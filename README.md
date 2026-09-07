@@ -2,7 +2,7 @@
 
 # Integrantes
 
--   Moya Carlos Esteban
--   Iriarte Lopez Ana Valentina 
--   Vulcano Candela Nair
--   Martinez Oldani Jimera
+-   Moya Carlos Esteban - Scrum Master
+-   Iriarte Lopez Ana Valentina - Product Builder
+-   Vulcano Candela Nair - Product Builder
+-   Martinez Oldani Jimera - Product Builder
