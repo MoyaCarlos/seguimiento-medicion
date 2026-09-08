@@ -23,6 +23,20 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   Sprint 3 (funcionalidad y calidad) → Sprint 4 (cierre y entrega final).
   Duración/calendario a confirmar según fecha de entrega final.
 
+### Convención de Git
+- Branches: `feature/HU-XX-nombre-corto`, `fix/nombre-corto`.
+- Nada de push directo a `main`: todo cambio entra por Pull Request.
+- Mínimo 1 aprobación de otro integrante antes de mergear.
+- El PR debe pasar los tests (Godog + `go test`) antes de mergear.
+
+### Definition of Done
+Una historia se considera terminada cuando:
+- Código implementado y mergeado a `main`.
+- Tests unitarios (TDD) y escenario BDD correspondiente, ambos en verde.
+- Especificación SDD de la historia escrita en `/docs/specs`.
+- Revisada y aprobada por al menos otro integrante (PR).
+- Sin defectos abiertos bloqueantes para esa historia.
+
 ### SDD (Specification-Driven Development)
 - Especificaciones versionadas en `/docs/specs`, escritas **antes** de implementar.
 - Cada una define: objetivo, entradas, salidas esperadas, reglas de negocio,
