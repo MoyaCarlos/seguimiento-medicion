@@ -87,8 +87,11 @@ La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP
 - **Control de versiones:** Git + GitHub, tablero en GitHub Projects con sub-issues.
 
 ## Uso de Inteligencia Artificial
-- Herramienta actual: **Claude**. Posible incorporación futura de otras (ej. DeepSeek
-  API) — cualquier cambio se documentará en este archivo.
+- Herramientas usadas como **asistencia al desarrollo** (no forman parte de la
+  arquitectura del producto): **Claude**, **DeepSeek API** y modelos disponibles en
+  **build.nvidia.com**. Se usan para análisis de requisitos, especificaciones,
+  generación de código/tests, refactorización y revisión. Cualquier incorporación
+  adicional se documentará en este archivo.
 - Todo resultado generado con IA debe ser comprendido, revisado y validado por el
   equipo antes de incorporarse al proyecto. El equipo es responsable de todo el
   código, sea manual o asistido por IA.
