@@ -39,5 +39,20 @@ Principales funcionalidades:
 -   **Testing:** Godog (BDD) + `testing` estándar de Go (TDD).
 -   **Reportes:** generación de PDF con Maroto.
 
+## Especificación de funcionalidades (SDD)
+
+El proyecto aplica **Specification-Driven Development** con
+[GitHub Spec Kit](https://github.com/github/spec-kit), la herramienta oficial
+de GitHub para esta práctica: antes de implementar cada historia de usuario
+se escribe una especificación formal (objetivo, reglas de negocio, casos
+límite, condiciones de error, criterios de aceptación), siguiendo el flujo
+`/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` →
+`/speckit.implement`. Las especificaciones quedan versionadas en `specs/`, y
+son la base de la trazabilidad Historia → Spec → Escenario BDD → Tests → Código
+que se muestra en la defensa final.
+
+Ya está configurado en el repo para Claude Code y OpenCode — detalles de uso
+en [`docs/GUIA-IA-TERMINAL.md`](./docs/GUIA-IA-TERMINAL.md).
+
 Metodología, arquitectura, patrones de diseño y principios aplicados están
-documentados en [`claude.md`](./claude.md).
+documentados en [`AGENTS.md`](./AGENTS.md).

@@ -5,17 +5,44 @@ OpenCode+NVIDIA. El contexto del proyecto (stack, arquitectura, principios,
 convenciones) ya está en [`AGENTS.md`](../AGENTS.md) — se carga solo al abrir
 el agente en esta carpeta, no hace falta pegarlo en el prompt.
 
-## Spec Kit ya está instalado
+## Spec Kit: qué es y para qué lo usamos
 
-`specify init` ya corrió en el repo para Claude Code y OpenCode — no hace
-falta reinstalar nada, los comandos `/speckit.*` ya están disponibles al
-abrir cualquiera de las dos herramientas en esta carpeta.
+[GitHub Spec Kit](https://github.com/github/spec-kit) es la herramienta
+oficial de GitHub para **Specification-Driven Development (SDD)** — la
+práctica que el TP exige usar. Antes de escribir código de una funcionalidad,
+se escribe primero una especificación formal (objetivo, reglas de negocio,
+casos límite, condiciones de error, criterios de aceptación); Spec Kit guía
+ese proceso con comandos en vez de dejarlo librado a que cada uno escriba la
+spec como quiera.
+
+**Flujo por cada historia del Product Backlog:**
+
+1. `/speckit.specify` — convierte la historia en una especificación formal.
+2. `/speckit.clarify` — el agente pregunta lo que esté ambiguo antes de seguir.
+3. `/speckit.plan` — arma el plan técnico usando el stack ya definido en `AGENTS.md`.
+4. `/speckit.tasks` — desglosa el plan en tareas concretas.
+5. `/speckit.implement` — recién ahí se escribe código, **una historia a la
+   vez**, con revisión humana del diff (nunca todo el backlog de una).
+
+Las specs generadas quedan versionadas en `specs/<nombre-historia>/` dentro
+del repo — eso es lo que van a mostrar como evidencia de SDD en la defensa
+final, y de ahí sale la trazabilidad Historia → Spec → BDD → Tests → Código.
+
+**Ya está instalado y commiteado en el repo** — con hacer `git pull` en
+`seguimiento-medicion/` ya tenés los comandos `/speckit.*` disponibles al
+abrir el agente ahí adentro. No hace falta que lo reinstales.
 
 - Claude Code: `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, etc. (con guión).
 - OpenCode: `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, etc. (con punto).
 
-Si necesitás reinstalarlo en otra máquina: `uv tool install specify-cli` y
-después `specify init --here --integration claude` (o `opencode`).
+Si alguna vez hiciera falta reinstalarlo desde cero en otra máquina: parate
+**adentro de la carpeta del repo** (`cd ruta/a/seguimiento-medicion`) — el
+flag `--here` inicializa en la carpeta donde estés parado, así que si lo
+corrés desde otro lado te crea los archivos en el lugar equivocado — y ahí sí:
+```bash
+uv tool install specify-cli
+specify init --here --integration claude    # o: opencode
+```
 
 ## Reglas de oro
 
