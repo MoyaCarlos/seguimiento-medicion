@@ -44,6 +44,28 @@ uv tool install specify-cli
 specify init --here --integration claude    # o: opencode
 ```
 
+### `/speckit-taskstoissues` necesita tu propio GitHub token
+
+Este skill (sube las tareas de `/speckit.tasks` como Issues) usa el GitHub
+MCP server, ya configurado en `.mcp.json` (compartido en el repo, sin ningún
+token adentro). Para que te funcione en tu máquina:
+
+1. Creá un **Personal Access Token fine-grained** en
+   https://github.com/settings/personal-access-tokens/new — Resource owner:
+   tu usuario, Repository access: solo `seguimiento-medicion`, Permissions →
+   **Issues: Read and write**. Expiración: alcanza con fin de cuatrimestre
+   (ej. 31/12/2026), no pongas "No expiration".
+2. Guardalo como variable de entorno, **nunca lo pegues en el chat con el
+   agente ni lo commitees**:
+   ```bash
+   echo 'export GITHUB_PAT=tu_token_aca' >> ~/.zshrc
+   ```
+   (o `~/.bashrc` si usás bash en vez de zsh).
+3. Abrí una **terminal nueva** (los procesos ya corriendo no ven variables
+   agregadas después) y arrancá tu agente ahí — recién ahí el MCP conecta.
+4. Verificar sin exponer el token: `claude mcp list` tiene que mostrar
+   `github ... ✔ Connected` (puede tardar unos segundos en la primera conexión).
+
 ## Reglas de oro
 
 1. **Todo lo que genere la IA lo tenés que entender antes de commitear.**
