@@ -56,6 +56,29 @@ Se puede tener una ventana de cada uno abierta al mismo tiempo, cada sesión
 usa su propio modelo sin pisarse. Cambiar de modelo dentro de una sesión ya
 abierta: `/models`.
 
+## Skills útiles (solo Claude Code)
+
+OpenCode no tiene este sistema, así que esto es solo para quien use Claude
+Code. Se invocan con `/nombre-skill`:
+
+- **`/code-review`** — revisa el diff/PR pendiente buscando bugs antes de
+  mergear. Usar antes de abrir un PR importante.
+- **`/security-review`** — revisión de seguridad del diff pendiente, útil en
+  todo lo que toque la API REST o la persistencia.
+- **`simplify`** — pasada de limpieza (reuso, simplificación, eficiencia)
+  sobre lo que cambiaste.
+- **`dataviz`** — guía de diseño para los gráficos del Dashboard (paleta de
+  colores, forma de los charts, legibilidad).
+- **`artifact-diagramming`** — para armar diagramas (arquitectura, flujo de
+  trazabilidad Historia→SDD→BDD→Tests→Código) para la documentación o la
+  defensa final.
+- **`run`** — levanta el proyecto (backend Go + frontend React) para probar
+  una feature en vivo en vez de confiar solo en los tests.
+- **`init`** — genera documentación automática del código, útil más
+  adelante cuando ya haya bastante escrito.
+- **`fewer-permission-prompts`** — reduce las confirmaciones repetidas de
+  comandos (git, go test, npm) si te resultan molestas.
+
 ## Antes de pedir ayuda al equipo
 
 Si el agente se traba o da vueltas en círculos con lo mismo, no insistas 5
