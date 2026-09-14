@@ -1,0 +1,8 @@
+# Archivos personales/del SO, no del proyecto
+.directory
+.claude/settings.json
+.claude/settings.local.json
+
+# Variables de entorno con API keys (DeepSeek, NVIDIA, etc.)
+.env
+.env.local

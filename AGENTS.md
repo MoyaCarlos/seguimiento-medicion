@@ -37,14 +37,27 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 Una historia se considera terminada cuando:
 - Código implementado y mergeado a `main`.
 - Tests unitarios (TDD) y escenario BDD correspondiente, ambos en verde.
-- Especificación SDD de la historia escrita en `/docs/specs`.
+- Especificación SDD de la historia escrita en `specs/`.
 - Revisada y aprobada por al menos otro integrante (PR).
 - Sin defectos abiertos bloqueantes para esa historia.
 
 ### SDD (Specification-Driven Development)
-- Especificaciones versionadas en `/docs/specs`, escritas **antes** de implementar.
-- Cada una define: objetivo, entradas, salidas esperadas, reglas de negocio,
-  restricciones, casos límite, condiciones de error y criterios de aceptación.
+- Herramienta: **[GitHub Spec Kit](https://github.com/github/spec-kit)**, instalado
+  con `specify init --here --integration claude` (o `--integration opencode`).
+  Genera las specs versionadas en `specs/<feature>/` — reemplaza lo que se había
+  pensado como `/docs/specs`.
+- Flujo por historia: `/speckit.constitution` (una vez) → `/speckit.specify` →
+  `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`.
+  En Claude Code los comandos usan guión (`/speckit-specify`); en OpenCode, punto
+  (`/speckit.specify`) — mismo comando, distinta sintaxis según la herramienta.
+- Cada spec debe cubrir como mínimo: objetivo, entradas, salidas esperadas, reglas
+  de negocio, restricciones, casos límite, condiciones de error y criterios de
+  aceptación. Para reglas de negocio/casos límite/errores, redactar en formato
+  **EARS** (Ubicuo / Basado en evento / Basado en estado / No deseado / Opcional)
+  en vez de prosa libre — más preciso y se traduce directo a escenarios BDD.
+- `/speckit.implement` se corre **una historia a la vez**, con revisión humana del
+  diff antes de seguir — no se usa para completar varias historias de una sola vez
+  (ver convención de commits RED/GREEN/REFACTOR más abajo).
 
 ### BDD (Behavior-Driven Development)
 - **Godog** (Gherkin) para automatizar escenarios Given-When-Then.
@@ -93,7 +106,7 @@ Clean/Hexagonal liviana (Ports & Adapters), sin ceremonia de más capas de las n
 /internal/report     -> generación de informes PDF (Maroto)
 /features            -> escenarios BDD (Godog)
 /web                 -> frontend React (Vite)
-/docs/specs          -> especificaciones SDD versionadas
+/specs               -> especificaciones SDD versionadas (generadas con Spec Kit)
 ```
 
 La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP.

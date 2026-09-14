@@ -5,6 +5,18 @@ OpenCode+NVIDIA. El contexto del proyecto (stack, arquitectura, principios,
 convenciones) ya está en [`AGENTS.md`](../AGENTS.md) — se carga solo al abrir
 el agente en esta carpeta, no hace falta pegarlo en el prompt.
 
+## Spec Kit ya está instalado
+
+`specify init` ya corrió en el repo para Claude Code y OpenCode — no hace
+falta reinstalar nada, los comandos `/speckit.*` ya están disponibles al
+abrir cualquiera de las dos herramientas en esta carpeta.
+
+- Claude Code: `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, etc. (con guión).
+- OpenCode: `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, etc. (con punto).
+
+Si necesitás reinstalarlo en otra máquina: `uv tool install specify-cli` y
+después `specify init --here --integration claude` (o `opencode`).
+
 ## Reglas de oro
 
 1. **Todo lo que genere la IA lo tenés que entender antes de commitear.**
