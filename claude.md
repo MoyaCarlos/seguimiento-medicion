@@ -50,7 +50,19 @@ Una historia se considera terminada cuando:
 - Ciclo **RED → GREEN → REFACTOR** para reglas de negocio y cálculos.
 - Paquete `testing` estándar de Go, foco en la capa de dominio (`/internal/domain`)
   y de casos de uso (`/internal/service`).
-- Evidencia del proceso mediante historial de commits.
+- Evidencia del proceso mediante historial de commits: para cálculos de métricas,
+  estimación, reglas de negocio y validaciones, cada fase del ciclo es su propio
+  commit, con prefijo en el mensaje:
+  ```
+  RED: agregar test de <caso> (falla)
+  GREEN: implementar <caso>, test en verde
+  REFACTOR: <qué se limpió>
+  ```
+  No forzar un commit de REFACTOR vacío si no hay nada que limpiar. No aplica a
+  código trivial (getters, DTOs).
+- **Merge a `main` siempre con "Create a merge commit"**, nunca squash — si se
+  aplasta el PR en un solo commit se pierde la evidencia del ciclo RED/GREEN/REFACTOR
+  en el historial de `main`.
 
 ## Principios de diseño
 - **Clean Code:** nombres claros, funciones pequeñas, sin comentarios que expliquen el "qué".
