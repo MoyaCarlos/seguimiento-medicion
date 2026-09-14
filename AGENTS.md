@@ -8,6 +8,10 @@ Ingeniería y Calidad de Software (UTN FRSR, 2026).
 El proyecto se desarrolla obligatoriamente utilizando Go, Scrum, SDD, BDD, TDD, Git
 y herramientas de Inteligencia Artificial como soporte al proceso.
 
+> Este archivo lo cargan automáticamente tanto Claude Code (vía el symlink
+> `CLAUDE.md`) como OpenCode. Consejos prácticos de cómo trabajar con estos
+> agentes desde la terminal: [`docs/GUIA-IA-TERMINAL.md`](docs/GUIA-IA-TERMINAL.md).
+
 ## Equipo y roles
 - **Product Architect:** profesores de la cátedra.
 - **Agile Enabler:** Moya Carlos Esteban.
