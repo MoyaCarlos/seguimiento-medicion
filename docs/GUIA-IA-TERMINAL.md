@@ -66,6 +66,29 @@ token adentro). Para que te funcione en tu máquina:
 4. Verificar sin exponer el token: `claude mcp list` tiene que mostrar
    `github ... ✔ Connected` (puede tardar unos segundos en la primera conexión).
 
+## Qué instalar en tu agente (y qué NO)
+
+**No hace falta instalar nada vos misma.** Todo lo que el equipo decidió usar
+ya está commiteado en el repo — con `git pull` en `seguimiento-medicion/` te
+llega automáticamente, tanto en Claude Code como en OpenCode:
+
+- **Spec Kit** (`/speckit.*`) — flujo de SDD, ver sección de arriba.
+- **`test-driven-development`** (skill de
+  [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills)) —
+  refuerza el ciclo RED/GREEN/REFACTOR con Prove-It Pattern para bugs, test
+  pyramid y Arrange-Act-Assert. Recomendada por el profesor. Se activa sola,
+  sin comando — el agente la usa cuando estás implementando o corrigiendo algo.
+
+**No instales paquetes de skills adicionales por tu cuenta** (ej. el resto del
+catálogo de `agent-skills`, o `mattpocock/skills`) sin avisar al equipo antes.
+No es por desconfianza: cada skill que se suma **consume contexto/tokens** aunque
+no se use — hay una medición real de esto en
+[`docs/METRICA-CONSUMO-MCP.md`](METRICA-CONSUMO-MCP.md) — y varias de esas
+skills hacen lo mismo que Spec Kit (specs, planning), lo que genera confusión
+sobre cuál usar para qué. Si el profesor recomienda algo puntual, lo evaluamos
+como equipo antes de instalarlo (así decidimos con la skill de TDD: se
+descartó el resto de ambos catálogos por redundancia).
+
 ## Reglas de oro
 
 1. **Todo lo que genere la IA lo tenés que entender antes de commitear.**
@@ -117,10 +140,13 @@ Se puede tener una ventana de cada uno abierta al mismo tiempo, cada sesión
 usa su propio modelo sin pisarse. Cambiar de modelo dentro de una sesión ya
 abierta: `/models`.
 
-## Skills útiles (solo Claude Code)
+## Skills nativas de Claude Code (no hace falta instalarlas)
 
-OpenCode no tiene este sistema, así que esto es solo para quien use Claude
-Code. Se invocan con `/nombre-skill`:
+Estas ya vienen incluidas en Claude Code — no son algo que se instale con
+`npx skills`, simplemente están disponibles. OpenCode no tiene este sistema
+de skills nativas, así que esta lista es solo para quien use Claude Code
+(distinto de `test-driven-development`, que sí instalamos para ambas
+herramientas — ver arriba). Se invocan con `/nombre-skill`:
 
 - **`/code-review`** — revisa el diff/PR pendiente buscando bugs antes de
   mergear. Usar antes de abrir un PR importante.
