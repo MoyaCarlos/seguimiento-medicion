@@ -64,6 +64,10 @@ Una historia se considera terminada cuando:
 - Archivos `.feature` en `/features`, con casos normales, alternativos, límite y de error.
 
 ### TDD (Test-Driven Development)
+- Skill `test-driven-development` (de [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills),
+  instalada con `npx skills add addyosmani/agent-skills --skill test-driven-development`
+  — compatible con Claude Code y OpenCode) refuerza el ciclo con Prove-It Pattern
+  para bugs, test pyramid y Arrange-Act-Assert. Recomendada por la cátedra.
 - Ciclo **RED → GREEN → REFACTOR** para reglas de negocio y cálculos.
 - Paquete `testing` estándar de Go, foco en la capa de dominio (`/internal/domain`)
   y de casos de uso (`/internal/service`).
