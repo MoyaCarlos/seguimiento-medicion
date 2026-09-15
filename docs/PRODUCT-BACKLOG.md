@@ -15,6 +15,7 @@ No se puede gestionar nada si no existe un contenedor. Esta es la base estructur
 
 * **HU-04: Creación de Proyecto y Asignación de Equipo (Must have).** Es la máxima prioridad operativa. Todo el sistema (historias, sprints, horas) depende de que exista un proyecto y usuarios registrados.  
 * **HU-01: Creación de Historias de Usuario (Must have).** Sin esto, no hay Product Backlog.
+* **HU-13: Fechas y Estado del Proyecto (Should have).** Extiende HU-04: registrar fecha de inicio/fin y consultar el estado general del proyecto (requisito explícito del punto 1 del enunciado).
 
 ## ***Prioridad 2: El Motor de Scrum (Iteraciones)***
 
@@ -22,6 +23,8 @@ Una vez que tienen el proyecto y el Backlog, necesitan el ciclo de trabajo ágil
 
 * **HU-05: Apertura y Cierre de Sprints (Must have).** Da vida a la metodología.  
 * **HU-06: Movimiento de Historias al Sprint Backlog (Must have).** Permite a las Product Builders definir en qué se va a trabajar durante la iteración.
+* **HU-11: Actualización de Estado de una Historia en el Sprint (Must have).** Sin poder marcar una historia como completada durante el sprint, no hay datos reales para calcular velocidad ni ninguna métrica.
+* **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado; de baja complejidad técnica una vez que existen sprints cerrados.
 
 ## ***Prioridad 3: Alimentación de Datos (El Valor de Negocio)***
 
@@ -32,9 +35,11 @@ Para que el diferenciador del sistema (las métricas) funcione, primero necesita
 
 ## ***Prioridad 4: Resultados y Calidad (El Valor Final)***
 
-Estas funcionalidades son el corazón del valor para el cliente final, pero tienen una alta dependencia técnica de las etapas anteriores.
+Estas funcionalidades son el corazón del valor para el cliente final, pero tienen una alta dependencia técnica de las etapas anteriores. Se dividió la antigua HU-03 en tres historias más chicas (cálculo, visualización y exportación son responsabilidades distintas) y se agregó cobertura completa del punto 7 del enunciado.
 
-* **HU-03: Visualización de Velocidad del Equipo y Reportes (Must have).** El Dashboard y los reportes PDF (Maroto) consumirán la información generada en la Prioridad 3\.  
+* **HU-03: Cálculo de Métricas del Proyecto (Must have).** El motor de cálculo (Story Points planificados/completados, velocidad, horas estimadas/reales, desviación, % completadas, defectos detectados/resueltos) — requisito central del enunciado (punto 7).
+* **HU-09: Dashboard de Métricas (Must have).** Visualización gráfica de lo que calcula HU-03 (punto 8 del enunciado).
+* **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto de historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado).
 * **HU-08: Registro y Seguimiento de Bugs (Should have).** Completa el ciclo de aseguramiento de calidad del software desarrollado.
 
 ---
@@ -93,26 +98,26 @@ Nuevo
 
 ---
 
-## HU-03: Visualización de Velocidad del Equipo (Velocity) 
+## HU-03: Cálculo de Métricas del Proyecto 
 ### Descripción
-Como Scrum Master quiero visualizar un gráfico que compare los Story Points estimados vs. completados por cada Sprint para poder analizar la capacidad real del equipo y mejorar la planificación futura.
+Como Scrum Master quiero que el sistema calcule automáticamente las métricas del proyecto y de cada Sprint para poder analizar la capacidad real del equipo y la calidad del trabajo entregado.
 ### Criterios de aceptacion (BDD):
-Escenario 1: Generación del gráfico de Velocity.
-Dado que el proyecto tiene al menos un Sprint finalizado,
-Cuando ingreso a la sección "Dashboard de Métricas",
-Entonces el sistema debe renderizar un gráfico de barras donde el eje X sean los Sprints y el eje Y muestre dos barras por Sprint: "Puntos Comprometidos" (gris) y "Puntos Completados" (verde).
-Escenario 2: Generación de reporte PDF.
-Dado que estoy visualizando las métricas,
-Cuando presiono el botón "Exportar a PDF",
-Entonces la librería Maroto debe procesar los datos y descargar un archivo local con el resumen del gráfico.
+Escenario 1: Cálculo tras cerrar un Sprint.
+Dado que un Sprint se cierra (HU-05) con historias marcadas como completadas (HU-11),
+Cuando el sistema recalcula las métricas del proyecto,
+Entonces debe obtener: Story Points planificados y completados, velocidad del equipo, horas estimadas y reales, desviación entre esfuerzo estimado y real, porcentaje de historias completadas, y cantidad de defectos detectados y resueltos en ese Sprint.
+Escenario 2: Proyecto sin Sprints cerrados.
+Dado que un proyecto todavía no tiene ningún Sprint finalizado,
+Cuando se solicita el cálculo de métricas,
+Entonces el sistema debe devolver todos los valores en cero (o "sin datos") en vez de fallar o mostrar un error.
 ### Prioridad
-M (Must have) - Requisito central del enunciado.
+M (Must have) - Requisito central del enunciado (punto 7).
 ### Estado
 Nuevo
 ### Valor de Negocio
 21 (Fibonacci)
 ### Estimación
-13 Story Points (Requiere integración de gráficos y librería Maroto) 
+8 Story Points (cálculos de dominio, sin UI — se testea con TDD directo sobre `/internal/domain`) 
 
 
 ---
@@ -252,4 +257,119 @@ Nuevo
 8 (Fibonacci)
 ### Estimación
 8 Story Points 
+
+---
+
+## HU-09: Dashboard de Métricas 
+### Descripción
+Como Scrum Master quiero visualizar en un panel las métricas calculadas del proyecto (HU-03) con representaciones gráficas para poder evaluar de un vistazo el estado del proyecto sin tener que leer datos crudos.
+### Criterios de aceptacion (BDD):
+Escenario 1: Renderizado del Dashboard.
+Dado que el proyecto tiene al menos un Sprint finalizado y sus métricas calculadas,
+Cuando ingreso a la sección "Dashboard",
+Entonces el sistema debe renderizar un gráfico de barras de velocidad (Sprints en eje X, Puntos Comprometidos vs. Completados en eje Y) y al menos un indicador visual por cada métrica restante del punto 7 del enunciado.
+Escenario 2: Proyecto sin datos.
+Dado que un proyecto todavía no tiene Sprints finalizados,
+Cuando ingreso al Dashboard,
+Entonces el sistema debe mostrar un estado vacío informativo, no un gráfico roto ni un error.
+### Prioridad
+M (Must have) - Requisito central del enunciado (punto 8).
+### Estado
+Nuevo
+### Valor de Negocio
+13 (Fibonacci)
+### Estimación
+8 Story Points (integración de librería de gráficos en el frontend React)
+
+---
+
+## HU-10: Generación de Reporte en PDF 
+### Descripción
+Como Scrum Master quiero exportar un reporte en PDF de un proyecto o Sprint con sus historias, estimaciones, esfuerzo, métricas y defectos para poder compartir el estado del proyecto fuera del sistema (ej. con el profesor/Cliente).
+### Criterios de aceptacion (BDD):
+Escenario 1: Exportación exitosa.
+Dado que estoy viendo el resumen de un Sprint cerrado,
+Cuando presiono "Exportar a PDF",
+Entonces la librería Maroto debe generar un archivo con: historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos asociados a ese Sprint.
+Escenario 2: Error de generación.
+Dado que el proceso de generación del PDF falla (ej. dato faltante),
+Cuando se solicita el reporte,
+Entonces el sistema debe informar el error al usuario en vez de descargar un archivo corrupto o vacío.
+### Prioridad
+M (Must have) - Requisito central del enunciado (punto 9).
+### Estado
+Nuevo
+### Valor de Negocio
+13 (Fibonacci)
+### Estimación
+8 Story Points (integración con Maroto, depende de HU-03 y HU-08 para los datos)
+
+---
+
+## HU-11: Actualización de Estado de una Historia en el Sprint 
+### Descripción
+Como Product Builder quiero cambiar el estado de una historia asignada al Sprint (En progreso, Completada) para poder reflejar el avance real del trabajo durante la iteración.
+### Criterios de aceptacion (BDD):
+Escenario 1: Marcar historia como completada.
+Dado que una historia está asignada a un Sprint activo con estado "En progreso",
+Cuando la marco como "Completada",
+Entonces el sistema registra la fecha de finalización y la incluye en el cálculo de Story Points completados del Sprint (HU-03).
+Escenario 2: Transición inválida.
+Dado que una historia todavía no fue asignada a ningún Sprint,
+Cuando intento marcarla como "Completada" directamente desde el Product Backlog,
+Entonces el sistema rechaza el cambio y muestra un mensaje indicando que primero debe asignarse a un Sprint activo.
+### Prioridad
+M (Must have) - Sin esto no hay datos reales para ninguna métrica.
+### Estado
+Nuevo
+### Valor de Negocio
+13 (Fibonacci)
+### Estimación
+3 Story Points
+
+---
+
+## HU-12: Consulta de Sprints Anteriores 
+### Descripción
+Como Scrum Master quiero consultar el historial de Sprints ya cerrados con su resumen (Sprint Goal, historias completadas, métricas) para poder comparar el desempeño del equipo a lo largo del proyecto.
+### Criterios de aceptacion (BDD):
+Escenario 1: Listado de Sprints cerrados.
+Dado que el proyecto tiene al menos dos Sprints finalizados,
+Cuando ingreso a la sección "Historial de Sprints",
+Entonces el sistema muestra una lista con cada Sprint cerrado, su Sprint Goal, fechas y métricas principales.
+Escenario 2: Detalle de un Sprint puntual.
+Dado que estoy en el historial de Sprints,
+Cuando selecciono uno en particular,
+Entonces el sistema muestra el detalle completo de ese Sprint (historias, esfuerzo, defectos) sin afectar al Sprint activo actual.
+### Prioridad
+S (Should have) - Requisito explícito del enunciado (punto 3), baja complejidad técnica.
+### Estado
+Nuevo
+### Valor de Negocio
+8 (Fibonacci)
+### Estimación
+3 Story Points
+
+---
+
+## HU-13: Fechas y Estado del Proyecto 
+### Descripción
+Como Scrum Master quiero registrar la fecha de inicio y finalización de un proyecto y consultar su estado general para poder tener visibilidad del ciclo de vida completo del proyecto.
+### Criterios de aceptacion (BDD):
+Escenario 1: Registro de fechas.
+Dado que estoy editando un proyecto existente (HU-04),
+Cuando ingreso una fecha de inicio y una fecha de finalización estimada y guardo,
+Entonces el sistema valida que la fecha de fin sea posterior a la de inicio y las persiste.
+Escenario 2: Consulta de estado.
+Dado que un proyecto tiene Sprints y fechas cargadas,
+Cuando consulto su estado,
+Entonces el sistema muestra si está "Planificado", "En curso" o "Finalizado" según la fecha actual y el estado de sus Sprints.
+### Prioridad
+S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
+### Estado
+Nuevo
+### Valor de Negocio
+8 (Fibonacci)
+### Estimación
+3 Story Points
 
