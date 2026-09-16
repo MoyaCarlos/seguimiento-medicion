@@ -8,7 +8,7 @@ Trabajo Práctico Integrador de la asignatura **Ingeniería y Calidad de Softwar
 -   Moya Carlos Esteban - Scrum Master
 -   Iriarte Lopez Ana Valentina - Product Builder
 -   Vulcano Candela Nair - Product Builder
--   Martinez Oldani Jimera - Product Builder
+-   Martinez Oldani Jimena - Product Builder
 
 ## Descripción del proyecto
 
