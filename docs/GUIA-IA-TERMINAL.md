@@ -117,6 +117,40 @@ descartó el resto de ambos catálogos por redundancia).
    de entorno (`.env`, con `.gitignore`), referenciadas como `{env:VAR}` en
    `opencode.json`.
 
+## Ahorrar tokens: una tarea por sesión
+
+Cada mensaje que mandás en una sesión reenvía **toda la conversación
+anterior** de esa sesión — cuanto más larga y mezclada esté, más caro (en
+tokens, en plata, en velocidad de respuesta) sale cada mensaje nuevo, incluso
+si la pregunta actual no tiene nada que ver con lo de antes.
+
+**Quedate en la misma sesión cuando:**
+- Seguís trabajando en la **misma historia** o el mismo archivo (ej. escribiste
+  el test RED, ahora pedís el GREEN — necesita el contexto de lo anterior).
+- Estás iterando sobre algo que el agente ya entendió (corrigiendo un detalle,
+  ajustando un mensaje de error, etc.).
+- Vas a revisar/discutir el mismo cambio que acaban de hacer.
+
+**Abrí una sesión nueva cuando:**
+- Vas a empezar **otra historia distinta**, sin relación con la anterior.
+- Cambiás de tipo de tarea (pasaste de codear a redactar la spec de otra
+  funcionalidad, o a una pregunta general sin relación con lo que venías haciendo).
+- La sesión ya lleva rato larga y no la necesitás más — no hace falta "cerrarla
+  prolijo", simplemente arrancá una nueva para lo próximo.
+
+**Cómo pedir sin gastar de más:**
+- **Un pedido concreto por mensaje**, no una lista de 5 cosas no relacionadas
+  en un mismo prompt — si una parte falla o hay que ajustarla, tenés que
+  repetir/corregir todo el bloque.
+- **No le pidas que relea archivos que ya leyó en la misma sesión** — si ya
+  te mostró el contenido de un archivo hace 2 mensajes, no hace falta
+  pedírselo de nuevo salvo que haya cambiado.
+- **Cortá una respuesta que se fue por las ramas** en vez de dejar que seas vos
+  quien la lea entera — pedile que resuma o vaya al punto.
+- **Pedí la versión más simple primero** (esto es literal el modo "ponytail"
+  que ya tienen activo en este repo): la solución mínima que funciona, no la
+  más completa "por si acaso". Si después hace falta más, se agrega.
+
 ## Prompts que funcionan mejor
 
 - **Sé específico con archivos y funciones**: "en `internal/domain/sprint.go`,
