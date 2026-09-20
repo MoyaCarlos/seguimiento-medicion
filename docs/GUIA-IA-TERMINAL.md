@@ -178,18 +178,14 @@ si la pregunta actual no tiene nada que ver con lo de antes.
 DeepSeek tiene precios distintos según la hora — **fuera de horario pico
 cuesta la mitad**. En hora argentina (ART, UTC-3), el horario pico (caro) es:
 
-- **Lunes a viernes, 22:00 a 01:00** y **03:00 a 07:00** — evitar programar en
-  esas franjas si se puede.
-- **Todo el resto de la semana es horario barato**, esto incluye **sábado y
-  domingo completos**, y el horario normal de trabajo/estudio (mañana, tarde,
-  noche hasta las 22hs) entre semana.
+- **Lunes a viernes, 22:00 a 01:00** y **03:00 a 07:00** — evitar programar en esas franjas si se puede.
+- **Todo el resto de la semana es horario barato**, esto incluye **sábado y domingo completos**, y el horario normal de trabajo/estudio (mañana, tarde, noche hasta las 22hs) entre semana.
 
-En la práctica, el horario en el que normalmente van a estar laburando ya cae
-en la franja barata — esto importa sobre todo si a alguna se le ocurre dejar
-una tarea larga corriendo de madrugada, ahí conviene esperar a la mañana.
+En la práctica, el horario en el que normalmente van a estar laburando ya cae en la franja barata — esto importa sobre todo si a alguna se le ocurre dejar una tarea larga corriendo de madrugada, ahí conviene esperar a la mañana.
 
 Esto **no aplica a Claude Code** (suscripción de Carlos, no cobra por
 horario) ni a NVIDIA (es por créditos, no por franja horaria).
+
 ## Prompts que funcionan mejor
 
 - **Sé específico con archivos y funciones**: "en `internal/domain/sprint.go`, la función `CerrarSprint`..." en vez de "arreglá el cierre de sprint".
@@ -202,35 +198,40 @@ horario) ni a NVIDIA (es por créditos, no por franja horaria).
 ## Conectar DeepSeek en OpenCode
 
 El equipo va a trabajar con OpenCode + DeepSeek (Carlos usa Claude Code, pero
-solo hasta que se le termine la suscripción). El proveedor ya está declarado
-en `opencode.json` (commiteado, sin ninguna key adentro) — cada una solo
-necesita generar su propia key y conectarla en su máquina.
+solo hasta que se le termine la suscripción). **DeepSeek ya viene como
+proveedor nativo de OpenCode** — no hace falta ningún archivo de config en el
+repo, se conecta directo.
 
 **1. Instalar OpenCode** (si no lo tenés):
 ```bash
 curl -fsSL https://opencode.ai/install | bash
 ```
-o bien instalar el cli y luego la extension de visual studio
+O instalar el CLI y después la extensión de Visual Studio Code.
 
-La api key se la pase a cada una por mensaje privado, no la pierdan.
+La API key la pasa Carlos por mensaje privado — no la compartan en ningún
+otro lado, ni la peguen en el chat con el agente.
 
-**2. Conectarla con `/connect`** (más seguro que variable de entorno: la key
-queda guardada solo en tu máquina, en `~/.local/share/opencode/auth.json`,
-**nunca en ningún archivo del repo** — así nadie puede pisarla ni commitearla
-por accidente):
+**2. Conectarla con `/connect`** (la key queda guardada solo en tu máquina,
+en `~/.local/share/opencode/auth.json`, **nunca en ningún archivo del
+repo**):
 1. Parada en la carpeta del repo, arrancá OpenCode: `opencode`
 2. Adentro, escribí `/connect`
-3. Elegí (o escribí) el proveedor: `deepseek`
-4. Pegá la key cuando te la pida — queda guardada ahí, no en el chat ni en ningún archivo del proyecto.
+3. Buscá y elegí **DeepSeek** (aparece como proveedor nativo, con todo el
+   catálogo de modelos actualizado).
+4. Pegá la key cuando te la pida.
 
-**4. Arrancar OpenCode con DeepSeek**, parada en la carpeta del repo:
+**3. Elegir el modelo:**
 ```bash
-opencode -m deepseek/deepseek-chat        # para codear
-opencode -m deepseek/deepseek-reasoner    # para razonamiento más profundo
+opencode -m deepseek/deepseek-flash    # default recomendado: rápido y barato
+opencode -m deepseek/deepseek-v4-pro   # solo para algo puntual bien difícil (~3x más caro)
 ```
-Yo recomiendo usar deepseek flash
+**Usen `deepseek-flash` por default** — de sobra para el trabajo normal, con
+1M de contexto. Reserven V4 Pro para algo específico que Flash no resuelva bien.
 
 Cambiar de modelo dentro de una sesión ya abierta: `/models`.
+
+*(Nota: si ven `deepseek-chat` o `deepseek-reasoner` en algún lado, son
+nombres viejos ya dados de baja por DeepSeek — usen `deepseek-flash` en su lugar.)*
 
 **NVIDIA (build.nvidia.com)** se va a sumar de la misma forma (otro bloque en
 `opencode.json` + tu propia key de build.nvidia.com) cuando esté lista —
