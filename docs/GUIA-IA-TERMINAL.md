@@ -113,9 +113,11 @@ descartó el resto de ambos catálogos por redundancia).
    agente diga "ya están en verde" — `go test ./...` (o el comando de Godog)
    con tus propios ojos.
 
-5. **Nunca pegues API keys en el chat ni las commitees.** Van en variables
-   de entorno (`.env`, con `.gitignore`), referenciadas como `{env:VAR}` en
-   `opencode.json`.
+5. **Nunca pegues API keys en el chat ni las commitees.** En OpenCode se
+   conectan con `/connect` (ver más abajo); en Claude Code (MCP de GitHub) van
+   como variable de entorno referenciada con `{env:VAR}` en `.mcp.json`. En
+   ningún caso el valor real de una key debería aparecer en un archivo
+   versionado del repo.
 
 ## Ahorrar tokens: una tarea por sesión
 
@@ -178,12 +180,14 @@ curl -fsSL https://opencode.ai/install | bash
 2. **"Create new API key"** → ponele un nombre (ej. tu nombre) → confirmá.
 3. Copiá la key — no se vuelve a mostrar después.
 
-**3. Guardarla como variable de entorno** (nunca la pegues en el chat con el
-agente ni la commitees):
-```bash
-echo 'export DEEPSEEK_API_KEY=tu_key_aca' >> ~/.zshrc
-```
-(o `~/.bashrc` si usás bash). Después `source ~/.zshrc` o abrí una terminal nueva.
+**3. Conectarla con `/connect`** (más seguro que variable de entorno: la key
+queda guardada solo en tu máquina, en `~/.local/share/opencode/auth.json`,
+**nunca en ningún archivo del repo** — así nadie puede pisarla ni commitearla
+por accidente):
+1. Parada en la carpeta del repo, arrancá OpenCode: `opencode`
+2. Adentro, escribí `/connect`
+3. Elegí (o escribí) el proveedor: `deepseek`
+4. Pegá la key cuando te la pida — queda guardada ahí, no en el chat ni en ningún archivo del proyecto.
 
 **4. Arrancar OpenCode con DeepSeek**, parada en la carpeta del repo:
 ```bash
