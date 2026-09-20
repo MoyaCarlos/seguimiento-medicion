@@ -255,17 +255,6 @@ dejamos como decisión de cada una, no lo metemos en el repo compartido para
 no imponérselo a nadie. Si lo querés probar, se instala **en tu config
 personal** (no toca el repo ni afecta a las demás):
 
-```bash
-mkdir -p ~/.config/opencode
-```
-Y en `~/.config/opencode/opencode.json` (creálo si no existe):
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@dietrichgebert/ponytail"]
-}
-```
-
 Si no lo instalás, el efecto lo conseguís igual pidiéndolo a mano: *"la
 versión más simple que funcione, sin agregar nada que no pedí"* — es la
 misma idea que ya está en "Ahorrar tokens" más arriba, solo que ponytail lo
