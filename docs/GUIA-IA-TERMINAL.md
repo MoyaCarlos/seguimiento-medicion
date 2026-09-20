@@ -44,6 +44,26 @@ uv tool install specify-cli
 specify init --here --integration claude    # o: opencode
 ```
 
+### Comandos opcionales (quedan disponibles, no son obligatorios en el flujo)
+
+- **`/speckit.constitution`** — se corre **una sola vez por proyecto** (ya
+  no hace falta repetirlo), define los principios/restricciones que Spec Kit
+  respeta al generar cualquier spec. Ya está configurado.
+- **`/speckit.clarify`** — dentro del flujo principal (ver arriba): hace
+  hasta 5 preguntas puntuales sobre lo ambiguo de la spec antes de pasar a
+  `/speckit.plan`, y guarda las respuestas en la spec misma.
+- **`/speckit.checklist`** — genera una checklist de calidad para validar que
+  la spec de una historia esté completa/clara, después de `/speckit.plan`.
+  Útil si dudás de que la spec quedó bien armada antes de seguir.
+- **`/speckit.analyze`** — chequea que spec, plan y tasks de una misma
+  historia sean consistentes entre sí (no se contradigan), después de
+  `/speckit.tasks` y antes de `/speckit.implement`.
+- **`/speckit.converge`** — compara el código ya escrito contra la spec/plan/
+  tasks de una historia y agrega como tareas nuevas lo que falte. Sirve para
+  retomar una historia que quedó a medias.
+- **`/speckit.taskstoissues`** — sube las tareas de `/speckit.tasks` como
+  Issues de GitHub (ver la sección de abajo, necesita tu propio token).
+
 ### `/speckit-taskstoissues` necesita tu propio GitHub token
 
 Este skill (sube las tareas de `/speckit.tasks` como Issues) usa el GitHub
@@ -153,10 +173,26 @@ si la pregunta actual no tiene nada que ver con lo de antes.
   que ya tienen activo en este repo): la solución mínima que funciona, no la
   más completa "por si acaso". Si después hace falta más, se agrega.
 
+### Horarios más baratos (si usás DeepSeek)
+
+DeepSeek tiene precios distintos según la hora — **fuera de horario pico
+cuesta la mitad**. En hora argentina (ART, UTC-3), el horario pico (caro) es:
+
+- **Lunes a viernes, 22:00 a 01:00** y **03:00 a 07:00** — evitar programar en
+  esas franjas si se puede.
+- **Todo el resto de la semana es horario barato**, esto incluye **sábado y
+  domingo completos**, y el horario normal de trabajo/estudio (mañana, tarde,
+  noche hasta las 22hs) entre semana.
+
+En la práctica, el horario en el que normalmente van a estar laburando ya cae
+en la franja barata — esto importa sobre todo si a alguna se le ocurre dejar
+una tarea larga corriendo de madrugada, ahí conviene esperar a la mañana.
+
+Esto **no aplica a Claude Code** (suscripción de Carlos, no cobra por
+horario) ni a NVIDIA (es por créditos, no por franja horaria).
 ## Prompts que funcionan mejor
 
-- **Sé específico con archivos y funciones**: "en `internal/domain/sprint.go`,
-  la función `CerrarSprint`..." en vez de "arreglá el cierre de sprint".
+- **Sé específico con archivos y funciones**: "en `internal/domain/sprint.go`, la función `CerrarSprint`..." en vez de "arreglá el cierre de sprint".
 - **Decí qué NO tocar**: si estás en medio de otra cosa, aclaralo.
 - **Si el pedido es ambiguo, dejá que pregunte** en vez de que asuma y
   tengas que deshacer.
@@ -174,13 +210,11 @@ necesita generar su propia key y conectarla en su máquina.
 ```bash
 curl -fsSL https://opencode.ai/install | bash
 ```
+o bien instalar el cli y luego la extension de visual studio
 
-**2. Generar tu API key de DeepSeek:**
-1. Entrá a https://platform.deepseek.com/api_keys (creá cuenta si no tenés).
-2. **"Create new API key"** → ponele un nombre (ej. tu nombre) → confirmá.
-3. Copiá la key — no se vuelve a mostrar después.
+La api key se la pase a cada una por mensaje privado, no la pierdan.
 
-**3. Conectarla con `/connect`** (más seguro que variable de entorno: la key
+**2. Conectarla con `/connect`** (más seguro que variable de entorno: la key
 queda guardada solo en tu máquina, en `~/.local/share/opencode/auth.json`,
 **nunca en ningún archivo del repo** — así nadie puede pisarla ni commitearla
 por accidente):
@@ -194,6 +228,8 @@ por accidente):
 opencode -m deepseek/deepseek-chat        # para codear
 opencode -m deepseek/deepseek-reasoner    # para razonamiento más profundo
 ```
+Yo recomiendo usar deepseek flash
+
 Cambiar de modelo dentro de una sesión ya abierta: `/models`.
 
 **NVIDIA (build.nvidia.com)** se va a sumar de la misma forma (otro bloque en
