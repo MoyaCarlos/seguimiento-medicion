@@ -127,18 +127,40 @@ descartó el resto de ambos catálogos por redundancia).
 - **Pedí el "por qué" en decisiones no obvias**, no solo el código — te va a
   servir para la presentación final.
 
-## Multi-modelo en OpenCode
+## Conectar DeepSeek en OpenCode
 
-Quienes no tienen Claude Code usan OpenCode con dos proveedores ya
-configurados en `opencode.json`:
+El equipo va a trabajar con OpenCode + DeepSeek (Carlos usa Claude Code, pero
+solo hasta que se le termine la suscripción). El proveedor ya está declarado
+en `opencode.json` (commiteado, sin ninguna key adentro) — cada una solo
+necesita generar su propia key y conectarla en su máquina.
 
-- **DeepSeek** → para codear (`opencode -m deepseek/deepseek-chat`).
-- **NVIDIA (build.nvidia.com)** → para planificar/discutir (`opencode -m
-  nvidia/<modelo>`).
+**1. Instalar OpenCode** (si no lo tenés):
+```bash
+curl -fsSL https://opencode.ai/install | bash
+```
 
-Se puede tener una ventana de cada uno abierta al mismo tiempo, cada sesión
-usa su propio modelo sin pisarse. Cambiar de modelo dentro de una sesión ya
-abierta: `/models`.
+**2. Generar tu API key de DeepSeek:**
+1. Entrá a https://platform.deepseek.com/api_keys (creá cuenta si no tenés).
+2. **"Create new API key"** → ponele un nombre (ej. tu nombre) → confirmá.
+3. Copiá la key — no se vuelve a mostrar después.
+
+**3. Guardarla como variable de entorno** (nunca la pegues en el chat con el
+agente ni la commitees):
+```bash
+echo 'export DEEPSEEK_API_KEY=tu_key_aca' >> ~/.zshrc
+```
+(o `~/.bashrc` si usás bash). Después `source ~/.zshrc` o abrí una terminal nueva.
+
+**4. Arrancar OpenCode con DeepSeek**, parada en la carpeta del repo:
+```bash
+opencode -m deepseek/deepseek-chat        # para codear
+opencode -m deepseek/deepseek-reasoner    # para razonamiento más profundo
+```
+Cambiar de modelo dentro de una sesión ya abierta: `/models`.
+
+**NVIDIA (build.nvidia.com)** se va a sumar de la misma forma (otro bloque en
+`opencode.json` + tu propia key de build.nvidia.com) cuando esté lista —
+mismo procedimiento, se documenta acá cuando se agregue.
 
 ## Skills nativas de Claude Code (no hace falta instalarlas)
 
