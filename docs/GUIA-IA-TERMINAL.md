@@ -233,9 +233,12 @@ Cambiar de modelo dentro de una sesión ya abierta: `/models`.
 *(Nota: si ven `deepseek-chat` o `deepseek-reasoner` en algún lado, son
 nombres viejos ya dados de baja por DeepSeek — usen `deepseek-flash` en su lugar.)*
 
-**NVIDIA (build.nvidia.com)** se va a sumar de la misma forma (otro bloque en
-`opencode.json` + tu propia key de build.nvidia.com) cuando esté lista —
-mismo procedimiento, se documenta acá cuando se agregue.
+**NVIDIA (build.nvidia.com)** también es proveedor **nativo** de OpenCode —
+mismo procedimiento que DeepSeek, sin archivo de config: `/connect` → buscar
+**NVIDIA** → pegar la key (se genera en build.nvidia.com, con créditos
+gratis). Da acceso a modelos Nemotron y otros modelos abiertos. Cuando esté
+lista la key del equipo, se usa igual que arriba, solo cambiando el nombre
+del proveedor en `/connect` y en `-m nvidia/<modelo>`.
 
 ## Skills nativas de Claude Code (no hace falta instalarlas)
 
