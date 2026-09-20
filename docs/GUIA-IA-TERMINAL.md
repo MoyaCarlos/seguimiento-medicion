@@ -240,6 +240,29 @@ gratis). Da acceso a modelos Nemotron y otros modelos abiertos. Cuando esté
 lista la key del equipo, se usa igual que arriba, solo cambiando el nombre
 del proveedor en `/connect` y en `-m nvidia/<modelo>`.
 
+## Ponytail (plugin personal de Carlos, no compartido)
+
+Si ven mencionado "ponytail" en algún momento: es un **plugin de Claude
+Code que solo usa Carlos**, activado en su configuración local
+(`.claude/settings.json`, que está en `.gitignore` — no se comparte por el
+repo a propósito, porque es exclusivo de Claude Code y no tendría sentido
+forzarlo). Lo que hace: en cada respuesta, empuja a pedir siempre **la
+solución más simple que funcione** primero — reusar lo que ya existe, no
+crear abstracciones que nadie pidió, evitar código de más "por las dudas".
+
+**No hace falta el plugin para aplicar lo mismo en OpenCode** — es una forma
+de pedir, no una herramienta: cuando le pidas algo al agente, agregá *"la
+versión más simple que funcione, sin agregar nada que no pedí"*. Es
+exactamente la misma idea que ya está en "Ahorrar tokens" más arriba.
+
+## Modelos de NVIDIA se dan de baja rápido
+
+Si usando el proveedor NVIDIA les aparece un error tipo `410 Gone` /
+`"has reached its end of life"`, no es un problema de configuración —
+NVIDIA retira modelos de su catálogo (build.nvidia.com) con fecha de baja
+fija, más seguido que DeepSeek con su propia API. Solución: `/models` y
+elegir cualquier modelo vigente de la lista, no hay que arreglar nada.
+
 ## Skills nativas de Claude Code (no hace falta instalarlas)
 
 Estas ya vienen incluidas en Claude Code — no son algo que se instale con
