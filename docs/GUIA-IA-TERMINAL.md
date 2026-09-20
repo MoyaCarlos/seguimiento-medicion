@@ -240,20 +240,36 @@ gratis). Da acceso a modelos Nemotron y otros modelos abiertos. Cuando esté
 lista la key del equipo, se usa igual que arriba, solo cambiando el nombre
 del proveedor en `/connect` y en `-m nvidia/<modelo>`.
 
-## Ponytail (plugin personal de Carlos, no compartido)
+## Ponytail (opcional, cada una decide)
 
-Si ven mencionado "ponytail" en algún momento: es un **plugin de Claude
-Code que solo usa Carlos**, activado en su configuración local
-(`.claude/settings.json`, que está en `.gitignore` — no se comparte por el
-repo a propósito, porque es exclusivo de Claude Code y no tendría sentido
-forzarlo). Lo que hace: en cada respuesta, empuja a pedir siempre **la
-solución más simple que funcione** primero — reusar lo que ya existe, no
-crear abstracciones que nadie pidió, evitar código de más "por las dudas".
+Si ven mencionado "ponytail": es un plugin que Carlos usa en Claude Code
+(activado en `.claude/settings.json`, que está en `.gitignore` — no se
+comparte por el repo). Lo que hace: en cada respuesta, empuja al agente a
+dar siempre **la solución más simple que funcione** primero — reusar lo que
+ya existe, no crear abstracciones que nadie pidió, no meter código de más
+"por las dudas". Es básicamente forzar KISS/YAGNI de `AGENTS.md` de forma
+automática en vez de tener que pedirlo cada vez.
 
-**No hace falta el plugin para aplicar lo mismo en OpenCode** — es una forma
-de pedir, no una herramienta: cuando le pidas algo al agente, agregá *"la
-versión más simple que funcione, sin agregar nada que no pedí"*. Es
-exactamente la misma idea que ya está en "Ahorrar tokens" más arriba.
+**También existe para OpenCode** (no es exclusivo de Claude Code) — pero lo
+dejamos como decisión de cada una, no lo metemos en el repo compartido para
+no imponérselo a nadie. Si lo querés probar, se instala **en tu config
+personal** (no toca el repo ni afecta a las demás):
+
+```bash
+mkdir -p ~/.config/opencode
+```
+Y en `~/.config/opencode/opencode.json` (creálo si no existe):
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@dietrichgebert/ponytail"]
+}
+```
+
+Si no lo instalás, el efecto lo conseguís igual pidiéndolo a mano: *"la
+versión más simple que funcione, sin agregar nada que no pedí"* — es la
+misma idea que ya está en "Ahorrar tokens" más arriba, solo que ponytail lo
+hace automático en cada respuesta.
 
 ## Modelos de NVIDIA se dan de baja rápido
 
