@@ -56,3 +56,13 @@ en [`docs/GUIA-IA-TERMINAL.md`](./docs/GUIA-IA-TERMINAL.md).
 
 Metodología, arquitectura, patrones de diseño y principios aplicados están
 documentados en [`AGENTS.md`](./AGENTS.md).
+
+## Documentación del proyecto
+
+- [`docs/PRODUCT-BACKLOG.md`](./docs/PRODUCT-BACKLOG.md) — las 13 historias de usuario.
+- [`docs/GUIA-SCRUM-MASTER.md`](./docs/GUIA-SCRUM-MASTER.md) — checklist de
+  ceremonias por Sprint, Definition of Done y entregables del TP.
+- [`docs/GUIA-IA-TERMINAL.md`](./docs/GUIA-IA-TERMINAL.md) — cómo usar los
+  agentes de IA (Claude Code / OpenCode) en este proyecto.
+- [`docs/METRICA-CONSUMO-MCP.md`](./docs/METRICA-CONSUMO-MCP.md) — medición
+  de consumo de tokens de las herramientas de IA usadas.
