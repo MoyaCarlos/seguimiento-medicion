@@ -67,8 +67,14 @@ specify init --here --integration claude    # o: opencode
 ### `/speckit-taskstoissues` necesita tu propio GitHub token
 
 Este skill (sube las tareas de `/speckit.tasks` como Issues) usa el GitHub
-MCP server, ya configurado en `.mcp.json` (compartido en el repo, sin ningún
-token adentro). Para que te funcione en tu máquina:
+MCP server. **Ojo:** Claude Code y OpenCode leen configuraciones distintas
+para esto — no es el mismo archivo. Ambas ya están commiteadas en el repo,
+sin ningún token adentro:
+
+- Claude Code lee `.mcp.json`.
+- OpenCode lee el bloque `"mcp"` dentro de `opencode.json`.
+
+Para que te funcione en tu máquina (mismos pasos 1 y 2 sin importar la herramienta):
 
 1. Creá un **Personal Access Token fine-grained** en
    https://github.com/settings/personal-access-tokens/new — Resource owner:
@@ -83,8 +89,12 @@ token adentro). Para que te funcione en tu máquina:
    (o `~/.bashrc` si usás bash en vez de zsh).
 3. Abrí una **terminal nueva** (los procesos ya corriendo no ven variables
    agregadas después) y arrancá tu agente ahí — recién ahí el MCP conecta.
-4. Verificar sin exponer el token: `claude mcp list` tiene que mostrar
-   `github ... ✔ Connected` (puede tardar unos segundos en la primera conexión).
+4. **Verificar sin exponer el token**, según tu herramienta:
+   - Claude Code: `claude mcp list` → tiene que mostrar `github ... ✔ Connected`.
+   - OpenCode: `opencode mcp list` (o `/mcps` dentro de una sesión ya
+     abierta) → mismo chequeo. Si no conecta, `opencode mcp debug github`
+     da más detalle sin mostrar el token.
+   Puede tardar unos segundos en la primera conexión.
 
 ## Qué instalar en tu agente (y qué NO)
 
@@ -133,9 +143,10 @@ descartó el resto de ambos catálogos por redundancia).
    agente diga "ya están en verde" — `go test ./...` (o el comando de Godog)
    con tus propios ojos.
 
-5. **Nunca pegues API keys en el chat ni las commitees.** En OpenCode se
-   conectan con `/connect` (ver más abajo); en Claude Code (MCP de GitHub) van
-   como variable de entorno referenciada con `{env:VAR}` en `.mcp.json`. En
+5. **Nunca pegues API keys en el chat ni las commitees.** Para DeepSeek/NVIDIA
+   en OpenCode se conectan con `/connect` (ver más abajo); para el MCP de
+   GitHub van como variable de entorno referenciada con `{env:VAR}` — en
+   `.mcp.json` (Claude Code) o en `opencode.json` (OpenCode). En
    ningún caso el valor real de una key debería aparecer en un archivo
    versionado del repo.
 
@@ -242,23 +253,11 @@ del proveedor en `/connect` y en `-m nvidia/<modelo>`.
 
 ## Ponytail (opcional, cada una decide)
 
-Si ven mencionado "ponytail": es un plugin que Carlos usa en Claude Code
-(activado en `.claude/settings.json`, que está en `.gitignore` — no se
-comparte por el repo). Lo que hace: en cada respuesta, empuja al agente a
-dar siempre **la solución más simple que funcione** primero — reusar lo que
-ya existe, no crear abstracciones que nadie pidió, no meter código de más
-"por las dudas". Es básicamente forzar KISS/YAGNI de `AGENTS.md` de forma
-automática en vez de tener que pedirlo cada vez.
+Si ven mencionado "ponytail": es un plugin que Carlos usa en Claude Code (activado en `.claude/settings.json`, que está en `.gitignore` — no se comparte por el repo). Lo que hace: en cada respuesta, empuja al agente a dar siempre **la solución más simple que funcione** primero — reusar lo que ya existe, no crear abstracciones que nadie pidió, no meter código de más "por las dudas". Es básicamente forzar KISS/YAGNI de `AGENTS.md` de forma automática en vez de tener que pedirlo cada vez.
 
-**También existe para OpenCode** (no es exclusivo de Claude Code) — pero lo
-dejamos como decisión de cada una, no lo metemos en el repo compartido para
-no imponérselo a nadie. Si lo querés probar, se instala **en tu config
-personal** (no toca el repo ni afecta a las demás):
+**También existe para OpenCode** (no es exclusivo de Claude Code) — pero lo dejamos como decisión de cada una, no lo metemos en el repo compartido para no imponérselo a nadie. Si lo querés probar, se instala **en tu config personal** (no toca el repo ni afecta a las demás):
 
-Si no lo instalás, el efecto lo conseguís igual pidiéndolo a mano: *"la
-versión más simple que funcione, sin agregar nada que no pedí"* — es la
-misma idea que ya está en "Ahorrar tokens" más arriba, solo que ponytail lo
-hace automático en cada respuesta.
+Si no lo instalás, el efecto lo conseguís igual pidiéndolo a mano: *"la versión más simple que funcione, sin agregar nada que no pedí"* — es la misma idea que ya está en "Ahorrar tokens" más arriba, solo que ponytail lo hace automático en cada respuesta.
 
 ## Modelos de NVIDIA se dan de baja rápido
 
