@@ -6,3 +6,18 @@
 # Variables de entorno con API keys (DeepSeek, NVIDIA, etc.)
 .env
 .env.local
+
+# Go
+*.exe
+*.exe~
+*.test
+*.out
+vendor/
+
+# Base SQLite local
+*.db
+*.db-journal
+
+# SO
+.DS_Store
+Thumbs.db
