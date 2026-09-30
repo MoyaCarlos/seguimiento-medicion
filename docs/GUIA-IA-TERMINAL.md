@@ -64,17 +64,23 @@ specify init --here --integration claude    # o: opencode
 - **`/speckit.taskstoissues`** — sube las tareas de `/speckit.tasks` como
   Issues de GitHub (ver la sección de abajo, necesita tu propio token).
 
-### `/speckit-taskstoissues` necesita tu propio GitHub token
+### `/speckit-taskstoissues` — esto es tarea del Scrum Master, no de todas
 
 Este skill (sube las tareas de `/speckit.tasks` como Issues) usa el GitHub
-MCP server. **Ojo:** Claude Code y OpenCode leen configuraciones distintas
-para esto — no es el mismo archivo. Ambas ya están commiteadas en el repo,
-sin ningún token adentro:
+MCP server. **No hace falta que cada una lo configure** — es Carlos quien
+administra el tablero y sube las issues, el resto del flujo de Spec Kit
+(`specify`, `clarify`, `plan`, `tasks`, `implement`) funciona perfecto sin
+ningún token de GitHub. Si en algún momento querés tu propio acceso igual,
+los pasos son estos (quedan documentados por si hace falta):
+
+**Ojo:** Claude Code y OpenCode leen configuraciones distintas para esto —
+no es el mismo archivo. Ambas ya están commiteadas en el repo, sin ningún
+token adentro:
 
 - Claude Code lee `.mcp.json`.
 - OpenCode lee el bloque `"mcp"` dentro de `opencode.json`.
 
-Para que te funcione en tu máquina (mismos pasos 1 y 2 sin importar la herramienta):
+Pasos (mismos 1 y 2 sin importar la herramienta):
 
 1. Creá un **Personal Access Token fine-grained** en
    https://github.com/settings/personal-access-tokens/new — Resource owner:
