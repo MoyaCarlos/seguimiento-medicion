@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Creación de Historias (HU-01)
+  version: 1.0.0
+  description: >-
+    Contrato del endpoint de creación de historias de usuario del Product
+    Backlog. Cubre únicamente HU-01: no incluye edición, borrado ni listado
+    (GET /backlog queda fuera de alcance; el orden de creación se preserva vía
+    identificador incremental).
+paths:
+  /backlog:
+    post:
+      summary: Crear una historia de usuario en el Product Backlog
+      operationId: crearHistoriaBacklog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearHistoriaRequest'
+            examples:
+              valida:
+                value:
+                  proyecto_id: 1
+                  titulo: Como usuario quiero iniciar sesión
+                  descripcion: Autenticación con email y contraseña
+                  prioridad: M
+                  valor_negocio: 13
+              valorNegocioOmitido:
+                value:
+                  proyecto_id: 1
+                  titulo: Como usuario quiero cerrar sesión
+                  descripcion: Cerrar la sesión activa
+                  prioridad: S
+      responses:
+        '201':
+          description: Historia de usuario creada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoriaCreada'
+              examples:
+                creada:
+                  value:
+                    id: 1
+                    proyecto_id: 1
+                    titulo: Como usuario quiero iniciar sesión
+                    descripcion: Autenticación con email y contraseña
+                    prioridad: M
+                    estado: Nueva
+                    valor_negocio: 13
+                    estimacion_sp: null
+        '400':
+          description: >-
+            Formulario inválido (campo obligatorio faltante, longitud excedida,
+            prioridad fuera de MoSCoW, valor de negocio fuera de Fibonacci) o
+            JSON malformado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+              examples:
+                tituloEnBlanco:
+                  value:
+                    campo: titulo
+                    mensaje: el título es obligatorio
+                jsonInvalido:
+                  value:
+                    campo: ''
+                    mensaje: JSON inválido
+        '500':
+          description: Error interno (fallo de persistencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+components:
+  schemas:
+    CrearHistoriaRequest:
+      type: object
+      required:
+        - proyecto_id
+        - titulo
+        - descripcion
+        - prioridad
+      properties:
+        proyecto_id:
+          type: integer
+          format: int64
+          minimum: 1
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 200
+        descripcion:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        prioridad:
+          type: string
+          enum: [M, S, C, W]
+          description: Escala MoSCoW (Must, Should, Could, Won't).
+        valor_negocio:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 5, 8, 13, 21]
+          description: Valor de negocio opcional (escala Fibonacci).
+    HistoriaCreada:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        proyecto_id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        prioridad:
+          type: string
+          enum: [M, S, C, W]
+        estado:
+          type: string
+          enum: [Nueva]
+        valor_negocio:
+          type: integer
+          nullable: true
+        estimacion_sp:
+          type: integer
+          nullable: true
+          description: Siempre null al crear; se completa vía Planning Poker (HU-02).
+    ErrorValidacion:
+      type: object
+      properties:
+        campo:
+          type: string
+          description: Campo que originó el error (vacío si no aplica a un campo).
+        mensaje:
+          type: string
+    ErrorInterno:
+      type: object
+      properties:
+        mensaje:
+          type: string
