@@ -7,7 +7,7 @@
 >   miden cosas distintas e independientes (como en WSJF): Valor de Negocio es el
 >   impacto/beneficio relativo para el proyecto; Estimación es el esfuerzo/complejidad
 >   relativa (Story Points). No están relacionadas entre sí ni deben coincidir.
-> - **Estado** inicial de toda historia recién creada: `Nuevo`.
+> - **Estado** inicial de toda historia recién creada: `Nueva`.
 
 ## ***Prioridad 1: Cimientos del Sistema (Dependencia Crítica)***
 
@@ -55,7 +55,7 @@ Como Product Builder quiero crear historias de usuario con prioridad, estado y e
 * Escenario 1: Creación exitosa.
 Dado que me encuentro logueado en el panel del Product Backlog,
 Cuando ingreso los datos obligatorios (título, descripción, prioridad) y presiono "Guardar",
-Entonces la historia debe aparecer al final de la lista con estado "Nuevo" y guardarse en la base de datos SQLite.
+Entonces la historia debe quedar registrada de forma persistente con estado "Nueva" (el listado se cubre en el incremento de frontend).
 * Escenario 2: Faltan campos.
 Dado que intento crear una historia,
 Cuando dejo el campo "Título" en blanco y presiono "Guardar",
@@ -65,7 +65,7 @@ Entonces el sistema debe mostrar una advertencia y no debe registrar la HU.
 M (Must have) - Esencial para el MVP. 
 
 ### Estado
-Nuevo
+Nueva
 
 ### Valor de Negocio
 21 (Fibonacci) 
@@ -90,7 +90,7 @@ Entonces el sistema debe mostrar el valor elegido por cada uno y calcular el pro
 ### Prioridad
 S (Should have) 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci) 
 ### Estimación
@@ -113,7 +113,7 @@ Entonces el sistema debe devolver todos los valores en cero (o "sin datos") en v
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 7).
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 21 (Fibonacci)
 ### Estimación
@@ -139,7 +139,7 @@ Entonces el sistema vincula al usuario al proyecto, habilitando sus permisos cor
 ### Prioridad
 M (Must have) - Requisito fundamental para que el sistema funcione. 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 21 (Fibonacci) 
 ### Estimación
@@ -166,7 +166,7 @@ Entonces el sistema cambia su estado a "Finalizado" y mueve automáticamente tod
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -195,7 +195,7 @@ Entonces el sistema me muestra un mensaje de error indicando que solo se pueden 
 ### Prioridad
 M (Must have) - Core del flujo de trabajo de Scrum. 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci) 
 
@@ -224,7 +224,7 @@ Entonces el sistema bloquea el guardado y muestra un error de validación en la 
 ### Prioridad
 M (Must have) - Fundamental para que luego se puedan calcular las métricas de desviación de esfuerzo. 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci) 
 
@@ -252,7 +252,7 @@ Entonces el sistema registra internamente el Sprint de resolución para que post
 ### Prioridad
 S (Should have) - Es muy importante para las métricas de calidad, pero el proyecto podría arrancar los primeros Sprints funcionales sin este módulo. 
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
@@ -275,7 +275,7 @@ Entonces el sistema debe mostrar un estado vacío informativo, no un gráfico ro
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 8).
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación
@@ -298,7 +298,7 @@ Entonces el sistema debe informar el error al usuario en vez de descargar un arc
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 9).
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación
@@ -321,7 +321,7 @@ Entonces el sistema rechaza el cambio y muestra un mensaje indicando que primero
 ### Prioridad
 M (Must have) - Sin esto no hay datos reales para ninguna métrica.
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación
@@ -344,7 +344,7 @@ Entonces el sistema muestra el detalle completo de ese Sprint (historias, esfuer
 ### Prioridad
 S (Should have) - Requisito explícito del enunciado (punto 3), baja complejidad técnica.
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
@@ -367,7 +367,7 @@ Entonces el sistema muestra si está "Planificado", "En curso" o "Finalizado" se
 ### Prioridad
 S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
 ### Estado
-Nuevo
+Nueva
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
