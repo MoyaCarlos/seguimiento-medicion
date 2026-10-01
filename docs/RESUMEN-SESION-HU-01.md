@@ -12,6 +12,46 @@ Este resumen documenta lo realizado **antes** de pasar a la implementación (`/s
    `specs/001-hu-01-crear-historias-usuario/spec.md`, con 2 historias de usuario
    (US1 creación P1, US2 valor de negocio P2), requisitos funcionales (FR-001..FR-014),
    criterios de éxito medibles, casos borde y supuestos.
+
+Modo de uso:
+```
+/speckit.specify
+
+Historia HU-N: Nombre de la historia
+
+descripcion de la historia
+
+Criterios de aceptación (BDD):
+
+
+Prioridad: . Story Points:.
+
+```
+
+EJmeplo: (Se copian del archivo PRODUCT-BACKLOG.md, esta en la carpeta docs)
+
+```
+/speckit.specify
+
+Historia HU-01: Creación de Historias de Usuario.
+
+Como Product Builder quiero crear historias de usuario con prioridad, estado
+y estimación para poder alimentar y organizar el Product Backlog del proyecto.
+
+Criterios de aceptación (BDD):
+Escenario 1: Creación exitosa. Dado que me encuentro logueado en el panel
+del Product Backlog, Cuando ingreso los datos obligatorios (título,
+descripción, prioridad) y presiono "Guardar", Entonces la historia debe
+aparecer al final de la lista con estado "Nuevo" y guardarse en la base de
+datos SQLite.
+Escenario 2: Faltan campos. Dado que intento crear una historia, Cuando
+dejo el campo "Título" en blanco y presiono "Guardar", Entonces el sistema
+debe mostrar una advertencia y no debe registrar la HU.
+
+Prioridad: Must have. Story Points: 5.
+
+```
+
 2. **Clarificación** (`/speckit.clarify`): 5 preguntas resueltas con el equipo
    (estimación, valor de negocio, roles, longitudes, escala Fibonacci).
 3. **Plan** (`/speckit.plan`): diseño técnico hexagonal en
