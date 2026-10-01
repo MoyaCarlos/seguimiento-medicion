@@ -46,8 +46,11 @@ Una historia se considera terminada cuando:
   con `specify init --here --integration claude` (o `--integration opencode`).
   Genera las specs versionadas en `specs/<feature>/` — reemplaza lo que se había
   pensado como `/docs/specs`.
-- Flujo por historia: `/speckit.constitution` (una vez) → `/speckit.specify` →
-  `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`.
+- Flujo por historia: `/speckit.constitution` (una vez, ya ratificada) →
+  `/speckit.specify` → `/speckit.clarify` → `/speckit.plan` → `/speckit.tasks` →
+  `/speckit.analyze` → escenario BDD en `/features` → `/speckit.implement`.
+  `/speckit.analyze` chequea consistencia entre spec/plan/tasks **antes** de
+  escribir código — valió la pena en HU-01, se volvió paso estándar, no opcional.
   En Claude Code los comandos usan guión (`/speckit-specify`); en OpenCode, punto
   (`/speckit.specify`) — mismo comando, distinta sintaxis según la herramienta.
 - Cada spec debe cubrir como mínimo: objetivo, entradas, salidas esperadas, reglas

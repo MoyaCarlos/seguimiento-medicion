@@ -62,7 +62,7 @@ Prioridad: Must have. Story Points: 5.
    resolvieron todas las inconsistencias detectadas (0 CRITICAL al cierre).
 6. **Escenario BDD**: `features/crear_historia_backlog.feature` con 3 escenarios
    (creación exitosa, falta de título, prioridad inválida).
-7. **Empezar a codear**: `/speckit.implement` (una historia a la vez, commits RED/GREEN/REFACTOR). Cuando termine de codear pedir instrucciones para testear y probar endpoints si los hubiera generado. 
+7. **Empezar a codear**: `/speckit.implement` (una historia a la vez, commits RED/GREEN/REFACTOR). Cuando termine de codear pedir instrucciones para testear y probar endpoints si los hubiera generado. Por ultimo pedir que se generen los commits necesarios y hacer push manual.
 
 
 ## Decisiones acordadas
@@ -98,5 +98,7 @@ Arquitectura hexagonal liviana:
 
 ## Pendiente
 
-- Implementar con `/speckit.implement` (una historia a la vez, commits RED/GREEN/REFACTOR).
-- Opcional (gobernanza): ratificar la constitución con `/speckit.constitution`.
+- ~~Implementar con `/speckit.implement`~~ — hecho (commits RED/GREEN/REFACTOR, PR #14 mergeado).
+- ~~Ratificar la constitución con `/speckit.constitution`~~ — hecho (v1.0.0, 2026-10-01):
+  formaliza este mismo flujo (incluido `/speckit.analyze`) como regla autoritativa para
+  todas las historias siguientes, no solo esta.

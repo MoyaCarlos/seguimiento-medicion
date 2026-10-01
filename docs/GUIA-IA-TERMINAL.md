@@ -21,7 +21,11 @@ spec como quiera.
 2. `/speckit.clarify` — el agente pregunta lo que esté ambiguo antes de seguir.
 3. `/speckit.plan` — arma el plan técnico usando el stack ya definido en `AGENTS.md`.
 4. `/speckit.tasks` — desglosa el plan en tareas concretas.
-5. `/speckit.implement` — recién ahí se escribe código, **una historia a la
+5. `/speckit.analyze` — chequea que spec/plan/tasks sean consistentes entre sí,
+   **antes** de escribir código. No es opcional: en HU-01 encontró inconsistencias
+   reales que había que resolver antes de seguir.
+6. Escribir/actualizar el escenario BDD correspondiente en `/features`.
+7. `/speckit.implement` — recién ahí se escribe código, **una historia a la
    vez**, con revisión humana del diff (nunca todo el backlog de una).
 
 Las specs generadas quedan versionadas en `specs/<nombre-historia>/` dentro
@@ -55,9 +59,6 @@ specify init --here --integration claude    # o: opencode
 - **`/speckit.checklist`** — genera una checklist de calidad para validar que
   la spec de una historia esté completa/clara, después de `/speckit.plan`.
   Útil si dudás de que la spec quedó bien armada antes de seguir.
-- **`/speckit.analyze`** — chequea que spec, plan y tasks de una misma
-  historia sean consistentes entre sí (no se contradigan), después de
-  `/speckit.tasks` y antes de `/speckit.implement`.
 - **`/speckit.converge`** — compara el código ya escrito contra la spec/plan/
   tasks de una historia y agrega como tareas nuevas lo que falte. Sirve para
   retomar una historia que quedó a medias.
