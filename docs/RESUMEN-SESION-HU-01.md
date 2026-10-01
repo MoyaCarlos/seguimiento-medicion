@@ -54,7 +54,7 @@ Prioridad: Must have. Story Points: 5.
 
 2. **Clarificación** (`/speckit.clarify`): 5 preguntas resueltas con el equipo
    (estimación, valor de negocio, roles, longitudes, escala Fibonacci).
-3. **Plan** (`/speckit.plan`): diseño técnico hexagonal en
+3. **Plan** (`/speckit.plan`): crea los archivos de diseño técnico hexagonal en
    `plan.md`, `research.md`, `data-model.md`, `contracts/openapi.yaml` y `quickstart.md`.
 4. **Tareas** (`/speckit.tasks`): `tasks.md` con 30 tareas organizadas por historia,
    con TDD (RED→GREEN→REFACTOR) y BDD exigidos por `AGENTS.md`.
@@ -62,6 +62,8 @@ Prioridad: Must have. Story Points: 5.
    resolvieron todas las inconsistencias detectadas (0 CRITICAL al cierre).
 6. **Escenario BDD**: `features/crear_historia_backlog.feature` con 3 escenarios
    (creación exitosa, falta de título, prioridad inválida).
+7. **Empezar a codear**: `/speckit.implement` (una historia a la vez, commits RED/GREEN/REFACTOR). Cuando termine de codear pedir instrucciones para testear y probar endpoints si los hubiera generado. 
+
 
 ## Decisiones acordadas
 
