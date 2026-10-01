@@ -65,6 +65,23 @@ Una historia se considera terminada cuando:
 ### BDD (Behavior-Driven Development)
 - **Godog** (Gherkin) para automatizar escenarios Given-When-Then.
 - Archivos `.feature` en `/features`, con casos normales, alternativos, límite y de error.
+- No hay comando `/speckit.*` dedicado a esto — se pide directo al agente, después
+  de `/speckit.tasks`/`/speckit.analyze` y antes de `/speckit.implement`. Prompt de
+  referencia (usado en HU-01, un archivo `.feature` por historia):
+  ```
+  A partir de los Criterios de Aceptación en specs/<historia>/spec.md, generá
+  el archivo features/<nombre_historia>.feature en Gherkin (español):
+
+  - Tag @HU-XX al principio.
+  - Característica con el Como/Quiero/Para copiado de la Descripción del spec.
+  - Antecedentes (Background) si hay una precondición que se repite en todos
+    los escenarios.
+  - Un Escenario por cada Criterio de Aceptación del spec — no inventes casos
+    que no estén ahí.
+  - Revisá explícitamente si aplican estas 4 categorías: caso normal, caso
+    alternativo, caso límite, caso de error. Si alguna no aplica a esta
+    historia, decime por qué en vez de omitirla en silencio.
+  ```
 
 ### TDD (Test-Driven Development)
 - Skill `test-driven-development` (de [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills),

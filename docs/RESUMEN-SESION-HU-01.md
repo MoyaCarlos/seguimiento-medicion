@@ -61,7 +61,23 @@ Prioridad: Must have. Story Points: 5.
 5. **Análisis** (`/speckit.analyze`): dos pasadas de consistencia spec/plan/tasks; se
    resolvieron todas las inconsistencias detectadas (0 CRITICAL al cierre).
 6. **Escenario BDD**: `features/crear_historia_backlog.feature` con 3 escenarios
-   (creación exitosa, falta de título, prioridad inválida).
+   (creación exitosa, falta de título, prioridad inválida). No hay comando de
+   Spec Kit para esto — se le pidió directo al agente con este prompt (ahora
+   también en `AGENTS.md` como referencia para el resto de las historias):
+   ```
+   A partir de los Criterios de Aceptación en specs/<historia>/spec.md, generá
+   el archivo features/<nombre_historia>.feature en Gherkin (español):
+
+   - Tag @HU-XX al principio.
+   - Característica con el Como/Quiero/Para copiado de la Descripción del spec.
+   - Antecedentes (Background) si hay una precondición que se repite en todos
+     los escenarios.
+   - Un Escenario por cada Criterio de Aceptación del spec — no inventes casos
+     que no estén ahí.
+   - Revisá explícitamente si aplican estas 4 categorías: caso normal, caso
+     alternativo, caso límite, caso de error. Si alguna no aplica a esta
+     historia, decime por qué en vez de omitirla en silencio.
+   ```
 7. **Empezar a codear**: `/speckit.implement` (una historia a la vez, commits RED/GREEN/REFACTOR). Cuando termine de codear pedir instrucciones para testear y probar endpoints si los hubiera generado. Por ultimo pedir que se generen los commits necesarios y hacer push manual.
 
 
