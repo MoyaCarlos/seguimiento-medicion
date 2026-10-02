@@ -9,4 +9,7 @@ import "github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 type ProjectRepository interface {
 	Create(p *domain.Project) error
 	GetByID(id string) (*domain.Project, error)
+	Update(p *domain.Project) error
+	AddMember(m *domain.Membership) error
+	ListMembers(projectID string) ([]domain.Member, error)
 }
