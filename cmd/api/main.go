@@ -28,7 +28,10 @@ func main() {
 	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
 
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
-	sprintHandler := apihttp.NewSprintHandler(service.NewIniciarSprint(sprintRepo))
+	sprintHandler := apihttp.NewSprintHandler(
+		service.NewIniciarSprint(sprintRepo),
+		service.NewCerrarSprint(sprintRepo, repo),
+	)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {

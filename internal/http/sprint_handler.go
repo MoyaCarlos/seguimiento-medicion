@@ -14,10 +14,11 @@ import (
 // SprintHandler es el adaptador de entrada para el ciclo de vida de los Sprints.
 type SprintHandler struct {
 	iniciar *service.IniciarSprint
+	cerrar  *service.CerrarSprint
 }
 
-func NewSprintHandler(iniciar *service.IniciarSprint) *SprintHandler {
-	return &SprintHandler{iniciar: iniciar}
+func NewSprintHandler(iniciar *service.IniciarSprint, cerrar *service.CerrarSprint) *SprintHandler {
+	return &SprintHandler{iniciar: iniciar, cerrar: cerrar}
 }
 
 // Iniciar atiende POST /sprints/{id}/iniciar.
@@ -46,6 +47,20 @@ func (h *SprintHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		FechaInicio: inicio,
 		FechaFin:    fin,
 	})
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuestaSprint(sprint))
+}
+
+// Cerrar atiende POST /sprints/{id}/cerrar.
+func (h *SprintHandler) Cerrar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	sprint, err := h.cerrar.Ejecutar(r.Context(), id)
 	if err != nil {
 		escribirError(w, err)
 		return
