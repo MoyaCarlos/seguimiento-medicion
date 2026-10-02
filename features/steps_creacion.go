@@ -185,4 +185,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el sistema muestra una advertencia de validación$`, sc.muestraAdvertenciaDeValidacion)
 	ctx.Step(`^el sistema muestra un error de validación$`, sc.muestraErrorDeValidacion)
 	ctx.Step(`^no registra la historia en el Product Backlog$`, sc.noRegistraHistoria)
+
+	inicializarPasosSprint(ctx, sc)
 }

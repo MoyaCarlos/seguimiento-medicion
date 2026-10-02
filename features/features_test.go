@@ -8,7 +8,7 @@ import (
 
 func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
-		Name:                "HU-01",
+		Name:                "BDD",
 		ScenarioInitializer: InitializeScenario,
 		Options: &godog.Options{
 			Format:   "pretty",
@@ -17,6 +17,6 @@ func TestFeatures(t *testing.T) {
 		},
 	}
 	if suite.Run() != 0 {
-		t.Fatal("fallaron los escenarios BDD de HU-01")
+		t.Fatal("fallaron los escenarios BDD")
 	}
 }
