@@ -12,7 +12,7 @@ func TestFeatures(t *testing.T) {
 		ScenarioInitializer: InitializeScenario,
 		Options: &godog.Options{
 			Format:   "pretty",
-			Paths:    []string{"."},
+			Paths:    []string{"crear_historia_backlog.feature"},
 			TestingT: t,
 		},
 	}
