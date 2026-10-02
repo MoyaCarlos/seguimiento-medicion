@@ -27,11 +27,15 @@ func main() {
 	crearHistoria := service.NewCrearHistoriaBacklog(repo)
 	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
 
+	sprintRepo := repository.NewSQLiteSprintRepository(db)
+	sprintHandler := apihttp.NewSprintHandler(service.NewIniciarSprint(sprintRepo))
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 
 	log.Println("listening on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
