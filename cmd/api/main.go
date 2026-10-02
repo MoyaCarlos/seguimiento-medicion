@@ -39,6 +39,7 @@ func main() {
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
+	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
 	log.Println("listening on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
