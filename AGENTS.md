@@ -101,6 +101,10 @@ Una historia se considera terminada cuando:
   ```
   No forzar un commit de REFACTOR vacío si no hay nada que limpiar. No aplica a
   código trivial (getters, DTOs).
+- `/speckit.tasks` usa la plantilla `.specify/templates/overrides/tasks-template.md`
+  (override del proyecto): genera cada fase RED/GREEN/REFACTOR como una tarea
+  más una **tarea de COMMIT propia**, así `/speckit.implement` commitea por fase
+  en vez de dejar todo junto. No editar la plantilla base de Spec Kit.
 - **Merge a `main` siempre con "Create a merge commit"**, nunca squash — si se
   aplasta el PR en un solo commit se pierde la evidencia del ciclo RED/GREEN/REFACTOR
   en el historial de `main`.
