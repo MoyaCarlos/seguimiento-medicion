@@ -65,7 +65,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Sprint"
         "400":
-          description: Fechas inválidas, Sprint no encontrado, no está Pendiente, o ya existe otro Activo en el proyecto
+          description: Fechas o Goal inválidos, no está Pendiente, o ya existe otro Activo en el proyecto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Sprint no encontrado
           content:
             application/json:
               schema:
@@ -89,7 +95,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Sprint"
         "400":
-          description: Sprint no encontrado o no está Activo
+          description: El Sprint no está Activo, o el id es inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Sprint no encontrado
           content:
             application/json:
               schema:
