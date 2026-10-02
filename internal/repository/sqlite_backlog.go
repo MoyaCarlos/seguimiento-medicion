@@ -42,6 +42,40 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 	return item, nil
 }
 
+// ListarPorSprint devuelve las historias asignadas al Sprint, en orden de creación.
+func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
+	filas, err := r.db.QueryContext(ctx,
+		`SELECT id, proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
+		 FROM backlog_items WHERE sprint_id = ? ORDER BY id`, sprintID)
+	if err != nil {
+		return nil, fmt.Errorf("listar historias del sprint %d: %w", sprintID, err)
+	}
+	defer filas.Close()
+
+	var historias []domain.BacklogItem
+	for filas.Next() {
+		var (
+			h                 domain.BacklogItem
+			prioridad, estado string
+		)
+		if err := filas.Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &prioridad, &estado,
+			&h.ValorNegocio, &h.EstimacionSP, &h.SprintID); err != nil {
+			return nil, fmt.Errorf("leer historia: %w", err)
+		}
+		h.Prioridad, h.Estado = domain.Prioridad(prioridad), domain.Estado(estado)
+		historias = append(historias, h)
+	}
+	return historias, filas.Err()
+}
+
+// QuitarDeSprint devuelve la historia al Product Backlog (sin Sprint asignado).
+func (r *SQLiteBacklogRepository) QuitarDeSprint(ctx context.Context, historiaID int64) error {
+	if _, err := r.db.ExecContext(ctx, "UPDATE backlog_items SET sprint_id = NULL WHERE id = ?", historiaID); err != nil {
+		return fmt.Errorf("quitar historia %d del sprint: %w", historiaID, err)
+	}
+	return nil
+}
+
 func punteroAValorSQL(v *int) any {
 	if v == nil {
 		return nil
