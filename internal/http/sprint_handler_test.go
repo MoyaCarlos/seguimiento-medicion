@@ -16,10 +16,19 @@ import (
 
 const cuerpoIniciarValido = `{"sprint_goal":"Entregar el MVP","fecha_inicio":"2026-10-05","fecha_fin":"2026-10-19"}`
 
+// sinHistorias simula un Sprint sin historias asignadas (el arrastre se
+// prueba en el caso de uso, no acá).
+type sinHistorias struct{}
+
+func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogItem, error) {
+	return nil, nil
+}
+func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
+
 func nuevoSprintHandlerDePrueba(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria) {
 	t.Helper()
 	repo := repository.NewSprintRepositoryEnMemoria()
-	return NewSprintHandler(service.NewIniciarSprint(repo)), repo
+	return NewSprintHandler(service.NewIniciarSprint(repo), service.NewCerrarSprint(repo, sinHistorias{})), repo
 }
 
 func sembrarPendiente(t *testing.T, repo *repository.SprintRepositoryEnMemoria) int64 {
@@ -141,6 +150,63 @@ func TestSprintHandler_Iniciar_PeticionInvalida(t *testing.T) {
 
 			if rec.Code != nethttp.StatusBadRequest {
 				t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+			}
+		})
+	}
+}
+
+func TestSprintHandler_Cerrar_Exitoso(t *testing.T) {
+	handler, repo := nuevoSprintHandlerDePrueba(t)
+	id := strconv.FormatInt(sembrarPendiente(t, repo), 10)
+	handler.Iniciar(httptest.NewRecorder(), peticionSprint(id, "iniciar", cuerpoIniciarValido))
+	rec := httptest.NewRecorder()
+
+	handler.Cerrar(rec, peticionSprint(id, "cerrar", ""))
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp sprintResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Estado != "Finalizado" {
+		t.Errorf("se esperaba estado Finalizado, se obtuvo %q", resp.Estado)
+	}
+}
+
+func TestSprintHandler_Cerrar_NoActivo(t *testing.T) {
+	handler, repo := nuevoSprintHandlerDePrueba(t)
+	id := strconv.FormatInt(sembrarPendiente(t, repo), 10)
+	rec := httptest.NewRecorder()
+
+	handler.Cerrar(rec, peticionSprint(id, "cerrar", ""))
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	if resp := decodificarError(t, rec); resp.Campo != "estado" {
+		t.Errorf("se esperaba campo estado, se obtuvo %q", resp.Campo)
+	}
+}
+
+func TestSprintHandler_Cerrar_NoEncontradoEIdInvalido(t *testing.T) {
+	casos := map[string]struct {
+		id     string
+		codigo int
+	}{
+		"inexistente":    {"999", nethttp.StatusNotFound},
+		"id no numérico": {"abc", nethttp.StatusBadRequest},
+	}
+	for nombre, caso := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler, _ := nuevoSprintHandlerDePrueba(t)
+			rec := httptest.NewRecorder()
+
+			handler.Cerrar(rec, peticionSprint(caso.id, "cerrar", ""))
+
+			if rec.Code != caso.codigo {
+				t.Fatalf("se esperaba %d, se obtuvo %d", caso.codigo, rec.Code)
 			}
 		})
 	}
