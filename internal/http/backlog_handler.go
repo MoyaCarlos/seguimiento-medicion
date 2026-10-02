@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	nethttp "net/http"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -34,12 +33,7 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 		ValorNegocio: req.ValorNegocio,
 	})
 	if err != nil {
-		var verr domain.ValidationError
-		if errors.As(err, &verr) {
-			escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
-			return
-		}
-		escribirJSON(w, nethttp.StatusInternalServerError, errorResponse{Mensaje: "error interno"})
+		escribirError(w, err)
 		return
 	}
 
