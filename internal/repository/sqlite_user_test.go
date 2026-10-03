@@ -34,8 +34,8 @@ func TestSQLiteUserRepository_NoEncuentra(t *testing.T) {
 	repo := NewSQLiteUserRepository(abrirBDDePrueba(t))
 
 	_, err := repo.FindByNormalizedName("inexistente")
-	if !errors.Is(err, ErrNoEncontrado) {
-		t.Fatalf("se esperaba ErrNoEncontrado, se obtuvo %v", err)
+	if !errors.Is(err, domain.ErrNoEncontrado) {
+		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)
 	}
 }
 

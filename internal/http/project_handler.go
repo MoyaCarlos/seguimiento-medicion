@@ -194,7 +194,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
 		return
 	}
-	if errors.Is(err, domain.ErrNoEncontrado) {
+	if errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: "proyecto no encontrado"})
 		return
 	}

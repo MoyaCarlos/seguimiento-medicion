@@ -44,7 +44,7 @@ func (r *ProjectRepositoryEnMemoria) GetByID(id int64) (*domain.Project, error) 
 	defer r.mu.Unlock()
 	p, ok := r.proyectos[id]
 	if !ok {
-		return nil, ErrNoEncontrado
+		return nil, domain.ErrProyectoNoEncontrado
 	}
 	return &p, nil
 }
@@ -53,7 +53,7 @@ func (r *ProjectRepositoryEnMemoria) Update(p *domain.Project) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.proyectos[p.ID]; !ok {
-		return ErrNoEncontrado
+		return domain.ErrProyectoNoEncontrado
 	}
 	r.proyectos[p.ID] = *p
 	return nil

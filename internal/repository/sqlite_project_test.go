@@ -134,7 +134,7 @@ func TestSQLiteProjectRepository_AddMember_FKVioladaNoEsNoEncontrado(t *testing.
 	if err == nil {
 		t.Fatal("se esperaba error por FK")
 	}
-	if errors.Is(err, ErrNoEncontrado) {
+	if errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("una falla de FK no debe mapearse a 'no encontrado': %v", err)
 	}
 }
@@ -183,8 +183,8 @@ func TestSQLiteProjectRepository_UpdateInexistente(t *testing.T) {
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 	p, _ := domain.NewProject("Fantasma", "", nil, nil)
 	p.ID = 999
-	if err := repo.Update(&p); !errors.Is(err, ErrNoEncontrado) {
-		t.Fatalf("se esperaba ErrNoEncontrado, se obtuvo %v", err)
+	if err := repo.Update(&p); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
 }
 

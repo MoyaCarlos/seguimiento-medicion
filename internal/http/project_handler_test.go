@@ -54,14 +54,14 @@ func (s *stubProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	}
 	p, ok := s.proyectos[id]
 	if !ok {
-		return nil, repository.ErrNoEncontrado
+		return nil, domain.ErrProyectoNoEncontrado
 	}
 	return &p, nil
 }
 
 func (s *stubProjectRepository) Update(p *domain.Project) error {
 	if _, ok := s.proyectos[p.ID]; !ok {
-		return repository.ErrNoEncontrado
+		return domain.ErrProyectoNoEncontrado
 	}
 	s.proyectos[p.ID] = *p
 	return nil
@@ -93,7 +93,7 @@ func (s *stubUserRepository) FindByNormalizedName(normalized string) (*domain.Us
 	if u, ok := s.usuarios[normalized]; ok {
 		return &u, nil
 	}
-	return nil, repository.ErrNoEncontrado
+	return nil, domain.ErrNoEncontrado
 }
 
 func (s *stubUserRepository) Create(u *domain.User) error {

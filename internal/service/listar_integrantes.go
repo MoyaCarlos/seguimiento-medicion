@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -19,11 +18,7 @@ func NewListarIntegrantes(proyectos repository.ProjectRepository) *ListarIntegra
 
 // Ejecutar verifica que el proyecto exista y devuelve sus integrantes.
 func (s *ListarIntegrantes) Ejecutar(_ context.Context, proyectoID int64) ([]domain.Member, error) {
-	_, err := s.proyectos.GetByID(proyectoID)
-	if errors.Is(err, repository.ErrNoEncontrado) {
-		return nil, domain.ErrNoEncontrado
-	}
-	if err != nil {
+	if _, err := s.proyectos.GetByID(proyectoID); err != nil {
 		return nil, err
 	}
 	return s.proyectos.ListMembers(proyectoID)

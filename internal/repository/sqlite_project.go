@@ -111,7 +111,7 @@ func (r *SQLiteProjectRepository) Update(p *domain.Project) error {
 		return fmt.Errorf("actualizar proyecto: %w", err)
 	}
 	if afectadas == 0 {
-		return ErrNoEncontrado
+		return domain.ErrProyectoNoEncontrado
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func escanearProyecto(row *sql.Row) (*domain.Project, error) {
 	)
 	if err := row.Scan(&p.ID, &p.Name, &p.Description, &inicio, &fin, &createdAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNoEncontrado
+			return nil, domain.ErrProyectoNoEncontrado
 		}
 		return nil, fmt.Errorf("leer proyecto: %w", err)
 	}

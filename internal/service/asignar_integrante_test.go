@@ -108,8 +108,8 @@ func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
 		ProyectoID: 0, Nombre: "Jimena", Rol: domain.RolProductBuilder,
 	})
-	if !errors.Is(err, domain.ErrNoEncontrado) {
-		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
 	if len(proyectos.miembros) != 0 {
 		t.Error("no se debía persistir ninguna vinculación")

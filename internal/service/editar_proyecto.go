@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -30,9 +29,6 @@ func NewEditarProyecto(proyectos repository.ProjectRepository) *EditarProyecto {
 // Ejecutar carga el proyecto, valida los datos y persiste los cambios.
 func (s *EditarProyecto) Ejecutar(_ context.Context, input EditarProyectoInput) (domain.Project, error) {
 	actual, err := s.proyectos.GetByID(input.ID)
-	if errors.Is(err, repository.ErrNoEncontrado) {
-		return domain.Project{}, domain.ErrNoEncontrado
-	}
 	if err != nil {
 		return domain.Project{}, err
 	}
@@ -43,9 +39,6 @@ func (s *EditarProyecto) Ejecutar(_ context.Context, input EditarProyectoInput) 
 	}
 
 	if err := s.proyectos.Update(&editado); err != nil {
-		if errors.Is(err, repository.ErrNoEncontrado) {
-			return domain.Project{}, domain.ErrNoEncontrado
-		}
 		return domain.Project{}, err
 	}
 	return editado, nil

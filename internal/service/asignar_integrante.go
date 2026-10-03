@@ -33,9 +33,6 @@ func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteI
 	}
 
 	proyecto, err := s.proyectos.GetByID(input.ProyectoID)
-	if errors.Is(err, repository.ErrNoEncontrado) {
-		return domain.Member{}, domain.ErrNoEncontrado
-	}
 	if err != nil {
 		return domain.Member{}, err
 	}
@@ -56,9 +53,6 @@ func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteI
 	if err := s.proyectos.AddMember(&membresia); err != nil {
 		if errors.Is(err, repository.ErrMiembroDuplicado) {
 			return domain.Member{}, domain.ValidationError{Campo: "integrante", Mensaje: "el integrante ya pertenece al proyecto"}
-		}
-		if errors.Is(err, repository.ErrNoEncontrado) {
-			return domain.Member{}, domain.ErrNoEncontrado
 		}
 		return domain.Member{}, err
 	}

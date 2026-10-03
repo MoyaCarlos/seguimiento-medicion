@@ -45,7 +45,7 @@ func (f *fakeProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	}
 	p, ok := f.proyectos[id]
 	if !ok {
-		return nil, repository.ErrNoEncontrado
+		return nil, domain.ErrProyectoNoEncontrado
 	}
 	return &p, nil
 }
@@ -55,7 +55,7 @@ func (f *fakeProjectRepository) Update(p *domain.Project) error {
 		return f.err
 	}
 	if _, ok := f.proyectos[p.ID]; !ok {
-		return repository.ErrNoEncontrado
+		return domain.ErrProyectoNoEncontrado
 	}
 	f.updates++
 	f.proyectos[p.ID] = *p
@@ -94,7 +94,7 @@ func (f *fakeUserRepository) FindByNormalizedName(normalized string) (*domain.Us
 	}
 	u, ok := f.usuarios[normalized]
 	if !ok {
-		return nil, repository.ErrNoEncontrado
+		return nil, domain.ErrNoEncontrado
 	}
 	return &u, nil
 }

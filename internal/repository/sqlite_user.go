@@ -56,7 +56,7 @@ func (r *SQLiteUserRepository) FindByNormalizedName(normalizedName string) (*dom
 	)
 	if err := row.Scan(&u.ID, &u.Name, &u.NormalizedName, &createdAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNoEncontrado
+			return nil, domain.ErrNoEncontrado
 		}
 		return nil, fmt.Errorf("buscar usuario: %w", err)
 	}

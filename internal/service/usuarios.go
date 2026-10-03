@@ -15,7 +15,7 @@ func resolverUsuario(usuarios repository.UserRepository, candidato domain.User) 
 	if err == nil {
 		return *existente, nil
 	}
-	if !errors.Is(err, repository.ErrNoEncontrado) {
+	if !errors.Is(err, domain.ErrNoEncontrado) {
 		return domain.User{}, err
 	}
 
