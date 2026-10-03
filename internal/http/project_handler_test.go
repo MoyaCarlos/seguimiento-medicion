@@ -41,6 +41,13 @@ func (s *stubProjectRepository) Create(p *domain.Project) error {
 	return nil
 }
 
+func (s *stubProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
+	if err := s.Create(p); err != nil {
+		return err
+	}
+	return s.AddMember(&domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster})
+}
+
 func (s *stubProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	if s.err != nil {
 		return nil, s.err

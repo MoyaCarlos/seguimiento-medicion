@@ -43,15 +43,7 @@ func (s *CrearProyecto) Ejecutar(_ context.Context, input CrearProyectoInput) (d
 		return domain.Project{}, err
 	}
 
-	if err := s.proyectos.Create(&proyecto); err != nil {
-		return domain.Project{}, err
-	}
-
-	membresia, err := domain.NewMembership(proyecto.ID, usuario.ID, domain.RolScrumMaster)
-	if err != nil {
-		return domain.Project{}, err
-	}
-	if err := s.proyectos.AddMember(&membresia); err != nil {
+	if err := s.proyectos.CreateWithScrumMaster(&proyecto, usuario.ID); err != nil {
 		return domain.Project{}, err
 	}
 	return proyecto, nil

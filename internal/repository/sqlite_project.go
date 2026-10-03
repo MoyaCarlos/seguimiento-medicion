@@ -42,6 +42,15 @@ func (r *SQLiteProjectRepository) Create(p *domain.Project) error {
 	return nil
 }
 
+// CreateWithScrumMaster inserta el proyecto y su membresía de Scrum Master.
+func (r *SQLiteProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
+	if err := r.Create(p); err != nil {
+		return err
+	}
+	m := domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster}
+	return r.AddMember(&m)
+}
+
 // GetByID devuelve el proyecto con el identificador indicado.
 func (r *SQLiteProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	row := r.db.QueryRow(

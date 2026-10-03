@@ -10,6 +10,7 @@ import (
 // sacar los que ya están acá sin avisar a quien esté en HU-05.
 type ProjectRepository interface {
 	Create(p *domain.Project) error
+	CreateWithScrumMaster(p *domain.Project, creatorID int64) error
 	GetByID(id int64) (*domain.Project, error)
 	Update(p *domain.Project) error
 	AddMember(m *domain.Membership) error

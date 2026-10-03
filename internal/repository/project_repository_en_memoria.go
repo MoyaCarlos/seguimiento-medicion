@@ -32,6 +32,13 @@ func (r *ProjectRepositoryEnMemoria) Create(p *domain.Project) error {
 	return nil
 }
 
+func (r *ProjectRepositoryEnMemoria) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
+	if err := r.Create(p); err != nil {
+		return err
+	}
+	return r.AddMember(&domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster})
+}
+
 func (r *ProjectRepositoryEnMemoria) GetByID(id int64) (*domain.Project, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
