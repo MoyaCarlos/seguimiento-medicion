@@ -147,7 +147,7 @@ func (r *SQLiteProjectRepository) ListMembers(projectID int64) ([]domain.Member,
 		 FROM project_members pm
 		 JOIN users u ON u.id = pm.user_id
 		 WHERE pm.project_id = ?
-		 ORDER BY pm.created_at, u.name`,
+		 ORDER BY pm.rowid`,
 		projectID,
 	)
 	if err != nil {
