@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -35,6 +36,11 @@ func (s *CrearProyecto) Ejecutar(_ context.Context, input CrearProyectoInput) (d
 	}
 	creador, err := domain.NewUser(input.Creador)
 	if err != nil {
+		var verr domain.ValidationError
+		if errors.As(err, &verr) && verr.Campo == "nombre" {
+			verr.Campo = "creador"
+			return domain.Project{}, verr
+		}
 		return domain.Project{}, err
 	}
 
