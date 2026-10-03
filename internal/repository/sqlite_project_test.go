@@ -74,6 +74,24 @@ func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_CreateWithScrumMaster_Rollback(t *testing.T) {
+	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+
+	p, _ := domain.NewProject("Proyecto", "", nil, nil)
+	// creadorID inexistente: la FK de project_members falla en la segunda escritura.
+	if err := repo.CreateWithScrumMaster(&p, 999999); err == nil {
+		t.Fatal("se esperaba error por FK del integrante inexistente")
+	}
+
+	var total int
+	if err := repo.db.QueryRow("SELECT COUNT(*) FROM projects").Scan(&total); err != nil {
+		t.Fatal(err)
+	}
+	if total != 0 {
+		t.Fatalf("se esperaban 0 proyectos (rollback de la transacción), se encontraron %d", total)
+	}
+}
+
 func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 

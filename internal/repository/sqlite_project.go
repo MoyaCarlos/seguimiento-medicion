@@ -42,13 +42,47 @@ func (r *SQLiteProjectRepository) Create(p *domain.Project) error {
 	return nil
 }
 
-// CreateWithScrumMaster inserta el proyecto y su membresía de Scrum Master.
+// CreateWithScrumMaster inserta el proyecto y su membresía de Scrum Master en
+// una sola transacción, de modo que si la segunda escritura falla no queda un
+// proyecto sin Scrum Master.
 func (r *SQLiteProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
-	if err := r.Create(p); err != nil {
-		return err
+	if p.CreatedAt.IsZero() {
+		p.CreatedAt = time.Now().UTC()
 	}
-	m := domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster}
-	return r.AddMember(&m)
+
+	tx, err := r.db.Begin()
+	if err != nil {
+		return fmt.Errorf("iniciar transacción: %w", err)
+	}
+	defer tx.Rollback()
+
+	res, err := tx.Exec(
+		`INSERT INTO projects (name, description, start_date, end_date, created_at)
+		 VALUES (?, ?, ?, ?, ?)`,
+		p.Name, p.Description,
+		tiempoOpcionalAValor(p.StartDate), tiempoOpcionalAValor(p.EndDate),
+		p.CreatedAt.Format(time.RFC3339),
+	)
+	if err != nil {
+		return fmt.Errorf("crear proyecto: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obtener id del proyecto: %w", err)
+	}
+	p.ID = id
+
+	if _, err := tx.Exec(
+		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
+		id, creatorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
+	); err != nil {
+		return fmt.Errorf("vincular scrum master: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("confirmar transacción: %w", err)
+	}
+	return nil
 }
 
 // GetByID devuelve el proyecto con el identificador indicado.
