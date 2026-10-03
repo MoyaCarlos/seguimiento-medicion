@@ -21,19 +21,12 @@ func NewSQLiteUserRepository(db *sql.DB) *SQLiteUserRepository {
 
 // Create persiste el integrante, asignando ID y CreatedAt si vienen vacíos.
 func (r *SQLiteUserRepository) Create(u *domain.User) error {
-	if u.ID == "" {
-		id, err := nuevoID()
-		if err != nil {
-			return err
-		}
-		u.ID = id
-	}
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now().UTC()
 	}
-	_, err := r.db.Exec(
-		`INSERT INTO users (id, name, normalized_name, created_at) VALUES (?, ?, ?, ?)`,
-		u.ID, u.Name, u.NormalizedName, u.CreatedAt.Format(time.RFC3339),
+	res, err := r.db.Exec(
+		`INSERT INTO users (name, normalized_name, created_at) VALUES (?, ?, ?)`,
+		u.Name, u.NormalizedName, u.CreatedAt.Format(time.RFC3339),
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
@@ -41,6 +34,11 @@ func (r *SQLiteUserRepository) Create(u *domain.User) error {
 		}
 		return fmt.Errorf("crear usuario: %w", err)
 	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obtener id del usuario: %w", err)
+	}
+	u.ID = id
 	return nil
 }
 

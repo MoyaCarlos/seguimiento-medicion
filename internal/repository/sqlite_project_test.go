@@ -34,7 +34,7 @@ func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
 	if err := repo.Create(&p); err != nil {
 		t.Fatalf("no se esperaba error al crear: %v", err)
 	}
-	if p.ID == "" {
+	if p.ID == 0 {
 		t.Fatal("se esperaba un ID asignado")
 	}
 
@@ -96,7 +96,7 @@ func TestSQLiteProjectRepository_Update(t *testing.T) {
 func TestSQLiteProjectRepository_UpdateInexistente(t *testing.T) {
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 	p, _ := domain.NewProject("Fantasma", "", nil, nil)
-	p.ID = "no-existe"
+	p.ID = 999
 	if err := repo.Update(&p); !errors.Is(err, ErrNoEncontrado) {
 		t.Fatalf("se esperaba ErrNoEncontrado, se obtuvo %v", err)
 	}

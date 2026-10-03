@@ -17,7 +17,7 @@ func TestSQLiteUserRepository_CrearYBuscar(t *testing.T) {
 	if err := repo.Create(&u); err != nil {
 		t.Fatalf("no se esperaba error al crear: %v", err)
 	}
-	if u.ID == "" {
+	if u.ID == 0 {
 		t.Fatal("se esperaba un ID asignado")
 	}
 

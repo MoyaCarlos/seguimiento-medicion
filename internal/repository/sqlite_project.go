@@ -21,31 +21,29 @@ func NewSQLiteProjectRepository(db *sql.DB) *SQLiteProjectRepository {
 
 // Create persiste el proyecto, asignando ID y CreatedAt si vienen vacíos.
 func (r *SQLiteProjectRepository) Create(p *domain.Project) error {
-	if p.ID == "" {
-		id, err := nuevoID()
-		if err != nil {
-			return err
-		}
-		p.ID = id
-	}
 	if p.CreatedAt.IsZero() {
 		p.CreatedAt = time.Now().UTC()
 	}
-	_, err := r.db.Exec(
-		`INSERT INTO projects (id, name, description, start_date, end_date, created_at)
-		 VALUES (?, ?, ?, ?, ?, ?)`,
-		p.ID, p.Name, p.Description,
+	res, err := r.db.Exec(
+		`INSERT INTO projects (name, description, start_date, end_date, created_at)
+		 VALUES (?, ?, ?, ?, ?)`,
+		p.Name, p.Description,
 		tiempoOpcionalAValor(p.StartDate), tiempoOpcionalAValor(p.EndDate),
 		p.CreatedAt.Format(time.RFC3339),
 	)
 	if err != nil {
 		return fmt.Errorf("crear proyecto: %w", err)
 	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("obtener id del proyecto: %w", err)
+	}
+	p.ID = id
 	return nil
 }
 
 // GetByID devuelve el proyecto con el identificador indicado.
-func (r *SQLiteProjectRepository) GetByID(id string) (*domain.Project, error) {
+func (r *SQLiteProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	row := r.db.QueryRow(
 		`SELECT id, name, description, start_date, end_date, created_at FROM projects WHERE id = ?`,
 		id,
@@ -97,7 +95,7 @@ func (r *SQLiteProjectRepository) AddMember(m *domain.Membership) error {
 }
 
 // ListMembers devuelve los integrantes del proyecto con su nombre y rol.
-func (r *SQLiteProjectRepository) ListMembers(projectID string) ([]domain.Member, error) {
+func (r *SQLiteProjectRepository) ListMembers(projectID int64) ([]domain.Member, error) {
 	filas, err := r.db.Query(
 		`SELECT pm.user_id, pm.project_id, u.name, pm.role, pm.created_at
 		 FROM project_members pm

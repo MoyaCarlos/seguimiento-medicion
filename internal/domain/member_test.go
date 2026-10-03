@@ -59,11 +59,11 @@ func TestNewUser_NombreDemasiadoLargo(t *testing.T) {
 }
 
 func TestNewMembership_Valida(t *testing.T) {
-	m, err := NewMembership("proy-1", "user-1", RolScrumMaster)
+	m, err := NewMembership(1, 2, RolScrumMaster)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if m.ProjectID != "proy-1" || m.UserID != "user-1" || m.Role != RolScrumMaster {
+	if m.ProjectID != 1 || m.UserID != 2 || m.Role != RolScrumMaster {
 		t.Errorf("asignación inesperada: %+v", m)
 	}
 }
@@ -71,14 +71,14 @@ func TestNewMembership_Valida(t *testing.T) {
 func TestNewMembership_CamposObligatorios(t *testing.T) {
 	casos := []struct {
 		nombre     string
-		proyectoID string
-		userID     string
+		proyectoID int64
+		userID     int64
 		rol        Role
 		campo      string
 	}{
-		{"proyecto vacío", "", "user-1", RolScrumMaster, "proyecto_id"},
-		{"integrante vacío", "proy-1", "", RolScrumMaster, "integrante_id"},
-		{"rol inválido", "proy-1", "user-1", Role("Product Owner"), "rol"},
+		{"proyecto vacío", 0, 2, RolScrumMaster, "proyecto_id"},
+		{"integrante vacío", 1, 0, RolScrumMaster, "integrante_id"},
+		{"rol inválido", 1, 2, Role("Product Owner"), "rol"},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

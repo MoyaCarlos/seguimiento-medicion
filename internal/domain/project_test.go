@@ -90,7 +90,7 @@ func TestNewProject_NombresRepetidosPermitidos(t *testing.T) {
 
 func TestConDatosEditados_ConservaIdentidad(t *testing.T) {
 	creado := time.Date(2026, 1, 15, 10, 30, 0, 0, time.UTC)
-	base := Project{ID: "proy-1", Name: "Original", Description: "desc", CreatedAt: creado}
+	base := Project{ID: 1, Name: "Original", Description: "desc", CreatedAt: creado}
 	fin := time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC)
 
 	editado, err := base.ConDatosEditados("  Nuevo  ", "", nil, &fin)
@@ -103,7 +103,7 @@ func TestConDatosEditados_ConservaIdentidad(t *testing.T) {
 	if editado.StartDate != nil || editado.EndDate == nil || !editado.EndDate.Equal(fin) {
 		t.Errorf("fechas inesperadas: inicio=%v fin=%v", editado.StartDate, editado.EndDate)
 	}
-	if editado.ID != "proy-1" || !editado.CreatedAt.Equal(creado) {
+	if editado.ID != 1 || !editado.CreatedAt.Equal(creado) {
 		t.Errorf("no se conservó la identidad: %+v", editado)
 	}
 }

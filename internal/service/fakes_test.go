@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -9,7 +8,7 @@ import (
 )
 
 type fakeProjectRepository struct {
-	proyectos     map[string]domain.Project
+	proyectos     map[int64]domain.Project
 	miembros      []domain.Membership
 	listaMiembros []domain.Member
 	err           error
@@ -23,17 +22,17 @@ func (f *fakeProjectRepository) Create(p *domain.Project) error {
 	}
 	f.creates++
 	if f.proyectos == nil {
-		f.proyectos = map[string]domain.Project{}
+		f.proyectos = map[int64]domain.Project{}
 	}
-	if p.ID == "" {
-		p.ID = fmt.Sprintf("proy-%d", f.creates)
+	if p.ID == 0 {
+		p.ID = int64(f.creates)
 	}
 	p.CreatedAt = time.Now().UTC()
 	f.proyectos[p.ID] = *p
 	return nil
 }
 
-func (f *fakeProjectRepository) GetByID(id string) (*domain.Project, error) {
+func (f *fakeProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -69,7 +68,7 @@ func (f *fakeProjectRepository) AddMember(m *domain.Membership) error {
 	return nil
 }
 
-func (f *fakeProjectRepository) ListMembers(string) ([]domain.Member, error) {
+func (f *fakeProjectRepository) ListMembers(int64) ([]domain.Member, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -104,7 +103,7 @@ func (f *fakeUserRepository) Create(u *domain.User) error {
 		return repository.ErrUsuarioDuplicado
 	}
 	f.creates++
-	u.ID = fmt.Sprintf("user-%d", f.creates)
+	u.ID = int64(f.creates)
 	u.CreatedAt = time.Now().UTC()
 	f.usuarios[u.NormalizedName] = *u
 	return nil

@@ -29,7 +29,7 @@ func TestObtenerProyecto_Ejecutar_Existente(t *testing.T) {
 func TestObtenerProyecto_Ejecutar_Inexistente(t *testing.T) {
 	servicio := NewObtenerProyecto(&fakeProjectRepository{})
 
-	_, err := servicio.Ejecutar(context.Background(), "no-existe")
+	_, err := servicio.Ejecutar(context.Background(), 0)
 	if !errors.Is(err, domain.ErrNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)
 	}

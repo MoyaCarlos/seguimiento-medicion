@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 var errPersistencia = errors.New("fallo de persistencia")
 
 type stubProjectRepository struct {
-	proyectos     map[string]domain.Project
+	proyectos     map[int64]domain.Project
 	miembros      []domain.Membership
 	listaMiembros []domain.Member
 	err           error
@@ -30,17 +31,17 @@ func (s *stubProjectRepository) Create(p *domain.Project) error {
 	}
 	s.creates++
 	if s.proyectos == nil {
-		s.proyectos = map[string]domain.Project{}
+		s.proyectos = map[int64]domain.Project{}
 	}
-	if p.ID == "" {
-		p.ID = "proy-" + itoa(s.creates)
+	if p.ID == 0 {
+		p.ID = int64(s.creates)
 	}
 	p.CreatedAt = time.Now().UTC()
 	s.proyectos[p.ID] = *p
 	return nil
 }
 
-func (s *stubProjectRepository) GetByID(id string) (*domain.Project, error) {
+func (s *stubProjectRepository) GetByID(id int64) (*domain.Project, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -69,7 +70,7 @@ func (s *stubProjectRepository) AddMember(m *domain.Membership) error {
 	return nil
 }
 
-func (s *stubProjectRepository) ListMembers(string) ([]domain.Member, error) {
+func (s *stubProjectRepository) ListMembers(int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -96,24 +97,10 @@ func (s *stubUserRepository) Create(u *domain.User) error {
 		return repository.ErrUsuarioDuplicado
 	}
 	s.creates++
-	u.ID = "user-" + itoa(s.creates)
+	u.ID = int64(s.creates)
 	u.CreatedAt = time.Now().UTC()
 	s.usuarios[u.NormalizedName] = *u
 	return nil
-}
-
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	var buf [20]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
-	}
-	return string(buf[i:])
 }
 
 func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
@@ -128,7 +115,7 @@ func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
 }
 
 // crearProyectoViaHTTP usa el propio handler (y sus repos) para preparar un proyecto.
-func crearProyectoViaHTTP(t *testing.T, handler *ProjectHandler, nombre string) string {
+func crearProyectoViaHTTP(t *testing.T, handler *ProjectHandler, nombre string) int64 {
 	t.Helper()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
@@ -161,7 +148,7 @@ func TestProjectHandler_Crear_Exitosa(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("respuesta JSON inválida: %v", err)
 	}
-	if resp.ID == "" || resp.Nombre != "Software Metrics & Estimation" {
+	if resp.ID == 0 || resp.Nombre != "Software Metrics & Estimation" {
 		t.Errorf("respuesta inesperada: %+v", resp)
 	}
 	if resp.FechaInicio == nil || *resp.FechaInicio != "2026-03-01" {
@@ -239,10 +226,11 @@ func TestProjectHandler_Crear_ErrorPersistencia(t *testing.T) {
 func TestProjectHandler_Obtener_Existente(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/projects/"+id, nil)
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr, nil)
+	req.SetPathValue("id", idStr)
 	handler.Obtener(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -251,7 +239,7 @@ func TestProjectHandler_Obtener_Existente(t *testing.T) {
 	var resp proyectoResponse
 	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 	if resp.ID != id {
-		t.Errorf("se esperaba el proyecto %s, se obtuvo %s", id, resp.ID)
+		t.Errorf("se esperaba el proyecto %d, se obtuvo %d", id, resp.ID)
 	}
 }
 
@@ -270,10 +258,11 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Original")
+	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/"+id, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva"}`))
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva"}`))
+	req.SetPathValue("id", idStr)
 	handler.Editar(rec, req)
 
 	if rec.Code != http.StatusOK {
@@ -289,10 +278,11 @@ func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Original")
+	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/"+id, bytes.NewBufferString(`{"nombre":""}`))
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":""}`))
+	req.SetPathValue("id", idStr)
 	handler.Editar(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
@@ -320,10 +310,11 @@ func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 func TestProjectHandler_AsignarIntegrante_Exitosa(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/projects/"+id+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
+	req.SetPathValue("id", idStr)
 	handler.AsignarIntegrante(rec, req)
 
 	if rec.Code != http.StatusCreated {
@@ -339,10 +330,11 @@ func TestProjectHandler_AsignarIntegrante_Exitosa(t *testing.T) {
 func TestProjectHandler_AsignarIntegrante_RolInvalido(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/projects/"+id+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"Product Owner"}`))
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"Product Owner"}`))
+	req.SetPathValue("id", idStr)
 	handler.AsignarIntegrante(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
@@ -358,15 +350,16 @@ func TestProjectHandler_AsignarIntegrante_RolInvalido(t *testing.T) {
 func TestProjectHandler_AsignarIntegrante_Duplicado(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
 
 	cuerpo := `{"nombre":"Jimena","rol":"product_builder"}`
-	req1 := httptest.NewRequest(http.MethodPost, "/projects/"+id+"/members", bytes.NewBufferString(cuerpo))
-	req1.SetPathValue("id", id)
+	req1 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
+	req1.SetPathValue("id", idStr)
 	handler.AsignarIntegrante(httptest.NewRecorder(), req1)
 
 	rec := httptest.NewRecorder()
-	req2 := httptest.NewRequest(http.MethodPost, "/projects/"+id+"/members", bytes.NewBufferString(cuerpo))
-	req2.SetPathValue("id", id)
+	req2 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
+	req2.SetPathValue("id", idStr)
 	handler.AsignarIntegrante(rec, req2)
 
 	if rec.Code != http.StatusBadRequest {
@@ -394,11 +387,12 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
-	repo.listaMiembros = []domain.Member{{UserID: "u1", ProjectID: id, Name: "Ana", Role: domain.RolScrumMaster}}
+	idStr := strconv.FormatInt(id, 10)
+	repo.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Name: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/projects/"+id+"/members", nil)
-	req.SetPathValue("id", id)
+	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/members", nil)
+	req.SetPathValue("id", idStr)
 	handler.ListarIntegrantes(rec, req)
 
 	if rec.Code != http.StatusOK {

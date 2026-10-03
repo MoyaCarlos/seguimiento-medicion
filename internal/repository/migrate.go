@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS backlog_items (
 
 const esquemaProjects = `
 CREATE TABLE IF NOT EXISTS projects (
-    id          TEXT PRIMARY KEY,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     start_date  TEXT,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS projects (
 
 const esquemaUsers = `
 CREATE TABLE IF NOT EXISTS users (
-    id              TEXT PRIMARY KEY,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL,
     normalized_name TEXT NOT NULL UNIQUE,
     created_at      TEXT NOT NULL
@@ -40,8 +40,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 const esquemaProjectMembers = `
 CREATE TABLE IF NOT EXISTS project_members (
-    project_id TEXT NOT NULL,
-    user_id    TEXT NOT NULL,
+    project_id INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
     role       TEXT NOT NULL,
     created_at TEXT NOT NULL,
     PRIMARY KEY (project_id, user_id),

@@ -42,7 +42,7 @@ func TestEditarProyecto_Exitosa(t *testing.T) {
 
 func TestEditarProyecto_Inexistente(t *testing.T) {
 	servicio := NewEditarProyecto(&fakeProjectRepository{})
-	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{ID: "no-existe", Nombre: "X"})
+	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{ID: 0, Nombre: "X"})
 	if !errors.Is(err, domain.ErrNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)
 	}

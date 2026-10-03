@@ -60,7 +60,7 @@ func (c *proyectoContext) proyectoPersistido() error {
 	if c.err != nil {
 		return c.err
 	}
-	if c.proyecto.ID == "" {
+	if c.proyecto.ID == 0 {
 		return errors.New("no se generó el proyecto")
 	}
 	var total int
@@ -74,7 +74,7 @@ func (c *proyectoContext) proyectoPersistido() error {
 }
 
 func (c *proyectoContext) confirmaProyecto() error {
-	if c.proyecto.ID == "" {
+	if c.proyecto.ID == 0 {
 		return errors.New("no se devolvió el identificador del proyecto")
 	}
 	return nil

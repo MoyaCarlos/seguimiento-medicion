@@ -21,7 +21,7 @@ func TestCrearProyecto_Ejecutar_Exitosa(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if proyecto.ID == "" {
+	if proyecto.ID == 0 {
 		t.Error("se esperaba ID asignado")
 	}
 	if proyectos.creates != 1 {

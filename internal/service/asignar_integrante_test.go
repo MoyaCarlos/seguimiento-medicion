@@ -8,7 +8,7 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
-func proyectoDePrueba(t *testing.T, proyectos *fakeProjectRepository, usuarios *fakeUserRepository) string {
+func proyectoDePrueba(t *testing.T, proyectos *fakeProjectRepository, usuarios *fakeUserRepository) int64 {
 	t.Helper()
 	crear := NewCrearProyecto(proyectos, usuarios)
 	proyecto, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto", Creador: "Ana"})
@@ -106,7 +106,7 @@ func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
 	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
-		ProyectoID: "no-existe", Nombre: "Jimena", Rol: domain.RolProductBuilder,
+		ProyectoID: 0, Nombre: "Jimena", Rol: domain.RolProductBuilder,
 	})
 	if !errors.Is(err, domain.ErrNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)

@@ -11,7 +11,7 @@ import (
 
 // EditarProyectoInput son los datos editables de un proyecto.
 type EditarProyectoInput struct {
-	ID          string
+	ID          int64
 	Nombre      string
 	Descripcion string
 	FechaInicio *time.Time

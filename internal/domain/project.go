@@ -9,7 +9,7 @@ import (
 // Los campos de fechas/estado (HU-13) se agregan sobre esta misma struct,
 // no se cambia el nombre ni se remueven los que ya hay.
 type Project struct {
-	ID          string
+	ID          int64
 	Name        string
 	Description string
 	StartDate   *time.Time

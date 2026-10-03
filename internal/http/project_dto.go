@@ -18,7 +18,7 @@ type crearProyectoRequest struct {
 }
 
 type proyectoResponse struct {
-	ID          string  `json:"id"`
+	ID          int64   `json:"id"`
 	Nombre      string  `json:"nombre"`
 	Descripcion string  `json:"descripcion"`
 	FechaInicio *string `json:"fecha_inicio"`
@@ -39,8 +39,8 @@ type asignarIntegranteRequest struct {
 }
 
 type integranteResponse struct {
-	ID          string `json:"id"`
-	ProyectoID  string `json:"proyecto_id"`
+	ID          int64  `json:"id"`
+	ProyectoID  int64  `json:"proyecto_id"`
 	Nombre      string `json:"nombre"`
 	Rol         string `json:"rol"`
 	VinculadoEn string `json:"vinculado_en"`

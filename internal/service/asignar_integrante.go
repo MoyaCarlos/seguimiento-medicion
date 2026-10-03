@@ -10,7 +10,7 @@ import (
 
 // AsignarIntegranteInput son los datos de entrada para vincular a un integrante.
 type AsignarIntegranteInput struct {
-	ProyectoID string
+	ProyectoID int64
 	Nombre     string
 	Rol        domain.Role
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	nethttp "net/http"
+	"strconv"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -63,7 +64,12 @@ func (h *ProjectHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Obtener atiende GET /projects/{id}.
 func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
-	proyecto, err := h.obtener.Ejecutar(r.Context(), r.PathValue("id"))
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	proyecto, err := h.obtener.Ejecutar(r.Context(), id)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -73,6 +79,12 @@ func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Editar atiende PUT /projects/{id}.
 func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
 	var req editarProyectoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
@@ -91,7 +103,7 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	proyecto, err := h.editar.Ejecutar(r.Context(), service.EditarProyectoInput{
-		ID:          r.PathValue("id"),
+		ID:          id,
 		Nombre:      req.Nombre,
 		Descripcion: req.Descripcion,
 		FechaInicio: inicio,
@@ -106,6 +118,12 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // AsignarIntegrante atiende POST /projects/{id}/members.
 func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
 	var req asignarIntegranteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
@@ -113,7 +131,7 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 	}
 
 	miembro, err := h.asignar.Ejecutar(r.Context(), service.AsignarIntegranteInput{
-		ProyectoID: r.PathValue("id"),
+		ProyectoID: id,
 		Nombre:     req.Nombre,
 		Rol:        domain.Role(req.Rol),
 	})
@@ -126,7 +144,13 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 
 // ListarIntegrantes atiende GET /projects/{id}/members.
 func (h *ProjectHandler) ListarIntegrantes(w nethttp.ResponseWriter, r *nethttp.Request) {
-	miembros, err := h.listar.Ejecutar(r.Context(), r.PathValue("id"))
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	miembros, err := h.listar.Ejecutar(r.Context(), id)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -136,6 +160,14 @@ func (h *ProjectHandler) ListarIntegrantes(w nethttp.ResponseWriter, r *nethttp.
 		respuesta = append(respuesta, aIntegranteResponse(m))
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
+}
+
+func parsearID(valor string) (int64, error) {
+	id, err := strconv.ParseInt(valor, 10, 64)
+	if err != nil || id <= 0 {
+		return 0, domain.ErrNoEncontrado
+	}
+	return id, nil
 }
 
 // escribirError traduce los errores de dominio a respuestas HTTP.

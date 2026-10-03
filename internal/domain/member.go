@@ -21,7 +21,7 @@ func (r Role) Valido() bool {
 // User es un integrante del equipo. Se identifica por su nombre normalizado,
 // de modo que "Ana", "ana" y " Ana " resuelven al mismo usuario.
 type User struct {
-	ID             string
+	ID             int64
 	Name           string
 	NormalizedName string
 	CreatedAt      time.Time
@@ -49,18 +49,18 @@ func NormalizarNombre(name string) string {
 // Membership es la relación Proyecto–Usuario–Rol: un integrante con exactamente
 // un rol dentro de un proyecto.
 type Membership struct {
-	ProjectID string
-	UserID    string
+	ProjectID int64
+	UserID    int64
 	Role      Role
 	CreatedAt time.Time
 }
 
 // NewMembership valida y construye una asignación integrante–proyecto–rol.
-func NewMembership(projectID, userID string, role Role) (Membership, error) {
-	if strings.TrimSpace(projectID) == "" {
+func NewMembership(projectID, userID int64, role Role) (Membership, error) {
+	if projectID <= 0 {
 		return Membership{}, ValidationError{Campo: "proyecto_id", Mensaje: "el proyecto es obligatorio"}
 	}
-	if strings.TrimSpace(userID) == "" {
+	if userID <= 0 {
 		return Membership{}, ValidationError{Campo: "integrante_id", Mensaje: "el integrante es obligatorio"}
 	}
 	if !role.Valido() {
@@ -72,8 +72,8 @@ func NewMembership(projectID, userID string, role Role) (Membership, error) {
 // Member es la vista de lectura de un integrante dentro de un proyecto,
 // combinando el nombre del usuario con su rol.
 type Member struct {
-	UserID    string
-	ProjectID string
+	UserID    int64
+	ProjectID int64
 	Name      string
 	Role      Role
 	CreatedAt time.Time
