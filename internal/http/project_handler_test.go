@@ -255,6 +255,40 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	}
 }
 
+func TestProjectHandler_Obtener_IDNoNumerico(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/projects/abc", nil)
+	req.SetPathValue("id", "abc")
+	handler.Obtener(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Campo != "id" {
+		t.Errorf("se esperaba campo id, se obtuvo %q", resp.Campo)
+	}
+}
+
+func TestProjectHandler_Obtener_IDNoPositivo(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/projects/0", nil)
+	req.SetPathValue("id", "0")
+	handler.Obtener(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Campo != "id" {
+		t.Errorf("se esperaba campo id, se obtuvo %q", resp.Campo)
+	}
+}
+
 func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Original")
