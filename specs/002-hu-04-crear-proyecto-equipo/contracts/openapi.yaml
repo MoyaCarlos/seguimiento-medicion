@@ -69,8 +69,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-        description: Identificador del proyecto (UUID).
+          type: integer
+        description: Identificador del proyecto (entero positivo).
     get:
       summary: Consultar un proyecto existente
       operationId: obtenerProyecto
@@ -143,8 +143,8 @@ paths:
         in: path
         required: true
         schema:
-          type: string
-        description: Identificador del proyecto (UUID).
+          type: integer
+        description: Identificador del proyecto (entero positivo).
     get:
       summary: Listar los integrantes del proyecto con su rol
       operationId: listarIntegrantes
@@ -250,6 +250,9 @@ components:
       type: object
       required:
         - nombre
+        - descripcion
+        - fecha_inicio
+        - fecha_fin
       properties:
         nombre:
           type: string
@@ -262,10 +265,12 @@ components:
           type: string
           format: date
           nullable: true
+          description: Fecha de inicio; `null` explícito la deja sin fecha.
         fecha_fin:
           type: string
           format: date
           nullable: true
+          description: Fecha de fin; `null` explícito la deja sin fecha.
     AsignarIntegranteRequest:
       type: object
       required:
@@ -283,7 +288,7 @@ components:
       type: object
       properties:
         id:
-          type: string
+          type: integer
         nombre:
           type: string
         descripcion:
@@ -303,10 +308,10 @@ components:
       type: object
       properties:
         id:
-          type: string
+          type: integer
           description: Identificador del usuario/integrante.
         proyecto_id:
-          type: string
+          type: integer
         nombre:
           type: string
         rol:

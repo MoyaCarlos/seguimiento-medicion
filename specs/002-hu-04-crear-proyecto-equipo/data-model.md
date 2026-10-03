@@ -10,7 +10,7 @@ actuales y el orden, sin renombrar.
 
 | Campo | Tipo Go | Obligatorio | Descripción |
 |-------|---------|-------------|-------------|
-| `ID` | `string` | — (asignado al persistir) | UUID v4 generado por el repositorio; se mantiene `string` por el contrato con HU-05. |
+| `ID` | `int64` | — (asignado al persistir) | Autoincremental, asignado por el repositorio con `LastInsertId()`. |
 | `Name` | `string` | Sí | No vacío (ni solo espacios), ≤ 100 caracteres (FR-005). Nombre repetido permitido (FR-007). |
 | `Description` | `string` | No | ≤ 2000 caracteres. Puede quedar vacía (FR-001, FR-019). |
 | `StartDate` | `*time.Time` | No | Fecha de inicio; `nil` si no se informa. |
@@ -43,7 +43,7 @@ Comportamiento de inicialización: `Name` y `Description` se normalizan con `Tri
 
 | Campo | Tipo Go | Obligatorio | Descripción |
 |-------|---------|-------------|-------------|
-| `ID` | `string` | — (asignado al persistir) | UUID v4. |
+| `ID` | `int64` | — (asignado al persistir) | Autoincremental, asignado por el repositorio. |
 | `Name` | `string` | Sí | Nombre tal como se ingresó, recortado. No vacío, ≤ 200 caracteres (FR-013). |
 | `NormalizedName` | `string` | Sí (derivado) | `ToLower(TrimSpace(Name))`; clave de unicidad para reutilización (FR-016, R3). |
 | `CreatedAt` | `time.Time` | Sí (automático) | Timestamp de creación. |
@@ -81,11 +81,11 @@ Un rol inválido produce `ValidationError{Campo: "rol", Mensaje: "el rol debe se
 ### Constructor
 
 ```go
-func NewMembership(projectID, userID string, role Role) (Membership, error)
+func NewMembership(projectID, userID int64, role Role) (Membership, error)
 ```
 
-1. `projectID` no vacío → si falla: `ValidationError{Campo: "proyecto_id", Mensaje: "el proyecto es obligatorio"}`.
-2. `userID` no vacío → si falla: `ValidationError{Campo: "integrante_id", Mensaje: "el integrante es obligatorio"}`.
+1. `projectID <= 0` → si falla: `ValidationError{Campo: "proyecto_id", Mensaje: "el proyecto es obligatorio"}`.
+2. `userID <= 0` → si falla: `ValidationError{Campo: "integrante_id", Mensaje: "el integrante es obligatorio"}`.
 3. `role.Valido()` → si falla: el `ValidationError` de `Role`.
 
 ## Tipo de error
@@ -97,7 +97,7 @@ Se reutiliza el `domain.ValidationError{Campo, Mensaje}` existente
 
 ```sql
 CREATE TABLE IF NOT EXISTS projects (
-    id          TEXT PRIMARY KEY,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
     name        TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     start_date  TEXT,              -- RFC3339 o NULL
@@ -106,15 +106,15 @@ CREATE TABLE IF NOT EXISTS projects (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    id              TEXT PRIMARY KEY,
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
     name            TEXT NOT NULL,
     normalized_name TEXT NOT NULL UNIQUE,
     created_at      TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS project_members (
-    project_id TEXT NOT NULL,
-    user_id    TEXT NOT NULL,
+    project_id INTEGER NOT NULL,
+    user_id    INTEGER NOT NULL,
     role       TEXT NOT NULL,
     created_at TEXT NOT NULL,
     PRIMARY KEY (project_id, user_id),

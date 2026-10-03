@@ -1,6 +1,6 @@
 # Feature Specification: Creación de Proyecto y Asignación de Equipo (HU-04)
 
-**Feature Branch**: `HU-04-crear-proyecto-equipo`
+**Feature Branch**: `hu-4-creación-de-proyecto-asignación-de-equipo`
 
 **Created**: 2026-10-01
 
@@ -69,21 +69,24 @@ Como Scrum Master, desde la vista de edición de un proyecto ya creado puedo cor
 
 ### Edge Cases
 
-- ¿Qué ocurre si el nombre del proyecto contiene solo espacios en blanco? Se considera inválido: se muestra la advertencia y no se crea el proyecto.
-- ¿Qué ocurre si el nombre del proyecto supera los 100 caracteres? Se muestra una advertencia y se solicita acortarlo; no se crea el proyecto.
-- ¿Qué ocurre si la descripción del proyecto está vacía? El proyecto se crea igualmente: la descripción es opcional.
-- ¿Qué ocurre si dos proyectos tienen el mismo nombre? Se permiten nombres repetidos (no hay unicidad de nombre de proyecto).
-- ¿Qué ocurre si intento asignar un rol distinto de Scrum Master o Product Builder? El sistema rechaza la selección con un mensaje de validación.
-- ¿Qué ocurre si intento agregar al mismo integrante dos veces al mismo proyecto? El sistema lo rechaza indicando que el integrante ya pertenece al proyecto.
-- ¿Qué ocurre si intento agregar integrantes a un proyecto que no existe? La acción no está disponible: la vista de configuración solo opera sobre un proyecto creado.
-- ¿Qué ocurre si el nombre del integrante supera los 200 caracteres? Se muestra una advertencia y no se realiza la vinculación.
-- ¿Qué ocurre si dos Scrum Masters crean proyectos al mismo tiempo? Ambos proyectos quedan registrados de forma independiente, sin sobrescribirse.
-- ¿Qué ocurre al editar si dejo la descripción vacía? Se permite: la descripción sigue siendo opcional al modificar.
-- ¿Qué ocurre al editar si dejo las fechas sin completar? Se permite: las fechas son opcionales.
-- ¿Qué ocurre al editar si la fecha de fin es anterior a la de inicio? Se muestra una advertencia y no se guardan los cambios.
-- ¿Qué ocurre si edito un proyecto y le pongo un nombre ya usado por otro proyecto? Se permite: no hay unicidad de nombre de proyecto.
-- ¿Qué ocurre si intento editar un proyecto que no existe? La operación no está disponible; solo se puede editar un proyecto existente.
-- ¿Qué ocurre si dos personas editan el mismo proyecto al mismo tiempo? No hay versionado ni historial: prevalece el último guardado que resulte válido.
+Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
+
+- **WHILE** el nombre del proyecto esté vacío o compuesto solo por espacios, **THEN** el sistema **shall** mostrar una advertencia de validación y no crear el proyecto.
+- **IF** el nombre del proyecto supera los 100 caracteres, **THEN** el sistema **shall** mostrar una advertencia y no crear el proyecto.
+- **IF** la descripción del proyecto está vacía, **THEN** el sistema **shall** crear el proyecto igualmente (la descripción es opcional).
+- **IF** dos proyectos tienen el mismo nombre, **THEN** el sistema **shall** permitir nombres repetidos (no hay unicidad de nombre).
+- **IF** se intenta asignar un rol distinto de Scrum Master o Product Builder, **THEN** el sistema **shall** rechazar la selección con un mensaje de validación.
+- **IF** se intenta agregar al mismo integrante dos veces al mismo proyecto, **THEN** el sistema **shall** rechazarlo indicando que el integrante ya pertenece al proyecto.
+- **WHEN** se asigna un integrante a un proyecto inexistente, **THEN** el sistema **shall** responder con "proyecto no encontrado" (el 404 domina sobre cualquier validación de rol).
+- **IF** el nombre del integrante supera los 200 caracteres, **THEN** el sistema **shall** mostrar una advertencia y no realizar la vinculación.
+- **WHEN** dos Scrum Masters crean proyectos al mismo tiempo, **THEN** el sistema **shall** registrar ambos proyectos de forma independiente, sin sobrescribirse.
+- **IF** al editar se deja la descripción vacía, **THEN** el sistema **shall** permitirlo (la descripción sigue siendo opcional).
+- **IF** al editar se dejan las fechas sin completar, **THEN** el sistema **shall** permitirlo (las fechas son opcionales).
+- **IF** al editar la fecha de fin es anterior a la fecha de inicio, **THEN** el sistema **shall** mostrar una advertencia y no guardar los cambios.
+- **IF** se edita un proyecto con un nombre ya usado por otro, **THEN** el sistema **shall** permitirlo (no hay unicidad de nombre).
+- **IF** se intenta editar un proyecto que no existe, **THEN** el sistema **shall** responder con "proyecto no encontrado".
+- **WHEN** dos personas editan el mismo proyecto al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial).
+- **IF** la solicitud de edición (PUT) omite alguna de las claves `nombre`, `descripcion`, `fecha_inicio` o `fecha_fin`, **THEN** el sistema **shall** responder 400 indicando el campo faltante y conservar los valores previos.
 
 ## Requirements *(mandatory)*
 
