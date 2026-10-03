@@ -152,6 +152,135 @@ Backend Go en la raíz: `cmd/`, `internal/`, `features/` (ver `plan.md`). Sin fr
 
 ---
 
+## Phase 7: Remediación del code review
+
+**Input**: `Informe-remediacion-HU-04.md` (revisión externa de calidad).
+
+**Reglas**: un commit por fase (`RED:`/`GREEN:`/`REFACTOR:`) y, tras cada GREEN/REFACTOR,
+`go build ./...`, `go vet ./...`, `gofmt -l .` (vacío) y `go test ./...` en verde. Ningún
+commit de esta fase puede romper `go build ./...`.
+
+**Desvío de proceso justificado (aceptado por el Agile Enabler)**: cambiar las firmas
+`string→int64` no admite un test RED que compile contra el código viejo. Por eso la
+migración de IDs se hace como **commit mecánico por capa** (`REFACTOR: pasar IDs a int64
+en <capa>`) que solo adapta tipos y tests existentes, sin comportamiento nuevo; el
+RED/GREEN real se reserva para lo observable nuevo (ID `> 0` por `LastInsertId`, `400`
+por id no numérico o `<= 0`, IDs numéricos en el JSON).
+
+**Decisiones de diseño (propuestas en el plan, sin objeción del Agile Enabler)**:
+- Método transaccional (B2): `GuardarConScrumMaster(ctx, p domain.Project, creadorID int64) (domain.Project, error)`.
+- Orden de validación (mejora): **404 primero** (proyecto inexistente domina sobre rol inválido), documentado en `spec.md` (casos límite).
+- Usuario huérfano (B2): `resolverUsuario` (find-or-create del creador) queda fuera de la transacción; un usuario sin membresía es inocuo (no viola SC-006/SC-007 y se reutiliza luego).
+
+### 7.1 IDs `int64` (sección 1 del informe)
+
+- [ ] R001 REFACTOR dominio: `Project.ID`, `User.ID`, `Membership.ProjectID`, `Membership.UserID` → `int64`; agregar `ErrProyectoNoEncontrado` en `internal/domain/errors.go`; adaptar `internal/domain/project_test.go` y `member_test.go`. Verde.
+- [ ] R002 COMMIT `REFACTOR: pasar IDs a int64 en dominio`
+- [ ] R003 REFACTOR repositorio: `ProjectRepository` → `Guardar(ctx, Project) (Project, error)`, `ObtenerPorID(ctx, int64) (Project, error)`, `Actualizar`, `AgregarIntegrante`, `ListarIntegrantes`, `GuardarConScrumMaster(ctx, Project, creadorID int64) (Project, error)` (ctx primero); `UserRepository` int64; borrar `internal/repository/id.go` y todo `crypto/rand`; migración con `projects.id`/`users.id` `INTEGER PRIMARY KEY AUTOINCREMENT` y `project_members.project_id`/`user_id` `INTEGER` con FK; adaptar `sqlite_project.go`, `sqlite_user.go` y sus tests (ID por `LastInsertId()`). Verde.
+- [ ] R004 COMMIT `REFACTOR: pasar IDs a int64 en repositorio`
+- [ ] R005 RED repo: test en `internal/repository/sqlite_project_test.go` de que `Guardar` asigna `ID > 0` y `ObtenerPorID(id int64)` relee por ese entero — confirmar FALLA.
+- [ ] R006 COMMIT `RED: test de ID numérico y lectura por ID (falla)`
+- [ ] R007 GREEN repo: implementar `Guardar`/`ObtenerPorID` int64 con `LastInsertId()` — verde.
+- [ ] R008 COMMIT `GREEN: ID numérico asignado por LastInsertId, test en verde`
+- [ ] R009 REFACTOR service: adaptar `CrearProyecto`, `ObtenerProyecto`, `EditarProyecto`, `AsignarIntegrante`, `ListarIntegrantes`, `usuarios.go` y `fakes_test.go` + tests al puerto int64. Verde.
+- [ ] R010 COMMIT `REFACTOR: pasar IDs a int64 en service`
+- [ ] R011 REFACTOR http: `{id}` de ruta como `int64`; DTOs con IDs `int64`; `400 {"campo":"id",...}` si no numérico o `<= 0`; adaptar `internal/http/project_dto.go`, `project_handler.go` y tests. Verde.
+- [ ] R012 COMMIT `REFACTOR: pasar IDs a int64 en http`
+- [ ] R013 RED http: test `GET/PUT/POST /projects/{id}...` con id no numérico y con id `<= 0` → `400 {"campo":"id",...}` — confirmar FALLA.
+- [ ] R014 COMMIT `RED: 400 por id no numérico o <= 0 (falla)`
+- [ ] R015 GREEN http: parsear `{id}` a int64 con 400 — verde.
+- [ ] R016 COMMIT `GREEN: parsear id a int64 con 400, test en verde`
+- [ ] R017 Agregar `NewProjectRepositoryEnMemoria()` en `internal/repository` (archivo no-test, implementa la interfaz completa) para HU-05/HU-13.
+- [ ] R018 COMMIT `Agregar NewProjectRepositoryEnMemoria`
+- [ ] R019 Actualizar `spec.md`, `plan.md`, `data-model.md`, `quickstart.md`, `research.md` y `contracts/openapi.yaml` (IDs `integer`, contrato int64). Borrar `seguimiento.db` local (esquema TEXT→INTEGER).
+- [ ] R020 COMMIT `Actualizar specs y OpenAPI a IDs int64`
+
+### 7.2 B2 — creación transaccional proyecto + Scrum Master
+
+- [ ] R021 RED integración: test en `internal/repository/sqlite_project_test.go` sobre `:memory:` que fuerza fallo en la 2ª escritura (`GuardarConScrumMaster` con `creadorID` inexistente y FK activas) y verifica `SELECT COUNT(*) FROM projects` == 0 — confirmar FALLA.
+- [ ] R022 COMMIT `RED: proyecto + Scrum Master en una sola transacción (falla)`
+- [ ] R023 GREEN: `GuardarConScrumMaster` con `BeginTx`/`Commit`/`Rollback` en `SQLiteProjectRepository`; `CrearProyecto` usa solo ese método (creador resuelto vía `resolverUsuario`, huérfano inocuo justificado). Verde.
+- [ ] R024 COMMIT `GREEN: crear proyecto + Scrum Master transaccional, test en verde`
+
+### 7.3 B1 — runner Godog único (11 escenarios)
+
+- [ ] R025 Unificar runner en `features/features_test.go`: `Paths:["."]`, `Name:"BDD"`, registrando HU-01 y HU-04 (cada una en su `inicializarPasosXxx`); desambiguar el regex colisionado de HU-04 (`^el sistema muestra una advertencia de validación$` → `... del proyecto`) y actualizar `features/creacion_proyecto_equipo.feature` sin salir del spec. `go test ./features/ -v` → **11 escenarios**.
+- [ ] R026 COMMIT `Unificar runner BDD con los pasos de HU-01 y HU-04`
+- [ ] R027 Documentar en `features/README.md` cómo se agrega una historia nueva.
+- [ ] R028 COMMIT `Documentar agregado de historias BDD en features/README.md`
+
+### 7.4 C1 — pasos BDD que verifican lo que dicen
+
+- [ ] R029 Mejorar `features/steps_proyecto.go`: `noRealizaVinculacion` comprueba que no se escribió fila nueva en `project_members` (p.ej. 0 filas con rol `product_builder`); `asignarInvalido` ejercita nombre vacío **y** rol inválido; `editarValido` manda fechas y `persisteCambios` las verifica persistidas. Demostrar que cada `Entonces` falla rompiendo temporalmente una regla (sin commitear).
+- [ ] R030 COMMIT `Reforzar pasos BDD de HU-04 para verificar lo que dicen`
+
+### 7.5 C2 — PUT completo con presencia de claves
+
+- [ ] R031 RED http: `PUT /projects/{id}` con `{"nombre":"X"}` (sin `descripcion`/`fecha_inicio`/`fecha_fin`) sobre proyecto con descripción y fechas → `400` y proyecto intacto — confirmar FALLA.
+- [ ] R032 COMMIT `RED: PUT sin claves obligatorias devuelve 400 (falla)`
+- [ ] R033 GREEN http: DTO de edición con detección de presencia de clave (punteros/`json.RawMessage`); `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin` obligatorios como claves; `null` explícito para limpiar fechas; clave ausente → `400` con el campo. Actualizar `contracts/openapi.yaml`. Verde.
+- [ ] R034 COMMIT `GREEN: PUT completo con presencia de claves, test en verde`
+
+### 7.6 C3 — campo del error del creador
+
+- [ ] R035 RED service: `CrearProyecto` con `creador` vacío → `ValidationError{Campo:"creador"}` (hoy dice `"nombre"`) — confirmar FALLA.
+- [ ] R036 COMMIT `RED: error del creador con campo correcto (falla)`
+- [ ] R037 GREEN service: mapear a `"creador"` solo en el flujo de creación (sin romper `AsignarIntegrante`, que sigue con `"nombre"`). Verde.
+- [ ] R038 COMMIT `GREEN: campo creador en error del creador, test en verde`
+
+### 7.7 C4 — foreign_keys por DSN
+
+- [ ] R039 RED repo: test que abre dos conexiones del pool sobre un archivo en `t.TempDir()` y verifica `PRAGMA foreign_keys` == 1 en ambas — confirmar FALLA.
+- [ ] R040 COMMIT `RED: foreign_keys activas en todas las conexiones (falla)`
+- [ ] R041 GREEN repo: activar por DSN `?_pragma=foreign_keys(1)` en `AbrirSQLite`; mantener las pruebas `:memory:` funcionando (cap de 1 conexión solo para memoria). Verde.
+- [ ] R042 COMMIT `GREEN: foreign_keys por DSN, test en verde`
+
+### 7.8 Mejoras requeridas
+
+- [ ] R043 RED repo: `AddMember` con `user_id` inexistente (FK) → error de integridad, NO `ErrProyectoNoEncontrado` (404) — confirmar FALLA.
+- [ ] R044 COMMIT `RED: falla de FK no se confunde con proyecto no encontrado (falla)`
+- [ ] R045 GREEN repo: reemplazar `strings.Contains` por el código de error de modernc en `sqlite_project.go` y `sqlite_user.go`, distinguiendo UNIQUE / FK / no-encontrado. Verde.
+- [ ] R046 COMMIT `GREEN: errores SQLite por código (FK ≠ 404), test en verde`
+- [ ] R047 REFACTOR: un solo `ErrNoEncontrado` de dominio (eliminar el de `repository` y la traducción repetida en los 4 services). Verde.
+- [ ] R048 COMMIT `REFACTOR: un solo error de dominio para no-encontrado`
+- [ ] R049 REFACTOR: validar el rol una sola vez (eliminar el duplicado entre `AsignarIntegrante` y `NewMembership`). Verde.
+- [ ] R050 COMMIT `REFACTOR: validación de rol en un único lugar`
+- [ ] R051 RED service: proyecto inexistente + rol inválido → `404` (orden: proyecto primero) — confirmar FALLA.
+- [ ] R052 COMMIT `RED: orden de validación 404 antes que 400 (falla)`
+- [ ] R053 GREEN service + spec: aplicar el orden 404→400 y documentarlo como caso límite en `spec.md`. Verde.
+- [ ] R054 COMMIT `GREEN: orden de validación 404 antes que 400, test en verde`
+- [ ] R055 RED repo: `ListMembers` con 3 altas en el mismo segundo devuelve el orden real de alta (no arbitrario) — confirmar FALLA.
+- [ ] R056 COMMIT `RED: ListMembers ordena por orden real de alta (falla)`
+- [ ] R057 GREEN repo: ordenar por el orden real de alta (p.ej. `ORDER BY pm.rowid`). Verde.
+- [ ] R058 COMMIT `GREEN: ListMembers por orden de alta, test en verde`
+
+### 7.9 Renombres a convención español (REFACTOR, tests en verde)
+
+- [ ] R059 REFACTOR dominio: `Name→Nombre`, `Description→Descripcion`, `StartDate→FechaInicio`, `EndDate→FechaFin`, `CreatedAt→CreadoEn`; `User.Name→Nombre`, `NormalizedName→NombreNormalizado`, `CreatedAt→CreadoEn`. Adaptar services/repos/http/tests. Verde.
+- [ ] R060 COMMIT `REFACTOR: campos de dominio a español (Project/User)`
+- [ ] R061 REFACTOR puertos: `Create→Guardar`, `GetByID→ObtenerPorID`, `Update→Actualizar`, `AddMember→AgregarIntegrante`, `ListMembers→ListarIntegrantes`, `FindByNormalizedName→ObtenerPorNombreNormalizado`. Adaptar services/tests. Verde.
+- [ ] R062 COMMIT `REFACTOR: métodos de puerto a español`
+
+### 7.10 Spec en EARS, Branch y /speckit.analyze
+
+- [ ] R063 Reescribir reglas de negocio, casos límite y condiciones de error de `spec.md` en formato EARS; corregir el campo `Branch` con el nombre real de la rama.
+- [ ] R064 COMMIT `Reescribir spec HU-04 en EARS y corregir Branch`
+- [ ] R065 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL).
+- [ ] R066 COMMIT `Registrar resultado de /speckit.analyze en research.md`
+
+---
+
+## Excepción de proceso
+
+Los **13 commits originales** de esta rama (previos a la remediación) no llevan prefijos
+`RED:`/`GREEN:`/`REFACTOR:` y 8 de ellos no compilan por separado, porque la plantilla de
+`/speckit.tasks` vigente en ese momento no exigía un commit por fase (corregida luego en el
+PR #15). **No se reescribe el historial**: reconstruir un proceso que no ocurrió así es peor
+que una excepción documentada. La evidencia del ciclo TDD queda cubierta de aquí en adelante
+por los commits de esta fase de remediación.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
