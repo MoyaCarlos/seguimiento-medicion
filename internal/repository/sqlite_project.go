@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	sqlite "modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 // SQLiteProjectRepository implementa ProjectRepository sobre SQLite.
@@ -125,12 +126,14 @@ func (r *SQLiteProjectRepository) AddMember(m *domain.Membership) error {
 		m.ProjectID, m.UserID, string(m.Role), m.CreatedAt.Format(time.RFC3339),
 	)
 	if err != nil {
-		mensaje := err.Error()
-		if strings.Contains(mensaje, "UNIQUE constraint failed") {
-			return ErrMiembroDuplicado
-		}
-		if strings.Contains(mensaje, "FOREIGN KEY constraint failed") {
-			return ErrNoEncontrado
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.Code() {
+			case sqlite3.SQLITE_CONSTRAINT_UNIQUE, sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
+				return ErrMiembroDuplicado
+			case sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY:
+				return ErrIntegridadReferencial
+			}
 		}
 		return fmt.Errorf("agregar integrante: %w", err)
 	}

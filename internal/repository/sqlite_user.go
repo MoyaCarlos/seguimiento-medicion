@@ -4,10 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	sqlite "modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 // SQLiteUserRepository implementa UserRepository sobre SQLite.
@@ -29,7 +30,8 @@ func (r *SQLiteUserRepository) Create(u *domain.User) error {
 		u.Name, u.NormalizedName, u.CreatedAt.Format(time.RFC3339),
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
 			return ErrUsuarioDuplicado
 		}
 		return fmt.Errorf("crear usuario: %w", err)
