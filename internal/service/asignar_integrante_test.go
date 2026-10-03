@@ -116,6 +116,17 @@ func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	}
 }
 
+func TestAsignarIntegrante_ProyectoInexistenteDominaRolInvalido(t *testing.T) {
+	servicio := NewAsignarIntegrante(&fakeProjectRepository{}, &fakeUserRepository{})
+
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+		ProyectoID: 0, Nombre: "Jimena", Rol: domain.Role("Product Owner"),
+	})
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba proyecto no encontrado (404) antes que rol inválido (400), se obtuvo %v", err)
+	}
+}
+
 func TestAsignarIntegrante_VariosScrumMaster(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
 	usuarios := &fakeUserRepository{}
