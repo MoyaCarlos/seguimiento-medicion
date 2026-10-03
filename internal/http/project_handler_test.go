@@ -296,6 +296,33 @@ func TestProjectHandler_Obtener_IDNoPositivo(t *testing.T) {
 	}
 }
 
+func TestProjectHandler_Editar_SinClavesObligatorias(t *testing.T) {
+	handler, repo := nuevoProjectHandlerDePrueba()
+	id := crearProyectoViaHTTP(t, handler, "Original")
+	idStr := strconv.FormatInt(id, 10)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"X"}`))
+	req.SetPathValue("id", idStr)
+	handler.Editar(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Campo == "" {
+		t.Errorf("se esperaba el campo faltante, se obtuvo %+v", resp)
+	}
+	obtenido, err := repo.GetByID(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if obtenido.Name != "Original" {
+		t.Errorf("el proyecto no debía cambiar, nombre actual %q", obtenido.Name)
+	}
+}
+
 func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Original")
