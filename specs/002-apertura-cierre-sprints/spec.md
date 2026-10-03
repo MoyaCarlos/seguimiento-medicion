@@ -4,7 +4,9 @@
 
 **Created**: 2026-10-01
 
-**Status**: Draft
+**Status**: En progreso — NO TERMINADA, NO MERGEAR. Rama publicada solo como
+respaldo. Implementadas US1 (iniciar) y US2 (cerrar con arrastre); falta US3
+(crear Sprint), que depende de que HU-04 entre a `main`. Ver `tasks.md`.
 
 **Input**: User description: "HU-05: Apertura y Cierre de Sprints. Como Scrum
 Master quiero crear, iniciar y cerrar un Sprint definiendo su objetivo
