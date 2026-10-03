@@ -155,25 +155,55 @@ func (c *proyectoContext) vinculaIntegrante() error {
 func (c *proyectoContext) habilitaPermisos() error { return nil }
 
 func (c *proyectoContext) asignarInvalido() error {
-	_, c.err = c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
+	_, errNombre := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "",
 		Rol:        domain.RolProductBuilder,
 	})
+	_, errRol := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
+		ProyectoID: c.proyecto.ID,
+		Nombre:     "Jimena Martinez",
+		Rol:        domain.Role("Product Owner"),
+	})
+	var vNombre, vRol domain.ValidationError
+	if !errors.As(errNombre, &vNombre) || vNombre.Campo != "nombre" {
+		return fmt.Errorf("se esperaba ValidationError de nombre vacío, se obtuvo %v", errNombre)
+	}
+	if !errors.As(errRol, &vRol) || vRol.Campo != "rol" {
+		return fmt.Errorf("se esperaba ValidationError de rol inválido, se obtuvo %v", errRol)
+	}
+	c.err = errNombre
 	return nil
 }
 
 func (c *proyectoContext) noRealizaVinculacion() error {
-	return c.muestraAdvertencia()
+	if err := c.muestraAdvertencia(); err != nil {
+		return err
+	}
+	var total int
+	if err := c.db.QueryRow(
+		"SELECT COUNT(*) FROM project_members WHERE role = ?",
+		string(domain.RolProductBuilder),
+	).Scan(&total); err != nil {
+		return err
+	}
+	if total != 0 {
+		return fmt.Errorf("se escribieron %d vinculaciones de product_builder pese al error", total)
+	}
+	return nil
 }
 
 func (c *proyectoContext) enEdicion() error { return nil }
 
 func (c *proyectoContext) editarValido() error {
+	inicio := time.Date(2026, 3, 2, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC)
 	_, c.err = c.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
 		ID:          c.proyecto.ID,
 		Nombre:      "Proyecto corregido",
 		Descripcion: "descripción corregida",
+		FechaInicio: &inicio,
+		FechaFin:    &fin,
 	})
 	return nil
 }
@@ -188,6 +218,15 @@ func (c *proyectoContext) persisteCambios() error {
 	}
 	if actualizado.Name != "Proyecto corregido" {
 		return fmt.Errorf("no se persistió la edición, nombre actual %q", actualizado.Name)
+	}
+	if actualizado.Description != "descripción corregida" {
+		return fmt.Errorf("no se persistió la descripción: %q", actualizado.Description)
+	}
+	if actualizado.StartDate == nil || actualizado.StartDate.Format("2006-01-02") != "2026-03-02" {
+		return fmt.Errorf("no se persistió la fecha de inicio: %v", actualizado.StartDate)
+	}
+	if actualizado.EndDate == nil || actualizado.EndDate.Format("2006-01-02") != "2026-12-15" {
+		return fmt.Errorf("no se persistió la fecha de fin: %v", actualizado.EndDate)
 	}
 	return nil
 }
