@@ -25,13 +25,9 @@ func NewAsignarIntegrante(proyectos repository.ProjectRepository, usuarios repos
 	return &AsignarIntegrante{proyectos: proyectos, usuarios: usuarios}
 }
 
-// Ejecutar valida el rol y el proyecto, resuelve el integrante y persiste la
-// vinculación, rechazando duplicados.
+// Ejecutar verifica el proyecto, resuelve el integrante y persiste la
+// vinculación (el rol se valida en el dominio), rechazando duplicados.
 func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteInput) (domain.Member, error) {
-	if !input.Rol.Valido() {
-		return domain.Member{}, domain.ValidationError{Campo: "rol", Mensaje: "el rol debe ser scrum_master o product_builder"}
-	}
-
 	proyecto, err := s.proyectos.GetByID(input.ProyectoID)
 	if err != nil {
 		return domain.Member{}, err
