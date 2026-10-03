@@ -4,11 +4,39 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
+
+func TestAbrirSQLite_ForeignKeysEnTodasLasConexiones(t *testing.T) {
+	archivo := filepath.Join(t.TempDir(), "prueba.db")
+	db, err := AbrirSQLite(archivo)
+	if err != nil {
+		t.Fatalf("no se pudo abrir sqlite: %v", err)
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(2)
+
+	tx, err := db.Begin()
+	if err != nil {
+		t.Fatalf("no se pudo iniciar transacción: %v", err)
+	}
+	defer tx.Rollback()
+
+	var fkTx, fkOtra int
+	if err := tx.QueryRow("PRAGMA foreign_keys").Scan(&fkTx); err != nil {
+		t.Fatalf("no se pudo consultar foreign_keys (tx): %v", err)
+	}
+	if err := db.QueryRow("PRAGMA foreign_keys").Scan(&fkOtra); err != nil {
+		t.Fatalf("no se pudo consultar foreign_keys (otra conexión): %v", err)
+	}
+	if fkTx != 1 || fkOtra != 1 {
+		t.Fatalf("se esperaba foreign_keys = 1 en ambas conexiones, se obtuvo %d y %d", fkTx, fkOtra)
+	}
+}
 
 func abrirBDDePrueba(t *testing.T) *sql.DB {
 	t.Helper()
