@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	_ "modernc.org/sqlite"
 )
@@ -50,17 +51,26 @@ CREATE TABLE IF NOT EXISTS project_members (
 );`
 
 // AbrirSQLite abre una conexión a SQLite (driver puro Go, sin CGO) y activa
-// las claves foráneas. Se limita a una conexión para que los PRAGMA y las
-// bases :memory: se comporten de forma predecible.
+// las claves foráneas en todas las conexiones del pool. Para las bases
+// :memory: se limita a una conexión (cada conexión abriría una base distinta);
+// para las de archivo se activan las FK por DSN (_pragma).
 func AbrirSQLite(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", dsn)
+	if strings.HasPrefix(dsn, ":memory:") {
+		db, err := sql.Open("sqlite", dsn)
+		if err != nil {
+			return nil, fmt.Errorf("abrir sqlite: %w", err)
+		}
+		db.SetMaxOpenConns(1)
+		if _, err := db.ExecContext(context.Background(), "PRAGMA foreign_keys = ON"); err != nil {
+			_ = db.Close()
+			return nil, fmt.Errorf("activar foreign keys: %w", err)
+		}
+		return db, nil
+	}
+
+	db, err := sql.Open("sqlite", dsn+"?_pragma=foreign_keys(1)")
 	if err != nil {
 		return nil, fmt.Errorf("abrir sqlite: %w", err)
-	}
-	db.SetMaxOpenConns(1)
-	if _, err := db.ExecContext(context.Background(), "PRAGMA foreign_keys = ON"); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("activar foreign keys: %w", err)
 	}
 	return db, nil
 }
