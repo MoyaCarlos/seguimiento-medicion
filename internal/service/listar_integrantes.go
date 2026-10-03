@@ -17,9 +17,9 @@ func NewListarIntegrantes(proyectos repository.ProjectRepository) *ListarIntegra
 }
 
 // Ejecutar verifica que el proyecto exista y devuelve sus integrantes.
-func (s *ListarIntegrantes) Ejecutar(_ context.Context, proyectoID int64) ([]domain.Member, error) {
-	if _, err := s.proyectos.GetByID(proyectoID); err != nil {
+func (s *ListarIntegrantes) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
 		return nil, err
 	}
-	return s.proyectos.ListMembers(proyectoID)
+	return s.proyectos.ListarIntegrantes(ctx, proyectoID)
 }

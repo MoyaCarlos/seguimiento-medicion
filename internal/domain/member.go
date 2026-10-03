@@ -21,10 +21,10 @@ func (r Role) Valido() bool {
 // User es un integrante del equipo. Se identifica por su nombre normalizado,
 // de modo que "Ana", "ana" y " Ana " resuelven al mismo usuario.
 type User struct {
-	ID             int64
-	Name           string
-	NormalizedName string
-	CreatedAt      time.Time
+	ID                int64
+	Nombre            string
+	NombreNormalizado string
+	CreadoEn          time.Time
 }
 
 const userNameMaxLen = 200
@@ -38,7 +38,7 @@ func NewUser(name string) (User, error) {
 	if len([]rune(nombre)) > userNameMaxLen {
 		return User{}, ValidationError{Campo: "nombre", Mensaje: "el nombre del integrante no puede superar los 200 caracteres"}
 	}
-	return User{Name: nombre, NormalizedName: NormalizarNombre(nombre)}, nil
+	return User{Nombre: nombre, NombreNormalizado: NormalizarNombre(nombre)}, nil
 }
 
 // NormalizarNombre aplica la regla de identidad: minúsculas y sin espacios externos.
@@ -52,7 +52,7 @@ type Membership struct {
 	ProjectID int64
 	UserID    int64
 	Role      Role
-	CreatedAt time.Time
+	CreadoEn  time.Time
 }
 
 // NewMembership valida y construye una asignación integrante–proyecto–rol.
@@ -74,7 +74,7 @@ func NewMembership(projectID, userID int64, role Role) (Membership, error) {
 type Member struct {
 	UserID    int64
 	ProjectID int64
-	Name      string
+	Nombre    string
 	Role      Role
-	CreatedAt time.Time
+	CreadoEn  time.Time
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -16,9 +17,9 @@ type fakeProjectRepository struct {
 	updates       int
 }
 
-func (f *fakeProjectRepository) Create(p *domain.Project) error {
+func (f *fakeProjectRepository) Guardar(_ context.Context, p domain.Project) (domain.Project, error) {
 	if f.err != nil {
-		return f.err
+		return domain.Project{}, f.err
 	}
 	f.creates++
 	if f.proyectos == nil {
@@ -27,30 +28,34 @@ func (f *fakeProjectRepository) Create(p *domain.Project) error {
 	if p.ID == 0 {
 		p.ID = int64(f.creates)
 	}
-	p.CreatedAt = time.Now().UTC()
-	f.proyectos[p.ID] = *p
-	return nil
+	p.CreadoEn = time.Now().UTC()
+	f.proyectos[p.ID] = p
+	return p, nil
 }
 
-func (f *fakeProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
-	if err := f.Create(p); err != nil {
-		return err
+func (f *fakeProjectRepository) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
+	guardado, err := f.Guardar(ctx, p)
+	if err != nil {
+		return domain.Project{}, err
 	}
-	return f.AddMember(&domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster})
+	if err := f.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+		return domain.Project{}, err
+	}
+	return guardado, nil
 }
 
-func (f *fakeProjectRepository) GetByID(id int64) (*domain.Project, error) {
+func (f *fakeProjectRepository) ObtenerPorID(_ context.Context, id int64) (domain.Project, error) {
 	if f.err != nil {
-		return nil, f.err
+		return domain.Project{}, f.err
 	}
 	p, ok := f.proyectos[id]
 	if !ok {
-		return nil, domain.ErrProyectoNoEncontrado
+		return domain.Project{}, domain.ErrProyectoNoEncontrado
 	}
-	return &p, nil
+	return p, nil
 }
 
-func (f *fakeProjectRepository) Update(p *domain.Project) error {
+func (f *fakeProjectRepository) Actualizar(_ context.Context, p domain.Project) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -58,11 +63,11 @@ func (f *fakeProjectRepository) Update(p *domain.Project) error {
 		return domain.ErrProyectoNoEncontrado
 	}
 	f.updates++
-	f.proyectos[p.ID] = *p
+	f.proyectos[p.ID] = p
 	return nil
 }
 
-func (f *fakeProjectRepository) AddMember(m *domain.Membership) error {
+func (f *fakeProjectRepository) AgregarIntegrante(_ context.Context, m domain.Membership) error {
 	if f.err != nil {
 		return f.err
 	}
@@ -71,11 +76,11 @@ func (f *fakeProjectRepository) AddMember(m *domain.Membership) error {
 			return repository.ErrMiembroDuplicado
 		}
 	}
-	f.miembros = append(f.miembros, *m)
+	f.miembros = append(f.miembros, m)
 	return nil
 }
 
-func (f *fakeProjectRepository) ListMembers(int64) ([]domain.Member, error) {
+func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -88,7 +93,7 @@ type fakeUserRepository struct {
 	err      error
 }
 
-func (f *fakeUserRepository) FindByNormalizedName(normalized string) (*domain.User, error) {
+func (f *fakeUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -99,19 +104,19 @@ func (f *fakeUserRepository) FindByNormalizedName(normalized string) (*domain.Us
 	return &u, nil
 }
 
-func (f *fakeUserRepository) Create(u *domain.User) error {
+func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
 	if f.err != nil {
-		return f.err
+		return domain.User{}, f.err
 	}
 	if f.usuarios == nil {
 		f.usuarios = map[string]domain.User{}
 	}
-	if _, ok := f.usuarios[u.NormalizedName]; ok {
-		return repository.ErrUsuarioDuplicado
+	if _, ok := f.usuarios[u.NombreNormalizado]; ok {
+		return domain.User{}, repository.ErrUsuarioDuplicado
 	}
 	f.creates++
 	u.ID = int64(f.creates)
-	u.CreatedAt = time.Now().UTC()
-	f.usuarios[u.NormalizedName] = *u
-	return nil
+	u.CreadoEn = time.Now().UTC()
+	f.usuarios[u.NombreNormalizado] = u
+	return u, nil
 }

@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -25,9 +26,9 @@ type stubProjectRepository struct {
 	creates       int
 }
 
-func (s *stubProjectRepository) Create(p *domain.Project) error {
+func (s *stubProjectRepository) Guardar(_ context.Context, p domain.Project) (domain.Project, error) {
 	if s.err != nil {
-		return s.err
+		return domain.Project{}, s.err
 	}
 	s.creates++
 	if s.proyectos == nil {
@@ -36,48 +37,52 @@ func (s *stubProjectRepository) Create(p *domain.Project) error {
 	if p.ID == 0 {
 		p.ID = int64(s.creates)
 	}
-	p.CreatedAt = time.Now().UTC()
-	s.proyectos[p.ID] = *p
-	return nil
+	p.CreadoEn = time.Now().UTC()
+	s.proyectos[p.ID] = p
+	return p, nil
 }
 
-func (s *stubProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
-	if err := s.Create(p); err != nil {
-		return err
+func (s *stubProjectRepository) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
+	guardado, err := s.Guardar(ctx, p)
+	if err != nil {
+		return domain.Project{}, err
 	}
-	return s.AddMember(&domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster})
+	if err := s.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+		return domain.Project{}, err
+	}
+	return guardado, nil
 }
 
-func (s *stubProjectRepository) GetByID(id int64) (*domain.Project, error) {
+func (s *stubProjectRepository) ObtenerPorID(_ context.Context, id int64) (domain.Project, error) {
 	if s.err != nil {
-		return nil, s.err
+		return domain.Project{}, s.err
 	}
 	p, ok := s.proyectos[id]
 	if !ok {
-		return nil, domain.ErrProyectoNoEncontrado
+		return domain.Project{}, domain.ErrProyectoNoEncontrado
 	}
-	return &p, nil
+	return p, nil
 }
 
-func (s *stubProjectRepository) Update(p *domain.Project) error {
+func (s *stubProjectRepository) Actualizar(_ context.Context, p domain.Project) error {
 	if _, ok := s.proyectos[p.ID]; !ok {
 		return domain.ErrProyectoNoEncontrado
 	}
-	s.proyectos[p.ID] = *p
+	s.proyectos[p.ID] = p
 	return nil
 }
 
-func (s *stubProjectRepository) AddMember(m *domain.Membership) error {
+func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Membership) error {
 	for _, e := range s.miembros {
 		if e.ProjectID == m.ProjectID && e.UserID == m.UserID {
 			return repository.ErrMiembroDuplicado
 		}
 	}
-	s.miembros = append(s.miembros, *m)
+	s.miembros = append(s.miembros, m)
 	return nil
 }
 
-func (s *stubProjectRepository) ListMembers(int64) ([]domain.Member, error) {
+func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
@@ -89,25 +94,25 @@ type stubUserRepository struct {
 	creates  int
 }
 
-func (s *stubUserRepository) FindByNormalizedName(normalized string) (*domain.User, error) {
+func (s *stubUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
 	if u, ok := s.usuarios[normalized]; ok {
 		return &u, nil
 	}
 	return nil, domain.ErrNoEncontrado
 }
 
-func (s *stubUserRepository) Create(u *domain.User) error {
+func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
 	if s.usuarios == nil {
 		s.usuarios = map[string]domain.User{}
 	}
-	if _, ok := s.usuarios[u.NormalizedName]; ok {
-		return repository.ErrUsuarioDuplicado
+	if _, ok := s.usuarios[u.NombreNormalizado]; ok {
+		return domain.User{}, repository.ErrUsuarioDuplicado
 	}
 	s.creates++
 	u.ID = int64(s.creates)
-	u.CreatedAt = time.Now().UTC()
-	s.usuarios[u.NormalizedName] = *u
-	return nil
+	u.CreadoEn = time.Now().UTC()
+	s.usuarios[u.NombreNormalizado] = u
+	return u, nil
 }
 
 func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
@@ -314,12 +319,12 @@ func TestProjectHandler_Editar_SinClavesObligatorias(t *testing.T) {
 	if resp.Campo == "" {
 		t.Errorf("se esperaba el campo faltante, se obtuvo %+v", resp)
 	}
-	obtenido, err := repo.GetByID(id)
+	obtenido, err := repo.ObtenerPorID(context.Background(), id)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if obtenido.Name != "Original" {
-		t.Errorf("el proyecto no debía cambiar, nombre actual %q", obtenido.Name)
+	if obtenido.Nombre != "Original" {
+		t.Errorf("el proyecto no debía cambiar, nombre actual %q", obtenido.Nombre)
 	}
 }
 
@@ -456,7 +461,7 @@ func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	repo.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Name: "Ana", Role: domain.RolScrumMaster}}
+	repo.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/members", nil)

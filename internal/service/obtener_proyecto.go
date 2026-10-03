@@ -17,10 +17,6 @@ func NewObtenerProyecto(proyectos repository.ProjectRepository) *ObtenerProyecto
 }
 
 // Ejecutar devuelve el proyecto o domain.ErrProyectoNoEncontrado si no existe.
-func (s *ObtenerProyecto) Ejecutar(_ context.Context, id int64) (domain.Project, error) {
-	proyecto, err := s.proyectos.GetByID(id)
-	if err != nil {
-		return domain.Project{}, err
-	}
-	return *proyecto, nil
+func (s *ObtenerProyecto) Ejecutar(ctx context.Context, id int64) (domain.Project, error) {
+	return s.proyectos.ObtenerPorID(ctx, id)
 }

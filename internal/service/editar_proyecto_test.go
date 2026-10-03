@@ -29,7 +29,7 @@ func TestEditarProyecto_Exitosa(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if editado.Name != "Corregido" || editado.Description != "nueva desc" {
+	if editado.Nombre != "Corregido" || editado.Descripcion != "nueva desc" {
 		t.Errorf("edición no aplicada: %+v", editado)
 	}
 	if editado.ID != creado.ID {

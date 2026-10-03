@@ -32,7 +32,7 @@ func TestAsignarIntegrante_Exitosa(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if miembro.Name != "Jimena" || miembro.Role != domain.RolProductBuilder {
+	if miembro.Nombre != "Jimena" || miembro.Role != domain.RolProductBuilder {
 		t.Errorf("integrante inesperado: %+v", miembro)
 	}
 	if len(proyectos.miembros) != 2 { // creador + Jimena

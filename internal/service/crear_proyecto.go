@@ -29,7 +29,7 @@ func NewCrearProyecto(proyectos repository.ProjectRepository, usuarios repositor
 }
 
 // Ejecutar valida, persiste el proyecto y registra la vinculación del creador.
-func (s *CrearProyecto) Ejecutar(_ context.Context, input CrearProyectoInput) (domain.Project, error) {
+func (s *CrearProyecto) Ejecutar(ctx context.Context, input CrearProyectoInput) (domain.Project, error) {
 	proyecto, err := domain.NewProject(input.Nombre, input.Descripcion, input.FechaInicio, input.FechaFin)
 	if err != nil {
 		return domain.Project{}, err
@@ -44,13 +44,10 @@ func (s *CrearProyecto) Ejecutar(_ context.Context, input CrearProyectoInput) (d
 		return domain.Project{}, err
 	}
 
-	usuario, err := resolverUsuario(s.usuarios, creador)
+	usuario, err := resolverUsuario(ctx, s.usuarios, creador)
 	if err != nil {
 		return domain.Project{}, err
 	}
 
-	if err := s.proyectos.CreateWithScrumMaster(&proyecto, usuario.ID); err != nil {
-		return domain.Project{}, err
-	}
-	return proyecto, nil
+	return s.proyectos.GuardarConScrumMaster(ctx, proyecto, usuario.ID)
 }

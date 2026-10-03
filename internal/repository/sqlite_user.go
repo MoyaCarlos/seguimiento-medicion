@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -20,47 +21,47 @@ func NewSQLiteUserRepository(db *sql.DB) *SQLiteUserRepository {
 	return &SQLiteUserRepository{db: db}
 }
 
-// Create persiste el integrante, asignando ID y CreatedAt si vienen vacíos.
-func (r *SQLiteUserRepository) Create(u *domain.User) error {
-	if u.CreatedAt.IsZero() {
-		u.CreatedAt = time.Now().UTC()
+// Guardar persiste el integrante y devuelve una copia con el ID asignado.
+func (r *SQLiteUserRepository) Guardar(ctx context.Context, u domain.User) (domain.User, error) {
+	if u.CreadoEn.IsZero() {
+		u.CreadoEn = time.Now().UTC()
 	}
-	res, err := r.db.Exec(
+	res, err := r.db.ExecContext(ctx,
 		`INSERT INTO users (name, normalized_name, created_at) VALUES (?, ?, ?)`,
-		u.Name, u.NormalizedName, u.CreatedAt.Format(time.RFC3339),
+		u.Nombre, u.NombreNormalizado, u.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
 		var sqliteErr *sqlite.Error
 		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-			return ErrUsuarioDuplicado
+			return domain.User{}, ErrUsuarioDuplicado
 		}
-		return fmt.Errorf("crear usuario: %w", err)
+		return domain.User{}, fmt.Errorf("crear usuario: %w", err)
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("obtener id del usuario: %w", err)
+		return domain.User{}, fmt.Errorf("obtener id del usuario: %w", err)
 	}
 	u.ID = id
-	return nil
+	return u, nil
 }
 
-// FindByNormalizedName devuelve el integrante cuyo nombre normalizado coincide.
-func (r *SQLiteUserRepository) FindByNormalizedName(normalizedName string) (*domain.User, error) {
-	row := r.db.QueryRow(
+// ObtenerPorNombreNormalizado devuelve el integrante cuyo nombre normalizado coincide.
+func (r *SQLiteUserRepository) ObtenerPorNombreNormalizado(ctx context.Context, normalized string) (*domain.User, error) {
+	row := r.db.QueryRowContext(ctx,
 		`SELECT id, name, normalized_name, created_at FROM users WHERE normalized_name = ?`,
-		normalizedName,
+		normalized,
 	)
 	var (
 		u         domain.User
 		createdAt string
 	)
-	if err := row.Scan(&u.ID, &u.Name, &u.NormalizedName, &createdAt); err != nil {
+	if err := row.Scan(&u.ID, &u.Nombre, &u.NombreNormalizado, &createdAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrNoEncontrado
 		}
 		return nil, fmt.Errorf("buscar usuario: %w", err)
 	}
-	u.CreatedAt = parsearTiempo(createdAt)
+	u.CreadoEn = parsearTiempo(createdAt)
 	return &u, nil
 }
 

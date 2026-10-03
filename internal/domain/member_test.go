@@ -23,11 +23,11 @@ func TestNewUser_NormalizaNombre(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if u.Name != "Ana Valentina" {
-		t.Errorf("se esperaba el nombre recortado, se obtuvo %q", u.Name)
+	if u.Nombre != "Ana Valentina" {
+		t.Errorf("se esperaba el nombre recortado, se obtuvo %q", u.Nombre)
 	}
-	if u.NormalizedName != "ana valentina" {
-		t.Errorf("se esperaba nombre normalizado en minúsculas, se obtuvo %q", u.NormalizedName)
+	if u.NombreNormalizado != "ana valentina" {
+		t.Errorf("se esperaba nombre normalizado en minúsculas, se obtuvo %q", u.NombreNormalizado)
 	}
 }
 

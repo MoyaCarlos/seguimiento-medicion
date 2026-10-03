@@ -27,8 +27,8 @@ func NewAsignarIntegrante(proyectos repository.ProjectRepository, usuarios repos
 
 // Ejecutar verifica el proyecto, resuelve el integrante y persiste la
 // vinculación (el rol se valida en el dominio), rechazando duplicados.
-func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteInput) (domain.Member, error) {
-	proyecto, err := s.proyectos.GetByID(input.ProyectoID)
+func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegranteInput) (domain.Member, error) {
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, input.ProyectoID)
 	if err != nil {
 		return domain.Member{}, err
 	}
@@ -37,7 +37,7 @@ func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteI
 	if err != nil {
 		return domain.Member{}, err
 	}
-	usuario, err := resolverUsuario(s.usuarios, candidato)
+	usuario, err := resolverUsuario(ctx, s.usuarios, candidato)
 	if err != nil {
 		return domain.Member{}, err
 	}
@@ -46,7 +46,7 @@ func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteI
 	if err != nil {
 		return domain.Member{}, err
 	}
-	if err := s.proyectos.AddMember(&membresia); err != nil {
+	if err := s.proyectos.AgregarIntegrante(ctx, membresia); err != nil {
 		if errors.Is(err, repository.ErrMiembroDuplicado) {
 			return domain.Member{}, domain.ValidationError{Campo: "integrante", Mensaje: "el integrante ya pertenece al proyecto"}
 		}
@@ -56,8 +56,8 @@ func (s *AsignarIntegrante) Ejecutar(_ context.Context, input AsignarIntegranteI
 	return domain.Member{
 		UserID:    usuario.ID,
 		ProjectID: proyecto.ID,
-		Name:      usuario.Name,
+		Nombre:    usuario.Nombre,
 		Role:      input.Rol,
-		CreatedAt: membresia.CreatedAt,
+		CreadoEn:  membresia.CreadoEn,
 	}, nil
 }

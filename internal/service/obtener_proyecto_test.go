@@ -21,7 +21,7 @@ func TestObtenerProyecto_Ejecutar_Existente(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if obtenido.ID != creado.ID || obtenido.Name != "Proyecto" {
+	if obtenido.ID != creado.ID || obtenido.Nombre != "Proyecto" {
 		t.Errorf("proyecto inesperado: %+v", obtenido)
 	}
 }

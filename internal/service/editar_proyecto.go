@@ -27,8 +27,8 @@ func NewEditarProyecto(proyectos repository.ProjectRepository) *EditarProyecto {
 }
 
 // Ejecutar carga el proyecto, valida los datos y persiste los cambios.
-func (s *EditarProyecto) Ejecutar(_ context.Context, input EditarProyectoInput) (domain.Project, error) {
-	actual, err := s.proyectos.GetByID(input.ID)
+func (s *EditarProyecto) Ejecutar(ctx context.Context, input EditarProyectoInput) (domain.Project, error) {
+	actual, err := s.proyectos.ObtenerPorID(ctx, input.ID)
 	if err != nil {
 		return domain.Project{}, err
 	}
@@ -38,7 +38,7 @@ func (s *EditarProyecto) Ejecutar(_ context.Context, input EditarProyectoInput) 
 		return domain.Project{}, err
 	}
 
-	if err := s.proyectos.Update(&editado); err != nil {
+	if err := s.proyectos.Actualizar(ctx, editado); err != nil {
 		return domain.Project{}, err
 	}
 	return editado, nil

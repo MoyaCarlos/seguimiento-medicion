@@ -52,6 +52,7 @@ func abrirBDDePrueba(t *testing.T) *sql.DB {
 }
 
 func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 
@@ -59,38 +60,41 @@ func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error de dominio: %v", err)
 	}
-	if err := repo.Create(&p); err != nil {
+	guardado, err := repo.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error al crear: %v", err)
 	}
-	if p.ID == 0 {
+	if guardado.ID == 0 {
 		t.Fatal("se esperaba un ID asignado")
 	}
 
-	leido, err := repo.GetByID(p.ID)
+	leido, err := repo.ObtenerPorID(ctx, guardado.ID)
 	if err != nil {
 		t.Fatalf("no se esperaba error al leer: %v", err)
 	}
-	if leido.Name != p.Name || leido.Description != "Descripción" {
+	if leido.Nombre != guardado.Nombre || leido.Descripcion != "Descripción" {
 		t.Errorf("proyecto inesperado: %+v", leido)
 	}
-	if leido.StartDate == nil || !leido.StartDate.Equal(inicio) {
-		t.Errorf("se esperaba fecha de inicio %v, se obtuvo %v", inicio, leido.StartDate)
+	if leido.FechaInicio == nil || !leido.FechaInicio.Equal(inicio) {
+		t.Errorf("se esperaba fecha de inicio %v, se obtuvo %v", inicio, leido.FechaInicio)
 	}
-	if leido.EndDate != nil {
-		t.Errorf("se esperaba fecha de fin nula, se obtuvo %v", leido.EndDate)
+	if leido.FechaFin != nil {
+		t.Errorf("se esperaba fecha de fin nula, se obtuvo %v", leido.FechaFin)
 	}
 }
 
 func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
 	var ids []int64
 	for i := 0; i < 3; i++ {
 		p, _ := domain.NewProject("Proyecto", "", nil, nil)
-		if err := repo.Create(&p); err != nil {
+		guardado, err := repo.Guardar(ctx, p)
+		if err != nil {
 			t.Fatalf("no se esperaba error: %v", err)
 		}
-		ids = append(ids, p.ID)
+		ids = append(ids, guardado.ID)
 	}
 	if ids[0] <= 0 {
 		t.Fatalf("se esperaba un ID positivo, se obtuvo %d", ids[0])
@@ -102,12 +106,13 @@ func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
 	}
 }
 
-func TestSQLiteProjectRepository_CreateWithScrumMaster_Rollback(t *testing.T) {
+func TestSQLiteProjectRepository_GuardarConScrumMaster_Rollback(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
 	// creadorID inexistente: la FK de project_members falla en la segunda escritura.
-	if err := repo.CreateWithScrumMaster(&p, 999999); err == nil {
+	if _, err := repo.GuardarConScrumMaster(ctx, p, 999999); err == nil {
 		t.Fatal("se esperaba error por FK del integrante inexistente")
 	}
 
@@ -120,17 +125,18 @@ func TestSQLiteProjectRepository_CreateWithScrumMaster_Rollback(t *testing.T) {
 	}
 }
 
-func TestSQLiteProjectRepository_AddMember_FKVioladaNoEsNoEncontrado(t *testing.T) {
-	db := abrirBDDePrueba(t)
-	proyectos := NewSQLiteProjectRepository(db)
+func TestSQLiteProjectRepository_AgregarIntegrante_FKVioladaNoEsNoEncontrado(t *testing.T) {
+	ctx := context.Background()
+	proyectos := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
-	if err := proyectos.Create(&p); err != nil {
+	guardado, err := proyectos.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
-	m := domain.Membership{ProjectID: p.ID, UserID: 999, Role: domain.RolScrumMaster}
-	err := proyectos.AddMember(&m)
+	m := domain.Membership{ProjectID: guardado.ID, UserID: 999, Role: domain.RolScrumMaster}
+	err = proyectos.AgregarIntegrante(ctx, m)
 	if err == nil {
 		t.Fatal("se esperaba error por FK")
 	}
@@ -140,11 +146,12 @@ func TestSQLiteProjectRepository_AddMember_FKVioladaNoEsNoEncontrado(t *testing.
 }
 
 func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
 	for i := 0; i < 2; i++ {
 		p, _ := domain.NewProject("Mismo nombre", "", nil, nil)
-		if err := repo.Create(&p); err != nil {
+		if _, err := repo.Guardar(ctx, p); err != nil {
 			t.Fatalf("no se esperaba error con nombres repetidos: %v", err)
 		}
 	}
@@ -157,44 +164,49 @@ func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 	}
 }
 
-func TestSQLiteProjectRepository_Update(t *testing.T) {
+func TestSQLiteProjectRepository_Actualizar(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
 	p, _ := domain.NewProject("Original", "desc", nil, nil)
-	if err := repo.Create(&p); err != nil {
+	guardado, err := repo.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
-	editado, err := p.ConDatosEditados("Corregido", "nueva desc", nil, nil)
+	editado, err := guardado.ConDatosEditados("Corregido", "nueva desc", nil, nil)
 	if err != nil {
 		t.Fatalf("no se esperaba error de dominio: %v", err)
 	}
-	if err := repo.Update(&editado); err != nil {
+	if err := repo.Actualizar(ctx, editado); err != nil {
 		t.Fatalf("no se esperaba error al actualizar: %v", err)
 	}
 
-	leido, _ := repo.GetByID(p.ID)
-	if leido.Name != "Corregido" || leido.Description != "nueva desc" {
+	leido, _ := repo.ObtenerPorID(ctx, guardado.ID)
+	if leido.Nombre != "Corregido" || leido.Descripcion != "nueva desc" {
 		t.Errorf("no se persistió la edición: %+v", leido)
 	}
 }
 
-func TestSQLiteProjectRepository_UpdateInexistente(t *testing.T) {
+func TestSQLiteProjectRepository_ActualizarInexistente(t *testing.T) {
+	ctx := context.Background()
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 	p, _ := domain.NewProject("Fantasma", "", nil, nil)
 	p.ID = 999
-	if err := repo.Update(&p); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+	if err := repo.Actualizar(ctx, p); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
 }
 
-func TestSQLiteProjectRepository_ListMembers_OrdenDeAlta(t *testing.T) {
+func TestSQLiteProjectRepository_ListarIntegrantes_OrdenDeAlta(t *testing.T) {
+	ctx := context.Background()
 	db := abrirBDDePrueba(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
-	if err := proyectos.Create(&p); err != nil {
+	guardado, err := proyectos.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
@@ -204,76 +216,83 @@ func TestSQLiteProjectRepository_ListMembers_OrdenDeAlta(t *testing.T) {
 	fecha := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 	for _, n := range nombres {
 		u, _ := domain.NewUser(n)
-		if err := usuarios.Create(&u); err != nil {
+		guardadoU, err := usuarios.Guardar(ctx, u)
+		if err != nil {
 			t.Fatalf("no se esperaba error: %v", err)
 		}
-		m, _ := domain.NewMembership(p.ID, u.ID, domain.RolProductBuilder)
-		m.CreatedAt = fecha
-		if err := proyectos.AddMember(&m); err != nil {
+		m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolProductBuilder)
+		m.CreadoEn = fecha
+		if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 			t.Fatalf("no se esperaba error: %v", err)
 		}
 	}
 
-	miembros, err := proyectos.ListMembers(p.ID)
+	miembros, err := proyectos.ListarIntegrantes(ctx, guardado.ID)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 	for i, n := range nombres {
-		if miembros[i].Name != n {
-			t.Fatalf("se esperaba orden de alta %v, se obtuvo %q en la posición %d", nombres, miembros[i].Name, i)
+		if miembros[i].Nombre != n {
+			t.Fatalf("se esperaba orden de alta %v, se obtuvo %q en la posición %d", nombres, miembros[i].Nombre, i)
 		}
 	}
 }
 
 func TestSQLiteProjectRepository_Miembros(t *testing.T) {
+	ctx := context.Background()
 	db := abrirBDDePrueba(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
-	if err := proyectos.Create(&p); err != nil {
+	guardado, err := proyectos.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 	u, _ := domain.NewUser("Candela")
-	if err := usuarios.Create(&u); err != nil {
+	guardadoU, err := usuarios.Guardar(ctx, u)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	m, _ := domain.NewMembership(p.ID, u.ID, domain.RolScrumMaster)
-	if err := proyectos.AddMember(&m); err != nil {
+	m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolScrumMaster)
+	if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 		t.Fatalf("no se esperaba error al agregar: %v", err)
 	}
 
-	miembros, err := proyectos.ListMembers(p.ID)
+	miembros, err := proyectos.ListarIntegrantes(ctx, guardado.ID)
 	if err != nil {
 		t.Fatalf("no se esperaba error al listar: %v", err)
 	}
 	if len(miembros) != 1 {
 		t.Fatalf("se esperaba 1 integrante, se obtuvieron %d", len(miembros))
 	}
-	if miembros[0].Name != "Candela" || miembros[0].Role != domain.RolScrumMaster {
+	if miembros[0].Nombre != "Candela" || miembros[0].Role != domain.RolScrumMaster {
 		t.Errorf("integrante inesperado: %+v", miembros[0])
 	}
 }
 
 func TestSQLiteProjectRepository_MiembroDuplicado(t *testing.T) {
+	ctx := context.Background()
 	db := abrirBDDePrueba(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
-	if err := proyectos.Create(&p); err != nil {
+	guardado, err := proyectos.Guardar(ctx, p)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 	u, _ := domain.NewUser("Candela")
-	if err := usuarios.Create(&u); err != nil {
+	guardadoU, err := usuarios.Guardar(ctx, u)
+	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
-	m, _ := domain.NewMembership(p.ID, u.ID, domain.RolProductBuilder)
-	if err := proyectos.AddMember(&m); err != nil {
+	m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolProductBuilder)
+	if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if err := proyectos.AddMember(&m); !errors.Is(err, ErrMiembroDuplicado) {
+	if err := proyectos.AgregarIntegrante(ctx, m); !errors.Is(err, ErrMiembroDuplicado) {
 		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
 	}
 }

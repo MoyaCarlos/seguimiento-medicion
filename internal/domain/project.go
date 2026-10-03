@@ -10,11 +10,11 @@ import (
 // no se cambia el nombre ni se remueven los que ya hay.
 type Project struct {
 	ID          int64
-	Name        string
-	Description string
-	StartDate   *time.Time
-	EndDate     *time.Time
-	CreatedAt   time.Time
+	Nombre      string
+	Descripcion string
+	FechaInicio *time.Time
+	FechaFin    *time.Time
+	CreadoEn    time.Time
 }
 
 const (
@@ -22,28 +22,28 @@ const (
 	projectDescriptionMaxLen = 2000
 )
 
-// NewProject valida y construye un Project nuevo (sin ID ni CreatedAt, que los
+// NewProject valida y construye un Project nuevo (sin ID ni CreadoEn, que los
 // asigna la persistencia).
 func NewProject(name, description string, start, end *time.Time) (Project, error) {
 	nombre, descripcion, err := validarProyecto(name, description, start, end)
 	if err != nil {
 		return Project{}, err
 	}
-	return Project{Name: nombre, Description: descripcion, StartDate: start, EndDate: end}, nil
+	return Project{Nombre: nombre, Descripcion: descripcion, FechaInicio: start, FechaFin: end}, nil
 }
 
 // ConDatosEditados reutiliza las mismas validaciones del alta y devuelve una
 // copia del proyecto con los datos editables actualizados, conservando ID y
-// CreatedAt.
+// CreadoEn.
 func (p Project) ConDatosEditados(name, description string, start, end *time.Time) (Project, error) {
 	nombre, descripcion, err := validarProyecto(name, description, start, end)
 	if err != nil {
 		return Project{}, err
 	}
-	p.Name = nombre
-	p.Description = descripcion
-	p.StartDate = start
-	p.EndDate = end
+	p.Nombre = nombre
+	p.Descripcion = descripcion
+	p.FechaInicio = start
+	p.FechaFin = end
 	return p, nil
 }
 

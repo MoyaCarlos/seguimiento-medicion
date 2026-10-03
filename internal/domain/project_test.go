@@ -14,21 +14,21 @@ func TestNewProject_Valido(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if conFechas.Name != "Software Metrics" || conFechas.Description != "Descripción" {
+	if conFechas.Nombre != "Software Metrics" || conFechas.Descripcion != "Descripción" {
 		t.Errorf("no se recortaron los campos: %+v", conFechas)
 	}
-	if conFechas.StartDate == nil || !conFechas.StartDate.Equal(inicio) {
-		t.Errorf("fecha de inicio inesperada: %v", conFechas.StartDate)
+	if conFechas.FechaInicio == nil || !conFechas.FechaInicio.Equal(inicio) {
+		t.Errorf("fecha de inicio inesperada: %v", conFechas.FechaInicio)
 	}
-	if conFechas.EndDate == nil || !conFechas.EndDate.Equal(fin) {
-		t.Errorf("fecha de fin inesperada: %v", conFechas.EndDate)
+	if conFechas.FechaFin == nil || !conFechas.FechaFin.Equal(fin) {
+		t.Errorf("fecha de fin inesperada: %v", conFechas.FechaFin)
 	}
 
 	sinFechas, err := NewProject("Proyecto corto", "", nil, nil)
 	if err != nil {
 		t.Fatalf("no se esperaba error sin fechas: %v", err)
 	}
-	if sinFechas.StartDate != nil || sinFechas.EndDate != nil {
+	if sinFechas.FechaInicio != nil || sinFechas.FechaFin != nil {
 		t.Errorf("se esperaban fechas nulas: %+v", sinFechas)
 	}
 }
@@ -90,20 +90,20 @@ func TestNewProject_NombresRepetidosPermitidos(t *testing.T) {
 
 func TestConDatosEditados_ConservaIdentidad(t *testing.T) {
 	creado := time.Date(2026, 1, 15, 10, 30, 0, 0, time.UTC)
-	base := Project{ID: 1, Name: "Original", Description: "desc", CreatedAt: creado}
+	base := Project{ID: 1, Nombre: "Original", Descripcion: "desc", CreadoEn: creado}
 	fin := time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC)
 
 	editado, err := base.ConDatosEditados("  Nuevo  ", "", nil, &fin)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if editado.Name != "Nuevo" || editado.Description != "" {
+	if editado.Nombre != "Nuevo" || editado.Descripcion != "" {
 		t.Errorf("campos no actualizados: %+v", editado)
 	}
-	if editado.StartDate != nil || editado.EndDate == nil || !editado.EndDate.Equal(fin) {
-		t.Errorf("fechas inesperadas: inicio=%v fin=%v", editado.StartDate, editado.EndDate)
+	if editado.FechaInicio != nil || editado.FechaFin == nil || !editado.FechaFin.Equal(fin) {
+		t.Errorf("fechas inesperadas: inicio=%v fin=%v", editado.FechaInicio, editado.FechaFin)
 	}
-	if editado.ID != 1 || !editado.CreatedAt.Equal(creado) {
+	if editado.ID != 1 || !editado.CreadoEn.Equal(creado) {
 		t.Errorf("no se conservó la identidad: %+v", editado)
 	}
 }

@@ -216,17 +216,17 @@ func (c *proyectoContext) persisteCambios() error {
 	if err != nil {
 		return err
 	}
-	if actualizado.Name != "Proyecto corregido" {
-		return fmt.Errorf("no se persistió la edición, nombre actual %q", actualizado.Name)
+	if actualizado.Nombre != "Proyecto corregido" {
+		return fmt.Errorf("no se persistió la edición, nombre actual %q", actualizado.Nombre)
 	}
-	if actualizado.Description != "descripción corregida" {
-		return fmt.Errorf("no se persistió la descripción: %q", actualizado.Description)
+	if actualizado.Descripcion != "descripción corregida" {
+		return fmt.Errorf("no se persistió la descripción: %q", actualizado.Descripcion)
 	}
-	if actualizado.StartDate == nil || actualizado.StartDate.Format("2006-01-02") != "2026-03-02" {
-		return fmt.Errorf("no se persistió la fecha de inicio: %v", actualizado.StartDate)
+	if actualizado.FechaInicio == nil || actualizado.FechaInicio.Format("2006-01-02") != "2026-03-02" {
+		return fmt.Errorf("no se persistió la fecha de inicio: %v", actualizado.FechaInicio)
 	}
-	if actualizado.EndDate == nil || actualizado.EndDate.Format("2006-01-02") != "2026-12-15" {
-		return fmt.Errorf("no se persistió la fecha de fin: %v", actualizado.EndDate)
+	if actualizado.FechaFin == nil || actualizado.FechaFin.Format("2006-01-02") != "2026-12-15" {
+		return fmt.Errorf("no se persistió la fecha de fin: %v", actualizado.FechaFin)
 	}
 	return nil
 }

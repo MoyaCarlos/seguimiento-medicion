@@ -68,11 +68,11 @@ func formatearFecha(t *time.Time) *string {
 func aProyectoResponse(p domain.Project) proyectoResponse {
 	return proyectoResponse{
 		ID:          p.ID,
-		Nombre:      p.Name,
-		Descripcion: p.Description,
-		FechaInicio: formatearFecha(p.StartDate),
-		FechaFin:    formatearFecha(p.EndDate),
-		CreadoEn:    p.CreatedAt.Format(time.RFC3339),
+		Nombre:      p.Nombre,
+		Descripcion: p.Descripcion,
+		FechaInicio: formatearFecha(p.FechaInicio),
+		FechaFin:    formatearFecha(p.FechaFin),
+		CreadoEn:    p.CreadoEn.Format(time.RFC3339),
 	}
 }
 
@@ -80,8 +80,8 @@ func aIntegranteResponse(m domain.Member) integranteResponse {
 	return integranteResponse{
 		ID:          m.UserID,
 		ProyectoID:  m.ProjectID,
-		Nombre:      m.Name,
+		Nombre:      m.Nombre,
 		Rol:         string(m.Role),
-		VinculadoEn: m.CreatedAt.Format(time.RFC3339),
+		VinculadoEn: m.CreadoEn.Format(time.RFC3339),
 	}
 }

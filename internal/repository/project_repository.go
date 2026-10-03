@@ -1,18 +1,19 @@
 package repository
 
 import (
+	"context"
+
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
-// ProjectRepository es lo mínimo que HU-05 necesita para poder crear un
-// Sprint referenciando un Project existente. HU-04 puede agregar métodos
-// (Update, AddMember, List, etc.) sin romper esto — solo no renombrar ni
-// sacar los que ya están acá sin avisar a quien esté en HU-05.
+// ProjectRepository es el puerto de persistencia de proyectos y su equipo.
+// El contrato de Guardar/ObtenerPorID es consumido por otras historias y no se
+// altera.
 type ProjectRepository interface {
-	Create(p *domain.Project) error
-	CreateWithScrumMaster(p *domain.Project, creatorID int64) error
-	GetByID(id int64) (*domain.Project, error)
-	Update(p *domain.Project) error
-	AddMember(m *domain.Membership) error
-	ListMembers(projectID int64) ([]domain.Member, error)
+	Guardar(ctx context.Context, p domain.Project) (domain.Project, error)
+	GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error)
+	ObtenerPorID(ctx context.Context, id int64) (domain.Project, error)
+	Actualizar(ctx context.Context, p domain.Project) error
+	AgregarIntegrante(ctx context.Context, m domain.Membership) error
+	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)
 }

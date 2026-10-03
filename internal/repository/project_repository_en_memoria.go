@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -20,46 +21,50 @@ func NewProjectRepositoryEnMemoria() *ProjectRepositoryEnMemoria {
 	return &ProjectRepositoryEnMemoria{proyectos: map[int64]domain.Project{}}
 }
 
-func (r *ProjectRepositoryEnMemoria) Create(p *domain.Project) error {
+func (r *ProjectRepositoryEnMemoria) Guardar(_ context.Context, p domain.Project) (domain.Project, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if p.CreatedAt.IsZero() {
-		p.CreatedAt = time.Now().UTC()
+	if p.CreadoEn.IsZero() {
+		p.CreadoEn = time.Now().UTC()
 	}
 	r.siguiente++
 	p.ID = r.siguiente
-	r.proyectos[p.ID] = *p
-	return nil
+	r.proyectos[p.ID] = p
+	return p, nil
 }
 
-func (r *ProjectRepositoryEnMemoria) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
-	if err := r.Create(p); err != nil {
-		return err
+func (r *ProjectRepositoryEnMemoria) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
+	guardado, err := r.Guardar(ctx, p)
+	if err != nil {
+		return domain.Project{}, err
 	}
-	return r.AddMember(&domain.Membership{ProjectID: p.ID, UserID: creatorID, Role: domain.RolScrumMaster})
+	if err := r.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+		return domain.Project{}, err
+	}
+	return guardado, nil
 }
 
-func (r *ProjectRepositoryEnMemoria) GetByID(id int64) (*domain.Project, error) {
+func (r *ProjectRepositoryEnMemoria) ObtenerPorID(_ context.Context, id int64) (domain.Project, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	p, ok := r.proyectos[id]
 	if !ok {
-		return nil, domain.ErrProyectoNoEncontrado
+		return domain.Project{}, domain.ErrProyectoNoEncontrado
 	}
-	return &p, nil
+	return p, nil
 }
 
-func (r *ProjectRepositoryEnMemoria) Update(p *domain.Project) error {
+func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Project) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if _, ok := r.proyectos[p.ID]; !ok {
 		return domain.ErrProyectoNoEncontrado
 	}
-	r.proyectos[p.ID] = *p
+	r.proyectos[p.ID] = p
 	return nil
 }
 
-func (r *ProjectRepositoryEnMemoria) AddMember(m *domain.Membership) error {
+func (r *ProjectRepositoryEnMemoria) AgregarIntegrante(_ context.Context, m domain.Membership) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, existente := range r.miembros {
@@ -67,24 +72,24 @@ func (r *ProjectRepositoryEnMemoria) AddMember(m *domain.Membership) error {
 			return ErrMiembroDuplicado
 		}
 	}
-	if m.CreatedAt.IsZero() {
-		m.CreatedAt = time.Now().UTC()
+	if m.CreadoEn.IsZero() {
+		m.CreadoEn = time.Now().UTC()
 	}
-	r.miembros = append(r.miembros, *m)
+	r.miembros = append(r.miembros, m)
 	return nil
 }
 
-func (r *ProjectRepositoryEnMemoria) ListMembers(projectID int64) ([]domain.Member, error) {
+func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	var out []domain.Member
 	for _, m := range r.miembros {
-		if m.ProjectID == projectID {
+		if m.ProjectID == proyectoID {
 			out = append(out, domain.Member{
 				UserID:    m.UserID,
 				ProjectID: m.ProjectID,
 				Role:      m.Role,
-				CreatedAt: m.CreatedAt,
+				CreadoEn:  m.CreadoEn,
 			})
 		}
 	}

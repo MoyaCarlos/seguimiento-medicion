@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -20,87 +21,87 @@ func NewSQLiteProjectRepository(db *sql.DB) *SQLiteProjectRepository {
 	return &SQLiteProjectRepository{db: db}
 }
 
-// Create persiste el proyecto, asignando ID y CreatedAt si vienen vacíos.
-func (r *SQLiteProjectRepository) Create(p *domain.Project) error {
-	if p.CreatedAt.IsZero() {
-		p.CreatedAt = time.Now().UTC()
+// Guardar persiste el proyecto y devuelve una copia con el ID asignado.
+func (r *SQLiteProjectRepository) Guardar(ctx context.Context, p domain.Project) (domain.Project, error) {
+	if p.CreadoEn.IsZero() {
+		p.CreadoEn = time.Now().UTC()
 	}
-	res, err := r.db.Exec(
+	res, err := r.db.ExecContext(ctx,
 		`INSERT INTO projects (name, description, start_date, end_date, created_at)
 		 VALUES (?, ?, ?, ?, ?)`,
-		p.Name, p.Description,
-		tiempoOpcionalAValor(p.StartDate), tiempoOpcionalAValor(p.EndDate),
-		p.CreatedAt.Format(time.RFC3339),
+		p.Nombre, p.Descripcion,
+		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
+		p.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
-		return fmt.Errorf("crear proyecto: %w", err)
+		return domain.Project{}, fmt.Errorf("crear proyecto: %w", err)
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("obtener id del proyecto: %w", err)
+		return domain.Project{}, fmt.Errorf("obtener id del proyecto: %w", err)
 	}
 	p.ID = id
-	return nil
+	return p, nil
 }
 
-// CreateWithScrumMaster inserta el proyecto y su membresía de Scrum Master en
+// GuardarConScrumMaster inserta el proyecto y su membresía de Scrum Master en
 // una sola transacción, de modo que si la segunda escritura falla no queda un
 // proyecto sin Scrum Master.
-func (r *SQLiteProjectRepository) CreateWithScrumMaster(p *domain.Project, creatorID int64) error {
-	if p.CreatedAt.IsZero() {
-		p.CreatedAt = time.Now().UTC()
+func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
+	if p.CreadoEn.IsZero() {
+		p.CreadoEn = time.Now().UTC()
 	}
 
-	tx, err := r.db.Begin()
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("iniciar transacción: %w", err)
+		return domain.Project{}, fmt.Errorf("iniciar transacción: %w", err)
 	}
 	defer tx.Rollback()
 
-	res, err := tx.Exec(
+	res, err := tx.ExecContext(ctx,
 		`INSERT INTO projects (name, description, start_date, end_date, created_at)
 		 VALUES (?, ?, ?, ?, ?)`,
-		p.Name, p.Description,
-		tiempoOpcionalAValor(p.StartDate), tiempoOpcionalAValor(p.EndDate),
-		p.CreatedAt.Format(time.RFC3339),
+		p.Nombre, p.Descripcion,
+		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
+		p.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
-		return fmt.Errorf("crear proyecto: %w", err)
+		return domain.Project{}, fmt.Errorf("crear proyecto: %w", err)
 	}
 	id, err := res.LastInsertId()
 	if err != nil {
-		return fmt.Errorf("obtener id del proyecto: %w", err)
+		return domain.Project{}, fmt.Errorf("obtener id del proyecto: %w", err)
 	}
 	p.ID = id
 
-	if _, err := tx.Exec(
+	if _, err := tx.ExecContext(ctx,
 		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
-		id, creatorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
+		id, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
 	); err != nil {
-		return fmt.Errorf("vincular scrum master: %w", err)
+		return domain.Project{}, fmt.Errorf("vincular scrum master: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("confirmar transacción: %w", err)
+		return domain.Project{}, fmt.Errorf("confirmar transacción: %w", err)
 	}
-	return nil
+	return p, nil
 }
 
-// GetByID devuelve el proyecto con el identificador indicado.
-func (r *SQLiteProjectRepository) GetByID(id int64) (*domain.Project, error) {
-	row := r.db.QueryRow(
+// ObtenerPorID devuelve el proyecto con el identificador indicado.
+func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Project, error) {
+	row := r.db.QueryRowContext(ctx,
 		`SELECT id, name, description, start_date, end_date, created_at FROM projects WHERE id = ?`,
 		id,
 	)
 	return escanearProyecto(row)
 }
 
-// Update reemplaza los datos editables del proyecto.
-func (r *SQLiteProjectRepository) Update(p *domain.Project) error {
-	resultado, err := r.db.Exec(
+// Actualizar reemplaza los datos editables del proyecto.
+func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Project) error {
+	resultado, err := r.db.ExecContext(ctx,
 		`UPDATE projects SET name = ?, description = ?, start_date = ?, end_date = ? WHERE id = ?`,
-		p.Name, p.Description,
-		tiempoOpcionalAValor(p.StartDate), tiempoOpcionalAValor(p.EndDate),
+		p.Nombre, p.Descripcion,
+		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
 		p.ID,
 	)
 	if err != nil {
@@ -116,14 +117,14 @@ func (r *SQLiteProjectRepository) Update(p *domain.Project) error {
 	return nil
 }
 
-// AddMember vincula un integrante con un rol al proyecto.
-func (r *SQLiteProjectRepository) AddMember(m *domain.Membership) error {
-	if m.CreatedAt.IsZero() {
-		m.CreatedAt = time.Now().UTC()
+// AgregarIntegrante vincula un integrante con un rol al proyecto.
+func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) error {
+	if m.CreadoEn.IsZero() {
+		m.CreadoEn = time.Now().UTC()
 	}
-	_, err := r.db.Exec(
+	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
-		m.ProjectID, m.UserID, string(m.Role), m.CreatedAt.Format(time.RFC3339),
+		m.ProjectID, m.UserID, string(m.Role), m.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
 		var sqliteErr *sqlite.Error
@@ -140,15 +141,15 @@ func (r *SQLiteProjectRepository) AddMember(m *domain.Membership) error {
 	return nil
 }
 
-// ListMembers devuelve los integrantes del proyecto con su nombre y rol.
-func (r *SQLiteProjectRepository) ListMembers(projectID int64) ([]domain.Member, error) {
-	filas, err := r.db.Query(
+// ListarIntegrantes devuelve los integrantes del proyecto con su nombre y rol.
+func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	filas, err := r.db.QueryContext(ctx,
 		`SELECT pm.user_id, pm.project_id, u.name, pm.role, pm.created_at
 		 FROM project_members pm
 		 JOIN users u ON u.id = pm.user_id
 		 WHERE pm.project_id = ?
 		 ORDER BY pm.rowid`,
-		projectID,
+		proyectoID,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("listar integrantes: %w", err)
@@ -161,10 +162,10 @@ func (r *SQLiteProjectRepository) ListMembers(projectID int64) ([]domain.Member,
 			m         domain.Member
 			createdAt string
 		)
-		if err := filas.Scan(&m.UserID, &m.ProjectID, &m.Name, &m.Role, &createdAt); err != nil {
+		if err := filas.Scan(&m.UserID, &m.ProjectID, &m.Nombre, &m.Role, &createdAt); err != nil {
 			return nil, fmt.Errorf("leer integrante: %w", err)
 		}
-		m.CreatedAt = parsearTiempo(createdAt)
+		m.CreadoEn = parsearTiempo(createdAt)
 		miembros = append(miembros, m)
 	}
 	if err := filas.Err(); err != nil {
@@ -173,21 +174,21 @@ func (r *SQLiteProjectRepository) ListMembers(projectID int64) ([]domain.Member,
 	return miembros, nil
 }
 
-func escanearProyecto(row *sql.Row) (*domain.Project, error) {
+func escanearProyecto(row *sql.Row) (domain.Project, error) {
 	var (
 		p                      domain.Project
 		inicio, fin, createdAt sql.NullString
 	)
-	if err := row.Scan(&p.ID, &p.Name, &p.Description, &inicio, &fin, &createdAt); err != nil {
+	if err := row.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, domain.ErrProyectoNoEncontrado
+			return domain.Project{}, domain.ErrProyectoNoEncontrado
 		}
-		return nil, fmt.Errorf("leer proyecto: %w", err)
+		return domain.Project{}, fmt.Errorf("leer proyecto: %w", err)
 	}
-	p.StartDate = valorATiempoOpcional(inicio)
-	p.EndDate = valorATiempoOpcional(fin)
-	p.CreatedAt = parsearTiempo(createdAt.String)
-	return &p, nil
+	p.FechaInicio = valorATiempoOpcional(inicio)
+	p.FechaFin = valorATiempoOpcional(fin)
+	p.CreadoEn = parsearTiempo(createdAt.String)
+	return p, nil
 }
 
 func tiempoOpcionalAValor(t *time.Time) any {
