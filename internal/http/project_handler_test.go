@@ -329,7 +329,7 @@ func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva"}`))
+	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
 	handler.Editar(rec, req)
 
@@ -349,7 +349,7 @@ func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 	idStr := strconv.FormatInt(id, 10)
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":""}`))
+	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
 	handler.Editar(rec, req)
 
@@ -366,7 +366,7 @@ func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X"}`))
+	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", "999")
 	handler.Editar(rec, req)
 

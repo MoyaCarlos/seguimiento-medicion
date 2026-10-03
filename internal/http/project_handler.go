@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	nethttp "net/http"
 	"strconv"
 
@@ -85,12 +86,28 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	var req editarProyectoRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return
 	}
+	var claves map[string]json.RawMessage
+	if err := json.Unmarshal(data, &claves); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	for _, campo := range []string{"nombre", "descripcion", "fecha_inicio", "fecha_fin"} {
+		if _, ok := claves[campo]; !ok {
+			escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: campo, Mensaje: "el campo es obligatorio"})
+			return
+		}
+	}
 
+	var req editarProyectoRequest
+	if err := json.Unmarshal(data, &req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
 	inicio, err := parsearFecha(req.FechaInicio, "fecha_inicio")
 	if err != nil {
 		escribirError(w, err)
