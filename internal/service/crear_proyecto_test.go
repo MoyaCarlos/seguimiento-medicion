@@ -69,8 +69,8 @@ func TestCrearProyecto_Ejecutar_CreadorObligatorio(t *testing.T) {
 		Creador: "",
 	})
 	var verr domain.ValidationError
-	if !errors.As(err, &verr) || verr.Campo != "nombre" {
-		t.Fatalf("se esperaba ValidationError de nombre del creador, se obtuvo %v", err)
+	if !errors.As(err, &verr) || verr.Campo != "creador" {
+		t.Fatalf("se esperaba ValidationError de creador, se obtuvo %v", err)
 	}
 	if proyectos.creates != 0 {
 		t.Error("no se debía persistir el proyecto sin creador válido")
