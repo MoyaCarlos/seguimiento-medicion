@@ -188,6 +188,43 @@ func TestSQLiteProjectRepository_UpdateInexistente(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_ListMembers_OrdenDeAlta(t *testing.T) {
+	db := abrirBDDePrueba(t)
+	proyectos := NewSQLiteProjectRepository(db)
+	usuarios := NewSQLiteUserRepository(db)
+
+	p, _ := domain.NewProject("Proyecto", "", nil, nil)
+	if err := proyectos.Create(&p); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	// Tres altas con el mismo created_at (resolución de segundos) en orden no
+	// alfabético: el orden real de alta debe prevalecer.
+	nombres := []string{"Jimena", "Ana", "Candela"}
+	fecha := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	for _, n := range nombres {
+		u, _ := domain.NewUser(n)
+		if err := usuarios.Create(&u); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		m, _ := domain.NewMembership(p.ID, u.ID, domain.RolProductBuilder)
+		m.CreatedAt = fecha
+		if err := proyectos.AddMember(&m); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+	}
+
+	miembros, err := proyectos.ListMembers(p.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	for i, n := range nombres {
+		if miembros[i].Name != n {
+			t.Fatalf("se esperaba orden de alta %v, se obtuvo %q en la posición %d", nombres, miembros[i].Name, i)
+		}
+	}
+}
+
 func TestSQLiteProjectRepository_Miembros(t *testing.T) {
 	db := abrirBDDePrueba(t)
 	proyectos := NewSQLiteProjectRepository(db)
