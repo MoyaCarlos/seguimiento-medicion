@@ -120,6 +120,25 @@ func TestSQLiteProjectRepository_CreateWithScrumMaster_Rollback(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_AddMember_FKVioladaNoEsNoEncontrado(t *testing.T) {
+	db := abrirBDDePrueba(t)
+	proyectos := NewSQLiteProjectRepository(db)
+
+	p, _ := domain.NewProject("Proyecto", "", nil, nil)
+	if err := proyectos.Create(&p); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	m := domain.Membership{ProjectID: p.ID, UserID: 999, Role: domain.RolScrumMaster}
+	err := proyectos.AddMember(&m)
+	if err == nil {
+		t.Fatal("se esperaba error por FK")
+	}
+	if errors.Is(err, ErrNoEncontrado) {
+		t.Fatalf("una falla de FK no debe mapearse a 'no encontrado': %v", err)
+	}
+}
+
 func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
