@@ -246,8 +246,8 @@ func TestProjectHandler_Obtener_Existente(t *testing.T) {
 func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/projects/no-existe", nil)
-	req.SetPathValue("id", "no-existe")
+	req := httptest.NewRequest(http.MethodGet, "/projects/999", nil)
+	req.SetPathValue("id", "999")
 	handler.Obtener(rec, req)
 
 	if rec.Code != http.StatusNotFound {
@@ -332,8 +332,8 @@ func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPut, "/projects/no-existe", bytes.NewBufferString(`{"nombre":"X"}`))
-	req.SetPathValue("id", "no-existe")
+	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X"}`))
+	req.SetPathValue("id", "999")
 	handler.Editar(rec, req)
 
 	if rec.Code != http.StatusNotFound {
@@ -409,8 +409,8 @@ func TestProjectHandler_AsignarIntegrante_Duplicado(t *testing.T) {
 func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodPost, "/projects/no-existe/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
-	req.SetPathValue("id", "no-existe")
+	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
+	req.SetPathValue("id", "999")
 	handler.AsignarIntegrante(rec, req)
 
 	if rec.Code != http.StatusNotFound {

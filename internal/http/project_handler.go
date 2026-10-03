@@ -165,7 +165,7 @@ func (h *ProjectHandler) ListarIntegrantes(w nethttp.ResponseWriter, r *nethttp.
 func parsearID(valor string) (int64, error) {
 	id, err := strconv.ParseInt(valor, 10, 64)
 	if err != nil || id <= 0 {
-		return 0, domain.ErrNoEncontrado
+		return 0, domain.ValidationError{Campo: "id", Mensaje: "el identificador debe ser un entero positivo"}
 	}
 	return id, nil
 }
