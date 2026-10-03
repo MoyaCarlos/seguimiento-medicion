@@ -53,6 +53,27 @@ func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
+	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+
+	var ids []int64
+	for i := 0; i < 3; i++ {
+		p, _ := domain.NewProject("Proyecto", "", nil, nil)
+		if err := repo.Create(&p); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		ids = append(ids, p.ID)
+	}
+	if ids[0] <= 0 {
+		t.Fatalf("se esperaba un ID positivo, se obtuvo %d", ids[0])
+	}
+	for i := 1; i < len(ids); i++ {
+		if ids[i] <= ids[i-1] {
+			t.Fatalf("se esperaban IDs crecientes, se obtuvieron %v", ids)
+		}
+	}
+}
+
 func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
 
