@@ -258,7 +258,7 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext) {
 	ctx.Step(`^habilita su panel principal, cuya navegación realiza el frontend$`, pc.habilitaPanel)
 	ctx.Step(`^que intento crear un proyecto$`, pc.intentoCrearProyecto)
 	ctx.Step(`^dejo el nombre vacío o compuesto solo por espacios y presiono "Crear"$`, pc.crearProyectoNombreVacio)
-	ctx.Step(`^el sistema muestra una advertencia de validación$`, pc.muestraAdvertencia)
+	ctx.Step(`^el sistema muestra una advertencia de validación del proyecto$`, pc.muestraAdvertencia)
 	ctx.Step(`^no genera el proyecto$`, pc.noGeneraProyecto)
 	ctx.Step(`^que existe un proyecto creado$`, pc.existeProyectoCreado)
 	ctx.Step(`^estoy en la vista de configuración del proyecto$`, pc.enConfiguracion)

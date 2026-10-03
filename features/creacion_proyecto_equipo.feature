@@ -17,7 +17,7 @@ Característica: Creación de Proyecto y Asignación de Equipo
   Escenario: Creación con nombre vacío
     Dado que intento crear un proyecto
     Cuando dejo el nombre vacío o compuesto solo por espacios y presiono "Crear"
-    Entonces el sistema muestra una advertencia de validación
+    Entonces el sistema muestra una advertencia de validación del proyecto
     Y no genera el proyecto
 
   Escenario: Asignación de integrante y rol
@@ -31,7 +31,7 @@ Característica: Creación de Proyecto y Asignación de Equipo
     Dado que existe un proyecto creado
     Y estoy en la vista de configuración del proyecto
     Cuando ingreso un integrante sin nombre o con un rol inválido y confirmo
-    Entonces el sistema muestra una advertencia de validación
+    Entonces el sistema muestra una advertencia de validación del proyecto
     Y no realiza la vinculación
 
   Escenario: Edición de un proyecto existente
@@ -44,14 +44,14 @@ Característica: Creación de Proyecto y Asignación de Equipo
     Dado que existe un proyecto creado
     Y estoy en la vista de edición del proyecto
     Cuando dejo el nombre vacío o compuesto solo por espacios y guardo
-    Entonces el sistema muestra una advertencia de validación
+    Entonces el sistema muestra una advertencia de validación del proyecto
     Y no guarda los cambios
 
   Escenario: Edición con fecha de fin anterior a la fecha de inicio
     Dado que existe un proyecto creado
     Y estoy en la vista de edición del proyecto
     Cuando ingreso una fecha de fin anterior a la fecha de inicio y guardo
-    Entonces el sistema muestra una advertencia de validación
+    Entonces el sistema muestra una advertencia de validación del proyecto
     Y no guarda los cambios
 
   Escenario: Cancelar la edición sin aplicar cambios
