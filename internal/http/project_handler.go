@@ -86,6 +86,12 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
+	// El proyecto inexistente domina (404) sobre cualquier validación del cuerpo.
+	if _, err := h.obtener.Ejecutar(r.Context(), id); err != nil {
+		escribirError(w, err)
+		return
+	}
+
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
