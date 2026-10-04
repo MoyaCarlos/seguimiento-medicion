@@ -54,3 +54,35 @@ func TestCrearSprint_ProyectoInexistente(t *testing.T) {
 		t.Errorf("no debía guardarse ningún Sprint, hay %d", len(guardados))
 	}
 }
+
+func TestCrearSprint_RechazaSegundoPendiente(t *testing.T) {
+	proyectos := repository.NewProjectRepositoryEnMemoria()
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	proyecto := sembrarProyecto(t, proyectos)
+	sembrarSprintPendiente(t, sprints, proyecto.ID)
+
+	_, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID)
+	esperarValidacion(t, err, "estado")
+
+	delProyecto, err := sprints.ListarPorProyecto(context.Background(), proyecto.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al listar: %v", err)
+	}
+	if len(delProyecto) != 1 {
+		t.Errorf("el proyecto debía seguir con un solo Sprint, tiene %d", len(delProyecto))
+	}
+}
+
+func TestCrearSprint_PermitePendienteSiElOtroEstaActivo(t *testing.T) {
+	proyectos := repository.NewProjectRepositoryEnMemoria()
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	proyecto := sembrarProyecto(t, proyectos)
+	activo := sembrarSprintPendiente(t, sprints, proyecto.ID)
+	if _, err := NewIniciarSprint(sprints).Ejecutar(context.Background(), inputValido(activo.ID)); err != nil {
+		t.Fatalf("no se esperaba error al iniciar: %v", err)
+	}
+
+	if _, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID); err != nil {
+		t.Fatalf("con un Sprint Activo se debe poder preparar el siguiente: %v", err)
+	}
+}
