@@ -19,6 +19,7 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
 ## Tu rol como Scrum Master / Agile Enabler
 
 No sos quien construye el producto (eso son las Product Builders) — sos quien:
+
 - Organiza las ceremonias (Planning, Daily, Review, Retrospective).
 - Cuida que el proceso (Scrum + SDD + BDD + TDD) se siga de verdad, no solo
   de nombre.
@@ -102,12 +103,12 @@ La consigna pide estos 13 al final. Marcá los que ya tengan avance real:
 
 Si en algún momento hay que elegir en qué invertir el tiempo que queda:
 
-| Criterio | % |
-|---|---|
-| Producto funcional | 25% |
-| SDD, BDD y TDD | 25% |
-| Calidad del software | 20% |
-| Gestión del proyecto | 20% |
+| Criterio                         | %   |
+| -------------------------------- | --- |
+| Producto funcional               | 25% |
+| SDD, BDD y TDD                   | 25% |
+| Calidad del software             | 20% |
+| Gestión del proyecto             | 20% |
 | Trabajo en equipo y presentación | 10% |
 
 Es decir: **el proceso (SDD+BDD+TDD) pesa lo mismo que el producto

@@ -23,14 +23,23 @@ func main() {
 		log.Fatalf("migrar base de datos: %v", err)
 	}
 
-	repo := repository.NewSQLiteBacklogRepository(db)
-	crearHistoria := service.NewCrearHistoriaBacklog(repo)
+	backlogRepo := repository.NewSQLiteBacklogRepository(db)
+	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo)
 	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
+
+	proyectos := repository.NewSQLiteProjectRepository(db)
+	usuarios := repository.NewSQLiteUserRepository(db)
+	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
+	obtenerProyecto := service.NewObtenerProyecto(proyectos)
+	editarProyecto := service.NewEditarProyecto(proyectos)
+	asignarIntegrante := service.NewAsignarIntegrante(proyectos, usuarios)
+	listarIntegrantes := service.NewListarIntegrantes(proyectos)
+	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes)
 
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewIniciarSprint(sprintRepo),
-		service.NewCerrarSprint(sprintRepo, repo),
+		service.NewCerrarSprint(sprintRepo, backlogRepo),
 	)
 
 	mux := http.NewServeMux()
@@ -38,6 +47,11 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("POST /projects", projectHandler.Crear)
+	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
+	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
+	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
+	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 

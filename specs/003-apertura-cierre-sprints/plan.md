@@ -1,8 +1,8 @@
 # Implementation Plan: Apertura y Cierre de Sprints
 
-**Branch**: `002-apertura-cierre-sprints` | **Date**: 2026-10-01 | **Spec**: [spec.md](./spec.md)
+**Branch**: `003-apertura-cierre-sprints` | **Date**: 2026-10-01 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/002-apertura-cierre-sprints/spec.md`
+**Input**: Feature specification from `/specs/003-apertura-cierre-sprints/spec.md`
 
 ## Summary
 
@@ -68,7 +68,7 @@ Sin violaciones — no hace falta llenar Complexity Tracking.
 ### Documentation (this feature)
 
 ```text
-specs/002-apertura-cierre-sprints/
+specs/003-apertura-cierre-sprints/
 ├── plan.md              # Este archivo
 ├── research.md          # Fase 0
 ├── data-model.md        # Fase 1

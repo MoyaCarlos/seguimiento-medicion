@@ -92,7 +92,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	switch {
 	case errors.As(err, &verr):
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
-	case errors.Is(err, domain.ErrSprintNoEncontrado):
+	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	default:
 		escribirJSON(w, nethttp.StatusInternalServerError, errorResponse{Mensaje: "error interno"})

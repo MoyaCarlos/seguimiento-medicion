@@ -4,7 +4,7 @@ description: "Task list for HU-05: Apertura y Cierre de Sprints"
 
 # Tasks: Apertura y Cierre de Sprints
 
-**Input**: Design documents from `/specs/002-apertura-cierre-sprints/`
+**Input**: Design documents from `/specs/003-apertura-cierre-sprints/`
 **Prerequisites**: plan.md, spec.md, data-model.md, research.md, contracts/, quickstart.md
 
 **Tests**: la Constitución (Principio I, NON-NEGOTIABLE) exige TDD estricto

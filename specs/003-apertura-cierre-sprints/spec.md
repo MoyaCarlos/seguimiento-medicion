@@ -1,6 +1,6 @@
 # Feature Specification: Apertura y Cierre de Sprints
 
-**Feature Branch**: `002-apertura-cierre-sprints`
+**Feature Branch**: `003-apertura-cierre-sprints`
 
 **Created**: 2026-10-01
 
