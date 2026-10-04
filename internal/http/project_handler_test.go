@@ -383,6 +383,18 @@ func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 	}
 }
 
+func TestProjectHandler_Editar_InexistenteConCuerpoInvalido(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X"}`))
+	req.SetPathValue("id", "999")
+	handler.Editar(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre cuerpo inválido), se obtuvo %d", rec.Code)
+	}
+}
+
 func TestProjectHandler_AsignarIntegrante_Exitosa(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
