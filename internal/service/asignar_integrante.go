@@ -33,6 +33,10 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 		return domain.Member{}, err
 	}
 
+	if !input.Rol.Valido() {
+		return domain.Member{}, domain.ValidationError{Campo: "rol", Mensaje: "el rol debe ser scrum_master o product_builder"}
+	}
+
 	candidato, err := domain.NewUser(input.Nombre)
 	if err != nil {
 		return domain.Member{}, err
