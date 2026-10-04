@@ -23,60 +23,27 @@ func NewSQLiteProjectRepository(db *sql.DB) *SQLiteProjectRepository {
 
 // Guardar persiste el proyecto y devuelve una copia con el ID asignado.
 func (r *SQLiteProjectRepository) Guardar(ctx context.Context, p domain.Project) (domain.Project, error) {
-	if p.CreadoEn.IsZero() {
-		p.CreadoEn = time.Now().UTC()
-	}
-	res, err := r.db.ExecContext(ctx,
-		`INSERT INTO projects (name, description, start_date, end_date, created_at)
-		 VALUES (?, ?, ?, ?, ?)`,
-		p.Nombre, p.Descripcion,
-		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
-		p.CreadoEn.Format(time.RFC3339),
-	)
-	if err != nil {
-		return domain.Project{}, fmt.Errorf("crear proyecto: %w", err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return domain.Project{}, fmt.Errorf("obtener id del proyecto: %w", err)
-	}
-	p.ID = id
-	return p, nil
+	return insertarProyecto(ctx, r.db, p)
 }
 
 // GuardarConScrumMaster inserta el proyecto y su membresía de Scrum Master en
 // una sola transacción, de modo que si la segunda escritura falla no queda un
 // proyecto sin Scrum Master.
 func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
-	if p.CreadoEn.IsZero() {
-		p.CreadoEn = time.Now().UTC()
-	}
-
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		return domain.Project{}, fmt.Errorf("iniciar transacción: %w", err)
 	}
 	defer tx.Rollback()
 
-	res, err := tx.ExecContext(ctx,
-		`INSERT INTO projects (name, description, start_date, end_date, created_at)
-		 VALUES (?, ?, ?, ?, ?)`,
-		p.Nombre, p.Descripcion,
-		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
-		p.CreadoEn.Format(time.RFC3339),
-	)
+	p, err = insertarProyecto(ctx, tx, p)
 	if err != nil {
-		return domain.Project{}, fmt.Errorf("crear proyecto: %w", err)
+		return domain.Project{}, err
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return domain.Project{}, fmt.Errorf("obtener id del proyecto: %w", err)
-	}
-	p.ID = id
 
 	if _, err := tx.ExecContext(ctx,
 		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
-		id, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
+		p.ID, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
 	); err != nil {
 		return domain.Project{}, fmt.Errorf("vincular scrum master: %w", err)
 	}
@@ -84,6 +51,34 @@ func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p d
 	if err := tx.Commit(); err != nil {
 		return domain.Project{}, fmt.Errorf("confirmar transacción: %w", err)
 	}
+	return p, nil
+}
+
+// ejecutorSQL abstrae *sql.DB y *sql.Tx para compartir el INSERT de proyectos.
+type ejecutorSQL interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
+// insertarProyecto inserta el proyecto en el ejecutor dado y asigna el ID.
+func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (domain.Project, error) {
+	if p.CreadoEn.IsZero() {
+		p.CreadoEn = time.Now().UTC()
+	}
+	res, err := ex.ExecContext(ctx,
+		`INSERT INTO projects (name, description, start_date, end_date, created_at)
+		 VALUES (?, ?, ?, ?, ?)`,
+		p.Nombre, p.Descripcion,
+		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
+		p.CreadoEn.Format(time.RFC3339),
+	)
+	if err != nil {
+		return domain.Project{}, fmt.Errorf("crear proyecto: %w", err)
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return domain.Project{}, fmt.Errorf("obtener id del proyecto: %w", err)
+	}
+	p.ID = id
 	return p, nil
 }
 
