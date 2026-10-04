@@ -53,6 +53,7 @@ func main() {
 	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
+	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
