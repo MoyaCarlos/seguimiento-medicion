@@ -113,5 +113,37 @@ func Migrar(ctx context.Context, db *sql.DB) error {
 			return fmt.Errorf("migrar %s: %w", e.nombre, err)
 		}
 	}
+	if err := verificarEsquemaViejo(ctx, db); err != nil {
+		return err
+	}
 	return nil
+}
+
+// verificarEsquemaViejo detecta una base creada con IDs TEXT (esquema previo a
+// int64) y devuelve un error que indica cómo resolverlo. CREATE TABLE IF NOT
+// EXISTS no migra una tabla ya existente, así que ese caso debe señalarse.
+func verificarEsquemaViejo(ctx context.Context, db *sql.DB) error {
+	filas, err := db.QueryContext(ctx, "PRAGMA table_info(projects)")
+	if err != nil {
+		return fmt.Errorf("inspeccionar esquema de projects: %w", err)
+	}
+	defer filas.Close()
+
+	for filas.Next() {
+		var (
+			cid     int
+			nombre  string
+			tipo    string
+			notnull int
+			dflt    sql.NullString
+			pk      int
+		)
+		if err := filas.Scan(&cid, &nombre, &tipo, &notnull, &dflt, &pk); err != nil {
+			return fmt.Errorf("leer esquema de projects: %w", err)
+		}
+		if nombre == "id" && strings.EqualFold(tipo, "TEXT") {
+			return ErrEsquemaViejo
+		}
+	}
+	return filas.Err()
 }

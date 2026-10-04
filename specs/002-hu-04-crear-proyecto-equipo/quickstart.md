@@ -13,6 +13,11 @@ implementación.
 - Puerto `8080` libre.
 - Formato de fechas en la API: `YYYY-MM-DD` (RFC3339 en la base).
 
+> **Importante al actualizar**: quien actualice desde una versión anterior debe
+> borrar su `seguimiento.db` local si fue creado con IDs `TEXT` (esquema viejo).
+> Al migrar, la aplicación detecta ese esquema y termina con un error claro en
+> vez de seguir con un 500.
+
 ## Preparación
 
 ```powershell
