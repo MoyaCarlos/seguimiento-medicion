@@ -11,11 +11,11 @@ actuales y el orden, sin renombrar.
 | Campo | Tipo Go | Obligatorio | Descripción |
 |-------|---------|-------------|-------------|
 | `ID` | `int64` | — (asignado al persistir) | Autoincremental, asignado por el repositorio con `LastInsertId()`. |
-| `Name` | `string` | Sí | No vacío (ni solo espacios), ≤ 100 caracteres (FR-005). Nombre repetido permitido (FR-007). |
-| `Description` | `string` | No | ≤ 2000 caracteres. Puede quedar vacía (FR-001, FR-019). |
-| `StartDate` | `*time.Time` | No | Fecha de inicio; `nil` si no se informa. |
-| `EndDate` | `*time.Time` | No | Fecha de fin; `nil` si no se informa. Si ambas existen, no puede ser anterior a `StartDate` (FR-020). |
-| `CreatedAt` | `time.Time` | Sí (automático) | Timestamp de creación. No editable. |
+| `Nombre` | `string` | Sí | No vacío (ni solo espacios), ≤ 100 caracteres (FR-005). Nombre repetido permitido (FR-007). |
+| `Descripcion` | `string` | No | ≤ 2000 caracteres. Puede quedar vacía (FR-001, FR-019). |
+| `FechaInicio` | `*time.Time` | No | Fecha de inicio; `nil` si no se informa. |
+| `FechaFin` | `*time.Time` | No | Fecha de fin; `nil` si no se informa. Si ambas existen, no puede ser anterior a `FechaInicio` (FR-020). |
+| `CreadoEn` | `time.Time` | Sí (automático) | Timestamp de creación. No editable. |
 
 > HU-13 (`Should have`) es quien agrega la consulta del estado derivado
 > (Planificado/En curso/Finalizado). HU-04 solo registra y edita las fechas.
@@ -29,24 +29,24 @@ func (p Project) ConDatosEditados(name, description string, start, end *time.Tim
 
 Invariantes validados (en este orden; se devuelve el primer `ValidationError`).
 `ConDatosEditados` reutiliza exactamente la misma validación que `NewProject` (DRY, FR-019)
-y conserva `ID` y `CreatedAt`:
+y conserva `ID` y `CreadoEn`:
 
 1. `name` no vacío tras `strings.TrimSpace` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre es obligatorio"}`.
 2. `len([]rune(name)) <= 100` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre no puede superar los 100 caracteres"}`.
 3. `len([]rune(description)) <= 2000` → si falla: `ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}`.
 4. `start == nil || end == nil || !end.Before(*start)` → si falla: `ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin no puede ser anterior a la fecha de inicio"}`.
 
-Comportamiento de inicialización: `Name` y `Description` se normalizan con `TrimSpace`;
-`ID` queda vacío hasta que el repositorio lo asigne; `CreatedAt` se fija al persistir.
+Comportamiento de inicialización: `Nombre` y `Descripcion` se normalizan con `TrimSpace`;
+`ID` queda vacío hasta que el repositorio lo asigne; `CreadoEn` se fija al persistir.
 
 ## Entidad de dominio: `User` (integrante)
 
 | Campo | Tipo Go | Obligatorio | Descripción |
 |-------|---------|-------------|-------------|
 | `ID` | `int64` | — (asignado al persistir) | Autoincremental, asignado por el repositorio. |
-| `Name` | `string` | Sí | Nombre tal como se ingresó, recortado. No vacío, ≤ 200 caracteres (FR-013). |
-| `NormalizedName` | `string` | Sí (derivado) | `ToLower(TrimSpace(Name))`; clave de unicidad para reutilización (FR-016, R3). |
-| `CreatedAt` | `time.Time` | Sí (automático) | Timestamp de creación. |
+| `Nombre` | `string` | Sí | Nombre tal como se ingresó, recortado. No vacío, ≤ 200 caracteres (FR-013). |
+| `NombreNormalizado` | `string` | Sí (derivado) | `ToLower(TrimSpace(Nombre))`; clave de unicidad para reutilización (FR-016, R3). |
+| `CreadoEn` | `time.Time` | Sí (automático) | Timestamp de creación. |
 
 ### Constructor
 
@@ -57,7 +57,7 @@ func NewUser(name string) (User, error)
 1. `name` no vacío tras `TrimSpace` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre del integrante es obligatorio"}`.
 2. `len([]rune(name)) <= 200` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre del integrante no puede superar los 200 caracteres"}`.
 
-`NormalizedName` se calcula siempre con `ToLower(TrimSpace(name))` (FR-016).
+`NombreNormalizado` se calcula siempre con `ToLower(TrimSpace(Nombre))` (FR-016).
 
 ## Enum de dominio: `Role`
 
@@ -73,10 +73,10 @@ Un rol inválido produce `ValidationError{Campo: "rol", Mensaje: "el rol debe se
 
 | Campo | Tipo Go | Obligatorio | Descripción |
 |-------|---------|-------------|-------------|
-| `ProjectID` | `string` | Sí | Proyecto existente (FR-009). |
-| `UserID` | `string` | Sí | Integrante (existente o recién creado). |
+| `ProjectID` | `int64` | Sí | Proyecto existente (FR-009). |
+| `UserID` | `int64` | Sí | Integrante (existente o recién creado). |
 | `Role` | `Role` | Sí | Un único rol por integrante y proyecto (FR-011, SC-007). |
-| `CreatedAt` | `time.Time` | Sí (automático) | Timestamp de vinculación. |
+| `CreadoEn` | `time.Time` | Sí (automático) | Timestamp de vinculación. |
 
 ### Constructor
 

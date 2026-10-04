@@ -7,8 +7,9 @@ import (
 )
 
 // ProjectRepository es el puerto de persistencia de proyectos y su equipo.
-// El contrato de Guardar/ObtenerPorID es consumido por otras historias y no se
-// altera.
+// Los métodos se renombraron a la convención en español (Create→Guardar,
+// GetByID→ObtenerPorID, Update→Actualizar, AddMember→AgregarIntegrante,
+// ListMembers→ListarIntegrantes); la interfaz es consumida por otras historias.
 type ProjectRepository interface {
 	Guardar(ctx context.Context, p domain.Project) (domain.Project, error)
 	GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error)

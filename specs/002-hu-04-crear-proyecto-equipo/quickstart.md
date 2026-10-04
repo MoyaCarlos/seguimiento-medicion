@@ -44,7 +44,7 @@ curl -i -X POST http://localhost:8080/projects `
 Resultado esperado:
 
 - HTTP `201 Created`.
-- Cuerpo con `id` (UUID), `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`, `creado_en`.
+- Cuerpo con `id` (entero autoincremental), `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`, `creado_en`.
 - El creador queda vinculado: `GET /projects/{id}/members` devuelve a "Ana Valentina" con rol `scrum_master`.
 - Al reiniciar la API, el proyecto y su integrante siguen disponibles (SC-002).
 
