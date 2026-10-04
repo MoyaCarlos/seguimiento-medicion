@@ -50,29 +50,51 @@ CREATE TABLE IF NOT EXISTS project_members (
     FOREIGN KEY (user_id)    REFERENCES users(id)
 );`
 
-// AbrirSQLite abre una conexión a SQLite (driver puro Go, sin CGO) y activa
-// las claves foráneas en todas las conexiones del pool. Para las bases
-// :memory: se limita a una conexión (cada conexión abriría una base distinta);
-// para las de archivo se activan las FK por DSN (_pragma).
+// AbrirSQLite abre una conexión a SQLite (driver puro Go, sin CGO) limitada a
+// una única conexión, activa las claves foráneas y configura un busy_timeout
+// para las bases en archivo (vía _pragma en el DSN). Las bases en memoria
+// (también en su forma URI) activan las FK por sentencia.
 func AbrirSQLite(dsn string) (*sql.DB, error) {
-	if strings.HasPrefix(dsn, ":memory:") {
-		db, err := sql.Open("sqlite", dsn)
-		if err != nil {
-			return nil, fmt.Errorf("abrir sqlite: %w", err)
-		}
-		db.SetMaxOpenConns(1)
+	enMemoria := esDSNEnMemoria(dsn)
+
+	abierto := dsn
+	if !enMemoria {
+		abierto = dsnConPragmas(dsn)
+	}
+
+	db, err := sql.Open("sqlite", abierto)
+	if err != nil {
+		return nil, fmt.Errorf("abrir sqlite: %w", err)
+	}
+	db.SetMaxOpenConns(1)
+
+	if enMemoria {
 		if _, err := db.ExecContext(context.Background(), "PRAGMA foreign_keys = ON"); err != nil {
 			_ = db.Close()
 			return nil, fmt.Errorf("activar foreign keys: %w", err)
 		}
-		return db, nil
-	}
-
-	db, err := sql.Open("sqlite", dsn+"?_pragma=foreign_keys(1)")
-	if err != nil {
-		return nil, fmt.Errorf("abrir sqlite: %w", err)
 	}
 	return db, nil
+}
+
+// dsnConPragmas agrega foreign_keys y busy_timeout respetando los parámetros que
+// el DSN ya pudiera traer (? para el primero, & para los siguientes).
+func dsnConPragmas(dsn string) string {
+	separador := "?"
+	if strings.Contains(dsn, "?") {
+		separador = "&"
+	}
+	return dsn + separador + "_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
+}
+
+// esDSNEnMemoria reconoce tanto la forma simple ":memory:" como las URI de
+// memoria (p.ej. "file::memory:?cache=shared").
+func esDSNEnMemoria(dsn string) bool {
+	base := dsn
+	if i := strings.IndexByte(dsn, '?'); i >= 0 {
+		base = dsn[:i]
+	}
+	return base == ":memory:" || base == "file::memory:"
 }
 
 // Migrar crea el esquema de forma idempotente.

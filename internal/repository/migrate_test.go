@@ -10,6 +10,37 @@ import (
 	"time"
 )
 
+func TestDSNConPragmas_SinParametros(t *testing.T) {
+	got := dsnConPragmas("file:app.db")
+	want := "file:app.db?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
+	if got != want {
+		t.Errorf("se esperaba %q, se obtuvo %q", want, got)
+	}
+}
+
+func TestDSNConPragmas_ConParametros(t *testing.T) {
+	got := dsnConPragmas("file:app.db?cache=shared")
+	want := "file:app.db?cache=shared&_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
+	if got != want {
+		t.Errorf("se esperaba %q, se obtuvo %q", want, got)
+	}
+}
+
+func TestEsDSNEnMemoria(t *testing.T) {
+	casos := map[string]bool{
+		":memory:":                   true,
+		"file::memory:":              true,
+		"file::memory:?cache=shared": true,
+		"file:app.db":                false,
+		"app.db":                     false,
+	}
+	for dsn, esperado := range casos {
+		if esDSNEnMemoria(dsn) != esperado {
+			t.Errorf("esDSNEnMemoria(%q) se esperaba %v", dsn, esperado)
+		}
+	}
+}
+
 func TestAbrirSQLite_PragmasEnArchivoReal(t *testing.T) {
 	archivo := filepath.Join(t.TempDir(), "prueba.db")
 	db, err := AbrirSQLite(archivo)
