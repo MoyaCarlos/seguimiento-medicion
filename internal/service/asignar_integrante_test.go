@@ -40,6 +40,25 @@ func TestAsignarIntegrante_Exitosa(t *testing.T) {
 	}
 }
 
+func TestAsignarIntegrante_VinculadoEnNoCero(t *testing.T) {
+	proyectos := &fakeProjectRepository{}
+	usuarios := &fakeUserRepository{}
+	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
+
+	servicio := NewAsignarIntegrante(proyectos, usuarios)
+	miembro, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+		ProyectoID: proyectoID,
+		Nombre:     "Jimena",
+		Rol:        domain.RolProductBuilder,
+	})
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if miembro.CreadoEn.IsZero() {
+		t.Error("se esperaba que vinculado_en no fuera la fecha cero")
+	}
+}
+
 func TestAsignarIntegrante_ReutilizaUsuario(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
 	usuarios := &fakeUserRepository{}
