@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -35,5 +36,21 @@ func TestCrearSprint_Exitoso(t *testing.T) {
 	}
 	if estadoPersistido(t, sprints, creado.ID) != domain.SprintPendiente {
 		t.Error("el Sprint no quedó persistido en estado Pendiente")
+	}
+}
+
+func TestCrearSprint_ProyectoInexistente(t *testing.T) {
+	sprints := repository.NewSprintRepositoryEnMemoria()
+
+	_, err := NewCrearSprint(repository.NewProjectRepositoryEnMemoria(), sprints).Ejecutar(context.Background(), 999)
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+	}
+	guardados, err := sprints.ListarPorProyecto(context.Background(), 999)
+	if err != nil {
+		t.Fatalf("no se esperaba error al listar: %v", err)
+	}
+	if len(guardados) != 0 {
+		t.Errorf("no debía guardarse ningún Sprint, hay %d", len(guardados))
 	}
 }
