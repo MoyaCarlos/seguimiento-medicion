@@ -155,6 +155,10 @@ func (c *proyectoContext) vinculaIntegrante() error {
 func (c *proyectoContext) habilitaPermisos() error { return nil }
 
 func (c *proyectoContext) asignarInvalido() error {
+	usuariosAntes, err := c.contarUsuarios()
+	if err != nil {
+		return err
+	}
 	_, errNombre := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "",
@@ -172,8 +176,23 @@ func (c *proyectoContext) asignarInvalido() error {
 	if !errors.As(errRol, &vRol) || vRol.Campo != "rol" {
 		return fmt.Errorf("se esperaba ValidationError de rol inválido, se obtuvo %v", errRol)
 	}
+	usuariosDespues, err := c.contarUsuarios()
+	if err != nil {
+		return err
+	}
+	if usuariosDespues != usuariosAntes {
+		return fmt.Errorf("se crearon %d usuarios pese al error (usuario huérfano)", usuariosDespues-usuariosAntes)
+	}
 	c.err = errNombre
 	return nil
+}
+
+func (c *proyectoContext) contarUsuarios() (int, error) {
+	var total int
+	if err := c.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&total); err != nil {
+		return 0, err
+	}
+	return total, nil
 }
 
 func (c *proyectoContext) noRealizaVinculacion() error {

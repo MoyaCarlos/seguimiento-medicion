@@ -119,6 +119,25 @@ func TestAsignarIntegrante_RolInvalido(t *testing.T) {
 	}
 }
 
+func TestAsignarIntegrante_RolInvalidoNoCreaUsuario(t *testing.T) {
+	proyectos := &fakeProjectRepository{}
+	usuarios := &fakeUserRepository{}
+	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
+	createsInicial := usuarios.creates
+
+	servicio := NewAsignarIntegrante(proyectos, usuarios)
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+		ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.Role("Product Owner"),
+	})
+	var verr domain.ValidationError
+	if !errors.As(err, &verr) || verr.Campo != "rol" {
+		t.Fatalf("se esperaba ValidationError de rol, se obtuvo %v", err)
+	}
+	if usuarios.creates != createsInicial {
+		t.Fatalf("un rol inválido no debe crear usuario: se crearon %d usuarios nuevos", usuarios.creates-createsInicial)
+	}
+}
+
 func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
 	usuarios := &fakeUserRepository{}
