@@ -1,0 +1,90 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+)
+
+func TestAbrirSQLite_PragmasEnArchivoReal(t *testing.T) {
+	archivo := filepath.Join(t.TempDir(), "prueba.db")
+	db, err := AbrirSQLite(archivo)
+	if err != nil {
+		t.Fatalf("no se pudo abrir sqlite: %v", err)
+	}
+	defer db.Close()
+
+	var fk, busy int
+	if err := db.QueryRow("PRAGMA foreign_keys").Scan(&fk); err != nil {
+		t.Fatalf("no se pudo consultar foreign_keys: %v", err)
+	}
+	if err := db.QueryRow("PRAGMA busy_timeout").Scan(&busy); err != nil {
+		t.Fatalf("no se pudo consultar busy_timeout: %v", err)
+	}
+	if fk != 1 {
+		t.Errorf("se esperaba foreign_keys = 1, se obtuvo %d", fk)
+	}
+	if busy != 5000 {
+		t.Errorf("se esperaba busy_timeout = 5000, se obtuvo %d", busy)
+	}
+}
+
+func TestAbrirSQLite_DSNConParametrosPrevios(t *testing.T) {
+	archivo := filepath.Join(t.TempDir(), "prueba.db")
+	dsn := "file:" + filepath.ToSlash(archivo) + "?cache=shared"
+	db, err := AbrirSQLite(dsn)
+	if err != nil {
+		t.Fatalf("no se pudo abrir sqlite: %v", err)
+	}
+	defer db.Close()
+
+	var fk int
+	if err := db.QueryRow("PRAGMA foreign_keys").Scan(&fk); err != nil {
+		t.Fatalf("no se pudo consultar foreign_keys: %v", err)
+	}
+	if fk != 1 {
+		t.Errorf("se esperaba foreign_keys = 1, se obtuvo %d", fk)
+	}
+}
+
+func TestAbrirSQLite_EscriturasConcurrentesSinLock(t *testing.T) {
+	archivo := filepath.Join(t.TempDir(), "prueba.db")
+	db, err := AbrirSQLite(archivo)
+	if err != nil {
+		t.Fatalf("no se pudo abrir sqlite: %v", err)
+	}
+	defer db.Close()
+	ctx := context.Background()
+	if err := Migrar(ctx, db); err != nil {
+		t.Fatalf("no se pudo migrar: %v", err)
+	}
+
+	const escrituras = 30
+	errc := make(chan error, escrituras)
+	var wg sync.WaitGroup
+	for i := 0; i < escrituras; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, err := db.ExecContext(ctx,
+				`INSERT INTO projects (name, description, created_at) VALUES (?, '', ?)`,
+				fmt.Sprintf("proyecto-%d", i), time.Now().UTC().Format(time.RFC3339),
+			)
+			if err != nil {
+				errc <- err
+			}
+		}(i)
+	}
+	wg.Wait()
+	close(errc)
+	for err := range errc {
+		if strings.Contains(err.Error(), "database is locked") {
+			t.Fatalf("no se esperaba 'database is locked': %v", err)
+		}
+		t.Errorf("escritura concurrente falló: %v", err)
+	}
+}
