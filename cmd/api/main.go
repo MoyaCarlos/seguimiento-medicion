@@ -36,6 +36,14 @@ func main() {
 	listarIntegrantes := service.NewListarIntegrantes(proyectos)
 	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes)
 
+	sprintRepo := repository.NewSQLiteSprintRepository(db)
+	sprintHandler := apihttp.NewSprintHandler(
+		service.NewCrearSprint(proyectos, sprintRepo),
+		service.NewIniciarSprint(sprintRepo),
+		service.NewCerrarSprint(sprintRepo, backlogRepo),
+		sprintRepo,
+	)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -46,6 +54,9 @@ func main() {
 	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
+	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
+	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
+	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
 	log.Println("listening on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {

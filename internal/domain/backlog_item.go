@@ -17,6 +17,9 @@ type BacklogItem struct {
 	Estado       Estado
 	ValorNegocio *int
 	EstimacionSP *int
+	// SprintID es nil mientras la historia está en el Product Backlog. Su
+	// asignación (con sus validaciones) es alcance de HU-06.
+	SprintID *int64
 }
 
 // NewBacklogItem construye una historia validando sus invariantes. El estado se

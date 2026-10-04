@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	nethttp "net/http"
 	"strconv"
@@ -191,18 +190,4 @@ func parsearID(valor string) (int64, error) {
 		return 0, domain.ValidationError{Campo: "id", Mensaje: "el identificador debe ser un entero positivo"}
 	}
 	return id, nil
-}
-
-// escribirError traduce los errores de dominio a respuestas HTTP.
-func escribirError(w nethttp.ResponseWriter, err error) {
-	var verr domain.ValidationError
-	if errors.As(err, &verr) {
-		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
-		return
-	}
-	if errors.Is(err, domain.ErrProyectoNoEncontrado) {
-		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: "proyecto no encontrado"})
-		return
-	}
-	escribirJSON(w, nethttp.StatusInternalServerError, errorResponse{Mensaje: "error interno"})
 }

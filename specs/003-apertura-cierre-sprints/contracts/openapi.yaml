@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Apertura y Cierre de Sprints (HU-05)
+  version: "1.0.0"
+paths:
+  /sprints:
+    post:
+      summary: Crear un Sprint (estado inicial Pendiente)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [proyecto_id]
+              properties:
+                proyecto_id:
+                  type: integer
+                  format: int64
+      responses:
+        "201":
+          description: Sprint creado en estado Pendiente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sprint"
+        "400":
+          description: proyecto_id no positivo, o el proyecto ya tiene un Sprint Pendiente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Proyecto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sprints/{id}/iniciar:
+    post:
+      summary: Iniciar un Sprint Pendiente (define Goal y fechas)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sprint_goal, fecha_inicio, fecha_fin]
+              properties:
+                sprint_goal:
+                  type: string
+                fecha_inicio:
+                  type: string
+                  format: date
+                fecha_fin:
+                  type: string
+                  format: date
+      responses:
+        "200":
+          description: Sprint iniciado (estado Activo)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sprint"
+        "400":
+          description: Fechas o Goal inválidos, no está Pendiente, o ya existe otro Activo en el proyecto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Sprint no encontrado (se informa antes que cualquier 400 del cuerpo)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sprints/{id}/cerrar:
+    post:
+      summary: Cerrar un Sprint Activo (arrastra historias no completadas al backlog)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Sprint cerrado (estado Finalizado)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sprint"
+        "400":
+          description: El Sprint no está Activo, o el id es inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Sprint no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Sprint:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        proyecto_id:
+          type: integer
+          format: int64
+        sprint_goal:
+          type: string
+          nullable: true
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+        estado:
+          type: string
+          enum: [Pendiente, Activo, Finalizado]
+    Error:
+      type: object
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

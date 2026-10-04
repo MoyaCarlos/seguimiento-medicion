@@ -2,6 +2,9 @@ package domain
 
 import "errors"
 
+// ErrSprintNoEncontrado indica que el Sprint pedido no existe.
+var ErrSprintNoEncontrado = errors.New("sprint no encontrado")
+
 // ValidationError describe una violación de una regla de negocio del dominio.
 type ValidationError struct {
 	Campo   string

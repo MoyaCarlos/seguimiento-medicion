@@ -46,7 +46,18 @@ func (s *scenarioContext) iniciarBD() error {
 }
 
 func (s *scenarioContext) existeProyecto(identificador int) error {
-	s.proyectoID = int64(identificador)
+	p, err := domain.NewProject("Proyecto de prueba", "", nil, nil)
+	if err != nil {
+		return err
+	}
+	guardado, err := repository.NewSQLiteProjectRepository(s.db).Guardar(context.Background(), p)
+	if err != nil {
+		return err
+	}
+	if guardado.ID != int64(identificador) {
+		return fmt.Errorf("el escenario asume una base vacía: el proyecto quedó con id %d, no %d", guardado.ID, identificador)
+	}
+	s.proyectoID = guardado.ID
 	return nil
 }
 
@@ -185,4 +196,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el sistema muestra una advertencia de validación$`, sc.muestraAdvertenciaDeValidacion)
 	ctx.Step(`^el sistema muestra un error de validación$`, sc.muestraErrorDeValidacion)
 	ctx.Step(`^no registra la historia en el Product Backlog$`, sc.noRegistraHistoria)
+
+	inicializarPasosSprint(ctx, sc)
 }
