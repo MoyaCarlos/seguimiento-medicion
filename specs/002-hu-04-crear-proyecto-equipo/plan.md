@@ -46,21 +46,23 @@ proyecto (HU-13) quedan fuera de alcance.
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-El archivo `.specify/memory/constitution.md` sigue siendo la plantilla sin ratificar de Spec Kit (solo placeholders, sin principios formales), por lo que no hay gates constitucionales formales. Se usan como gates los principios rectores documentados en `AGENTS.md`.
+La constitución del proyecto (`.specify/memory/constitution.md`, v1.0.0) está ratificada y
+sus principios (Test-First, SDD, BDD, Clean/Hexagonal, Clean Code/SOLID/KISS/YAGNI/DRY,
+stack obligatorio) actúan como gates formales de este plan.
 
 | Gate | Fuente | Estado |
 |------|--------|--------|
 | Dependencia apunta hacia adentro (domain no conoce SQLite/HTTP) | Arquitectura hexagonal / DIP | PASS |
 | Un service por caso de uso (Crear, Editar, Asignar); services dependen de interfaces | SRP / DIP | PASS |
 | Validaciones de proyecto en un único lugar, reutilizadas por alta y edición | DRY | PASS |
-| Sin dependencias nuevas (REST con stdlib, IDs con crypto/rand) | KISS / YAGNI | PASS |
+| Sin dependencias nuevas (REST con stdlib, IDs `int64` autoincrementales) | KISS / YAGNI | PASS |
 | Ciclo TDD RED→GREEN→REFACTOR en dominio/servicio | TDD obligatorio | PASS |
 | Escenario BDD por criterio de aceptación | BDD | PASS |
 | Respeto del scaffolding de HU-05 (IDs `int64`) | Contrato entre historias | PASS |
 | Sin edición de equipo, borrado de proyecto ni estados de ciclo de vida | YAGNI | PASS |
-| Constitución formal ratificada | Gobernanza | WARN — `/speckit.constitution` no ejecutado; `constitution.md` es plantilla vacía |
+| Constitución formal ratificada | Gobernanza | PASS |
 
-**Re-evaluación post-diseño (Phase 1)**: los gates siguen en PASS. La única alerta (WARN) es administrativa y no bloquea; se recomienda ratificar la constitución con `/speckit.constitution`.
+**Re-evaluación post-diseño (Phase 1)**: los gates siguen en PASS.
 
 ## Project Structure
 

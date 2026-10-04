@@ -100,3 +100,25 @@ Este documento resuelve los puntos técnicos abiertos del plan. No quedan
 | R11 | IDs | `int64` por `LastInsertId` |
 | R12 | Frontend | diferido |
 | R13 | Dependencias | ninguna nueva |
+
+## R14. Resultado de `/speckit.analyze` (ronda 3)
+
+Se ejecutó `/speckit.analyze` sobre `spec.md`, `plan.md` y `tasks.md` de HU-04.
+**Resultado: 0 CRITICAL, 0 HIGH, 0 MEDIUM, 0 LOW pendientes.**
+
+Hallazgos detectados y resueltos en esta ronda:
+
+| ID | Categoría | Severidad | Resolución |
+|----|-----------|-----------|------------|
+| F1 | Inconsistencia | MEDIUM | `plan.md` (Constitution Check) decía que la constitución estaba "sin ratificar"; se actualizó a v1.0.0 ratificada. |
+| F2 | Inconsistencia | MEDIUM | `research.md`/`plan.md`/`quickstart.md` mencionaban `string`/UUID y firmas `Create`/`GetByID`; se alinearon a `int64` y `Guardar`/`ObtenerPorID`. |
+| F3 | Inconsistencia | LOW | `data-model.md` documentaba campos en inglés (`Name`, `NormalizedName`, `CreatedAt`); se alinearon a `Nombre`, `NombreNormalizado`, `CreadoEn`. |
+
+Cobertura: 23/23 requisitos funcionales (FR-001..FR-023), 10/10 criterios de éxito
+(SC-001..SC-010) y las 3 historias (US1/US2/US3) tienen tareas en `tasks.md`
+(fases 1-6) y su desglose de remediación (fase 7). No quedan requisitos sin tarea
+ni tareas sin requisito mapeado.
+
+Alineación con la constitución: los seis principios (Test-First, SDD, BDD,
+Clean/Hexagonal, Clean Code/SOLID/KISS/YAGNI/DRY, stack obligatorio) se verifican en
+el plan; no hay conflictos con ningún MUST.

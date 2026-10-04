@@ -272,8 +272,8 @@ por id no numérico o `<= 0`, IDs numéricos en el JSON).
 
 - [X] R063 Reescribir reglas de negocio, casos límite y condiciones de error de `spec.md` en formato EARS; corregir el campo `Branch` con el nombre real de la rama.
 - [X] R064 COMMIT `Reescribir spec HU-04 en EARS y corregir Branch`
-- [ ] R065 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL).
-- [ ] R066 COMMIT `Registrar resultado de /speckit.analyze en research.md`
+- [X] R065 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL).
+- [X] R066 COMMIT `Registrar resultado de /speckit.analyze en research.md`
 
 ### 7.11 Remediación ronda 3
 
@@ -314,9 +314,9 @@ DRY en `GuardarConScrumMaster`, registro de desvíos de la ronda 2).
 - [X] R095 GREEN mejora: mapear FK del creador a `ErrIntegridadReferencial`. Verde.
 - [X] R096 COMMIT `GREEN: mapear FK del creador a ErrIntegridadReferencial, test en verde`
 - [X] R097 C4: alinear `research.md`/`plan.md`/`quickstart.md`/`data-model.md` y el comentario de `project_repository.go`; tildar tareas R; "Excepción de proceso" y nota de desvíos.
-- [ ] R098 COMMIT `Alinear specs, comentario de puerto y tasks.md a la realidad del código`
-- [ ] R099 Ejecutar `/speckit.analyze` (ronda 3) y registrar resultado en `research.md`.
-- [ ] R100 COMMIT `Registrar resultado de /speckit.analyze (ronda 3) en research.md`
+- [X] R098 COMMIT `Alinear specs, comentario de puerto y tasks.md a la realidad del código`
+- [X] R099 Ejecutar `/speckit.analyze` (ronda 3) y registrar resultado en `research.md`.
+- [X] R100 COMMIT `Registrar resultado de /speckit.analyze (ronda 3) en research.md`
 
 ### 7.12 Desvíos de la ronda 2 (registro, sin reescribir historial)
 
