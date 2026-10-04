@@ -18,6 +18,12 @@ Característica: Apertura y cierre de Sprints
     Cuando intento crear un Sprint para el proyecto con identificador 999, que no existe
     Entonces el sistema rechaza la operación
 
+  Escenario: No se puede crear un segundo Sprint Pendiente en el mismo proyecto
+    Dado que existe un Sprint en estado "Pendiente" para el proyecto
+    Cuando intento crear otro Sprint para el proyecto
+    Entonces el sistema rechaza la operación
+    Y el proyecto sigue teniendo un solo Sprint en estado "Pendiente"
+
   Escenario: Iniciar un Sprint exitosamente
     Dado que existe un Sprint en estado "Pendiente" para el proyecto, sin otro Sprint "Activo"
     Cuando defino el Sprint Goal "Entregar el MVP", una fecha de inicio y una fecha de fin posterior, y lo inicio

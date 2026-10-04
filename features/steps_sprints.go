@@ -25,6 +25,7 @@ type pasosSprint struct {
 	base       *scenarioContext
 	sprints    *repository.SQLiteSprintRepository
 	backlog    *repository.SQLiteBacklogRepository
+	crear      *service.CrearSprint
 	iniciar    *service.IniciarSprint
 	cerrar     *service.CerrarSprint
 	sprint     domain.Sprint
@@ -37,6 +38,7 @@ type pasosSprint struct {
 func (p *pasosSprint) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
+	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
@@ -74,6 +76,38 @@ func (p *pasosSprint) existeActivo() error {
 func (p *pasosSprint) existeOtroPendiente() (err error) {
 	p.segundo, err = p.nuevoPendiente()
 	return err
+}
+
+func (p *pasosSprint) creoUnSprint() error {
+	p.sprint, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	return nil
+}
+
+func (p *pasosSprint) intentoCrearParaProyecto(proyectoID int) error {
+	_, p.err = p.crear.Ejecutar(context.Background(), int64(proyectoID))
+	return nil
+}
+
+func (p *pasosSprint) intentoCrearOtro() error {
+	_, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	return nil
+}
+
+func (p *pasosSprint) unSoloPendiente() error {
+	delProyecto, err := p.sprints.ListarPorProyecto(context.Background(), p.base.proyectoID)
+	if err != nil {
+		return err
+	}
+	pendientes := 0
+	for _, s := range delProyecto {
+		if s.Estado == domain.SprintPendiente {
+			pendientes++
+		}
+	}
+	if pendientes != 1 {
+		return fmt.Errorf("se esperaba un solo Sprint Pendiente, hay %d", pendientes)
+	}
+	return nil
 }
 
 func (p *pasosSprint) inicioConGoal(goal string) error {
@@ -201,8 +235,7 @@ func (p *pasosSprint) completadaSigueVinculada() error {
 	return nil
 }
 
-// inicializarPasosSprint registra los pasos de HU-05. Los de creación de un
-// Sprint se agregan con US3 (CrearSprint).
+// inicializarPasosSprint registra los pasos de HU-05.
 func inicializarPasosSprint(ctx *godog.ScenarioContext, base *scenarioContext) {
 	p := &pasosSprint{base: base}
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
@@ -210,6 +243,11 @@ func inicializarPasosSprint(ctx *godog.ScenarioContext, base *scenarioContext) {
 		return goctx, nil
 	})
 
+	ctx.Step(`^creo un Sprint para el proyecto$`, p.creoUnSprint)
+	ctx.Step(`^intento crear un Sprint para el proyecto con identificador (\d+), que no existe$`, p.intentoCrearParaProyecto)
+	ctx.Step(`^intento crear otro Sprint para el proyecto$`, p.intentoCrearOtro)
+	ctx.Step(`^el Sprint queda persistido en estado "([^"]*)"$`, p.sprintPasaAEstado)
+	ctx.Step(`^el proyecto sigue teniendo un solo Sprint en estado "Pendiente"$`, p.unSoloPendiente)
 	ctx.Step(`^que existe un Sprint en estado "Pendiente" para el proyecto, sin otro Sprint "Activo"$`, p.existePendiente)
 	ctx.Step(`^que existe un Sprint en estado "Pendiente" para el proyecto$`, p.existePendiente)
 	ctx.Step(`^que el proyecto (?:ya )?tiene un Sprint en estado "Activo"$`, p.existeActivo)
