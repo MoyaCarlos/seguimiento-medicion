@@ -228,6 +228,25 @@ func TestSprintHandler_Iniciar_NoEncontrado(t *testing.T) {
 	}
 }
 
+func TestSprintHandler_Iniciar_NoEncontradoAntesQueCuerpoInvalido(t *testing.T) {
+	casos := map[string]string{
+		"fecha mal formada": `{"sprint_goal":"Goal","fecha_inicio":"05/10/2026","fecha_fin":"2026-10-19"}`,
+		"JSON malformado":   `{no-es-json`,
+	}
+	for nombre, cuerpo := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler, _ := nuevoSprintHandlerDePrueba(t)
+			rec := httptest.NewRecorder()
+
+			handler.Iniciar(rec, peticionSprint("999", "iniciar", cuerpo))
+
+			if rec.Code != nethttp.StatusNotFound {
+				t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
+
 func TestSprintHandler_Iniciar_PeticionInvalida(t *testing.T) {
 	casos := map[string]struct{ id, cuerpo string }{
 		"id no numérico": {"abc", cuerpoIniciarValido},
