@@ -125,6 +125,17 @@ func TestSQLiteProjectRepository_GuardarConScrumMaster_Rollback(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_GuardarConScrumMaster_FKDelCreador(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+
+	p, _ := domain.NewProject("Proyecto", "", nil, nil)
+	_, err := repo.GuardarConScrumMaster(ctx, p, 999999)
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	}
+}
+
 func TestSQLiteProjectRepository_AgregarIntegrante_FKVioladaNoEsNoEncontrado(t *testing.T) {
 	ctx := context.Background()
 	proyectos := NewSQLiteProjectRepository(abrirBDDePrueba(t))
