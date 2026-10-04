@@ -45,6 +45,10 @@ func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p d
 		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
 		p.ID, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
 	); err != nil {
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY {
+			return domain.Project{}, ErrIntegridadReferencial
+		}
 		return domain.Project{}, fmt.Errorf("vincular scrum master: %w", err)
 	}
 
