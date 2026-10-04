@@ -33,6 +33,7 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 		service.NewCrearSprint(proyectos, sprints),
 		service.NewIniciarSprint(sprints),
 		service.NewCerrarSprint(sprints, sinHistorias{}),
+		sprints,
 	)
 	return handler, sprints, proyectos
 }

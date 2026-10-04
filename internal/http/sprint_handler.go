@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
@@ -16,10 +17,11 @@ type SprintHandler struct {
 	crear   *service.CrearSprint
 	iniciar *service.IniciarSprint
 	cerrar  *service.CerrarSprint
+	sprints repository.SprintRepository
 }
 
-func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint) *SprintHandler {
-	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar}
+func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, sprints repository.SprintRepository) *SprintHandler {
+	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, sprints: sprints}
 }
 
 // Crear atiende POST /sprints.
@@ -41,6 +43,11 @@ func (h *SprintHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 func (h *SprintHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	id, ok := idDeRuta(w, r)
 	if !ok {
+		return
+	}
+	// El Sprint inexistente domina (404) sobre cualquier validación del cuerpo.
+	if _, err := h.sprints.ObtenerPorID(r.Context(), id); err != nil {
+		escribirError(w, err)
 		return
 	}
 	var req iniciarSprintRequest
