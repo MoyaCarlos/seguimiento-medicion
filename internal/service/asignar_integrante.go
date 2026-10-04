@@ -46,7 +46,8 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 	if err != nil {
 		return domain.Member{}, err
 	}
-	if err := s.proyectos.AgregarIntegrante(ctx, membresia); err != nil {
+	guardada, err := s.proyectos.AgregarIntegrante(ctx, membresia)
+	if err != nil {
 		if errors.Is(err, repository.ErrMiembroDuplicado) {
 			return domain.Member{}, domain.ValidationError{Campo: "integrante", Mensaje: "el integrante ya pertenece al proyecto"}
 		}
@@ -58,6 +59,6 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 		ProjectID: proyecto.ID,
 		Nombre:    usuario.Nombre,
 		Role:      input.Rol,
-		CreadoEn:  membresia.CreadoEn,
+		CreadoEn:  guardada.CreadoEn,
 	}, nil
 }

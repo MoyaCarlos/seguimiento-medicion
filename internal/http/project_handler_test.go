@@ -47,7 +47,7 @@ func (s *stubProjectRepository) GuardarConScrumMaster(ctx context.Context, p dom
 	if err != nil {
 		return domain.Project{}, err
 	}
-	if err := s.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+	if _, err := s.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
 		return domain.Project{}, err
 	}
 	return guardado, nil
@@ -72,14 +72,17 @@ func (s *stubProjectRepository) Actualizar(_ context.Context, p domain.Project) 
 	return nil
 }
 
-func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Membership) error {
+func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Membership) (domain.Membership, error) {
 	for _, e := range s.miembros {
 		if e.ProjectID == m.ProjectID && e.UserID == m.UserID {
-			return repository.ErrMiembroDuplicado
+			return domain.Membership{}, repository.ErrMiembroDuplicado
 		}
 	}
+	if m.CreadoEn.IsZero() {
+		m.CreadoEn = time.Now().UTC()
+	}
 	s.miembros = append(s.miembros, m)
-	return nil
+	return m, nil
 }
 
 func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {

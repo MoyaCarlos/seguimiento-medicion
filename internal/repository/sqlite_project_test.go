@@ -136,7 +136,7 @@ func TestSQLiteProjectRepository_AgregarIntegrante_FKVioladaNoEsNoEncontrado(t *
 	}
 
 	m := domain.Membership{ProjectID: guardado.ID, UserID: 999, Role: domain.RolScrumMaster}
-	err = proyectos.AgregarIntegrante(ctx, m)
+	_, err = proyectos.AgregarIntegrante(ctx, m)
 	if err == nil {
 		t.Fatal("se esperaba error por FK")
 	}
@@ -222,7 +222,7 @@ func TestSQLiteProjectRepository_ListarIntegrantes_OrdenDeAlta(t *testing.T) {
 		}
 		m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolProductBuilder)
 		m.CreadoEn = fecha
-		if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
+		if _, err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 			t.Fatalf("no se esperaba error: %v", err)
 		}
 	}
@@ -255,7 +255,7 @@ func TestSQLiteProjectRepository_Miembros(t *testing.T) {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 	m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolScrumMaster)
-	if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
+	if _, err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 		t.Fatalf("no se esperaba error al agregar: %v", err)
 	}
 
@@ -289,10 +289,10 @@ func TestSQLiteProjectRepository_MiembroDuplicado(t *testing.T) {
 	}
 
 	m, _ := domain.NewMembership(guardado.ID, guardadoU.ID, domain.RolProductBuilder)
-	if err := proyectos.AgregarIntegrante(ctx, m); err != nil {
+	if _, err := proyectos.AgregarIntegrante(ctx, m); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if err := proyectos.AgregarIntegrante(ctx, m); !errors.Is(err, ErrMiembroDuplicado) {
+	if _, err := proyectos.AgregarIntegrante(ctx, m); !errors.Is(err, ErrMiembroDuplicado) {
 		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
 	}
 }

@@ -117,8 +117,9 @@ func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Proje
 	return nil
 }
 
-// AgregarIntegrante vincula un integrante con un rol al proyecto.
-func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) error {
+// AgregarIntegrante vincula un integrante con un rol al proyecto y devuelve la
+// membresía guardada (con su CreadoEn asignado).
+func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error) {
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
 	}
@@ -131,14 +132,14 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 		if errors.As(err, &sqliteErr) {
 			switch sqliteErr.Code() {
 			case sqlite3.SQLITE_CONSTRAINT_UNIQUE, sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
-				return ErrMiembroDuplicado
+				return domain.Membership{}, ErrMiembroDuplicado
 			case sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY:
-				return ErrIntegridadReferencial
+				return domain.Membership{}, ErrIntegridadReferencial
 			}
 		}
-		return fmt.Errorf("agregar integrante: %w", err)
+		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", err)
 	}
-	return nil
+	return m, nil
 }
 
 // ListarIntegrantes devuelve los integrantes del proyecto con su nombre y rol.

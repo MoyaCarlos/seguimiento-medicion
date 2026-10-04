@@ -38,7 +38,7 @@ func (r *ProjectRepositoryEnMemoria) GuardarConScrumMaster(ctx context.Context, 
 	if err != nil {
 		return domain.Project{}, err
 	}
-	if err := r.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+	if _, err := r.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
 		return domain.Project{}, err
 	}
 	return guardado, nil
@@ -64,19 +64,19 @@ func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Proj
 	return nil
 }
 
-func (r *ProjectRepositoryEnMemoria) AgregarIntegrante(_ context.Context, m domain.Membership) error {
+func (r *ProjectRepositoryEnMemoria) AgregarIntegrante(_ context.Context, m domain.Membership) (domain.Membership, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	for _, existente := range r.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
-			return ErrMiembroDuplicado
+			return domain.Membership{}, ErrMiembroDuplicado
 		}
 	}
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
 	}
 	r.miembros = append(r.miembros, m)
-	return nil
+	return m, nil
 }
 
 func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
