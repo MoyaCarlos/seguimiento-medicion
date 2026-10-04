@@ -111,7 +111,7 @@ Goal ni fechas todavía.
 - ¿Qué pasa si el Sprint que se cierra no tiene ninguna historia asignada?
   → Se cierra igual, no es un error; simplemente no hay nada que mover.
 - ¿Qué pasa si se intenta iniciar o cerrar un Sprint que no existe
-  (`SprintID` inválido)? → Se rechaza con error de "no encontrado",
+  (`SprintID` inexistente)? → Se rechaza con error de "no encontrado",
   aunque el cuerpo de la petición también sea inválido: la existencia se
   verifica antes que los datos (mismo criterio que HU-04).
 

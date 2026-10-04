@@ -100,7 +100,7 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 
 - [ ] T047 RED: tests handler — `POST /sprints/999/iniciar` con fecha mal formada → 404, y con JSON malformado → 404
 - [ ] T048 COMMIT `RED: agregar tests de 404 antes que 400 en iniciar Sprint (falla)`
-- [ ] T049 GREEN: verificar la existencia del Sprint antes de validar el cuerpo (el mecanismo se decide en la revisión del diff); los tests de T013/T014 siguen en verde
+- [ ] T049 GREEN: `NewSprintHandler` recibe el puerto `repository.SprintRepository`; `SprintHandler.Iniciar` llama a `ObtenerPorID` antes de decodificar el cuerpo. Actualizar `cmd/api/main.go` y el helper de `sprint_handler_test.go`; T013/T014 siguen en verde
 - [ ] T050 COMMIT `GREEN: responder 404 antes que 400 en iniciar Sprint, test en verde`
 
 ## Phase 7: BDD y cierre
@@ -131,6 +131,10 @@ implementación correspondiente en cada fase (RED antes que GREEN).
   con tests en service y handler; `ListarPorProyecto` con test directo.
 - **REFACTOR**: `BacklogHandler` (HU-01) pasó a usar el mismo mapeo de
   errores que `SprintHandler`.
+- **404 antes que 400 al iniciar (2026-10-04, decisión de Carlos)**: el
+  handler consulta el puerto `SprintRepository` directamente, sin un service
+  `ObtenerSprint` aparte. Difiere de `ProjectHandler.Editar` (HU-04), que usa
+  el service `ObtenerProyecto`. Sigue dependiendo de una interfaz, no de SQLite.
 - **US3 destrabada (2026-10-04)**: HU-04 entró a `main` con IDs `int64`;
   `CrearSprint` usa su `ProjectRepository.ObtenerPorID`.
 

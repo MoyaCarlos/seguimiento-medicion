@@ -103,6 +103,7 @@ internal/repository/
 internal/http/
 ├── sprint_dto.go
 ├── sprint_handler.go     # POST /sprints, POST /sprints/{id}/iniciar, POST /sprints/{id}/cerrar
+│                         # (recibe el puerto SprintRepository para el 404 antes que 400 al iniciar)
 └── sprint_handler_test.go
 
 features/
