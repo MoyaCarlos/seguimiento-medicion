@@ -1,0 +1,335 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Proyectos y Equipo (HU-04)
+  version: 1.0.0
+  description: >-
+    Contrato de creación, edición simple y asignación de equipo de proyectos.
+    Cubre únicamente HU-04: no incluye borrado de proyectos, baja ni cambio de rol
+    de integrantes, ni el estado de ciclo de vida del proyecto (HU-13). La edición
+    es simple (sin versionado ni historial) y reutiliza las validaciones del alta.
+paths:
+  /projects:
+    post:
+      summary: Crear un proyecto y vincular al creador como Scrum Master
+      operationId: crearProyecto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearProyectoRequest'
+            examples:
+              valido:
+                value:
+                  nombre: Software Metrics & Estimation
+                  descripcion: Sistema de estimación, seguimiento y medición
+                  creador: Ana Valentina
+                  fecha_inicio: "2026-03-01"
+                  fecha_fin: "2026-11-30"
+              sinFechas:
+                value:
+                  nombre: Proyecto corto
+                  descripcion: ""
+                  creador: Candela
+      responses:
+        '201':
+          description: Proyecto creado y creador vinculado como Scrum Master.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        '400':
+          description: Datos inválidos (nombre vacío o extenso, fecha de fin anterior al inicio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+              examples:
+                nombreEnBlanco:
+                  value:
+                    campo: nombre
+                    mensaje: el nombre es obligatorio
+                fechaInvalida:
+                  value:
+                    campo: fecha_fin
+                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+                jsonInvalido:
+                  value:
+                    campo: ''
+                    mensaje: JSON inválido
+        '500':
+          description: Error interno (fallo de persistencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+  /projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: Identificador del proyecto (entero positivo).
+    get:
+      summary: Consultar un proyecto existente
+      operationId: obtenerProyecto
+      responses:
+        '200':
+          description: Proyecto encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        '404':
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+    put:
+      summary: Editar un proyecto existente (nombre, descripción y fechas)
+      operationId: editarProyecto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarProyectoRequest'
+            examples:
+              valido:
+                value:
+                  nombre: Software Metrics & Estimation (v2)
+                  descripcion: Corrección de la descripción cargada
+                  fecha_inicio: "2026-03-02"
+                  fecha_fin: "2026-12-15"
+      responses:
+        '200':
+          description: Proyecto actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        '400':
+          description: Datos inválidos; el proyecto conserva sus valores previos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+              examples:
+                nombreEnBlanco:
+                  value:
+                    campo: nombre
+                    mensaje: el nombre es obligatorio
+                fechaInvalida:
+                  value:
+                    campo: fecha_fin
+                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+        '404':
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+        '500':
+          description: Error interno (fallo de persistencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+  /projects/{id}/members:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: Identificador del proyecto (entero positivo).
+    get:
+      summary: Listar los integrantes del proyecto con su rol
+      operationId: listarIntegrantes
+      responses:
+        '200':
+          description: Listado de integrantes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Integrante'
+        '404':
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+    post:
+      summary: Vincular un integrante al proyecto con un rol
+      operationId: asignarIntegrante
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignarIntegranteRequest'
+            examples:
+              productBuilder:
+                value:
+                  nombre: Jimena Martinez
+                  rol: product_builder
+              scrumMaster:
+                value:
+                  nombre: Candela Vulcano
+                  rol: scrum_master
+      responses:
+        '201':
+          description: Integrante vinculado al proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integrante'
+        '400':
+          description: >-
+            Datos inválidos (nombre vacío o extenso, rol distinto de
+            scrum_master/product_builder) o integrante ya vinculado al proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+              examples:
+                rolInvalido:
+                  value:
+                    campo: rol
+                    mensaje: 'el rol debe ser scrum_master o product_builder'
+                yaVinculado:
+                  value:
+                    campo: integrante
+                    mensaje: el integrante ya pertenece al proyecto
+        '404':
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+        '500':
+          description: Error interno (fallo de persistencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+components:
+  schemas:
+    CrearProyectoRequest:
+      type: object
+      required:
+        - nombre
+        - creador
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 100
+        descripcion:
+          type: string
+          maxLength: 2000
+        creador:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Nombre del Scrum Master que crea el proyecto (se vincula automáticamente).
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+          description: Si se informa junto con fecha_inicio, no puede ser anterior.
+    EditarProyectoRequest:
+      type: object
+      required:
+        - nombre
+        - descripcion
+        - fecha_inicio
+        - fecha_fin
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 100
+        descripcion:
+          type: string
+          maxLength: 2000
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha de inicio; `null` explícito la deja sin fecha.
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+          description: Fecha de fin; `null` explícito la deja sin fecha.
+    AsignarIntegranteRequest:
+      type: object
+      required:
+        - nombre
+        - rol
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 200
+        rol:
+          type: string
+          enum: [scrum_master, product_builder]
+    Proyecto:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+        creado_en:
+          type: string
+          format: date-time
+    Integrante:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Identificador del usuario/integrante.
+        proyecto_id:
+          type: integer
+        nombre:
+          type: string
+        rol:
+          type: string
+          enum: [scrum_master, product_builder]
+        vinculado_en:
+          type: string
+          format: date-time
+    ErrorValidacion:
+      type: object
+      properties:
+        campo:
+          type: string
+          description: Campo que originó el error (vacío si no aplica a un campo).
+        mensaje:
+          type: string
+    ErrorInterno:
+      type: object
+      properties:
+        mensaje:
+          type: string

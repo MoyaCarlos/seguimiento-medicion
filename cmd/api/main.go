@@ -23,15 +23,29 @@ func main() {
 		log.Fatalf("migrar base de datos: %v", err)
 	}
 
-	repo := repository.NewSQLiteBacklogRepository(db)
-	crearHistoria := service.NewCrearHistoriaBacklog(repo)
+	backlogRepo := repository.NewSQLiteBacklogRepository(db)
+	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo)
 	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
+
+	proyectos := repository.NewSQLiteProjectRepository(db)
+	usuarios := repository.NewSQLiteUserRepository(db)
+	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
+	obtenerProyecto := service.NewObtenerProyecto(proyectos)
+	editarProyecto := service.NewEditarProyecto(proyectos)
+	asignarIntegrante := service.NewAsignarIntegrante(proyectos, usuarios)
+	listarIntegrantes := service.NewListarIntegrantes(proyectos)
+	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("POST /projects", projectHandler.Crear)
+	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
+	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
+	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
+	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 
 	log.Println("listening on :8080")
 	if err := http.ListenAndServe(":8080", mux); err != nil {
