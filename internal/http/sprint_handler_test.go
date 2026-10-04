@@ -25,10 +25,103 @@ func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogIte
 }
 func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
 
+func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria, *repository.ProjectRepositoryEnMemoria) {
+	t.Helper()
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	proyectos := repository.NewProjectRepositoryEnMemoria()
+	handler := NewSprintHandler(
+		service.NewCrearSprint(proyectos, sprints),
+		service.NewIniciarSprint(sprints),
+		service.NewCerrarSprint(sprints, sinHistorias{}),
+	)
+	return handler, sprints, proyectos
+}
+
 func nuevoSprintHandlerDePrueba(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria) {
 	t.Helper()
-	repo := repository.NewSprintRepositoryEnMemoria()
-	return NewSprintHandler(service.NewIniciarSprint(repo), service.NewCerrarSprint(repo, sinHistorias{})), repo
+	handler, sprints, _ := nuevoSprintHandlerConProyectos(t)
+	return handler, sprints
+}
+
+func sembrarProyectoParaSprints(t *testing.T, repo *repository.ProjectRepositoryEnMemoria) int64 {
+	t.Helper()
+	p, _ := domain.NewProject("Software Metrics & Estimation", "", nil, nil)
+	g, err := repo.Guardar(context.Background(), p)
+	if err != nil {
+		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
+	}
+	return g.ID
+}
+
+func peticionCrearSprint(cuerpo string) *nethttp.Request {
+	req := httptest.NewRequest(nethttp.MethodPost, "/sprints", bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	return req
+}
+
+func cuerpoCrearSprint(proyectoID int64) string {
+	return `{"proyecto_id":` + strconv.FormatInt(proyectoID, 10) + `}`
+}
+
+func TestSprintHandler_Crear_Exitoso(t *testing.T) {
+	handler, _, proyectos := nuevoSprintHandlerConProyectos(t)
+	proyectoID := sembrarProyectoParaSprints(t, proyectos)
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp sprintResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.ID == 0 || resp.ProyectoID != proyectoID || resp.Estado != "Pendiente" {
+		t.Errorf("respuesta inesperada: %+v", resp)
+	}
+	if resp.SprintGoal != nil || resp.FechaInicio != nil || resp.FechaFin != nil {
+		t.Errorf("un Sprint Pendiente no tiene Goal ni fechas: %+v", resp)
+	}
+}
+
+func TestSprintHandler_Crear_ProyectoInexistente(t *testing.T) {
+	handler, _ := nuevoSprintHandlerDePrueba(t)
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, peticionCrearSprint(cuerpoCrearSprint(999)))
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+}
+
+func TestSprintHandler_Crear_ErroresDeValidacion(t *testing.T) {
+	casos := map[string]struct {
+		cuerpo func(proyectoID int64) string
+		campo  string
+	}{
+		"proyecto_id no positivo": {func(int64) string { return cuerpoCrearSprint(0) }, "proyecto_id"},
+		"otro Sprint Pendiente":   {cuerpoCrearSprint, "estado"},
+		"JSON inválido":           {func(int64) string { return `{no-es-json` }, ""},
+	}
+	for nombre, caso := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler, _, proyectos := nuevoSprintHandlerConProyectos(t)
+			proyectoID := sembrarProyectoParaSprints(t, proyectos)
+			handler.Crear(httptest.NewRecorder(), peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+			rec := httptest.NewRecorder()
+
+			handler.Crear(rec, peticionCrearSprint(caso.cuerpo(proyectoID)))
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := decodificarError(t, rec); resp.Campo != caso.campo {
+				t.Errorf("se esperaba campo %q, se obtuvo %q", caso.campo, resp.Campo)
+			}
+		})
+	}
 }
 
 func sembrarPendiente(t *testing.T, repo *repository.SprintRepositoryEnMemoria) int64 {
