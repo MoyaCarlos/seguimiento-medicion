@@ -38,6 +38,7 @@ func main() {
 
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 	sprintHandler := apihttp.NewSprintHandler(
+		service.NewCrearSprint(proyectos, sprintRepo),
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 	)

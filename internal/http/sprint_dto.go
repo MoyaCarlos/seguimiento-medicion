@@ -6,6 +6,10 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
+type crearSprintRequest struct {
+	ProyectoID int64 `json:"proyecto_id"`
+}
+
 type iniciarSprintRequest struct {
 	SprintGoal  string `json:"sprint_goal"`
 	FechaInicio string `json:"fecha_inicio"`
