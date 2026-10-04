@@ -21,7 +21,7 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 - [X] T003 [P] RED: test de `NewSprint` — rechaza `ProyectoID <= 0` — en `internal/domain/sprint_test.go`
 - [X] T004 GREEN: implementar struct `Sprint{ID, ProyectoID, SprintGoal, FechaInicio, FechaFin, Estado}` + factory `NewSprint` en `internal/domain/sprint.go`
 - [X] T005 [P] Definir puerto `SprintRepository` (`Crear`, `ObtenerPorID`, `ListarPorProyecto`) en `internal/repository/sprint_repository.go`
-- [X] T006 [P] Implementar `SprintRepositoryFake` (en memoria) en `internal/repository/sprint_repository_fake.go` — lo va a necesitar también HU-13 para su propio TDD
+- [X] T006 [P] Implementar `SprintRepositoryEnMemoria` en `internal/repository/sprint_repository_memoria.go` — lo va a necesitar también HU-13 para su propio TDD
 
 **Checkpoint**: dominio y puerto de Sprint listos — las 3 user stories pueden arrancar.
 
@@ -29,7 +29,7 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 
 **Goal**: pasar un Sprint de `Pendiente` a `Activo` definiendo Goal y fechas, respetando que no haya otro `Activo` en el mismo proyecto.
 
-**Independent Test**: sembrar un Sprint `Pendiente` directo en `SprintRepositoryFake`, iniciarlo, verificar `Activo`; sembrar un segundo Sprint `Pendiente` en el mismo proyecto y verificar que iniciarlo falla porque ya hay un `Activo`.
+**Independent Test**: sembrar un Sprint `Pendiente` directo en `SprintRepositoryEnMemoria`, iniciarlo, verificar `Activo`; sembrar un segundo Sprint `Pendiente` en el mismo proyecto y verificar que iniciarlo falla porque ya hay un `Activo`.
 
 - [X] T007 [P] [US1] RED: test `IniciarSprint` — caso exitoso (`Pendiente`→`Activo`) en `internal/service/iniciar_sprint_test.go`
 - [X] T008 [US1] GREEN: implementar servicio `IniciarSprint` en `internal/service/iniciar_sprint.go`
@@ -69,25 +69,49 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 
 **Goal**: crear un Sprint nuevo en estado `Pendiente` para un Project existente, respetando que no haya ya otro `Pendiente` en ese proyecto.
 
-**Independent Test**: crear un Sprint para un `Project` existente (vía `ProjectRepositoryFake`) → queda `Pendiente`; crear para un `ProyectoID` inexistente → error; crear un segundo `Pendiente` en el mismo proyecto → error.
+**Independent Test**: crear un Sprint para un `Project` guardado en `ProjectRepositoryEnMemoria` → queda `Pendiente`; crear para un `ProyectoID` inexistente → `ErrProyectoNoEncontrado`; crear un segundo `Pendiente` en el mismo proyecto → error de validación.
 
-- [ ] T029 [P] [US3] RED: test `CrearSprint` — caso exitoso en `internal/service/crear_sprint_test.go`
-- [ ] T030 [US3] GREEN: implementar servicio `CrearSprint` (usa `ProjectRepository.GetByID`) en `internal/service/crear_sprint.go`
-- [ ] T031 [P] [US3] RED: test `CrearSprint` — rechaza `ProyectoID` inexistente (FR-002)
-- [ ] T032 [US3] GREEN: agregar esa validación
-- [ ] T033 [P] [US3] RED: test `CrearSprint` — rechaza si ya existe otro Sprint `Pendiente` en el proyecto (FR-011)
-- [ ] T034 [US3] GREEN: agregar esa validación
-- [ ] T035 [P] [US3] RED: test handler `POST /sprints` en `internal/http/sprint_handler_test.go`
-- [ ] T036 [US3] GREEN: implementar `SprintHandler.Crear`
-- [ ] T037 [US3] Cablear ruta `POST /sprints` en `cmd/api/main.go`
+> Fases 5 a 7 renumeradas el 2026-10-04 (antes T029-T040, ninguna empezada) para agregar las tareas COMMIT de la plantilla vigente (PR #15) y lo que salió de `/speckit.clarify` (sesión 2026-10-04).
+
+- [ ] T029 [US3] RED: test `CrearSprint` — caso exitoso (`Pendiente`, persistido) en `internal/service/crear_sprint_test.go`, con `ProjectRepositoryEnMemoria` + `SprintRepositoryEnMemoria`
+- [ ] T030 [US3] COMMIT `RED: agregar test de CrearSprint exitoso (falla)`
+- [ ] T031 [US3] GREEN: implementar servicio `CrearSprint` (`NewSprint` + `SprintRepository.Guardar`) en `internal/service/crear_sprint.go`
+- [ ] T032 [US3] COMMIT `GREEN: implementar CrearSprint, test en verde`
+- [ ] T033 [US3] RED: test `CrearSprint` — rechaza `ProyectoID` inexistente con `domain.ErrProyectoNoEncontrado` y no guarda nada (FR-002)
+- [ ] T034 [US3] COMMIT `RED: agregar test de CrearSprint con proyecto inexistente (falla)`
+- [ ] T035 [US3] GREEN: verificar el proyecto con `ProjectRepository.ObtenerPorID` (puerto de HU-04, sin puertos nuevos)
+- [ ] T036 [US3] COMMIT `GREEN: rechazar proyecto inexistente en CrearSprint, test en verde`
+- [ ] T037 [US3] RED: test `CrearSprint` — rechaza si ya existe otro Sprint `Pendiente` en el proyecto (FR-011, US3 escenario 3)
+- [ ] T038 [US3] COMMIT `RED: agregar test de CrearSprint con otro Pendiente (falla)`
+- [ ] T039 [US3] GREEN: agregar esa validación (consulta `SprintRepository.ListarPorProyecto`)
+- [ ] T040 [US3] COMMIT `GREEN: rechazar segundo Sprint Pendiente, test en verde`
+- [ ] T041 [US3] RED: test handler `POST /sprints` en `internal/http/sprint_handler_test.go` — 201 éxito; 404 proyecto inexistente; 400 `proyecto_id <= 0`, otro `Pendiente` y JSON inválido
+- [ ] T042 [US3] COMMIT `RED: agregar tests del handler POST /sprints (falla)`
+- [ ] T043 [US3] GREEN: implementar `SprintHandler.Crear` + DTOs en `internal/http/sprint_handler.go`, `internal/http/sprint_dto.go`
+- [ ] T044 [US3] COMMIT `GREEN: implementar handler POST /sprints, test en verde`
+- [ ] T045 [US3] Cablear ruta `POST /sprints` en `cmd/api/main.go` (reusar `proyectos` de HU-04)
+- [ ] T046 [US3] COMMIT `Cablear POST /sprints en cmd/api`
 
 **Checkpoint**: las 3 user stories completas — HU-05 cerrada funcionalmente.
 
-## Phase 6: Polish
+## Phase 6: 404 antes que 400 al iniciar (clarify 2026-10-04)
 
-- [ ] T038 Escenario BDD en `features/apertura_cierre_sprints.feature` + step definitions (usar el prompt de referencia de `AGENTS.md`, después de este `/speckit.tasks` + `/speckit.analyze`)
-- [ ] T039 Confirmar `go build ./...` y `go vet ./...` sin errores
-- [ ] T040 Marcar HU-05 como implementada en `docs/PRODUCT-BACKLOG.md` si cambió algo del alcance original
+**Goal**: `POST /sprints/{id}/iniciar` sobre un Sprint inexistente responde 404 aunque el cuerpo sea inválido (fecha mal formada o JSON malformado), mismo criterio que HU-04. Hoy el handler valida el cuerpo antes de buscar el Sprint.
+
+- [ ] T047 RED: tests handler — `POST /sprints/999/iniciar` con fecha mal formada → 404, y con JSON malformado → 404
+- [ ] T048 COMMIT `RED: agregar tests de 404 antes que 400 en iniciar Sprint (falla)`
+- [ ] T049 GREEN: verificar la existencia del Sprint antes de validar el cuerpo (el mecanismo se decide en la revisión del diff); los tests de T013/T014 siguen en verde
+- [ ] T050 COMMIT `GREEN: responder 404 antes que 400 en iniciar Sprint, test en verde`
+
+## Phase 7: BDD y cierre
+
+- [X] T051 Escenarios BDD de US1/US2 en `features/apertura_cierre_sprints.feature` + pasos en `features/steps_sprints.go` (5 de 7 escenarios definidos)
+- [ ] T052 Agregar el escenario de FR-011 (US3 escenario 3) a `features/apertura_cierre_sprints.feature`
+- [ ] T053 Definir los pasos de los 3 escenarios de creación. El paso compartido "existe un proyecto con identificador 1" (HU-01, `steps_creacion.go`) solo asigna un número: para HU-05 tiene que existir un proyecto real en el repositorio que usan los pasos de Sprint, sin romper los escenarios de HU-01
+- [ ] T054 COMMIT `Agregar pasos BDD de creación de Sprint (HU-05)`
+- [ ] T055 Confirmar `go build ./...`, `go vet ./...`, `gofmt -l .` (vacío), `go test ./...` y Godog sin escenarios `undefined`
+- [ ] T056 Quitar "NO TERMINADA, NO MERGEAR" del Status de `spec.md` y marcar HU-05 en `docs/PRODUCT-BACKLOG.md` si cambió el alcance
+- [ ] T057 COMMIT `Marcar HU-05 como implementada`
 
 ## Notas de implementación (desvíos respecto al plan)
 
@@ -107,9 +131,8 @@ implementación correspondiente en cada fase (RED antes que GREEN).
   con tests en service y handler; `ListarPorProyecto` con test directo.
 - **REFACTOR**: `BacklogHandler` (HU-01) pasó a usar el mismo mapeo de
   errores que `SprintHandler`.
-- **US3 en pausa**: el contrato `Project`/`ProjectRepository` usa
-  `ID string` y el resto del sistema `int64` — se resuelve con quien hace
-  HU-04 antes de implementar `CrearSprint`.
+- **US3 destrabada (2026-10-04)**: HU-04 entró a `main` con IDs `int64`;
+  `CrearSprint` usa su `ProjectRepository.ObtenerPorID`.
 
 ## Dependencies & Execution Order
 
@@ -117,7 +140,8 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 - **Phase 2 → Fases 3/4/5**: bloqueante (dominio/puerto de Sprint antes que cualquier user story).
 - **US1 (P1) y US2 (P1)**: no dependen una de la otra para ser *testeadas* (cada una siembra su propio estado de Sprint directo en el fake), pero **US2 depende de los tasks T017-T019** (campo `SprintID` + métodos de `BacklogRepository`) antes de poder implementar el arrastre.
 - **US3 (P2)**: depende de Phase 2 únicamente; no depende de US1/US2. Se ordena después por prioridad de valor, no por dependencia técnica real — se podría adelantar si conviene por reparto de trabajo.
-- **Phase 6**: después de que las 3 user stories estén implementadas.
+- **Phase 6** (404 antes que 400): solo depende de US1; puede ir antes o después de US3.
+- **Phase 7**: T052-T054 después de US3 (los pasos usan `CrearSprint`); T055-T057 al final de todo.
 
 ## Parallel Example
 

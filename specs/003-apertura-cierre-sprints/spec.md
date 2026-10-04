@@ -6,13 +6,21 @@
 
 **Status**: En progreso — NO TERMINADA, NO MERGEAR. Rama publicada solo como
 respaldo. Implementadas US1 (iniciar) y US2 (cerrar con arrastre); falta US3
-(crear Sprint), que depende de que HU-04 entre a `main`. Ver `tasks.md`.
+(crear Sprint); HU-04 ya está en `main`. Ver `tasks.md`.
 
 **Input**: User description: "HU-05: Apertura y Cierre de Sprints. Como Scrum
 Master quiero crear, iniciar y cerrar un Sprint definiendo su objetivo
 (Sprint Goal) y plazos para poder organizar y delimitar las iteraciones de
 desarrollo del equipo. Depende de HU-04 (Project), ya existe un contrato
 mínimo commiteado (Project/ProjectRepository) para TDD con fake en memoria."
+
+## Clarifications
+
+### Session 2026-10-04
+
+- Q: ¿Qué responde la API al crear un Sprint para un proyecto que no existe? → A: 404 "proyecto no encontrado", igual que HU-04.
+- Q: Al iniciar un Sprint inexistente con datos inválidos, ¿qué error se informa primero? → A: 404 primero; el cuerpo se valida (400) solo si el Sprint existe.
+- Q: ¿Un Sprint puede tener la misma fecha de inicio y de fin? → A: No; el fin debe ser estrictamente posterior (posible, pero no práctico). HU-04 acepta fechas iguales para proyectos a propósito.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -87,17 +95,25 @@ Goal ni fechas todavía.
 2. **Given** se intenta crear un Sprint para un `ProyectoID` que no existe,
    **When** se ejecuta la creación, **Then** el sistema rechaza la
    operación.
+3. **Given** un proyecto ya tiene un Sprint en estado "Pendiente", **When**
+   se intenta crear otro Sprint para ese proyecto, **Then** el sistema
+   rechaza la operación y el proyecto sigue teniendo un solo Sprint
+   "Pendiente".
 
 ### Edge Cases
 
 - ¿Qué pasa si se intenta cerrar un Sprint que nunca se inició (sigue en
   "Pendiente")? → Se rechaza, solo se cierran Sprints "Activo".
 - ¿Qué pasa si la fecha de fin ingresada es anterior o igual a la fecha de
-  inicio al iniciar el Sprint? → Se rechaza con error de validación.
+  inicio al iniciar el Sprint? → Se rechaza con error de validación,
+  incluido el Sprint de un día. Difiere a propósito de HU-04, que acepta
+  fechas iguales para un proyecto: un Sprint de un día no es práctico.
 - ¿Qué pasa si el Sprint que se cierra no tiene ninguna historia asignada?
   → Se cierra igual, no es un error; simplemente no hay nada que mover.
 - ¿Qué pasa si se intenta iniciar o cerrar un Sprint que no existe
-  (`SprintID` inválido)? → Se rechaza con error de "no encontrado".
+  (`SprintID` inválido)? → Se rechaza con error de "no encontrado",
+  aunque el cuerpo de la petición también sea inválido: la existencia se
+  verifica antes que los datos (mismo criterio que HU-04).
 
 ## Requirements *(mandatory)*
 
@@ -106,13 +122,14 @@ Goal ni fechas todavía.
 - **FR-001**: El sistema MUST permitir crear un Sprint asociado a un
   `Project` existente, quedando en estado inicial "Pendiente".
 - **FR-002**: El sistema MUST rechazar la creación de un Sprint si el
-  `Project` indicado no existe.
+  `Project` indicado no existe, con error de "proyecto no encontrado"
+  (no de "datos inválidos"), mismo criterio que HU-04.
 - **FR-003**: El sistema MUST permitir iniciar un Sprint en estado
   "Pendiente", definiendo en ese momento el Sprint Goal, la fecha de inicio
   y la fecha de fin, pasando su estado a "Activo".
 - **FR-004**: El sistema MUST rechazar iniciar un Sprint si ya existe otro
   Sprint en estado "Activo" para el mismo `Project`.
-- **FR-005**: El sistema MUST validar que la fecha de fin sea posterior a
+- **FR-005**: El sistema MUST validar que la fecha de fin sea estrictamente posterior a
   la fecha de inicio al iniciar un Sprint.
 - **FR-006**: El sistema MUST permitir cerrar un Sprint que esté en estado
   "Activo", cambiando su estado a "Finalizado".
@@ -164,11 +181,9 @@ Goal ni fechas todavía.
 - No hay cierre automático de Sprints por fecha vencida; cerrar un Sprint
   es siempre una acción manual del Scrum Master, consistente con el
   Escenario 2 original ("el Scrum Master presiona Cerrar Sprint").
-- Esta historia depende del contrato mínimo `Project`/`ProjectRepository`
-  ya commiteado en `internal/domain/project.go` e
-  `internal/repository/project_repository.go` (commit `f2ea8f9`) — se usa
-  un fake en memoria de `ProjectRepository` para TDD, sin esperar la
-  implementación real de HU-04.
+- Esta historia usa el `ProjectRepository` real de HU-04 (ya en `main`,
+  IDs `int64`) para verificar que el proyecto existe; en los tests se usa
+  su fake en memoria (`ProjectRepositoryEnMemoria`).
 - Un proyecto tiene como máximo un Sprint "Pendiente" a la vez (FR-011) —
   coincide con la práctica real de Scrum de planificar un Sprint por vez,
   no una cola de varios por adelantado.

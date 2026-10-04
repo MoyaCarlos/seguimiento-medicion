@@ -5,10 +5,10 @@
 | Campo | Tipo | Regla |
 |---|---|---|
 | ID | int64 | autoincremental |
-| ProyectoID | int64 | obligatorio, `> 0`, debe existir (vía `ProjectRepository.GetByID`) |
+| ProyectoID | int64 | obligatorio, `> 0`, debe existir (vía `ProjectRepository.ObtenerPorID`; si no, `ErrProyectoNoEncontrado`) |
 | SprintGoal | string | obligatorio al **iniciar** (no al crear) |
 | FechaInicio | time.Time | obligatoria al iniciar |
-| FechaFin | time.Time | obligatoria al iniciar; debe ser posterior a FechaInicio |
+| FechaFin | time.Time | obligatoria al iniciar; estrictamente posterior a FechaInicio (no se permite un Sprint de un día) |
 | Estado | EstadoSprint | `Pendiente` (default al crear) → `Activo` → `Finalizado` |
 
 **Invariantes** (validados en `NewSprint` / métodos de transición, patrón Factory):

@@ -3,10 +3,11 @@
 ## Prerrequisitos
 
 - Go 1.26 instalado (`go build ./...` corre limpio en el repo).
-- No hace falta que HU-04 esté implementada: se usa
-  `repository.NewProjectRepositoryFake()` (en memoria) cargado con un
-  `Project` de prueba, siguiendo `internal/domain/project.go` /
-  `internal/repository/project_repository.go` ya commiteados.
+- HU-04 ya está en `main`: en los tests se usa
+  `repository.NewProjectRepositoryEnMemoria()` con un `Project` de prueba
+  guardado vía `Guardar`.
+- Si tenés un `seguimiento.db` local de antes de HU-04, borralo: la API
+  detecta el esquema viejo y termina con error.
 
 ## Validar el flujo completo (una vez implementado)
 
@@ -37,5 +38,5 @@ go test ./internal/... -run Sprint -v
 ```bash
 go test ./features/... -v
 ```
-(una vez generado `features/apertura_cierre_sprints.feature` y sus step
-definitions, después de `/speckit.tasks` + `/speckit.analyze`).
+(escenarios en `features/apertura_cierre_sprints.feature`, pasos en
+`features/steps_sprints.go`).

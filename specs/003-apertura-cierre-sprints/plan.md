@@ -10,9 +10,9 @@ Permitir crear, iniciar y cerrar Sprints asociados a un Project, con la
 regla de negocio de "un solo Sprint Activo (y un solo Pendiente) por
 proyecto a la vez", y el arrastre automático de historias no completadas
 al Product Backlog al cerrar. Se implementa en Go siguiendo la arquitectura
-Clean/Hexagonal ya establecida (mismo patrón que HU-01), usando un fake en
-memoria de `ProjectRepository` (ya commiteado) para no depender de la
-implementación real de HU-04 todavía.
+Clean/Hexagonal ya establecida (mismo patrón que HU-01). La existencia del
+proyecto se verifica con el `ProjectRepository` real de HU-04 (ya en
+`main`); en los tests se usa su fake `ProjectRepositoryEnMemoria`.
 
 ## Technical Context
 
@@ -39,9 +39,10 @@ consistente con `cmd/api/main.go` actual).
 correctitud de las reglas de negocio (un solo Activo/Pendiente, arrastre de
 historias) por sobre cualquier meta de throughput.
 
-**Constraints**: debe integrar con el contrato `Project`/`ProjectRepository`
-ya commiteado (`internal/domain/project.go`,
-`internal/repository/project_repository.go`); el dominio no puede depender
+**Constraints**: `CrearSprint` depende del puerto `ProjectRepository` de
+HU-04 (`ObtenerPorID(ctx, id int64)`, en
+`internal/repository/project_repository.go`), sin puertos nuevos; el
+dominio no puede depender
 de SQLite ni HTTP (Principio IV de la constitución).
 
 **Scale/Scope**: acotado a esta historia — entidad `Sprint` y sus 3
@@ -97,7 +98,7 @@ internal/repository/
 ├── sprint_repository.go       # Puerto SprintRepository
 ├── sqlite_sprint.go           # Adaptador SQLite
 ├── sqlite_sprint_test.go
-└── sprint_repository_fake.go  # Fake en memoria (para tests propios y de quien consuma SprintRepository)
+└── sprint_repository_memoria.go  # SprintRepositoryEnMemoria (para tests propios y de quien consuma SprintRepository)
 
 internal/http/
 ├── sprint_dto.go
@@ -110,9 +111,9 @@ features/
 
 **Structure Decision**: misma estructura de capas ya usada en HU-01, un
 archivo por responsabilidad dentro de cada paquete. Se agrega
-`sprint_repository_fake.go` versionado (no solo en tests) porque HU-13
-también lo va a necesitar para su propio TDD, igual que ya se hizo con el
-contrato de `Project`.
+`sprint_repository_memoria.go` versionado (no solo en tests) porque HU-13
+también lo va a necesitar para su propio TDD, igual que
+`ProjectRepositoryEnMemoria` de HU-04.
 
 ## Complexity Tracking
 

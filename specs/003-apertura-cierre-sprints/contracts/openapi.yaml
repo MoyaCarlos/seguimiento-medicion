@@ -25,7 +25,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/Sprint"
         "400":
-          description: Proyecto inexistente, o el proyecto ya tiene un Sprint Pendiente
+          description: proyecto_id no positivo, o el proyecto ya tiene un Sprint Pendiente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Proyecto no encontrado
           content:
             application/json:
               schema:
@@ -71,7 +77,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "404":
-          description: Sprint no encontrado
+          description: Sprint no encontrado (se informa antes que cualquier 400 del cuerpo)
           content:
             application/json:
               schema:
