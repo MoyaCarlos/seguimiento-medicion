@@ -14,8 +14,9 @@ const (
 
 // CalcularEstadoProyecto deriva el estado del proyecto dando prioridad a los
 // Sprints sobre las fechas: un Sprint Activo mantiene el proyecto "En curso";
-// sin ejecución iniciada, deciden las fechas del proyecto, comparadas por día
-// calendario (los bordes [inicio, fin] son inclusivos).
+// todos Finalizado ⇒ "Finalizado"; un Finalizado junto a un Pendiente ⇒ "En
+// curso" (FR-016); sin ejecución iniciada, deciden las fechas del proyecto,
+// comparadas por día calendario (los bordes [inicio, fin] son inclusivos).
 func CalcularEstadoProyecto(p Project, sprints []Sprint, ahora time.Time) EstadoProyecto {
 	for _, s := range sprints {
 		if s.Estado == SprintActivo {
@@ -24,6 +25,9 @@ func CalcularEstadoProyecto(p Project, sprints []Sprint, ahora time.Time) Estado
 	}
 	if len(sprints) > 0 && todosFinalizados(sprints) {
 		return ProyectoFinalizado
+	}
+	if hayFinalizado(sprints) {
+		return ProyectoEnCurso
 	}
 	ahora = inicioDelDiaCivil(ahora)
 	if p.FechaInicio == nil || ahora.Before(*p.FechaInicio) {
@@ -50,4 +54,13 @@ func todosFinalizados(sprints []Sprint) bool {
 		}
 	}
 	return true
+}
+
+func hayFinalizado(sprints []Sprint) bool {
+	for _, s := range sprints {
+		if s.Estado == SprintFinalizado {
+			return true
+		}
+	}
+	return false
 }
