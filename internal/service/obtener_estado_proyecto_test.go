@@ -10,13 +10,23 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 )
 
+// civilLocal devuelve la medianoche local del día civil dado, para que los casos
+// de borde de fecha sean deterministas e independientes de la zona horaria del host.
+func civilLocal(y int, m time.Month, d int) time.Time {
+	return time.Date(y, m, d, 0, 0, 0, 0, time.Local)
+}
+
 func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 	ctx := context.Background()
+	// Fechas del proyecto: día UTC (00:00), igual que HU-04.
 	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
-	antes := inicio.AddDate(0, 0, -1)
-	enRango := time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC)
-	despues := fin.AddDate(0, 0, 1)
+	// Instantes de consulta: días civiles en hora local.
+	antes := civilLocal(2026, 2, 28)
+	inicioHoy := civilLocal(2026, 3, 1)
+	enRango := civilLocal(2026, 6, 15)
+	finHoy := civilLocal(2026, 11, 30)
+	despues := civilLocal(2026, 12, 1)
 
 	casos := []struct {
 		nombre    string
@@ -28,9 +38,9 @@ func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 		{"sprint activo con fecha fin vencida => en curso", true, []domain.EstadoSprint{domain.SprintActivo}, despues, domain.ProyectoEnCurso},
 		{"sin activos y todos finalizados => finalizado", true, []domain.EstadoSprint{domain.SprintFinalizado, domain.SprintFinalizado}, enRango, domain.ProyectoFinalizado},
 		{"sin sprints iniciados, ahora antes del inicio => planificado", true, nil, antes, domain.ProyectoPlanificado},
-		{"sin sprints iniciados, ahora igual al inicio (borde) => en curso", true, nil, inicio, domain.ProyectoEnCurso},
+		{"sin sprints iniciados, ahora igual al inicio (borde) => en curso", true, nil, inicioHoy, domain.ProyectoEnCurso},
 		{"sin sprints iniciados, ahora dentro del rango => en curso", true, nil, enRango, domain.ProyectoEnCurso},
-		{"sin sprints iniciados, ahora igual al fin (borde) => en curso", true, nil, fin, domain.ProyectoEnCurso},
+		{"sin sprints iniciados, ahora igual al fin (borde) => en curso", true, nil, finHoy, domain.ProyectoEnCurso},
 		{"sin sprints iniciados, ahora después del fin => finalizado", true, nil, despues, domain.ProyectoFinalizado},
 		{"solo sprints pendientes con inicio futuro => planificado", true, []domain.EstadoSprint{domain.SprintPendiente}, antes, domain.ProyectoPlanificado},
 		{"sin sprints y sin fechas => planificado", false, nil, enRango, domain.ProyectoPlanificado},
