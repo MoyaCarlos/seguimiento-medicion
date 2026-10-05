@@ -529,3 +529,23 @@ Nueva
 13 (Fibonacci)
 ### Estimación
 5 Story Points
+
+---
+
+# FIXES DEL SPRINT 1 INCLUIDOS EN EL SPRINT 2
+
+Defectos encontrados durante el Sprint 1 (que terminó el 2026-10-05). Entran al
+backlog del Sprint 2 y se reparan cada uno en su propia rama `fix/<n°-issue>-nombre`
+(ver la convención de Git en `AGENTS.md`). Cada issue tiene la etiqueta `bug`.
+
+| Issue | Fix | Historia | Rama sugerida |
+|---|---|---|---|
+| #19 | Integridad referencial de `proyecto_id` en historias y Sprints: llave foránea en la base, el caso de uso `CrearHistoriaBacklog` no valida que el proyecto exista, y `ErrIntegridadReferencial` se responde como 500 | HU-01, HU-05 | `fix/19-integridad-proyecto-id` |
+| #21 | Los errores 404 de la API incluyen `"campo": ""` vacío | transversal | `fix/21-404-sin-campo-vacio` |
+| #99 | Al cerrar un Sprint, las historias no completadas vuelven a "Nueva" | HU-05 | `fix/99-estado-nueva-al-arrastrar` |
+| #100 | La fecha de fin de un proyecto debe ser estrictamente posterior a la de inicio | HU-04 | `fix/100-fecha-fin-posterior-proyecto` |
+| #101 | Pendientes del code review de HU-04: fake en memoria de proyectos y 404 antes que 400 al asignar integrantes | HU-04 | `fix/101-pendientes-review-hu04` |
+| #102 | `.gitattributes` para que `gofmt` no marque todos los archivos en Windows (CRLF) | transversal | `fix/102-gitattributes-lf` |
+
+**A definir con el cliente, fuera del Sprint 2 hasta entonces:** #20, iniciar un
+Sprint acepta fechas en el pasado.
