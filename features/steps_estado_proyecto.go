@@ -126,6 +126,19 @@ func (p *pasosEstado) todosFinalizados() error {
 	return err
 }
 
+// finalizadoYPendiente deja el proyecto con un Sprint Finalizado y otro
+// Pendiente (sin ningún Activo), para el caso [Finalizado, Pendiente] de FR-016.
+func (p *pasosEstado) finalizadoYPendiente() error {
+	if err := p.crearActivo(); err != nil {
+		return err
+	}
+	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID); err != nil {
+		return err
+	}
+	_, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	return err
+}
+
 func (p *pasosEstado) sinSprintsIniciados() error {
 	delProyecto, err := p.sprints.ListarPorProyecto(context.Background(), p.base.proyectoID)
 	if err != nil {
@@ -203,6 +216,7 @@ func InitializeScenarioEstado(ctx *godog.ScenarioContext, base *scenarioContext)
 	ctx.Step(`^que el proyecto tiene la fecha actual como fecha de fin$`, p.fechaActualComoFin)
 	ctx.Step(`^que el proyecto cuenta con un Sprint en estado "Activo"$`, p.cuentaConActivo)
 	ctx.Step(`^que el proyecto tiene todos sus Sprints en estado "Finalizado"$`, p.todosFinalizados)
+	ctx.Step(`^que el proyecto tiene un Sprint en estado "Finalizado" y uno "Pendiente"$`, p.finalizadoYPendiente)
 	ctx.Step(`^que el proyecto no tiene Sprints iniciados$`, p.sinSprintsIniciados)
 	ctx.Step(`^que consulté el estado del proyecto y era "([^"]*)"$`, p.consulteYEstadoEra)
 	ctx.Step(`^consulto el estado del proyecto$`, p.consultoEstado)
