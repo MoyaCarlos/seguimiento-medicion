@@ -118,12 +118,13 @@ y verificar que el service no invoca `Guardar`/`Actualizar`.
 
 - [X] T030 C1-SDD: actualizar `spec.md` (Edge Case EARS para `[Finalizado, Pendiente]` ⇒ "En curso"; ajustar FR-005/FR-007 y Assumptions; entrada en `## Clarifications`) y alinear `plan.md`, `data-model.md` y `research.md` con la nueva regla de derivación
 - [X] T031 COMMIT `Especificar hueco de derivación [Finalizado, Pendiente] (HU-13)` — stagear `specs/004-hu-13-estado-proyecto/{spec,plan,data-model,research}.md`
-- [ ] T032 B1-RED: tests de dominio con hora del día (fin = 30/11 con `ahora` 30/11 10:00 y 23:59:59 ⇒ "En curso"; 1/12 00:00:01 ⇒ "Finalizado"; inicio = 10/10 con 10/10 00:00:01 ⇒ "En curso" y 9/10 23:59:59 ⇒ "Planificado") y reescribir los `ahora` de `estado_proyecto_test.go` a `time.Local` (determinismo ante el host) — confirmar que FALLA
-- [ ] T033 COMMIT `RED: agregar tests de borde de fecha con hora del día (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go`
-- [ ] T034 B1-GREEN: normalizar `ahora` a día civil local dentro de `CalcularEstadoProyecto` (comparar por día calendario, DRY, sin reloj inyectado) — `go test ./internal/domain/` en verde
-- [ ] T035 COMMIT `GREEN: comparar fechas por día calendario, test en verde` — stagear `internal/domain/estado_proyecto.go`
-- [ ] T036 B1-BDD: en `features/steps_estado_proyecto.go` reemplazar `hoyUTC()` por día civil local y hacer que `consultoEstado` pase `time.Now()` real; fechas de borde derivadas del día civil local — `go test ./features/` en verde
-- [ ] T037 COMMIT `Actualizar pasos BDD de HU-13 para la hora real en los bordes` — stagear `features/steps_estado_proyecto.go`
+- [X] T032 B1-RED: tests de dominio con hora del día (fin = 30/11 con `ahora` 30/11 10:00 y 23:59:59 ⇒ "En curso"; 1/12 00:00:01 ⇒ "Finalizado"; inicio = 10/10 con 10/10 00:00:01 ⇒ "En curso" y 9/10 23:59:59 ⇒ "Planificado") y reescribir los `ahora` de `estado_proyecto_test.go` a `time.Local` (determinismo ante el host) — confirmar que FALLA
+- [X] T033 COMMIT `RED: agregar tests de borde de fecha con hora del día (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go`
+- [X] T034 B1-GREEN: normalizar `ahora` a día civil local dentro de `CalcularEstadoProyecto` (comparar por día calendario, DRY, sin reloj inyectado) — `go test ./internal/domain/` en verde
+- [X] T035 COMMIT `GREEN: comparar fechas por día calendario, test en verde` — stagear `internal/domain/estado_proyecto.go`
+- [X] T035b B1-fixtures: alinear `internal/service/obtener_estado_proyecto_test.go` a día civil local (consecuencia del GREEN de B1: los `ahora` en UTC dejan de representar el borde) — COMMIT `Alinear fixtures de ObtenerEstadoProyecto a día civil local (HU-13)`
+- [X] T036 B1-BDD: en `features/steps_estado_proyecto.go` reemplazar `hoyUTC()` por día civil local y hacer que `consultoEstado` pase `time.Now()` real; fechas de borde derivadas del día civil local — `go test ./features/` en verde
+- [X] T037 COMMIT `Actualizar pasos BDD de HU-13 para la hora real en los bordes` — stagear `features/steps_estado_proyecto.go`
 - [ ] T038 C1-RED: tests de dominio y de service para `[Finalizado, Pendiente]` sin fechas y con `FechaInicio` futura ⇒ "En curso" — confirmar que FALLA
 - [ ] T039 COMMIT `RED: agregar tests de [Finalizado, Pendiente] => En curso (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go` y `internal/service/obtener_estado_proyecto_test.go`
 - [ ] T040 C1-GREEN: regla en `CalcularEstadoProyecto` — sin `Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" — `go test ./...` en verde
