@@ -6,8 +6,8 @@ import (
 )
 
 // Project es el contenedor de todo lo demás: Sprints, historias, esfuerzo.
-// Los campos de fechas/estado (HU-13) se agregan sobre esta misma struct,
-// no se cambia el nombre ni se remueven los que ya hay.
+// Las fechas de inicio/fin (HU-04) son campos persistidos; el estado del
+// proyecto (HU-13) NO es un campo: se calcula on-demand sobre esta struct.
 type Project struct {
 	ID          int64
 	Nombre      string
