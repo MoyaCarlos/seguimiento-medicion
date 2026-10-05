@@ -5,6 +5,7 @@ import (
 	"io"
 	nethttp "net/http"
 	"strconv"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -17,6 +18,7 @@ type ProjectHandler struct {
 	editar  *service.EditarProyecto
 	asignar *service.AsignarIntegrante
 	listar  *service.ListarIntegrantes
+	estado  *service.ObtenerEstadoProyecto
 }
 
 func NewProjectHandler(
@@ -25,8 +27,9 @@ func NewProjectHandler(
 	editar *service.EditarProyecto,
 	asignar *service.AsignarIntegrante,
 	listar *service.ListarIntegrantes,
+	estado *service.ObtenerEstadoProyecto,
 ) *ProjectHandler {
-	return &ProjectHandler{crear: crear, obtener: obtener, editar: editar, asignar: asignar, listar: listar}
+	return &ProjectHandler{crear: crear, obtener: obtener, editar: editar, asignar: asignar, listar: listar, estado: estado}
 }
 
 // Crear atiende POST /projects.
@@ -75,6 +78,21 @@ func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, aProyectoResponse(proyecto))
+}
+
+// ObtenerEstado atiende GET /projects/{id}/status.
+func (h *ProjectHandler) ObtenerEstado(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	estado, err := h.estado.Ejecutar(r.Context(), id, time.Now())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, estadoProyectoResponse{Estado: string(estado)})
 }
 
 // Editar atiende PUT /projects/{id}.

@@ -38,6 +38,10 @@ type asignarIntegranteRequest struct {
 	Rol    string `json:"rol"`
 }
 
+type estadoProyectoResponse struct {
+	Estado string `json:"estado"`
+}
+
 type integranteResponse struct {
 	ID          int64  `json:"id"`
 	ProyectoID  int64  `json:"proyecto_id"`
