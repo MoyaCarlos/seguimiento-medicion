@@ -30,7 +30,7 @@ type pasosEstado struct {
 }
 
 func (p *pasosEstado) preparar() {
-	p.hoy = hoyUTC()
+	p.hoy = hoyCivil()
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
@@ -41,10 +41,12 @@ func (p *pasosEstado) preparar() {
 	p.sprint, p.estado, p.err = domain.Sprint{}, "", nil
 }
 
-// hoyUTC normaliza la fecha actual a un día UTC, para que los bordes inclusivos
-// del rango [fecha_inicio, fecha_fin] se comporten de forma determinista.
-func hoyUTC() time.Time {
-	ahora := time.Now().UTC()
+// hoyCivil devuelve la medianoche UTC del día civil actual en la zona horaria
+// local del servidor. Se usa solo para derivar las fechas del proyecto de los
+// escenarios; la consulta en sí pasa time.Now() real (con hora) para que el
+// borde inclusivo [inicio, fin] se pruebe contra la hora del día.
+func hoyCivil() time.Time {
+	ahora := time.Now()
 	return time.Date(ahora.Year(), ahora.Month(), ahora.Day(), 0, 0, 0, 0, time.UTC)
 }
 
@@ -138,12 +140,12 @@ func (p *pasosEstado) sinSprintsIniciados() error {
 }
 
 func (p *pasosEstado) consultoEstado() error {
-	p.estado, p.err = p.consulta.Ejecutar(context.Background(), p.base.proyectoID, p.hoy)
+	p.estado, p.err = p.consulta.Ejecutar(context.Background(), p.base.proyectoID, time.Now())
 	return nil
 }
 
 func (p *pasosEstado) consultoEstadoDeInexistente() error {
-	p.estado, p.err = p.consulta.Ejecutar(context.Background(), 999, p.hoy)
+	p.estado, p.err = p.consulta.Ejecutar(context.Background(), 999, time.Now())
 	return nil
 }
 
