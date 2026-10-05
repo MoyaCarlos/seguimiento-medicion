@@ -96,6 +96,14 @@ func (p *pasosEstado) fechaActualComoFin() error {
 	return p.fijarFechas(&inicio, &fin)
 }
 
+// fechaFinVencida deja la fecha de fin en el pasado, para probar que un Sprint
+// Activo prevalece sobre la fecha vencida (decisión del clarify 2026-10-04).
+func (p *pasosEstado) fechaFinVencida() error {
+	inicio := p.hoy.AddDate(0, 0, -14)
+	fin := p.hoy.AddDate(0, 0, -7)
+	return p.fijarFechas(&inicio, &fin)
+}
+
 func (p *pasosEstado) crearActivo() error {
 	pendiente, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
 	if err != nil {
@@ -214,6 +222,7 @@ func InitializeScenarioEstado(ctx *godog.ScenarioContext, base *scenarioContext)
 	ctx.Step(`^que el proyecto tiene la fecha actual dentro de su rango de fechas$`, p.fechaActualEnRango)
 	ctx.Step(`^que el proyecto tiene la fecha actual como fecha de inicio$`, p.fechaActualComoInicio)
 	ctx.Step(`^que el proyecto tiene la fecha actual como fecha de fin$`, p.fechaActualComoFin)
+	ctx.Step(`^que el proyecto tiene la fecha de fin vencida$`, p.fechaFinVencida)
 	ctx.Step(`^que el proyecto cuenta con un Sprint en estado "Activo"$`, p.cuentaConActivo)
 	ctx.Step(`^que el proyecto tiene todos sus Sprints en estado "Finalizado"$`, p.todosFinalizados)
 	ctx.Step(`^que el proyecto tiene un Sprint en estado "Finalizado" y uno "Pendiente"$`, p.finalizadoYPendiente)
