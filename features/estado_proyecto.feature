@@ -65,3 +65,9 @@ Característica: Consulta del estado general del proyecto
     Dado que el proyecto tiene un Sprint en estado "Finalizado" y uno "Pendiente"
     Cuando consulto el estado del proyecto
     Entonces el estado del proyecto es "En curso"
+
+  Escenario: Sprint Activo con fecha de fin vencida muestra "En curso"
+    Dado que el proyecto tiene la fecha de fin vencida
+    Y que el proyecto cuenta con un Sprint en estado "Activo"
+    Cuando consulto el estado del proyecto
+    Entonces el estado del proyecto es "En curso"
