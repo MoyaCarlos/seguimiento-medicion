@@ -119,14 +119,21 @@ func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.U
 }
 
 func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
+	handler, proyectos, _ := nuevoProjectHandlerDePruebaConSprints()
+	return handler, proyectos
+}
+
+func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepository, *repository.SprintRepositoryEnMemoria) {
 	proyectos := &stubProjectRepository{}
 	usuarios := &stubUserRepository{}
+	sprints := repository.NewSprintRepositoryEnMemoria()
 	crear := service.NewCrearProyecto(proyectos, usuarios)
 	obtener := service.NewObtenerProyecto(proyectos)
 	editar := service.NewEditarProyecto(proyectos)
 	asignar := service.NewAsignarIntegrante(proyectos, usuarios)
 	listar := service.NewListarIntegrantes(proyectos)
-	return NewProjectHandler(crear, obtener, editar, asignar, listar), proyectos
+	estado := service.NewObtenerEstadoProyecto(proyectos, sprints)
+	return NewProjectHandler(crear, obtener, editar, asignar, listar, estado), proyectos, sprints
 }
 
 // crearProyectoViaHTTP usa el propio handler (y sus repos) para preparar un proyecto.
@@ -490,5 +497,66 @@ func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 	if len(resp) != 1 || resp[0].Nombre != "Ana" {
 		t.Errorf("listado inesperado: %+v", resp)
+	}
+}
+
+func TestProjectHandler_ObtenerEstado_EnCurso(t *testing.T) {
+	handler, _, sprints := nuevoProjectHandlerDePruebaConSprints()
+	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
+
+	if _, err := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: id, Estado: domain.SprintActivo}); err != nil {
+		t.Fatalf("no se pudo sembrar el Sprint: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/status", nil)
+	req.SetPathValue("id", idStr)
+	handler.ObtenerEstado(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp estadoProyectoResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Estado != string(domain.ProyectoEnCurso) {
+		t.Errorf("se esperaba %q, se obtuvo %q", domain.ProyectoEnCurso, resp.Estado)
+	}
+}
+
+func TestProjectHandler_ObtenerEstado_Inexistente(t *testing.T) {
+	handler, _, _ := nuevoProjectHandlerDePruebaConSprints()
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/projects/999/status", nil)
+	req.SetPathValue("id", "999")
+	handler.ObtenerEstado(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
+	}
+}
+
+func TestProjectHandler_ObtenerEstado_IDInvalido(t *testing.T) {
+	handler, _, _ := nuevoProjectHandlerDePruebaConSprints()
+
+	for _, id := range []string{"abc", "0"} {
+		t.Run(id, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodGet, "/projects/"+id+"/status", nil)
+			req.SetPathValue("id", id)
+			handler.ObtenerEstado(rec, req)
+
+			if rec.Code != http.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+			}
+			var resp errorResponse
+			_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+			if resp.Campo != "id" {
+				t.Errorf("se esperaba campo id, se obtuvo %q", resp.Campo)
+			}
+		})
 	}
 }
