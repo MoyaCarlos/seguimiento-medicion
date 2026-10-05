@@ -45,6 +45,8 @@ func TestCalcularEstadoProyecto_TablaDeDecision(t *testing.T) {
 		{"sin sprints iniciados, ahora igual al fin (borde inclusivo) => en curso", conFechas, nil, finHoy, ProyectoEnCurso},
 		{"sin sprints iniciados, ahora después del fin => finalizado", conFechas, nil, despues, ProyectoFinalizado},
 		{"solo sprints pendientes con inicio futuro => planificado", conFechas, []Sprint{sprint(SprintPendiente)}, antes, ProyectoPlanificado},
+		{"finalizado y pendiente sin fechas => en curso", Project{}, []Sprint{sprint(SprintFinalizado), sprint(SprintPendiente)}, enRango, ProyectoEnCurso},
+		{"finalizado y pendiente con inicio futuro => en curso", Project{FechaInicio: tiempoPtr(inicio)}, []Sprint{sprint(SprintFinalizado), sprint(SprintPendiente)}, antes, ProyectoEnCurso},
 		{"sin sprints y sin fecha de inicio => planificado", Project{}, nil, enRango, ProyectoPlanificado},
 		{"fecha de fin sin fecha de inicio => planificado (no iniciado por fecha)", Project{FechaFin: tiempoPtr(fin)}, nil, enRango, ProyectoPlanificado},
 		{"solo fecha de inicio, ahora dentro del rango abierto => en curso", Project{FechaInicio: tiempoPtr(inicio)}, nil, enRango, ProyectoEnCurso},

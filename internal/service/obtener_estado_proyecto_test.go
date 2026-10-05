@@ -78,6 +78,50 @@ func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 	}
 }
 
+func TestObtenerEstadoProyecto_FinalizadoYPendiente(t *testing.T) {
+	ctx := context.Background()
+	inicioFuturo := civilLocal(2026, 12, 31)
+	ahora := civilLocal(2026, 6, 15)
+
+	casos := []struct {
+		nombre    string
+		conInicio bool
+	}{
+		{"sin fechas => en curso", false},
+		{"con inicio futuro => en curso", true},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			proyectos := repository.NewProjectRepositoryEnMemoria()
+			sprints := repository.NewSprintRepositoryEnMemoria()
+
+			proyecto := domain.Project{Nombre: "Proyecto"}
+			if c.conInicio {
+				proyecto.FechaInicio = &inicioFuturo
+			}
+			guardado, err := proyectos.Guardar(ctx, proyecto)
+			if err != nil {
+				t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
+			}
+			for _, estado := range []domain.EstadoSprint{domain.SprintFinalizado, domain.SprintPendiente} {
+				if _, err := sprints.Guardar(ctx, domain.Sprint{ProyectoID: guardado.ID, Estado: estado}); err != nil {
+					t.Fatalf("no se esperaba error al guardar el Sprint: %v", err)
+				}
+			}
+
+			servicio := NewObtenerEstadoProyecto(proyectos, sprints)
+			got, err := servicio.Ejecutar(ctx, guardado.ID, ahora)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if got != domain.ProyectoEnCurso {
+				t.Errorf("Ejecutar() = %q, se esperaba %q", got, domain.ProyectoEnCurso)
+			}
+		})
+	}
+}
+
 func TestObtenerEstadoProyecto_Ejecutar_ProyectoInexistente(t *testing.T) {
 	servicio := NewObtenerEstadoProyecto(
 		repository.NewProjectRepositoryEnMemoria(),
