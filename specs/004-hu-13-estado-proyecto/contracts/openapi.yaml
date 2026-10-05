@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Fechas y Estado del Proyecto (HU-13)
+  version: "1.0.0"
+  description: >
+    Consulta del estado general derivado de un proyecto. Operación de solo lectura:
+    no registra ni modifica fechas ni Sprints (eso es HU-04 / HU-05).
+paths:
+  /projects/{id}/status:
+    get:
+      summary: Consultar el estado general de un proyecto
+      description: >
+        Calcula y devuelve "Planificado", "En curso" o "Finalizado" a partir de la fecha
+        actual, de las fechas del proyecto y del estado de sus Sprints. La regla es: los
+        Sprints mandan; las fechas del proyecto son respaldo cuando no hay Sprints iniciados.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: Estado calculado del proyecto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EstadoProyecto"
+        "400":
+          description: Identificador inválido (no entero positivo)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Proyecto no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    EstadoProyecto:
+      type: object
+      properties:
+        estado:
+          type: string
+          enum: [Planificado, "En curso", Finalizado]
+    Error:
+      type: object
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

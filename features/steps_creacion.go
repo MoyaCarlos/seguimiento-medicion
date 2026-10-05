@@ -167,8 +167,9 @@ func (s *scenarioContext) noRegistraHistoria() error {
 	return nil
 }
 
-// InitializeScenario registra los pasos de los escenarios de HU-01.
-func InitializeScenario(ctx *godog.ScenarioContext) {
+// InitializeScenario registra los pasos de los escenarios de HU-01 y devuelve
+// el contexto compartido para que otras historias (HU-13) se apoyen en él.
+func InitializeScenario(ctx *godog.ScenarioContext) *scenarioContext {
 	sc := &scenarioContext{}
 
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
@@ -198,4 +199,5 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^no registra la historia en el Product Backlog$`, sc.noRegistraHistoria)
 
 	inicializarPasosSprint(ctx, sc)
+	return sc
 }

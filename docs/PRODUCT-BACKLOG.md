@@ -15,7 +15,7 @@ No se puede gestionar nada si no existe un contenedor. Esta es la base estructur
 
 * **HU-04: Creación de Proyecto y Asignación de Equipo (Must have).** Es la máxima prioridad operativa. Todo el sistema (historias, sprints, horas) depende de que exista un proyecto y usuarios registrados.  
 * **HU-01: Creación de Historias de Usuario (Must have).** Sin esto, no hay Product Backlog.
-* **HU-13: Fechas y Estado del Proyecto (Should have).** Extiende HU-04: registrar fecha de inicio/fin y consultar el estado general del proyecto (requisito explícito del punto 1 del enunciado).
+* **HU-13: Fechas y Estado del Proyecto (Should have).** Extiende HU-04: consultar el estado general del proyecto (Planificado / En curso / Finalizado) a partir de sus fechas y Sprints; el registro de las fechas de inicio/fin lo cubre HU-04 (requisito explícito del punto 1 del enunciado).
 
 ## ***Prioridad 2: El Motor de Scrum (Iteraciones)***
 
@@ -354,9 +354,9 @@ Nueva
 
 ## HU-13: Fechas y Estado del Proyecto 
 ### Descripción
-Como Scrum Master quiero registrar la fecha de inicio y finalización de un proyecto y consultar su estado general para poder tener visibilidad del ciclo de vida completo del proyecto.
+Como Scrum Master quiero registrar la fecha de inicio y finalización de un proyecto y consultar su estado general para poder tener visibilidad del ciclo de vida completo del proyecto. El registro/edición de fechas lo cubre HU-04; esta historia implementa la consulta de estado.
 ### Criterios de aceptacion (BDD):
-Escenario 1: Registro de fechas.
+Escenario 1: Registro de fechas (cubierto por HU-04).
 Dado que estoy editando un proyecto existente (HU-04),
 Cuando ingreso una fecha de inicio y una fecha de finalización estimada y guardo,
 Entonces el sistema valida que la fecha de fin sea posterior a la de inicio y las persiste.
@@ -367,7 +367,7 @@ Entonces el sistema muestra si está "Planificado", "En curso" o "Finalizado" se
 ### Prioridad
 S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
 ### Estado
-Nueva
+Implementada
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
