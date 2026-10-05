@@ -142,7 +142,7 @@ y verificar que el service no invoca `Guardar`/`Actualizar`.
 - [X] T051 COMMIT `Quitar copia aparcada de pasos BDD (HU-13)` — stagear el borrado
 - [X] T052 C3: corregir T027–T029 de este `tasks.md` (el aparcado era recurso temporal y se eliminó)
 - [X] T053 C4: correr `/speckit.analyze` (criterio 0 CRITICAL), registrar resultado y resolución en `research.md` y añadir la sección "Excepción de proceso" en `tasks.md`
-- [ ] T054 COMMIT `Registrar analyze, excepción de proceso y coherencia de docs (HU-13)` — stagear `research.md`, `tasks.md`, `plan.md`, `data-model.md` y `quickstart.md`
+- [X] T054 COMMIT `Registrar analyze, excepción de proceso y coherencia de docs (HU-13)` — stagear `research.md`, `tasks.md`, `plan.md`, `data-model.md` y `quickstart.md`
 
 ---
 
