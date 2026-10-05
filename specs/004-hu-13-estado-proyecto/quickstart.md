@@ -24,6 +24,7 @@ go test ./internal/domain/... ./internal/service/... -run Estado -v
 |---|---|---|
 | Al menos uno `Activo` | cualquiera (aunque `FechaFin` vencida) | `En curso` |
 | Ninguno `Activo`, todos `Finalizado` | cualquiera | `Finalizado` |
+| Ninguno `Activo`, al menos un `Finalizado` y al menos un `Pendiente` | cualquiera | `En curso` |
 | Sin iniciar (ninguno Activo/Finalizado) | `ahora < FechaInicio` | `Planificado` |
 | Sin iniciar | `FechaInicio ≤ ahora ≤ FechaFin` | `En curso` |
 | Sin iniciar | `ahora > FechaFin` | `Finalizado` |

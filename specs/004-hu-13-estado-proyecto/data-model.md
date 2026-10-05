@@ -20,8 +20,8 @@ tablas existentes:
 | `Finalizado` | Todos los Sprints existentes están `Finalizado`, o (sin Sprints iniciados) la fecha actual superó la fecha de fin. |
 
 **Representación**: `domain.EstadoProyecto string` con constantes
-(`ProyectoPlanificado`/`ProyectoEnCurso`/`ProyectoFinalizado`) y método `EsValida()`, mismo
-patrón que `domain.Estado`, `domain.Prioridad` y `domain.EstadoSprint`. **No se persiste**.
+(`ProyectoPlanificado`/`ProyectoEnCurso`/`ProyectoFinalizado`). No se agrega método
+`EsValida()` (nadie lo consume — YAGNI, igual que `EstadoSprint` de HU-05). **No se persiste**.
 
 ## Regla de cálculo (función pura)
 

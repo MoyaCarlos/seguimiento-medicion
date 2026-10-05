@@ -96,3 +96,33 @@ solución más simple que cumple el requisito.
   a depender de `SprintRepository`, ampliando su responsabilidad y su superficie de test.
 - Nombre de ruta `/projects/{id}/estado` — descartada por consistencia con los sustantivos en
   inglés ya usados en las rutas (`/members`); el campo de respuesta igualmente es `estado`.
+
+## Decisión: Comparar por día calendario en la zona horaria del servidor (B1)
+
+**Decisión**: `CalcularEstadoProyecto` reduce el instante `ahora` a la medianoche UTC de su
+día civil en la zona horaria local del servidor (`inicioDelDiaCivil`) antes de comparar
+contra `FechaInicio`/`FechaFin`. Las fechas del proyecto (HU-04) ya se guardan a las 00:00 UTC,
+así que la comparación queda a nivel de día calendario y los bordes `[inicio, fin]` son
+inclusivos.
+
+**Rationale**: con `time.Now()` (hora del día) el borde `ahora.After(FechaFin)` era verdadero
+durante todo el día de fin, y la hora local podía adelantar un día la comparación contra
+fechas UTC. El spec fija la zona horaria del servidor como supuesto; comparar por día civil
+local lo cumple. No se inyecta un reloj (`func() time.Time`): YAGNI, el dominio queda
+determinista y probado pasando `ahora` como parámetro.
+
+## /speckit.analyze (remediación, 2026-10-05)
+
+**Resultado**: **0 CRITICAL**. El análisis corrió sobre el estado final de `spec.md`,
+`plan.md`, `data-model.md`, `quickstart.md` y `tasks.md` (con los cambios de B1 y C1 ya
+aplicados).
+
+Hallazgos (no bloqueantes) y resolución:
+
+| ID | Categoría | Severidad | Ubicación | Resumen | Resolución |
+|---|---|---|---|---|---|
+| F1 | Inconsistencia | MEDIUM | `plan.md`, `data-model.md` | Referenciaban un método `EsValida()` en `EstadoProyecto` que nunca se implementó (tasks.md T003: "sin `EsValida()`, nadie lo usa — YAGNI"). | Corregido: se quitó la mención y se dejó explícito que no se agrega `EsValida()`. |
+| F2 | Inconsistencia | MEDIUM | `quickstart.md` | La tabla de decisión no incluía la fila `[Finalizado, Pendiente] ⇒ En curso` (FR-016). | Corregido: fila agregada a la tabla. |
+
+Sin hallazgos CRITICAL, sin violaciones de la Constitución y sin requisitos sin cobertura:
+FR-016 queda cubierto por RED (T038), GREEN (T040) y el escenario BDD (T042).

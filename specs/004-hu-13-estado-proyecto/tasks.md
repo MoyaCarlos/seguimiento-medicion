@@ -104,6 +104,7 @@ y verificar que el service no invoca `Guardar`/`Actualizar`.
 - [X] T025 Actualizar `spec.md` (Status: Implementada) y `docs/PRODUCT-BACKLOG.md` si cambió el alcance de HU-13
 - [X] T026 COMMIT `Marcar HU-13 como implementada` — stagear `specs/004-hu-13-estado-proyecto/spec.md` (y `docs/PRODUCT-BACKLOG.md` si se tocó)
 - [X] T027 **[final] Restaurar los pasos BDD**: copiar `specs/004-hu-13-estado-proyecto/_steps_estado_proyecto.go` a `features/steps_estado_proyecto.go` (renombrar sin el guion bajo) y registrarlos — `InitializeScenario` en `features/steps_creacion.go` debe devolver `*scenarioContext`, y en `features/features_test.go` usar `sc := InitializeScenario(ctx)` + `InitializeScenarioEstado(ctx, sc)`
+  > **Nota de remediación (C3):** el archivo aparcado `specs/004-hu-13-estado-proyecto/_steps_estado_proyecto.go` era solo un recurso temporal mientras el dominio y el servicio aún no existían. Una vez replicado en `/features`, dejó de tener sentido y se **eliminó** en la remediación (commit `Quitar copia aparcada de pasos BDD (HU-13)`), para no mantener dos copias desincronizadas ni romper la estructura de `AGENTS.md` (`/specs` solo guarda especificaciones).
 - [X] T028 Verificar `go build ./...`, `go vet ./...`, `go test ./...` y `go test ./features/ -v` en verde (0 pasos `undefined`)
 - [X] T029 COMMIT `Agregar pasos BDD de estado del proyecto (HU-13)` — stagear `features/steps_estado_proyecto.go`, `features/steps_creacion.go` y `features/features_test.go`
 
@@ -125,23 +126,23 @@ y verificar que el service no invoca `Guardar`/`Actualizar`.
 - [X] T035b B1-fixtures: alinear `internal/service/obtener_estado_proyecto_test.go` a día civil local (consecuencia del GREEN de B1: los `ahora` en UTC dejan de representar el borde) — COMMIT `Alinear fixtures de ObtenerEstadoProyecto a día civil local (HU-13)`
 - [X] T036 B1-BDD: en `features/steps_estado_proyecto.go` reemplazar `hoyUTC()` por día civil local y hacer que `consultoEstado` pase `time.Now()` real; fechas de borde derivadas del día civil local — `go test ./features/` en verde
 - [X] T037 COMMIT `Actualizar pasos BDD de HU-13 para la hora real en los bordes` — stagear `features/steps_estado_proyecto.go`
-- [ ] T038 C1-RED: tests de dominio y de service para `[Finalizado, Pendiente]` sin fechas y con `FechaInicio` futura ⇒ "En curso" — confirmar que FALLA
-- [ ] T039 COMMIT `RED: agregar tests de [Finalizado, Pendiente] => En curso (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go` y `internal/service/obtener_estado_proyecto_test.go`
-- [ ] T040 C1-GREEN: regla en `CalcularEstadoProyecto` — sin `Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" — `go test ./...` en verde
-- [ ] T041 COMMIT `GREEN: [Finalizado, Pendiente] => En curso, test en verde` — stagear `internal/domain/estado_proyecto.go`
-- [ ] T042 C1-BDD: escenario en `features/estado_proyecto.feature` para `[Finalizado, Pendiente]` ⇒ "En curso" (un Escenario por criterio de aceptación)
-- [ ] T043 COMMIT `Agregar escenario BDD de [Finalizado, Pendiente] (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
-- [ ] T044 C1-BDD: paso `finalizadoYPendiente` en `features/steps_estado_proyecto.go` — `go test ./features/` en verde
-- [ ] T045 COMMIT `Agregar pasos BDD de [Finalizado, Pendiente] (HU-13)` — stagear `features/steps_estado_proyecto.go`
-- [ ] T046 C2-BDD: escenario en `features/estado_proyecto.feature` — Sprint Activo con fecha de fin vencida ⇒ "En curso" (decisión del clarify)
-- [ ] T047 COMMIT `Agregar escenario BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
-- [ ] T048 C2-BDD: paso `fechaFinVencida` en `features/steps_estado_proyecto.go` (reutiliza `cuentaConActivo`) — `go test ./features/` en verde
-- [ ] T049 COMMIT `Agregar pasos BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear `features/steps_estado_proyecto.go`
-- [ ] T050 C3: `git rm specs/004-hu-13-estado-proyecto/_steps_estado_proyecto.go` (copia aparcada de 221 líneas ya replicada en `/features`)
-- [ ] T051 COMMIT `Quitar copia aparcada de pasos BDD (HU-13)` — stagear el borrado
-- [ ] T052 C3: corregir T027–T029 de este `tasks.md` (el aparcado era recurso temporal y se eliminó)
-- [ ] T053 C4: correr `/speckit.analyze` (criterio 0 CRITICAL), registrar resultado y resolución en `research.md` y añadir la sección "Excepción de proceso" en `tasks.md`
-- [ ] T054 COMMIT `Registrar analyze y excepción de proceso (HU-13)` — stagear `research.md` y `tasks.md`
+- [X] T038 C1-RED: tests de dominio y de service para `[Finalizado, Pendiente]` sin fechas y con `FechaInicio` futura ⇒ "En curso" — confirmar que FALLA
+- [X] T039 COMMIT `RED: agregar tests de [Finalizado, Pendiente] => En curso (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go` y `internal/service/obtener_estado_proyecto_test.go`
+- [X] T040 C1-GREEN: regla en `CalcularEstadoProyecto` — sin `Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" — `go test ./...` en verde
+- [X] T041 COMMIT `GREEN: [Finalizado, Pendiente] => En curso, test en verde` — stagear `internal/domain/estado_proyecto.go`
+- [X] T042 C1-BDD: escenario en `features/estado_proyecto.feature` para `[Finalizado, Pendiente]` ⇒ "En curso" (un Escenario por criterio de aceptación)
+- [X] T043 COMMIT `Agregar escenario BDD de [Finalizado, Pendiente] (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
+- [X] T044 C1-BDD: paso `finalizadoYPendiente` en `features/steps_estado_proyecto.go` — `go test ./features/` en verde
+- [X] T045 COMMIT `Agregar pasos BDD de [Finalizado, Pendiente] (HU-13)` — stagear `features/steps_estado_proyecto.go`
+- [X] T046 C2-BDD: escenario en `features/estado_proyecto.feature` — Sprint Activo con fecha de fin vencida ⇒ "En curso" (decisión del clarify)
+- [X] T047 COMMIT `Agregar escenario BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
+- [X] T048 C2-BDD: paso `fechaFinVencida` en `features/steps_estado_proyecto.go` (reutiliza `cuentaConActivo`) — `go test ./features/` en verde
+- [X] T049 COMMIT `Agregar pasos BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear `features/steps_estado_proyecto.go`
+- [X] T050 C3: `git rm specs/004-hu-13-estado-proyecto/_steps_estado_proyecto.go` (copia aparcada de 221 líneas ya replicada en `/features`)
+- [X] T051 COMMIT `Quitar copia aparcada de pasos BDD (HU-13)` — stagear el borrado
+- [X] T052 C3: corregir T027–T029 de este `tasks.md` (el aparcado era recurso temporal y se eliminó)
+- [X] T053 C4: correr `/speckit.analyze` (criterio 0 CRITICAL), registrar resultado y resolución en `research.md` y añadir la sección "Excepción de proceso" en `tasks.md`
+- [ ] T054 COMMIT `Registrar analyze, excepción de proceso y coherencia de docs (HU-13)` — stagear `research.md`, `tasks.md`, `plan.md`, `data-model.md` y `quickstart.md`
 
 ---
 
@@ -175,3 +176,12 @@ Phase 5 cierra con BDD y control de calidad.
   por la cátedra. Los COMMIT del RED stagean solo el/los archivo(s) de test.
 - El instante `ahora` se inyecta como parámetro (no `time.Now()` dentro del dominio) para que
   la regla sea pura y testeable.
+
+## Excepción de proceso
+
+`AGENTS.md` define `/speckit.analyze` como paso estándar **antes** de `/speckit.implement`.
+En HU-13 el análisis se ejecutó **después** de implementar (en la remediación del code review,
+T053), y no antes, por lo que no pudo prevenir el defecto B1 ni el hueco de C1. Se documenta
+como **excepción de proceso aceptada**: no se reescribe el historial; el resultado del análisis
+(0 CRITICAL) queda registrado en `research.md`. El mismo texto se repite en la descripción del
+PR, que abre el Agile Enabler (Carlos Moya).

@@ -102,7 +102,7 @@ specs/004-hu-13-estado-proyecto/
 ```text
 internal/domain/
 ├── estado_proyecto.go        # NUEVO: tipo EstadoProyecto (Planificado/En curso/Finalizado),
-│                             #   EsValida() y función pura CalcularEstadoProyecto(p, sprints, ahora)
+│                             #   y función pura CalcularEstadoProyecto(p, sprints, ahora)
 └── estado_proyecto_test.go   # NUEVO: tests TDD de la regla (RED/GREEN)
 
 internal/service/
