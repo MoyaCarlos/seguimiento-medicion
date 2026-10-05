@@ -16,7 +16,7 @@ tablas existentes:
 | Valor | Significado |
 |---|---|
 | `Planificado` | El proyecto aún no inició ejecución: sin Sprints iniciados y sin alcanzar la fecha de inicio (o sin fecha de inicio cargada). |
-| `En curso` | Hay un Sprint `Activo`, o (sin Sprints iniciados) la fecha actual está dentro del rango del proyecto. |
+| `En curso` | Hay un Sprint `Activo`, o hay un Sprint `Finalizado` junto a un `Pendiente`, o (sin Sprints iniciados) la fecha actual está dentro del rango del proyecto. |
 | `Finalizado` | Todos los Sprints existentes están `Finalizado`, o (sin Sprints iniciados) la fecha actual superó la fecha de fin. |
 
 **Representación**: `domain.EstadoProyecto string` con constantes
@@ -34,7 +34,9 @@ Algoritmo (precedencia: Sprints sobre fechas):
 
 1. ¿Algún Sprint con `Estado == Activo`? → `En curso`.
 2. ¿Hay ≥ 1 Sprint y todos están `Finalizado`? → `Finalizado`.
-3. Si no (sin ejecución iniciada), decide la fecha:
+3. ¿Hay al menos un Sprint `Finalizado` (sin `Activo` y sin ser todos `Finalizado`, es
+   decir, conviviendo con al menos un `Pendiente`)? → `En curso`.
+4. Si no (sin ejecución iniciada), decide la fecha:
    - `FechaInicio == nil` o `ahora` < `FechaInicio` → `Planificado`.
    - `FechaFin != nil` y `ahora` > `FechaFin` → `Finalizado`.
    - en otro caso (dentro del rango, bordes inclusivos) → `En curso`.

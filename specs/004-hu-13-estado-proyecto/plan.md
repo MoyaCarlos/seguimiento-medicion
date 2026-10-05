@@ -15,10 +15,11 @@ implementa con el mismo patrón Clean/Hexagonal de HU-04/HU-05: regla en `intern
 un caso de uso en `internal/service` que depende únicamente de los puertos
 `ProjectRepository` y `SprintRepository`, y un adaptador HTTP de lectura.
 
-Precedencia acordada (clarificación 2026-10-04): **los Sprints mandan, las fechas son
-respaldo**. Un Sprint `Activo` ⇒ "En curso" aunque la fecha de fin haya pasado; si no hay
-`Activo` y todos los Sprints están `Finalizado` ⇒ "Finalizado"; en el resto deciden las
-fechas del proyecto.
+Precedencia acordada (clarificación 2026-10-04, ampliada 2026-10-05): **los Sprints mandan,
+las fechas son respaldo**. Un Sprint `Activo` ⇒ "En curso" aunque la fecha de fin haya
+pasado; si no hay `Activo` y todos los Sprints están `Finalizado` ⇒ "Finalizado"; sin
+`Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" (FR-016); en
+el resto deciden las fechas del proyecto.
 
 ## Technical Context
 

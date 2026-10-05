@@ -31,7 +31,8 @@ dominio; no se agrega columna `estado` a `projects` ni tabla nueva.
 
 1. Si hay al menos un Sprint `Activo` ⇒ **"En curso"**.
 2. Si no hay `Activo` y existe al menos un Sprint y **todos** están `Finalizado` ⇒ **"Finalizado"**.
-3. En el resto, decide la fecha:
+3. Si no hay `Activo` y hay al menos un `Finalizado` junto a al menos un `Pendiente` ⇒ **"En curso"**.
+4. En el resto, decide la fecha:
    - sin `FechaInicio`, o `ahora` anterior a `FechaInicio` ⇒ **"Planificado"**;
    - `ahora` dentro de `[FechaInicio, FechaFin]` (bordes inclusivos) ⇒ **"En curso"**;
    - `ahora` posterior a `FechaFin` ⇒ **"Finalizado"**.
@@ -45,6 +46,19 @@ borde de `spec.md`.
 - Fechas dominantes — descartada por el usuario: mostraría "Finalizado" con un Sprint aún activo.
 - Regla híbrida con "finalizado por fecha" antes que por Sprints — descartada: agrega una
   rama sin valor observable distinto al caso de uso.
+
+## Decisión: Hueco de especificación `[Finalizado, Pendiente]` (2026-10-05)
+
+**Decisión**: sin Sprint `Activo`, con al menos un `Finalizado` y al menos un `Pendiente`
+⇒ **"En curso"** (FR-016). Un Sprint cerrado es evidencia de ejecución; el proyecto no
+terminó porque queda un Sprint pendiente. Las fechas solo deciden cuando no hay Sprints
+iniciados.
+
+**Rationale**: el estado se había definido como "todos Finalizado ⇒ Finalizado" y "fechas
+en el resto", lo que dejaba a `[Finalizado, Pendiente]` cayendo a las fechas (⇒
+"Planificado" sin `FechaInicio`), pese a haber ejecución registrada. La regla cierra el
+hueco sin alterar D1 (un único Sprint `Finalizado` y sin `Pendiente` sigue dando
+"Finalizado" por FR-004, decisión que queda en manos del equipo).
 
 ## Decisión: El instante actual se inyecta como parámetro
 
