@@ -109,6 +109,41 @@ y verificar que el service no invoca `Guardar`/`Actualizar`.
 
 ---
 
+## Phase 6: Remediación del code review (informe externo)
+
+> Resultado de la revisión externa (rama revisada hasta `415fb28`): 1 bloqueante (B1),
+> 4 correcciones obligatorias (C1–C4) y 2 decisiones pendientes del equipo (D1, D2) que
+> **no** se resuelven acá, solo se señalan en el reporte final. Orden de ejecución exigido:
+> spec/clarificación de C1 → B1 → C1 → C2 → C3 → C4 (analyze al final).
+
+- [X] T030 C1-SDD: actualizar `spec.md` (Edge Case EARS para `[Finalizado, Pendiente]` ⇒ "En curso"; ajustar FR-005/FR-007 y Assumptions; entrada en `## Clarifications`) y alinear `plan.md`, `data-model.md` y `research.md` con la nueva regla de derivación
+- [X] T031 COMMIT `Especificar hueco de derivación [Finalizado, Pendiente] (HU-13)` — stagear `specs/004-hu-13-estado-proyecto/{spec,plan,data-model,research}.md`
+- [ ] T032 B1-RED: tests de dominio con hora del día (fin = 30/11 con `ahora` 30/11 10:00 y 23:59:59 ⇒ "En curso"; 1/12 00:00:01 ⇒ "Finalizado"; inicio = 10/10 con 10/10 00:00:01 ⇒ "En curso" y 9/10 23:59:59 ⇒ "Planificado") y reescribir los `ahora` de `estado_proyecto_test.go` a `time.Local` (determinismo ante el host) — confirmar que FALLA
+- [ ] T033 COMMIT `RED: agregar tests de borde de fecha con hora del día (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go`
+- [ ] T034 B1-GREEN: normalizar `ahora` a día civil local dentro de `CalcularEstadoProyecto` (comparar por día calendario, DRY, sin reloj inyectado) — `go test ./internal/domain/` en verde
+- [ ] T035 COMMIT `GREEN: comparar fechas por día calendario, test en verde` — stagear `internal/domain/estado_proyecto.go`
+- [ ] T036 B1-BDD: en `features/steps_estado_proyecto.go` reemplazar `hoyUTC()` por día civil local y hacer que `consultoEstado` pase `time.Now()` real; fechas de borde derivadas del día civil local — `go test ./features/` en verde
+- [ ] T037 COMMIT `Actualizar pasos BDD de HU-13 para la hora real en los bordes` — stagear `features/steps_estado_proyecto.go`
+- [ ] T038 C1-RED: tests de dominio y de service para `[Finalizado, Pendiente]` sin fechas y con `FechaInicio` futura ⇒ "En curso" — confirmar que FALLA
+- [ ] T039 COMMIT `RED: agregar tests de [Finalizado, Pendiente] => En curso (falla)` — stagear **solo** `internal/domain/estado_proyecto_test.go` y `internal/service/obtener_estado_proyecto_test.go`
+- [ ] T040 C1-GREEN: regla en `CalcularEstadoProyecto` — sin `Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" — `go test ./...` en verde
+- [ ] T041 COMMIT `GREEN: [Finalizado, Pendiente] => En curso, test en verde` — stagear `internal/domain/estado_proyecto.go`
+- [ ] T042 C1-BDD: escenario en `features/estado_proyecto.feature` para `[Finalizado, Pendiente]` ⇒ "En curso" (un Escenario por criterio de aceptación)
+- [ ] T043 COMMIT `Agregar escenario BDD de [Finalizado, Pendiente] (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
+- [ ] T044 C1-BDD: paso `finalizadoYPendiente` en `features/steps_estado_proyecto.go` — `go test ./features/` en verde
+- [ ] T045 COMMIT `Agregar pasos BDD de [Finalizado, Pendiente] (HU-13)` — stagear `features/steps_estado_proyecto.go`
+- [ ] T046 C2-BDD: escenario en `features/estado_proyecto.feature` — Sprint Activo con fecha de fin vencida ⇒ "En curso" (decisión del clarify)
+- [ ] T047 COMMIT `Agregar escenario BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear **solo** `features/estado_proyecto.feature`
+- [ ] T048 C2-BDD: paso `fechaFinVencida` en `features/steps_estado_proyecto.go` (reutiliza `cuentaConActivo`) — `go test ./features/` en verde
+- [ ] T049 COMMIT `Agregar pasos BDD de Sprint Activo con fecha fin vencida (HU-13)` — stagear `features/steps_estado_proyecto.go`
+- [ ] T050 C3: `git rm specs/004-hu-13-estado-proyecto/_steps_estado_proyecto.go` (copia aparcada de 221 líneas ya replicada en `/features`)
+- [ ] T051 COMMIT `Quitar copia aparcada de pasos BDD (HU-13)` — stagear el borrado
+- [ ] T052 C3: corregir T027–T029 de este `tasks.md` (el aparcado era recurso temporal y se eliminó)
+- [ ] T053 C4: correr `/speckit.analyze` (criterio 0 CRITICAL), registrar resultado y resolución en `research.md` y añadir la sección "Excepción de proceso" en `tasks.md`
+- [ ] T054 COMMIT `Registrar analyze y excepción de proceso (HU-13)` — stagear `research.md` y `tasks.md`
+
+---
+
 ## Dependencies & Execution Order
 
 - **Phase 2 → Phase 3/4**: bloqueante (la regla de dominio es prerequisito de todo).
