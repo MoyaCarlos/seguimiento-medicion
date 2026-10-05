@@ -38,6 +38,9 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 - Un defecto encontrado en el camino se registra como issue con la etiqueta `bug` y se
   repara en **su propia rama** `fix/<n°-issue>-nombre-corto`, que sale de `main`. Un fix
   por rama; no se mezcla con cambios de una historia.
+- Los defectos encontrados durante un Sprint entran al backlog del Sprint siguiente: el
+  issue `bug` se asigna a esa iteración en el Project y se planifica junto con las
+  historias.
 - El PR del fix cierra su issue con `Closes #N` en la descripción.
 - El ciclo es el mismo que para una historia: primero el `RED:` que reproduce el bug
   (Prove-It Pattern), después el `GREEN:`, y `REFACTOR:` solo si hay algo que limpiar.
