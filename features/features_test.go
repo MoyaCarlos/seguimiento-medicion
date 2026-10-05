@@ -10,8 +10,9 @@ func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name: "BDD",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			InitializeScenario(ctx)         // HU-01 (+ HU-05)
-			InitializeScenarioProyecto(ctx) // HU-04
+			sc := InitializeScenario(ctx)     // HU-01 (+ HU-05)
+			InitializeScenarioProyecto(ctx)   // HU-04
+			InitializeScenarioEstado(ctx, sc) // HU-13
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
