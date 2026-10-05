@@ -17,7 +17,9 @@
 > - Si un recurso no existe se responde "no encontrado" (404) antes de validar el
 >   cuerpo de la petición (400).
 > - Estados de una historia de usuario: `Nueva` → `En progreso` → `Completada`. Es el
->   único vocabulario: no usar "Terminado" ni "Done".
+>   único vocabulario: no usar "Terminado" ni "Done". `En progreso` solo existe dentro
+>   de un Sprint: si una historia no completada vuelve al Product Backlog al cerrar su
+>   Sprint, vuelve a `Nueva`.
 > - La fecha de fin debe ser estrictamente posterior a la de inicio, tanto en
 >   proyectos como en Sprints.
 > - Los estados derivados (como el estado del proyecto) y las métricas se calculan al
@@ -31,16 +33,16 @@ No se puede gestionar nada si no existe un contenedor. Esta es la base estructur
 
 * **HU-04: Creación de Proyecto y Asignación de Equipo (Must have).** Es la máxima prioridad operativa. Todo el sistema (historias, sprints, horas) depende de que exista un proyecto y usuarios registrados.  
 * **HU-01: Creación de Historias de Usuario (Must have).** Sin esto, no hay Product Backlog.
-* **HU-15: Consulta y Edición del Product Backlog (Must have).** Completa el punto 2 del enunciado: listar el backlog y mantener los criterios de aceptación de cada historia. HU-06 necesita este listado.
-* **HU-13: Fechas y Estado del Proyecto (Should have).** Extiende HU-04: consultar el estado general del proyecto (Planificado / En curso / Finalizado) a partir de sus fechas y Sprints; el registro de las fechas de inicio/fin lo cubre HU-04 (requisito explícito del punto 1 del enunciado). Para el estado de los Sprints usa HU-05.
 
 ## ***Prioridad 2: El Motor de Scrum (Iteraciones)***
 
 Una vez que tienen el proyecto y el Backlog, necesitan el ciclo de trabajo ágil.
 
 * **HU-05: Apertura y Cierre de Sprints (Must have).** Da vida a la metodología.  
+* **HU-15: Consulta y Edición del Product Backlog (Must have).** Completa el punto 2 del enunciado: listar el backlog y mantener los criterios de aceptación y los Story Points de cada historia. HU-06 necesita este listado.
 * **HU-06: Movimiento de Historias al Sprint Backlog (Must have).** Permite a las Product Builders definir en qué se va a trabajar durante la iteración.
 * **HU-11: Actualización de Estado de una Historia en el Sprint (Must have).** Sin poder marcar una historia como completada durante el sprint, no hay datos reales para calcular velocidad ni ninguna métrica.
+* **HU-13: Fechas y Estado del Proyecto (Should have).** Extiende HU-04: consultar el estado general del proyecto (Planificado / En curso / Finalizado) a partir de sus fechas y Sprints; el registro de las fechas de inicio/fin lo cubre HU-04 (requisito explícito del punto 1 del enunciado). Va en esta prioridad porque usa el estado de los Sprints (HU-05).
 
 ## ***Prioridad 3: Alimentación de Datos (El Valor de Negocio)***
 
@@ -49,6 +51,7 @@ Para que el diferenciador del sistema (las métricas) funcione, primero necesita
 * **HU-02: Votación de Esfuerzo en Planning Poker (Should have).** Aporta un gran valor metodológico: registrar las estimaciones individuales, mantenerlas ocultas y mostrarlas.  
 * **HU-14: Consenso y Registro de la Estimación Acordada (Should have).** Completa el Planning Poker del punto 4 del enunciado: detectar diferencias, nuevas rondas y registrar la estimación acordada, que son los "Story Points" estimados.
 * **HU-07: Imputación de Horas Trabajadas (Must have).** Requisito indispensable para luego poder cruzar lo estimado vs. lo real.
+* **HU-08: Registro y Seguimiento de Bugs (Must have).** Los defectos son requisito mínimo del enunciado (punto 6) y alimentan las métricas (HU-03) y el reporte (HU-10), por eso se carga junto con el resto de los datos.
 
 ## ***Prioridad 4: Resultados y Calidad (El Valor Final)***
 
@@ -57,7 +60,6 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 * **HU-03: Cálculo de Métricas del Proyecto (Must have).** El motor de cálculo (Story Points planificados/completados, velocidad, horas estimadas/reales, desviación, % completadas, defectos detectados/resueltos) — requisito central del enunciado (punto 7).
 * **HU-09: Dashboard de Métricas (Must have).** Visualización gráfica de lo que calcula HU-03 (punto 8 del enunciado).
 * **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto de historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado).
-* **HU-08: Registro y Seguimiento de Bugs (Should have).** Completa el ciclo de aseguramiento de calidad del software desarrollado.
 * **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado. Va al final porque su historial muestra métricas (HU-03), esfuerzo (HU-07) y defectos (HU-08), que tienen que existir antes.
 
 ---
@@ -114,6 +116,8 @@ Cuando el Scrum Master presiona "Revelar",
 Entonces el sistema debe mostrar el valor elegido por cada uno y calcular el promedio sugerido.
 ### Depende de
 HU-04 (integrantes que votan), HU-01 (historia a estimar).
+### Notas
+El modelo de votación debe contemplar rondas desde el inicio (cada voto pertenece a una ronda), porque la historia de consenso (HU-14) agrega nuevas rondas y conserva el historial.
 ### Prioridad
 S (Should have) 
 ### Estado
@@ -142,7 +146,7 @@ Dado que estoy editando un proyecto existente,
 Cuando defino cuántas horas equivale un Story Point,
 Entonces el sistema lo guarda en el proyecto y lo usa para calcular las horas estimadas. Si todavía no está definido, las horas estimadas y la desviación se informan como "sin datos".
 ### Depende de
-HU-05 (cierre de Sprint), HU-11 (historias completadas), HU-14 (Story Points acordados), HU-07 (horas reales), HU-08 (defectos), HU-04 (edición del proyecto, donde vive el parámetro de horas por Story Point).
+HU-05 (cierre de Sprint), HU-11 (historias completadas), HU-15 (Story Points de cada historia), HU-07 (horas reales), HU-08 (defectos), HU-04 (edición del proyecto, donde vive el parámetro de horas por Story Point).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 7).
 ### Estado
@@ -167,7 +171,7 @@ Entonces el sistema genera el proyecto en la base de datos SQLite y me redirige 
 Escenario 2: Asignación de integrantes y roles.
 Dado que estoy en la vista de configuración del proyecto recién creado,
 Cuando ingreso el nombre de un integrante y selecciono su rol (Scrum Master o Product Builder),
-Entonces el sistema vincula al usuario al proyecto, habilitando sus permisos correspondientes.
+Entonces el sistema vincula al usuario al proyecto y registra su rol (la aplicación de permisos por rol queda fuera del alcance por ahora).
 Escenario 3: Fechas del proyecto inválidas.
 Dado que estoy editando un proyecto existente,
 Cuando ingreso una fecha de fin igual o anterior a la fecha de inicio y guardo,
@@ -199,7 +203,7 @@ Entonces el estado cambia a "Activo" y el sistema bloquea la posibilidad de inic
 Escenario 2: Cierre de Sprint con arrastre de trabajo.
 Dado que un Sprint se encuentra en estado "Activo",
 Cuando el Scrum Master presiona "Cerrar Sprint",
-Entonces el sistema cambia su estado a "Finalizado" y mueve automáticamente todas las Historias de Usuario no completadas de vuelta al Product Backlog
+Entonces el sistema cambia su estado a "Finalizado" y mueve automáticamente todas las Historias de Usuario no completadas de vuelta al Product Backlog, sin Sprint asignado y con estado "Nueva".
 Escenario 3: Crear un Sprint.
 Dado que existe un proyecto,
 Cuando creo un Sprint para ese proyecto,
@@ -215,7 +219,7 @@ HU-04 (el proyecto debe existir), HU-01 (historias a arrastrar al cerrar).
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Implementada
+Implementada (el estado "Nueva" al arrastrar una historia está pendiente: hoy solo se le quita el Sprint y conserva su estado)
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -241,7 +245,7 @@ Cuando intento asignar una HU cuyo estado ya es "Completada",
 Entonces el sistema me muestra un mensaje de error indicando que solo se pueden planificar historias pendientes.
 
 ### Depende de
-HU-05 (Sprints), HU-15 (vista del backlog sin Sprint), HU-01 (historias). El estado "Completada" lo define HU-11.
+HU-05 (Sprints y estado "Completada", que ya existe), HU-15 (vista del backlog sin Sprint), HU-01 (historias).
 
 ### Prioridad
 M (Must have) - Core del flujo de trabajo de Scrum. 
@@ -260,13 +264,13 @@ Nueva
 ### Descripción
 Como integrante del equipo
 quiero registrar las horas reales que invertí trabajando en una Historia de Usuario
-para poder proveer datos al sistema que permitan comparar el esfuerzo estimado (Story Points) contra el esfuerzo real.
+para poder proveer datos al sistema que permitan comparar el esfuerzo estimado (Story Points convertidos a horas, ver HU-03) contra el esfuerzo real.
 
 ### Criterios de aceptacion (BDD):
 Escenario 1: Registro válido de tiempo.
 Dado que soy integrante del proyecto y la historia pertenece a un Sprint activo,
 Cuando abro el formulario de registro, selecciono mi nombre, ingreso la fecha de hoy, la actividad realizada y "4 horas", y guardo,
-Entonces el sistema suma esas 4 horas al esfuerzo total acumulado de esa HU, registrando integrante, fecha y actividad.
+Entonces el sistema suma esas 4 horas al esfuerzo total acumulado de esa HU, registrando integrante, fecha, actividad y el Sprint activo en ese momento (así las horas se atribuyen al Sprint correcto aunque la historia pase luego a otro).
 Escenario 2: Validación de inputs.
 Dado que intento cargar horas a una historia,
 Cuando ingreso un valor negativo (-2 horas), texto no numérico, una actividad vacía o un integrante que no pertenece al proyecto,
@@ -304,14 +308,14 @@ Cuando cambia su estado a "Resuelto",
 Entonces el sistema registra internamente el Sprint de resolución para que posteriormente aparezca en el Dashboard de métricas de calidad.
 Escenario 3: Sin Sprint activo.
 Dado que el proyecto no tiene ningún Sprint "Activo",
-Cuando intento registrar un defecto,
-Entonces el sistema rechaza la operación e indica que no hay un Sprint activo al que asociarlo.
+Cuando intento registrar un defecto o marcar uno como "Resuelto",
+Entonces el sistema rechaza la operación e indica que no hay un Sprint activo al que asociarlo (como Sprint de detección o de resolución).
 
 ### Depende de
 HU-01 (historia relacionada), HU-05 (Sprint de detección y de resolución).
 
 ### Prioridad
-S (Should have) - Es muy importante para las métricas de calidad, pero el proyecto podría arrancar los primeros Sprints funcionales sin este módulo. 
+M (Must have) - Los defectos son requisito mínimo del enunciado (punto 6) y HU-03 y HU-10 dependen de ellos.
 ### Estado
 Nueva
 ### Valor de Negocio
@@ -359,7 +363,7 @@ Dado que el proceso de generación del PDF falla (ej. dato faltante),
 Cuando se solicita el reporte,
 Entonces el sistema debe informar el error al usuario en vez de descargar un archivo corrupto o vacío.
 ### Depende de
-HU-05 (Sprint cerrado), HU-14 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
+HU-05 (Sprint cerrado), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 9).
 ### Estado
@@ -382,7 +386,7 @@ Entonces el sistema registra el cambio de estado.
 Escenario 2: Marcar historia como completada.
 Dado que una historia está asignada a un Sprint activo con estado "En progreso",
 Cuando la marco como "Completada",
-Entonces el sistema registra la fecha de finalización y la incluye en el cálculo de Story Points completados del Sprint (HU-03).
+Entonces el sistema registra la fecha de finalización; la historia queda disponible para el cálculo de Story Points completados del Sprint (HU-03).
 Escenario 3: Transición inválida.
 Dado que una historia todavía no fue asignada a ningún Sprint,
 Cuando intento marcarla como "En progreso" o "Completada" directamente desde el Product Backlog,
@@ -473,13 +477,15 @@ Entonces el sistema descarta los votos de la ronda anterior (que quedan registra
 Escenario 3: Registro de la estimación acordada.
 Dado que el equipo llegó a un acuerdo,
 Cuando el Scrum Master registra el valor acordado,
-Entonces la historia queda con esos Story Points como estimación.
+Entonces la historia queda con esos Story Points como estimación, reemplazando la que tuviera cargada (por ejemplo, de forma directa desde HU-15).
 Escenario 4: Estimación inválida.
 Dado que el Scrum Master intenta registrar una estimación,
 Cuando el valor no pertenece a la baraja Fibonacci o la votación no fue revelada,
 Entonces el sistema rechaza la operación y la historia mantiene su estimación anterior.
 ### Depende de
 HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
+### Notas
+No bloquea al cálculo de métricas ni al reporte: los Story Points también se cargan de forma directa al editar el Product Backlog (HU-15).
 ### Prioridad
 S (Should have) - Completa el requisito de Planning Poker del enunciado (punto 4).
 ### Estado
@@ -493,7 +499,7 @@ Nueva
 
 ## HU-15: Consulta y Edición del Product Backlog 
 ### Descripción
-Como Product Builder quiero ver el Product Backlog de un proyecto ordenado por prioridad y poder editar el título, la descripción y los criterios de aceptación de cada historia para poder mantenerlo actualizado y cumplir con el contenido mínimo que pide el enunciado.
+Como Product Builder quiero ver el Product Backlog de un proyecto ordenado por prioridad y poder editar el título, la descripción, los criterios de aceptación y los Story Points de cada historia para poder mantenerlo actualizado y cumplir con el contenido mínimo que pide el enunciado (puntos 2 y 4: estimar historias mediante Story Points).
 ### Criterios de aceptacion (BDD):
 Escenario 1: Listado del Product Backlog.
 Dado que un proyecto tiene historias, algunas ya asignadas a un Sprint,
@@ -501,20 +507,22 @@ Cuando consulto su Product Backlog,
 Entonces el sistema muestra solo las historias sin Sprint asignado, ordenadas por prioridad (MoSCoW) y, dentro de la misma prioridad, por orden de creación.
 Escenario 2: Edición de una historia.
 Dado que existe una historia en el Product Backlog,
-Cuando modifico su título, descripción o criterios de aceptación con datos válidos y guardo,
-Entonces el sistema persiste los cambios y conserva su identificador, estado y estimación.
+Cuando modifico su título, descripción, criterios de aceptación o Story Points (valor de la escala Fibonacci) con datos válidos y guardo,
+Entonces el sistema persiste los cambios y conserva su identificador y estado.
 Escenario 3: Edición inválida.
 Dado que estoy editando una historia,
-Cuando dejo el título en blanco,
+Cuando dejo el título en blanco o ingreso unos Story Points que no pertenecen a la escala Fibonacci,
 Entonces el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 Escenario 4: Historia inexistente.
 Dado que intento consultar o editar una historia o un proyecto que no existen,
 Cuando envío la petición,
 Entonces el sistema responde "no encontrado".
 ### Depende de
-HU-01 (historias), HU-04 (proyecto), HU-05 (para saber qué historias tienen Sprint asignado).
+HU-01 (historias), HU-04 (proyecto), HU-05 (campo de Sprint de la historia, que ya existe).
+### Notas
+La asignación de historias a un Sprint llega después, con la historia de movimiento al Sprint Backlog; hasta entonces el listado se prueba sembrando historias con Sprint.
 ### Prioridad
-M (Must have) - El enunciado exige los criterios de aceptación como parte mínima de cada elemento del Product Backlog, y HU-06 necesita el listado.
+M (Must have) - El enunciado exige los criterios de aceptación y los Story Points como parte mínima de cada elemento del Product Backlog, HU-06 necesita el listado y HU-03 y HU-10 necesitan los Story Points.
 ### Estado
 Nueva
 ### Valor de Negocio
