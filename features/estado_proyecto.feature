@@ -60,3 +60,8 @@ Característica: Consulta del estado general del proyecto
     Y que consulté el estado del proyecto y era "En curso"
     Cuando cierro su último Sprint y consulto su estado nuevamente
     Entonces el estado del proyecto es "Finalizado"
+
+  Escenario: Proyecto con un Sprint Finalizado y uno Pendiente muestra "En curso"
+    Dado que el proyecto tiene un Sprint en estado "Finalizado" y uno "Pendiente"
+    Cuando consulto el estado del proyecto
+    Entonces el estado del proyecto es "En curso"
