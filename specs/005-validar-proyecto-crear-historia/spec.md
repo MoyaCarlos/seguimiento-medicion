@@ -1,10 +1,10 @@
 # Feature Specification: Validar proyecto existente al crear historia de backlog (Issue #19)
 
-**Feature Branch**: `fix/validar-proyecto-crear-historia`
+**Feature Branch**: `fix/19-integridad-proyecto-id`
 
 **Created**: 2026-10-05
 
-**Status**: Draft
+**Status**: Implementada (Issue #19), pendiente de revisión por PR.
 
 **Input**: User description: "Issue #19: CrearHistoriaBacklog no valida que el proyecto exista antes de guardar. Como Product Builder, cuando intento crear una historia de usuario con un proyecto_id que no corresponde a ningún proyecto existente, el sistema no debería crearla — hoy la crea igual, generando una historia huérfana. Objetivo: que CrearHistoriaBacklog rechace la creación de una historia si el proyecto_id no corresponde a un proyecto existente. Salida esperada: el caso de uso devuelve domain.ErrProyectoNoEncontrado y no persiste nada en backlog_items. Referencia: CrearSprint ya hace esta validación llamando a proyectos.ObtenerPorID antes de persistir. Fuera de alcance: agregar FOREIGN KEY en el esquema SQLite."
 

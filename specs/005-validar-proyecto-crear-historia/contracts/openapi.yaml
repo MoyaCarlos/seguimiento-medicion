@@ -1,0 +1,133 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Validación de proyecto al crear historia (Issue #19)
+  version: 1.0.1
+  description: >-
+    Delta del contrato de POST /backlog definido en HU-01
+    (specs/001-hu-01-crear-historias-usuario/contracts/openapi.yaml). Esta corrección no
+    cambia el cuerpo de la petición ni el de la respuesta exitosa: solo agrega una
+    precondición. Si `proyecto_id` no corresponde a un proyecto existente, la operación se
+    rechaza y no se persiste la historia. El mapeo de `domain.ErrProyectoNoEncontrado` a
+    HTTP 404 ya lo realiza el traductor compartido `escribirError`
+    (internal/http/sprint_handler.go), por lo que no se modifica el handler en esta historia
+    (FR-007/US2 quedan documentados aquí como criterio de aceptación relacionado).
+paths:
+  /backlog:
+    post:
+      summary: Crear una historia de usuario en el Product Backlog
+      operationId: crearHistoriaBacklog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearHistoriaRequest'
+      responses:
+        '201':
+          description: >-
+            Historia creada correctamente. Solo ocurre si el proyecto referenciado existe
+            (precondición nueva de esta corrección).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoriaCreada'
+        '400':
+          description: >-
+            Formulario inválido (incluye `proyecto_id` <= 0) o JSON malformado.
+            Se evalúa antes que la existencia del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorValidacion'
+              examples:
+                proyectoAusente:
+                  value:
+                    campo: proyecto_id
+                    mensaje: el proyecto es obligatorio
+        '404':
+          description: >-
+            El `proyecto_id` es válido en forma pero no corresponde a ningún proyecto
+            existente. El caso de uso devuelve domain.ErrProyectoNoEncontrado y no se
+            persiste la historia. (Comportamiento resultante del mapper compartido;
+            ver FR-007, fuera del alcance de implementación de esta historia.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+              examples:
+                proyectoInexistente:
+                  value:
+                    mensaje: proyecto no encontrado
+        '500':
+          description: Error interno no previsto (fallo de persistencia distinto a "no encontrado").
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+components:
+  schemas:
+    CrearHistoriaRequest:
+      type: object
+      required:
+        - proyecto_id
+        - titulo
+        - descripcion
+        - prioridad
+      properties:
+        proyecto_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Identificador de un proyecto existente (precondición reforzada).
+        titulo:
+          type: string
+          minLength: 1
+          maxLength: 200
+        descripcion:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        prioridad:
+          type: string
+          enum: [M, S, C, W]
+        valor_negocio:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 5, 8, 13, 21]
+    HistoriaCreada:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        proyecto_id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        prioridad:
+          type: string
+          enum: [M, S, C, W]
+        estado:
+          type: string
+          enum: [Nueva]
+        valor_negocio:
+          type: integer
+          nullable: true
+        estimacion_sp:
+          type: integer
+          nullable: true
+    ErrorValidacion:
+      type: object
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string
+    ErrorInterno:
+      type: object
+      properties:
+        mensaje:
+          type: string
