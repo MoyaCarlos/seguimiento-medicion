@@ -41,6 +41,13 @@ Una historia se considera terminada cuando:
 - Revisada y aprobada por al menos otro integrante (PR).
 - Sin defectos abiertos bloqueantes para esa historia.
 
+**Cierre de los issues:** el issue padre de la historia se cierra al mergear su PR
+(con `Closes #N`), cuando están cerradas las sub-issues de Especificación SDD,
+Escenarios BDD, Backend y Tests. La sub-issue de **Frontend** no frena ese cierre:
+queda abierta y se cierra cuando se entrega su pantalla (Sprint de la interfaz).
+Si una sub-issue queda abierta por un punto pendiente, ese punto se registra como
+issue `bug` y se repara en su propia rama `fix/`.
+
 ### SDD (Specification-Driven Development)
 - Herramienta: **[GitHub Spec Kit](https://github.com/github/spec-kit)**, instalado
   con `specify init --here --integration claude` (o `--integration opencode`).
