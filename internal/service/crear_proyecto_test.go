@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 )
 
 func TestCrearProyecto_Ejecutar_Exitosa(t *testing.T) {
@@ -92,5 +93,26 @@ func TestCrearProyecto_Ejecutar_ReutilizaCreadorExistente(t *testing.T) {
 	}
 	if usuarios.creates != 1 {
 		t.Errorf("se esperaba un único usuario reutilizado, se crearon %d", usuarios.creates)
+	}
+}
+
+func TestCrearProyecto_Ejecutar_RepoEnMemoriaConFakeDeUsuarios(t *testing.T) {
+	proyectos := repository.NewProjectRepositoryEnMemoria()
+	usuarios := &fakeUserRepository{}
+	servicio := NewCrearProyecto(proyectos, usuarios)
+
+	proyecto, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
+		Nombre:  "Proyecto",
+		Creador: "Ana",
+	})
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	miembros, err := proyectos.ListarIntegrantes(context.Background(), proyecto.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al listar integrantes: %v", err)
+	}
+	if len(miembros) != 1 || miembros[0].UserID != 1 || miembros[0].Role != domain.RolScrumMaster {
+		t.Fatalf("se esperaba el Scrum Master vinculado, se obtuvo %+v", miembros)
 	}
 }

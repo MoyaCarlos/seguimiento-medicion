@@ -18,7 +18,7 @@ func TestProjectRepositoryEnMemoria_AgregarIntegranteProyectoInexistente(t *test
 	}
 }
 
-func TestProjectRepositoryEnMemoria_AgregarIntegranteUsuarioInexistente(t *testing.T) {
+func TestProjectRepositoryEnMemoria_AgregarIntegranteNoValidaUsuario(t *testing.T) {
 	repo := NewProjectRepositoryEnMemoria()
 	guardado, err := repo.Guardar(context.Background(), domain.Project{Nombre: "Proyecto"})
 	if err != nil {
@@ -27,8 +27,21 @@ func TestProjectRepositoryEnMemoria_AgregarIntegranteUsuarioInexistente(t *testi
 	_, err = repo.AgregarIntegrante(context.Background(), domain.Membership{
 		ProjectID: guardado.ID, UserID: 42, Role: domain.RolScrumMaster,
 	})
-	if !errors.Is(err, ErrIntegridadReferencial) {
-		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	if err != nil {
+		t.Fatalf("el fake no debe validar usuarios en otro repositorio: %v", err)
+	}
+}
+
+func TestProjectRepositoryEnMemoria_GuardarConScrumMaster_RollbackSiFallaMembresia(t *testing.T) {
+	repo := NewProjectRepositoryEnMemoria()
+	repo.miembros = []domain.Membership{{ProjectID: 1, UserID: 42, Role: domain.RolScrumMaster}}
+
+	_, err := repo.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto"}, 42)
+	if !errors.Is(err, ErrMiembroDuplicado) {
+		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
+	}
+	if _, err := repo.ObtenerPorID(context.Background(), 1); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("el proyecto debía revertirse, se obtuvo %v", err)
 	}
 }
 

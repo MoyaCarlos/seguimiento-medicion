@@ -472,6 +472,18 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	}
 }
 
+func TestProjectHandler_AsignarIntegrante_ProyectoInexistenteConCuerpoInvalido(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{nombre:`))
+	req.SetPathValue("id", "999")
+	handler.AsignarIntegrante(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre JSON inválido), se obtuvo %d", rec.Code)
+	}
+}
+
 func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
