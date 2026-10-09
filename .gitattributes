@@ -1,0 +1,2 @@
+# Saltos de línea: siempre LF en el repo y en el checkout (evita que gofmt marque todo en Windows)
+* text=auto eol=lf
