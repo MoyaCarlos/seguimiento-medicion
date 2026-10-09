@@ -28,10 +28,33 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   Duración/calendario a confirmar según fecha de entrega final.
 
 ### Convención de Git
-- Branches: `feature/HU-XX-nombre-corto`, `fix/nombre-corto`.
+- Branches: `feature/HU-XX-nombre-corto` para las historias y
+  `fix/<n°-issue>-nombre-corto` para los fixes (ej. `fix/19-integridad-proyecto-id`).
 - Nada de push directo a `main`: todo cambio entra por Pull Request.
 - Mínimo 1 aprobación de otro integrante antes de mergear.
 - El PR debe pasar los tests (Godog + `go test`) antes de mergear.
+
+### Fixes
+- Un defecto encontrado en el camino se registra como issue con la etiqueta `bug` y se
+  repara en **su propia rama** `fix/<n°-issue>-nombre-corto`, que sale de `main`. Un fix
+  por rama; no se mezcla con cambios de una historia.
+- Los defectos encontrados durante un Sprint entran al backlog del Sprint siguiente: el
+  issue `bug` se asigna a esa iteración en el Project y se planifica junto con las
+  historias.
+- El PR del fix cierra su issue con `Closes #N` en la descripción.
+- El ciclo es el mismo que para una historia: primero el `RED:` que reproduce el bug
+  (Prove-It Pattern), después el `GREEN:`, y `REFACTOR:` solo si hay algo que limpiar.
+
+### Versionado con git tags
+- Los tags son **SemVer anotados** y se crean sobre `main`, después de mergear el PR,
+  nunca desde una rama:
+  - `v0.N.0` al cerrar el Sprint N (`v0.1.0` = Sprint 1, el MVP).
+  - `v0.N.P` por cada fix mergeado después de ese hito (`v0.1.1`, `v0.1.2`, ...).
+  - `v1.0.0` en la entrega final.
+- Crearlo y publicarlo: `git tag -a v0.1.0 -m "Sprint 1: MVP" <commit>` y
+  `git push origin v0.1.0`. Lo crea el Agile Enabler (o quien él indique).
+- Un tag publicado no se mueve ni se borra: si hay un error, se corrige con el
+  siguiente tag.
 
 ### Definition of Done
 Una historia se considera terminada cuando:
