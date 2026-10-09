@@ -47,6 +47,7 @@ Característica: Apertura y cierre de Sprints
     Cuando el Scrum Master cierra el Sprint
     Entonces el Sprint pasa al estado "Finalizado"
     Y la historia no completada queda sin Sprint asignado en el Product Backlog
+    Y la historia no completada queda en estado "Nueva"
     Y la historia completada permanece vinculada a ese Sprint
 
   Escenario: No se puede cerrar un Sprint que no está Activo
