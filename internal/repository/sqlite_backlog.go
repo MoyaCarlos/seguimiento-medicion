@@ -68,9 +68,13 @@ func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID 
 	return historias, filas.Err()
 }
 
-// QuitarDeSprint devuelve la historia al Product Backlog (sin Sprint asignado).
+// QuitarDeSprint devuelve la historia al Product Backlog, sin Sprint asignado
+// y con estado Nueva.
 func (r *SQLiteBacklogRepository) QuitarDeSprint(ctx context.Context, historiaID int64) error {
-	if _, err := r.db.ExecContext(ctx, "UPDATE backlog_items SET sprint_id = NULL WHERE id = ?", historiaID); err != nil {
+	if _, err := r.db.ExecContext(ctx,
+		"UPDATE backlog_items SET sprint_id = NULL, estado = ? WHERE id = ?",
+		string(domain.EstadoNueva), historiaID,
+	); err != nil {
 		return fmt.Errorf("quitar historia %d del sprint: %w", historiaID, err)
 	}
 	return nil

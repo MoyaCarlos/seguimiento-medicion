@@ -37,6 +37,7 @@ func (h *historiasEnMemoria) QuitarDeSprint(_ context.Context, historiaID int64)
 	for i := range h.items {
 		if h.items[i].ID == historiaID {
 			h.items[i].SprintID = nil
+			h.items[i].Estado = domain.EstadoNueva
 		}
 	}
 	return nil
