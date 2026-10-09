@@ -120,6 +120,12 @@ de errores.
 
 ---
 
+## Excepción de proceso
+
+Los commits `fc65791` (GREEN), `c76ecb9` y `81a2eea` no compilan por separado: el GREEN cambió la firma de `NewCrearHistoriaBacklog` (ahora recibe también el `ProjectRepository`) y los llamadores se adaptaron en commits posteriores (`cmd/api` en `c76ecb9`, los tests del handler en `81a2eea`, los pasos BDD en `f8c9418`). El módulo vuelve a compilar completo desde `f8c9418`. No se reescribe el historial: queda como excepción documentada, igual que en HU-04.
+
+---
+
 ## Dependencies & Execution Order
 
 - **Phase 1 (gate + remediación)** → antes de cualquier implementación (T001–T005 ya ejecutados; queda T006, el commit).
