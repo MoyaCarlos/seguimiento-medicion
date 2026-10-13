@@ -14,7 +14,7 @@ actuales y el orden, sin renombrar.
 | `Nombre` | `string` | Sí | No vacío (ni solo espacios), ≤ 100 caracteres (FR-005). Nombre repetido permitido (FR-007). |
 | `Descripcion` | `string` | No | ≤ 2000 caracteres. Puede quedar vacía (FR-001, FR-019). |
 | `FechaInicio` | `*time.Time` | No | Fecha de inicio; `nil` si no se informa. |
-| `FechaFin` | `*time.Time` | No | Fecha de fin; `nil` si no se informa. Si ambas existen, no puede ser anterior a `FechaInicio` (FR-020). |
+| `FechaFin` | `*time.Time` | No | Fecha de fin; `nil` si no se informa. Si ambas existen, debe ser posterior a `FechaInicio` (FR-020). |
 | `CreadoEn` | `time.Time` | Sí (automático) | Timestamp de creación. No editable. |
 
 > HU-13 (`Should have`) es quien agrega la consulta del estado derivado
@@ -34,7 +34,7 @@ y conserva `ID` y `CreadoEn`:
 1. `name` no vacío tras `strings.TrimSpace` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre es obligatorio"}`.
 2. `len([]rune(name)) <= 100` → si falla: `ValidationError{Campo: "nombre", Mensaje: "el nombre no puede superar los 100 caracteres"}`.
 3. `len([]rune(description)) <= 2000` → si falla: `ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}`.
-4. `start == nil || end == nil || !end.Before(*start)` → si falla: `ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin no puede ser anterior a la fecha de inicio"}`.
+4. `start == nil || end == nil || end.After(*start)` → si falla: `ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin debe ser posterior a la de inicio"}`.
 
 Comportamiento de inicialización: `Nombre` y `Descripcion` se normalizan con `TrimSpace`;
 `ID` queda vacío hasta que el repositorio lo asigne; `CreadoEn` se fija al persistir.

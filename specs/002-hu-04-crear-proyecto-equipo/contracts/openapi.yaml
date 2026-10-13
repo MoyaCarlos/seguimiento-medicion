@@ -39,7 +39,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Proyecto'
         '400':
-          description: Datos inválidos (nombre vacío o extenso, fecha de fin anterior al inicio).
+          description: Datos inválidos (nombre vacío o extenso, fecha de fin anterior o igual al inicio).
           content:
             application/json:
               schema:
@@ -52,7 +52,7 @@ paths:
                 fechaInvalida:
                   value:
                     campo: fecha_fin
-                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+                    mensaje: la fecha de fin debe ser posterior a la de inicio
                 jsonInvalido:
                   value:
                     campo: ''
@@ -124,7 +124,7 @@ paths:
                 fechaInvalida:
                   value:
                     campo: fecha_fin
-                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+                    mensaje: la fecha de fin debe ser posterior a la de inicio
         '404':
           description: Proyecto inexistente.
           content:
@@ -245,7 +245,7 @@ components:
           type: string
           format: date
           nullable: true
-          description: Si se informa junto con fecha_inicio, no puede ser anterior.
+          description: Si se informa junto con fecha_inicio, debe ser posterior.
     EditarProyectoRequest:
       type: object
       required:
