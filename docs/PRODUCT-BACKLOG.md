@@ -22,6 +22,11 @@
 >   Sprint, vuelve a `Nueva`.
 > - La fecha de fin debe ser estrictamente posterior a la de inicio, tanto en
 >   proyectos como en Sprints.
+> - Los Story Points planificados de un Sprint son los de las historias **asignadas al
+>   cerrarlo** (incluidas las agregadas con el Sprint ya `Activo`): cuáles quedaron sin
+>   completar se registra al cerrar, porque esas historias vuelven al Product Backlog.
+> - No se editan los Story Points de una historia asignada a un Sprint `Activo` o
+>   `Finalizado`, para que las métricas históricas se puedan reproducir.
 > - Los estados derivados (como el estado del proyecto) y las métricas se calculan al
 >   consultar; no se guardan.
 > - Todo requisito mínimo del enunciado tiene una historia dueña. Las historias
@@ -147,6 +152,8 @@ Cuando defino cuántas horas equivale un Story Point,
 Entonces el sistema lo guarda en el proyecto y lo usa para calcular las horas estimadas. Si todavía no está definido, las horas estimadas y la desviación se informan como "sin datos".
 ### Depende de
 HU-05 (cierre de Sprint), HU-11 (historias completadas), HU-15 (Story Points de cada historia), HU-07 (horas reales), HU-08 (defectos), HU-04 (edición del proyecto, donde vive el parámetro de horas por Story Point).
+### Notas
+Los Story Points planificados de un Sprint son los de las historias asignadas al cerrarlo (incluidas las que quedaron sin completar y volvieron al Product Backlog; ver HU-05). Como los Story Points de una historia de un Sprint `Activo` o `Finalizado` no se editan (HU-15), las métricas de Sprints pasados no cambian.
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 7).
 ### Estado
@@ -203,7 +210,7 @@ Entonces el estado cambia a "Activo" y el sistema bloquea la posibilidad de inic
 Escenario 2: Cierre de Sprint con arrastre de trabajo.
 Dado que un Sprint se encuentra en estado "Activo",
 Cuando el Scrum Master presiona "Cerrar Sprint",
-Entonces el sistema cambia su estado a "Finalizado" y mueve automáticamente todas las Historias de Usuario no completadas de vuelta al Product Backlog, sin Sprint asignado y con estado "Nueva".
+Entonces el sistema cambia su estado a "Finalizado" y mueve automáticamente todas las Historias de Usuario no completadas de vuelta al Product Backlog, sin Sprint asignado y con estado "Nueva", y deja registrado cuáles eran y sus Story Points de ese momento.
 Escenario 3: Crear un Sprint.
 Dado que existe un proyecto,
 Cuando creo un Sprint para ese proyecto,
@@ -216,6 +223,8 @@ Entonces el sistema rechaza la operación por validación de fechas.
 ### Depende de
 HU-04 (el proyecto debe existir), HU-01 (historias a arrastrar al cerrar).
 
+### Notas
+Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story Points de ese momento; sin ese registro no se podrían calcular los Story Points planificados (HU-03), el gráfico de HU-09 ni el detalle de HU-12 de un Sprint ya cerrado. El cierre es una sola operación: o se aplica todo (estado del Sprint, registro y regreso al Product Backlog) o nada.
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
@@ -237,7 +246,7 @@ para poder definir el compromiso de trabajo de la iteración actual.
 ### Criterios de aceptacion (BDD):
 Escenario 1: Asignación exitosa.
 Dado que existe un Sprint en estado "Pendiente" o "Activo",
-Cuando arrastro o selecciono una HU del Product Backlog (estado "Nueva" o "En progreso") y la asigno al Sprint,
+Cuando arrastro o selecciono una HU del Product Backlog (estado "Nueva") y la asigno al Sprint,
 Entonces la HU desaparece de la vista del backlog general y pasa a conformar el Sprint Backlog de esa iteración.
 Escenario 2: Restricción de historias completadas.
 Dado que estoy planificando un Sprint,
@@ -279,6 +288,8 @@ Entonces el sistema bloquea el guardado y muestra un error de validación en la 
 ### Depende de
 HU-04 (integrantes), HU-06 (historia dentro de un Sprint), HU-05 (Sprint activo).
 
+### Notas
+Las horas se guardan como minutos enteros y se convierten a horas solo al mostrarlas. El tope de horas por carga lo define la especificación de esta historia.
 ### Prioridad
 M (Must have) - Fundamental para que luego se puedan calcular las métricas de desviación de esfuerzo. 
 ### Estado
@@ -339,6 +350,8 @@ Cuando ingreso al Dashboard,
 Entonces el sistema debe mostrar un estado vacío informativo, no un gráfico roto ni un error.
 ### Depende de
 HU-03 (métricas calculadas).
+### Notas
+"Puntos Comprometidos" son los Story Points de las historias asignadas al cerrar el Sprint, completadas o no (ver HU-05).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 8).
 ### Estado
@@ -364,6 +377,8 @@ Cuando se solicita el reporte,
 Entonces el sistema debe informar el error al usuario en vez de descargar un archivo corrupto o vacío.
 ### Depende de
 HU-05 (Sprint cerrado), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
+### Notas
+Las historias "planificadas" son las asignadas al cerrar el Sprint, completadas o no (ver HU-05).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 9).
 ### Estado
@@ -418,6 +433,8 @@ Cuando selecciono uno en particular,
 Entonces el sistema muestra el detalle completo de ese Sprint (historias, esfuerzo, defectos) sin afectar al Sprint activo actual.
 ### Depende de
 HU-05 (Sprints cerrados), HU-03 (métricas), HU-07 (esfuerzo), HU-08 (defectos), HU-11 (historias completadas).
+### Notas
+Las historias que se muestran como comprometidas son las asignadas al cerrar el Sprint, completadas o no (ver HU-05).
 ### Prioridad
 S (Should have) - Requisito explícito del enunciado (punto 3).
 ### Estado
@@ -480,7 +497,7 @@ Cuando el Scrum Master registra el valor acordado,
 Entonces la historia queda con esos Story Points como estimación, reemplazando la que tuviera cargada (por ejemplo, de forma directa desde HU-15).
 Escenario 4: Estimación inválida.
 Dado que el Scrum Master intenta registrar una estimación,
-Cuando el valor no pertenece a la baraja Fibonacci o la votación no fue revelada,
+Cuando el valor no pertenece a la baraja Fibonacci, la votación no fue revelada o la historia está asignada a un Sprint "Activo" o "Finalizado",
 Entonces el sistema rechaza la operación y la historia mantiene su estimación anterior.
 ### Depende de
 HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
@@ -511,7 +528,7 @@ Cuando modifico su título, descripción, criterios de aceptación o Story Point
 Entonces el sistema persiste los cambios y conserva su identificador y estado.
 Escenario 3: Edición inválida.
 Dado que estoy editando una historia,
-Cuando dejo el título en blanco o ingreso unos Story Points que no pertenecen a la escala Fibonacci,
+Cuando dejo el título en blanco, ingreso unos Story Points que no pertenecen a la escala Fibonacci o intento cambiar los Story Points de una historia asignada a un Sprint "Activo" o "Finalizado",
 Entonces el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 Escenario 4: Historia inexistente.
 Dado que intento consultar o editar una historia o un proyecto que no existen,
@@ -521,6 +538,7 @@ Entonces el sistema responde "no encontrado".
 HU-01 (historias), HU-04 (proyecto), HU-05 (campo de Sprint de la historia, que ya existe).
 ### Notas
 La asignación de historias a un Sprint llega después, con la historia de movimiento al Sprint Backlog; hasta entonces el listado se prueba sembrando historias con Sprint.
+Los criterios de aceptación son un texto libre opcional de hasta 2000 caracteres (el mismo límite que la descripción); vacío o solo espacios equivale a no tener criterios.
 ### Prioridad
 M (Must have) - El enunciado exige los criterios de aceptación y los Story Points como parte mínima de cada elemento del Product Backlog, HU-06 necesita el listado y HU-03 y HU-10 necesitan los Story Points.
 ### Estado
