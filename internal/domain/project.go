@@ -59,8 +59,8 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 	if len([]rune(descripcion)) > projectDescriptionMaxLen {
 		return "", "", ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}
 	}
-	if start != nil && end != nil && end.Before(*start) {
-		return "", "", ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin no puede ser anterior a la fecha de inicio"}
+	if start != nil && end != nil && !end.After(*start) {
+		return "", "", ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin debe ser posterior a la de inicio"}
 	}
 	return nombre, descripcion, nil
 }
