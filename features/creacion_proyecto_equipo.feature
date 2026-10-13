@@ -47,12 +47,17 @@ Característica: Creación de Proyecto y Asignación de Equipo
     Entonces el sistema muestra una advertencia de validación del proyecto
     Y no guarda los cambios
 
-  Escenario: Edición con fecha de fin anterior a la fecha de inicio
+  Esquema del escenario: Edición con fecha de fin que no es posterior a la fecha de inicio
     Dado que existe un proyecto creado
     Y estoy en la vista de edición del proyecto
-    Cuando ingreso una fecha de fin anterior a la fecha de inicio y guardo
+    Cuando ingreso una fecha de fin <relacion> la fecha de inicio y guardo
     Entonces el sistema muestra una advertencia de validación del proyecto
     Y no guarda los cambios
+
+    Ejemplos:
+      | relacion    |
+      | anterior a  |
+      | igual a     |
 
   Escenario: Cancelar la edición sin aplicar cambios
     Dado que existe un proyecto creado

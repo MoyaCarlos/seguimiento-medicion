@@ -73,10 +73,13 @@ func TestNewProject_FechaFinAnteriorAlInicio(t *testing.T) {
 	}
 }
 
-func TestNewProject_FechaFinIgualAlInicioEsValida(t *testing.T) {
+func TestNewProject_FechaFinIgualAlInicio(t *testing.T) {
 	fecha := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
-	if _, err := NewProject("Proyecto", "", &fecha, &fecha); err != nil {
-		t.Fatalf("la fecha de fin igual al inicio debería ser válida: %v", err)
+
+	_, err := NewProject("Proyecto", "", &fecha, &fecha)
+	verr, ok := err.(ValidationError)
+	if !ok || verr.Campo != "fecha_fin" {
+		t.Fatalf("se esperaba ValidationError de fecha_fin, se obtuvo %v", err)
 	}
 }
 
@@ -125,6 +128,7 @@ func TestConDatosEditados_ReutilizaValidacionesDelAlta(t *testing.T) {
 		{"nombre largo", strings.Repeat("a", projectNameMaxLen+1), "", nil, nil, "nombre"},
 		{"descripción larga", "Proyecto", strings.Repeat("d", projectDescriptionMaxLen+1), nil, nil, "descripcion"},
 		{"fin anterior al inicio", "Proyecto", "", &inicio, &fin, "fecha_fin"},
+		{"fin igual al inicio", "Proyecto", "", &inicio, &inicio, "fecha_fin"},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

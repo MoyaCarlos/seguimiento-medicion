@@ -52,7 +52,7 @@ Resultado esperado:
 
 - Nombre vacío o solo espacios: `400` (`campo: "nombre"`).
 - Nombre > 100 caracteres: `400` (`campo: "nombre"`).
-- `fecha_fin` anterior a `fecha_inicio`: `400` (`campo: "fecha_fin"`).
+- `fecha_fin` anterior o igual a `fecha_inicio`: `400` (`campo: "fecha_fin"`).
 - `descripcion` omitida: el proyecto se crea igual (opcional).
 - JSON malformado: `400` con `{"mensaje":"JSON inválido"}`.
 
@@ -94,7 +94,7 @@ Resultado esperado:
 ### Casos borde de la edición
 
 - Nombre vacío o solo espacios: `400` (`campo: "nombre"`); el proyecto conserva sus valores previos.
-- `fecha_fin` anterior a `fecha_inicio`: `400` (`campo: "fecha_fin"`); sin cambios persistidos.
+- `fecha_fin` anterior o igual a `fecha_inicio`: `400` (`campo: "fecha_fin"`); sin cambios persistidos.
 - `descripcion` vacía: se permite (opcional).
 - Nombre repetido de otro proyecto: se permite (no hay unicidad).
 - Proyecto inexistente: `404`.

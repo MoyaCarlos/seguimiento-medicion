@@ -258,9 +258,12 @@ func (c *proyectoContext) editarNombreVacio() error {
 	return nil
 }
 
-func (c *proyectoContext) editarFechaInvalida() error {
+func (c *proyectoContext) editarFechaInvalida(relacion string) error {
 	inicio := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
 	fin := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	if relacion == "igual a" {
+		fin = inicio
+	}
 	_, c.err = c.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
 		ID:          c.proyecto.ID,
 		Nombre:      "Proyecto base",
@@ -330,7 +333,7 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el sistema persiste los cambios del proyecto$`, pc.persisteCambios)
 	ctx.Step(`^dejo el nombre vacío o compuesto solo por espacios y guardo$`, pc.editarNombreVacio)
 	ctx.Step(`^no guarda los cambios$`, pc.noGuardaCambios)
-	ctx.Step(`^ingreso una fecha de fin anterior a la fecha de inicio y guardo$`, pc.editarFechaInvalida)
+	ctx.Step(`^ingreso una fecha de fin (anterior a|igual a) la fecha de inicio y guardo$`, pc.editarFechaInvalida)
 	ctx.Step(`^decido no aplicar cambios y cancelo$`, pc.cancelaEdicion)
 	ctx.Step(`^el proyecto permanece sin modificaciones$`, pc.permaneceSinModificaciones)
 }
