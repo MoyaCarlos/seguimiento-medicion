@@ -24,10 +24,11 @@ func main() {
 	}
 
 	backlogRepo := repository.NewSQLiteBacklogRepository(db)
-	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo)
-	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
 
 	proyectos := repository.NewSQLiteProjectRepository(db)
+	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo, proyectos)
+	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
+
 	usuarios := repository.NewSQLiteUserRepository(db)
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
