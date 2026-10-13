@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -40,7 +41,7 @@ func main() {
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
-		service.NewIniciarSprint(sprintRepo),
+		service.NewIniciarSprint(sprintRepo, time.Now),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 		sprintRepo,
 	)

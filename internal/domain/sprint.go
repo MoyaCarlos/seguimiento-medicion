@@ -24,8 +24,10 @@ func NewSprint(proyectoID int64) (Sprint, error) {
 	return Sprint{ProyectoID: proyectoID, Estado: SprintPendiente}, nil
 }
 
-// Iniciar pasa el Sprint de Pendiente a Activo con su Goal y plazos.
-func (s *Sprint) Iniciar(goal string, inicio, fin time.Time) error {
+// Iniciar pasa el Sprint de Pendiente a Activo con su Goal y plazos. La fecha
+// de fin se compara contra el día civil de ahora: un Sprint no puede nacer
+// Activo ya vencido.
+func (s *Sprint) Iniciar(goal string, inicio, fin, ahora time.Time) error {
 	if s.Estado != SprintPendiente {
 		return ValidationError{Campo: "estado", Mensaje: "solo se puede iniciar un Sprint pendiente"}
 	}
@@ -38,6 +40,9 @@ func (s *Sprint) Iniciar(goal string, inicio, fin time.Time) error {
 	}
 	if !fin.After(inicio) {
 		return ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin debe ser posterior a la de inicio"}
+	}
+	if fin.Before(inicioDelDiaCivil(ahora)) {
+		return ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin no puede ser anterior a hoy"}
 	}
 	s.SprintGoal, s.FechaInicio, s.FechaFin, s.Estado = goal, inicio, fin, SprintActivo
 	return nil

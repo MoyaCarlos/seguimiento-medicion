@@ -80,7 +80,7 @@ func TestSQLiteSprintRepository_ActualizarPersisteLaTransicion(t *testing.T) {
 
 	inicio := time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
 	fin := inicio.AddDate(0, 0, 14)
-	if err := sprint.Iniciar("Entregar el MVP", inicio, fin); err != nil {
+	if err := sprint.Iniciar("Entregar el MVP", inicio, fin, inicio); err != nil {
 		t.Fatalf("no se esperaba error de dominio: %v", err)
 	}
 	if err := repo.Actualizar(ctx, sprint); err != nil {

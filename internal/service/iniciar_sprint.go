@@ -20,10 +20,11 @@ type IniciarSprintInput struct {
 // proyecto no tenga otro Sprint Activo.
 type IniciarSprint struct {
 	sprints repository.SprintRepository
+	ahora   func() time.Time
 }
 
-func NewIniciarSprint(sprints repository.SprintRepository) *IniciarSprint {
-	return &IniciarSprint{sprints: sprints}
+func NewIniciarSprint(sprints repository.SprintRepository, ahora func() time.Time) *IniciarSprint {
+	return &IniciarSprint{sprints: sprints, ahora: ahora}
 }
 
 func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) (domain.Sprint, error) {
@@ -45,7 +46,7 @@ func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) 
 		}
 	}
 
-	if err := sprint.Iniciar(input.SprintGoal, input.FechaInicio, input.FechaFin); err != nil {
+	if err := sprint.Iniciar(input.SprintGoal, input.FechaInicio, input.FechaFin, s.ahora()); err != nil {
 		return domain.Sprint{}, err
 	}
 	if err := s.sprints.Actualizar(ctx, sprint); err != nil {
