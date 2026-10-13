@@ -9,6 +9,7 @@ import (
 var (
 	hoy          = time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
 	enDosSemanas = hoy.AddDate(0, 0, 14)
+	ahora        = time.Date(2026, 10, 5, 12, 0, 0, 0, time.Local)
 )
 
 func esperarErrorDeValidacion(t *testing.T, err error, campo string) {
@@ -28,7 +29,7 @@ func sprintActivo(t *testing.T) Sprint {
 	if err != nil {
 		t.Fatalf("no se esperaba error al crear: %v", err)
 	}
-	if err := s.Iniciar("Entregar el MVP", hoy, enDosSemanas); err != nil {
+	if err := s.Iniciar("Entregar el MVP", hoy, enDosSemanas, ahora); err != nil {
 		t.Fatalf("no se esperaba error al iniciar: %v", err)
 	}
 	return s
@@ -69,7 +70,7 @@ func TestSprint_Iniciar_PasaAActivo(t *testing.T) {
 
 func TestSprint_Iniciar_GoalObligatorio(t *testing.T) {
 	s, _ := NewSprint(1)
-	err := s.Iniciar("   ", hoy, enDosSemanas)
+	err := s.Iniciar("   ", hoy, enDosSemanas, ahora)
 	esperarErrorDeValidacion(t, err, "sprint_goal")
 	if s.Estado != SprintPendiente {
 		t.Errorf("el Sprint no debía cambiar de estado, quedó %q", s.Estado)
@@ -78,7 +79,7 @@ func TestSprint_Iniciar_GoalObligatorio(t *testing.T) {
 
 func TestSprint_Iniciar_FechaInicioObligatoria(t *testing.T) {
 	s, _ := NewSprint(1)
-	err := s.Iniciar("Goal", time.Time{}, enDosSemanas)
+	err := s.Iniciar("Goal", time.Time{}, enDosSemanas, ahora)
 	esperarErrorDeValidacion(t, err, "fecha_inicio")
 }
 
@@ -89,7 +90,7 @@ func TestSprint_Iniciar_FechaFinDebeSerPosterior(t *testing.T) {
 	} {
 		t.Run(nombre, func(t *testing.T) {
 			s, _ := NewSprint(1)
-			err := s.Iniciar("Goal", hoy, fin)
+			err := s.Iniciar("Goal", hoy, fin, ahora)
 			esperarErrorDeValidacion(t, err, "fecha_fin")
 			if s.Estado != SprintPendiente {
 				t.Errorf("el Sprint no debía cambiar de estado, quedó %q", s.Estado)
@@ -98,9 +99,28 @@ func TestSprint_Iniciar_FechaFinDebeSerPosterior(t *testing.T) {
 	}
 }
 
+func TestSprint_Iniciar_FechaFinNoPuedeSerAnteriorAHoy(t *testing.T) {
+	s, _ := NewSprint(1)
+	err := s.Iniciar("Goal", hoy.AddDate(0, 0, -14), hoy.AddDate(0, 0, -1), ahora)
+	esperarErrorDeValidacion(t, err, "fecha_fin")
+	if s.Estado != SprintPendiente {
+		t.Errorf("el Sprint no debía cambiar de estado, quedó %q", s.Estado)
+	}
+}
+
+func TestSprint_Iniciar_AceptaInicioPasadoConFinHoy(t *testing.T) {
+	s, _ := NewSprint(1)
+	if err := s.Iniciar("Goal", hoy.AddDate(0, 0, -7), hoy, ahora); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if s.Estado != SprintActivo {
+		t.Errorf("se esperaba estado %q, se obtuvo %q", SprintActivo, s.Estado)
+	}
+}
+
 func TestSprint_Iniciar_SoloDesdePendiente(t *testing.T) {
 	s := sprintActivo(t)
-	err := s.Iniciar("Otro goal", hoy, enDosSemanas)
+	err := s.Iniciar("Otro goal", hoy, enDosSemanas, ahora)
 	esperarErrorDeValidacion(t, err, "estado")
 }
 

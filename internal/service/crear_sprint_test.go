@@ -78,7 +78,7 @@ func TestCrearSprint_PermitePendienteSiElOtroEstaActivo(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	proyecto := sembrarProyecto(t, proyectos)
 	activo := sembrarSprintPendiente(t, sprints, proyecto.ID)
-	if _, err := NewIniciarSprint(sprints).Ejecutar(context.Background(), inputValido(activo.ID)); err != nil {
+	if _, err := NewIniciarSprint(sprints, relojFijo).Ejecutar(context.Background(), inputValido(activo.ID)); err != nil {
 		t.Fatalf("no se esperaba error al iniciar: %v", err)
 	}
 

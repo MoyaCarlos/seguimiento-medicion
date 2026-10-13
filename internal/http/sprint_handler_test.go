@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -25,13 +26,15 @@ func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogIte
 }
 func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
 
+func relojFijo() time.Time { return time.Date(2026, 10, 5, 12, 0, 0, 0, time.Local) }
+
 func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria, *repository.ProjectRepositoryEnMemoria) {
 	t.Helper()
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	handler := NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprints),
-		service.NewIniciarSprint(sprints),
+		service.NewIniciarSprint(sprints, relojFijo),
 		service.NewCerrarSprint(sprints, sinHistorias{}),
 		sprints,
 	)
@@ -180,9 +183,10 @@ func TestSprintHandler_Iniciar_ErroresDeValidacion(t *testing.T) {
 		cuerpo string
 		campo  string
 	}{
-		"fecha de fin no posterior": {`{"sprint_goal":"Goal","fecha_inicio":"2026-10-05","fecha_fin":"2026-10-05"}`, "fecha_fin"},
-		"formato de fecha inválido": {`{"sprint_goal":"Goal","fecha_inicio":"05/10/2026","fecha_fin":"2026-10-19"}`, "fecha_inicio"},
-		"goal vacío":                {`{"sprint_goal":"","fecha_inicio":"2026-10-05","fecha_fin":"2026-10-19"}`, "sprint_goal"},
+		"fecha de fin no posterior":   {`{"sprint_goal":"Goal","fecha_inicio":"2026-10-05","fecha_fin":"2026-10-05"}`, "fecha_fin"},
+		"fecha de fin anterior a hoy": {`{"sprint_goal":"Goal","fecha_inicio":"2020-01-01","fecha_fin":"2020-02-01"}`, "fecha_fin"},
+		"formato de fecha inválido":   {`{"sprint_goal":"Goal","fecha_inicio":"05/10/2026","fecha_fin":"2026-10-19"}`, "fecha_inicio"},
+		"goal vacío":                  {`{"sprint_goal":"","fecha_inicio":"2026-10-05","fecha_fin":"2026-10-19"}`, "sprint_goal"},
 	}
 	for nombre, caso := range casos {
 		t.Run(nombre, func(t *testing.T) {
