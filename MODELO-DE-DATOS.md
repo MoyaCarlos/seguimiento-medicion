@@ -386,7 +386,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | `estimacion_sp` ya cargada no se modifica con Sprint `Activo` o `Finalizado` (cargarla desde `NULL` sí se permite) — **Decidido (D2b, 2026-10-13)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
-| Fechas en el pasado al iniciar un Sprint | — | Pendiente de definir con el cliente (#20); **ninguna** restricción de base lo cubre |
+| Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
 
 ### Traducción de violaciones a errores
 
