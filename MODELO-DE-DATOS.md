@@ -5,13 +5,13 @@ implemente una historia: antes de escribir SQL, un repositorio o una migración,
 se lee esto. Si una spec de `specs/` contradice este documento, se corrige uno
 de los dos en el mismo PR; no se resuelve en el código.
 
-- Estado: **propuesta** (2026-10-09), pendiente de aprobación del equipo. Incorpora un
+- Estado: **definido** (2026-10-13): todas las decisiones de §7 están cerradas y entra en vigencia al mergearse el PR #116 (diseño inicial del 2026-10-09). Incorpora un
   análisis tipo `/speckit.analyze` y una revisión posterior. Todo el SQL de este documento
   se probó con filas válidas, inválidas y con `NULL` en SQLite 3.53.4, tanto con el módulo
   `sqlite3` de Python como con `modernc.org/sqlite` v1.60.1 (misma versión del motor).
   Va por PR en la rama `docs/modelo-de-datos`.
-- Lo marcado **PENDIENTE** es una decisión de producto o del profesor: el modelo la
-  contempla, pero nadie la implementa hasta que se confirme (ver §7).
+- Una decisión abierta se marca **PENDIENTE** (producto o profesor) y nadie la implementa
+  hasta que se confirme (ver §7). Hoy no queda ninguna.
 - Base: backlog refinado de `docs/PRODUCT-BACKLOG.md` (PR #105, 15 historias).
 - Alcance: tablas, columnas, restricciones, migraciones y dónde vive cada regla.
   No incluye código.
@@ -44,7 +44,8 @@ Además hay un hueco de diseño que ninguna historia nota por separado: ver
 | Obligatoriedad | Se declara `NOT NULL` todo lo que el dominio exige siempre. `NULL` significa "todavía no definido", nunca "cero" ni "vacío". |
 | Borrado | Ninguna historia borra datos. **Sin `ON DELETE CASCADE`**: se deja el comportamiento por defecto de SQLite, `NO ACTION`, que rechaza borrar (o cambiar el id de) un padre con hijos con `SQLITE_CONSTRAINT_FOREIGNKEY`. **No** se declara `ON DELETE RESTRICT`: rechaza igual pero con otro código (`SQLITE_CONSTRAINT_TRIGGER`), y rompería la traducción de errores de §5. Si algún día hace falta borrar, es una historia nueva con su propia decisión. |
 | Claves foráneas | `PRAGMA foreign_keys = ON` en cada conexión (ya lo hace `AbrirSQLite`). Un test de repositorio por FK debe probarlo contra SQLite real, no contra un fake. |
-| Enums cerrados | `CHECK (col IN (...))` solo para estados, roles, severidad y prioridad. Es la última barrera contra datos inválidos; la validación con mensaje sigue siendo del dominio. |
+| Enums cerrados | `CHECK (col IN (...))` para estados, roles, severidad y prioridad. Es la última barrera contra datos inválidos; la validación con mensaje sigue siendo del dominio. |
+| Formato de fechas | `CHECK (date(col) IS col)` en **toda** columna de fecha de calendario (D12): rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'` y acepta `NULL`. Debe ser `IS`, no `=`. |
 | Escala Fibonacci | **Sin `CHECK`** en `valor_negocio`, `estimacion_sp` ni `votos.valor`: la escala vive solo en el dominio (DRY, D11). |
 | Largos de texto | **No** van en la base (`titulo` ≤ 200, etc.): viven en el dominio y duplicarlos rompe DRY. |
 | Qué NO se guarda | Estado del proyecto (HU-13) y métricas (HU-03): se calculan al consultar. Ver [§6](#6-qué-no-se-guarda-y-de-dónde-se-calcula). |
@@ -136,7 +137,7 @@ erDiagram
         int sprint_id FK
         text fecha
         text actividad
-        real horas
+        int minutos
         text creado_en
     }
     defectos {
@@ -171,6 +172,7 @@ Notación: **PK** clave primaria, **UK** única, **FK** clave foránea, `?` admi
 
 Restricciones de base:
 - `CHECK (horas_por_story_point IS NULL OR horas_por_story_point > 0)`
+- `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12)
 - `CHECK (fecha_inicio IS NULL OR fecha_fin IS NULL OR fecha_fin > fecha_inicio)` — fin **estrictamente** posterior (#100). Los bordes inclusivos de HU-13 son una regla de *consulta*, no de almacenamiento.
 
 ### 4.2 `usuarios` — HU-04 (existe hoy como `users`)
@@ -209,7 +211,7 @@ Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Hoy no se impone 
 | `valor_negocio` | INTEGER? | Escala Fibonacci `{1,2,3,5,8,13,21}`, validada por el dominio |
 | `estimacion_sp` | INTEGER? | Story Points, misma escala. Los escriben HU-15 (directo) y HU-14 (acordada). `NULL` = sin estimar. **Decidido (D2b, 2026-10-13):** no se edita si la historia tiene un Sprint `Activo` o `Finalizado` (regla de servicio, §5). |
 | `sprint_id` | INTEGER? | `NULL` = está en el Product Backlog. Si no, el Sprint **actual o en el que se completó**. |
-| `fecha_finalizacion` | TEXT? | **Nueva.** HU-11. |
+| `fecha_finalizacion` | TEXT? | **Nueva.** HU-11. `CHECK (date(fecha_finalizacion) IS fecha_finalizacion)` (D12) |
 
 Restricciones de base:
 - `FOREIGN KEY (sprint_id, proyecto_id) REFERENCES sprints (id, proyecto_id)` — una historia **no puede entrar a un Sprint de otro proyecto**. Con `sprint_id NULL` SQLite no evalúa la FK (comportamiento `MATCH SIMPLE`), que es lo que se quiere.
@@ -235,6 +237,7 @@ Restricciones de base:
 - Pendiente ⇒ goal y fechas en `NULL`; Activo/Finalizado ⇒ goal y **las dos** fechas presentes y `fecha_fin > fecha_inicio`:
   `CHECK ((estado = 'Pendiente' AND sprint_goal IS NULL AND fecha_inicio IS NULL AND fecha_fin IS NULL) OR (estado <> 'Pendiente' AND sprint_goal IS NOT NULL AND fecha_inicio IS NOT NULL AND fecha_fin IS NOT NULL AND fecha_fin > fecha_inicio))`
   El `fecha_fin IS NOT NULL` es imprescindible: sin él, un Sprint `Activo` con `fecha_fin NULL` **entraba** (la comparación da `NULL` y un `CHECK` que da `NULL` no falla; verificado). Ver §4.10.
+- `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12).
 - Un solo Activo y un solo Pendiente por proyecto, como **índices únicos parciales**:
   `CREATE UNIQUE INDEX ... ON sprints (proyecto_id) WHERE estado = 'Activo'` y otro igual con `'Pendiente'`.
   Hoy esa regla vive solo en el servicio y el PR #17 ya registró el límite (dos pedidos simultáneos podrían violarla).
@@ -257,7 +260,7 @@ un Sprint pasado (HU-12). Esta tabla registra cuáles quedaron afuera.
 **Por qué lleva `proyecto_id` con FK compuestas.** El principio "la base garantiza que todo es del mismo proyecto" ya rige en `historias`, `registros_horas` y `defectos`; esta tabla era la excepción. Se probó la alternativa sin `proyecto_id` (dos FK simples a `sprints(id)` e `historias(id)`): **acepta** una fila con el Sprint del proyecto 1 y la historia del proyecto 2. Con `proyecto_id` y FK compuestas, esa fila se rechaza con cualquiera de los dos valores de `proyecto_id`. El costo es una columna y una FK más, y la PK no cambia; la escribe un único método (`CerrarConArrastre`), que ya conoce el proyecto del Sprint. Lo que la base **no** puede garantizar es que la historia *estuvo* en ese Sprint: eso es responsabilidad de `CerrarConArrastre` y de su test.
 
 - Una historia puede estar en varios Sprints si se arrastra más de una vez.
-- Historias **comprometidas** de un Sprint = `historias WHERE sprint_id = S` (las completadas) ∪ `historias_arrastradas WHERE sprint_id = S`. **Decidido (D2c, 2026-10-13):** "comprometidas" significa *lo asignado al cerrar el Sprint* (incluidas las historias agregadas con el Sprint ya `Activo`) es una definición de producto que afecta HU-03, 09, 10 y 12 y no está en el backlog.
+- Historias **comprometidas** de un Sprint = `historias WHERE sprint_id = S` (las completadas) ∪ `historias_arrastradas WHERE sprint_id = S`. **Decidido (D2c, 2026-10-13):** "comprometidas" significa *lo asignado al cerrar el Sprint* (incluidas las historias agregadas con el Sprint ya `Activo`). Es una definición de producto que afecta HU-03, 09, 10 y 12 y ya figura en el backlog.
 - SP **planificados** de S = `SUM(historias.estimacion_sp)` de las completadas + `SUM(historias_arrastradas.estimacion_sp)`. Las completadas no necesitan foto **porque D2b está aprobada** (no se edita `estimacion_sp` con Sprint `Activo`/`Finalizado`).
 
 **Cómo se escribe: una sola operación de repositorio.** El cierre no son tres llamadas sueltas (hoy `CerrarSprint` llama a `QuitarDeSprint` historia por historia y después a `Actualizar`, sin transacción):
@@ -307,9 +310,9 @@ que HU-14 no tenga que reestructurar.
 | `historia_id` | NOT NULL | |
 | `usuario_id` | NOT NULL | quién trabajó |
 | `sprint_id` | NOT NULL | Sprint **activo en el momento de la carga** (HU-07 Esc. 1). No se recalcula nunca, aunque la historia cambie de Sprint. |
-| `fecha` | TEXT NOT NULL | día trabajado |
+| `fecha` | TEXT NOT NULL | día trabajado. `CHECK (date(fecha) IS fecha)` (D12) |
 | `actividad` | TEXT NOT NULL | no vacía (validación del dominio) |
-| `horas` | REAL NOT NULL | `CHECK (horas > 0)`. **Decidido (D8, 2026-10-13):** la columna es `minutos INTEGER NOT NULL CHECK (minutos > 0)` en lugar de `horas REAL` (ver §7). |
+| `minutos` | INTEGER NOT NULL | `CHECK (minutos > 0)`. **Decidido (D8, 2026-10-13):** minutos enteros, no `horas REAL`; se convierten a horas solo al mostrar (ver §7). |
 | `creado_en` | TEXT NOT NULL | |
 
 FK compuestas (todas incluyen `proyecto_id`):
@@ -318,7 +321,7 @@ FK compuestas (todas incluyen `proyecto_id`):
 `(proyecto_id, usuario_id) → integrantes(proyecto_id, usuario_id)`.
 Con eso la base garantiza que el integrante, la historia y el Sprint son **del mismo proyecto**.
 
-Esfuerzo real de una historia = `SUM(horas)`; de un Sprint = `SUM(horas) WHERE sprint_id = S`.
+Esfuerzo real de una historia = `SUM(minutos)`; de un Sprint = `SUM(minutos) WHERE sprint_id = S` (en minutos; se muestra en horas).
 
 ### 4.9 `defectos` — HU-08 (**tabla nueva**, migración 005)
 
@@ -352,9 +355,10 @@ En SQL, un `CHECK` que evalúa a `NULL` **no falla**. Por eso, en toda columna q
 | `historias` | `(estado = 'Completada') = (fecha_finalizacion IS NOT NULL)` | `fecha_finalizacion` | No: las dos mitades son booleanas |
 | `defectos` | `(estado = 'Resuelto') = (sprint_resolucion_id IS NOT NULL)` | `sprint_resolucion_id` | No: ídem |
 | `integrantes`, `historias`, `sprints`, `defectos` | enums (`rol`, `prioridad`, `estado`, `severidad`) | ninguna (todas `NOT NULL`) | No: lo rechaza `NOT NULL` |
-| `registros_horas` | `horas > 0` | ninguna (`NOT NULL`) | No |
+| `registros_horas` | `minutos > 0` | ninguna (`NOT NULL`) | No |
+| `proyectos`, `sprints`, `historias`, `registros_horas` | `date(col) IS col` (D12) | `fecha_inicio`, `fecha_fin`, `fecha_finalizacion` | No: con `NULL`, `date(NULL) IS NULL` es verdadero a propósito; `IS` (no `=`) evita que un texto inválido pase |
 
-Cada caso con `NULL` figura en el test de esquema (§9, punto 6). Un hueco **distinto** de los `NULL` —el formato de las fechas— se trata en D12.
+Cada caso con `NULL` figura en el test de esquema (§9, punto 6). Un hueco **distinto** de los `NULL` —el formato de las fechas— se cubre con el `CHECK` de D12 (§2).
 
 ## 5. Dónde vive cada regla
 
@@ -379,7 +383,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Hay Sprint Activo para registrar horas o defectos | — | Servicio |
 | Al imputar horas, la historia pertenece al Sprint activo y `registros_horas.sprint_id` es ese Sprint | — | Servicio (HU-07) |
 | `sprint_deteccion_id` y `sprint_resolucion_id` de un defecto son el Sprint `Activo` en ese momento | — | Servicio (HU-08) |
-| `estimacion_sp` no se edita con Sprint `Activo` o `Finalizado` — **Decidido (D2b, 2026-10-13)**: decisión de producto, no está en el backlog | — | Servicio (HU-15 y HU-14) |
+| `estimacion_sp` no se edita con Sprint `Activo` o `Finalizado` — **Decidido (D2b, 2026-10-13)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | Pendiente de definir con el cliente (#20); **ninguna** restricción de base lo cubre |
@@ -408,7 +412,7 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 | SP planificados de un Sprint | completadas (`historias`) + arrastradas (`historias_arrastradas.estimacion_sp`), §4.6. **Decidido (D2b, D2c, 2026-10-13)** |
 | SP completados / velocidad | `SUM(estimacion_sp)` de `historias WHERE sprint_id = S AND estado = 'Completada'` |
 | % de historias completadas | completadas / comprometidas |
-| Horas reales | `SUM(registros_horas.horas)` por historia, Sprint o proyecto |
+| Horas reales | `SUM(registros_horas.minutos)` por historia, Sprint o proyecto, convertido a horas al mostrar |
 | Horas estimadas | SP × `proyectos.horas_por_story_point`; `NULL` ⇒ "sin datos" (qué SP entran —comprometidos o completados— lo define la spec de HU-03) |
 | Desviación | horas reales vs. estimadas |
 | Defectos detectados / resueltos | `defectos` por `sprint_deteccion_id` / `sprint_resolucion_id` |
@@ -418,24 +422,25 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
-requiere confirmación del equipo o del profesor; este documento no la decide.
+requiere confirmación del equipo o del profesor; este documento no la decide. Hoy todas
+están cerradas.
 
 | # | Tema | Recomendación | Afecta |
 |---|---|---|---|
-| **D1** | HU-06 Esc. 1 permite asignar una historia "Nueva **o En progreso**" desde el Product Backlog, pero la decisión transversal dice que `En progreso` solo existe dentro de un Sprint (y el `CHECK` de §4.4 lo vuelve imposible). | Corregir HU-06: desde el backlog solo se asignan historias `Nueva`. | HU-06 |
+| **D1** | HU-06 Esc. 1 permite asignar una historia "Nueva **o En progreso**" desde el Product Backlog, pero la decisión transversal dice que `En progreso` solo existe dentro de un Sprint (y el `CHECK` de §4.4 lo vuelve imposible). | Corregir HU-06: desde el backlog solo se asignan historias `Nueva`. **Hecho** en el backlog con este PR. | HU-06 |
 | **D2a** | Tras cerrar un Sprint se pierde qué se había comprometido (§4.6). | Tabla `historias_arrastradas` con `proyecto_id` y **foto de `estimacion_sp`** (así la historia arrastrada, que vuelve al Product Backlog y es editable, no altera los SP del Sprint viejo). Es una decisión de modelado, ya incorporada. | HU-05, 03, 09, 10, 12 |
-| **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se edita `estimacion_sp` de una historia con Sprint `Activo` o `Finalizado`". Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14), y **no está en el backlog**. Requiere confirmación del equipo o del profesor antes de implementarse. | Aprobarla: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Si se rechaza, guardar también una foto de las completadas. | HU-14, 15, 03 |
-| **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12 y no está en el backlog. | Aceptarla: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
+| **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se edita `estimacion_sp` de una historia con Sprint `Activo` o `Finalizado`". Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
+| **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12; quedó reflejada en el backlog con este PR (decisiones transversales y notas de esas historias). | Aceptada: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
 | **D3** | Fechas del proyecto en RFC 3339 y las del Sprint en `YYYY-MM-DD`. | Ambas `YYYY-MM-DD`. No cambia la API (ya expone solo la fecha); sí el repositorio de proyectos. | HU-04, 13 |
 | **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. | No imponerla hasta que una historia la pida. | HU-04 |
 | **D5** | Ninguna historia cubre sacar una historia de un Sprint o pasarla a otro. El modelo lo permitiría con un `UPDATE`, sin reglas. | Fuera de alcance; si HU-06 lo necesita, lo define en su spec. | HU-06 |
 | **D6** | HU-08 refinada ya no tiene "título" del defecto (la versión original sí). | Seguir el backlog refinado: solo descripción. | HU-08 |
 | **D7** | Origen de las "horas estimadas" (pendiente del profesor). | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
-| **D8** | Tipo y granularidad de `horas`: decimales (1.5 h) o minutos enteros; tope por carga. **Cerrada el 2026-10-13: minutos enteros.** El tope por carga es una regla del dominio, no de la base: lo fija la spec de HU-07. | Guardar **minutos enteros** (`minutos INTEGER`) y convertir a horas solo al mostrar. Verificado: el `SUM` de SQLite compensa y suma diez cargas de 0,1 h exactamente 1.0, así que el problema no es la suma en la base; es que `0.1 + 0.2` ya no es `0.3` en `float64` (en SQL, `SUM(0.1, 0.2) = 0.3` da falso) y que en Go `0.1 + 0.2 + 0.3` da `0.6000000000000001`, con lo que la desviación de HU-03 entre horas reales y estimadas deja de ser exactamente cero. Con minutos enteros las sumas y comparaciones son exactas. Decide la spec de HU-07 (define también el tope por carga) antes de la migración 004. | HU-07, 03 |
+| **D8** | Tipo y granularidad de `horas`: decimales (1.5 h) o minutos enteros; tope por carga. **Cerrada el 2026-10-13: minutos enteros.** El tope por carga es una regla del dominio, no de la base: lo fija la spec de HU-07. | Guardar **minutos enteros** (`minutos INTEGER`) y convertir a horas solo al mostrar. Verificado: el `SUM` de SQLite compensa y suma diez cargas de 0,1 h exactamente 1.0, así que el problema no es la suma en la base; es que `0.1 + 0.2` ya no es `0.3` en `float64` (en SQL, `SUM(0.1, 0.2) = 0.3` da falso) y que en Go `0.1 + 0.2 + 0.3` da `0.6000000000000001`, con lo que la desviación de HU-03 entre horas reales y estimadas deja de ser exactamente cero. Con minutos enteros las sumas y comparaciones son exactas. El tope por carga lo define la spec de HU-07. | HU-07, 03 |
 | **D9** | `ON DELETE`: ninguna historia borra datos. | Comportamiento por defecto de SQLite (`NO ACTION`) en todo, sin cascadas ni `RESTRICT` explícito (§2). | todas |
 | **D10** | **Cerrada el 2026-10-13** (clarify de HU-15, #94): texto libre opcional, hasta 2000 caracteres, el mismo límite que la descripción; vacío o solo espacios se guarda como `NULL`. Cómo se guardan los criterios de aceptación. | Una columna de texto libre; una tabla hija es YAGNI hasta que una historia pida marcarlos uno por uno. | HU-15 |
 | **D11** | `CHECK` de la escala Fibonacci. **Decidido el 2026-10-09: sin `CHECK`**, la escala vive solo en el dominio. Si la escala cambia, no hay que recrear tablas. | — (cerrada) | HU-01, 02, 14, 15 |
-| **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Agregar `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). Si se descarta por YAGNI, queda anotado el hueco. No está en las migraciones de §9. | HU-04, 05, 07, 11 |
+| **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#99) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
@@ -496,8 +501,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    con `PRAGMA foreign_keys = OFF` fuera de la transacción y vuelto a activar al terminar,
    en la misma conexión: `AbrirSQLite` fija el pragma por DSN y usa una sola conexión,
    así que el apagado y el reencendido deben hacerse explícitamente en esa conexión).
-   Es el costo de tener `CHECK`; por eso se usan solo en enums cerrados y estables y no
-   en la escala Fibonacci (D11).
+   Es el costo de tener `CHECK`; por eso se usan solo en enums cerrados y estables y en
+   el formato de fechas (D12), y no en la escala Fibonacci (D11).
 5. **Una sola vez**, al adoptar este esquema, las bases locales con las tablas en
    inglés (`projects`, `users`…) se detectan y se pide borrar `seguimiento.db`, igual
    que hoy con `ErrEsquemaViejo`. Son datos de desarrollo; no hay producción. Es el
@@ -511,13 +516,14 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    - `sprints`: Activo **y** Finalizado con `fecha_fin NULL`, con `fecha_inicio NULL` y con `sprint_goal NULL` (los seis rechazados); Pendiente con goal o con alguna fecha; fin = inicio y fin < inicio.
    - `historias`: `En progreso` y `Completada` sin Sprint; `Completada` sin `fecha_finalizacion`; `Nueva` y `En progreso` con `fecha_finalizacion`; Sprint de otro proyecto; Sprint `NULL` (válido, la FK compuesta no se evalúa).
    - Índices parciales: segundo Activo y segundo Pendiente, por `INSERT` y por `UPDATE`; varios Finalizado (válidos).
-   - `registros_horas`: `horas` 0, negativas y `NULL`; historia, Sprint o usuario de otro proyecto, o usuario que no es integrante.
+   - Fechas (D12), en `proyectos`, `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
+   - `registros_horas`: `minutos` 0, negativos y `NULL`; historia, Sprint o usuario de otro proyecto, o usuario que no es integrante.
    - `defectos`: `Resuelto` sin `sprint_resolucion_id` y `Pendiente` con él; `sprint_resolucion_id NULL` (válido).
    - `historias_arrastradas`: Sprint e historia de proyectos distintos, con ambos valores de `proyecto_id`.
    - Cierre de Sprint: el `UPDATE` único acepta; el orden "primero quitar el Sprint" sobre una historia `En progreso` rechaza.
    - Cada FK y cada violación se traduce al error de dominio de §5, **contra `modernc.org/sqlite`**.
 
-   Los casos de arriba se verificaron (128 de 128 con el resultado esperado) con el SQLite de
+   Los casos de arriba, salvo los de fechas y `minutos` (D8 y D12, verificados aparte con el SQLite de Python), se verificaron (128 de 128 con el resultado esperado) con el SQLite de
    Python, y las migraciones y los casos clave se repitieron con `modernc.org/sqlite`; ambos
    usan SQLite 3.53.4. Si el documento y la migración divergen, ese test falla.
 
@@ -572,7 +578,7 @@ En #19 se acordó que el adaptador SQLite tradujera la violación de FK a `ErrPr
 
 ### Relación con otros issues abiertos
 
-- **#19 / PR #103:** la parte 1 (validar el proyecto en el caso de uso) sigue igual y se mergea. Las partes 2 y 3 se hacen con la adopción; hacerlas aparte sobre las tablas viejas es trabajo que se tira. #19 figura cerrado con el PR #103 todavía abierto (ver §12).
+- **#19 / PR #103:** la parte 1 (validar el proyecto en el caso de uso) ya está mergeada. Las partes 2 y 3 se hacen con la adopción (#107); hacerlas aparte sobre las tablas viejas es trabajo que se tira. #19 sigue reabierto hasta que se mergee #107.
 - **#99** (estado `Nueva` al arrastrar): lleva la migración 002, la escritura en `historias_arrastradas` y `CerrarConArrastre` (§4.6). Ver §12.
 - **#100** (fin posterior a inicio): va antes de la 001 (arriba); el `CHECK` de `proyectos` lo refuerza, pero el arreglo en el dominio sigue siendo necesario para el mensaje.
 
@@ -587,12 +593,12 @@ En #19 se acordó que el adaptador SQLite tradujera la violación de FK a `ErrPr
 Cosas que este documento **no** hace y que alguien del equipo debe hacer. Ninguna se
 resolvió desde acá:
 
-- [ ] **Corregir HU-06 Escenario 1** en `docs/PRODUCT-BACKLOG.md` (D1): desde el Product Backlog solo se asignan historias en estado `Nueva` (la decisión transversal dice que `En progreso` solo existe dentro de un Sprint). El backlog refinado está en la rama del PR #105.
+- [x] **Corregir HU-06 Escenario 1** en `docs/PRODUCT-BACKLOG.md` (D1): hecho con el PR #116. Falta corregir el issue #6.
 - [ ] **Reescribir el issue #99.** Ahora incluye una tabla nueva (migración 002), una transacción y el método `CerrarConArrastre`. Decidir si sigue siendo un `fix` o si amplía HU-05, y mencionar el arrastre registrado en las historias **HU-05, HU-09, HU-10 y HU-12** del backlog.
-- [ ] **Frenar la parte 2 de #19** (Jimena): se absorbe en la adopción. Su **PR #103** (validación en el servicio) sigue igual.
+- [x] **Frenar la parte 2 de #19** (Jimena): se absorbe en la adopción (#107). Su PR #103 (validación en el servicio) ya está mergeado.
 - [x] **Reabrir o referenciar #19** desde el issue de la adopción: hecho, #19 reabierto y #107 creado.
 - [ ] **Actualizar el texto de #19** (punto 3 del acuerdo): la traducción de FK pasa a `ErrIntegridadReferencial`/409 (§10).
 - [ ] **Corregir el nombre de rama del fix #101:** debe ser `fix/101-…` (como en la tabla del PR #105), no `fix/#101-…`; el `#` no va en el nombre.
 - [x] **Abrir el issue `bug` de la adopción** (#107). Falta reservar `specs/006-…` al empezar.
 - [x] **Asignar al responsable de la adopción:** Carlos (#107).
-- [x] **D2b, D2c, D8, D12 y D13 cerradas el 2026-10-13.** Falta reflejar D2b y D2c en el backlog (HU-05, 09, 10, 12, 14, 15) y el tope por carga en la spec de HU-07.
+- [x] **D2b, D2c, D8, D12 y D13 cerradas el 2026-10-13.** D2b y D2c ya figuran en el backlog (PR #116). Falta el tope por carga, que lo define la spec de HU-07.
