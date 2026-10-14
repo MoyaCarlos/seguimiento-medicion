@@ -225,7 +225,7 @@ Entonces el sistema rechaza la operación por validación de fechas.
 HU-04 (el proyecto debe existir), HU-01 (historias a arrastrar al cerrar).
 
 ### Notas
-Un Sprint puede iniciarse con fecha de inicio anterior a hoy (el equipo pudo empezarlo y olvidar declararlo); no se restringe (#20).
+Un Sprint puede iniciarse con fechas de inicio y de fin anteriores a hoy (el equipo pudo empezarlo y olvidar declararlo); no se restringe (#20). Solo se exige que el fin sea posterior al inicio.
 Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story Points de ese momento; sin ese registro no se podrían calcular los Story Points planificados (HU-03), el gráfico de HU-09 ni el detalle de HU-12 de un Sprint ya cerrado. El cierre es una sola operación: o se aplica todo (estado del Sprint, registro y regreso al Product Backlog) o nada.
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
@@ -568,5 +568,5 @@ backlog del Sprint 2 y se reparan cada uno en su propia rama `fix/<n°-issue>-no
 | #102 | `.gitattributes` para que `gofmt` no marque todos los archivos en Windows (CRLF) | transversal | `fix/102-gitattributes-lf` |
 
 **Decidido por el equipo (2026-10-14), no es un defecto:** #20. Un Sprint se puede iniciar
-con fecha de inicio anterior a hoy, porque el equipo pudo haberlo empezado de hecho y
-olvidar declararlo en la aplicación. No se restringe.
+con fechas de inicio y de fin anteriores a hoy, porque el equipo pudo haberlo empezado de
+hecho y olvidar declararlo en la aplicación. No se restringe; solo el fin debe ser posterior al inicio.
