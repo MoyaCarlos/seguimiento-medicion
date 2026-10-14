@@ -383,7 +383,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Hay Sprint Activo para registrar horas o defectos | — | Servicio |
 | Al imputar horas, la historia pertenece al Sprint activo y `registros_horas.sprint_id` es ese Sprint | — | Servicio (HU-07) |
 | `sprint_deteccion_id` y `sprint_resolucion_id` de un defecto son el Sprint `Activo` en ese momento | — | Servicio (HU-08) |
-| `estimacion_sp` no se edita con Sprint `Activo` o `Finalizado` — **Decidido (D2b, 2026-10-13)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
+| `estimacion_sp` ya cargada no se modifica con Sprint `Activo` o `Finalizado` (cargarla desde `NULL` sí se permite) — **Decidido (D2b, 2026-10-13)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | Pendiente de definir con el cliente (#20); **ninguna** restricción de base lo cubre |
@@ -409,8 +409,8 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 | Dato | Fuente |
 |---|---|
 | Estado del proyecto (HU-13) | `proyectos.fecha_*` + `sprints.estado` |
-| SP planificados de un Sprint | completadas (`historias`) + arrastradas (`historias_arrastradas.estimacion_sp`), §4.6. **Decidido (D2b, D2c, 2026-10-13)** |
-| SP completados / velocidad | `SUM(estimacion_sp)` de `historias WHERE sprint_id = S AND estado = 'Completada'` |
+| SP planificados de un Sprint (usar `COALESCE(SUM(...), 0)`: el `SUM` de solo `NULL` da `NULL`) | completadas (`historias`) + arrastradas (`historias_arrastradas.estimacion_sp`), §4.6. **Decidido (D2b, D2c, 2026-10-13)** |
+| SP completados / velocidad | `COALESCE(SUM(estimacion_sp), 0)` de `historias WHERE sprint_id = S AND estado = 'Completada'` |
 | % de historias completadas | completadas / comprometidas |
 | Horas reales | `SUM(registros_horas.minutos)` por historia, Sprint o proyecto, convertido a horas al mostrar |
 | Horas estimadas | SP × `proyectos.horas_por_story_point`; `NULL` ⇒ "sin datos" (qué SP entran —comprometidos o completados— lo define la spec de HU-03) |
@@ -429,7 +429,7 @@ están cerradas.
 |---|---|---|---|
 | **D1** | HU-06 Esc. 1 permite asignar una historia "Nueva **o En progreso**" desde el Product Backlog, pero la decisión transversal dice que `En progreso` solo existe dentro de un Sprint (y el `CHECK` de §4.4 lo vuelve imposible). | Corregir HU-06: desde el backlog solo se asignan historias `Nueva`. **Hecho** en el backlog con este PR. | HU-06 |
 | **D2a** | Tras cerrar un Sprint se pierde qué se había comprometido (§4.6). | Tabla `historias_arrastradas` con `proyecto_id` y **foto de `estimacion_sp`** (así la historia arrastrada, que vuelve al Product Backlog y es editable, no altera los SP del Sprint viejo). Es una decisión de modelado, ya incorporada. | HU-05, 03, 09, 10, 12 |
-| **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se edita `estimacion_sp` de una historia con Sprint `Activo` o `Finalizado`". Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
+| **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se modifica una `estimacion_sp` **ya cargada** de una historia con Sprint `Activo` o `Finalizado`"; cargarla por primera vez (estaba en `NULL`) se permite (decidido el 2026-10-14). Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
 | **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12; quedó reflejada en el backlog con este PR (decisiones transversales y notas de esas historias). | Aceptada: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
 | **D3** | Fechas del proyecto en RFC 3339 y las del Sprint en `YYYY-MM-DD`. | Ambas `YYYY-MM-DD`. No cambia la API (ya expone solo la fecha); sí el repositorio de proyectos. | HU-04, 13 |
 | **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. | No imponerla hasta que una historia la pida. | HU-04 |

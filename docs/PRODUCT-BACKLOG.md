@@ -25,8 +25,9 @@
 > - Los Story Points planificados de un Sprint son los de las historias **asignadas al
 >   cerrarlo** (incluidas las agregadas con el Sprint ya `Activo`): cuáles quedaron sin
 >   completar se registra al cerrar, porque esas historias vuelven al Product Backlog.
-> - No se editan los Story Points de una historia asignada a un Sprint `Activo` o
->   `Finalizado`, para que las métricas históricas se puedan reproducir.
+> - No se modifican los Story Points ya cargados de una historia asignada a un Sprint
+>   `Activo` o `Finalizado`, para que las métricas históricas se puedan reproducir. Cargarlos
+>   por primera vez (la historia estaba sin estimar) sí se permite.
 > - Los estados derivados (como el estado del proyecto) y las métricas se calculan al
 >   consultar; no se guardan.
 > - Todo requisito mínimo del enunciado tiene una historia dueña. Las historias
@@ -497,7 +498,7 @@ Cuando el Scrum Master registra el valor acordado,
 Entonces la historia queda con esos Story Points como estimación, reemplazando la que tuviera cargada (por ejemplo, de forma directa desde HU-15).
 Escenario 4: Estimación inválida.
 Dado que el Scrum Master intenta registrar una estimación,
-Cuando el valor no pertenece a la baraja Fibonacci, la votación no fue revelada o la historia está asignada a un Sprint "Activo" o "Finalizado",
+Cuando el valor no pertenece a la baraja Fibonacci, la votación no fue revelada o la historia ya tiene estimación y está asignada a un Sprint "Activo" o "Finalizado",
 Entonces el sistema rechaza la operación y la historia mantiene su estimación anterior.
 ### Depende de
 HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
@@ -528,7 +529,7 @@ Cuando modifico su título, descripción, criterios de aceptación o Story Point
 Entonces el sistema persiste los cambios y conserva su identificador y estado.
 Escenario 3: Edición inválida.
 Dado que estoy editando una historia,
-Cuando dejo el título en blanco, ingreso unos Story Points que no pertenecen a la escala Fibonacci o intento cambiar los Story Points de una historia asignada a un Sprint "Activo" o "Finalizado",
+Cuando dejo el título en blanco, ingreso unos Story Points que no pertenecen a la escala Fibonacci o intento cambiar los Story Points ya cargados de una historia asignada a un Sprint "Activo" o "Finalizado",
 Entonces el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 Escenario 4: Historia inexistente.
 Dado que intento consultar o editar una historia o un proyecto que no existen,
