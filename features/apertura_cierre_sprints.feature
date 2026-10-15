@@ -41,6 +41,12 @@ Característica: Apertura y cierre de Sprints
     Cuando intento iniciarlo con una fecha de fin igual o anterior a la fecha de inicio
     Entonces el sistema rechaza la operación por validación de fechas
 
+  Escenario: Fecha de fin anterior a hoy
+    Dado que existe un Sprint en estado "Pendiente" para el proyecto
+    Cuando intento iniciarlo con una fecha de fin anterior a hoy
+    Entonces el sistema rechaza la operación por validación de fechas
+    Y el Sprint permanece en estado "Pendiente"
+
   Escenario: Cerrar un Sprint con arrastre de historias no completadas
     Dado que el proyecto tiene un Sprint en estado "Activo"
     Y ese Sprint tiene una historia completada y otra no completada asignadas

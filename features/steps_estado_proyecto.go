@@ -35,7 +35,7 @@ func (p *pasosEstado) preparar() {
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, time.Now)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.consulta = service.NewObtenerEstadoProyecto(proyectos, p.sprints)
 	p.sprint, p.estado, p.err = domain.Sprint{}, "", nil

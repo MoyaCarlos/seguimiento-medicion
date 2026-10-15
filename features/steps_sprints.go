@@ -19,6 +19,10 @@ var (
 	finSprint    = inicioSprint.AddDate(0, 0, 14)
 )
 
+// relojSprint fija "hoy" en el día de inicioSprint para que los escenarios no
+// dependan de la fecha en que se corren.
+func relojSprint() time.Time { return time.Date(2026, 10, 5, 12, 0, 0, 0, time.Local) }
+
 // pasosSprint guarda el estado de los escenarios de HU-05. Comparte la base
 // y el proyecto del Background con los pasos de HU-01.
 type pasosSprint struct {
@@ -39,7 +43,7 @@ func (p *pasosSprint) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, relojSprint)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
 	p.completada, p.pendiente = 0, 0
@@ -126,6 +130,27 @@ func (p *pasosSprint) intentoIniciarSegundo() error {
 
 func (p *pasosSprint) intentoIniciarConFechaInvalida() error {
 	_, p.err = p.iniciarCon(p.sprint.ID, "Goal", inicioSprint)
+	return nil
+}
+
+func (p *pasosSprint) intentoIniciarConFinPasado() error {
+	_, p.err = p.iniciar.Ejecutar(context.Background(), service.IniciarSprintInput{
+		SprintID:    p.sprint.ID,
+		SprintGoal:  "Goal",
+		FechaInicio: inicioSprint.AddDate(0, 0, -14),
+		FechaFin:    inicioSprint.AddDate(0, 0, -1),
+	})
+	return nil
+}
+
+func (p *pasosSprint) sprintSiguePendiente() error {
+	actual, err := p.estadoPersistido(p.sprint.ID)
+	if err != nil {
+		return err
+	}
+	if actual != domain.SprintPendiente {
+		return fmt.Errorf("el Sprint debía seguir %q, quedó %q", domain.SprintPendiente, actual)
+	}
 	return nil
 }
 
@@ -256,6 +281,8 @@ func inicializarPasosSprint(ctx *godog.ScenarioContext, base *scenarioContext) {
 	ctx.Step(`^defino el Sprint Goal "([^"]*)", una fecha de inicio y una fecha de fin posterior, y lo inicio$`, p.inicioConGoal)
 	ctx.Step(`^intento iniciar ese segundo Sprint$`, p.intentoIniciarSegundo)
 	ctx.Step(`^intento iniciarlo con una fecha de fin igual o anterior a la fecha de inicio$`, p.intentoIniciarConFechaInvalida)
+	ctx.Step(`^intento iniciarlo con una fecha de fin anterior a hoy$`, p.intentoIniciarConFinPasado)
+	ctx.Step(`^el Sprint permanece en estado "Pendiente"$`, p.sprintSiguePendiente)
 	ctx.Step(`^el Scrum Master cierra el Sprint$`, p.cierroElSprint)
 	ctx.Step(`^intento cerrarlo$`, p.cierroElSprint)
 	ctx.Step(`^el Sprint pasa al estado "([^"]*)"$`, p.sprintPasaAEstado)

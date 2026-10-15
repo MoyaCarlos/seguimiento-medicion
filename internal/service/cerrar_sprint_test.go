@@ -49,7 +49,7 @@ func historia(id int64, estado domain.Estado, sprintID int64) domain.BacklogItem
 func sembrarSprintActivo(t *testing.T, repo repository.SprintRepository, proyectoID int64) domain.Sprint {
 	t.Helper()
 	pendiente := sembrarSprintPendiente(t, repo, proyectoID)
-	activo, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(pendiente.ID))
+	activo, err := NewIniciarSprint(repo, relojFijo).Ejecutar(context.Background(), inputValido(pendiente.ID))
 	if err != nil {
 		t.Fatalf("no se pudo iniciar el Sprint: %v", err)
 	}

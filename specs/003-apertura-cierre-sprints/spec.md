@@ -20,6 +20,10 @@ mínimo commiteado (Project/ProjectRepository) para TDD con fake en memoria."
 - Q: Al iniciar un Sprint inexistente con datos inválidos, ¿qué error se informa primero? → A: 404 primero; el cuerpo se valida (400) solo si el Sprint existe.
 - Q: ¿Un Sprint puede tener la misma fecha de inicio y de fin? → A: No; el fin debe ser estrictamente posterior (posible, pero no práctico). HU-04 acepta fechas iguales para proyectos a propósito.
 
+### Session 2026-10-13
+
+- Q: ¿Se puede iniciar un Sprint con fechas anteriores a hoy? (Issue #20) → A: La fecha de inicio puede ser pasada (registrar un Sprint que arrancó hace unos días), pero la fecha de fin no puede ser anterior a hoy: un Sprint no nace "Activo" ya vencido. Se compara por día calendario; un fin igual a hoy se acepta.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Iniciar un Sprint (Priority: P1)
@@ -45,6 +49,10 @@ válidas, pasa a "Activo".
 2. **Given** un proyecto ya tiene un Sprint en estado "Activo", **When** se
    intenta iniciar otro Sprint del mismo proyecto, **Then** el sistema
    rechaza la operación y el segundo Sprint permanece "Pendiente".
+3. **Given** existe un Sprint con estado "Pendiente", **When** se intenta
+   iniciarlo con una fecha de fin anterior a hoy, **Then** el sistema
+   rechaza la operación por validación de fechas y el Sprint permanece
+   "Pendiente".
 
 ---
 
@@ -112,6 +120,9 @@ Goal ni fechas todavía.
   (`SprintID` inexistente)? → Se rechaza con error de "no encontrado",
   aunque el cuerpo de la petición también sea inválido: la existencia se
   verifica antes que los datos (mismo criterio que HU-04).
+- ¿Qué pasa si se intenta iniciar un Sprint cuya fecha de fin ya pasó? →
+  Se rechaza con error de validación sobre `fecha_fin` (FR-012). Una fecha
+  de inicio pasada sí se acepta, y un fin igual a hoy también.
 
 ## Requirements *(mandatory)*
 
@@ -145,6 +156,10 @@ Goal ni fechas todavía.
   "Pendiente" para un `Project` si ya existe otro Sprint "Pendiente" para
   ese mismo proyecto (máximo un Sprint "Pendiente" por proyecto a la vez,
   igual criterio que la regla de "un solo Activo").
+- **FR-012** *(No deseado)*: If la fecha de fin es anterior al día de hoy
+  (por día calendario) al iniciar un Sprint, then el sistema MUST rechazar
+  la operación con error de validación sobre `fecha_fin`, y el Sprint MUST
+  permanecer "Pendiente".
 
 ### Key Entities
 

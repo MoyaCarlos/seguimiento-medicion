@@ -15,6 +15,8 @@ var (
 	finSprint    = inicioSprint.AddDate(0, 0, 14)
 )
 
+func relojFijo() time.Time { return time.Date(2026, 10, 5, 12, 0, 0, 0, time.Local) }
+
 func sembrarSprintPendiente(t *testing.T, repo repository.SprintRepository, proyectoID int64) domain.Sprint {
 	t.Helper()
 	s, err := domain.NewSprint(proyectoID)
@@ -56,7 +58,7 @@ func TestIniciarSprint_Exitoso(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
 	sprint := sembrarSprintPendiente(t, repo, 1)
 
-	resultado, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(sprint.ID))
+	resultado, err := NewIniciarSprint(repo, relojFijo).Ejecutar(context.Background(), inputValido(sprint.ID))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -70,7 +72,7 @@ func TestIniciarSprint_Exitoso(t *testing.T) {
 
 func TestIniciarSprint_RechazaSegundoActivoEnElProyecto(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
-	servicio := NewIniciarSprint(repo)
+	servicio := NewIniciarSprint(repo, relojFijo)
 	primero := sembrarSprintPendiente(t, repo, 1)
 	segundo := sembrarSprintPendiente(t, repo, 1)
 	if _, err := servicio.Ejecutar(context.Background(), inputValido(primero.ID)); err != nil {
@@ -87,7 +89,7 @@ func TestIniciarSprint_RechazaSegundoActivoEnElProyecto(t *testing.T) {
 
 func TestIniciarSprint_UnActivoEnOtroProyectoNoBloquea(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
-	servicio := NewIniciarSprint(repo)
+	servicio := NewIniciarSprint(repo, relojFijo)
 	otroProyecto := sembrarSprintPendiente(t, repo, 2)
 	if _, err := servicio.Ejecutar(context.Background(), inputValido(otroProyecto.ID)); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -105,7 +107,22 @@ func TestIniciarSprint_FechasInvalidasNoPersiste(t *testing.T) {
 	input := inputValido(sprint.ID)
 	input.FechaFin = input.FechaInicio
 
-	_, err := NewIniciarSprint(repo).Ejecutar(context.Background(), input)
+	_, err := NewIniciarSprint(repo, relojFijo).Ejecutar(context.Background(), input)
+
+	esperarValidacion(t, err, "fecha_fin")
+	if estadoPersistido(t, repo, sprint.ID) != domain.SprintPendiente {
+		t.Errorf("el Sprint debía permanecer Pendiente")
+	}
+}
+
+func TestIniciarSprint_FechaFinAnteriorAHoyNoPersiste(t *testing.T) {
+	repo := repository.NewSprintRepositoryEnMemoria()
+	sprint := sembrarSprintPendiente(t, repo, 1)
+	input := inputValido(sprint.ID)
+	input.FechaInicio = inicioSprint.AddDate(0, 0, -14)
+	input.FechaFin = inicioSprint.AddDate(0, 0, -1)
+
+	_, err := NewIniciarSprint(repo, relojFijo).Ejecutar(context.Background(), input)
 
 	esperarValidacion(t, err, "fecha_fin")
 	if estadoPersistido(t, repo, sprint.ID) != domain.SprintPendiente {
@@ -116,7 +133,7 @@ func TestIniciarSprint_FechasInvalidasNoPersiste(t *testing.T) {
 func TestIniciarSprint_NoEncontrado(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
 
-	_, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(999))
+	_, err := NewIniciarSprint(repo, relojFijo).Ejecutar(context.Background(), inputValido(999))
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Fatalf("se esperaba ErrSprintNoEncontrado, se obtuvo %v", err)
