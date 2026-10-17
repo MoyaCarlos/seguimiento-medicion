@@ -132,6 +132,7 @@ func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
 	mustExec(t, db, "UPDATE backlog_items SET sprint_id = 7 WHERE id IN (?, ?)", ids[0], ids[1])
 	mustExec(t, db, "UPDATE backlog_items SET sprint_id = 8 WHERE id = ?", ids[2])
 	mustExec(t, db, "UPDATE backlog_items SET estado = ? WHERE id = ?", string(domain.EstadoCompletada), ids[0])
+	mustExec(t, db, "UPDATE backlog_items SET estado = ? WHERE id = ?", "En progreso", ids[1])
 
 	historias, err := repo.ListarPorSprint(ctx, 7)
 	if err != nil {
@@ -150,6 +151,13 @@ func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
 	historias, _ = repo.ListarPorSprint(ctx, 7)
 	if len(historias) != 1 || historias[0].ID != ids[0] {
 		t.Errorf("se esperaba que solo quede la historia completada en el Sprint 7: %+v", historias)
+	}
+	var estado string
+	if err := db.QueryRow("SELECT estado FROM backlog_items WHERE id = ?", ids[1]).Scan(&estado); err != nil {
+		t.Fatalf("no se pudo consultar el estado de la historia devuelta al backlog: %v", err)
+	}
+	if estado != string(domain.EstadoNueva) {
+		t.Errorf("la historia devuelta al backlog debía quedar en estado Nueva, quedó %q", estado)
 	}
 }
 
