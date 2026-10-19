@@ -230,7 +230,7 @@ Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Implementada (el estado "Nueva" al arrastrar una historia está pendiente: hoy solo se le quita el Sprint y conserva su estado)
+Implementada (falta registrar las historias arrastradas, con sus Story Points, y que el cierre sea atómico: issue #117, depende de #107)
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -566,6 +566,8 @@ backlog del Sprint 2 y se reparan cada uno en su propia rama `fix/<n°-issue>-no
 | #100 | La fecha de fin de un proyecto debe ser estrictamente posterior a la de inicio | HU-04 | `fix/100-fecha-fin-posterior-proyecto` |
 | #101 | Pendientes del code review de HU-04: fake en memoria de proyectos y 404 antes que 400 al asignar integrantes | HU-04 | `fix/101-pendientes-review-hu04` |
 | #102 | `.gitattributes` para que `gofmt` no marque todos los archivos en Windows (CRLF) | transversal | `fix/102-gitattributes-lf` |
+
+**Continuación de #99:** el PR #115 ya resolvió que las historias no completadas vuelvan a "Nueva". El registro de las historias arrastradas, con sus Story Points, y el cierre atómico son el issue #117, que depende de #107.
 
 **Decidido por el equipo (2026-10-14), no es un defecto:** #20. Un Sprint se puede iniciar
 con fechas de inicio y de fin anteriores a hoy, porque el equipo pudo haberlo empezado de
