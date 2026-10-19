@@ -53,5 +53,6 @@ components:
       properties:
         campo:
           type: string
+          description: Campo que originó el error (se omite si el error no aplica a un campo).
         mensaje:
           type: string
