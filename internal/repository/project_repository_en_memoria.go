@@ -9,9 +9,9 @@ import (
 )
 
 // ProjectRepositoryEnMemoria implementa ProjectRepository en memoria para que
-// HU-05 y HU-13 usen un fake compartido en lugar de fakes propios. Se comporta
-// como SQLite: valida la existencia de proyecto y usuario al vincular, rechaza
-// duplicados y devuelve el nombre del integrante al listar.
+// HU-05 y HU-13 usen un fake compartido en lugar de fakes propios. Valida la
+// existencia de proyecto al vincular, rechaza duplicados y devuelve el nombre
+// del integrante al listar.
 type ProjectRepositoryEnMemoria struct {
 	mu               sync.Mutex
 	proyectos        map[int64]domain.Project
@@ -90,9 +90,6 @@ func (r *ProjectRepositoryEnMemoria) AgregarIntegrante(_ context.Context, m doma
 	defer r.mu.Unlock()
 	if _, ok := r.proyectos[m.ProjectID]; !ok {
 		return domain.Membership{}, domain.ErrProyectoNoEncontrado
-	}
-	if _, ok := r.usuarios[m.UserID]; !ok {
-		return domain.Membership{}, ErrIntegridadReferencial
 	}
 	for _, existente := range r.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
