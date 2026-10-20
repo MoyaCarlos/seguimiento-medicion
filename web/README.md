@@ -1,32 +1,75 @@
-# React + TypeScript + Vite
+# Frontend compartido
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Base React + TypeScript + Vite para las pantallas del Sprint 2.
 
-Currently, two official plugins are available:
+## Ejecutar en desarrollo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Desde esta carpeta:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+La aplicación queda disponible en `http://localhost:5173`. El backend debe
+estar ejecutándose en `http://localhost:8080`; Vite redirige automáticamente
+las rutas `/backlog`, `/projects` y `/sprints` mediante su proxy.
+
+## Comandos
+
+```bash
+npm run build
+npm run lint
+npm test
+```
+
+## Decisión de ruteo
+
+La base usa un router liviano sobre la History API para no agregar una
+dependencia de ruteo antes de la decisión del equipo. El registro central
+mantiene una línea por feature y expone `matchRoute`, por lo que React Router
+puede incorporarse posteriormente sin cambiar las URLs públicas.
+
+## Estructura
+
+Cada historia vive en una carpeta propia dentro de `src/features/` y no
+importa código de otra historia. La infraestructura compartida está en
+`src/compartido/`:
+
+```text
+src/
+  compartido/
+    api/             Cliente HTTP y errores de la API
+    componentes/     Button, Field, ErrorMessage y LoadingIndicator
+    router/          Registro común de rutas
+  features/
+    hu01/
+    hu04/
+    hu05/
+    hu13/
+```
+
+Para agregar una pantalla:
+
+1. Crear su carpeta en `src/features/<nombre>/`.
+2. Exportar el componente de la pantalla desde esa carpeta.
+3. Agregar una única línea al registro de rutas en
+   `src/compartido/router/routes.ts`.
+4. Agregar sus tests junto a la feature.
+
+Las rutas reciben el proyecto actual mediante `/projects/:id/...`; no se debe
+guardar el identificador del proyecto únicamente en estado global o local.
+
+## Cliente de API
+
+`src/compartido/api/client.ts` expone `apiFetch`, que:
+
+- decodifica respuestas JSON;
+- envía `Accept: application/json`;
+- lanza `ApiError` para estados HTTP no exitosos;
+- conserva `status`, `message` y `field`;
+- soporta errores con campo y errores generales sin campo.
+
+El cliente usa rutas relativas para que el proxy funcione en desarrollo y la
+misma aplicación pueda configurarse detrás de un servidor reverse proxy en
+otros entornos.
