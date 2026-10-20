@@ -147,6 +147,12 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 		return
 	}
 
+	// El proyecto inexistente domina (404) sobre cualquier validación del cuerpo.
+	if _, err := h.obtener.Ejecutar(r.Context(), id); err != nil {
+		escribirError(w, err)
+		return
+	}
+
 	var req asignarIntegranteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
