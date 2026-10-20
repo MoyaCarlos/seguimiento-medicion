@@ -32,6 +32,19 @@ func TestProjectRepositoryEnMemoria_AgregarIntegranteNoValidaUsuario(t *testing.
 	}
 }
 
+func TestProjectRepositoryEnMemoria_GuardarConScrumMaster_RollbackSiFallaMembresia(t *testing.T) {
+	repo := NewProjectRepositoryEnMemoria()
+	repo.miembros = []domain.Membership{{ProjectID: 1, UserID: 42, Role: domain.RolScrumMaster}}
+
+	_, err := repo.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto"}, 42)
+	if !errors.Is(err, ErrMiembroDuplicado) {
+		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
+	}
+	if _, err := repo.ObtenerPorID(context.Background(), 1); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("el proyecto debía revertirse, se obtuvo %v", err)
+	}
+}
+
 func TestProjectRepositoryEnMemoria_AgregarIntegranteDuplicado(t *testing.T) {
 	repo := NewProjectRepositoryEnMemoria()
 	guardado, _ := repo.Guardar(context.Background(), domain.Project{Nombre: "Proyecto"})
