@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
-import { matchRoute } from './routes'
+import { matchRoute, navigationRoutes } from './routes'
 
 function FeaturePlaceholder({ title, projectId }: { title: string; projectId?: string }) {
   return (
-    <section className="placeholder" aria-labelledby="placeholder-title">
-      <p className="eyebrow">Base del frontend · Sprint 2</p>
-      <h1 id="placeholder-title">{title}</h1>
-      {projectId && <p>Proyecto actual: {projectId}</p>}
+    <section className="placeholder placeholder--feature" aria-labelledby="placeholder-title">
+      <div className="placeholder-icon" aria-hidden="true">✦</div>
+      <div>
+        <p className="eyebrow">Base del frontend · Sprint 2</p>
+        <h1 id="placeholder-title">{title}</h1>
+        {projectId && <p className="project-context">Proyecto actual: <strong>{projectId}</strong></p>}
+      </div>
       <p>Esta pantalla será implementada por su historia de usuario.</p>
     </section>
   )
@@ -23,7 +26,12 @@ export function AppRoutes() {
   }, [])
 
   if (route.feature === 'not-found') {
-    return <FeaturePlaceholder title="Página no encontrada" />
+    return (
+      <div className="page-stack">
+        <PageHeader pathname={pathname} projectId={route.projectId} />
+        <FeaturePlaceholder title="Página no encontrada" />
+      </div>
+    )
   }
 
   const title = route.feature === 'hu04'
@@ -32,5 +40,48 @@ export function AppRoutes() {
       : route.feature === 'hu05' ? 'Sprints'
         : 'Estado del proyecto'
 
-  return <FeaturePlaceholder title={title} projectId={route.projectId} />
+  return (
+    <div className="page-stack">
+      <PageHeader pathname={pathname} projectId={route.projectId} />
+      <FeaturePlaceholder title={title} projectId={route.projectId} />
+    </div>
+  )
+}
+
+function PageHeader({ pathname, projectId }: { pathname: string; projectId?: string }) {
+  const currentProjectId = projectId ?? pathname.match(/^\/projects\/([^/]+)/)?.[1]
+
+  function navigate(path: string) {
+    if (!currentProjectId) return
+    const nextPath = `/projects/${currentProjectId}${path}`
+    window.history.pushState({}, '', nextPath)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }
+
+  return (
+    <div className="page-header">
+      <div>
+        <p className="eyebrow">Métrica · Seguimiento de proyectos</p>
+        <p className="route-context">Ruta actual: <code>{pathname}</code></p>
+      </div>
+      {currentProjectId && (
+        <nav className="feature-navigation" aria-label="Historias del Sprint 2">
+          {navigationRoutes.map((item) => {
+            const active = matchRoute(pathname).feature === item.feature
+            return (
+              <button
+                className={`feature-navigation__item${active ? ' feature-navigation__item--active' : ''}`}
+                key={item.feature}
+                onClick={() => navigate(item.path)}
+                type="button"
+                aria-current={active ? 'page' : undefined}
+              >
+                {item.label}
+              </button>
+            )
+          })}
+        </nav>
+      )}
+    </div>
+  )
 }

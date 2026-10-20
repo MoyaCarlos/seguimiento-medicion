@@ -62,6 +62,59 @@ input {
   padding: 3rem 1.5rem;
 }
 
+.page-stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.page-header {
+  align-items: flex-end;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+
+.page-header .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.route-context {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.route-context code {
+  color: var(--lilac-dark);
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.feature-navigation {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+}
+
+.feature-navigation__item {
+  background: transparent;
+  border: 0;
+  border-radius: 0.55rem;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.65rem 0.8rem;
+}
+
+.feature-navigation__item:hover,
+.feature-navigation__item--active {
+  background: #eee8f8;
+  color: var(--lilac-dark);
+}
+
 .placeholder {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -70,6 +123,42 @@ input {
   margin: 3rem auto;
   max-width: 700px;
   padding: 3rem;
+}
+
+.placeholder--feature {
+  align-items: flex-start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto 1fr;
+  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+}
+
+.placeholder--feature > p:last-child {
+  grid-column: 2;
+  margin: 0;
+}
+
+.placeholder-icon {
+  align-items: center;
+  background: #eee8f8;
+  border: 1px solid #ded2f0;
+  border-radius: 0.85rem;
+  color: var(--lilac);
+  display: flex;
+  font-size: 1.4rem;
+  height: 3rem;
+  justify-content: center;
+  width: 3rem;
+}
+
+.project-context {
+  margin: 0;
+}
+
+.project-context strong {
+  color: var(--lilac-dark);
 }
 
 .eyebrow {
@@ -164,8 +253,26 @@ h1 {
     padding: 1.5rem 1rem;
   }
 
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .feature-navigation {
+    overflow-x: auto;
+  }
+
+  .feature-navigation__item {
+    flex: 0 0 auto;
+  }
+
   .placeholder {
     margin: 1rem auto;
     padding: 1.75rem;
+  }
+
+  .placeholder--feature {
+    grid-template-columns: auto 1fr;
   }
 }

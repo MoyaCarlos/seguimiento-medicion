@@ -5,6 +5,13 @@ export type RouteMatch = {
   screen?: string
 }
 
+export const navigationRoutes = [
+  { feature: 'hu04' as const, label: 'Proyecto', path: '' },
+  { feature: 'hu01' as const, label: 'Historias', path: '/backlog' },
+  { feature: 'hu05' as const, label: 'Sprints', path: '/sprints' },
+  { feature: 'hu13' as const, label: 'Equipo', path: '/status' },
+]
+
 export const featureRoutes = [
   { feature: 'hu04' as const, paths: ['/projects/:id', '/projects/:id/settings', '/projects/:id/edit'] },
   { feature: 'hu01' as const, paths: ['/projects/:id/backlog'] },
