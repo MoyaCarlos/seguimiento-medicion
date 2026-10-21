@@ -1,10 +1,8 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { rutas } from './rutas'
-
-afterEach(cleanup)
 
 function abrir(url: string) {
   const router = createMemoryRouter(rutas, { initialEntries: [url] })
