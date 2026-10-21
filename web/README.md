@@ -10,10 +10,12 @@ sin pisarse.
 
 ## Cómo correrlo
 
-Necesitás Node.js 26 y el backend levantado. Todo el equipo usa la misma
-versión de Node, y está fijada en el archivo `web/.nvmrc`. Con otra versión,
-`npm install` se detiene con un error que indica la versión requerida
-(`Required: {"node":">=26"}`), en lugar de fallar más adelante de forma confusa.
+Necesitás Node.js 24 (la versión LTS, de soporte a largo plazo) y el backend
+levantado. Todo el equipo usa la misma versión de Node, y está fijada en el
+archivo `web/.nvmrc`; el mínimo exacto es 24.15.0 (campo `engines` de
+`package.json`). Con una versión anterior, `npm install` se detiene con un
+error que indica la versión requerida (`Required: {"node":">=24.15.0"}`), en
+lugar de fallar más adelante de forma confusa.
 
 Para tener la versión correcta, desde esta carpeta (`web/`):
 
@@ -21,9 +23,9 @@ Para tener la versión correcta, desde esta carpeta (`web/`):
 - Con **fnm**: `fnm install` y después `fnm use`.
 
 Los dos leen la versión del archivo `.nvmrc`. Podés comprobarlo con
-`node --version`, que tiene que empezar con `v26`.
+`node --version`, que tiene que empezar con `v24`.
 
-Con Node 26 listo:
+Con Node 24 listo:
 
 1. Levantar el backend, desde la raíz del repositorio:
 
