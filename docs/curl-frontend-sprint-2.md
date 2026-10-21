@@ -5,9 +5,85 @@ para probar las pantallas contra la API local.
 
 La API debe estar ejecutándose en `http://localhost:8080`.
 
-## Crear un proyecto
+Hay dos versiones con los mismos datos: la de **bash** (Linux, macOS y Git Bash
+en Windows) y la de **cmd** (Windows). Usá la que corresponda a tu terminal;
+solo cambia la forma de escribir los comandos.
+
+Los ids que devuelve la API se pierden al recargar una pantalla, porque todavía
+no existe un listado de proyectos ni de Sprints. **Anotá el `id` de cada
+respuesta**: lo necesitás para abrir la pantalla en
+`http://localhost:5173/projects/<id>` y para los comandos siguientes, donde el
+ejemplo usa `1`.
+
+## Versión bash (Linux, macOS y Git Bash)
+
+### Crear un proyecto
 
 ```bash
+curl -X POST http://localhost:8080/projects \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Proyecto Demo","descripcion":"Datos para probar el frontend","creador":"Ana","fecha_inicio":"2026-10-20","fecha_fin":"2026-12-20"}'
+```
+
+La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
+`PROJECT_ID=1` como ejemplo; reemplazarlo por el identificador real.
+
+### Agregar integrantes
+
+```bash
+curl -X POST http://localhost:8080/projects/1/members \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Carlos","rol":"product_builder"}'
+```
+
+```bash
+curl http://localhost:8080/projects/1/members
+```
+
+### Crear un Sprint
+
+```bash
+curl -X POST http://localhost:8080/sprints \
+  -H 'Content-Type: application/json' \
+  -d '{"proyecto_id":1}'
+```
+
+La respuesta incluye el `id` del Sprint. Reemplazar `SPRINT_ID` por ese valor.
+
+```bash
+curl -X POST http://localhost:8080/sprints/1/iniciar \
+  -H 'Content-Type: application/json' \
+  -d '{"sprint_goal":"Validar el seguimiento","fecha_inicio":"2026-10-20","fecha_fin":"2026-11-03"}'
+```
+
+### Crear una historia
+
+```bash
+curl -X POST http://localhost:8080/backlog \
+  -H 'Content-Type: application/json' \
+  -d '{"proyecto_id":1,"titulo":"Validar dashboard","descripcion":"Historia de ejemplo","prioridad":"M"}'
+```
+
+### Consultar y actualizar el proyecto
+
+```bash
+curl http://localhost:8080/projects/1
+```
+
+```bash
+curl -X PUT http://localhost:8080/projects/1 \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"Proyecto Demo actualizado","descripcion":"Descripción actualizada","fecha_inicio":"2026-10-20","fecha_fin":"2026-12-20"}'
+```
+
+## Versión cmd (Windows)
+
+Mismos pasos y mismos datos que la versión bash. En cmd la continuación de
+línea es `^` y las comillas dobles del JSON se escriben con `\"`.
+
+### Crear un proyecto
+
+```bat
 curl -X POST http://localhost:8080/projects ^
   -H "Content-Type: application/json" ^
   -d "{\"nombre\":\"Proyecto Demo\",\"descripcion\":\"Datos para probar el frontend\",\"creador\":\"Ana\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-12-20\"}"
@@ -16,21 +92,21 @@ curl -X POST http://localhost:8080/projects ^
 La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
 `PROJECT_ID=1` como ejemplo; reemplazarlo por el identificador real.
 
-## Agregar integrantes
+### Agregar integrantes
 
-```bash
+```bat
 curl -X POST http://localhost:8080/projects/1/members ^
   -H "Content-Type: application/json" ^
   -d "{\"nombre\":\"Carlos\",\"rol\":\"product_builder\"}"
 ```
 
-```bash
+```bat
 curl http://localhost:8080/projects/1/members
 ```
 
-## Crear un Sprint
+### Crear un Sprint
 
-```bash
+```bat
 curl -X POST http://localhost:8080/sprints ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1}"
@@ -38,27 +114,27 @@ curl -X POST http://localhost:8080/sprints ^
 
 La respuesta incluye el `id` del Sprint. Reemplazar `SPRINT_ID` por ese valor.
 
-```bash
+```bat
 curl -X POST http://localhost:8080/sprints/1/iniciar ^
   -H "Content-Type: application/json" ^
   -d "{\"sprint_goal\":\"Validar el seguimiento\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-11-03\"}"
 ```
 
-## Crear una historia
+### Crear una historia
 
-```bash
+```bat
 curl -X POST http://localhost:8080/backlog ^
   -H "Content-Type: application/json" ^
-  -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"Must have\"}"
+  -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"M\"}"
 ```
 
-## Consultar y actualizar el proyecto
+### Consultar y actualizar el proyecto
 
-```bash
+```bat
 curl http://localhost:8080/projects/1
 ```
 
-```bash
+```bat
 curl -X PUT http://localhost:8080/projects/1 ^
   -H "Content-Type: application/json" ^
   -d "{\"nombre\":\"Proyecto Demo actualizado\",\"descripcion\":\"Descripción actualizada\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-12-20\"}"
