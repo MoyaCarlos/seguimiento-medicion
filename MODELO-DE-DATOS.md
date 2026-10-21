@@ -445,7 +445,7 @@ están cerradas.
 | **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
 
-**Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#99) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
+**Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
 
 ## 8. Mapa historia → tablas
 
@@ -492,7 +492,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | N.º | Contenido | Quién |
    |---|---|---|
    | 001 | Esquema base: `proyectos`, `usuarios`, `integrantes`, `historias`, `sprints` con todo lo de §4 | fix de adopción (§10) |
-   | 002 | `historias_arrastradas` (con `proyecto_id` y `estimacion_sp`) | fix #99 / HU-05. **Requiere 001 mergeada.** |
+   | 002 | `historias_arrastradas` (con `proyecto_id` y `estimacion_sp`) | #117 (continúa #99) / HU-05. **Requiere 001 mergeada.** |
    | 003 | `rondas_votacion`, `votos` | HU-02 |
    | 004 | `registros_horas` | HU-07 |
    | 005 | `defectos` | HU-08 |
@@ -570,7 +570,7 @@ Orden de la fase 3: `usuarios` → `proyectos`/`integrantes` → `sprints` → `
 
 1. **#100 ya está mergeado** (PR #111, `8dc81ef`), así que se cumple lo que hacía falta antes de la migración 001. **Por qué importaba:** la 001 rechaza `fecha_fin = fecha_inicio` en `proyectos` (`CHECK fecha_fin > fecha_inicio`), y hasta #100 el dominio las aceptaba (`NewProject` validaba solo "fin anterior"); con la 001 primero, un `POST /projects` con fechas iguales habría pasado la validación y fallado en el `INSERT` con un error de `CHECK` (500, D13) en vez del 400 sobre `fecha_fin`. **Qué cambió:** el test `TestNewProject_FechaFinIgualAlInicioEsValida` se invirtió y hoy es `TestNewProject_FechaFinIgualAlInicio` (`internal/domain/project_test.go:76`), que espera un `ValidationError` sobre `fecha_fin`; también se actualizaron el escenario BDD de HU-04 y la spec `specs/002-…`.
 2. **Adopción (migración 001)** antes que el resto.
-3. Después, el **fix #99** (migración 002 y `CerrarConArrastre`, §4.6) y **HU-15** (usa las columnas de 001).
+3. Después, **#117** (migración 002 y `CerrarConArrastre`, §4.6; continúa #99, ya cerrado por el PR #115) y **HU-15** (usa las columnas de 001).
 4. **#101** puede avanzar en paralelo mientras no toque los repositorios que se renombran; si los toca, espera a 001.
 5. La spec y la clarificación de HU-15 (#94) pueden avanzar ya; solo su implementación espera a 001.
 
@@ -584,7 +584,7 @@ En #19 se acordó que el adaptador SQLite tradujera la violación de FK a `ErrPr
 ### Relación con otros issues abiertos
 
 - **#19 / PR #103:** la parte 1 (validar el proyecto en el caso de uso) ya está mergeada. Las partes 2 y 3 se hacen con la adopción (#107); hacerlas aparte sobre las tablas viejas es trabajo que se tira. #19 sigue reabierto hasta que se mergee #107.
-- **#99** (estado `Nueva` al arrastrar): lleva la migración 002, la escritura en `historias_arrastradas` y `CerrarConArrastre` (§4.6). Ver §12.
+- **#99** (estado `Nueva` al arrastrar): ya está cerrado (PR #115). Lo que faltaba —migración 002, la escritura en `historias_arrastradas` y `CerrarConArrastre` (§4.6)— lo lleva **#117**, que depende de #107.
 - **#100** (fin posterior a inicio): ya está mergeado (arriba). El `CHECK` de `proyectos` lo refuerza, pero el arreglo en el dominio sigue siendo necesario para devolver el mensaje (400 sobre `fecha_fin`).
 
 ## 11. Cómo se mantiene este documento
@@ -599,9 +599,9 @@ Cosas que este documento **no** hace por sí mismo y que alguien del equipo debe
 (issues, ramas y backlog). Las marcadas `[x]` ya se hicieron; las otras siguen abiertas:
 
 - [x] **Corregir HU-06 Escenario 1** en `docs/PRODUCT-BACKLOG.md` (D1): hecho con el PR #116. Falta corregir el issue #6.
-- [ ] **Dividir #99.** Recomendado en la review del PR #115: #99 queda con su alcance original (las historias no completadas vuelven a `Nueva`), que cubre el PR #115; lo que el modelo agrega (migración 002, transacción, `CerrarConArrastre` y el registro de arrastradas) pasa a un issue nuevo que depende de #107. Mencionar el arrastre registrado en las historias **HU-05, HU-09, HU-10 y HU-12** del backlog. Cuando se decida, actualizar §9 (fila 002) y §10 (que hoy dicen que lo lleva #99).
-- [ ] **Mergear el PR #115 (#99)** con `Closes #99` en su descripción y "Create a merge commit". Va antes de #107: ambos tocan `sqlite_backlog.go`. Su `UPDATE` único cumple el `CHECK` de §4.4.
-- [ ] **Cerrar el issue #20 como "not planned"** (el PR #113 ya se cerró): el equipo decidió el 2026-10-14 que un Sprint se puede iniciar con fechas pasadas (§5).
+- [x] **Dividir #99:** hecho. #99 quedó con su alcance original y lo cerró el PR #115 (las historias no completadas vuelven a `Nueva`); lo que el modelo agrega (migración 002, transacción, `CerrarConArrastre` y el registro de arrastradas) es el issue **#117**, que depende de #107. El arrastre registrado ya figura en HU-05, HU-09, HU-10 y HU-12 del backlog (PR #116).
+- [x] **Mergear el PR #115 (#99)**: hecho, con merge commit.
+- [x] **Cerrar el issue #20 como "not planned"**: hecho (el PR #113 se cerró); el equipo decidió el 2026-10-14 que un Sprint se puede iniciar con fechas pasadas (§5).
 - [x] **Frenar la parte 2 de #19** (Jimena): se absorbe en la adopción (#107). Su PR #103 (validación en el servicio) ya está mergeado.
 - [x] **Reabrir o referenciar #19** desde el issue de la adopción: hecho, #19 reabierto y #107 creado.
 - [ ] **Actualizar el texto de #19** (punto 3 del acuerdo): la traducción de FK pasa a `ErrIntegridadReferencial`/409 (§10).
