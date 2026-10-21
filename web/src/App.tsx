@@ -1,15 +1,15 @@
-import { AppRoutes } from './compartido/router/AppRoutes'
+import { Link, Outlet } from 'react-router'
 import './App.css'
 
 function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <a className="brand" href="/projects/1">Métrica</a>
+        <Link className="brand" to="/">Métrica</Link>
         <span className="header-label">Seguimiento de proyectos</span>
       </header>
       <main className="app-main">
-        <AppRoutes />
+        <Outlet />
       </main>
     </div>
   )
