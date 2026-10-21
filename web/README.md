@@ -144,14 +144,17 @@ export function Component() {
 }
 ```
 
-**2. Agregar una línea en `src/rutas.tsx`**, junto a las otras pantallas, dentro
-de la lista `children` de `projects/:id`:
+**2. Agregar una línea en `src/rutas.tsx`**, dentro de la lista `children` de la
+ruta `projects/:id` (la que contiene `proyecto/*`, `backlog/*`, `sprints/*` y
+`status/*`; el archivo tiene otra lista `children` más afuera, que no es esa),
+**después de la línea de `status/*`**:
 
 ```tsx
 { path: 'ejemplo/*', lazy: () => import('./features/ejemplo') },
 ```
 
-**3. Agregar una línea en `src/navegacion.ts`** para que aparezca en el menú:
+**3. Agregar una línea en `src/navegacion.ts`** para que aparezca en el menú,
+**después de la línea de `status`**:
 
 ```ts
 { ruta: 'ejemplo', texto: 'Ejemplo' },
