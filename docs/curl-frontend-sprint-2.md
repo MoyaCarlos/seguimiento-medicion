@@ -26,7 +26,7 @@ curl -X POST http://localhost:8080/projects \
 ```
 
 La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
-`PROJECT_ID=1` como ejemplo; reemplazarlo por el identificador real.
+`1` como ejemplo; reemplazalo por el id real.
 
 ### Agregar integrantes
 
@@ -48,7 +48,8 @@ curl -X POST http://localhost:8080/sprints \
   -d '{"proyecto_id":1}'
 ```
 
-La respuesta incluye el `id` del Sprint. Reemplazar `SPRINT_ID` por ese valor.
+La respuesta incluye el `id` del Sprint. En los comandos siguientes se usa
+`1` como ejemplo; reemplazalo por el id real.
 
 ```bash
 curl -X POST http://localhost:8080/sprints/1/iniciar \
@@ -90,7 +91,7 @@ curl -X POST http://localhost:8080/projects ^
 ```
 
 La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
-`PROJECT_ID=1` como ejemplo; reemplazarlo por el identificador real.
+`1` como ejemplo; reemplazalo por el id real.
 
 ### Agregar integrantes
 
@@ -112,7 +113,8 @@ curl -X POST http://localhost:8080/sprints ^
   -d "{\"proyecto_id\":1}"
 ```
 
-La respuesta incluye el `id` del Sprint. Reemplazar `SPRINT_ID` por ese valor.
+La respuesta incluye el `id` del Sprint. En los comandos siguientes se usa
+`1` como ejemplo; reemplazalo por el id real.
 
 ```bat
 curl -X POST http://localhost:8080/sprints/1/iniciar ^

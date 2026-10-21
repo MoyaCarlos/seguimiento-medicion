@@ -10,9 +10,20 @@ sin pisarse.
 
 ## Cómo correrlo
 
-Necesitás Node.js 22.22.2 o superior (la librería de ruteo y el entorno de
-pruebas lo exigen; las versiones impares 23 y 25 no sirven) y el backend
-levantado.
+Necesitás Node.js 26 y el backend levantado. Todo el equipo usa la misma
+versión de Node, y está fijada en el archivo `web/.nvmrc`. Con otra versión,
+`npm install` se detiene con un error que indica la versión requerida
+(`Required: {"node":">=26"}`), en lugar de fallar más adelante de forma confusa.
+
+Para tener la versión correcta, desde esta carpeta (`web/`):
+
+- Con **nvm**: `nvm install` y después `nvm use`.
+- Con **fnm**: `fnm install` y después `fnm use`.
+
+Los dos leen la versión del archivo `.nvmrc`. Podés comprobarlo con
+`node --version`, que tiene que empezar con `v26`.
+
+Con Node 26 listo:
 
 1. Levantar el backend, desde la raíz del repositorio:
 
