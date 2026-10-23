@@ -152,13 +152,13 @@ func (p *pasosSprint) historiasAsignadas() error {
 		ids = append(ids, g.ID)
 	}
 	// La asignación de historias a un Sprint es de HU-06; acá se simula con SQL.
-	if _, err := p.base.db.Exec("UPDATE backlog_items SET sprint_id = ? WHERE id IN (?, ?)", p.sprint.ID, ids[0], ids[1]); err != nil {
+	if _, err := p.base.db.Exec("UPDATE historias SET sprint_id = ? WHERE id IN (?, ?)", p.sprint.ID, ids[0], ids[1]); err != nil {
 		return err
 	}
-	if _, err := p.base.db.Exec("UPDATE backlog_items SET estado = ? WHERE id = ?", string(domain.EstadoCompletada), ids[0]); err != nil {
+	if _, err := p.base.db.Exec("UPDATE historias SET estado = ?, fecha_finalizacion = ? WHERE id = ?", string(domain.EstadoCompletada), "2026-10-20", ids[0]); err != nil {
 		return err
 	}
-	if _, err := p.base.db.Exec("UPDATE backlog_items SET estado = ? WHERE id = ?", "En progreso", ids[1]); err != nil {
+	if _, err := p.base.db.Exec("UPDATE historias SET estado = ? WHERE id = ?", "En progreso", ids[1]); err != nil {
 		return err
 	}
 	p.completada, p.pendiente = ids[0], ids[1]
@@ -212,7 +212,7 @@ func (p *pasosSprint) segundoSiguePendiente() error {
 
 func (p *pasosSprint) sprintDeHistoria(id int64) (sql.NullInt64, error) {
 	var sprintID sql.NullInt64
-	err := p.base.db.QueryRow("SELECT sprint_id FROM backlog_items WHERE id = ?", id).Scan(&sprintID)
+	err := p.base.db.QueryRow("SELECT sprint_id FROM historias WHERE id = ?", id).Scan(&sprintID)
 	return sprintID, err
 }
 
@@ -240,7 +240,7 @@ func (p *pasosSprint) completadaSigueVinculada() error {
 
 func (p *pasosSprint) noCompletadaVuelveANueva() error {
 	var estado string
-	if err := p.base.db.QueryRow("SELECT estado FROM backlog_items WHERE id = ?", p.pendiente).Scan(&estado); err != nil {
+	if err := p.base.db.QueryRow("SELECT estado FROM historias WHERE id = ?", p.pendiente).Scan(&estado); err != nil {
 		return err
 	}
 	if estado != string(domain.EstadoNueva) {

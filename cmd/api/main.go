@@ -19,7 +19,7 @@ func main() {
 	}
 	defer db.Close()
 
-	if err := repository.Migrar(ctx, db); err != nil {
+	if err := repository.AplicarMigraciones(ctx, db); err != nil {
 		log.Fatalf("migrar base de datos: %v", err)
 	}
 

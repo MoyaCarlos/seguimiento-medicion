@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	sqlite "modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
 )
 
 // SQLiteSprintRepository implementa SprintRepository sobre SQLite.
@@ -28,7 +30,7 @@ func (r *SQLiteSprintRepository) Guardar(ctx context.Context, s domain.Sprint) (
 		s.ProyectoID, textoONulo(s.SprintGoal), fechaASQL(s.FechaInicio), fechaASQL(s.FechaFin), string(s.Estado),
 	)
 	if err != nil {
-		return domain.Sprint{}, fmt.Errorf("guardar sprint: %w", err)
+		return domain.Sprint{}, fmt.Errorf("guardar sprint: %w", errorDeEscrituraDeSprint(s, err))
 	}
 	id, err := resultado.LastInsertId()
 	if err != nil {
@@ -73,12 +75,28 @@ func (r *SQLiteSprintRepository) Actualizar(ctx context.Context, s domain.Sprint
 		textoONulo(s.SprintGoal), fechaASQL(s.FechaInicio), fechaASQL(s.FechaFin), string(s.Estado), s.ID,
 	)
 	if err != nil {
-		return fmt.Errorf("actualizar sprint %d: %w", s.ID, err)
+		return fmt.Errorf("actualizar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
 		return domain.ErrSprintNoEncontrado
 	}
 	return nil
+}
+
+// errorDeEscrituraDeSprint traduce además la violación de los índices
+// parciales (un Sprint activo y uno pendiente por proyecto) al mismo
+// ValidationError que devuelve la validación previa del servicio.
+func errorDeEscrituraDeSprint(s domain.Sprint, err error) error {
+	var sqliteErr *sqlite.Error
+	if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+		switch s.Estado {
+		case domain.SprintActivo:
+			return domain.ErrYaHaySprintActivo
+		case domain.SprintPendiente:
+			return domain.ErrYaHaySprintPendiente
+		}
+	}
+	return errorDeEscritura(err)
 }
 
 type escaneable interface {

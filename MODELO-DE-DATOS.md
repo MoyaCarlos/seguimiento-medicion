@@ -191,8 +191,8 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
 | Columna | Tipo | Notas |
 |---|---|---|
-| `proyecto_id` | FK → `proyectos(id)` | PK compuesta con `usuario_id` |
-| `usuario_id` | FK → `usuarios(id)` | |
+| `proyecto_id` | FK → `proyectos(id)` NOT NULL | PK compuesta con `usuario_id` |
+| `usuario_id` | FK → `usuarios(id)` NOT NULL | |
 | `rol` | TEXT NOT NULL | `CHECK IN ('scrum_master','product_builder')` |
 | `creado_en` | TEXT NOT NULL | |
 
@@ -240,7 +240,8 @@ Restricciones de base:
   El `fecha_fin IS NOT NULL` es imprescindible: sin él, un Sprint `Activo` con `fecha_fin NULL` **entraba** (la comparación da `NULL` y un `CHECK` que da `NULL` no falla; verificado). Ver §4.10.
 - `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12).
 - Un solo Activo y un solo Pendiente por proyecto, como **índices únicos parciales**:
-  `CREATE UNIQUE INDEX ... ON sprints (proyecto_id) WHERE estado = 'Activo'` y otro igual con `'Pendiente'`.
+  `CREATE UNIQUE INDEX sprints_un_activo_por_proyecto ON sprints (proyecto_id) WHERE estado = 'Activo'` y
+  `CREATE UNIQUE INDEX sprints_un_pendiente_por_proyecto ON sprints (proyecto_id) WHERE estado = 'Pendiente'`.
   Hoy esa regla vive solo en el servicio y el PR #17 ya registró el límite (dos pedidos simultáneos podrían violarla).
 
 ### 4.6 `historias_arrastradas` — HU-05 cierre, HU-09, HU-10, HU-12 (**tabla nueva**, migración 002)
@@ -397,11 +398,11 @@ El motor **no dice qué restricción falló**: con el mismo mensaje `FOREIGN KEY
 | Violación | Código (`Code()`) | Error de dominio | HTTP |
 |---|---|---|---|
 | Cualquier FK (simple o compuesta) | 787 | `ErrIntegridadReferencial` | 409 |
-| Índice único parcial de `sprints` | 2067 | `ValidationError` sobre `estado`, con el mensaje que corresponda al estado del Sprint **que se está guardando**: `Activo` → "ya hay un Sprint activo", `Pendiente` → "ya hay un Sprint pendiente" | 400 |
+| Índice único parcial de `sprints` | 2067 | `ValidationError` sobre `estado`, con el mensaje que corresponda al estado del Sprint **que se está guardando**: `Activo` → "el proyecto ya tiene un Sprint activo", `Pendiente` → "el proyecto ya tiene un Sprint pendiente" (el mismo texto que devuelve el servicio en la validación previa, así la carrera responde igual) | 400 |
 | `UNIQUE` / `PRIMARY KEY` de otras tablas (`usuarios.nombre_normalizado`, `integrantes`, `rondas_votacion`, `votos`) | 2067 / 1555 | los errores propios que ya existen (`ErrUsuarioDuplicado`, `ErrMiembroDuplicado`, …) o uno nuevo equivalente | 409 |
 | `CHECK` o `NOT NULL` | 275 / 1299 | error genérico (indica que el dominio dejó pasar un dato inválido: es un defecto a corregir, no un error del cliente) | 500 (D13) |
 
-**Por qué el índice parcial se distingue por el estado y no por el mensaje.** Los dos índices (`un Activo`, `un Pendiente`) fallan con el *mismo* texto, `UNIQUE constraint failed: sprints.proyecto_id`, y el mismo código 2067 (verificado en Python y en `modernc`). Pero un Sprint tiene un solo `estado`, así que al guardarlo solo puede chocar con el índice de *ese* estado: un `INSERT`/`UPDATE` con `Activo` solo viola el índice de Activos; con `Pendiente`, el de Pendientes; con `Finalizado` no choca con ninguno. El adaptador mira el `estado` del Sprint que guarda y arma el mensaje.
+**Por qué el índice parcial se distingue por el estado y no por el mensaje.** Los dos índices (`un Activo`, `un Pendiente`) fallan con el *mismo* texto, `UNIQUE constraint failed: sprints.proyecto_id`, y el mismo código 2067 (verificado en Python y en `modernc`). Pero un Sprint tiene un solo `estado`, así que al guardarlo solo puede chocar con el índice de *ese* estado: un `INSERT`/`UPDATE` con `Activo` solo viola el índice de Activos; con `Pendiente`, el de Pendientes; con `Finalizado` no choca con ninguno. El adaptador mira el `estado` del Sprint que guarda y devuelve el mismo mensaje que el servicio: "el proyecto ya tiene un Sprint activo" o "el proyecto ya tiene un Sprint pendiente".
 
 ## 6. Qué NO se guarda y de dónde se calcula
 
@@ -479,9 +480,11 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
 `verificarEsquemaViejo`.
 
 1. **Archivos numerados** en `internal/repository/migraciones/NNN_nombre.sql`,
-   embebidos en el binario. Una tabla `migraciones_aplicadas (version, aplicada_en)`
-   registra cuáles corrieron. Al arrancar se aplican, en orden, las que falten
-   (aunque haya huecos), cada una en su propia transacción. El runner usa `go:embed`
+   embebidos en el binario. Una tabla de control registra cuáles corrieron; la crea el
+   runner antes de leerla, con
+   `CREATE TABLE IF NOT EXISTS migraciones_aplicadas (version INTEGER PRIMARY KEY, aplicada_en TEXT NOT NULL)`,
+   y `aplicada_en` va en RFC 3339 UTC (§2, instantes). Al arrancar se aplican, en orden,
+   las que falten (aunque haya huecos), cada una en su propia transacción. El runner usa `go:embed`
    de la biblioteca estándar: **no se agrega una dependencia** como `golang-migrate`
    (constitución VI).
 2. **Una migración mergeada a `main` no se edita nunca.** Un cambio posterior es una
@@ -505,10 +508,18 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    así que el apagado y el reencendido deben hacerse explícitamente en esa conexión).
    Es el costo de tener `CHECK`; por eso se usan solo en enums cerrados y estables y en
    el formato de fechas (D12), y no en la escala Fibonacci (D11).
+   Limitación del runner actual: cada migración corre en una transacción y SQLite ignora
+   `PRAGMA foreign_keys = OFF` dentro de una transacción. Ninguna migración prevista (002 a
+   005) recrea tablas, así que no se resuelve ahora; la primera que lo necesite debe
+   extender el runner y ajustar este punto.
 5. **Una sola vez**, al adoptar este esquema, las bases locales con las tablas en
-   inglés (`projects`, `users`…) se detectan y se pide borrar `seguimiento.db`, igual
-   que hoy con `ErrEsquemaViejo`. Son datos de desarrollo; no hay producción. Es el
-   último "borrá la base": de ahí en más se migra.
+   inglés se detectan y se pide borrar `seguimiento.db`, igual que hoy con
+   `ErrEsquemaViejo`. Una base es vieja si tiene **al menos una** de `projects`, `users`,
+   `project_members` o `backlog_items`; `sprints` no cuenta, porque conserva el nombre.
+   Son datos de desarrollo; no hay producción. Es el último "borrá la base": de ahí en más se migra.
+   El chequeo corre en cada arranque (es una consulta barata); por eso `projects`, `users`,
+   `project_members` y `backlog_items` quedan reservados y no se usan para tablas nuevas,
+   que van en español (§2).
 6. **Test de esquema**: aplicar todas las migraciones sobre una base vacía y comprobar
    con `pragma_foreign_key_list` y `pragma_table_info` que cada tabla, columna y FK de
    este documento existe. Además, **insertar filas válidas e inválidas y esperar
@@ -558,13 +569,13 @@ Es **un solo PR grande**, y no se parte:
 | 3. Renombre, **un par de commits por repositorio SQLite**, en este orden: | | |
 | 3a. `usuarios` | Los tests de `sqlite_user` pasan a las tablas y columnas nuevas | Adaptar el SQL del repositorio |
 | 3b. `proyectos` + `integrantes` | Ídem para `sqlite_project`, incluidas las fechas `YYYY-MM-DD` (D3) | Ídem |
-| 3c. `sprints` | Ídem para `sqlite_sprint` | Ídem |
+| 3c. `sprints` | — (sin `RED:`: `sqlite_sprint.go` no cambia, porque `sprints` conserva nombre y columnas) | Un único commit `test:` que pasa los tests de `sqlite_sprint` al esquema 001 |
 | 3d. `historias` | Ídem para `sqlite_backlog` | Ídem |
 | 4. Traducción de errores (§5) | Tests contra SQLite real: FK → `ErrIntegridadReferencial` (409), índice parcial → `ValidationError` según el estado del Sprint, `CHECK`/`NOT NULL` → error genérico | Mapeo en los adaptadores y en el handler |
-| 5. Cableado y limpieza | Test: abrir una base con las tablas viejas en inglés devuelve el error claro "borrá `seguimiento.db`" | `main.go` usa el runner; se eliminan `Migrar`, `asegurarColumna`, `verificarEsquemaViejo` y las constantes `esquema*` |
+| 5. Cableado y limpieza | Test: una base con al menos una de las tablas viejas (`projects`, `users`, `project_members` o `backlog_items`, un caso por tabla; `sprints` no cuenta) devuelve el error claro "borrá `seguimiento.db`" | `main.go` usa el runner; se eliminan `Migrar`, `asegurarColumna`, `verificarEsquemaViejo` y las constantes `esquema*` |
 | 6. Cierre | — | `go build`, `go vet`, `gofmt -l`, `go test ./...` y Godog en verde; `/speckit.analyze` registrado |
 
-Orden de la fase 3: `usuarios` → `proyectos`/`integrantes` → `sprints` → `historias`, que sigue las dependencias entre FK. La migración 001 crea todas las tablas nuevas de una vez, con FK entre ellas, y `sprints` conserva su nombre pero cambia de columnas y de FK. Por eso los repositorios `sqlite_*` viejos dejan de coincidir con el esquema desde la fase 2, y **lo esperable es que el paquete `repository` (y lo que depende de él, como `features`) quede en rojo desde la fase 2 hasta terminar la 3d**, sin poder garantizar un verde intermedio por repositorio. Se documenta como excepción de proceso en `tasks.md` y en el PR (como en HU-13 y #103); la alternativa es un solo `GREEN:` para toda la fase 3. El verde se recupera al cerrar la fase 3.
+Orden de la fase 3: `usuarios` → `proyectos`/`integrantes` → `sprints` → `historias`, que sigue las dependencias entre FK. La migración 001 crea todas las tablas nuevas de una vez, con FK entre ellas, y `sprints` conserva su nombre y sus columnas: lo que cambia es que gana FK, `CHECK` e índices. La fase 2 sigue en verde, porque `Migrar` (esquema viejo) vive hasta la fase 5 y los tests existentes lo siguen usando. **Lo esperable es que el paquete `repository` (y lo que depende de él, como `features`) quede en rojo desde el `GREEN:` de la fase 3a hasta terminar la 3d**: desde que el primer repositorio pasa al esquema 001, los tests que siguen en el esquema viejo y dependen de él dejan de coincidir, sin poder garantizar un verde intermedio por repositorio. Se documenta como excepción de proceso en `tasks.md` y en el PR (como en HU-13 y #103); la alternativa es un solo `GREEN:` para toda la fase 3. El verde se recupera al cerrar la fase 3.
 
 ### Orden y dependencias
 
