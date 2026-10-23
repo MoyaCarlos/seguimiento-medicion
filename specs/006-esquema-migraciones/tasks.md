@@ -126,7 +126,7 @@ description: "Tareas de la adopción del modelo de datos (Issue #107): migracion
 - [ ] T024 [US3] COMMIT `git add internal/repository/sqlite_backlog_test.go internal/repository/sqlite_sprint_test.go` — `RED: tests de sqlite_backlog sobre el esquema 001 (falla)`
 - [ ] T025 [US3] GREEN: en internal/repository/sqlite_backlog.go, `backlog_items` → `historias` en `Guardar`, `ListarPorSprint` y `QuitarDeSprint`. En los steps de Godog (los `.feature` **no** se tocan, SC-002):
   - features/steps_creacion.go: `repository.Migrar` → `repository.AplicarMigraciones`; `backlog_items` → `historias` en las consultas.
-  - features/steps_proyecto.go: `Migrar` → `AplicarMigraciones`; `projects` → `proyectos`, `name` → `nombre`, `users` → `usuarios` en las consultas (líneas 67, 105, 143, 192, 203, 287).
+  - features/steps_proyecto.go: `Migrar` → `AplicarMigraciones`; `projects` → `proyectos`, `name` → `nombre`, `users` → `usuarios` y `project_members` → `integrantes` (columnas `proyecto_id`, `usuario_id`, `rol`, §4.3) en las consultas (líneas 67, 105, 143, 192, 203, 287).
   - features/steps_sprints.go: `backlog_items` → `historias`; la historia `Completada` se actualiza junto con `fecha_finalizacion` (`CHECK` de §4.4).
   - features/steps_estado_proyecto.go: `fijarFechas` escribe `UPDATE proyectos SET fecha_inicio = ?, fecha_fin = ?` con `time.DateOnly` (el `CHECK` de D12 rechaza RFC 3339); renombrar `fechaOpcionalRFC3339` a `fechaOpcionalComoDia`.
   **Con este GREEN termina la excepción de proceso: el paquete `repository` y `features`, en rojo desde el GREEN de la fase 3a, vuelven al verde.** Correr `go test ./...` (incluye Godog) y confirmar todo en verde.
