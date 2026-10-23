@@ -31,7 +31,7 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 		punteroAValorSQL(item.EstimacionSP),
 	)
 	if err != nil {
-		return domain.BacklogItem{}, fmt.Errorf("guardar backlog item: %w", err)
+		return domain.BacklogItem{}, fmt.Errorf("guardar backlog item: %w", errorDeEscritura(err))
 	}
 
 	id, err := resultado.LastInsertId()
