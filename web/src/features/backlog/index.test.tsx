@@ -242,9 +242,9 @@ describe('validación de US2', () => {
   })
 
   it.each([
-    ['título de 201 caracteres', 'Título', 'a'.repeat(201)],
-    ['descripción de 2001 caracteres', 'Descripción', 'a'.repeat(2001)],
-  ])('US2.3: rechaza un %s sin llamar a la API', async (_caso, etiqueta, texto) => {
+    ['un título de 201 caracteres', 'Título', 'a'.repeat(201)],
+    ['una descripción de 2001 caracteres', 'Descripción', 'a'.repeat(2001)],
+  ])('US2.3: rechaza %s sin llamar a la API', async (_caso, etiqueta, texto) => {
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
     abrir()
