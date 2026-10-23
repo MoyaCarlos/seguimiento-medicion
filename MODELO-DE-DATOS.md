@@ -191,8 +191,8 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
 | Columna | Tipo | Notas |
 |---|---|---|
-| `proyecto_id` | FK → `proyectos(id)` | PK compuesta con `usuario_id` |
-| `usuario_id` | FK → `usuarios(id)` | |
+| `proyecto_id` | FK → `proyectos(id)` NOT NULL | PK compuesta con `usuario_id` |
+| `usuario_id` | FK → `usuarios(id)` NOT NULL | |
 | `rol` | TEXT NOT NULL | `CHECK IN ('scrum_master','product_builder')` |
 | `creado_en` | TEXT NOT NULL | |
 
