@@ -84,14 +84,14 @@ description: "Task list for HU-01 frontend: pantalla de creación de historias d
 
 **Independent Test**: simular 400 con campo, 400 sin campo, 404 de proyecto, error de conexión/500 y comprobar el lugar del mensaje, que los datos se conservan, que la pantalla sigue usable y que un nuevo intento reemplaza el aviso.
 
-- [ ] T022 [US3] RED: en `web/src/features/backlog/historia.test.ts` escribir tests de `mapearError`: `ApiError` con `campo` conocido (`titulo`, `descripcion`, `prioridad`, `valor_negocio`) → mensaje de ese campo; sin campo, campo desconocido o `proyecto_id` → aviso general; 404 "proyecto no encontrado" → general; `ConnectionError` → mensaje de conexión general. Confirmar que FALLA
-- [ ] T023 [US3] COMMIT `RED: agregar tests de mapeo de errores del servidor (falla)`
-- [ ] T024 [US3] GREEN: implementar `mapearError` en `web/src/features/backlog/historia.ts`; `npm test` en verde
-- [ ] T025 [US3] COMMIT `GREEN: implementar mapeo de errores del servidor, test en verde`
-- [ ] T026 [US3] RED: agregar en `web/src/features/backlog/index.test.tsx` un `it` por escenario de aceptación de US3 (cinco): error 400 con campo junto al campo y datos conservados; 400 sin campo en el aviso general; 404 de proyecto en el aviso general; backend caído/500 con aviso general y pantalla usable; y que un nuevo intento reemplaza el aviso anterior. Verificar además que, con un aviso visible, escribir en un campo no lo borra (FR-015). Confirmar que FALLA
-- [ ] T027 [US3] COMMIT `RED: agregar pruebas de componente de errores del servidor (falla)`
-- [ ] T028 [US3] GREEN: integrar `mapearError` y `ApiError`/`ConnectionError` en `web/src/features/backlog/index.tsx` (mensaje junto al campo o `ErrorMessage` arriba del formulario, sin borrar datos); `npm test` en verde
-- [ ] T029 [US3] COMMIT `GREEN: integrar errores del servidor en la pantalla, test en verde`
+- [X] T022 [US3] RED: en `web/src/features/backlog/historia.test.ts` escribir tests de `mapearError`: `ApiError` con `campo` conocido (`titulo`, `descripcion`, `prioridad`, `valor_negocio`) → mensaje de ese campo; sin campo, campo desconocido o `proyecto_id` → aviso general; 404 "proyecto no encontrado" → general; `ConnectionError` → mensaje de conexión general. Confirmar que FALLA
+- [X] T023 [US3] COMMIT `RED: agregar tests de mapeo de errores del servidor (falla)`
+- [X] T024 [US3] GREEN: implementar `mapearError` en `web/src/features/backlog/historia.ts`; `npm test` en verde
+- [X] T025 [US3] COMMIT `GREEN: implementar mapeo de errores del servidor, test en verde`
+- [X] T026 [US3] RED: agregar en `web/src/features/backlog/index.test.tsx` un `it` por escenario de aceptación de US3 (cinco): error 400 con campo junto al campo y datos conservados; 400 sin campo en el aviso general; 404 de proyecto en el aviso general; backend caído/500 con aviso general y pantalla usable; y que un nuevo intento reemplaza el aviso anterior. Verificar además que, con un aviso visible, escribir en un campo no lo borra (FR-015). Confirmar que FALLA
+- [X] T027 [US3] COMMIT `RED: agregar pruebas de componente de errores del servidor (falla)`
+- [X] T028 [US3] GREEN: integrar `mapearError` y `ApiError`/`ConnectionError` en `web/src/features/backlog/index.tsx` (mensaje junto al campo o `ErrorMessage` arriba del formulario, sin borrar datos); `npm test` en verde
+- [X] T029 [US3] COMMIT `GREEN: integrar errores del servidor en la pantalla, test en verde`
 
 **Checkpoint**: todos los rechazos se muestran en el lugar correcto.
 
