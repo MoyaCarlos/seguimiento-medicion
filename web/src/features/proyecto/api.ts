@@ -1,4 +1,5 @@
 import { get, post, put } from '../../compartido/api/client'
+import type { DatosProyecto } from './validacion'
 
 export type Rol = 'scrum_master' | 'product_builder'
 
@@ -53,6 +54,21 @@ export const listarIntegrantes = (id: string) =>
 
 export const asignarIntegrante = (id: string, datos: NuevoIntegrante) =>
   post<Integrante>(`/projects/${id}/members`, datos)
+
+export const aNuevoProyecto = (datos: DatosProyecto): NuevoProyecto => ({
+  nombre: datos.nombre.trim(),
+  descripcion: datos.descripcion.trim(),
+  creador: datos.creador.trim(),
+  fecha_inicio: datos.fecha_inicio || null,
+  fecha_fin: datos.fecha_fin || null,
+})
+
+export const aProyectoEditado = (datos: DatosProyecto): ProyectoEditado => ({
+  nombre: datos.nombre.trim(),
+  descripcion: datos.descripcion.trim(),
+  fecha_inicio: datos.fecha_inicio || null,
+  fecha_fin: datos.fecha_fin || null,
+})
 
 export const ETIQUETAS_ROL: Record<Rol, string> = {
   scrum_master: 'Scrum Master',

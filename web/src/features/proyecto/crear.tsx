@@ -5,7 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { crearProyecto } from './api'
+import { aNuevoProyecto, crearProyecto } from './api'
 import { CampoDescripcion } from './Campos'
 import { campoDeError, mensajeDeError } from './errores'
 import { validarCreacion } from './validacion'
@@ -43,13 +43,7 @@ export function Component() {
 
     setEnviando(true)
     try {
-      const proyecto = await crearProyecto({
-        nombre: datos.nombre.trim(),
-        descripcion: datos.descripcion.trim(),
-        creador: datos.creador.trim(),
-        fecha_inicio: datos.fecha_inicio || null,
-        fecha_fin: datos.fecha_fin || null,
-      })
+      const proyecto = await crearProyecto(aNuevoProyecto(datos))
       navegar(`/projects/${proyecto.id}/proyecto`, { replace: true })
     } catch (error) {
       const campo = campoDeError(error)

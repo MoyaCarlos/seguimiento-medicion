@@ -5,7 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { editarProyecto, obtenerProyecto } from './api'
+import { aProyectoEditado, editarProyecto, obtenerProyecto } from './api'
 import { CampoDescripcion } from './Campos'
 import { campoDeError, mensajeDeError } from './errores'
 import { validarEdicion } from './validacion'
@@ -76,12 +76,7 @@ export function Editar() {
 
     setEnviando(true)
     try {
-      await editarProyecto(id, {
-        nombre: datos.nombre.trim(),
-        descripcion: datos.descripcion.trim(),
-        fecha_inicio: datos.fecha_inicio || null,
-        fecha_fin: datos.fecha_fin || null,
-      })
+      await editarProyecto(id, aProyectoEditado(datos))
       navegar(`/projects/${id}/proyecto`)
     } catch (error) {
       const campo = campoDeError(error)
