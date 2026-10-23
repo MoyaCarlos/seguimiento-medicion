@@ -14,35 +14,6 @@ import (
 	"time"
 )
 
-func TestMigrar_EsquemaViejoIDsTexto(t *testing.T) {
-	db, err := AbrirSQLite(":memory:")
-	if err != nil {
-		t.Fatalf("no se pudo abrir sqlite: %v", err)
-	}
-	defer db.Close()
-	ctx := context.Background()
-
-	// Esquema viejo: projects.id es TEXT (previo a la migración a int64).
-	if _, err := db.ExecContext(ctx, `CREATE TABLE projects (
-		id          TEXT PRIMARY KEY,
-		name        TEXT NOT NULL,
-		description TEXT NOT NULL DEFAULT '',
-		start_date  TEXT,
-		end_date    TEXT,
-		created_at  TEXT NOT NULL
-	)`); err != nil {
-		t.Fatalf("no se pudo preparar el esquema viejo: %v", err)
-	}
-
-	err = Migrar(ctx, db)
-	if err == nil {
-		t.Fatal("se esperaba un error por esquema viejo (IDs TEXT)")
-	}
-	if !strings.Contains(err.Error(), "esquema viejo") {
-		t.Fatalf("el error debe explicar el esquema viejo, se obtuvo %v", err)
-	}
-}
-
 func TestDSNConPragmas_SinParametros(t *testing.T) {
 	got := dsnConPragmas("file:app.db")
 	want := "file:app.db?_pragma=foreign_keys(1)&_pragma=busy_timeout(5000)"
@@ -123,7 +94,7 @@ func TestAbrirSQLite_EscriturasConcurrentesSinLock(t *testing.T) {
 	}
 	defer db.Close()
 	ctx := context.Background()
-	if err := Migrar(ctx, db); err != nil {
+	if err := AplicarMigraciones(ctx, db); err != nil {
 		t.Fatalf("no se pudo migrar: %v", err)
 	}
 
@@ -135,7 +106,7 @@ func TestAbrirSQLite_EscriturasConcurrentesSinLock(t *testing.T) {
 		go func(i int) {
 			defer wg.Done()
 			_, err := db.ExecContext(ctx,
-				`INSERT INTO projects (name, description, created_at) VALUES (?, '', ?)`,
+				`INSERT INTO proyectos (nombre, descripcion, creado_en) VALUES (?, '', ?)`,
 				fmt.Sprintf("proyecto-%d", i), time.Now().UTC().Format(time.RFC3339),
 			)
 			if err != nil {

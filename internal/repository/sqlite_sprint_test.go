@@ -10,20 +10,6 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
-func nuevaBD(t *testing.T) *sql.DB {
-	t.Helper()
-	db, err := AbrirSQLite(":memory:")
-	if err != nil {
-		t.Fatalf("no se pudo abrir sqlite: %v", err)
-	}
-	db.SetMaxOpenConns(1)
-	if err := Migrar(context.Background(), db); err != nil {
-		t.Fatalf("no se pudo migrar: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
-	return db
-}
-
 func guardarSprint(t *testing.T, repo *SQLiteSprintRepository, proyectoID int64) domain.Sprint {
 	t.Helper()
 	s, err := domain.NewSprint(proyectoID)
@@ -60,13 +46,6 @@ func iniciarSprint(t *testing.T, repo *SQLiteSprintRepository, s domain.Sprint) 
 		t.Fatalf("no se esperaba error al iniciar el Sprint: %v", err)
 	}
 	return s
-}
-
-func TestMigrar_EsIdempotente(t *testing.T) {
-	db := nuevaBD(t)
-	if err := Migrar(context.Background(), db); err != nil {
-		t.Fatalf("migrar dos veces no debería fallar: %v", err)
-	}
 }
 
 func TestSQLiteSprintRepository_GuardarYObtenerPendiente(t *testing.T) {

@@ -14,57 +14,6 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-const esquemaBacklogItems = `
-CREATE TABLE IF NOT EXISTS backlog_items (
-    id            INTEGER PRIMARY KEY AUTOINCREMENT,
-    proyecto_id   INTEGER NOT NULL,
-    titulo        TEXT    NOT NULL,
-    descripcion   TEXT    NOT NULL,
-    prioridad     TEXT    NOT NULL,
-    estado        TEXT    NOT NULL,
-    valor_negocio INTEGER,
-    estimacion_sp INTEGER
-);`
-
-const esquemaSprints = `
-CREATE TABLE IF NOT EXISTS sprints (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    proyecto_id  INTEGER NOT NULL,
-    sprint_goal  TEXT,
-    fecha_inicio TEXT,
-    fecha_fin    TEXT,
-    estado       TEXT    NOT NULL
-);`
-
-const esquemaProjects = `
-CREATE TABLE IF NOT EXISTS projects (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL,
-    description TEXT NOT NULL DEFAULT '',
-    start_date  TEXT,
-    end_date    TEXT,
-    created_at  TEXT NOT NULL
-);`
-
-const esquemaUsers = `
-CREATE TABLE IF NOT EXISTS users (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    name            TEXT NOT NULL,
-    normalized_name TEXT NOT NULL UNIQUE,
-    created_at      TEXT NOT NULL
-);`
-
-const esquemaProjectMembers = `
-CREATE TABLE IF NOT EXISTS project_members (
-    project_id INTEGER NOT NULL,
-    user_id    INTEGER NOT NULL,
-    role       TEXT NOT NULL,
-    created_at TEXT NOT NULL,
-    PRIMARY KEY (project_id, user_id),
-    FOREIGN KEY (project_id) REFERENCES projects(id),
-    FOREIGN KEY (user_id)    REFERENCES users(id)
-);`
-
 // AbrirSQLite abre una conexión a SQLite (driver puro Go, sin CGO) limitada a
 // una única conexión, activa las claves foráneas y configura un busy_timeout
 // para las bases en archivo (vía _pragma en el DSN). Las bases en memoria
@@ -112,77 +61,19 @@ func esDSNEnMemoria(dsn string) bool {
 	return base == ":memory:" || base == "file::memory:"
 }
 
-// Migrar crea el esquema de forma idempotente.
-func Migrar(ctx context.Context, db *sql.DB) error {
-	esquemas := []struct {
-		nombre string
-		ddl    string
-	}{
-		{"backlog_items", esquemaBacklogItems},
-		{"projects", esquemaProjects},
-		{"users", esquemaUsers},
-		{"project_members", esquemaProjectMembers},
+// verificarBaseVieja detecta una base creada con el esquema previo a la
+// migración 001 (tablas en inglés). sprints no cuenta: conserva su nombre.
+func verificarBaseVieja(ctx context.Context, db *sql.DB) error {
+	var viejas int
+	if err := db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('projects','users','project_members','backlog_items')`,
+	).Scan(&viejas); err != nil {
+		return fmt.Errorf("inspeccionar base: %w", err)
 	}
-	for _, e := range esquemas {
-		if _, err := db.ExecContext(ctx, e.ddl); err != nil {
-			return fmt.Errorf("migrar %s: %w", e.nombre, err)
-		}
-	}
-	if err := verificarEsquemaViejo(ctx, db); err != nil {
-		return err
-	}
-	if _, err := db.ExecContext(ctx, esquemaSprints); err != nil {
-		return fmt.Errorf("migrar sprints: %w", err)
-	}
-	return asegurarColumna(ctx, db, "backlog_items", "sprint_id", "INTEGER")
-}
-
-// asegurarColumna agrega la columna si todavía no existe: SQLite no soporta
-// "ADD COLUMN IF NOT EXISTS" y las bases locales creadas por HU-01 no la tienen.
-func asegurarColumna(ctx context.Context, db *sql.DB, tabla, columna, tipo string) error {
-	var existe int
-	err := db.QueryRowContext(ctx,
-		"SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?", tabla, columna,
-	).Scan(&existe)
-	if err != nil {
-		return fmt.Errorf("inspeccionar %s: %w", tabla, err)
-	}
-	if existe > 0 {
-		return nil
-	}
-	if _, err := db.ExecContext(ctx, fmt.Sprintf("ALTER TABLE %s ADD COLUMN %s %s", tabla, columna, tipo)); err != nil {
-		return fmt.Errorf("agregar %s.%s: %w", tabla, columna, err)
+	if viejas > 0 {
+		return ErrEsquemaViejo
 	}
 	return nil
-}
-
-// verificarEsquemaViejo detecta una base creada con IDs TEXT (esquema previo a
-// int64) y devuelve un error que indica cómo resolverlo. CREATE TABLE IF NOT
-// EXISTS no migra una tabla ya existente, así que ese caso debe señalarse.
-func verificarEsquemaViejo(ctx context.Context, db *sql.DB) error {
-	filas, err := db.QueryContext(ctx, "PRAGMA table_info(projects)")
-	if err != nil {
-		return fmt.Errorf("inspeccionar esquema de projects: %w", err)
-	}
-	defer filas.Close()
-
-	for filas.Next() {
-		var (
-			cid     int
-			nombre  string
-			tipo    string
-			notnull int
-			dflt    sql.NullString
-			pk      int
-		)
-		if err := filas.Scan(&cid, &nombre, &tipo, &notnull, &dflt, &pk); err != nil {
-			return fmt.Errorf("leer esquema de projects: %w", err)
-		}
-		if nombre == "id" && strings.EqualFold(tipo, "TEXT") {
-			return ErrEsquemaViejo
-		}
-	}
-	return filas.Err()
 }
 
 var nombreDeMigracion = regexp.MustCompile(`^(\d{3})_.+\.sql$`)
@@ -190,6 +81,9 @@ var nombreDeMigracion = regexp.MustCompile(`^(\d{3})_.+\.sql$`)
 // aplicarMigraciones aplica, en orden de nombre, las migraciones NNN_nombre.sql
 // de fsys que no figuran en migraciones_aplicadas, cada una en su transacción.
 func aplicarMigraciones(ctx context.Context, db *sql.DB, fsys fs.FS) error {
+	if err := verificarBaseVieja(ctx, db); err != nil {
+		return err
+	}
 	if _, err := db.ExecContext(ctx,
 		`CREATE TABLE IF NOT EXISTS migraciones_aplicadas (version INTEGER PRIMARY KEY, aplicada_en TEXT NOT NULL)`,
 	); err != nil {
