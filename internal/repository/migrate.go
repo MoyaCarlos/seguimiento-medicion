@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
 	"io/fs"
 	"regexp"
@@ -242,4 +243,16 @@ func aplicarMigracion(ctx context.Context, db *sql.DB, fsys fs.FS, nombre string
 		return err
 	}
 	return tx.Commit()
+}
+
+//go:embed migraciones/*.sql
+var migracionesFS embed.FS
+
+// AplicarMigraciones aplica las migraciones embebidas en el binario.
+func AplicarMigraciones(ctx context.Context, db *sql.DB) error {
+	fsys, err := fs.Sub(migracionesFS, "migraciones")
+	if err != nil {
+		return fmt.Errorf("abrir migraciones embebidas: %w", err)
+	}
+	return aplicarMigraciones(ctx, db, fsys)
 }
