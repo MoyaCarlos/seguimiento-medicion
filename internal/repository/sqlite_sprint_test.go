@@ -201,3 +201,69 @@ func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
 		t.Fatalf("no se pudo ejecutar %q: %v", query, err)
 	}
 }
+
+func TestSQLiteSprintRepository_Guardar_ProyectoInexistenteEsIntegridad(t *testing.T) {
+	repo := NewSQLiteSprintRepository(nuevaBDMigrada(t))
+	s, err := domain.NewSprint(999)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+
+	_, err = repo.Guardar(context.Background(), s)
+
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteSprintRepository_IndiceParcial_SegundoPendiente(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	proyectoID := guardarProyecto(t, db)
+	guardarSprint(t, repo, proyectoID)
+	s, _ := domain.NewSprint(proyectoID)
+
+	_, err := repo.Guardar(context.Background(), s)
+
+	esperado := domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint pendiente"}
+	var verr domain.ValidationError
+	if !errors.As(err, &verr) || verr != esperado {
+		t.Fatalf("se esperaba %v, se obtuvo %v", esperado, err)
+	}
+}
+
+func TestSQLiteSprintRepository_IndiceParcial_SegundoActivo(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	proyectoID := guardarProyecto(t, db)
+	iniciarSprint(t, repo, guardarSprint(t, repo, proyectoID))
+	otro := guardarSprint(t, repo, proyectoID)
+	inicio := time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
+	if err := otro.Iniciar("Otro objetivo", inicio, inicio.AddDate(0, 0, 14)); err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+
+	err := repo.Actualizar(context.Background(), otro)
+
+	esperado := domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint activo"}
+	var verr domain.ValidationError
+	if !errors.As(err, &verr) || verr != esperado {
+		t.Fatalf("se esperaba %v, se obtuvo %v", esperado, err)
+	}
+}
+
+func TestSQLiteSprintRepository_CheckEsErrorGenerico(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	s := guardarSprint(t, repo, guardarProyecto(t, db))
+	s.Estado = domain.SprintActivo
+	s.FechaInicio = time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
+	s.FechaFin = s.FechaInicio.AddDate(0, 0, 14)
+
+	err := repo.Actualizar(context.Background(), s)
+
+	var verr domain.ValidationError
+	if err == nil || errors.Is(err, ErrIntegridadReferencial) || errors.As(err, &verr) {
+		t.Fatalf("se esperaba un error genérico del CHECK, se obtuvo %v", err)
+	}
+}

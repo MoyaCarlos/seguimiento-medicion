@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -93,5 +94,19 @@ func TestSQLiteBacklogRepository_TitulosRepetidos(t *testing.T) {
 	}
 	if total != 2 {
 		t.Errorf("se esperaban 2 historias con el mismo título, se obtuvieron %d", total)
+	}
+}
+
+func TestSQLiteBacklogRepository_Guardar_ProyectoInexistenteEsIntegridad(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	item, err := domain.NewBacklogItem(999, "Historia huérfana", "Sin proyecto", domain.PrioridadMust, nil)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+
+	_, err = repo.Guardar(context.Background(), item)
+
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
 	}
 }
