@@ -21,9 +21,9 @@ description: "Task list for HU-01 frontend: pantalla de creación de historias d
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 [P] Crear `web/src/features/backlog/opciones.ts` con `PRIORIDADES` (`M`/Must have, `S`/Should have, `C`/Could have, `W`/Won't have), `VALORES_NEGOCIO` (`1, 2, 3, 5, 8, 13, 21`), los tipos `Prioridad` y `ValorNegocio`, y `etiquetaPrioridad(codigo)`. Es data/mapeo trivial: no lleva ciclo RED
-- [ ] T002 [P] Crear `web/src/features/backlog/backlog.css` con reglas acotadas a `.backlog-form textarea` y `.backlog-form select`, reutilizando las variables `--line`, `--ink` y `--lilac` de `web/src/App.css`. No tocar `App.css` ni `compartido/`
-- [ ] T003 COMMIT `Agregar opciones y estilos de la pantalla de backlog`
+- [X] T001 [P] Crear `web/src/features/backlog/opciones.ts` con `PRIORIDADES` (`M`/Must have, `S`/Should have, `C`/Could have, `W`/Won't have), `VALORES_NEGOCIO` (`1, 2, 3, 5, 8, 13, 21`), los tipos `Prioridad` y `ValorNegocio`, y `etiquetaPrioridad(codigo)`. Es data/mapeo trivial: no lleva ciclo RED
+- [X] T002 [P] Crear `web/src/features/backlog/backlog.css` con reglas acotadas a `.backlog-form textarea` y `.backlog-form select`, reutilizando las variables `--line`, `--ink` y `--lilac` de `web/src/App.css`. No tocar `App.css` ni `compartido/`
+- [X] T003 COMMIT `Agregar opciones y estilos de la pantalla de backlog`
 
 **Checkpoint**: opciones y estilos listos; todavía no hay pantalla.
 
