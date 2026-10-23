@@ -13,23 +13,38 @@ import (
 
 // ProjectHandler es el adaptador de entrada de los proyectos y su equipo.
 type ProjectHandler struct {
-	crear   *service.CrearProyecto
-	obtener *service.ObtenerProyecto
-	editar  *service.EditarProyecto
-	asignar *service.AsignarIntegrante
-	listar  *service.ListarIntegrantes
-	estado  *service.ObtenerEstadoProyecto
+	crear             *service.CrearProyecto
+	obtener           *service.ObtenerProyecto
+	listarProyectos   *service.ListarProyectos
+	editar            *service.EditarProyecto
+	asignar           *service.AsignarIntegrante
+	listarIntegrantes *service.ListarIntegrantes
+	estado            *service.ObtenerEstadoProyecto
 }
 
 func NewProjectHandler(
 	crear *service.CrearProyecto,
 	obtener *service.ObtenerProyecto,
+	listarProyectos *service.ListarProyectos,
 	editar *service.EditarProyecto,
 	asignar *service.AsignarIntegrante,
-	listar *service.ListarIntegrantes,
+	listarIntegrantes *service.ListarIntegrantes,
 	estado *service.ObtenerEstadoProyecto,
 ) *ProjectHandler {
-	return &ProjectHandler{crear: crear, obtener: obtener, editar: editar, asignar: asignar, listar: listar, estado: estado}
+	return &ProjectHandler{
+		crear:             crear,
+		obtener:           obtener,
+		listarProyectos:   listarProyectos,
+		editar:            editar,
+		asignar:           asignar,
+		listarIntegrantes: listarIntegrantes,
+		estado:            estado,
+	}
+}
+
+// Listar atiende GET /projects.
+func (h *ProjectHandler) Listar(w nethttp.ResponseWriter, _ *nethttp.Request) {
+	escribirJSON(w, nethttp.StatusNotImplemented, errorResponse{Mensaje: "no implementado"})
 }
 
 // Crear atiende POST /projects.
@@ -196,7 +211,7 @@ func (h *ProjectHandler) ListarIntegrantes(w nethttp.ResponseWriter, r *nethttp.
 		return
 	}
 
-	miembros, err := h.listar.Ejecutar(r.Context(), id)
+	miembros, err := h.listarIntegrantes.Ejecutar(r.Context(), id)
 	if err != nil {
 		escribirError(w, err)
 		return

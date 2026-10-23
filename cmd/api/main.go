@@ -33,11 +33,12 @@ func main() {
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
+	listarProyectos := service.NewListarProyectos(proyectos)
 	editarProyecto := service.NewEditarProyecto(proyectos)
 	asignarIntegrante := service.NewAsignarIntegrante(proyectos, usuarios)
 	listarIntegrantes := service.NewListarIntegrantes(proyectos)
 	obtenerEstadoProyecto := service.NewObtenerEstadoProyecto(proyectos, sprintRepo)
-	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
+	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, listarProyectos, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
