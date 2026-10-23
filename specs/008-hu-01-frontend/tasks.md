@@ -114,8 +114,8 @@ description: "Task list for HU-01 frontend: pantalla de creación de historias d
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T034 Desde `web/` correr `npm test`, `npm run lint` y `npm run build`; corregir lo que falle sin tocar `web/src/compartido/`, `web/package.json` ni `web/src/rutas.tsx`
-- [ ] T035 Ejecutar los 10 puntos de validación de [quickstart.md](quickstart.md) con backend y frontend levantados; confirmar que no hay cambios en `compartido/`, `package.json` ni en las demás pantallas, y que no quedan advertencias de lint ni tests en rojo
+- [X] T034 Desde `web/` correr `npm test`, `npm run lint` y `npm run build`; corregir lo que falle sin tocar `web/src/compartido/`, `web/package.json` ni `web/src/rutas.tsx`
+- [X] T035 Ejecutar los 10 puntos de validación de [quickstart.md](quickstart.md) con backend y frontend levantados; confirmar que no hay cambios en `compartido/`, `package.json` ni en las demás pantallas, y que no quedan advertencias de lint ni tests en rojo
 
 ---
 

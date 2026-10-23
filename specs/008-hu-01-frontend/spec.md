@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-22
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR (Issue #31)
 
 **Input**: User description: "[HU-01] Frontend (issue #31, parte de #1). Pantalla para crear historias de usuario en el Product Backlog de un proyecto, sobre la base del frontend (#108).
 
