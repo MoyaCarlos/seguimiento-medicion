@@ -18,8 +18,8 @@ const HISTORIA: HistoriaCreada = {
 }
 
 function responderCreada(overrides: Partial<HistoriaCreada> = {}) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify({ ...HISTORIA, ...overrides }), { status: 201 }),
+  const fetchMock = vi.fn().mockImplementation(() =>
+    Promise.resolve(new Response(JSON.stringify({ ...HISTORIA, ...overrides }), { status: 201 })),
   )
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
