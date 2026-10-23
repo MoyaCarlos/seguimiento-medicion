@@ -52,6 +52,7 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
 	mux.HandleFunc("GET /projects/{id}/status", projectHandler.ObtenerEstado)

@@ -43,8 +43,17 @@ func NewProjectHandler(
 }
 
 // Listar atiende GET /projects.
-func (h *ProjectHandler) Listar(w nethttp.ResponseWriter, _ *nethttp.Request) {
-	escribirJSON(w, nethttp.StatusNotImplemented, errorResponse{Mensaje: "no implementado"})
+func (h *ProjectHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	proyectos, err := h.listarProyectos.Ejecutar(r.Context())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	respuesta := make([]proyectoResponse, 0, len(proyectos))
+	for _, proyecto := range proyectos {
+		respuesta = append(respuesta, aProyectoResponse(proyecto))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // Crear atiende POST /projects.
