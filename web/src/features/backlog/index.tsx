@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
 import { useParams } from 'react-router'
+import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { crearHistoria } from './api'
-import { ESTADO_INICIAL, armarCuerpo, parsearProyectoId, validarHistoria } from './historia'
+import { ESTADO_INICIAL, armarCuerpo, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
 import { PRIORIDADES, etiquetaPrioridad } from './opciones'
 import './backlog.css'
@@ -65,7 +66,17 @@ export function Component() {
       setConfirmacion(historia)
       setFormulario(ESTADO_INICIAL)
     } catch (error) {
-      setErrorGeneral(error instanceof Error ? error.message : 'No se pudo crear la historia')
+      if (error instanceof ApiError || error instanceof ConnectionError) {
+        const mapeado = mapearError(error)
+
+        if (mapeado.campo) {
+          setErrores({ [mapeado.campo]: mapeado.mensaje } as ErrorDeCampo)
+        } else {
+          setErrorGeneral(mapeado.mensaje)
+        }
+      } else {
+        setErrorGeneral(error instanceof Error ? error.message : 'No se pudo crear la historia')
+      }
     } finally {
       setEnviando(false)
     }
