@@ -61,3 +61,30 @@ export function armarCuerpo(
 
   return cuerpo
 }
+
+const LONGITUD_MAXIMA_TITULO = 200
+const LONGITUD_MAXIMA_DESCRIPCION = 2000
+
+export function contarCaracteres(texto: string): number {
+  return [...texto].length
+}
+
+export function validarHistoria(formulario: FormularioHistoria): ErrorDeCampo {
+  const errores: ErrorDeCampo = {}
+  const titulo = formulario.titulo.trim()
+  const descripcion = formulario.descripcion.trim()
+
+  if (!titulo) {
+    errores.titulo = 'El título es obligatorio'
+  } else if (contarCaracteres(titulo) > LONGITUD_MAXIMA_TITULO) {
+    errores.titulo = 'El título no puede superar los 200 caracteres'
+  }
+
+  if (!descripcion) {
+    errores.descripcion = 'La descripción es obligatoria'
+  } else if (contarCaracteres(descripcion) > LONGITUD_MAXIMA_DESCRIPCION) {
+    errores.descripcion = 'La descripción no puede superar los 2000 caracteres'
+  }
+
+  return errores
+}
