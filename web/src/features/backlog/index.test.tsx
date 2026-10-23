@@ -25,6 +25,20 @@ function responderCreada(overrides: Partial<HistoriaCreada> = {}) {
   return fetchMock
 }
 
+function responderConError(status: number, cuerpo: { campo?: string; mensaje: string }) {
+  const fetchMock = vi.fn().mockImplementation(() =>
+    Promise.resolve(new Response(JSON.stringify(cuerpo), { status })),
+  )
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+function responderCaido() {
+  const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
 function abrir(url = '/projects/42/backlog') {
   const router = createMemoryRouter(
     [{ path: '/projects/:id/backlog', element: <Component /> }],
@@ -314,6 +328,115 @@ describe('validación de US2', () => {
     expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
     expect(mensajeDe(screen.getByLabelText('Título'))).toBeTruthy()
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('errores del servidor de US3', () => {
+  it('US3.1: muestra el error del servidor junto al campo y conserva los datos', async () => {
+    const fetchMock = responderConError(400, {
+      campo: 'titulo',
+      mensaje: 'el título es inválido',
+    })
+    abrir()
+    const user = await completarFormulario({ titulo: 'Historia con error' })
+
+    await user.click(botonGuardar())
+
+    const titulo = screen.getByLabelText('Título') as HTMLInputElement
+    const descripcion = screen.getByLabelText('Descripción') as HTMLTextAreaElement
+    expect(titulo.value).toBe('Historia con error')
+    expect(descripcion.value).toBe('Autenticación con email y contraseña')
+    expect(titulo.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(titulo)).toBe('el título es inválido')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('US3.2: muestra un error general sin campo como aviso arriba del formulario', async () => {
+    responderConError(400, { mensaje: 'datos inválidos' })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const alerta = await screen.findByRole('alert')
+    const formulario = document.querySelector('form')
+    expect(alerta.textContent).toBe('datos inválidos')
+    expect(formulario).not.toBeNull()
+    expect(
+      alerta.compareDocumentPosition(formulario as HTMLFormElement) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    const titulo = screen.getByLabelText('Título')
+    expect(titulo.getAttribute('aria-invalid')).toBe('false')
+    expect(titulo.getAttribute('aria-describedby')).toBeNull()
+  })
+
+  it('US3.3: muestra el proyecto no encontrado como aviso general, no como error de campo', async () => {
+    responderConError(404, { mensaje: 'proyecto no encontrado' })
+    abrir()
+    const user = await completarFormulario({ titulo: 'Historia con error' })
+
+    await user.click(botonGuardar())
+
+    const alerta = await screen.findByRole('alert')
+    expect(alerta.textContent).toBe('proyecto no encontrado')
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Historia con error')
+    expect(screen.getByLabelText('Título').getAttribute('aria-invalid')).toBe('false')
+  })
+
+  it.each([
+    ['con el backend caído', () => responderCaido(), 'No se pudo conectar con el servidor'],
+    ['con un error 500', () => responderConError(500, { mensaje: 'error interno' }), 'error interno'],
+  ])('US3.4: %s muestra un aviso general y la pantalla sigue usable', async (_caso, preparar, mensaje) => {
+    const fetchMock = preparar()
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const alerta = await screen.findByRole('alert')
+    expect(alerta.textContent).toBe(mensaje)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect((botonGuardar() as HTMLButtonElement).disabled).toBe(false)
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('US3.5: un nuevo intento reemplaza el aviso anterior', async () => {
+    const fetchMock = responderConError(400, {
+      campo: 'titulo',
+      mensaje: 'el título es inválido',
+    })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const titulo = screen.getByLabelText('Título')
+    expect(mensajeDe(titulo)).toBe('el título es inválido')
+
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify(HISTORIA), { status: 201 })),
+    )
+    await user.click(botonGuardar())
+
+    expect(await screen.findByRole('region', { name: 'Historia creada' })).toBeTruthy()
+    expect(mensajeDe(screen.getByLabelText('Título'))).toBeNull()
+    expect(screen.getByLabelText('Título').getAttribute('aria-invalid')).toBe('false')
+  })
+
+  it('FR-015: el aviso visible no se borra al escribir en un campo', async () => {
+    responderConError(400, { campo: 'titulo', mensaje: 'el título es inválido' })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const titulo = screen.getByLabelText('Título')
+    expect(mensajeDe(titulo)).toBe('el título es inválido')
+
+    await user.type(titulo, ' más')
+
+    expect(mensajeDe(titulo)).toBe('el título es inválido')
   })
 })
 
