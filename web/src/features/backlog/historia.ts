@@ -1,3 +1,5 @@
+import { ApiError } from '../../compartido/api/client'
+import type { ConnectionError } from '../../compartido/api/client'
 import type { Prioridad, ValorNegocio } from './opciones'
 
 export type FormularioHistoria = {
@@ -87,4 +89,32 @@ export function validarHistoria(formulario: FormularioHistoria): ErrorDeCampo {
   }
 
   return errores
+}
+
+export type ErrorMapeado = {
+  campo?: keyof ErrorDeCampo
+  mensaje: string
+}
+
+const CAMPOS_CONOCIDOS: readonly (keyof ErrorDeCampo)[] = [
+  'titulo',
+  'descripcion',
+  'prioridad',
+  'valor_negocio',
+]
+
+function esCampoConocido(campo: string): campo is keyof ErrorDeCampo {
+  return CAMPOS_CONOCIDOS.includes(campo as keyof ErrorDeCampo)
+}
+
+export function mapearError(error: ApiError | ConnectionError): ErrorMapeado {
+  if (!(error instanceof ApiError)) {
+    return { mensaje: error.message }
+  }
+
+  if (error.field && esCampoConocido(error.field)) {
+    return { campo: error.field, mensaje: error.message }
+  }
+
+  return { mensaje: error.message }
 }
