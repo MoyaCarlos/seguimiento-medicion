@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sort"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -53,6 +54,18 @@ func (f *fakeProjectRepository) ObtenerPorID(_ context.Context, id int64) (domai
 		return domain.Project{}, domain.ErrProyectoNoEncontrado
 	}
 	return p, nil
+}
+
+func (f *fakeProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	proyectos := make([]domain.Project, 0, len(f.proyectos))
+	for _, p := range f.proyectos {
+		proyectos = append(proyectos, p)
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	return proyectos, nil
 }
 
 func (f *fakeProjectRepository) Actualizar(_ context.Context, p domain.Project) error {
