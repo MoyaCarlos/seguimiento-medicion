@@ -6,8 +6,8 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { crearHistoria } from './api'
-import { ESTADO_INICIAL, armarCuerpo, parsearProyectoId } from './historia'
-import type { FormularioHistoria, HistoriaCreada } from './historia'
+import { ESTADO_INICIAL, armarCuerpo, parsearProyectoId, validarHistoria } from './historia'
+import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
 import { PRIORIDADES, etiquetaPrioridad } from './opciones'
 import './backlog.css'
 
@@ -20,6 +20,7 @@ export function Component() {
   const [enviando, setEnviando] = useState(false)
   const [confirmacion, setConfirmacion] = useState<HistoriaCreada | null>(null)
   const [errorGeneral, setErrorGeneral] = useState<string>()
+  const [errores, setErrores] = useState<ErrorDeCampo>({})
 
   function cambiarTitulo(evento: ChangeEvent<HTMLInputElement>) {
     setFormulario((actual) => ({ ...actual, titulo: evento.target.value }))
@@ -49,6 +50,14 @@ export function Component() {
 
     setConfirmacion(null)
     setErrorGeneral(undefined)
+    setErrores({})
+
+    const erroresDelIntento = validarHistoria(formulario)
+    if (Object.keys(erroresDelIntento).length > 0) {
+      setErrores(erroresDelIntento)
+      return
+    }
+
     setEnviando(true)
 
     try {
@@ -87,6 +96,7 @@ export function Component() {
             value={formulario.titulo}
             onChange={cambiarTitulo}
             disabled={deshabilitado}
+            error={errores.titulo}
           />
 
           <div className="field">
@@ -97,7 +107,12 @@ export function Component() {
               value={formulario.descripcion}
               onChange={cambiarDescripcion}
               disabled={deshabilitado}
+              aria-invalid={Boolean(errores.descripcion)}
+              aria-describedby={errores.descripcion ? 'descripcion-error' : undefined}
             />
+            {errores.descripcion && (
+              <ErrorMessage id="descripcion-error" message={errores.descripcion} />
+            )}
           </div>
 
           <div className="field">
@@ -108,6 +123,8 @@ export function Component() {
               value={formulario.prioridad}
               onChange={cambiarPrioridad}
               disabled={deshabilitado}
+              aria-invalid={Boolean(errores.prioridad)}
+              aria-describedby={errores.prioridad ? 'prioridad-error' : undefined}
             >
               {PRIORIDADES.map((prioridad) => (
                 <option key={prioridad.codigo} value={prioridad.codigo}>
@@ -115,6 +132,9 @@ export function Component() {
                 </option>
               ))}
             </select>
+            {errores.prioridad && (
+              <ErrorMessage id="prioridad-error" message={errores.prioridad} />
+            )}
           </div>
 
           <div className="field">
@@ -125,9 +145,14 @@ export function Component() {
               value={formulario.valorNegocio}
               onChange={cambiarValorNegocio}
               disabled={deshabilitado}
+              aria-invalid={Boolean(errores.valor_negocio)}
+              aria-describedby={errores.valor_negocio ? 'valor-negocio-error' : undefined}
             >
               <option value="">Sin valor</option>
             </select>
+            {errores.valor_negocio && (
+              <ErrorMessage id="valor-negocio-error" message={errores.valor_negocio} />
+            )}
           </div>
 
           {enviando && <LoadingIndicator />}
