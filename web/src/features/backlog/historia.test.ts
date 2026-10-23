@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { armarCuerpo, parsearProyectoId } from './historia'
+import { armarCuerpo, contarCaracteres, parsearProyectoId, validarHistoria } from './historia'
 import type { FormularioHistoria } from './historia'
 
 const FORMULARIO: FormularioHistoria = {
@@ -63,5 +63,92 @@ describe('armarCuerpo', () => {
     const cuerpo = armarCuerpo(42, { ...FORMULARIO, valorNegocio: '' })
 
     expect(cuerpo).not.toHaveProperty('valor_negocio')
+  })
+})
+
+const VALIDO: FormularioHistoria = {
+  titulo: 'Historia de usuario',
+  descripcion: 'Descripción de la historia',
+  prioridad: 'M',
+  valorNegocio: '',
+}
+
+describe('contarCaracteres', () => {
+  it('cuenta un emoji como un punto de código', () => {
+    expect(contarCaracteres('😀')).toBe(1)
+  })
+
+  it('cuenta una letra acentuada como un punto de código', () => {
+    expect(contarCaracteres('ñ')).toBe(1)
+  })
+
+  it('cuenta una letra con acento combinado como dos puntos de código', () => {
+    expect(contarCaracteres('e\u0301')).toBe(2)
+  })
+
+  it('devuelve cero para un texto vacío', () => {
+    expect(contarCaracteres('')).toBe(0)
+  })
+})
+
+describe('validarHistoria', () => {
+  it('acepta una historia válida', () => {
+    expect(validarHistoria(VALIDO)).toEqual({})
+  })
+
+  it.each([
+    ['vacío', ''],
+    ['con solo espacios', '   '],
+  ])('exige el título cuando está %s', (_caso, titulo) => {
+    expect(validarHistoria({ ...VALIDO, titulo })).toEqual({ titulo: expect.any(String) })
+  })
+
+  it.each([
+    ['vacía', ''],
+    ['con solo espacios', '   '],
+  ])('exige la descripción cuando está %s', (_caso, descripcion) => {
+    expect(validarHistoria({ ...VALIDO, descripcion })).toEqual({
+      descripcion: expect.any(String),
+    })
+  })
+
+  it('rechaza un título de 201 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, titulo: 'a'.repeat(201) })).toEqual({
+      titulo: expect.any(String),
+    })
+  })
+
+  it('rechaza una descripción de 2001 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, descripcion: 'a'.repeat(2001) })).toEqual({
+      descripcion: expect.any(String),
+    })
+  })
+
+  it('acepta un título de exactamente 200 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, titulo: 'a'.repeat(200) })).toEqual({})
+  })
+
+  it('acepta una descripción de exactamente 2000 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, descripcion: 'a'.repeat(2000) })).toEqual({})
+  })
+
+  it('evalúa la longitud después de recortar los extremos', () => {
+    expect(validarHistoria({ ...VALIDO, titulo: `  ${'a'.repeat(200)}  ` })).toEqual({})
+  })
+
+  it('cuenta puntos de código y no unidades UTF-16', () => {
+    expect(validarHistoria({ ...VALIDO, titulo: '😀'.repeat(201) })).toEqual({
+      titulo: expect.any(String),
+    })
+    expect(validarHistoria({ ...VALIDO, titulo: '😀'.repeat(200) })).toEqual({})
+  })
+
+  it('devuelve todos los errores de campo del intento', () => {
+    expect(
+      validarHistoria({ ...VALIDO, titulo: '', descripcion: 'a'.repeat(2001) }),
+    ).toEqual({
+      titulo: expect.any(String),
+      descripcion: expect.any(String),
+    })
   })
 })
