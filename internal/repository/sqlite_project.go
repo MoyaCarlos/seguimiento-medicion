@@ -42,7 +42,7 @@ func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p d
 	}
 
 	if _, err := tx.ExecContext(ctx,
-		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
 		p.ID, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
 	); err != nil {
 		var sqliteErr *sqlite.Error
@@ -69,7 +69,7 @@ func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (do
 		p.CreadoEn = time.Now().UTC()
 	}
 	res, err := ex.ExecContext(ctx,
-		`INSERT INTO projects (name, description, start_date, end_date, created_at)
+		`INSERT INTO proyectos (nombre, descripcion, fecha_inicio, fecha_fin, creado_en)
 		 VALUES (?, ?, ?, ?, ?)`,
 		p.Nombre, p.Descripcion,
 		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
@@ -89,7 +89,7 @@ func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (do
 // ObtenerPorID devuelve el proyecto con el identificador indicado.
 func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Project, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, name, description, start_date, end_date, created_at FROM projects WHERE id = ?`,
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en FROM proyectos WHERE id = ?`,
 		id,
 	)
 	return escanearProyecto(row)
@@ -98,7 +98,7 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 // Actualizar reemplaza los datos editables del proyecto.
 func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Project) error {
 	resultado, err := r.db.ExecContext(ctx,
-		`UPDATE projects SET name = ?, description = ?, start_date = ?, end_date = ? WHERE id = ?`,
+		`UPDATE proyectos SET nombre = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?`,
 		p.Nombre, p.Descripcion,
 		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
 		p.ID,
@@ -123,7 +123,7 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 		m.CreadoEn = time.Now().UTC()
 	}
 	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO project_members (project_id, user_id, role, created_at) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
 		m.ProjectID, m.UserID, string(m.Role), m.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
@@ -144,11 +144,11 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 // ListarIntegrantes devuelve los integrantes del proyecto con su nombre y rol.
 func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT pm.user_id, pm.project_id, u.name, pm.role, pm.created_at
-		 FROM project_members pm
-		 JOIN users u ON u.id = pm.user_id
-		 WHERE pm.project_id = ?
-		 ORDER BY pm.rowid`,
+		`SELECT i.usuario_id, i.proyecto_id, u.nombre, i.rol, i.creado_en
+		 FROM integrantes i
+		 JOIN usuarios u ON u.id = i.usuario_id
+		 WHERE i.proyecto_id = ?
+		 ORDER BY i.rowid`,
 		proyectoID,
 	)
 	if err != nil {
@@ -195,14 +195,14 @@ func tiempoOpcionalAValor(t *time.Time) any {
 	if t == nil {
 		return nil
 	}
-	return t.UTC().Format(time.RFC3339)
+	return t.UTC().Format(time.DateOnly)
 }
 
 func valorATiempoOpcional(v sql.NullString) *time.Time {
 	if !v.Valid {
 		return nil
 	}
-	t, err := time.Parse(time.RFC3339, v.String)
+	t, err := time.Parse(time.DateOnly, v.String)
 	if err != nil {
 		return nil
 	}
