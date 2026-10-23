@@ -104,11 +104,10 @@ Como integrante del equipo, quiero elegir la prioridad entre las cuatro opciones
 
 ### Edge Cases
 
-Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
+Los casos de campos obligatorios vacíos o con solo espacios, de longitud excedida y de varios campos inválidos en el mismo intento están definidos en FR-011, FR-012 y FR-012a y no se repiten acá. Los casos restantes están redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
-- Los casos de campos obligatorios vacíos o con solo espacios, de longitud excedida y de varios campos inválidos en el mismo intento están definidos en FR-011, FR-012 y FR-012a; esta sección no los repite.
 - **WHEN** el título tiene exactamente 200 caracteres y la descripción exactamente 2000, **THEN** la validación **shall** aceptarlos como válidos.
-- **IF** la dirección no trae un identificador de proyecto o no es un entero positivo, **THEN** la pantalla **shall** mostrar el formulario deshabilitado (campos y "Guardar") junto a un aviso general, sin permitir cargar datos ni enviar la creación.
+- **IF** la dirección no trae un identificador de proyecto, no son dígitos que representen un entero positivo o el valor supera 9007199254740991 (no es representable sin pérdida de precisión en JavaScript), **THEN** la pantalla **shall** mostrar el formulario deshabilitado (campos y "Guardar") junto a un aviso general, sin permitir cargar datos ni enviar la creación.
 - **WHILE** una creación está en curso, **THEN** la pantalla **shall** deshabilitar el botón de guardar y mostrar el indicador de carga, y **shall** ignorar nuevos intentos de envío.
 - **WHEN** el servidor responde con un error asociado a un campo conocido del formulario (título, descripción, prioridad o valor de negocio), **THEN** la pantalla **shall** mostrar el mensaje junto a ese campo.
 - **IF** el error del servidor se refiere al proyecto o a un campo desconocido, **THEN** la pantalla **shall** mostrarlo en el aviso general.
@@ -125,7 +124,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
 - **FR-001**: La aplicación MUST ofrecer la pantalla de creación de historias en la dirección del Product Backlog del proyecto (`/projects/:id/backlog`) y MUST tomar el identificador del proyecto desde esa dirección.
 - **FR-002**: La pantalla MUST conservar el proyecto de la dirección al recargar o abrir la URL directamente, sin depender de datos guardados por otra pantalla.
-- **FR-002a**: Cuando la dirección no traiga un identificador de proyecto válido, la pantalla MUST mostrar un aviso general con el formulario deshabilitado (campos y "Guardar") y MUST NOT enviar la creación.
+- **FR-002a**: Un identificador de proyecto válido son dígitos que representan un entero positivo representable sin pérdida de precisión en JavaScript (`Number.isSafeInteger`, hasta 9007199254740991). Cuando la dirección no traiga un identificador válido, la pantalla MUST mostrar un aviso general con el formulario deshabilitado (campos y "Guardar") y MUST NOT enviar la creación.
 
 **Formulario**
 

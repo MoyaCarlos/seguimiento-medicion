@@ -133,8 +133,11 @@ usando sus variables CSS; no se agregan librerías ni se modifica el CSS global.
    `{ titulo: '', descripcion: '', prioridad: 'M', valorNegocio: '' }` y la confirmación
    queda hasta el próximo intento.
 7. **Identificador inválido.** `parsearProyectoId` acepta solo dígitos que representen un
-   entero positivo (misma regla que el backend). Si falla, se muestra un aviso general y el
-   formulario queda deshabilitado (`fieldset disabled`), sin llamar a la API (clarificación).
+   entero positivo representable sin pérdida de precisión en JavaScript
+   (`Number.isSafeInteger`, hasta 9007199254740991). Es más estricta que la regla del
+   backend a propósito: un número mayor no se puede serializar con exactitud. Si falla, se
+   muestra un aviso general y el formulario queda deshabilitado (`fieldset disabled`), sin
+   llamar a la API (clarificación).
 8. **Pruebas de la pantalla.** `index.test.tsx` simula `fetch` (el mismo mecanismo del
    cliente compartido) para verificar el cuerpo enviado y cada respuesta; cada escenario de
    aceptación del spec es un `it` cuyo nombre lo reproduce, más los casos límite y de error

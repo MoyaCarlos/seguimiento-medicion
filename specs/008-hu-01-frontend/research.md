@@ -109,11 +109,15 @@ del diseño. No quedan `NEEDS CLARIFICATION`.
 
 ## 9. Identificador de proyecto de la URL
 
-- **Decisión**: `parsearProyectoId(valor)` acepta solo `/^\d+$/` y un resultado mayor que
-  cero; si no, la pantalla muestra un aviso general y deshabilita el formulario con
-  `fieldset disabled`, sin llamar a la API.
-- **Rationale**: replica la regla del backend (`parsearID`: entero positivo) y evita
-  aceptar valores como `1.5`, `1e3` o ` 1` que el backend rechazaría. Deshabilitar el
-  formulario es la decisión registrada en las clarificaciones.
+- **Decisión**: `parsearProyectoId(valor)` acepta solo `/^\d+$/`, un resultado mayor que
+  cero y `Number.isSafeInteger`, es decir, un entero positivo representable sin pérdida de
+  precisión en JavaScript (hasta 9007199254740991). Si no, la pantalla muestra un aviso
+  general y deshabilita el formulario con `fieldset disabled`, sin llamar a la API.
+- **Rationale**: es más estricta que la regla del backend (`parsearID`: entero positivo) a
+  propósito: un valor mayor que `Number.MAX_SAFE_INTEGER` se serializa con otro número
+  (por ejemplo, `9007199254740993` se envía como `9007199254740992`), así que se rechaza
+  antes de llamar a la API. También evita aceptar valores como `1.5`, `1e3` o ` 1` que el
+  backend rechazaría. Deshabilitar el formulario es la decisión registrada en las
+  clarificaciones.
 - **Alternativas**: `Number(valor)` (acepta decimales y notación científica); dejar el
   formulario habilitado y avisar al guardar (descartado en clarify).

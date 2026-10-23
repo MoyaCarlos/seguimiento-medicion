@@ -48,9 +48,11 @@ Abrir `http://localhost:5173/projects/<id>/backlog`.
 6. **Prioridad y valor**: probar las cuatro prioridades y cada valor admitido; guardar con
    "Sin valor". Esperado: el cuerpo lleva `M/S/C/W` y el `valor_negocio` correcto, u
    omitido en "Sin valor".
-7. **Error de campo**: forzar un rechazo del servidor (por ejemplo, enviar un título que
-   el backend considere inválido o simular la respuesta en la prueba automatizada).
-   Esperado: mensaje junto al campo, datos conservados.
+7. **Error de campo (forzado)**: en las herramientas del navegador, editar el `value` de
+   una opción de prioridad a `"X"` (el backend responde `400` con `campo: "prioridad"`) o
+   el de una opción de valor de negocio a `"4"`. Guardar una historia válida. Esperado:
+   mensaje junto al campo correspondiente, datos conservados. Este caso también está
+   cubierto por el test de componente con `fetch` simulado.
 8. **Proyecto inexistente**: abrir `/projects/999999/backlog` y guardar. Esperado: 404 y
    aviso general "proyecto no encontrado", datos conservados.
 9. **Id inválido**: abrir `/projects/abc/backlog` o `/projects/0/backlog`. Esperado:
