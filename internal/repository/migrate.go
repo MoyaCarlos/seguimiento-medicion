@@ -93,18 +93,38 @@ func aplicarMigraciones(ctx context.Context, db *sql.DB, fsys fs.FS) error {
 	if err != nil {
 		return fmt.Errorf("listar migraciones: %w", err)
 	}
-	for _, archivo := range archivos {
+	versiones, err := versionesDeMigraciones(archivos)
+	if err != nil {
+		return err
+	}
+	for i, archivo := range archivos {
 		nombre := archivo.Name()
-		partes := nombreDeMigracion.FindStringSubmatch(nombre)
-		if partes == nil {
-			return fmt.Errorf("nombre de migración inválido %q: se espera NNN_nombre.sql", nombre)
-		}
-		version, _ := strconv.Atoi(partes[1])
-		if err := aplicarMigracion(ctx, db, fsys, nombre, version); err != nil {
+		if err := aplicarMigracion(ctx, db, fsys, nombre, versiones[i]); err != nil {
 			return fmt.Errorf("aplicar migración %s: %w", nombre, err)
 		}
 	}
 	return nil
+}
+
+// versionesDeMigraciones valida todos los nombres antes de aplicar ninguno:
+// un nombre inválido o dos archivos con el mismo número hacen fallar el arranque.
+func versionesDeMigraciones(archivos []fs.DirEntry) ([]int, error) {
+	versiones := make([]int, len(archivos))
+	vistas := make(map[int]string, len(archivos))
+	for i, archivo := range archivos {
+		nombre := archivo.Name()
+		partes := nombreDeMigracion.FindStringSubmatch(nombre)
+		if partes == nil {
+			return nil, fmt.Errorf("nombre de migración inválido %q: se espera NNN_nombre.sql", nombre)
+		}
+		version, _ := strconv.Atoi(partes[1])
+		if previa, repetida := vistas[version]; repetida {
+			return nil, fmt.Errorf("versión de migración repetida %03d: %s y %s", version, previa, nombre)
+		}
+		vistas[version] = nombre
+		versiones[i] = version
+	}
+	return versiones, nil
 }
 
 func aplicarMigracion(ctx context.Context, db *sql.DB, fsys fs.FS, nombre string, version int) error {

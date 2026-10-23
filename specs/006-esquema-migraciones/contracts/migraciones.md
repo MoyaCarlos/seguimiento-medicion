@@ -9,6 +9,7 @@ El detalle de las tablas está en [MODELO-DE-DATOS.md §9](../../../MODELO-DE-DA
 - Un archivo puede tener varias sentencias separadas por `;`. Se ejecuta entero dentro de una transacción.
 - Una migración mergeada a `main` **no se edita**; un cambio es una migración nueva (§9 punto 2).
 - Un nombre que no cumple `NNN_nombre.sql` hace fallar el arranque.
+- Dos archivos con el mismo número hacen fallar el arranque.
 
 ## Función
 
