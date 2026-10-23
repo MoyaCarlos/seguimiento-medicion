@@ -80,6 +80,10 @@ func (r *ProjectRepositoryEnMemoria) ObtenerPorID(_ context.Context, id int64) (
 	return p, nil
 }
 
+func (r *ProjectRepositoryEnMemoria) Listar(_ context.Context) ([]domain.Project, error) {
+	return nil, nil
+}
+
 func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Project) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()

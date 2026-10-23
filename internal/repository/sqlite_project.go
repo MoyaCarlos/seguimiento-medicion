@@ -91,6 +91,10 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 	return escanearProyecto(row)
 }
 
+func (r *SQLiteProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
+	return nil, nil
+}
+
 // Actualizar reemplaza los datos editables del proyecto.
 func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Project) error {
 	resultado, err := r.db.ExecContext(ctx,
