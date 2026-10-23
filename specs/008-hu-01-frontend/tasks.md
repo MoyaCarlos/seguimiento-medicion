@@ -33,8 +33,8 @@ description: "Task list for HU-01 frontend: pantalla de creación de historias d
 
 **⚠️ CRITICAL**: sin estos tipos no se puede empezar ninguna historia.
 
-- [ ] T004 Crear `web/src/features/backlog/historia.ts` con los tipos `FormularioHistoria`, `CuerpoCrearHistoria`, `HistoriaCreada` y `ErrorDeCampo`, y la constante `ESTADO_INICIAL` (`titulo: ''`, `descripcion: ''`, `prioridad: 'M'`, `valorNegocio: ''`). Solo tipos/constante: sin funciones ni lógica
-- [ ] T005 COMMIT `Definir tipos del formulario de historia`
+- [X] T004 Crear `web/src/features/backlog/historia.ts` con los tipos `FormularioHistoria`, `CuerpoCrearHistoria`, `HistoriaCreada` y `ErrorDeCampo`, y la constante `ESTADO_INICIAL` (`titulo: ''`, `descripcion: ''`, `prioridad: 'M'`, `valorNegocio: ''`). Solo tipos/constante: sin funciones ni lógica
+- [X] T005 COMMIT `Definir tipos del formulario de historia`
 
 **Checkpoint**: Foundation ready; empieza la implementación por historia.
 
