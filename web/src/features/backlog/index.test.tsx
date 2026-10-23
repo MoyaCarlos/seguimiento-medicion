@@ -61,6 +61,11 @@ function botonGuardar() {
   return screen.getByRole('button', { name: 'Guardar' })
 }
 
+function mensajeDe(campo: HTMLElement) {
+  const id = campo.getAttribute('aria-describedby')
+  return id ? document.getElementById(id)?.textContent ?? null : null
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
@@ -189,6 +194,126 @@ describe('casos límite de creación', () => {
     expect(cuerpoEnviado(fetchMock, 0).titulo).toBe('Historia repetida')
     expect(cuerpoEnviado(fetchMock, 1).titulo).toBe('Historia repetida')
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
+
+describe('validación de US2', () => {
+  it('US2.1: sin título advierte junto al campo y no llama a la API', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+    const user = userEvent.setup()
+
+    fireEvent.change(screen.getByLabelText('Descripción'), {
+      target: { value: 'Descripción válida' },
+    })
+    await user.click(botonGuardar())
+
+    const titulo = screen.getByLabelText('Título')
+    expect(titulo.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(titulo)).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['título', 'Título'],
+    ['descripción', 'Descripción'],
+  ])('US2.2: con %s de solo espacios lo considera vacío', async (_caso, etiqueta) => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+    const user = userEvent.setup()
+
+    if (etiqueta === 'Título') {
+      fireEvent.change(screen.getByLabelText('Título'), { target: { value: '   ' } })
+      fireEvent.change(screen.getByLabelText('Descripción'), {
+        target: { value: 'Descripción válida' },
+      })
+    } else {
+      fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Título válido' } })
+      fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: '   ' } })
+    }
+    await user.click(botonGuardar())
+
+    const campo = screen.getByLabelText(etiqueta)
+    expect(campo.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(campo)).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['título de 201 caracteres', 'Título', 'a'.repeat(201)],
+    ['descripción de 2001 caracteres', 'Descripción', 'a'.repeat(2001)],
+  ])('US2.3: rechaza un %s sin llamar a la API', async (_caso, etiqueta, texto) => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+    const user = userEvent.setup()
+
+    if (etiqueta === 'Título') {
+      fireEvent.change(screen.getByLabelText('Título'), { target: { value: texto } })
+      fireEvent.change(screen.getByLabelText('Descripción'), {
+        target: { value: 'Descripción válida' },
+      })
+    } else {
+      fireEvent.change(screen.getByLabelText('Título'), { target: { value: 'Título válido' } })
+      fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: texto } })
+    }
+    await user.click(botonGuardar())
+
+    const campo = screen.getByLabelText(etiqueta)
+    expect(campo.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(campo)).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('US2.4: acepta exactamente 200 y 2000 caracteres', async () => {
+    const fetchMock = responderCreada()
+    abrir()
+    const user = userEvent.setup()
+    const titulo = 'a'.repeat(200)
+    const descripcion = 'a'.repeat(2000)
+
+    fireEvent.change(screen.getByLabelText('Título'), { target: { value: titulo } })
+    fireEvent.change(screen.getByLabelText('Descripción'), { target: { value: descripcion } })
+    await user.click(botonGuardar())
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(cuerpoEnviado(fetchMock).titulo).toBe(titulo)
+    expect(cuerpoEnviado(fetchMock).descripcion).toBe(descripcion)
+  })
+
+  it('US2.5: muestra todos los errores del intento a la vez', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+    const user = userEvent.setup()
+
+    fireEvent.change(screen.getByLabelText('Descripción'), {
+      target: { value: 'a'.repeat(2001) },
+    })
+    await user.click(botonGuardar())
+
+    const titulo = screen.getByLabelText('Título')
+    const descripcion = screen.getByLabelText('Descripción')
+    expect(mensajeDe(titulo)).toBeTruthy()
+    expect(mensajeDe(descripcion)).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('US2.6: un intento inválido reemplaza la confirmación anterior', async () => {
+    const fetchMock = responderCreada()
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+    await screen.findByRole('region', { name: 'Historia creada' })
+
+    await user.click(botonGuardar())
+
+    expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
+    expect(mensajeDe(screen.getByLabelText('Título'))).toBeTruthy()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })
 
