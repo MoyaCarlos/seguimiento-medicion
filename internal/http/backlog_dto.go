@@ -22,7 +22,7 @@ type historiaResponse struct {
 }
 
 type errorResponse struct {
-	Campo   string `json:"campo"`
+	Campo   string `json:"campo,omitempty"`
 	Mensaje string `json:"mensaje"`
 }
 

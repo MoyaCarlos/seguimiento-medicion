@@ -230,6 +230,18 @@ func TestProjectHandler_Crear_JSONInvalido(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
 	}
+	verificarErrorSinCampo(t, rec)
+}
+
+func verificarErrorSinCampo(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	var cuerpo map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &cuerpo); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	if _, ok := cuerpo["campo"]; ok {
+		t.Errorf("no se esperaba la clave campo, se obtuvo %s", rec.Body.String())
+	}
 }
 
 func TestProjectHandler_Crear_ErrorPersistencia(t *testing.T) {
@@ -275,6 +287,7 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
 	}
+	verificarErrorSinCampo(t, rec)
 }
 
 func TestProjectHandler_Obtener_IDNoNumerico(t *testing.T) {
@@ -476,6 +489,18 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
+	}
+}
+
+func TestProjectHandler_AsignarIntegrante_ProyectoInexistenteConCuerpoInvalido(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{nombre:`))
+	req.SetPathValue("id", "999")
+	handler.AsignarIntegrante(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre JSON inválido), se obtuvo %d", rec.Code)
 	}
 }
 

@@ -55,7 +55,6 @@ paths:
                     mensaje: la fecha de fin debe ser posterior a la de inicio
                 jsonInvalido:
                   value:
-                    campo: ''
                     mensaje: JSON inválido
         '500':
           description: Error interno (fallo de persistencia).
@@ -325,7 +324,7 @@ components:
       properties:
         campo:
           type: string
-          description: Campo que originó el error (vacío si no aplica a un campo).
+          description: Campo que originó el error (se omite si el error no aplica a un campo).
         mensaje:
           type: string
     ErrorInterno:

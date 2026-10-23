@@ -183,6 +183,26 @@ La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP
 - **Frontend:** React + Vite (SPA), consume la API vía REST/JSON.
 - **Persistencia:** SQLite embebido, vía `modernc.org/sqlite` (puro Go, sin CGO,
   evita depender de un compilador C en las máquinas del equipo).
+- **Modelo de datos (ya definido):** el esquema de la base **ya está diseñado** y vive en
+  [`MODELO-DE-DATOS.md`](MODELO-DE-DATOS.md), en la raíz del repo. Es la fuente de verdad:
+  tablas, columnas, restricciones, migraciones y dónde vive cada regla. **Quien trabaje en
+  este proyecto, persona o agente de IA, debe leerlo antes de tocar tablas, columnas o
+  repositorios SQLite, y no inventar un esquema propio.** Reglas:
+  - Tablas y columnas en español, `snake_case`; los valores de los enums son los del dominio.
+  - El esquema lo crean migraciones numeradas con `go:embed`, no `CREATE TABLE` sueltos en
+    el código.
+  - Un cambio de esquema se hace en un solo PR que modifica ese documento **y** agrega la
+    migración; ninguno va sin el otro.
+  - El `data-model.md` de cada spec **enlaza** a la sección del documento en lugar de
+    redefinir tablas.
+  - **Hasta que se mergee #107, `main` sigue con el esquema viejo** (tablas y columnas en
+    inglés): el documento describe el destino y esa diferencia es esperada, no se frena por
+    ella. Cualquier otra contradicción entre el documento y el código se frena y se avisa;
+    no se elige uno en silencio.
+  - **Ante cualquier duda sobre el modelo de datos, se pregunta al Scrum Master o al
+    equipo antes de seguir.** Vale para personas y para agentes de IA: no se completa un
+    hueco, no se agrega ni se cambia una tabla, columna o restricción y no se resuelve una
+    decisión abierta por cuenta propia, ni siquiera con una recomendación razonable.
 - **Testing BDD:** Godog.
 - **Testing TDD:** paquete `testing` estándar de Go.
 - **Reportes:** generación de PDF con Maroto (puro Go, sin dependencias externas).
