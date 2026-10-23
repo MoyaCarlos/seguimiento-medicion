@@ -52,17 +52,17 @@ func hoyCivil() time.Time {
 
 func (p *pasosEstado) fijarFechas(inicio, fin *time.Time) error {
 	_, err := p.base.db.Exec(
-		"UPDATE projects SET start_date = ?, end_date = ? WHERE id = ?",
-		fechaOpcionalRFC3339(inicio), fechaOpcionalRFC3339(fin), p.base.proyectoID,
+		"UPDATE proyectos SET fecha_inicio = ?, fecha_fin = ? WHERE id = ?",
+		fechaOpcionalComoDia(inicio), fechaOpcionalComoDia(fin), p.base.proyectoID,
 	)
 	return err
 }
 
-func fechaOpcionalRFC3339(t *time.Time) any {
+func fechaOpcionalComoDia(t *time.Time) any {
 	if t == nil {
 		return nil
 	}
-	return t.UTC().Format(time.RFC3339)
+	return t.UTC().Format(time.DateOnly)
 }
 
 func (p *pasosEstado) fechasCargadas() error {

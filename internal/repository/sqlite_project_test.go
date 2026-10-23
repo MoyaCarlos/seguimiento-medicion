@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -38,22 +37,9 @@ func TestAbrirSQLite_ForeignKeysEnTodasLasConexiones(t *testing.T) {
 	}
 }
 
-func abrirBDDePrueba(t *testing.T) *sql.DB {
-	t.Helper()
-	db, err := AbrirSQLite(":memory:")
-	if err != nil {
-		t.Fatalf("no se pudo abrir sqlite: %v", err)
-	}
-	if err := Migrar(context.Background(), db); err != nil {
-		t.Fatalf("no se pudo migrar: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
-	return db
-}
-
 func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 
 	p, err := domain.NewProject("Software Metrics & Estimation", "Descripción", &inicio, nil)
@@ -83,9 +69,35 @@ func TestSQLiteProjectRepository_CrearYLeer(t *testing.T) {
 	}
 }
 
+func TestSQLiteProjectRepository_FechasComoDia(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
+	inicio := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
+
+	p, err := domain.NewProject("Proyecto", "", &inicio, &fin)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+	guardado, err := repo.Guardar(ctx, p)
+	if err != nil {
+		t.Fatalf("no se esperaba error al crear: %v", err)
+	}
+
+	var fechaInicio, fechaFin string
+	if err := repo.db.QueryRow(
+		"SELECT fecha_inicio, fecha_fin FROM proyectos WHERE id = ?", guardado.ID,
+	).Scan(&fechaInicio, &fechaFin); err != nil {
+		t.Fatalf("no se pudieron leer las fechas: %v", err)
+	}
+	if fechaInicio != "2026-10-01" || fechaFin != "2026-12-01" {
+		t.Errorf("se esperaban 2026-10-01 y 2026-12-01, se obtuvo %q y %q", fechaInicio, fechaFin)
+	}
+}
+
 func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	var ids []int64
 	for i := 0; i < 3; i++ {
@@ -108,16 +120,16 @@ func TestSQLiteProjectRepository_IDsAutoincrementales(t *testing.T) {
 
 func TestSQLiteProjectRepository_GuardarConScrumMaster_Rollback(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
-	// creadorID inexistente: la FK de project_members falla en la segunda escritura.
+	// creadorID inexistente: la FK de integrantes falla en la segunda escritura.
 	if _, err := repo.GuardarConScrumMaster(ctx, p, 999999); err == nil {
 		t.Fatal("se esperaba error por FK del integrante inexistente")
 	}
 
 	var total int
-	if err := repo.db.QueryRow("SELECT COUNT(*) FROM projects").Scan(&total); err != nil {
+	if err := repo.db.QueryRow("SELECT COUNT(*) FROM proyectos").Scan(&total); err != nil {
 		t.Fatal(err)
 	}
 	if total != 0 {
@@ -127,7 +139,7 @@ func TestSQLiteProjectRepository_GuardarConScrumMaster_Rollback(t *testing.T) {
 
 func TestSQLiteProjectRepository_GuardarConScrumMaster_FKDelCreador(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
 	_, err := repo.GuardarConScrumMaster(ctx, p, 999999)
@@ -138,7 +150,7 @@ func TestSQLiteProjectRepository_GuardarConScrumMaster_FKDelCreador(t *testing.T
 
 func TestSQLiteProjectRepository_AgregarIntegrante_FKVioladaNoEsNoEncontrado(t *testing.T) {
 	ctx := context.Background()
-	proyectos := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	proyectos := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	p, _ := domain.NewProject("Proyecto", "", nil, nil)
 	guardado, err := proyectos.Guardar(ctx, p)
@@ -158,7 +170,7 @@ func TestSQLiteProjectRepository_AgregarIntegrante_FKVioladaNoEsNoEncontrado(t *
 
 func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	for i := 0; i < 2; i++ {
 		p, _ := domain.NewProject("Mismo nombre", "", nil, nil)
@@ -167,7 +179,7 @@ func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 		}
 	}
 	var total int
-	if err := repo.db.QueryRow("SELECT COUNT(*) FROM projects WHERE name = ?", "Mismo nombre").Scan(&total); err != nil {
+	if err := repo.db.QueryRow("SELECT COUNT(*) FROM proyectos WHERE nombre = ?", "Mismo nombre").Scan(&total); err != nil {
 		t.Fatalf("no se pudo contar: %v", err)
 	}
 	if total != 2 {
@@ -177,7 +189,7 @@ func TestSQLiteProjectRepository_NombresRepetidos(t *testing.T) {
 
 func TestSQLiteProjectRepository_Actualizar(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 
 	p, _ := domain.NewProject("Original", "desc", nil, nil)
 	guardado, err := repo.Guardar(ctx, p)
@@ -201,7 +213,7 @@ func TestSQLiteProjectRepository_Actualizar(t *testing.T) {
 
 func TestSQLiteProjectRepository_ActualizarInexistente(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteProjectRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
 	p, _ := domain.NewProject("Fantasma", "", nil, nil)
 	p.ID = 999
 	if err := repo.Actualizar(ctx, p); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
@@ -211,7 +223,7 @@ func TestSQLiteProjectRepository_ActualizarInexistente(t *testing.T) {
 
 func TestSQLiteProjectRepository_ListarIntegrantes_OrdenDeAlta(t *testing.T) {
 	ctx := context.Background()
-	db := abrirBDDePrueba(t)
+	db := nuevaBDMigrada(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 
@@ -221,7 +233,7 @@ func TestSQLiteProjectRepository_ListarIntegrantes_OrdenDeAlta(t *testing.T) {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
-	// Tres altas con el mismo created_at (resolución de segundos) en orden no
+	// Tres altas con el mismo creado_en (resolución de segundos) en orden no
 	// alfabético: el orden real de alta debe prevalecer.
 	nombres := []string{"Jimena", "Ana", "Candela"}
 	fecha := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -251,7 +263,7 @@ func TestSQLiteProjectRepository_ListarIntegrantes_OrdenDeAlta(t *testing.T) {
 
 func TestSQLiteProjectRepository_Miembros(t *testing.T) {
 	ctx := context.Background()
-	db := abrirBDDePrueba(t)
+	db := nuevaBDMigrada(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 
@@ -284,7 +296,7 @@ func TestSQLiteProjectRepository_Miembros(t *testing.T) {
 
 func TestSQLiteProjectRepository_MiembroDuplicado(t *testing.T) {
 	ctx := context.Background()
-	db := abrirBDDePrueba(t)
+	db := nuevaBDMigrada(t)
 	proyectos := NewSQLiteProjectRepository(db)
 	usuarios := NewSQLiteUserRepository(db)
 

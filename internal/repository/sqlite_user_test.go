@@ -10,7 +10,7 @@ import (
 
 func TestSQLiteUserRepository_CrearYBuscar(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteUserRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteUserRepository(nuevaBDMigrada(t))
 
 	u, err := domain.NewUser("Ana Valentina")
 	if err != nil {
@@ -34,7 +34,7 @@ func TestSQLiteUserRepository_CrearYBuscar(t *testing.T) {
 }
 
 func TestSQLiteUserRepository_NoEncuentra(t *testing.T) {
-	repo := NewSQLiteUserRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteUserRepository(nuevaBDMigrada(t))
 
 	_, err := repo.ObtenerPorNombreNormalizado(context.Background(), "inexistente")
 	if !errors.Is(err, domain.ErrNoEncontrado) {
@@ -44,7 +44,7 @@ func TestSQLiteUserRepository_NoEncuentra(t *testing.T) {
 
 func TestSQLiteUserRepository_NoDuplicaNombreNormalizado(t *testing.T) {
 	ctx := context.Background()
-	repo := NewSQLiteUserRepository(abrirBDDePrueba(t))
+	repo := NewSQLiteUserRepository(nuevaBDMigrada(t))
 
 	primero, _ := domain.NewUser("Ana")
 	if _, err := repo.Guardar(ctx, primero); err != nil {

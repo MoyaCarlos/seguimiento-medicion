@@ -27,7 +27,7 @@ func (r *SQLiteUserRepository) Guardar(ctx context.Context, u domain.User) (doma
 		u.CreadoEn = time.Now().UTC()
 	}
 	res, err := r.db.ExecContext(ctx,
-		`INSERT INTO users (name, normalized_name, created_at) VALUES (?, ?, ?)`,
+		`INSERT INTO usuarios (nombre, nombre_normalizado, creado_en) VALUES (?, ?, ?)`,
 		u.Nombre, u.NombreNormalizado, u.CreadoEn.Format(time.RFC3339),
 	)
 	if err != nil {
@@ -48,7 +48,7 @@ func (r *SQLiteUserRepository) Guardar(ctx context.Context, u domain.User) (doma
 // ObtenerPorNombreNormalizado devuelve el integrante cuyo nombre normalizado coincide.
 func (r *SQLiteUserRepository) ObtenerPorNombreNormalizado(ctx context.Context, normalized string) (*domain.User, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, name, normalized_name, created_at FROM users WHERE normalized_name = ?`,
+		`SELECT id, nombre, nombre_normalizado, creado_en FROM usuarios WHERE nombre_normalizado = ?`,
 		normalized,
 	)
 	var (

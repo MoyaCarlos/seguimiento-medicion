@@ -20,7 +20,7 @@ func NewSQLiteBacklogRepository(db *sql.DB) *SQLiteBacklogRepository {
 // Guardar persiste la historia y devuelve una copia con el ID asignado.
 func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
 	resultado, err := r.db.ExecContext(ctx,
-		`INSERT INTO backlog_items (proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp)
+		`INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp)
 		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
 		item.ProyectoID,
 		item.Titulo,
@@ -31,7 +31,7 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 		punteroAValorSQL(item.EstimacionSP),
 	)
 	if err != nil {
-		return domain.BacklogItem{}, fmt.Errorf("guardar backlog item: %w", err)
+		return domain.BacklogItem{}, fmt.Errorf("guardar backlog item: %w", errorDeEscritura(err))
 	}
 
 	id, err := resultado.LastInsertId()
@@ -46,7 +46,7 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	filas, err := r.db.QueryContext(ctx,
 		`SELECT id, proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
-		 FROM backlog_items WHERE sprint_id = ? ORDER BY id`, sprintID)
+		 FROM historias WHERE sprint_id = ? ORDER BY id`, sprintID)
 	if err != nil {
 		return nil, fmt.Errorf("listar historias del sprint %d: %w", sprintID, err)
 	}
@@ -72,7 +72,7 @@ func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID 
 // y con estado Nueva.
 func (r *SQLiteBacklogRepository) QuitarDeSprint(ctx context.Context, historiaID int64) error {
 	if _, err := r.db.ExecContext(ctx,
-		"UPDATE backlog_items SET sprint_id = NULL, estado = ? WHERE id = ?",
+		"UPDATE historias SET sprint_id = NULL, estado = ? WHERE id = ?",
 		string(domain.EstadoNueva), historiaID,
 	); err != nil {
 		return fmt.Errorf("quitar historia %d del sprint: %w", historiaID, err)
