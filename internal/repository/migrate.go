@@ -4,7 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io/fs"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -178,4 +182,64 @@ func verificarEsquemaViejo(ctx context.Context, db *sql.DB) error {
 		}
 	}
 	return filas.Err()
+}
+
+var nombreDeMigracion = regexp.MustCompile(`^(\d{3})_.+\.sql$`)
+
+// aplicarMigraciones aplica, en orden de nombre, las migraciones NNN_nombre.sql
+// de fsys que no figuran en migraciones_aplicadas, cada una en su transacción.
+func aplicarMigraciones(ctx context.Context, db *sql.DB, fsys fs.FS) error {
+	if _, err := db.ExecContext(ctx,
+		`CREATE TABLE IF NOT EXISTS migraciones_aplicadas (version INTEGER PRIMARY KEY, aplicada_en TEXT NOT NULL)`,
+	); err != nil {
+		return fmt.Errorf("crear migraciones_aplicadas: %w", err)
+	}
+	archivos, err := fs.ReadDir(fsys, ".")
+	if err != nil {
+		return fmt.Errorf("listar migraciones: %w", err)
+	}
+	for _, archivo := range archivos {
+		nombre := archivo.Name()
+		partes := nombreDeMigracion.FindStringSubmatch(nombre)
+		if partes == nil {
+			return fmt.Errorf("nombre de migración inválido %q: se espera NNN_nombre.sql", nombre)
+		}
+		version, _ := strconv.Atoi(partes[1])
+		if err := aplicarMigracion(ctx, db, fsys, nombre, version); err != nil {
+			return fmt.Errorf("aplicar migración %s: %w", nombre, err)
+		}
+	}
+	return nil
+}
+
+func aplicarMigracion(ctx context.Context, db *sql.DB, fsys fs.FS, nombre string, version int) error {
+	var aplicada int
+	if err := db.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM migraciones_aplicadas WHERE version = ?", version,
+	).Scan(&aplicada); err != nil {
+		return err
+	}
+	if aplicada > 0 {
+		return nil
+	}
+	contenido, err := fs.ReadFile(fsys, nombre)
+	if err != nil {
+		return err
+	}
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, string(contenido)); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if _, err := tx.ExecContext(ctx,
+		"INSERT INTO migraciones_aplicadas (version, aplicada_en) VALUES (?, ?)",
+		version, time.Now().UTC().Format(time.RFC3339),
+	); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	return tx.Commit()
 }
