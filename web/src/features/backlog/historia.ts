@@ -36,3 +36,28 @@ export const ESTADO_INICIAL: FormularioHistoria = {
   prioridad: 'M',
   valorNegocio: '',
 }
+
+export function parsearProyectoId(valor: string | undefined): number | null {
+  if (!valor || !/^\d+$/.test(valor)) return null
+
+  const id = Number(valor)
+  return Number.isSafeInteger(id) && id > 0 ? id : null
+}
+
+export function armarCuerpo(
+  proyectoId: number,
+  formulario: FormularioHistoria,
+): CuerpoCrearHistoria {
+  const cuerpo: CuerpoCrearHistoria = {
+    proyecto_id: proyectoId,
+    titulo: formulario.titulo.trim(),
+    descripcion: formulario.descripcion.trim(),
+    prioridad: formulario.prioridad,
+  }
+
+  if (formulario.valorNegocio !== '') {
+    cuerpo.valor_negocio = Number(formulario.valorNegocio) as ValorNegocio
+  }
+
+  return cuerpo
+}
