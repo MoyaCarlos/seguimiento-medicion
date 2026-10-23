@@ -53,11 +53,11 @@ describe('registro de rutas', () => {
 
   it('cambiar el id de la URL cambia el proyecto mostrado, sin estado compartido', async () => {
     const router = abrir('/projects/1/backlog')
-    expect(await screen.findByText('1')).toBeTruthy()
+    expect(await screen.findByText('1', { selector: 'strong' })).toBeTruthy()
 
     await router.navigate('/projects/2/backlog')
 
-    expect(await screen.findByText('2')).toBeTruthy()
+    expect(await screen.findByText('2', { selector: 'strong' })).toBeTruthy()
   })
 
   it.each(['/no-existe', '/projects/1/otra'])('%s muestra "Página no encontrada"', async (url) => {
