@@ -289,6 +289,23 @@ func TestAplicarMigraciones_NombreInvalido(t *testing.T) {
 	}
 }
 
+func TestAplicarMigraciones_VersionRepetida(t *testing.T) {
+	db := nuevaBDVacia(t)
+	fsys := fstest.MapFS{
+		"002_a.sql": migracion("CREATE TABLE t1 (x INTEGER);"),
+		"002_b.sql": migracion("CREATE TABLE t2 (x INTEGER);"),
+	}
+
+	err := aplicarMigraciones(context.Background(), db, fsys)
+
+	if err == nil {
+		t.Fatal("se esperaba un error por versión repetida")
+	}
+	if !strings.Contains(err.Error(), "002_a.sql") || !strings.Contains(err.Error(), "002_b.sql") {
+		t.Errorf("el error debe nombrar ambos archivos, got %q", err)
+	}
+}
+
 func TestAplicarMigraciones_IgnoraVersionDesconocida(t *testing.T) {
 	db := nuevaBDVacia(t)
 	ctx := context.Background()
