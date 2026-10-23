@@ -1,0 +1,174 @@
+.hu04-panel {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.hu04-tarjeta {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgb(80 60 110 / 8%);
+  padding: 2rem;
+}
+
+.hu04-tarjeta--angosta {
+  margin: 0 auto;
+  max-width: 640px;
+}
+
+.hu04-tarjeta h2 {
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.75rem;
+}
+
+.hu04-tarjeta p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.hu04-encabezado {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  justify-content: space-between;
+}
+
+.hu04-encabezado h1 {
+  margin-bottom: 0.35rem;
+}
+
+.hu04-acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.hu04-acciones .button {
+  text-decoration: none;
+}
+
+.hu04-intro {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.hu04-referencia {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.hu04-referencia strong {
+  color: var(--lilac-dark);
+}
+
+.hu04-fila {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.hu04-columnas {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.hu04-tarjeta form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.hu04-tarjeta form .button {
+  justify-self: start;
+}
+
+.hu04-opcional {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.hu04-tarjeta textarea,
+.hu04-tarjeta select {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+  resize: vertical;
+}
+
+.hu04-tarjeta textarea:focus,
+.hu04-tarjeta select:focus {
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
+  outline: none;
+}
+
+.hu04-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1.25rem 0 0;
+}
+
+.hu04-datos div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hu04-datos dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hu04-datos dd {
+  margin: 0;
+}
+
+.hu04-equipo {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.hu04-equipo li {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0.85rem;
+}
+
+.hu04-equipo strong {
+  color: var(--lilac-dark);
+  font-size: 0.8rem;
+}
+
+.hu04-enlace {
+  color: var(--lilac-dark);
+  font-weight: 700;
+  justify-self: start;
+}
+
+@media (max-width: 600px) {
+  .hu04-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hu04-tarjeta {
+    padding: 1.5rem;
+  }
+}

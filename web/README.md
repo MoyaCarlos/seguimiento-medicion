@@ -47,9 +47,11 @@ Con Node 24 listo:
 
    La terminal muestra la dirección, normalmente `http://localhost:5173`.
 
-3. Abrir `http://localhost:5173/projects/<id>` con el `id` del proyecto que
-   cargaste. La API todavía no tiene un listado de proyectos, así que hay que
-   conocer el `id`. La página `/` solo explica esto.
+3. Abrir `http://localhost:5173/`: la pantalla principal permite crear un
+   proyecto y, al confirmarlo, abre su panel en
+   `http://localhost:5173/projects/<id>/proyecto`. La API todavía no tiene un
+   listado de proyectos, así que para volver a uno existente hay que conocer su
+   `id`.
 
 ### Otros comandos
 
@@ -96,16 +98,17 @@ src/
     componentes/        Button, Field, ErrorMessage, LoadingIndicator
     router/             Marco del proyecto (menú), "página no encontrada" e inicio
   features/             Una carpeta por historia
-    proyecto/           HU-04 (hoy solo un marcador de lugar)
+    proyecto/           HU-04 (crear proyecto, panel, equipo y edición)
     backlog/            HU-01
     sprints/            HU-05
     estado/             HU-13
   setupTests.ts         Limpia la pantalla entre pruebas
 ```
 
-Hoy cada carpeta de `features/` tiene un `index.tsx` que solo muestra un
-marcador de lugar con el título y el proyecto actual. Cada historia lo
-reemplaza por su pantalla real.
+Hoy `features/proyecto/` ya tiene sus pantallas reales: la creación se abre en
+`/` y el panel, la configuración del equipo y la edición viven bajo
+`/projects/<id>/proyecto`. Las demás carpetas de `features/` siguen mostrando un
+marcador de lugar hasta que su historia las implemente.
 
 ### Las reglas que evitan los choques
 
