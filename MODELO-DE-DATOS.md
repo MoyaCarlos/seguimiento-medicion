@@ -508,11 +508,18 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    así que el apagado y el reencendido deben hacerse explícitamente en esa conexión).
    Es el costo de tener `CHECK`; por eso se usan solo en enums cerrados y estables y en
    el formato de fechas (D12), y no en la escala Fibonacci (D11).
+   Limitación del runner actual: cada migración corre en una transacción y SQLite ignora
+   `PRAGMA foreign_keys = OFF` dentro de una transacción. Ninguna migración prevista (002 a
+   005) recrea tablas, así que no se resuelve ahora; la primera que lo necesite debe
+   extender el runner y ajustar este punto.
 5. **Una sola vez**, al adoptar este esquema, las bases locales con las tablas en
    inglés se detectan y se pide borrar `seguimiento.db`, igual que hoy con
    `ErrEsquemaViejo`. Una base es vieja si tiene **al menos una** de `projects`, `users`,
    `project_members` o `backlog_items`; `sprints` no cuenta, porque conserva el nombre.
    Son datos de desarrollo; no hay producción. Es el último "borrá la base": de ahí en más se migra.
+   El chequeo corre en cada arranque (es una consulta barata); por eso `projects`, `users`,
+   `project_members` y `backlog_items` quedan reservados y no se usan para tablas nuevas,
+   que van en español (§2).
 6. **Test de esquema**: aplicar todas las migraciones sobre una base vacía y comprobar
    con `pragma_foreign_key_list` y `pragma_table_info` que cada tabla, columna y FK de
    este documento existe. Además, **insertar filas válidas e inválidas y esperar
