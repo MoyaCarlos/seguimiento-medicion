@@ -9,15 +9,8 @@ import (
 
 func nuevaBDDePrueba(t *testing.T) *SQLiteBacklogRepository {
 	t.Helper()
-	db, err := AbrirSQLite(":memory:")
-	if err != nil {
-		t.Fatalf("no se pudo abrir sqlite: %v", err)
-	}
-	db.SetMaxOpenConns(1)
-	if err := Migrar(context.Background(), db); err != nil {
-		t.Fatalf("no se pudo migrar: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
+	db := nuevaBDMigrada(t)
+	guardarProyecto(t, db)
 	return NewSQLiteBacklogRepository(db)
 }
 
@@ -44,7 +37,7 @@ func TestSQLiteBacklogRepository_Guardar(t *testing.T) {
 		valorNegocio *int
 	)
 	err = repo.db.QueryRowContext(ctx,
-		"SELECT estado, estimacion_sp, valor_negocio FROM backlog_items WHERE id = ?", guardado.ID,
+		"SELECT estado, estimacion_sp, valor_negocio FROM historias WHERE id = ?", guardado.ID,
 	).Scan(&estado, &estimacion, &valorNegocio)
 	if err != nil {
 		t.Fatalf("no se pudo releer la historia: %v", err)
@@ -95,7 +88,7 @@ func TestSQLiteBacklogRepository_TitulosRepetidos(t *testing.T) {
 	}
 
 	var total int
-	if err := repo.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM backlog_items WHERE titulo = ?", "Mismo título").Scan(&total); err != nil {
+	if err := repo.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM historias WHERE titulo = ?", "Mismo título").Scan(&total); err != nil {
 		t.Fatalf("no se pudo contar: %v", err)
 	}
 	if total != 2 {

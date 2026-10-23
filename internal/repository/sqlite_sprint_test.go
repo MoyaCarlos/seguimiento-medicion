@@ -145,13 +145,17 @@ func TestSQLiteSprintRepository_ListarPorProyecto(t *testing.T) {
 }
 
 func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
-	db := nuevaBD(t)
+	db := nuevaBDMigrada(t)
 	repo := NewSQLiteBacklogRepository(db)
+	sprints := NewSQLiteSprintRepository(db)
 	ctx := context.Background()
+	proyectoID := guardarProyecto(t, db)
+	activo := iniciarSprint(t, sprints, guardarSprint(t, sprints, proyectoID))
+	pendiente := guardarSprint(t, sprints, proyectoID)
 
 	var ids []int64
 	for _, titulo := range []string{"Completada", "Pendiente", "Otro sprint"} {
-		item, _ := domain.NewBacklogItem(1, titulo, "Descripción", domain.PrioridadMust, nil)
+		item, _ := domain.NewBacklogItem(proyectoID, titulo, "Descripción", domain.PrioridadMust, nil)
 		g, err := repo.Guardar(ctx, item)
 		if err != nil {
 			t.Fatalf("no se esperaba error al guardar: %v", err)
@@ -159,31 +163,31 @@ func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
 		ids = append(ids, g.ID)
 	}
 	// La asignación de historias a un Sprint es de HU-06; acá se simula con SQL directo.
-	mustExec(t, db, "UPDATE backlog_items SET sprint_id = 7 WHERE id IN (?, ?)", ids[0], ids[1])
-	mustExec(t, db, "UPDATE backlog_items SET sprint_id = 8 WHERE id = ?", ids[2])
-	mustExec(t, db, "UPDATE backlog_items SET estado = ? WHERE id = ?", string(domain.EstadoCompletada), ids[0])
-	mustExec(t, db, "UPDATE backlog_items SET estado = ? WHERE id = ?", "En progreso", ids[1])
+	mustExec(t, db, "UPDATE historias SET sprint_id = ? WHERE id IN (?, ?)", activo.ID, ids[0], ids[1])
+	mustExec(t, db, "UPDATE historias SET sprint_id = ? WHERE id = ?", pendiente.ID, ids[2])
+	mustExec(t, db, "UPDATE historias SET estado = ?, fecha_finalizacion = '2026-10-20' WHERE id = ?", string(domain.EstadoCompletada), ids[0])
+	mustExec(t, db, "UPDATE historias SET estado = ? WHERE id = ?", "En progreso", ids[1])
 
-	historias, err := repo.ListarPorSprint(ctx, 7)
+	historias, err := repo.ListarPorSprint(ctx, activo.ID)
 	if err != nil {
 		t.Fatalf("no se esperaba error al listar: %v", err)
 	}
 	if len(historias) != 2 {
-		t.Fatalf("se esperaban 2 historias del Sprint 7, se obtuvieron %d", len(historias))
+		t.Fatalf("se esperaban 2 historias del Sprint activo, se obtuvieron %d", len(historias))
 	}
-	if historias[0].Estado != domain.EstadoCompletada || historias[0].SprintID == nil || *historias[0].SprintID != 7 {
+	if historias[0].Estado != domain.EstadoCompletada || historias[0].SprintID == nil || *historias[0].SprintID != activo.ID {
 		t.Errorf("no se leyeron bien estado/sprint de la historia: %+v", historias[0])
 	}
 
 	if err := repo.QuitarDeSprint(ctx, ids[1]); err != nil {
 		t.Fatalf("no se esperaba error al quitar: %v", err)
 	}
-	historias, _ = repo.ListarPorSprint(ctx, 7)
+	historias, _ = repo.ListarPorSprint(ctx, activo.ID)
 	if len(historias) != 1 || historias[0].ID != ids[0] {
-		t.Errorf("se esperaba que solo quede la historia completada en el Sprint 7: %+v", historias)
+		t.Errorf("se esperaba que solo quede la historia completada en el Sprint activo: %+v", historias)
 	}
 	var estado string
-	if err := db.QueryRow("SELECT estado FROM backlog_items WHERE id = ?", ids[1]).Scan(&estado); err != nil {
+	if err := db.QueryRow("SELECT estado FROM historias WHERE id = ?", ids[1]).Scan(&estado); err != nil {
 		t.Fatalf("no se pudo consultar el estado de la historia devuelta al backlog: %v", err)
 	}
 	if estado != string(domain.EstadoNueva) {
