@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sort"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -19,6 +20,14 @@ func NewListarProyectos(proyectos listadorProyectos) *ListarProyectos {
 	return &ListarProyectos{proyectos: proyectos}
 }
 
-func (s *ListarProyectos) Ejecutar(_ context.Context) ([]domain.Project, error) {
-	return nil, nil
+func (s *ListarProyectos) Ejecutar(ctx context.Context) ([]domain.Project, error) {
+	proyectos, err := s.proyectos.Listar(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if proyectos == nil {
+		proyectos = []domain.Project{}
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	return proyectos, nil
 }
