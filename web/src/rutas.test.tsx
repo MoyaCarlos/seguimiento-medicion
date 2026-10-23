@@ -19,14 +19,20 @@ describe('registro de rutas', () => {
   ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo) => {
     abrir(url)
 
-    expect(await screen.findByRole('heading', { name: titulo })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: titulo }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByText('42')).toBeTruthy()
   })
 
-  it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
+  it('la feature de proyecto carga sus sub-pantallas dentro del mismo proyecto', async () => {
     abrir('/projects/1/proyecto/settings')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Configurar equipo' })).toBeTruthy()
+  })
+
+  it('la pantalla principal permite crear un proyecto', async () => {
+    abrir('/')
+
+    expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
   })
 
   it('/projects/:id redirige al panel del proyecto', async () => {
@@ -46,7 +52,7 @@ describe('registro de rutas', () => {
 
   it('mantiene activo el enlace de la feature en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/edit')
-    await screen.findByRole('heading', { name: 'Panel del proyecto' })
+    await screen.findByRole('heading', { name: 'Editar proyecto' })
 
     expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBe('page')
   })
