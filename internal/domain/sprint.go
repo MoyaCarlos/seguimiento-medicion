@@ -15,6 +15,12 @@ type Sprint struct {
 	Estado      EstadoSprint
 }
 
+// Un proyecto tiene a lo sumo un Sprint activo y uno pendiente.
+var (
+	ErrYaHaySprintActivo    = ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint activo"}
+	ErrYaHaySprintPendiente = ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint pendiente"}
+)
+
 // NewSprint crea un Sprint en estado Pendiente. El Goal y las fechas se
 // definen recién al iniciarlo.
 func NewSprint(proyectoID int64) (Sprint, error) {

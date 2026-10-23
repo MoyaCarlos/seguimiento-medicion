@@ -45,11 +45,7 @@ func (r *SQLiteProjectRepository) GuardarConScrumMaster(ctx context.Context, p d
 		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
 		p.ID, creadorID, string(domain.RolScrumMaster), time.Now().UTC().Format(time.RFC3339),
 	); err != nil {
-		var sqliteErr *sqlite.Error
-		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY {
-			return domain.Project{}, ErrIntegridadReferencial
-		}
-		return domain.Project{}, fmt.Errorf("vincular scrum master: %w", err)
+		return domain.Project{}, fmt.Errorf("vincular scrum master: %w", errorDeEscritura(err))
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -128,15 +124,11 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 	)
 	if err != nil {
 		var sqliteErr *sqlite.Error
-		if errors.As(err, &sqliteErr) {
-			switch sqliteErr.Code() {
-			case sqlite3.SQLITE_CONSTRAINT_UNIQUE, sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
-				return domain.Membership{}, ErrMiembroDuplicado
-			case sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY:
-				return domain.Membership{}, ErrIntegridadReferencial
-			}
+		if errors.As(err, &sqliteErr) &&
+			(sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY) {
+			return domain.Membership{}, ErrMiembroDuplicado
 		}
-		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", err)
+		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", errorDeEscritura(err))
 	}
 	return m, nil
 }

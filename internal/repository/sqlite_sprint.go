@@ -91,9 +91,9 @@ func errorDeEscrituraDeSprint(s domain.Sprint, err error) error {
 	if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
 		switch s.Estado {
 		case domain.SprintActivo:
-			return domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint activo"}
+			return domain.ErrYaHaySprintActivo
 		case domain.SprintPendiente:
-			return domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint pendiente"}
+			return domain.ErrYaHaySprintPendiente
 		}
 	}
 	return errorDeEscritura(err)
