@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"sort"
 	"sync"
 	"time"
 
@@ -81,7 +82,14 @@ func (r *ProjectRepositoryEnMemoria) ObtenerPorID(_ context.Context, id int64) (
 }
 
 func (r *ProjectRepositoryEnMemoria) Listar(_ context.Context) ([]domain.Project, error) {
-	return nil, nil
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	proyectos := make([]domain.Project, 0, len(r.proyectos))
+	for _, p := range r.proyectos {
+		proyectos = append(proyectos, p)
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	return proyectos, nil
 }
 
 func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Project) error {

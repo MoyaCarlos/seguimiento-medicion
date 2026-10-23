@@ -14,6 +14,7 @@ type ProjectRepository interface {
 	Guardar(ctx context.Context, p domain.Project) (domain.Project, error)
 	GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error)
 	ObtenerPorID(ctx context.Context, id int64) (domain.Project, error)
+	Listar(ctx context.Context) ([]domain.Project, error)
 	Actualizar(ctx context.Context, p domain.Project) error
 	AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error)
 	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)
