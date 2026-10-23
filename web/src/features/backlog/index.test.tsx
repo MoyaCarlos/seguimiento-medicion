@@ -440,6 +440,51 @@ describe('errores del servidor de US3', () => {
   })
 })
 
+describe('valor de negocio de US4', () => {
+  it('US4.3: ofrece solo "Sin valor", 1, 2, 3, 5, 8, 13 y 21', () => {
+    abrir()
+
+    const valor = screen.getByLabelText('Valor de negocio') as HTMLSelectElement
+
+    expect(Array.from(valor.options).map((opcion) => opcion.text)).toEqual([
+      'Sin valor',
+      '1',
+      '2',
+      '3',
+      '5',
+      '8',
+      '13',
+      '21',
+    ])
+  })
+
+  it('US4.4: con "Sin valor" crea la historia sin valor_negocio y no lo muestra', async () => {
+    const fetchMock = responderCreada({ valor_negocio: null })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(cuerpoEnviado(fetchMock)).not.toHaveProperty('valor_negocio')
+    expect(within(confirmacion).queryByText('Valor de negocio')).toBeNull()
+  })
+
+  it('US4.4b: envía el valor elegido, lo muestra y restablece el selector', async () => {
+    const fetchMock = responderCreada({ valor_negocio: 13 })
+    abrir()
+    const user = await completarFormulario()
+    await user.selectOptions(screen.getByLabelText('Valor de negocio'), '13')
+
+    await user.click(botonGuardar())
+
+    const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(cuerpoEnviado(fetchMock).valor_negocio).toBe(13)
+    expect(within(confirmacion).getByText('13')).toBeTruthy()
+    expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
+  })
+})
+
 describe('prioridad MoSCoW', () => {
   it('US4.1: muestra las cuatro etiquetas con "Must have" por defecto', () => {
     abrir()
