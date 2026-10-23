@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -335,5 +336,47 @@ func TestAplicarMigraciones_IgnoraVersionDesconocida(t *testing.T) {
 
 	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 9}) {
 		t.Fatalf("se esperaban las versiones [1 2 9], se obtuvo %v", got)
+	}
+}
+
+func TestAplicarMigraciones_BaseVieja(t *testing.T) {
+	casos := map[string]string{
+		"projects":        `CREATE TABLE projects (id INTEGER PRIMARY KEY)`,
+		"users":           `CREATE TABLE users (id INTEGER PRIMARY KEY)`,
+		"project_members": `CREATE TABLE project_members (project_id INTEGER, user_id INTEGER)`,
+		"backlog_items":   `CREATE TABLE backlog_items (id INTEGER PRIMARY KEY)`,
+	}
+	for tabla, ddl := range casos {
+		t.Run(tabla, func(t *testing.T) {
+			db := nuevaBDVacia(t)
+			ctx := context.Background()
+			if _, err := db.ExecContext(ctx, ddl); err != nil {
+				t.Fatalf("no se pudo preparar la base vieja: %v", err)
+			}
+
+			err := AplicarMigraciones(ctx, db)
+
+			if !errors.Is(err, ErrEsquemaViejo) {
+				t.Fatalf("se esperaba ErrEsquemaViejo, se obtuvo %v", err)
+			}
+			if !strings.Contains(err.Error(), "seguimiento.db") {
+				t.Errorf("el error debe nombrar seguimiento.db, se obtuvo %v", err)
+			}
+			if existeTabla(t, db, "migraciones_aplicadas") {
+				t.Error("no se esperaba migraciones_aplicadas en una base vieja")
+			}
+		})
+	}
+}
+
+func TestVerificarBaseVieja_SoloSprints(t *testing.T) {
+	db := nuevaBDVacia(t)
+	ctx := context.Background()
+	if _, err := db.ExecContext(ctx, `CREATE TABLE sprints (id INTEGER PRIMARY KEY)`); err != nil {
+		t.Fatalf("no se pudo preparar la base: %v", err)
+	}
+
+	if err := verificarBaseVieja(ctx, db); err != nil {
+		t.Fatalf("una base con solo sprints no es vieja, se obtuvo %v", err)
 	}
 }
