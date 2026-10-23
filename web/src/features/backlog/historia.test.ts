@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { armarCuerpo, contarCaracteres, parsearProyectoId, validarHistoria } from './historia'
+import { ApiError, ConnectionError } from '../../compartido/api/client'
+import { armarCuerpo, contarCaracteres, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { FormularioHistoria } from './historia'
 
 const FORMULARIO: FormularioHistoria = {
@@ -150,5 +151,47 @@ describe('validarHistoria', () => {
       titulo: expect.any(String),
       descripcion: expect.any(String),
     })
+  })
+})
+
+describe('mapearError', () => {
+  it.each([
+    ['titulo', 'el título es obligatorio'],
+    ['descripcion', 'la descripción es obligatoria'],
+    ['prioridad', 'la prioridad debe ser M, S, C o W'],
+    ['valor_negocio', 'el valor de negocio debe ser uno de 1, 2, 3, 5, 8, 13, 21'],
+  ] as const)('ubica el mensaje del campo %s junto a ese campo', (campo, mensaje) => {
+    expect(mapearError(new ApiError(400, mensaje, campo))).toEqual({ campo, mensaje })
+  })
+
+  it('manda al aviso general un error sin campo', () => {
+    const resultado = mapearError(new ApiError(400, 'datos inválidos'))
+
+    expect(resultado.campo).toBeUndefined()
+    expect(resultado.mensaje).toBe('datos inválidos')
+  })
+
+  it.each(['otro', 'proyecto_id'])(
+    'manda al aviso general el error del campo %s',
+    (campo) => {
+      const resultado = mapearError(new ApiError(400, 'mensaje del servidor', campo))
+
+      expect(resultado.campo).toBeUndefined()
+      expect(resultado.mensaje).toBe('mensaje del servidor')
+    },
+  )
+
+  it('manda al aviso general el proyecto no encontrado', () => {
+    const resultado = mapearError(new ApiError(404, 'proyecto no encontrado'))
+
+    expect(resultado.campo).toBeUndefined()
+    expect(resultado.mensaje).toBe('proyecto no encontrado')
+  })
+
+  it('manda al aviso general un error de conexión', () => {
+    const resultado = mapearError(new ConnectionError())
+
+    expect(resultado.campo).toBeUndefined()
+    expect(resultado.mensaje).toBe('No se pudo conectar con el servidor')
   })
 })
