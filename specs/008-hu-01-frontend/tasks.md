@@ -65,14 +65,14 @@ description: "Task list for HU-01 frontend: pantalla de creación de historias d
 
 **Independent Test**: intentar guardar sin título, solo espacios, con 201/2001 caracteres y con ambos campos inválidos; comprobar advertencias junto a cada campo y cero llamadas; con exactamente 200/2000, comprobar que se envía.
 
-- [ ] T014 [US2] RED: en `web/src/features/backlog/historia.test.ts` escribir tests de `contarCaracteres` (cuenta puntos de código: `"😀"` → 1, `"ñ"` → 1, `"e\u0301"` → 2; no unidades UTF-16) y de `validarHistoria` con las reglas de `data-model.md` citadas textualmente: título "Obligatorio; se evalúa después de `trim`; máximo 200 puntos de código", descripción "Obligatoria; se evalúa después de `trim`; máximo 2000 puntos de código", límites inclusivos 200/2000, y devolución de **todos** los errores de campo del intento. Confirmar que FALLA
-- [ ] T015 [US2] COMMIT `RED: agregar tests de validación del formulario (falla)`
-- [ ] T016 [US2] GREEN: implementar `contarCaracteres` y `validarHistoria` en `web/src/features/backlog/historia.ts` (recortar antes de validar y contar con `[...texto].length`); `npm test` en verde
-- [ ] T017 [US2] COMMIT `GREEN: implementar validación del formulario, test en verde`
-- [ ] T018 [US2] RED: agregar en `web/src/features/backlog/index.test.tsx` un `it` por escenario de aceptación de US2 (cuatro) más el caso de varios errores simultáneos: advertencia junto al campo, cero llamadas a `fetch`, exactamente 200/2000 aceptados, y que un intento inválido reemplaza la confirmación anterior. Confirmar que FALLA
-- [ ] T019 [US2] COMMIT `RED: agregar pruebas de componente de validación (falla)`
-- [ ] T020 [US2] GREEN: integrar `validarHistoria` en `web/src/features/backlog/index.tsx`: mostrar todas las advertencias junto a cada control con `label` asociada por `htmlFor`/`id` y `aria-invalid`/`aria-describedby`, bloquear el envío si hay errores, limpiar confirmación/errores al iniciar el intento y no borrar lo escrito. `npm test` en verde
-- [ ] T021 [US2] COMMIT `GREEN: integrar validación en la pantalla, test en verde`
+- [X] T014 [US2] RED: en `web/src/features/backlog/historia.test.ts` escribir tests de `contarCaracteres` (cuenta puntos de código: `"😀"` → 1, `"ñ"` → 1, `"e\u0301"` → 2; no unidades UTF-16) y de `validarHistoria` con las reglas de `data-model.md` citadas textualmente: título "Obligatorio; se evalúa después de `trim`; máximo 200 puntos de código", descripción "Obligatoria; se evalúa después de `trim`; máximo 2000 puntos de código", límites inclusivos 200/2000, y devolución de **todos** los errores de campo del intento. Confirmar que FALLA
+- [X] T015 [US2] COMMIT `RED: agregar tests de validación del formulario (falla)`
+- [X] T016 [US2] GREEN: implementar `contarCaracteres` y `validarHistoria` en `web/src/features/backlog/historia.ts` (recortar antes de validar y contar con `[...texto].length`); `npm test` en verde
+- [X] T017 [US2] COMMIT `GREEN: implementar validación del formulario, test en verde`
+- [X] T018 [US2] RED: agregar en `web/src/features/backlog/index.test.tsx` un `it` por escenario de aceptación de US2 (cuatro) más el caso de varios errores simultáneos: advertencia junto al campo, cero llamadas a `fetch`, exactamente 200/2000 aceptados, y que un intento inválido reemplaza la confirmación anterior. Confirmar que FALLA
+- [X] T019 [US2] COMMIT `RED: agregar pruebas de componente de validación (falla)`
+- [X] T020 [US2] GREEN: integrar `validarHistoria` en `web/src/features/backlog/index.tsx`: mostrar todas las advertencias junto a cada control con `label` asociada por `htmlFor`/`id` y `aria-invalid`/`aria-describedby`, bloquear el envío si hay errores, limpiar confirmación/errores al iniciar el intento y no borrar lo escrito. `npm test` en verde
+- [X] T021 [US2] COMMIT `GREEN: integrar validación en la pantalla, test en verde`
 
 **Checkpoint**: US1 y US2 funcionando; no se crean historias inválidas.
 
