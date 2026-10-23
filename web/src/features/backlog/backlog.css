@@ -13,3 +13,8 @@
   box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
   outline: none;
 }
+
+.backlog-confirmacion p,
+.backlog-confirmacion dd {
+  overflow-wrap: anywhere;
+}
