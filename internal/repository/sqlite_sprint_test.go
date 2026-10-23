@@ -37,6 +37,31 @@ func guardarSprint(t *testing.T, repo *SQLiteSprintRepository, proyectoID int64)
 	return guardado
 }
 
+func guardarProyecto(t *testing.T, db *sql.DB) int64 {
+	t.Helper()
+	p, err := domain.NewProject("Proyecto", "", nil, nil)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+	guardado, err := NewSQLiteProjectRepository(db).Guardar(context.Background(), p)
+	if err != nil {
+		t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
+	}
+	return guardado.ID
+}
+
+func iniciarSprint(t *testing.T, repo *SQLiteSprintRepository, s domain.Sprint) domain.Sprint {
+	t.Helper()
+	inicio := time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
+	if err := s.Iniciar("Objetivo", inicio, inicio.AddDate(0, 0, 14)); err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+	if err := repo.Actualizar(context.Background(), s); err != nil {
+		t.Fatalf("no se esperaba error al iniciar el Sprint: %v", err)
+	}
+	return s
+}
+
 func TestMigrar_EsIdempotente(t *testing.T) {
 	db := nuevaBD(t)
 	if err := Migrar(context.Background(), db); err != nil {
@@ -45,9 +70,11 @@ func TestMigrar_EsIdempotente(t *testing.T) {
 }
 
 func TestSQLiteSprintRepository_GuardarYObtenerPendiente(t *testing.T) {
-	repo := NewSQLiteSprintRepository(nuevaBD(t))
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	proyectoID := guardarProyecto(t, db)
 
-	guardado := guardarSprint(t, repo, 1)
+	guardado := guardarSprint(t, repo, proyectoID)
 	if guardado.ID <= 0 {
 		t.Fatalf("se esperaba un ID asignado, se obtuvo %d", guardado.ID)
 	}
@@ -56,7 +83,7 @@ func TestSQLiteSprintRepository_GuardarYObtenerPendiente(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error al leer: %v", err)
 	}
-	if leido.Estado != domain.SprintPendiente || leido.ProyectoID != 1 {
+	if leido.Estado != domain.SprintPendiente || leido.ProyectoID != proyectoID {
 		t.Errorf("se leyó un Sprint inesperado: %+v", leido)
 	}
 	if leido.SprintGoal != "" || !leido.FechaInicio.IsZero() || !leido.FechaFin.IsZero() {
@@ -65,7 +92,7 @@ func TestSQLiteSprintRepository_GuardarYObtenerPendiente(t *testing.T) {
 }
 
 func TestSQLiteSprintRepository_ObtenerInexistente(t *testing.T) {
-	repo := NewSQLiteSprintRepository(nuevaBD(t))
+	repo := NewSQLiteSprintRepository(nuevaBDMigrada(t))
 
 	_, err := repo.ObtenerPorID(context.Background(), 999)
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
@@ -74,9 +101,10 @@ func TestSQLiteSprintRepository_ObtenerInexistente(t *testing.T) {
 }
 
 func TestSQLiteSprintRepository_ActualizarPersisteLaTransicion(t *testing.T) {
-	repo := NewSQLiteSprintRepository(nuevaBD(t))
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
 	ctx := context.Background()
-	sprint := guardarSprint(t, repo, 1)
+	sprint := guardarSprint(t, repo, guardarProyecto(t, db))
 
 	inicio := time.Date(2026, 10, 5, 0, 0, 0, 0, time.UTC)
 	fin := inicio.AddDate(0, 0, 14)
@@ -100,12 +128,14 @@ func TestSQLiteSprintRepository_ActualizarPersisteLaTransicion(t *testing.T) {
 }
 
 func TestSQLiteSprintRepository_ListarPorProyecto(t *testing.T) {
-	repo := NewSQLiteSprintRepository(nuevaBD(t))
-	primero := guardarSprint(t, repo, 1)
-	guardarSprint(t, repo, 2)
-	segundo := guardarSprint(t, repo, 1)
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	proyecto1, proyecto2 := guardarProyecto(t, db), guardarProyecto(t, db)
+	primero := iniciarSprint(t, repo, guardarSprint(t, repo, proyecto1))
+	guardarSprint(t, repo, proyecto2)
+	segundo := guardarSprint(t, repo, proyecto1)
 
-	sprints, err := repo.ListarPorProyecto(context.Background(), 1)
+	sprints, err := repo.ListarPorProyecto(context.Background(), proyecto1)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
