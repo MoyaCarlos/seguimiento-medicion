@@ -1,0 +1,20 @@
+.backlog-form textarea,
+.backlog-form select {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
+.backlog-form textarea:focus,
+.backlog-form select:focus {
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
+  outline: none;
+}
+
+.backlog-confirmacion p,
+.backlog-confirmacion dd {
+  overflow-wrap: anywhere;
+}
