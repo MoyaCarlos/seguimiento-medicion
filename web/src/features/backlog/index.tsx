@@ -9,7 +9,7 @@ import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { crearHistoria } from './api'
 import { ESTADO_INICIAL, armarCuerpo, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
-import { PRIORIDADES, etiquetaPrioridad } from './opciones'
+import { PRIORIDADES, VALORES_NEGOCIO, etiquetaPrioridad } from './opciones'
 import './backlog.css'
 
 export function Component() {
@@ -160,6 +160,11 @@ export function Component() {
               aria-describedby={errores.valor_negocio ? 'valor-negocio-error' : undefined}
             >
               <option value="">Sin valor</option>
+              {VALORES_NEGOCIO.map((valor) => (
+                <option key={valor} value={String(valor)}>
+                  {valor}
+                </option>
+              ))}
             </select>
             {errores.valor_negocio && (
               <ErrorMessage id="valor-negocio-error" message={errores.valor_negocio} />
