@@ -104,7 +104,7 @@ func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project,
 	for filas.Next() {
 		p, err := escanearProyecto(filas)
 		if err != nil {
-			return nil, fmt.Errorf("leer proyecto: %w", err)
+			return nil, err
 		}
 		proyectos = append(proyectos, p)
 	}
