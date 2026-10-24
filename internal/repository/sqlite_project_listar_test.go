@@ -47,4 +47,22 @@ func TestSQLiteProjectRepository_Listar_OrdenadoPorID(t *testing.T) {
 	if !proyectos[0].FechaInicio.Equal(time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)) {
 		t.Errorf("fecha de inicio inesperada: %v", proyectos[0].FechaInicio)
 	}
+	if proyectos[0].Descripcion != "Descripción" {
+		t.Errorf("descripción inesperada: %q", proyectos[0].Descripcion)
+	}
+	if proyectos[0].FechaFin != nil {
+		t.Errorf("se esperaba fecha de fin nula, se obtuvo %v", proyectos[0].FechaFin)
+	}
+	creadoEn := time.Date(2026, 10, 23, 0, 0, 0, 0, time.UTC)
+	if !proyectos[0].CreadoEn.Equal(creadoEn) {
+		t.Errorf("creado_en inesperado: %v", proyectos[0].CreadoEn)
+	}
+	for _, proyecto := range proyectos {
+		if proyecto.FechaInicio != nil && proyecto.ID != 2 {
+			t.Errorf("el proyecto %d no debería tener fecha de inicio", proyecto.ID)
+		}
+		if proyecto.FechaFin != nil {
+			t.Errorf("el proyecto %d no debería tener fecha de fin", proyecto.ID)
+		}
+	}
 }
