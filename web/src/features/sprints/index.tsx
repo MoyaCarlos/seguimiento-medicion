@@ -11,6 +11,11 @@ import './sprints.css'
 
 export function Component() {
   const { id } = useParams()
+
+  return <PantallaSprints key={id} id={id} />
+}
+
+function PantallaSprints({ id }: { id?: string }) {
   const [sprints, setSprints] = useState(cargarSprintsIniciales)
   const [creando, setCreando] = useState(false)
   const [aviso, setAviso] = useState<string>()
