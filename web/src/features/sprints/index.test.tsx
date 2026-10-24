@@ -1,6 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Component } from './index'
 import type { Sprint } from './sprint'
@@ -165,5 +166,25 @@ describe('pantalla de Sprints', () => {
 
     expect((await screen.findByRole('alert')).textContent).toBe('proyecto_id inválido')
     expect(fetchSimulado).toHaveBeenCalledTimes(1)
+  })
+
+  it('al cambiar de proyecto no deja a la vista los Sprints del anterior', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(201, pendiente(5))))
+    const router = createMemoryRouter(
+      [{ path: '/projects/:id/sprints', element: <Component /> }],
+      { initialEntries: ['/projects/1/sprints'] },
+    )
+    render(<RouterProvider router={router} />)
+    await crear()
+    await screen.findByRole('heading', { name: 'Sprint #5' })
+
+    await act(() => router.navigate('/projects/2/sprints'))
+
+    expect(screen.queryByRole('heading', { name: 'Sprint #5' })).toBeNull()
+    for (const nombre of ['Pendiente', 'Activo', 'Finalizado']) {
+      expect(within(seccion(nombre)).getByText('No hay Sprints')).toBeTruthy()
+    }
+    expect(screen.getAllByRole('heading', { name: 'Sprints' })).toHaveLength(1)
+    expect(screen.getByText('2').tagName).toBe('STRONG')
   })
 })
