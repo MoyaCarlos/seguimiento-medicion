@@ -43,9 +43,10 @@ describe('pantalla de Sprints', () => {
     for (const nombre of ['Pendiente', 'Activo', 'Finalizado']) {
       expect(within(seccion(nombre)).getByText('No hay Sprints')).toBeTruthy()
     }
-    expect(screen.getByText(/Los Sprints existentes no se listan todavía/).textContent).toContain(
-      'docs/curl-frontend-sprint-2.md',
-    )
+    const texto = screen.getByText(/Los Sprints existentes no se listan todavía/).textContent
+    expect(texto).toContain('Los Sprints existentes no se listan todavía.')
+    expect(texto).toContain('se pierden al recargar')
+    expect(texto).toContain('docs/curl-frontend-sprint-2.md')
   })
 
   it('crea un Sprint con el id del proyecto y lo muestra en Pendiente sin Goal ni fechas', async () => {

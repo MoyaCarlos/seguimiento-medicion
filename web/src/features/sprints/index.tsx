@@ -37,8 +37,9 @@ export function Component() {
       <h1>Sprints</h1>
       <p>Proyecto actual: <strong>{id}</strong></p>
       <p>
-        Los Sprints existentes no se listan todavía. Para consultarlos, usá los comandos de
-        docs/curl-frontend-sprint-2.md.
+        Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se
+        pierden al recargar; los comandos de docs/curl-frontend-sprint-2.md permiten crear e
+        iniciar Sprints por la API.
       </p>
       {aviso && <ErrorMessage message={aviso} />}
       {creando && <LoadingIndicator />}
