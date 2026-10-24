@@ -18,6 +18,7 @@ func TestFeatures(t *testing.T) {
 			Format:   "pretty",
 			Paths:    []string{"."},
 			TestingT: t,
+			Strict:   true,
 		},
 	}
 	if suite.Run() != 0 {
