@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-23
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR.
 
 **Fuente de diseño**: [`MODELO-DE-DATOS.md`](../../MODELO-DE-DATOS.md) §4.1. Esta spec no
 redefine tablas ni columnas: el proyecto se lee de `proyectos` con los mismos campos que
@@ -18,10 +18,14 @@ El frontend ya tiene el panel y la edición de un proyecto, pero solo puede abri
 conociendo el `id`. La API no ofrece un listado, así que no hay forma de elegir qué
 proyecto editar. Esta ampliación agrega únicamente la lectura del listado.
 
+Para evitar la colisión de nombres con el nuevo `Listar`, el método interno de
+`project_handler.go` que atendía `GET /projects/{id}/members` se renombró de `listar`
+a `listarIntegrantes`; su comportamiento no cambia.
+
 ## Objetivo
 
-Permitir que un cliente autenticado como Scrum Master obtenga todos los proyectos
-existentes, ordenados por `id`, con la misma forma que `GET /projects/{id}`.
+Permitir que un cliente obtenga todos los proyectos existentes, ordenados por `id`,
+con la misma forma que `GET /projects/{id}`.
 
 ## Entradas y salidas
 
@@ -78,4 +82,5 @@ existentes, ordenados por `id`, con la misma forma que `GET /projects/{id}`.
 | Lista vacía `[]` | servicio y handler inicializan un arreglo vacío | test de servicio y handler |
 | Mismos campos que `GET /projects/{id}` | reutiliza `aProyectoResponse` | test de handler |
 | Error de persistencia | servicio propaga el error y `escribirError` responde 500 | test del servicio |
+| Escenarios BDD | [`features/listado_proyectos.feature`](../../features/listado_proyectos.feature) | Godog (`features/steps_listado_proyectos.go`) |
 | Contrato HTTP | [`specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml`](../002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml) | revisión del contrato |
