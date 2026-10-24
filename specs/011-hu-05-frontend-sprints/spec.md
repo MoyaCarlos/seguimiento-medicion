@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-24
 
-**Status**: Draft
+**Status**: Implementada (US1, US2, US3 y US4), pendiente de revisión por PR.
 
 **Input**: User description: "HU-05 Frontend (Issue #26, sub-issue de #5): pantalla de Sprints en `web/src/features/sprints/`. Crear un Sprint con un botón, iniciar un Sprint Pendiente con un formulario (Sprint Goal y fechas), cerrar un Sprint Activo con un botón, y mostrar los Sprints agrupados por estado. Consume solo la API que existe hoy; no hay listado de Sprints (#110)."
 
