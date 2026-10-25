@@ -66,7 +66,7 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
 	log.Printf("listening on :%s", cfg.Puerto)
-	if err := http.ListenAndServe(":"+cfg.Puerto, mux); err != nil {
+	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {
 		log.Fatal(err)
 	}
 }
