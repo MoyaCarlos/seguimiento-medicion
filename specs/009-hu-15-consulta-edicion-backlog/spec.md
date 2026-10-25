@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-13
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "HU-15: Consulta y Edición del Product Backlog. Como Product Builder quiero ver el Product Backlog de un proyecto ordenado por prioridad y poder editar el título, la descripción, los criterios de aceptación y los Story Points de cada historia para poder mantenerlo actualizado y cumplir con el contenido mínimo que pide el enunciado (puntos 2 y 4: estimar historias mediante Story Points). Prioridad M (Must have). Estado Nueva. Valor de Negocio 13 (Fibonacci). Estimación 5 Story Points. Depende de HU-01, HU-04 y HU-05."
 
