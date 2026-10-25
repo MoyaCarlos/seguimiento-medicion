@@ -43,6 +43,23 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarBacklog atiende GET /projects/{id}/backlog.
 func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
+	proyectoID, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	historias, err := h.consultarBacklog.Ejecutar(r.Context(), proyectoID)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	respuesta := make([]historiaResponse, 0, len(historias))
+	for _, item := range historias {
+		respuesta = append(respuesta, aRespuesta(item))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 func escribirJSON(w nethttp.ResponseWriter, status int, payload any) {

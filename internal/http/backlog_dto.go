@@ -29,13 +29,14 @@ type errorResponse struct {
 
 func aRespuesta(item domain.BacklogItem) historiaResponse {
 	return historiaResponse{
-		ID:           item.ID,
-		ProyectoID:   item.ProyectoID,
-		Titulo:       item.Titulo,
-		Descripcion:  item.Descripcion,
-		Prioridad:    string(item.Prioridad),
-		Estado:       string(item.Estado),
-		ValorNegocio: item.ValorNegocio,
-		EstimacionSP: item.EstimacionSP,
+		ID:                  item.ID,
+		ProyectoID:          item.ProyectoID,
+		Titulo:              item.Titulo,
+		Descripcion:         item.Descripcion,
+		CriteriosAceptacion: item.CriteriosAceptacion,
+		Prioridad:           string(item.Prioridad),
+		Estado:              string(item.Estado),
+		ValorNegocio:        item.ValorNegocio,
+		EstimacionSP:        item.EstimacionSP,
 	}
 }
