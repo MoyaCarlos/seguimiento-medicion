@@ -23,6 +23,7 @@ type pasosBacklog struct {
 	backlog   []domain.BacklogItem
 	historia  domain.BacklogItem
 	editada   domain.BacklogItem
+	enviado   service.EditarHistoriaInput
 	err       error
 }
 
@@ -32,6 +33,7 @@ func (p *pasosBacklog) preparar() {
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.historias)
 	p.editar = service.NewEditarHistoria(p.historias, repository.NewSQLiteSprintRepository(p.base.db))
 	p.backlog, p.historia, p.editada, p.err = nil, domain.BacklogItem{}, domain.BacklogItem{}, nil
+	p.enviado = service.EditarHistoriaInput{}
 }
 
 func (p *pasosBacklog) crearHistoria(titulo string, prioridad domain.Prioridad) (domain.BacklogItem, error) {
@@ -190,6 +192,7 @@ func (p *pasosBacklog) guardar(cambios func(*service.EditarHistoriaInput)) error
 		EstimacionSP:        p.historia.EstimacionSP,
 	}
 	cambios(&input)
+	p.enviado = input
 	p.editada, p.err = p.editar.Ejecutar(context.Background(), input)
 	return nil
 }
@@ -226,9 +229,10 @@ func (p *pasosBacklog) quedaConDatosNuevos() error {
 	if err != nil {
 		return err
 	}
-	if h.Titulo != "Iniciar sesión con Google" || h.Descripcion != "Autenticación con OAuth" ||
-		h.CriteriosAceptacion == nil || h.EstimacionSP == nil || *h.EstimacionSP != 5 {
-		return fmt.Errorf("la historia no quedó con los datos nuevos: %+v", h)
+	if h.Titulo != p.enviado.Titulo || h.Descripcion != p.enviado.Descripcion ||
+		textoOpcional(h.CriteriosAceptacion) != textoOpcional(p.enviado.CriteriosAceptacion) ||
+		enteroOpcional(h.EstimacionSP) != enteroOpcional(p.enviado.EstimacionSP) {
+		return fmt.Errorf("la historia no quedó con los datos enviados: se envió %+v, quedó %+v", p.enviado, h)
 	}
 	return nil
 }
@@ -238,8 +242,11 @@ func (p *pasosBacklog) conservaIdentificadorYEstado(estado string) error {
 	if err != nil {
 		return err
 	}
-	if h.ID != p.historia.ID || h.Estado != domain.Estado(estado) {
-		return fmt.Errorf("se esperaba id %d y estado %q, se obtuvo %d y %q", p.historia.ID, estado, h.ID, h.Estado)
+	if p.editada.ID != p.historia.ID {
+		return fmt.Errorf("la edición devolvió el id %d, se esperaba %d", p.editada.ID, p.historia.ID)
+	}
+	if p.editada.Estado != domain.Estado(estado) || h.Estado != domain.Estado(estado) {
+		return fmt.Errorf("se esperaba el estado %q, la edición devolvió %q y quedó %q", estado, p.editada.Estado, h.Estado)
 	}
 	return nil
 }
