@@ -5,6 +5,7 @@ import "strings"
 const (
 	longitudMaximaTitulo      = 200
 	longitudMaximaDescripcion = 2000
+	longitudMaximaCriterios   = 2000
 )
 
 // BacklogItem representa una historia de usuario del Product Backlog.
@@ -66,7 +67,40 @@ func NewBacklogItem(proyectoID int64, titulo, descripcion string, prioridad Prio
 }
 
 // ConDatosEditados devuelve una copia de la historia con los campos editables
-// reemplazados.
+// reemplazados, validados con las mismas reglas que el alta. El resto de los
+// campos se conserva; ante un error la historia no cambia.
 func (b BacklogItem) ConDatosEditados(titulo, descripcion string, criterios *string, estimacionSP *int) (BacklogItem, error) {
+	titulo = strings.TrimSpace(titulo)
+	if titulo == "" {
+		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título es obligatorio"}
+	}
+	if len([]rune(titulo)) > longitudMaximaTitulo {
+		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título no puede superar los 200 caracteres"}
+	}
+
+	descripcion = strings.TrimSpace(descripcion)
+	if descripcion == "" {
+		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción es obligatoria"}
+	}
+	if len([]rune(descripcion)) > longitudMaximaDescripcion {
+		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}
+	}
+
+	var criteriosNormalizados *string
+	if criterios != nil {
+		if texto := strings.TrimSpace(*criterios); texto != "" {
+			if len([]rune(texto)) > longitudMaximaCriterios {
+				return BacklogItem{}, ValidationError{Campo: "criterios_aceptacion", Mensaje: "los criterios de aceptación no pueden superar los 2000 caracteres"}
+			}
+			criteriosNormalizados = &texto
+		}
+	}
+
+	if estimacionSP != nil && !EsEstimacionValida(*estimacionSP) {
+		return BacklogItem{}, ErrEstimacionInvalida
+	}
+
+	b.Titulo, b.Descripcion = titulo, descripcion
+	b.CriteriosAceptacion, b.EstimacionSP = criteriosNormalizados, estimacionSP
 	return b, nil
 }
