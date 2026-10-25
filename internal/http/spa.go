@@ -9,8 +9,11 @@ import (
 
 const rutaSalud = "/health"
 
-// PrefijosAPI son las rutas que atiende la API. Todas menos /health comparten
-// ruta con pantallas del SPA y deben incluir los prefijos que proxea web/vite.config.ts.
+// PrefijosAPI documenta las rutas que atiende la API. No decide el enrutado:
+// ServirSPA responde index.html a todo GET con text/html salvo /health. Un test
+// verifica que incluya los prefijos que proxea web/vite.config.ts. Si hace falta
+// que otra ruta (por ejemplo, una descarga de PDF) llegue a la API aun con
+// text/html, agregala como excepción junto a /health.
 var PrefijosAPI = []string{"/backlog", "/projects", "/sprints", rutaSalud}
 
 func ServirSPA(api http.Handler, dirWeb string) http.Handler {

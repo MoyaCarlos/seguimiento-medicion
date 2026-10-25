@@ -123,7 +123,7 @@ Como usuario del navegador, entro a una pantalla por su URL (que comparte ruta c
 - **FR-011** (Ubicuo): El repositorio MUST incluir `.dockerignore` que excluya al menos `node_modules` (en cualquier nivel, incluido `web/node_modules`), `.git`, `*.db`, `docs/`, `specs/` y `web/dist`.
 - **FR-012** (Ubicuo): El README MUST tener una sección "Correr con Docker" con `docker build` y `docker run` (`-p`, `-v` a `/data`).
 - **FR-013** (Ubicuo): El esquema de datos MUST NOT modificarse.
-- **FR-014** (Ubicuo): Los prefijos de la API que proxea `web/vite.config.ts` MUST estar incluidos en los que usa `ServirSPA`; un test lo verifica.
+- **FR-014** (Ubicuo): Los prefijos de la API que proxea `web/vite.config.ts` MUST estar incluidos en `PrefijosAPI`; un test lo verifica. La lista es documentación verificada por test y no gobierna el enrutado: `ServirSPA` responde `index.html` a todo `GET` con `text/html` salvo `/health`.
 
 ### Key Entities
 
@@ -145,5 +145,5 @@ Ninguna nueva. Usa la base existente descrita en [`MODELO-DE-DATOS.md`](../../MO
 - Una sola imagen (decisión de Carlos); sin segunda imagen para el frontend.
 - Fuera de alcance: despliegue a Azure, Trivy, registro de imágenes y CI de Docker.
 - Se usa el volumen o bind mount de `/data` con permisos para el UID no root de la imagen (en bind mounts el usuario debe ajustar el dueño; en volúmenes con nombre Docker lo copia de la imagen).
-- La regla de negociación por `Accept` replica la de `web/vite.config.ts`; si cambian los prefijos proxeados allí, hay que cambiarlos también en Go (lo detecta un test, FR-014).
+- La regla de negociación por `Accept` replica la de `web/vite.config.ts`; si cambian los prefijos proxeados allí, hay que agregarlos también a `PrefijosAPI`, que es documentación verificada por test (FR-014) y no gobierna el enrutado.
 - El `Dockerfile` depende de las versiones de `go.mod` (Go 1.26.x) y de Node 24.
