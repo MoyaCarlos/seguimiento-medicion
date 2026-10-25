@@ -80,6 +80,21 @@ func (r *SQLiteBacklogRepository) QuitarDeSprint(ctx context.Context, historiaID
 	return nil
 }
 
+// ListarSinSprint devuelve el Product Backlog del proyecto.
+func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoID int64) ([]domain.BacklogItem, error) {
+	return nil, nil
+}
+
+// ObtenerPorID devuelve la historia con el identificador indicado.
+func (r *SQLiteBacklogRepository) ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error) {
+	return domain.BacklogItem{}, nil
+}
+
+// Actualizar persiste los campos editables de la historia.
+func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.BacklogItem) error {
+	return nil
+}
+
 func punteroAValorSQL(v *int) any {
 	if v == nil {
 		return nil
