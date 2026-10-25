@@ -18,5 +18,5 @@ func NewObtenerHistoria(historias repository.HistoriaRepository) *ObtenerHistori
 
 // Ejecutar devuelve la historia o domain.ErrHistoriaNoEncontrada si no existe.
 func (s *ObtenerHistoria) Ejecutar(ctx context.Context, id int64) (domain.BacklogItem, error) {
-	return domain.BacklogItem{}, nil
+	return s.historias.ObtenerPorID(ctx, id)
 }
