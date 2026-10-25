@@ -44,7 +44,7 @@ Como Product Builder, modifico el título, la descripción, los criterios de ace
 
 **Why this priority**: El enunciado exige criterios de aceptación y Story Points como contenido mínimo de cada elemento del Product Backlog. HU-03 (métricas) y HU-10 (reporte) necesitan los Story Points de cada historia.
 
-**Independent Test**: Se prueba editando una historia existente con datos válidos y verificando que los cambios quedan persistidos y que la historia conserva su identificador, estado, prioridad y Sprint.
+**Independent Test**: Se prueba editando una historia existente con datos válidos y verificando que los cambios quedan persistidos y que la historia conserva su identificador, estado, prioridad y Sprint. También se siembra una historia con Story Points en un Sprint "Activo" o "Finalizado" y se verifica que no se pueden cambiar, y otra sin estimar en el mismo Sprint para verificar que sí se pueden cargar.
 
 **Acceptance Scenarios**:
 
@@ -103,7 +103,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **Historia de Usuario**: la misma de HU-01, ampliada con **criterios de aceptación**. Atributos que se editan en esta historia: título, descripción, criterios de aceptación y Story Points. Atributos que no cambian al editar: identificador, proyecto, estado, prioridad, valor de negocio y Sprint asignado.
 - **Product Backlog**: vista de las historias de un proyecto sin Sprint asignado, ordenada por prioridad y orden de creación. No se guarda: se arma al consultar.
 - **Proyecto**: contenedor de las historias (HU-04); tiene que existir para consultar su backlog.
-- **Sprint**: solo interesa si la historia tiene uno asignado (HU-05); en ese caso queda fuera del Product Backlog.
+- **Sprint**: solo interesa si la historia tiene uno asignado (HU-05). En ese caso la historia queda fuera del Product Backlog, y el estado del Sprint (`Pendiente`, `Activo` o `Finalizado`) define si se pueden cambiar sus Story Points ya cargados (D2b, FR-015).
 
 ## Success Criteria *(mandatory)*
 
