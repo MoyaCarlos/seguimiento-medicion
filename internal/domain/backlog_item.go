@@ -31,20 +31,13 @@ func NewBacklogItem(proyectoID int64, titulo, descripcion string, prioridad Prio
 		return BacklogItem{}, ValidationError{Campo: "proyecto_id", Mensaje: "el proyecto es obligatorio"}
 	}
 
-	titulo = strings.TrimSpace(titulo)
-	if titulo == "" {
-		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título es obligatorio"}
+	titulo, err := validarTitulo(titulo)
+	if err != nil {
+		return BacklogItem{}, err
 	}
-	if len([]rune(titulo)) > longitudMaximaTitulo {
-		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título no puede superar los 200 caracteres"}
-	}
-
-	descripcion = strings.TrimSpace(descripcion)
-	if descripcion == "" {
-		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción es obligatoria"}
-	}
-	if len([]rune(descripcion)) > longitudMaximaDescripcion {
-		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}
+	descripcion, err = validarDescripcion(descripcion)
+	if err != nil {
+		return BacklogItem{}, err
 	}
 
 	if !prioridad.EsValida() {
@@ -70,20 +63,13 @@ func NewBacklogItem(proyectoID int64, titulo, descripcion string, prioridad Prio
 // reemplazados, validados con las mismas reglas que el alta. El resto de los
 // campos se conserva; ante un error la historia no cambia.
 func (b BacklogItem) ConDatosEditados(titulo, descripcion string, criterios *string, estimacionSP *int) (BacklogItem, error) {
-	titulo = strings.TrimSpace(titulo)
-	if titulo == "" {
-		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título es obligatorio"}
+	titulo, err := validarTitulo(titulo)
+	if err != nil {
+		return BacklogItem{}, err
 	}
-	if len([]rune(titulo)) > longitudMaximaTitulo {
-		return BacklogItem{}, ValidationError{Campo: "titulo", Mensaje: "el título no puede superar los 200 caracteres"}
-	}
-
-	descripcion = strings.TrimSpace(descripcion)
-	if descripcion == "" {
-		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción es obligatoria"}
-	}
-	if len([]rune(descripcion)) > longitudMaximaDescripcion {
-		return BacklogItem{}, ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}
+	descripcion, err = validarDescripcion(descripcion)
+	if err != nil {
+		return BacklogItem{}, err
 	}
 
 	var criteriosNormalizados *string
@@ -103,4 +89,26 @@ func (b BacklogItem) ConDatosEditados(titulo, descripcion string, criterios *str
 	b.Titulo, b.Descripcion = titulo, descripcion
 	b.CriteriosAceptacion, b.EstimacionSP = criteriosNormalizados, estimacionSP
 	return b, nil
+}
+
+func validarTitulo(titulo string) (string, error) {
+	titulo = strings.TrimSpace(titulo)
+	if titulo == "" {
+		return "", ValidationError{Campo: "titulo", Mensaje: "el título es obligatorio"}
+	}
+	if len([]rune(titulo)) > longitudMaximaTitulo {
+		return "", ValidationError{Campo: "titulo", Mensaje: "el título no puede superar los 200 caracteres"}
+	}
+	return titulo, nil
+}
+
+func validarDescripcion(descripcion string) (string, error) {
+	descripcion = strings.TrimSpace(descripcion)
+	if descripcion == "" {
+		return "", ValidationError{Campo: "descripcion", Mensaje: "la descripción es obligatoria"}
+	}
+	if len([]rune(descripcion)) > longitudMaximaDescripcion {
+		return "", ValidationError{Campo: "descripcion", Mensaje: "la descripción no puede superar los 2000 caracteres"}
+	}
+	return descripcion, nil
 }
