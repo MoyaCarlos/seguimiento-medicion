@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-23
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR.
 
 **Dependencia**: el panel principal pertenece a la pantalla de HU-04
 (`features/proyecto`, PR #121). Esta rama se apoya en esa pantalla y no duplica su
