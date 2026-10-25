@@ -92,6 +92,8 @@ internal/service/
 ├── consultar_product_backlog_test.go
 ├── editar_historia.go                   # EditarHistoria (nuevo)
 ├── editar_historia_test.go
+├── obtener_historia.go                  # ObtenerHistoria (nuevo): existencia antes de validar en el handler
+├── obtener_historia_test.go
 └── fakes_test.go                        # + fakeHistoriaRepository
 
 internal/repository/
