@@ -41,7 +41,7 @@ func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) 
 	}
 	for _, otro := range delProyecto {
 		if otro.ID != sprint.ID && otro.Estado == domain.SprintActivo {
-			return domain.Sprint{}, domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint activo"}
+			return domain.Sprint{}, domain.ErrYaHaySprintActivo
 		}
 	}
 

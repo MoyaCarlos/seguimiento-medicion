@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	nethttp "net/http"
 	"net/http/httptest"
 	"strconv"
@@ -322,5 +323,18 @@ func TestSprintHandler_Cerrar_NoEncontradoEIdInvalido(t *testing.T) {
 				t.Fatalf("se esperaba %d, se obtuvo %d", caso.codigo, rec.Code)
 			}
 		})
+	}
+}
+
+func TestEscribirError_IntegridadReferencialEsConflicto(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	escribirError(rec, fmt.Errorf("guardar sprint: %w", repository.ErrIntegridadReferencial))
+
+	if rec.Code != nethttp.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := decodificarError(t, rec); resp.Mensaje != "violación de integridad referencial" {
+		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
 	}
 }

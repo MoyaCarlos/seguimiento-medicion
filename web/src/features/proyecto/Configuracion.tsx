@@ -81,7 +81,7 @@ export function Configuracion() {
       <div className="hu04-encabezado">
         <div>
           <p className="eyebrow">Configuración</p>
-          <h1 id="configuracion-title">Configurar equipo</h1>
+          <h2 id="configuracion-title">Configurar equipo</h2>
           <p className="hu04-referencia">
             Proyecto <strong>{id}</strong>
           </p>

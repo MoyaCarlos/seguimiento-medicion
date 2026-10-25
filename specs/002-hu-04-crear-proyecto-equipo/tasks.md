@@ -330,6 +330,22 @@ reescribe el historial:
 **Desde ahora**: un commit `REFACTOR:` no puede cambiar comportamiento; si lo cambia,
 es un `RED:` + `GREEN:`.
 
+## Phase 8: Frontend de HU-04 (Sprint 2)
+
+**Purpose**: Implementar las pantallas del SPA que consumen los endpoints de esta
+historia, sobre la base de `specs/007-frontend-base`. Se ejecutó en la rama
+`feature/HU-04-frontend` (issue #36), con el cliente compartido de
+`web/src/compartido/api/client.ts` (`get`/`post`/`put`, `ApiError` y `ConnectionError`).
+
+- [X] T045 [P] [US1] Pantalla de creación de proyecto en `web/src/features/proyecto/crear.tsx`, con validaciones de nombre, creador, descripción y fechas.
+- [X] T046 [P] [US1] Panel principal del proyecto en `web/src/features/proyecto/Panel.tsx` y redirección posterior al alta.
+- [X] T047 [P] [US2] Vista de configuración del equipo en `web/src/features/proyecto/Configuracion.tsx`, con listado y asignación de integrantes.
+- [X] T048 [P] [US3] Vista de edición del proyecto en `web/src/features/proyecto/Editar.tsx`, con cancelación sin cambios.
+- [X] T049 [P] Cliente de la API de HU-04 en `web/src/features/proyecto/api.ts` sobre el cliente compartido (`get`/`post`/`put`); los errores se manejan como `ApiError` y `ConnectionError`.
+- [X] T050 [P] Registro de las rutas anidadas de la feature en `web/src/features/proyecto/index.tsx`.
+- [X] T051 [P] Tests de validación y de pantallas en `web/src/features/proyecto/*.test.ts(x)`.
+- [X] T052 Verificar `npm test`, `npm run lint` y `npm run build` en `web/`.
+
 ---
 
 ## Excepción de proceso

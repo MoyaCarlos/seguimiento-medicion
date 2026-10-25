@@ -40,7 +40,6 @@ export function Panel() {
       <div className="hu04-encabezado">
         <div>
           <p className="eyebrow">Panel principal</p>
-          <h1 id="panel-title">Panel del proyecto</h1>
           <p className="hu04-referencia">
             Proyecto <strong>{id}</strong>
           </p>

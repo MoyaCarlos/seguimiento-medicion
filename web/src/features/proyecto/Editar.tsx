@@ -93,7 +93,7 @@ export function Editar() {
   return (
     <section className="hu04-tarjeta hu04-tarjeta--angosta" aria-labelledby="editar-title">
       <p className="eyebrow">Proyecto · Edición</p>
-      <h1 id="editar-title">Editar proyecto</h1>
+      <h2 id="editar-title">Editar proyecto</h2>
       <p className="hu04-intro">
         Corregí el nombre, la descripción o las fechas. Los cambios se guardan sobre el
         proyecto actual.

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -9,15 +10,8 @@ import (
 
 func nuevaBDDePrueba(t *testing.T) *SQLiteBacklogRepository {
 	t.Helper()
-	db, err := AbrirSQLite(":memory:")
-	if err != nil {
-		t.Fatalf("no se pudo abrir sqlite: %v", err)
-	}
-	db.SetMaxOpenConns(1)
-	if err := Migrar(context.Background(), db); err != nil {
-		t.Fatalf("no se pudo migrar: %v", err)
-	}
-	t.Cleanup(func() { db.Close() })
+	db := nuevaBDMigrada(t)
+	guardarProyecto(t, db)
 	return NewSQLiteBacklogRepository(db)
 }
 
@@ -44,7 +38,7 @@ func TestSQLiteBacklogRepository_Guardar(t *testing.T) {
 		valorNegocio *int
 	)
 	err = repo.db.QueryRowContext(ctx,
-		"SELECT estado, estimacion_sp, valor_negocio FROM backlog_items WHERE id = ?", guardado.ID,
+		"SELECT estado, estimacion_sp, valor_negocio FROM historias WHERE id = ?", guardado.ID,
 	).Scan(&estado, &estimacion, &valorNegocio)
 	if err != nil {
 		t.Fatalf("no se pudo releer la historia: %v", err)
@@ -95,10 +89,24 @@ func TestSQLiteBacklogRepository_TitulosRepetidos(t *testing.T) {
 	}
 
 	var total int
-	if err := repo.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM backlog_items WHERE titulo = ?", "Mismo título").Scan(&total); err != nil {
+	if err := repo.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM historias WHERE titulo = ?", "Mismo título").Scan(&total); err != nil {
 		t.Fatalf("no se pudo contar: %v", err)
 	}
 	if total != 2 {
 		t.Errorf("se esperaban 2 historias con el mismo título, se obtuvieron %d", total)
+	}
+}
+
+func TestSQLiteBacklogRepository_Guardar_ProyectoInexistenteEsIntegridad(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	item, err := domain.NewBacklogItem(999, "Historia huérfana", "Sin proyecto", domain.PrioridadMust, nil)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+
+	_, err = repo.Guardar(context.Background(), item)
+
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
 	}
 }

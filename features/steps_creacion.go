@@ -37,7 +37,7 @@ func (s *scenarioContext) iniciarBD() error {
 		return err
 	}
 	db.SetMaxOpenConns(1)
-	if err := repository.Migrar(context.Background(), db); err != nil {
+	if err := repository.AplicarMigraciones(context.Background(), db); err != nil {
 		return err
 	}
 	s.db = db
@@ -118,7 +118,7 @@ func (s *scenarioContext) seGuardaEnSQLite() error {
 		return errors.New("se esperaba un identificador asignado")
 	}
 	var total int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM backlog_items WHERE id = ?", s.creada.ID).Scan(&total); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM historias WHERE id = ?", s.creada.ID).Scan(&total); err != nil {
 		return err
 	}
 	if total != 1 {
@@ -129,7 +129,7 @@ func (s *scenarioContext) seGuardaEnSQLite() error {
 
 func (s *scenarioContext) alFinalDelBacklog() error {
 	var maxID int64
-	if err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM backlog_items").Scan(&maxID); err != nil {
+	if err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM historias").Scan(&maxID); err != nil {
 		return err
 	}
 	if s.creada.ID != maxID {
@@ -173,7 +173,7 @@ func (s *scenarioContext) verificarErrorDeValidacion() error {
 
 func (s *scenarioContext) noRegistraHistoria() error {
 	var total int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM backlog_items").Scan(&total); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM historias").Scan(&total); err != nil {
 		return err
 	}
 	if total != 0 {
