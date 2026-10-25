@@ -23,3 +23,7 @@ var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
 var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
+
+// ErrEstimacionCongelada indica un cambio de los Story Points ya cargados de una
+// historia de un Sprint Activo o Finalizado (decisión D2b).
+var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}

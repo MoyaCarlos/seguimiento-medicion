@@ -150,3 +150,26 @@ func (f *fakeProductBacklogRepository) ListarSinSprint(_ context.Context, _ int6
 	}
 	return f.historias, nil
 }
+
+type fakeHistoriaRepository struct {
+	historias       map[int64]domain.BacklogItem
+	errActualizar   error
+	actualizaciones []domain.BacklogItem
+}
+
+func (f *fakeHistoriaRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.BacklogItem) error {
+	if f.errActualizar != nil {
+		return f.errActualizar
+	}
+	f.actualizaciones = append(f.actualizaciones, item)
+	f.historias[item.ID] = item
+	return nil
+}
