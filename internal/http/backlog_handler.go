@@ -10,11 +10,12 @@ import (
 
 // BacklogHandler es el adaptador de entrada para las historias del backlog.
 type BacklogHandler struct {
-	crearHistoria *service.CrearHistoriaBacklog
+	crearHistoria    *service.CrearHistoriaBacklog
+	consultarBacklog *service.ConsultarProductBacklog
 }
 
-func NewBacklogHandler(crearHistoria *service.CrearHistoriaBacklog) *BacklogHandler {
-	return &BacklogHandler{crearHistoria: crearHistoria}
+func NewBacklogHandler(crearHistoria *service.CrearHistoriaBacklog, consultarBacklog *service.ConsultarProductBacklog) *BacklogHandler {
+	return &BacklogHandler{crearHistoria: crearHistoria, consultarBacklog: consultarBacklog}
 }
 
 // Crear atiende POST /backlog.
@@ -38,6 +39,10 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	escribirJSON(w, nethttp.StatusCreated, aRespuesta(item))
+}
+
+// ConsultarBacklog atiende GET /projects/{id}/backlog.
+func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 func escribirJSON(w nethttp.ResponseWriter, status int, payload any) {

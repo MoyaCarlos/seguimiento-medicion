@@ -11,14 +11,15 @@ type crearHistoriaRequest struct {
 }
 
 type historiaResponse struct {
-	ID           int64  `json:"id"`
-	ProyectoID   int64  `json:"proyecto_id"`
-	Titulo       string `json:"titulo"`
-	Descripcion  string `json:"descripcion"`
-	Prioridad    string `json:"prioridad"`
-	Estado       string `json:"estado"`
-	ValorNegocio *int   `json:"valor_negocio"`
-	EstimacionSP *int   `json:"estimacion_sp"`
+	ID                  int64   `json:"id"`
+	ProyectoID          int64   `json:"proyecto_id"`
+	Titulo              string  `json:"titulo"`
+	Descripcion         string  `json:"descripcion"`
+	CriteriosAceptacion *string `json:"criterios_aceptacion"`
+	Prioridad           string  `json:"prioridad"`
+	Estado              string  `json:"estado"`
+	ValorNegocio        *int    `json:"valor_negocio"`
+	EstimacionSP        *int    `json:"estimacion_sp"`
 }
 
 type errorResponse struct {
