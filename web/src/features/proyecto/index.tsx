@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes } from 'react-router'
+import { Outlet, Route, Routes, useParams } from 'react-router'
 import { NoEncontrada } from '../../compartido/router/NoEncontrada'
 import { Configuracion } from './Configuracion'
 import { Editar } from './Editar'
@@ -15,9 +15,11 @@ function PanelLayout() {
 }
 
 export function Component() {
+  const { id } = useParams()
+
   return (
     <Routes>
-      <Route element={<PanelLayout />}>
+      <Route element={<PanelLayout key={id} />}>
         <Route index element={<Panel />} />
         <Route path="settings" element={<Configuracion />} />
         <Route path="edit" element={<Editar />} />
