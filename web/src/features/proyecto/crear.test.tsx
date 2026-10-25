@@ -65,4 +65,21 @@ describe('pantalla de creación de proyecto', () => {
       }),
     )
   })
+
+  it('muestra como error general el campo "nombre" que devuelve la API al crear', async () => {
+    const mensaje = 'el nombre del integrante no puede superar los 200 caracteres'
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ campo: 'nombre', mensaje }), { status: 400 }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+
+    await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
+    await userEvent.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
+    await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
+
+    expect(await screen.findByText(mensaje)).toBeTruthy()
+    const nombre = screen.getByLabelText('Nombre del proyecto')
+    expect(nombre.getAttribute('aria-describedby')).toBeNull()
+  })
 })

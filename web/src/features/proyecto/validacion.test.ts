@@ -55,6 +55,20 @@ describe('validarCreacion', () => {
       descripcion: 'La descripción no puede superar los 2000 caracteres',
     })
   })
+
+  it('limita el nombre del creador a 200 caracteres contados por puntos de código', () => {
+    const datosBase = {
+      nombre: 'Proyecto Alfa',
+      descripcion: '',
+      fecha_inicio: '',
+      fecha_fin: '',
+    }
+
+    expect(validarCreacion({ ...datosBase, creador: '😀'.repeat(200) })).toEqual({})
+    expect(validarCreacion({ ...datosBase, creador: '😀'.repeat(201) })).toEqual({
+      creador: 'El nombre del creador no puede superar los 200 caracteres',
+    })
+  })
 })
 
 describe('validarEdicion', () => {
