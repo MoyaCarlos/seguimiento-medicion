@@ -47,7 +47,7 @@ export function Component() {
       navegar(`/projects/${proyecto.id}/proyecto`, { replace: true })
     } catch (error) {
       const campo = campoDeError(error)
-      if (campo && campo in datos) {
+      if (campo && campo !== 'nombre' && campo in datos) {
         setErrores({ [campo]: mensajeDeError(error) })
       } else {
         setErrorGeneral(mensajeDeError(error))

@@ -10,11 +10,16 @@ export type ErroresProyecto = Partial<Record<keyof DatosProyecto, string>>
 
 const NOMBRE_MAX = 100
 const DESCRIPCION_MAX = 2000
+const CREADOR_MAX = 200
 
 export function validarCreacion(datos: DatosProyecto): ErroresProyecto {
   const errores = validarDatos(datos)
-  if (!datos.creador.trim()) {
+  const creador = datos.creador.trim()
+
+  if (!creador) {
     errores.creador = 'El nombre del creador es obligatorio'
+  } else if ([...creador].length > CREADOR_MAX) {
+    errores.creador = `El nombre del creador no puede superar los ${CREADOR_MAX} caracteres`
   }
   return errores
 }
