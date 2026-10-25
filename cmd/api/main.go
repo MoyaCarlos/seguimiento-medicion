@@ -57,6 +57,7 @@ func main() {
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
+	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)

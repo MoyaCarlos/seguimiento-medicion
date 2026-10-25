@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"io"
 	nethttp "net/http"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -76,6 +77,72 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 
 // Editar atiende PUT /backlog/{id}.
 func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	// La historia inexistente domina (404) sobre cualquier validación del cuerpo.
+	if _, err := h.obtenerHistoria.Ejecutar(r.Context(), id); err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	var claves map[string]json.RawMessage
+	if err := json.Unmarshal(data, &claves); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	for _, campo := range []string{"titulo", "descripcion", "criterios_aceptacion", "estimacion_sp"} {
+		if _, ok := claves[campo]; !ok {
+			escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: campo, Mensaje: "el campo es obligatorio"})
+			return
+		}
+	}
+
+	var req editarHistoriaRequest
+	if err := json.Unmarshal(data, &req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	estimacion, err := parsearEstimacion(req.EstimacionSP)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	item, err := h.editarHistoria.Ejecutar(r.Context(), service.EditarHistoriaInput{
+		ID:                  id,
+		Titulo:              req.Titulo,
+		Descripcion:         req.Descripcion,
+		CriteriosAceptacion: req.CriteriosAceptacion,
+		EstimacionSP:        estimacion,
+	})
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(item))
+}
+
+// parsearEstimacion convierte los Story Points del cuerpo a entero; un número no
+// entero se rechaza con el mismo error que un valor fuera de la escala.
+func parsearEstimacion(valor *json.Number) (*int, error) {
+	if valor == nil {
+		return nil, nil
+	}
+	n, err := valor.Int64()
+	if err != nil {
+		return nil, domain.ErrEstimacionInvalida
+	}
+	estimacion := int(n)
+	return &estimacion, nil
 }
 
 func escribirJSON(w nethttp.ResponseWriter, status int, payload any) {
