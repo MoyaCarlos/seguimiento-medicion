@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-24
 
-**Status**: Draft (Issue #132)
+**Status**: Implementada, pendiente de revisión por PR (Issue #132)
 
 **Input**: User description: "Imagen Docker multi-stage sin root para correr la app (Issue #132). UNA sola imagen: el binario Go sirve la API y el frontend (web/dist). PORT y DB_PATH configurables por entorno; el servidor replica la regla del proxy de Vite para servir el SPA; WEB_DIR configurable; Dockerfile multi-stage con usuario no root; .dockerignore; sección de README. Fuera de alcance: Azure, Trivy, registro de imágenes, CI de Docker. No se toca el esquema de datos."
 
