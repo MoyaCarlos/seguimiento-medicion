@@ -1,6 +1,10 @@
 package http
 
-import "github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+import (
+	"encoding/json"
+
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+)
 
 type crearHistoriaRequest struct {
 	ProyectoID   int64  `json:"proyecto_id"`
@@ -8,6 +12,13 @@ type crearHistoriaRequest struct {
 	Descripcion  string `json:"descripcion"`
 	Prioridad    string `json:"prioridad"`
 	ValorNegocio *int   `json:"valor_negocio"`
+}
+
+type editarHistoriaRequest struct {
+	Titulo              string       `json:"titulo"`
+	Descripcion         string       `json:"descripcion"`
+	CriteriosAceptacion *string      `json:"criterios_aceptacion"`
+	EstimacionSP        *json.Number `json:"estimacion_sp"`
 }
 
 type historiaResponse struct {

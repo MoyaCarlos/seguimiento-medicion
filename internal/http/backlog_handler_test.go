@@ -10,13 +10,17 @@ import (
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
 type stubBacklogRepository struct {
-	guardados []domain.BacklogItem
-	backlog   []domain.BacklogItem
-	errListar error
+	guardados       []domain.BacklogItem
+	backlog         []domain.BacklogItem
+	errListar       error
+	historias       map[int64]domain.BacklogItem
+	actualizaciones []domain.BacklogItem
+	sprints         *repository.SprintRepositoryEnMemoria
 }
 
 func (s *stubBacklogRepository) Guardar(_ context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
@@ -29,12 +33,31 @@ func (s *stubBacklogRepository) ListarSinSprint(_ context.Context, _ int64) ([]d
 	return s.backlog, s.errListar
 }
 
+func (s *stubBacklogRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := s.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (s *stubBacklogRepository) Actualizar(_ context.Context, item domain.BacklogItem) error {
+	s.actualizaciones = append(s.actualizaciones, item)
+	s.historias[item.ID] = item
+	return nil
+}
+
 func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
-	repo := &stubBacklogRepository{}
+	repo := &stubBacklogRepository{
+		historias: map[int64]domain.BacklogItem{},
+		sprints:   repository.NewSprintRepositoryEnMemoria(),
+	}
 	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
 	return NewBacklogHandler(
 		service.NewCrearHistoriaBacklog(repo, proyectos),
 		service.NewConsultarProductBacklog(proyectos, repo),
+		service.NewObtenerHistoria(repo),
+		service.NewEditarHistoria(repo, repo.sprints),
 	), repo
 }
 
@@ -215,5 +238,175 @@ func TestBacklogHandler_ConsultarBacklog_ErrorDePersistencia(t *testing.T) {
 
 	if rec.Code != nethttp.StatusInternalServerError {
 		t.Fatalf("se esperaba 500, se obtuvo %d", rec.Code)
+	}
+}
+
+const edicionValidaJSON = `{"titulo":"Iniciar sesión con Google","descripcion":"Con OAuth","criterios_aceptacion":"Dado, cuando, entonces","estimacion_sp":8}`
+
+func sembrarHistoria(repo *stubBacklogRepository) domain.BacklogItem {
+	h := domain.BacklogItem{ID: 3, ProyectoID: 1, Titulo: "Original", Descripcion: "Descripción",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva}
+	repo.historias[h.ID] = h
+	return h
+}
+
+func editarHistoria(handler *BacklogHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id, bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", id)
+	handler.Editar(rec, req)
+	return rec
+}
+
+func leerError(t *testing.T, rec *httptest.ResponseRecorder) errorResponse {
+	t.Helper()
+	var resp errorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	return resp
+}
+
+func TestBacklogHandler_Editar_Exitosa(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+
+	rec := editarHistoria(handler, "3", edicionValidaJSON)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.ID != 3 || resp.Titulo != "Iniciar sesión con Google" || resp.Estado != "Nueva" || resp.Prioridad != "M" {
+		t.Errorf("respuesta inesperada: %+v", resp)
+	}
+	if resp.CriteriosAceptacion == nil || *resp.CriteriosAceptacion != "Dado, cuando, entonces" ||
+		resp.EstimacionSP == nil || *resp.EstimacionSP != 8 {
+		t.Errorf("criterios o estimación inesperados: %+v", resp)
+	}
+	if len(repo.actualizaciones) != 1 {
+		t.Errorf("se esperaba persistir la edición")
+	}
+}
+
+func TestBacklogHandler_Editar_InexistenteDominaSobreElCuerpo(t *testing.T) {
+	cuerpos := map[string]string{
+		"titulo vacio":            `{"titulo":"","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`,
+		"falta una clave":         `{"titulo":"t"}`,
+		"story points no enteros": `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":2.5}`,
+	}
+	for nombre, cuerpo := range cuerpos {
+		t.Run(nombre, func(t *testing.T) {
+			handler, _ := nuevoHandlerDePrueba()
+
+			rec := editarHistoria(handler, "999", cuerpo)
+
+			if rec.Code != nethttp.StatusNotFound {
+				t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Mensaje != "historia no encontrada" {
+				t.Errorf("mensaje inesperado: %q", resp.Mensaje)
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_Editar_Validaciones(t *testing.T) {
+	casos := []struct {
+		nombre  string
+		cuerpo  string
+		campo   string
+		mensaje string
+	}{
+		{"titulo en blanco", `{"titulo":"   ","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`, "titulo", "el título es obligatorio"},
+		{"story points fuera de la escala", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":4}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
+		{"story points no enteros", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":2.5}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
+		{"falta titulo", `{"descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`, "titulo", "el campo es obligatorio"},
+		{"falta descripcion", `{"titulo":"t","criterios_aceptacion":null,"estimacion_sp":null}`, "descripcion", "el campo es obligatorio"},
+		{"faltan criterios", `{"titulo":"t","descripcion":"d","estimacion_sp":null}`, "criterios_aceptacion", "el campo es obligatorio"},
+		{"falta estimacion", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null}`, "estimacion_sp", "el campo es obligatorio"},
+	}
+	for _, tc := range casos {
+		t.Run(tc.nombre, func(t *testing.T) {
+			handler, repo := nuevoHandlerDePrueba()
+			sembrarHistoria(repo)
+
+			rec := editarHistoria(handler, "3", tc.cuerpo)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Campo != tc.campo || resp.Mensaje != tc.mensaje {
+				t.Errorf("se esperaba %q/%q, se obtuvo %q/%q", tc.campo, tc.mensaje, resp.Campo, resp.Mensaje)
+			}
+			if len(repo.actualizaciones) != 0 {
+				t.Errorf("no se esperaba persistir una edición inválida")
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_Editar_CamposOpcionalesNull(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var crudo map[string]json.RawMessage
+	_ = json.Unmarshal(rec.Body.Bytes(), &crudo)
+	if string(crudo["criterios_aceptacion"]) != "null" || string(crudo["estimacion_sp"]) != "null" {
+		t.Errorf("se esperaban criterios y estimación null: %s", rec.Body.String())
+	}
+}
+
+func TestBacklogHandler_Editar_StoryPointsCongelados(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint, _ := repo.sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: domain.SprintActivo})
+	h := sembrarHistoria(repo)
+	sp := 3
+	h.SprintID, h.EstimacionSP = &sprint.ID, &sp
+	repo.historias[h.ID] = h
+
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5}`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := leerError(t, rec); resp.Campo != "estimacion_sp" || resp.Mensaje != domain.ErrEstimacionCongelada.Mensaje {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+	if len(repo.actualizaciones) != 0 {
+		t.Errorf("no se esperaba persistir la edición")
+	}
+}
+
+func TestBacklogHandler_Editar_JSONInvalido(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+
+	rec := editarHistoria(handler, "3", `{no-es-json`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	if resp := leerError(t, rec); resp.Mensaje != "JSON inválido" {
+		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
+	}
+}
+
+func TestBacklogHandler_Editar_IDInvalido(t *testing.T) {
+	handler, _ := nuevoHandlerDePrueba()
+
+	rec := editarHistoria(handler, "abc", edicionValidaJSON)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
 	}
 }

@@ -12,10 +12,22 @@ import (
 type BacklogHandler struct {
 	crearHistoria    *service.CrearHistoriaBacklog
 	consultarBacklog *service.ConsultarProductBacklog
+	obtenerHistoria  *service.ObtenerHistoria
+	editarHistoria   *service.EditarHistoria
 }
 
-func NewBacklogHandler(crearHistoria *service.CrearHistoriaBacklog, consultarBacklog *service.ConsultarProductBacklog) *BacklogHandler {
-	return &BacklogHandler{crearHistoria: crearHistoria, consultarBacklog: consultarBacklog}
+func NewBacklogHandler(
+	crearHistoria *service.CrearHistoriaBacklog,
+	consultarBacklog *service.ConsultarProductBacklog,
+	obtenerHistoria *service.ObtenerHistoria,
+	editarHistoria *service.EditarHistoria,
+) *BacklogHandler {
+	return &BacklogHandler{
+		crearHistoria:    crearHistoria,
+		consultarBacklog: consultarBacklog,
+		obtenerHistoria:  obtenerHistoria,
+		editarHistoria:   editarHistoria,
+	}
 }
 
 // Crear atiende POST /backlog.
@@ -60,6 +72,10 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 		respuesta = append(respuesta, aRespuesta(item))
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
+}
+
+// Editar atiende PUT /backlog/{id}.
+func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 func escribirJSON(w nethttp.ResponseWriter, status int, payload any) {
