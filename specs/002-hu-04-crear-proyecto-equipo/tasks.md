@@ -337,14 +337,16 @@ historia, sobre la base de `specs/007-frontend-base`. Se ejecutó en la rama
 `feature/HU-04-frontend` (issue #36), con el cliente compartido de
 `web/src/compartido/api/client.ts` (`get`/`post`/`put`, `ApiError` y `ConnectionError`).
 
-- [X] T045 [P] [US1] Pantalla de creación de proyecto en `web/src/features/proyecto/crear.tsx`, con validaciones de nombre, creador, descripción y fechas.
+- [X] T045 [P] [US1] Pantalla de creación de proyecto en `web/src/features/proyecto/crear.tsx`, montada en la ruta índice `/`, con validaciones de nombre, creador, descripción y fechas.
 - [X] T046 [P] [US1] Panel principal del proyecto en `web/src/features/proyecto/Panel.tsx` y redirección posterior al alta.
 - [X] T047 [P] [US2] Vista de configuración del equipo en `web/src/features/proyecto/Configuracion.tsx`, con listado y asignación de integrantes.
 - [X] T048 [P] [US3] Vista de edición del proyecto en `web/src/features/proyecto/Editar.tsx`, con cancelación sin cambios.
 - [X] T049 [P] Cliente de la API de HU-04 en `web/src/features/proyecto/api.ts` sobre el cliente compartido (`get`/`post`/`put`); los errores se manejan como `ApiError` y `ConnectionError`.
-- [X] T050 [P] Registro de las rutas anidadas de la feature en `web/src/features/proyecto/index.tsx`.
-- [X] T051 [P] Tests de validación y de pantallas en `web/src/features/proyecto/*.test.ts(x)`.
+- [X] T050 [P] Registro de la ruta índice `/` en `web/src/rutas.tsx` y de las rutas anidadas de la feature en `web/src/features/proyecto/index.tsx`.
+- [X] T051 [P] Tests de validación, de pantallas y de la ruta índice en `web/src/features/proyecto/*.test.ts(x)` y `web/src/rutas.test.tsx`.
 - [X] T052 Verificar `npm test`, `npm run lint` y `npm run build` en `web/`.
+- [X] T053 Validar el nombre del creador hasta 200 caracteres y mostrar como error general el campo `nombre` que devuelve la API al crear.
+- [X] T054 Remontar la feature al cambiar el identificador del proyecto en la URL (`key={id}`).
 
 ---
 
