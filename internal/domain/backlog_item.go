@@ -9,14 +9,15 @@ const (
 
 // BacklogItem representa una historia de usuario del Product Backlog.
 type BacklogItem struct {
-	ID           int64
-	ProyectoID   int64
-	Titulo       string
-	Descripcion  string
-	Prioridad    Prioridad
-	Estado       Estado
-	ValorNegocio *int
-	EstimacionSP *int
+	ID                  int64
+	ProyectoID          int64
+	Titulo              string
+	Descripcion         string
+	CriteriosAceptacion *string
+	Prioridad           Prioridad
+	Estado              Estado
+	ValorNegocio        *int
+	EstimacionSP        *int
 	// SprintID es nil mientras la historia está en el Product Backlog. Su
 	// asignación (con sus validaciones) es alcance de HU-06.
 	SprintID *int64

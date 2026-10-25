@@ -20,3 +20,6 @@ var ErrNoEncontrado = errors.New("registro no encontrado")
 
 // ErrProyectoNoEncontrado indica que el proyecto solicitado no existe.
 var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
+
+// ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
+var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
