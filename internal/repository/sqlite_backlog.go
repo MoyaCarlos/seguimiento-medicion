@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -20,11 +21,12 @@ func NewSQLiteBacklogRepository(db *sql.DB) *SQLiteBacklogRepository {
 // Guardar persiste la historia y devuelve una copia con el ID asignado.
 func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
 	resultado, err := r.db.ExecContext(ctx,
-		`INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO historias (proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		item.ProyectoID,
 		item.Titulo,
 		item.Descripcion,
+		punteroATextoSQL(item.CriteriosAceptacion),
 		string(item.Prioridad),
 		string(item.Estado),
 		punteroAValorSQL(item.ValorNegocio),
@@ -45,7 +47,7 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 // ListarPorSprint devuelve las historias asignadas al Sprint, en orden de creación.
 func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT id, proyecto_id, titulo, descripcion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
+		`SELECT id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
 		 FROM historias WHERE sprint_id = ? ORDER BY id`, sprintID)
 	if err != nil {
 		return nil, fmt.Errorf("listar historias del sprint %d: %w", sprintID, err)
@@ -58,7 +60,7 @@ func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID 
 			h                 domain.BacklogItem
 			prioridad, estado string
 		)
-		if err := filas.Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &prioridad, &estado,
+		if err := filas.Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &h.CriteriosAceptacion, &prioridad, &estado,
 			&h.ValorNegocio, &h.EstimacionSP, &h.SprintID); err != nil {
 			return nil, fmt.Errorf("leer historia: %w", err)
 		}
@@ -66,6 +68,68 @@ func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID 
 		historias = append(historias, h)
 	}
 	return historias, filas.Err()
+}
+
+// ListarSinSprint devuelve el Product Backlog del proyecto: las historias sin
+// Sprint, por prioridad M, S, C, W y luego por orden de creación. El orden
+// alfabético de la prioridad no sirve, por eso el CASE.
+func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoID int64) ([]domain.BacklogItem, error) {
+	filas, err := r.db.QueryContext(ctx,
+		`SELECT id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
+		 FROM historias WHERE proyecto_id = ? AND sprint_id IS NULL
+		 ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id`, proyectoID)
+	if err != nil {
+		return nil, fmt.Errorf("listar product backlog del proyecto %d: %w", proyectoID, err)
+	}
+	defer filas.Close()
+
+	historias := make([]domain.BacklogItem, 0)
+	for filas.Next() {
+		var (
+			h                 domain.BacklogItem
+			prioridad, estado string
+		)
+		if err := filas.Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &h.CriteriosAceptacion, &prioridad, &estado,
+			&h.ValorNegocio, &h.EstimacionSP, &h.SprintID); err != nil {
+			return nil, fmt.Errorf("leer historia: %w", err)
+		}
+		h.Prioridad, h.Estado = domain.Prioridad(prioridad), domain.Estado(estado)
+		historias = append(historias, h)
+	}
+	return historias, filas.Err()
+}
+
+// ObtenerPorID devuelve la historia con el identificador indicado.
+func (r *SQLiteBacklogRepository) ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error) {
+	var (
+		h                 domain.BacklogItem
+		prioridad, estado string
+	)
+	err := r.db.QueryRowContext(ctx,
+		`SELECT id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id
+		 FROM historias WHERE id = ?`, id,
+	).Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &h.CriteriosAceptacion, &prioridad, &estado,
+		&h.ValorNegocio, &h.EstimacionSP, &h.SprintID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	if err != nil {
+		return domain.BacklogItem{}, fmt.Errorf("obtener historia %d: %w", id, err)
+	}
+	h.Prioridad, h.Estado = domain.Prioridad(prioridad), domain.Estado(estado)
+	return h, nil
+}
+
+// Actualizar persiste los campos editables de la historia: título, descripción,
+// criterios de aceptación y Story Points.
+func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.BacklogItem) error {
+	if _, err := r.db.ExecContext(ctx,
+		"UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ? WHERE id = ?",
+		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP), item.ID,
+	); err != nil {
+		return fmt.Errorf("actualizar historia %d: %w", item.ID, err)
+	}
+	return nil
 }
 
 // QuitarDeSprint devuelve la historia al Product Backlog, sin Sprint asignado
@@ -80,19 +144,11 @@ func (r *SQLiteBacklogRepository) QuitarDeSprint(ctx context.Context, historiaID
 	return nil
 }
 
-// ListarSinSprint devuelve el Product Backlog del proyecto.
-func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoID int64) ([]domain.BacklogItem, error) {
-	return nil, nil
-}
-
-// ObtenerPorID devuelve la historia con el identificador indicado.
-func (r *SQLiteBacklogRepository) ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error) {
-	return domain.BacklogItem{}, nil
-}
-
-// Actualizar persiste los campos editables de la historia.
-func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.BacklogItem) error {
-	return nil
+func punteroATextoSQL(v *string) any {
+	if v == nil {
+		return nil
+	}
+	return *v
 }
 
 func punteroAValorSQL(v *int) any {
