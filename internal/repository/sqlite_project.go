@@ -91,6 +91,29 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 	return escanearProyecto(row)
 }
 
+// Listar devuelve todos los proyectos ordenados por id.
+func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project, error) {
+	filas, err := r.db.QueryContext(ctx,
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en FROM proyectos ORDER BY id`)
+	if err != nil {
+		return nil, fmt.Errorf("listar proyectos: %w", err)
+	}
+	defer filas.Close()
+
+	proyectos := make([]domain.Project, 0)
+	for filas.Next() {
+		p, err := escanearProyecto(filas)
+		if err != nil {
+			return nil, err
+		}
+		proyectos = append(proyectos, p)
+	}
+	if err := filas.Err(); err != nil {
+		return nil, fmt.Errorf("listar proyectos: %w", err)
+	}
+	return proyectos, nil
+}
+
 // Actualizar reemplaza los datos editables del proyecto.
 func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Project) error {
 	resultado, err := r.db.ExecContext(ctx,
@@ -166,12 +189,12 @@ func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyect
 	return miembros, nil
 }
 
-func escanearProyecto(row *sql.Row) (domain.Project, error) {
+func escanearProyecto(fila escaneable) (domain.Project, error) {
 	var (
 		p                      domain.Project
 		inicio, fin, createdAt sql.NullString
 	)
-	if err := row.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt); err != nil {
+	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Project{}, domain.ErrProyectoNoEncontrado
 		}

@@ -33,11 +33,12 @@ func main() {
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
+	listarProyectos := service.NewListarProyectos(proyectos)
 	editarProyecto := service.NewEditarProyecto(proyectos)
 	asignarIntegrante := service.NewAsignarIntegrante(proyectos, usuarios)
 	listarIntegrantes := service.NewListarIntegrantes(proyectos)
 	obtenerEstadoProyecto := service.NewObtenerEstadoProyecto(proyectos, sprintRepo)
-	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
+	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, listarProyectos, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
@@ -51,6 +52,7 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
 	mux.HandleFunc("GET /projects/{id}/status", projectHandler.ObtenerEstado)
