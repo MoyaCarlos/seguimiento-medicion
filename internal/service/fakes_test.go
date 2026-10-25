@@ -136,3 +136,17 @@ func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.U
 	f.usuarios[u.NombreNormalizado] = u
 	return u, nil
 }
+
+type fakeProductBacklogRepository struct {
+	historias []domain.BacklogItem
+	err       error
+	llamadas  int
+}
+
+func (f *fakeProductBacklogRepository) ListarSinSprint(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
+	f.llamadas++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.historias, nil
+}
