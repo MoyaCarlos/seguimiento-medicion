@@ -20,3 +20,9 @@ Cada tarea con lógica lleva su propio commit `RED:` y `GREEN:`. Todos los commi
 - [x] T014 COMMIT `docs: agregar la especificación y el contrato de listado de proyectos (Issue #109)`
 - [x] T015 Marcar las tareas y verificar `go build`, `go vet`, `gofmt -l` y `go test ./...`.
 - [x] T016 COMMIT `docs: marcar las tareas completadas de listar proyectos (Refs #109)`
+- [x] T017 Habilitar `Strict` en el runner de Godog para que los pasos indefinidos fallen.
+- [x] T018 COMMIT `test: hacer estricto el runner BDD para que los pasos indefinidos fallen`
+- [x] T019 RED: escenarios BDD del listado (orden por id, lista vacía y error 500) sin pasos; fallan con el runner estricto.
+- [x] T020 COMMIT `RED: agregar escenarios BDD del listado de proyectos (fallan)`
+- [x] T021 GREEN: implementar los pasos BDD sobre SQLite y el handler, escenarios en verde.
+- [x] T022 COMMIT `GREEN: implementar los pasos BDD del listado, escenarios en verde`
