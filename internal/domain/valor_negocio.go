@@ -16,3 +16,8 @@ func EsValorNegocioValido(v int) bool {
 	_, ok := valoresNegocioValidos[v]
 	return ok
 }
+
+// EsEstimacionValida indica si los Story Points pertenecen a la escala Fibonacci permitida.
+func EsEstimacionValida(v int) bool {
+	return false
+}

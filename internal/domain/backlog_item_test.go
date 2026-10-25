@@ -99,3 +99,16 @@ func TestPrioridad_EsValida(t *testing.T) {
 		t.Errorf("la prioridad %q no debería ser válida", "X")
 	}
 }
+
+func TestEsEstimacionValida(t *testing.T) {
+	for _, v := range []int{1, 2, 3, 5, 8, 13, 21} {
+		if !EsEstimacionValida(v) {
+			t.Errorf("%d Story Points deberían ser válidos", v)
+		}
+	}
+	for _, v := range []int{0, -1, 4, 22, 34} {
+		if EsEstimacionValida(v) {
+			t.Errorf("%d Story Points no deberían ser válidos", v)
+		}
+	}
+}
