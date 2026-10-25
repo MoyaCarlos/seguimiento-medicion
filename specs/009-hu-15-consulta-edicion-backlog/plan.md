@@ -12,9 +12,11 @@ por MoSCoW y luego por id) y **editar una historia** (`PUT /backlog/{id}`: títu
 criterios de aceptación y Story Points, todo junto). La entidad `BacklogItem` suma
 `CriteriosAceptacion *string` (la columna ya existe desde #107) y la operación
 `ConDatosEditados`, que reutiliza las validaciones de creación y valida los Story Points
-contra la escala Fibonacci. El orden MoSCoW es una regla de dominio (`Prioridad.Orden`,
-`OrdenarBacklog`), no un `ORDER BY` en SQL. La existencia (proyecto/historia) se verifica
-antes de cualquier validación del cuerpo. El frontend queda fuera de este incremento (sub-issue
+contra la escala Fibonacci. El orden MoSCoW lo resuelve la consulta SQL con un `CASE`
+explícito, como fija `MODELO-DE-DATOS.md` §4.4. `EditarHistoria` aplica además la regla de
+servicio D2b: no se cambian los Story Points ya cargados de una historia de un Sprint `Activo`
+o `Finalizado` (cargarlos desde vacío sí). La existencia (proyecto/historia) se verifica antes
+de cualquier validación del cuerpo. El frontend queda fuera de este incremento (sub-issue
 propia).
 
 ## Technical Context
@@ -45,9 +47,9 @@ Constitución v1.0.0 (`.specify/memory/constitution.md`).
 
 | Principio | Cómo se cumple | Estado |
 |-----------|----------------|--------|
-| I. Test-First (NON-NEGOTIABLE) | Validación de edición, escala de SP, orden MoSCoW, services y handlers se hacen con commits RED → GREEN (→ REFACTOR al extraer las validaciones compartidas con `NewBacklogItem`) | PASS |
+| I. Test-First (NON-NEGOTIABLE) | Validación de edición, escala de SP, orden MoSCoW (test de integración del repositorio), regla D2b, services y handlers se hacen con commits RED → GREEN (→ REFACTOR al extraer las validaciones compartidas con `NewBacklogItem`) | PASS |
 | II. SDD | spec → clarify (3 Q resueltas) → plan; siguen tasks, analyze, BDD, implement | PASS |
-| III. BDD | `features/consulta_edicion_backlog.feature` con los 7 escenarios de la spec (normal, alternativo, límite, error) | PASS |
+| III. BDD | `features/consulta_edicion_backlog.feature` con los 9 escenarios de la spec (normal, alternativo, límite, error) | PASS |
 | IV. Clean/Hexagonal | Reglas en `internal/domain`; puertos nuevos en `internal/repository` (ISP); SQLite y HTTP como adaptadores | PASS |
 | V. Clean Code/SOLID/KISS/YAGNI/DRY | Un service por caso de uso (`ConsultarProductBacklog`, `EditarHistoria`); validaciones compartidas con HU-01; escala Fibonacci única; sin versionado/paginación | PASS |
 | VI. Stack | Solo stdlib + `modernc.org/sqlite` + Godog | PASS |
@@ -82,15 +84,12 @@ internal/domain/
 ├── backlog_item.go                      # + CriteriosAceptacion, ConDatosEditados, helpers de validación compartidos
 ├── backlog_item_test.go                 # + tests de edición
 ├── valor_negocio.go                     # escala Fibonacci compartida + EsEstimacionValida, ErrEstimacionInvalida
-├── prioridad.go                         # + Prioridad.Orden()
-├── product_backlog.go                   # OrdenarBacklog (nuevo)
-├── product_backlog_test.go              # (nuevo)
-└── errors.go                            # + ErrHistoriaNoEncontrada
+└── errors.go                            # + ErrHistoriaNoEncontrada, ErrEstimacionCongelada
 
 internal/service/
 ├── consultar_product_backlog.go         # ConsultarProductBacklog (nuevo)
 ├── consultar_product_backlog_test.go
-├── editar_historia.go                   # EditarHistoria (nuevo)
+├── editar_historia.go                   # EditarHistoria (nuevo), con la regla D2b (usa SprintRepository)
 ├── editar_historia_test.go
 ├── obtener_historia.go                  # ObtenerHistoria (nuevo): existencia antes de validar en el handler
 ├── obtener_historia_test.go
@@ -98,7 +97,7 @@ internal/service/
 
 internal/repository/
 ├── backlog_repository.go                # + ProductBacklogRepository, HistoriaRepository
-├── sqlite_backlog.go                    # + ListarSinSprint, ObtenerPorID, Actualizar; criterios en Guardar/ListarPorSprint
+├── sqlite_backlog.go                    # + ListarSinSprint (ORDER BY CASE prioridad, id), ObtenerPorID, Actualizar; criterios en Guardar/ListarPorSprint
 └── sqlite_backlog_test.go
 
 internal/http/
@@ -129,3 +128,4 @@ Notas de alcance (decisiones documentadas, no violaciones):
 | Asignar historias a un Sprint | No hay endpoint; los tests siembran `sprint_id` en la base o en el fake | Es HU-06 (Assumptions) |
 | Editar prioridad / valor de negocio | Fuera de alcance | Clarification 3 |
 | Concurrencia | Último guardado válido, sin versión | Edge case explícito de la spec |
+| D2b sin endpoint para asignar Sprint | Se prueba sembrando `sprint_id` y el estado del Sprint en la base o en el fake | HU-06 todavía no existe |

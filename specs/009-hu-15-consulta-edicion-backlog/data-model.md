@@ -42,11 +42,23 @@ entero (R5).
 
 Resultado: copia con los cuatro campos reemplazados y todos los demás intactos (FR-011).
 
+### Regla de servicio D2b (en `EditarHistoria`, no en el dominio)
+
+Después de `ConDatosEditados`, si `SprintID != nil` el service carga el Sprint:
+
+| Estado del Sprint | `EstimacionSP` actual | Nueva estimación | Resultado |
+|---|---|---|---|
+| sin Sprint o `Pendiente` | cualquiera | cualquiera válida | se guarda |
+| `Activo` / `Finalizado` | `nil` | `nil` o valor válido | se guarda (carga inicial) |
+| `Activo` / `Finalizado` | `v` | `v` (igual) | se guarda (no cambia) |
+| `Activo` / `Finalizado` | `v` | otro valor o `nil` | `domain.ErrEstimacionCongelada` (400, `campo: estimacion_sp`, "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"); no se llama a `Actualizar` |
+
 ## Vista: Product Backlog (no persistida)
 
 - **Origen**: historias con `proyecto_id = ?` y `sprint_id IS NULL`, cualquiera sea su estado.
-- **Orden**: `Prioridad.Orden()` ascendente (M=0, S=1, C=2, W=3) y, a igual prioridad, `ID`
-  ascendente. Lo aplica `domain.OrdenarBacklog` (orden estable).
+- **Orden**: prioridad `M, S, C, W` y, a igual prioridad, `id` ascendente. Lo aplica la consulta
+  SQL con `ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3
+  END, id` (`MODELO-DE-DATOS.md` §4.4; el orden alfabético no sirve).
 - **Vacía**: lista vacía (`[]`), nunca `null`, cuando el proyecto existe y no hay historias.
 
 ## Errores de dominio
@@ -56,17 +68,20 @@ Resultado: copia con los cuatro campos reemplazados y todos los demás intactos 
 | `domain.ErrProyectoNoEncontrado` (existe) | consulta de backlog de proyecto inexistente | 404 |
 | `domain.ErrHistoriaNoEncontrada` (nuevo) | edición de historia inexistente | 404 |
 | `domain.ValidationError` | edición inválida | 400 con `campo` |
+| `domain.ErrEstimacionCongelada` (nuevo, `ValidationError`) | cambio de SP ya cargados en Sprint Activo/Finalizado (D2b) | 400 con `campo: estimacion_sp` |
 
 ## Puertos (internal/repository)
 
 ```text
 ProductBacklogRepository
-  ListarSinSprint(ctx, proyectoID int64) ([]domain.BacklogItem, error)   // ORDER BY id
+  ListarSinSprint(ctx, proyectoID int64) ([]domain.BacklogItem, error)   // ORDER BY CASE prioridad ..., id
 
 HistoriaRepository
   ObtenerPorID(ctx, id int64) (domain.BacklogItem, error)               // ErrHistoriaNoEncontrada
   Actualizar(ctx, item domain.BacklogItem) error                         // titulo, descripcion, criterios, estimacion_sp
 ```
+
+`EditarHistoria` usa además el puerto existente `SprintRepository.ObtenerPorID` para D2b.
 
 `SQLiteBacklogRepository` implementa ambos, además de `BacklogRepository` y
 `HistoriasDeSprintRepository`. `Guardar` y `ListarPorSprint` pasan a leer/escribir

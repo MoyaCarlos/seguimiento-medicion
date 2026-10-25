@@ -70,7 +70,9 @@ paths:
         Si la historia no existe responde 404 antes de validar el cuerpo. Los
         cuatro campos son obligatorios como claves; criterios_aceptacion y
         estimacion_sp aceptan null (o "" para los criterios) para dejarlos vacíos.
-        Una edición con cualquier campo inválido se rechaza entera.
+        Una edición con cualquier campo inválido se rechaza entera. Si la historia
+        está en un Sprint Activo o Finalizado y ya tiene Story Points, no se pueden
+        cambiar (D2b); cargarlos cuando estaban en null sí se permite.
       operationId: editarHistoria
       parameters:
         - $ref: '#/components/parameters/ID'
@@ -117,6 +119,11 @@ paths:
                   value:
                     campo: estimacion_sp
                     mensaje: los Story Points deben ser uno de 1, 2, 3, 5, 8, 13, 21
+                storyPointsCongelados:
+                  summary: Cambio de SP ya cargados con Sprint Activo o Finalizado (D2b)
+                  value:
+                    campo: estimacion_sp
+                    mensaje: los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado
                 criteriosLargos:
                   value:
                     campo: criterios_aceptacion

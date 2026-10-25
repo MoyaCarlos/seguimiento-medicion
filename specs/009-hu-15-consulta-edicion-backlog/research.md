@@ -18,14 +18,15 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 ## R2. Dónde vive la regla de orden MoSCoW
 
-- **Decision**: en el dominio. `Prioridad.Orden()` devuelve 0..3 (M, S, C, W) y una función
-  `domain.OrdenarBacklog([]BacklogItem)` ordena estable por (orden de prioridad, id). El
-  repositorio devuelve las historias sin Sprint ordenadas por `id`; el service aplica el orden.
-- **Rationale**: es una regla de negocio (FR-003) → Principio I (TDD sobre el dominio) y DRY:
-  el fake en memoria y SQLite no tienen que replicar el `ORDER BY CASE`. El volumen es chico
-  (sin paginación), así que ordenar en memoria no tiene costo.
-- **Alternatives considered**: `ORDER BY CASE prioridad WHEN 'M' THEN 0 ... END, id` en SQL
-  (la regla quedaría en infraestructura y sin test unitario de dominio).
+- **Decision**: en la consulta SQL del adaptador, como fija `MODELO-DE-DATOS.md` §4.4:
+  `WHERE proyecto_id = ? AND sprint_id IS NULL ORDER BY CASE prioridad WHEN 'M' THEN 0
+  WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id`. El service no reordena.
+- **Rationale**: decisión del equipo ya documentada en el modelo de datos. El orden alfabético
+  de `prioridad` no sirve (`C` < `M` < `S` < `W`), por eso el `CASE` explícito; el "orden de
+  creación" es `id`. El ciclo TDD de la regla se hace con el test de integración del
+  repositorio contra SQLite `:memory:` (RED/GREEN) y el escenario BDD.
+- **Alternatives considered**: ordenar en el dominio; descartada para seguir el modelo de datos
+  acordado por el equipo.
 
 ## R3. Edición en el dominio
 
@@ -62,7 +63,8 @@ documento registra las decisiones técnicas tomadas para el diseño.
 ## R6. Existencia antes que validación
 
 - **Decision**: `EditarHistoria.Ejecutar` primero llama a `ObtenerPorID` (que devuelve
-  `domain.ErrHistoriaNoEncontrada`) y recién después valida. En el handler, la comprobación de
+  `domain.ErrHistoriaNoEncontrada`), después valida los campos (`ConDatosEditados`) y por
+  último aplica la regla D2b (R10). En el handler, la comprobación de
   claves obligatorias del cuerpo y el parseo de `estimacion_sp` se hacen **después** de
   verificar la existencia, igual que `ProjectHandler.Editar`. Para la consulta, el service
   llama a `ProjectRepository.ObtenerPorID` (→ `ErrProyectoNoEncontrado`) antes de listar.
@@ -73,7 +75,7 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 - **Decision**: dos interfaces nuevas en `internal/repository/backlog_repository.go`, sin
   tocar `BacklogRepository` (crear):
-  - `ProductBacklogRepository { ListarSinSprint(ctx, proyectoID) ([]domain.BacklogItem, error) }`
+  - `ProductBacklogRepository { ListarSinSprint(ctx, proyectoID) ([]domain.BacklogItem, error) }` (ya ordenado, R2)
   - `HistoriaRepository { ObtenerPorID(ctx, id) (domain.BacklogItem, error); Actualizar(ctx, item) error }`
   `SQLiteBacklogRepository` implementa las tres.
 - **Rationale**: mismo criterio que `HistoriasDeSprintRepository` (ISP): los stubs existentes
@@ -91,3 +93,20 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 - **Decision**: `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido.
 - **Rationale**: edge case explícito de la spec (mismo criterio que HU-04).
+
+## R10. Story Points congelados en Sprints Activo o Finalizado (D2b)
+
+- **Decision**: regla de **servicio** en `EditarHistoria`, como fija `MODELO-DE-DATOS.md` §5
+  ("Servicio (HU-15 y HU-14)"). Si la historia tiene `SprintID`, el service carga el Sprint con
+  `SprintRepository.ObtenerPorID`; si su estado es `Activo` o `Finalizado`, la estimación actual
+  no es `nil` y la nueva es distinta (otro valor o `nil`), devuelve
+  `domain.ErrEstimacionCongelada`, un `ValidationError{Campo: "estimacion_sp", Mensaje: "los
+  Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}` (400), y no
+  llama a `Actualizar`. Cargarla desde `nil` se permite. Con Sprint `Pendiente` o sin Sprint no
+  hay restricción.
+- **Rationale**: decisión D2b del equipo (texto: "No se modifican los Story Points ya cargados
+  ... Cargarlos por primera vez sí se permite"). Reenviar el mismo valor no modifica los Story
+  Points, por eso no se rechaza: el formulario siempre manda todos los campos (Assumptions).
+  `EditarHistoria` depende de la interfaz `repository.SprintRepository` ya existente (DIP).
+- **Alternatives considered**: ponerla en el dominio (`ConDatosEditados`); el modelo de datos la
+  asigna al servicio porque necesita el estado del Sprint, que no es parte de la historia.

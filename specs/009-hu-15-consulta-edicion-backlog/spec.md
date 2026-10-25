@@ -16,6 +16,10 @@
 - Q: ¿Los criterios de aceptación se guardan como un texto libre o como una lista de criterios? → A: Un solo texto libre opcional, máximo 2000 caracteres, con el mismo límite que la descripción. Vacío o ausente se guarda como NULL. Si más adelante hace falta tratar los criterios por separado, se migra a una tabla hija.
 - Q: ¿La edición incluye también la prioridad y el valor de negocio? → A: No. Solo se editan título, descripción, criterios de aceptación y Story Points, como dice la historia. Si hace falta repriorizar, se agrega como un cambio aparte.
 
+### Session 2026-10-25
+
+- Q: ¿Se pueden cambiar los Story Points de una historia asignada a un Sprint `Activo` o `Finalizado`? → A: No, si ya estaban cargados. Es la decisión D2b del equipo (aprobada el 2026-10-13, aclarada el 2026-10-14), registrada en `MODELO-DE-DATOS.md` (§4.4, §5 y D2b) y en las decisiones transversales y el Escenario 3 de HU-15 de `docs/PRODUCT-BACKLOG.md`: "No se modifican los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`, para que las métricas históricas se puedan reproducir. Cargarlos por primera vez (la historia estaba sin estimar) sí se permite." Es una regla de servicio, compartida con HU-14.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consultar el Product Backlog de un proyecto (Priority: P1)
@@ -48,6 +52,8 @@ Como Product Builder, modifico el título, la descripción, los criterios de ace
 2. **Given** que estoy editando una historia, **When** dejo el título en blanco (o compuesto solo por espacios), **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 3. **Given** que estoy editando una historia, **When** ingreso unos Story Points que no pertenecen a la escala Fibonacci, **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 4. **Given** que intento editar una historia que no existe, **When** envío la edición (aunque sus datos también sean inválidos), **Then** el sistema responde "no encontrado".
+5. **Given** que una historia con Story Points ya cargados está asignada a un Sprint "Activo" o "Finalizado", **When** intento cambiar sus Story Points, **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
+6. **Given** que una historia sin estimar está asignada a un Sprint "Activo" o "Finalizado", **When** cargo sus Story Points con un valor de la escala Fibonacci, **Then** el sistema persiste la estimación.
 
 ---
 
@@ -66,6 +72,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** los criterios de aceptación superan los 2000 caracteres, **THEN** el sistema **shall** rechazar la edición con una advertencia sobre los criterios y no modificar la historia.
 - **WHERE** los criterios de aceptación se envían vacíos, compuestos solo por espacios o sin informar, el sistema **shall** dejar la historia sin criterios de aceptación.
 - **IF** una edición tiene varios campos inválidos, **THEN** el sistema **shall** rechazarla entera, sin guardar parcialmente los campos válidos.
+- **WHILE** una historia está asignada a un Sprint `Activo` o `Finalizado` y tiene Story Points cargados, **IF** la edición informa Story Points distintos de los cargados (incluido dejarlos vacíos), **THEN** el sistema **shall** rechazar la edición con una advertencia sobre los Story Points y no modificar la historia (D2b).
+- **WHILE** una historia está asignada a un Sprint `Activo` o `Finalizado` y no tiene Story Points cargados, **WHEN** la edición informa Story Points válidos, **THEN** el sistema **shall** guardarlos (D2b: cargarlos por primera vez se permite).
+- **WHILE** una historia está asignada a un Sprint `Pendiente`, el sistema **shall** permitir cambiar sus Story Points como si estuviera en el Product Backlog.
 - **WHEN** se edita una historia, **THEN** el sistema **shall** conservar su identificador, proyecto, estado y Sprint asignado.
 - **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial, mismo criterio que HU-04).
 
@@ -87,6 +96,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-012**: El sistema MUST responder "no encontrado" cuando el proyecto consultado o la historia editada no existen, antes de validar cualquier dato de la petición.
 - **FR-013**: Los cambios de una edición válida MUST persistir y seguir disponibles después de cerrar y volver a abrir la aplicación.
 - **FR-014**: Las historias creadas antes de esta funcionalidad MUST aparecer en el listado con los criterios de aceptación vacíos.
+- **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse (decisión D2b del equipo).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -102,20 +112,20 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **SC-001**: Un Product Builder puede ver el Product Backlog completo de un proyecto en un solo paso, sin filtrar ni ordenar a mano.
 - **SC-002**: El 100% de las historias con Sprint asignado quedan fuera del listado y el 100% de las historias sin Sprint aparecen, en el orden de prioridad y creación definido.
 - **SC-003**: Un Product Builder puede corregir el título, la descripción, los criterios o los Story Points de una historia en menos de 1 minuto.
-- **SC-004**: El 100% de las ediciones con título vacío o Story Points fuera de la escala se rechazan con una advertencia y dejan la historia exactamente como estaba.
+- **SC-004**: El 100% de las ediciones con título vacío, Story Points fuera de la escala o que cambian los Story Points ya cargados de una historia de un Sprint `Activo` o `Finalizado` se rechazan con una advertencia y dejan la historia exactamente como estaba.
 - **SC-005**: El 100% de las ediciones válidas conservan el identificador y el estado de la historia, y siguen disponibles después de recargar la aplicación.
 
 ## Assumptions
 
 - No hay control de acceso por rol: igual que en HU-01, el sistema todavía no tiene identidad de usuario, así que cualquier integrante puede consultar y editar.
 - La asignación de historias a un Sprint llega con HU-06. Hasta entonces, el listado se prueba sembrando historias con Sprint directamente en la base de datos o en los fakes de los tests.
-- La edición se hace por identificador de historia y aplica a cualquier historia existente, esté o no en el Product Backlog. Cambiar el estado lo cubre HU-11 y cambiar el Sprint lo cubre HU-06.
+- La edición se hace por identificador de historia y aplica a cualquier historia existente, esté o no en el Product Backlog, con la restricción de D2b sobre los Story Points (FR-015). Cambiar el estado lo cubre HU-11 y cambiar el Sprint lo cubre HU-06.
 - Cargar los Story Points desde HU-15 es una carga directa. HU-14 puede reemplazarlos más adelante con la estimación acordada en Planning Poker.
 - Los Story Points se pueden borrar (dejar vacíos), porque la estimación es opcional hasta que se acuerde.
 - La edición envía todos los campos editables juntos: lo que se deja vacío queda vacío. No hay edición parcial campo por campo.
 - No hay paginación ni búsqueda: el volumen de historias de un proyecto académico es chico.
-- Por la regla transversal del backlog, una historia sin Sprint debería estar en "Nueva" (al cerrar un Sprint, las no completadas vuelven a "Nueva"; hoy eso está pendiente en el fix #99). El listado muestra el estado que tenga la historia, sin filtrar por él.
-- Los campos nuevos de la historia (criterios de aceptación) se agregan con el sistema de migraciones del modelo de datos (#107). La implementación de esta historia se hace después de ese cambio.
+- Por la regla transversal del backlog, una historia sin Sprint está en "Nueva": al cerrar un Sprint, las no completadas vuelven a "Nueva" (fix #99, PR #115) y la base lo garantiza con `CHECK (estado = 'Nueva' OR sprint_id IS NOT NULL)`. El listado muestra el estado que tenga la historia, sin filtrar por él.
+- La columna de criterios de aceptación ya existe en la migración 001 del modelo de datos (#107, D10), así que esta historia no agrega migraciones.
 - Los criterios de aceptación se guardan como un solo texto. Si más adelante hace falta tratar cada criterio por separado, se migra a una entidad hija de la historia.
 - Repriorizar el backlog (editar prioridad o valor de negocio) queda fuera de esta historia.
 - El orden de creación se toma del identificador incremental de la historia (HU-01, FR-003).

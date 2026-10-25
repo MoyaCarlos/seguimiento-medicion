@@ -49,5 +49,7 @@ curl -s -X POST localhost:8080/backlog -d '{"proyecto_id":1,"titulo":"Recuperar 
 | 8 | `PUT /backlog/99` con `"titulo":""` | 404 `historia no encontrada` (no 400) |
 | 9 | Reiniciar `go run ./cmd/api` y repetir el paso 4 | Los cambios persisten (FR-013) |
 
-Exclusión por Sprint (FR-002): hasta HU-06 no hay endpoint para asignar historias; se cubre en
-`sqlite_backlog_test.go` y en el escenario BDD sembrando `sprint_id` directo en la base.
+Exclusión por Sprint (FR-002) y Story Points congelados en Sprints `Activo`/`Finalizado`
+(FR-015, D2b): hasta HU-06 no hay endpoint para asignar historias; se cubren en
+`sqlite_backlog_test.go`, `editar_historia_test.go` y en los escenarios BDD sembrando
+`sprint_id` (y el estado del Sprint) directo en la base.
