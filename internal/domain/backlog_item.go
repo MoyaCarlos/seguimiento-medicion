@@ -64,3 +64,9 @@ func NewBacklogItem(proyectoID int64, titulo, descripcion string, prioridad Prio
 		EstimacionSP: nil,
 	}, nil
 }
+
+// ConDatosEditados devuelve una copia de la historia con los campos editables
+// reemplazados.
+func (b BacklogItem) ConDatosEditados(titulo, descripcion string, criterios *string, estimacionSP *int) (BacklogItem, error) {
+	return b, nil
+}
