@@ -37,11 +37,14 @@ func (s *scenarioContext) iniciarBD() error {
 		return err
 	}
 	db.SetMaxOpenConns(1)
-	if err := repository.Migrar(context.Background(), db); err != nil {
+	if err := repository.AplicarMigraciones(context.Background(), db); err != nil {
 		return err
 	}
 	s.db = db
-	s.servicio = service.NewCrearHistoriaBacklog(repository.NewSQLiteBacklogRepository(db))
+	s.servicio = service.NewCrearHistoriaBacklog(
+		repository.NewSQLiteBacklogRepository(db),
+		repository.NewSQLiteProjectRepository(db),
+	)
 	return nil
 }
 
@@ -64,6 +67,18 @@ func (s *scenarioContext) existeProyecto(identificador int) error {
 func (s *scenarioContext) enElPanel() error { return nil }
 
 func (s *scenarioContext) intentoCrea() error { return nil }
+
+func (s *scenarioContext) intentoCreaParaProyectoInexistente(identificador int) error {
+	s.proyectoID = int64(identificador)
+	return nil
+}
+
+func (s *scenarioContext) sistemaRespondeProyectoNoEncontrado() error {
+	if !errors.Is(s.err, domain.ErrProyectoNoEncontrado) {
+		return fmt.Errorf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", s.err)
+	}
+	return nil
+}
 
 func (s *scenarioContext) ingresoValido() error {
 	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
@@ -103,7 +118,7 @@ func (s *scenarioContext) seGuardaEnSQLite() error {
 		return errors.New("se esperaba un identificador asignado")
 	}
 	var total int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM backlog_items WHERE id = ?", s.creada.ID).Scan(&total); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM historias WHERE id = ?", s.creada.ID).Scan(&total); err != nil {
 		return err
 	}
 	if total != 1 {
@@ -114,7 +129,7 @@ func (s *scenarioContext) seGuardaEnSQLite() error {
 
 func (s *scenarioContext) alFinalDelBacklog() error {
 	var maxID int64
-	if err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM backlog_items").Scan(&maxID); err != nil {
+	if err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM historias").Scan(&maxID); err != nil {
 		return err
 	}
 	if s.creada.ID != maxID {
@@ -158,7 +173,7 @@ func (s *scenarioContext) verificarErrorDeValidacion() error {
 
 func (s *scenarioContext) noRegistraHistoria() error {
 	var total int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM backlog_items").Scan(&total); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(*) FROM historias").Scan(&total); err != nil {
 		return err
 	}
 	if total != 0 {
@@ -187,6 +202,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) *scenarioContext {
 	ctx.Step(`^que existe un proyecto con identificador (\d+)$`, sc.existeProyecto)
 	ctx.Step(`^que estoy en el panel del Product Backlog del proyecto$`, sc.enElPanel)
 	ctx.Step(`^que intento crear una historia$`, sc.intentoCrea)
+	ctx.Step(`^que intento crear una historia para el proyecto con identificador (\d+), que no existe$`, sc.intentoCreaParaProyectoInexistente)
 	ctx.Step(`^ingreso un título, una descripción y una prioridad "M" válidos y presiono "Guardar"$`, sc.ingresoValido)
 	ctx.Step(`^dejo el campo "Título" en blanco y presiono "Guardar"$`, sc.tituloEnBlanco)
 	ctx.Step(`^ingreso la prioridad "Urgente", que no pertenece al enum MoSCoW \(Must have / Should have / Could have / Won't have\), y presiono "Guardar"$`, sc.prioridadInvalida)
@@ -197,6 +213,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) *scenarioContext {
 	ctx.Step(`^el sistema muestra una advertencia de validación$`, sc.muestraAdvertenciaDeValidacion)
 	ctx.Step(`^el sistema muestra un error de validación$`, sc.muestraErrorDeValidacion)
 	ctx.Step(`^no registra la historia en el Product Backlog$`, sc.noRegistraHistoria)
+	ctx.Step(`^la creación se rechaza con error "proyecto no encontrado"$`, sc.sistemaRespondeProyectoNoEncontrado)
 
 	inicializarPasosSprint(ctx, sc)
 	return sc

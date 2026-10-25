@@ -29,7 +29,7 @@ func (c *proyectoContext) iniciar() error {
 	if err != nil {
 		return err
 	}
-	if err := repository.Migrar(context.Background(), db); err != nil {
+	if err := repository.AplicarMigraciones(context.Background(), db); err != nil {
 		return err
 	}
 	c.db = db
@@ -64,7 +64,7 @@ func (c *proyectoContext) proyectoPersistido() error {
 		return errors.New("no se generó el proyecto")
 	}
 	var total int
-	if err := c.db.QueryRow("SELECT COUNT(*) FROM projects WHERE id = ?", c.proyecto.ID).Scan(&total); err != nil {
+	if err := c.db.QueryRow("SELECT COUNT(*) FROM proyectos WHERE id = ?", c.proyecto.ID).Scan(&total); err != nil {
 		return err
 	}
 	if total != 1 {
@@ -102,7 +102,7 @@ func (c *proyectoContext) muestraAdvertencia() error {
 
 func (c *proyectoContext) noGeneraProyecto() error {
 	var total int
-	if err := c.db.QueryRow("SELECT COUNT(*) FROM projects").Scan(&total); err != nil {
+	if err := c.db.QueryRow("SELECT COUNT(*) FROM proyectos").Scan(&total); err != nil {
 		return err
 	}
 	if total != 0 {
@@ -141,7 +141,7 @@ func (c *proyectoContext) vinculaIntegrante() error {
 	}
 	var total int
 	if err := c.db.QueryRow(
-		"SELECT COUNT(*) FROM project_members WHERE project_id = ? AND role = ?",
+		"SELECT COUNT(*) FROM integrantes WHERE proyecto_id = ? AND rol = ?",
 		c.proyecto.ID, string(domain.RolProductBuilder),
 	).Scan(&total); err != nil {
 		return err
@@ -189,7 +189,7 @@ func (c *proyectoContext) asignarInvalido() error {
 
 func (c *proyectoContext) contarUsuarios() (int, error) {
 	var total int
-	if err := c.db.QueryRow("SELECT COUNT(*) FROM users").Scan(&total); err != nil {
+	if err := c.db.QueryRow("SELECT COUNT(*) FROM usuarios").Scan(&total); err != nil {
 		return 0, err
 	}
 	return total, nil
@@ -201,7 +201,7 @@ func (c *proyectoContext) noRealizaVinculacion() error {
 	}
 	var total int
 	if err := c.db.QueryRow(
-		"SELECT COUNT(*) FROM project_members WHERE role = ?",
+		"SELECT COUNT(*) FROM integrantes WHERE rol = ?",
 		string(domain.RolProductBuilder),
 	).Scan(&total); err != nil {
 		return err
@@ -258,9 +258,12 @@ func (c *proyectoContext) editarNombreVacio() error {
 	return nil
 }
 
-func (c *proyectoContext) editarFechaInvalida() error {
+func (c *proyectoContext) editarFechaInvalida(relacion string) error {
 	inicio := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
 	fin := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	if relacion == "igual a" {
+		fin = inicio
+	}
 	_, c.err = c.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
 		ID:          c.proyecto.ID,
 		Nombre:      "Proyecto base",
@@ -281,7 +284,7 @@ func (c *proyectoContext) cancelaEdicion() error { return nil }
 
 func (c *proyectoContext) permaneceSinModificaciones() error {
 	var nombre string
-	if err := c.db.QueryRow("SELECT name FROM projects WHERE id = ?", c.proyecto.ID).Scan(&nombre); err != nil {
+	if err := c.db.QueryRow("SELECT nombre FROM proyectos WHERE id = ?", c.proyecto.ID).Scan(&nombre); err != nil {
 		return err
 	}
 	if nombre != "Proyecto base" {
@@ -330,7 +333,7 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el sistema persiste los cambios del proyecto$`, pc.persisteCambios)
 	ctx.Step(`^dejo el nombre vacío o compuesto solo por espacios y guardo$`, pc.editarNombreVacio)
 	ctx.Step(`^no guarda los cambios$`, pc.noGuardaCambios)
-	ctx.Step(`^ingreso una fecha de fin anterior a la fecha de inicio y guardo$`, pc.editarFechaInvalida)
+	ctx.Step(`^ingreso una fecha de fin (anterior a|igual a) la fecha de inicio y guardo$`, pc.editarFechaInvalida)
 	ctx.Step(`^decido no aplicar cambios y cancelo$`, pc.cancelaEdicion)
 	ctx.Step(`^el proyecto permanece sin modificaciones$`, pc.permaneceSinModificaciones)
 }

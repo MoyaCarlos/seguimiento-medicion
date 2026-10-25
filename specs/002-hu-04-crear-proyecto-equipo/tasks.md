@@ -28,7 +28,7 @@ Backend Go en la raíz: `cmd/`, `internal/`, `features/` (ver `plan.md`). Sin fr
 
 - `Project.Nombre`: no vacío (ni solo espacios), **≤ 100 caracteres**; nombre repetido permitido.
 - `Project.Descripcion`: **≤ 2000 caracteres**, opcional.
-- Fechas `FechaInicio`/`FechaFin`: `*time.Time` opcionales; si ambas existen, `FechaFin` **no puede ser anterior** a `FechaInicio`.
+- Fechas `FechaInicio`/`FechaFin`: `*time.Time` opcionales; si ambas existen, `FechaFin` **debe ser posterior** a `FechaInicio` (refinamiento 2026-10-05, Issue #100).
 - `User.Nombre`: no vacío (ni solo espacios), **≤ 200 caracteres**; `NombreNormalizado = ToLower(TrimSpace(Nombre))` único.
 - `Role`: `scrum_master` o `product_builder` (único por integrante y proyecto).
 - IDs `int64` asignados por `AUTOINCREMENT` (`LastInsertId`).

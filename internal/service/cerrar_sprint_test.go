@@ -14,6 +14,15 @@ type historiasEnMemoria struct {
 	items []domain.BacklogItem
 }
 
+func (h *historiasEnMemoria) estadoDe(id int64) domain.Estado {
+	for _, item := range h.items {
+		if item.ID == id {
+			return item.Estado
+		}
+	}
+	return ""
+}
+
 func (h *historiasEnMemoria) ListarPorSprint(_ context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	var resultado []domain.BacklogItem
 	for _, item := range h.items {
@@ -28,6 +37,7 @@ func (h *historiasEnMemoria) QuitarDeSprint(_ context.Context, historiaID int64)
 	for i := range h.items {
 		if h.items[i].ID == historiaID {
 			h.items[i].SprintID = nil
+			h.items[i].Estado = domain.EstadoNueva
 		}
 	}
 	return nil
@@ -61,7 +71,7 @@ func TestCerrarSprint_FinalizaYDevuelveAlBacklogLasNoCompletadas(t *testing.T) {
 	sprint := sembrarSprintActivo(t, sprints, 1)
 	historias := &historiasEnMemoria{items: []domain.BacklogItem{
 		historia(1, domain.EstadoCompletada, sprint.ID),
-		historia(2, domain.EstadoNueva, sprint.ID),
+		historia(2, domain.Estado("En progreso"), sprint.ID),
 		historia(3, domain.EstadoNueva, sprint.ID+100),
 	}}
 
@@ -78,6 +88,9 @@ func TestCerrarSprint_FinalizaYDevuelveAlBacklogLasNoCompletadas(t *testing.T) {
 	}
 	if historias.sprintDe(2) != nil {
 		t.Errorf("la historia no completada debía volver al Product Backlog (FR-008)")
+	}
+	if estado := historias.estadoDe(2); estado != domain.EstadoNueva {
+		t.Errorf("la historia no completada debía volver a estado Nueva, quedó %q", estado)
 	}
 	if s := historias.sprintDe(3); s == nil || *s != sprint.ID+100 {
 		t.Errorf("no debían tocarse historias de otro Sprint")

@@ -135,7 +135,8 @@ Goal ni fechas todavía.
   en estado "Activo".
 - **FR-008**: Al cerrar un Sprint, el sistema MUST desvincular del Sprint a
   todas las Historias de Usuario asignadas que no estén completadas,
-  dejándolas disponibles en el Product Backlog sin Sprint asignado.
+  dejándolas disponibles en el Product Backlog sin Sprint asignado y con
+  estado "Nueva".
 - **FR-009**: Al cerrar un Sprint, las Historias de Usuario que sí estén
   completadas MUST permanecer vinculadas a ese Sprint.
 - **FR-010**: El sistema MUST poder consultar los Sprints de un `Project`

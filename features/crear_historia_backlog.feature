@@ -29,3 +29,9 @@ Característica: Creación de historias de usuario en el Product Backlog
     Cuando ingreso la prioridad "Urgente", que no pertenece al enum MoSCoW (Must have / Should have / Could have / Won't have), y presiono "Guardar"
     Entonces el sistema muestra un error de validación
     Y no registra la historia en el Product Backlog
+
+  Escenario: Rechazo de creación por proyecto inexistente
+    Dado que intento crear una historia para el proyecto con identificador 999, que no existe
+    Cuando ingreso un título, una descripción y una prioridad "M" válidos y presiono "Guardar"
+    Entonces la creación se rechaza con error "proyecto no encontrado"
+    Y no registra la historia en el Product Backlog

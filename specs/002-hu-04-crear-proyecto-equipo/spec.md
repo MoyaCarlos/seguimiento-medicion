@@ -18,6 +18,10 @@
 - Q: ¿Cómo determina el sistema que un nombre ingresado corresponde a un integrante ya existente y debe reutilizarlo? → A: Comparación ignorando mayúsculas/minúsculas y espacios externos; "Ana", "ana" y " Ana " son el mismo integrante.
 - Q: ¿Un proyecto debe tener estados de ciclo de vida o basta con registrarlo sin estado? → A: No tiene estados; se registra sin estado y queda operativo desde su creación.
 
+### Session 2026-10-05 (refinamiento, Issue #100)
+
+- Q: ¿La fecha de fin del proyecto puede ser igual a la de inicio? → A: No; debe ser estrictamente posterior, con el mismo criterio que los Sprints (HU-05). Una fecha de fin igual o anterior a la de inicio se rechaza.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Crear el entorno del proyecto (Priority: P1)
@@ -62,7 +66,7 @@ Como Scrum Master, desde la vista de edición de un proyecto ya creado puedo cor
 
 1. **Given** que estoy en la vista de edición de un proyecto existente, **When** modifico su nombre, descripción o fechas con datos válidos y guardo, **Then** el sistema persiste los cambios del proyecto.
 2. **Given** que estoy editando un proyecto, **When** dejo el nombre vacío (o compuesto solo por espacios) y guardo, **Then** el sistema muestra una advertencia y no guarda los cambios.
-3. **Given** que estoy editando un proyecto, **When** intento guardar una fecha de fin anterior a la fecha de inicio, **Then** el sistema muestra una advertencia y no guarda los cambios.
+3. **Given** que estoy editando un proyecto, **When** intento guardar una fecha de fin anterior o igual a la fecha de inicio, **Then** el sistema muestra una advertencia y no guarda los cambios.
 4. **Given** que estoy editando un proyecto, **When** decido no aplicar cambios y cancelo, **Then** el proyecto permanece sin modificaciones.
 
 ---
@@ -82,7 +86,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHEN** dos Scrum Masters crean proyectos al mismo tiempo, **THEN** el sistema **shall** registrar ambos proyectos de forma independiente, sin sobrescribirse.
 - **IF** al editar se deja la descripción vacía, **THEN** el sistema **shall** permitirlo (la descripción sigue siendo opcional).
 - **IF** al editar se dejan las fechas sin completar, **THEN** el sistema **shall** permitirlo (las fechas son opcionales).
-- **IF** al editar la fecha de fin es anterior a la fecha de inicio, **THEN** el sistema **shall** mostrar una advertencia y no guardar los cambios.
+- **IF** al crear o editar la fecha de fin es anterior o igual a la fecha de inicio, **THEN** el sistema **shall** mostrar una advertencia y no guardar los cambios.
 - **IF** se edita un proyecto con un nombre ya usado por otro, **THEN** el sistema **shall** permitirlo (no hay unicidad de nombre).
 - **IF** se intenta editar un proyecto que no existe, **THEN** el sistema **shall** responder con "proyecto no encontrado".
 - **WHEN** dos personas editan el mismo proyecto al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial).
@@ -111,7 +115,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-017**: El sistema MUST garantizar que todo proyecto tenga al menos un integrante con rol Scrum Master (el creador) y MUST permitir asignar más de un Scrum Master al mismo proyecto.
 - **FR-018**: El sistema MUST permitir a un Scrum Master editar un proyecto existente modificando su nombre, su descripción y sus fechas.
 - **FR-019**: La edición MUST reutilizar las mismas validaciones aplicadas al crear el proyecto: nombre obligatorio, no vacío (ni compuesto solo por espacios) y de hasta 100 caracteres; descripción de hasta 2000 caracteres; fechas opcionales.
-- **FR-020**: El sistema MUST validar que la fecha de fin no sea anterior a la fecha de inicio y MUST rechazar un rango de fechas inválido.
+- **FR-020**: El sistema MUST validar que la fecha de fin sea estrictamente posterior a la fecha de inicio y MUST rechazar un rango de fechas inválido (fin anterior o igual al inicio).
 - **FR-021**: Cuando la edición tenga datos inválidos, el sistema MUST mostrar una advertencia que identifique el problema y MUST NOT persistir los cambios, conservando el proyecto con sus valores previos.
 - **FR-022**: El sistema MUST persistir los cambios válidos de un proyecto editado de forma que permanezcan disponibles luego de recargar la aplicación.
 - **FR-023**: El sistema MUST aplicar la edición sin conservar versiones ni historial de cambios del proyecto (edición simple).
@@ -152,7 +156,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - Un integrante se identifica por su nombre: al vincularlo, el sistema crea el usuario si no existe o reutiliza el existente; no se requiere registro previo. La comparación ignora mayúsculas/minúsculas y espacios externos.
 - Todo proyecto debe tener al menos un Scrum Master (el creador); se permiten varios.
 - Esta historia registra la relación Proyecto–Usuario–Rol y la habilitación de roles; la verificación y aplicación efectiva de permisos por rol en las operaciones se difiere a una historia posterior.
-- El sistema adopta dos fechas del proyecto: fecha de inicio y fecha de fin, ambas opcionales; cuando ambas se informan, la fecha de fin no puede ser anterior a la fecha de inicio.
+- El sistema adopta dos fechas del proyecto: fecha de inicio y fecha de fin, ambas opcionales; cuando ambas se informan, la fecha de fin debe ser posterior a la fecha de inicio.
 - La edición del proyecto es simple: se modifican nombre, descripción y fechas, sin versionado ni historial de cambios; prevalece el último guardado que resulte válido.
 - La edición de la composición del equipo (alta, baja o cambio de rol de integrantes) y el borrado de proyectos quedan fuera del alcance de esta historia.
 - El listado/navegación entre proyectos, la redirección al panel principal (FR-004), la vista de configuración y la vista detallada del equipo quedan fuera del alcance de esta historia; esta historia garantiza la persistencia del proyecto, de las asignaciones de equipo y devuelve el proyecto para que el frontend navegue.

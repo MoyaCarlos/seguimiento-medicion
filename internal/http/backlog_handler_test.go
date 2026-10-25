@@ -24,7 +24,8 @@ func (s *stubBacklogRepository) Guardar(_ context.Context, item domain.BacklogIt
 
 func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 	repo := &stubBacklogRepository{}
-	return NewBacklogHandler(service.NewCrearHistoriaBacklog(repo)), repo
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
+	return NewBacklogHandler(service.NewCrearHistoriaBacklog(repo, proyectos)), repo
 }
 
 func construirPeticion(cuerpo string) *nethttp.Request {

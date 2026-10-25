@@ -14,7 +14,7 @@ Este documento resuelve los puntos técnicos abiertos del plan. No quedan
 
 ## R2. Representación de fechas opcionales
 
-- **Decisión**: `FechaInicio *time.Time` y `FechaFin *time.Time` en el dominio; en SQLite se guardan como `TEXT` en formato RFC3339 y `NULL` cuando son `nil`. Validación: si ambas existen, `FechaFin` no puede ser anterior a `FechaInicio`.
+- **Decisión**: `FechaInicio *time.Time` y `FechaFin *time.Time` en el dominio; en SQLite se guardan como `TEXT` en formato RFC3339 y `NULL` cuando son `nil`. Validación: si ambas existen, `FechaFin` debe ser posterior a `FechaInicio` (refinamiento 2026-10-05, Issue #100).
 - **Rationale**: distingue "sin fecha" de una fecha cero; mantiene el dominio libre de tipos de `database/sql` (mismo criterio que `*int` en HU-01).
 - **Alternativas consideradas**: `time.Time` con centinela (ambiguo); `sql.NullTime` en el dominio (filtraría persistencia); guardar fechas como `string` sin parseo (pierde validación de orden).
 - **Límite con HU-13**: HU-04 solo registra y edita fechas con la validación de orden. HU-13 (Should have) es quien consulta el estado derivado (Planificado/En curso/Finalizado) a partir de fechas y sprints.

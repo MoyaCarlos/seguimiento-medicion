@@ -3,12 +3,50 @@ info:
   title: Software Metrics & Estimation API — Proyectos y Equipo (HU-04)
   version: 1.0.0
   description: >-
-    Contrato de creación, edición simple y asignación de equipo de proyectos.
+    Contrato de creación, listado, edición simple y asignación de equipo de proyectos.
     Cubre únicamente HU-04: no incluye borrado de proyectos, baja ni cambio de rol
     de integrantes, ni el estado de ciclo de vida del proyecto (HU-13). La edición
     es simple (sin versionado ni historial) y reutiliza las validaciones del alta.
+    El listado no tiene paginación ni filtros.
 paths:
   /projects:
+    get:
+      summary: Listar todos los proyectos
+      operationId: listarProyectos
+      responses:
+        '200':
+          description: >-
+            Proyectos ordenados ascendentemente por id. Devuelve un arreglo vacío
+            ([]) si no hay proyectos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Proyecto'
+              examples:
+                conProyectos:
+                  value:
+                    - id: 1
+                      nombre: Software Metrics & Estimation
+                      descripcion: Sistema de estimación, seguimiento y medición
+                      fecha_inicio: "2026-03-01"
+                      fecha_fin: "2026-11-30"
+                      creado_en: "2026-03-01T10:00:00Z"
+                    - id: 2
+                      nombre: Proyecto corto
+                      descripcion: ""
+                      fecha_inicio: null
+                      fecha_fin: null
+                      creado_en: "2026-03-02T10:00:00Z"
+                sinProyectos:
+                  value: []
+        '500':
+          description: Error interno (fallo de persistencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
     post:
       summary: Crear un proyecto y vincular al creador como Scrum Master
       operationId: crearProyecto
@@ -39,7 +77,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Proyecto'
         '400':
-          description: Datos inválidos (nombre vacío o extenso, fecha de fin anterior al inicio).
+          description: Datos inválidos (nombre vacío o extenso, fecha de fin anterior o igual al inicio).
           content:
             application/json:
               schema:
@@ -52,10 +90,9 @@ paths:
                 fechaInvalida:
                   value:
                     campo: fecha_fin
-                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+                    mensaje: la fecha de fin debe ser posterior a la de inicio
                 jsonInvalido:
                   value:
-                    campo: ''
                     mensaje: JSON inválido
         '500':
           description: Error interno (fallo de persistencia).
@@ -124,7 +161,7 @@ paths:
                 fechaInvalida:
                   value:
                     campo: fecha_fin
-                    mensaje: la fecha de fin no puede ser anterior a la fecha de inicio
+                    mensaje: la fecha de fin debe ser posterior a la de inicio
         '404':
           description: Proyecto inexistente.
           content:
@@ -245,7 +282,7 @@ components:
           type: string
           format: date
           nullable: true
-          description: Si se informa junto con fecha_inicio, no puede ser anterior.
+          description: Si se informa junto con fecha_inicio, debe ser posterior.
     EditarProyectoRequest:
       type: object
       required:
@@ -325,7 +362,7 @@ components:
       properties:
         campo:
           type: string
-          description: Campo que originó el error (vacío si no aplica a un campo).
+          description: Campo que originó el error (se omite si el error no aplica a un campo).
         mensaje:
           type: string
     ErrorInterno:

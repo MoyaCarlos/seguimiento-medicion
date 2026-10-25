@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"sort"
 	"sync"
 	"time"
 
@@ -9,9 +10,9 @@ import (
 )
 
 // ProjectRepositoryEnMemoria implementa ProjectRepository en memoria para que
-// HU-05 y HU-13 usen un fake compartido en lugar de fakes propios. Se comporta
-// como SQLite: valida la existencia de proyecto y usuario al vincular, rechaza
-// duplicados y devuelve el nombre del integrante al listar.
+// HU-05 y HU-13 usen un fake compartido en lugar de fakes propios. Valida la
+// existencia de proyecto al vincular, rechaza duplicados y devuelve el nombre
+// del integrante al listar.
 type ProjectRepositoryEnMemoria struct {
 	mu               sync.Mutex
 	proyectos        map[int64]domain.Project
@@ -45,21 +46,26 @@ func (r *ProjectRepositoryEnMemoria) GuardarUsuario(_ context.Context, u domain.
 func (r *ProjectRepositoryEnMemoria) Guardar(_ context.Context, p domain.Project) (domain.Project, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.guardar(p), nil
+}
+
+func (r *ProjectRepositoryEnMemoria) guardar(p domain.Project) domain.Project {
 	if p.CreadoEn.IsZero() {
 		p.CreadoEn = time.Now().UTC()
 	}
 	r.siguiente++
 	p.ID = r.siguiente
 	r.proyectos[p.ID] = p
-	return p, nil
+	return p
 }
 
-func (r *ProjectRepositoryEnMemoria) GuardarConScrumMaster(ctx context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
-	guardado, err := r.Guardar(ctx, p)
-	if err != nil {
-		return domain.Project{}, err
-	}
-	if _, err := r.AgregarIntegrante(ctx, domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+func (r *ProjectRepositoryEnMemoria) GuardarConScrumMaster(_ context.Context, p domain.Project, creadorID int64) (domain.Project, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	guardado := r.guardar(p)
+	if _, err := r.agregarIntegrante(domain.Membership{ProjectID: guardado.ID, UserID: creadorID, Role: domain.RolScrumMaster}); err != nil {
+		delete(r.proyectos, guardado.ID)
 		return domain.Project{}, err
 	}
 	return guardado, nil
@@ -75,6 +81,17 @@ func (r *ProjectRepositoryEnMemoria) ObtenerPorID(_ context.Context, id int64) (
 	return p, nil
 }
 
+func (r *ProjectRepositoryEnMemoria) Listar(_ context.Context) ([]domain.Project, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	proyectos := make([]domain.Project, 0, len(r.proyectos))
+	for _, p := range r.proyectos {
+		proyectos = append(proyectos, p)
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	return proyectos, nil
+}
+
 func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Project) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -88,11 +105,12 @@ func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Proj
 func (r *ProjectRepositoryEnMemoria) AgregarIntegrante(_ context.Context, m domain.Membership) (domain.Membership, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.agregarIntegrante(m)
+}
+
+func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (domain.Membership, error) {
 	if _, ok := r.proyectos[m.ProjectID]; !ok {
 		return domain.Membership{}, domain.ErrProyectoNoEncontrado
-	}
-	if _, ok := r.usuarios[m.UserID]; !ok {
-		return domain.Membership{}, ErrIntegridadReferencial
 	}
 	for _, existente := range r.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {

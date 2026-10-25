@@ -18,18 +18,23 @@ type CrearHistoriaInput struct {
 
 // CrearHistoriaBacklog crea y persiste una historia del Product Backlog.
 type CrearHistoriaBacklog struct {
-	repo repository.BacklogRepository
+	repo      repository.BacklogRepository
+	proyectos repository.ProjectRepository
 }
 
-func NewCrearHistoriaBacklog(repo repository.BacklogRepository) *CrearHistoriaBacklog {
-	return &CrearHistoriaBacklog{repo: repo}
+func NewCrearHistoriaBacklog(repo repository.BacklogRepository, proyectos repository.ProjectRepository) *CrearHistoriaBacklog {
+	return &CrearHistoriaBacklog{repo: repo, proyectos: proyectos}
 }
 
 // Ejecutar construye la historia (devolviendo el error de validación si
-// corresponde) y la persiste a través del repositorio.
+// corresponde), verifica que el proyecto exista y la persiste a través del
+// repositorio.
 func (s *CrearHistoriaBacklog) Ejecutar(ctx context.Context, input CrearHistoriaInput) (domain.BacklogItem, error) {
 	item, err := domain.NewBacklogItem(input.ProyectoID, input.Titulo, input.Descripcion, input.Prioridad, input.ValorNegocio)
 	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	if _, err := s.proyectos.ObtenerPorID(ctx, input.ProyectoID); err != nil {
 		return domain.BacklogItem{}, err
 	}
 	return s.repo.Guardar(ctx, item)

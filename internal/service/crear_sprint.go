@@ -33,7 +33,7 @@ func (s *CrearSprint) Ejecutar(ctx context.Context, proyectoID int64) (domain.Sp
 	}
 	for _, otro := range delProyecto {
 		if otro.Estado == domain.SprintPendiente {
-			return domain.Sprint{}, domain.ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint pendiente"}
+			return domain.Sprint{}, domain.ErrYaHaySprintPendiente
 		}
 	}
 	return s.sprints.Guardar(ctx, sprint)

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"sort"
 	"strconv"
 	"testing"
 	"time"
@@ -62,6 +63,18 @@ func (s *stubProjectRepository) ObtenerPorID(_ context.Context, id int64) (domai
 		return domain.Project{}, domain.ErrProyectoNoEncontrado
 	}
 	return p, nil
+}
+
+func (s *stubProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	proyectos := make([]domain.Project, 0, len(s.proyectos))
+	for _, p := range s.proyectos {
+		proyectos = append(proyectos, p)
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	return proyectos, nil
 }
 
 func (s *stubProjectRepository) Actualizar(_ context.Context, p domain.Project) error {
@@ -131,9 +144,10 @@ func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepos
 	obtener := service.NewObtenerProyecto(proyectos)
 	editar := service.NewEditarProyecto(proyectos)
 	asignar := service.NewAsignarIntegrante(proyectos, usuarios)
-	listar := service.NewListarIntegrantes(proyectos)
+	listarIntegrantes := service.NewListarIntegrantes(proyectos)
+	listarProyectos := service.NewListarProyectos(proyectos)
 	estado := service.NewObtenerEstadoProyecto(proyectos, sprints)
-	return NewProjectHandler(crear, obtener, editar, asignar, listar, estado), proyectos, sprints
+	return NewProjectHandler(crear, obtener, listarProyectos, editar, asignar, listarIntegrantes, estado), proyectos, sprints
 }
 
 // crearProyectoViaHTTP usa el propio handler (y sus repos) para preparar un proyecto.
@@ -230,6 +244,18 @@ func TestProjectHandler_Crear_JSONInvalido(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
 	}
+	verificarErrorSinCampo(t, rec)
+}
+
+func verificarErrorSinCampo(t *testing.T, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	var cuerpo map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &cuerpo); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	if _, ok := cuerpo["campo"]; ok {
+		t.Errorf("no se esperaba la clave campo, se obtuvo %s", rec.Body.String())
+	}
 }
 
 func TestProjectHandler_Crear_ErrorPersistencia(t *testing.T) {
@@ -275,6 +301,7 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
 	}
+	verificarErrorSinCampo(t, rec)
 }
 
 func TestProjectHandler_Obtener_IDNoNumerico(t *testing.T) {
@@ -476,6 +503,18 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
+	}
+}
+
+func TestProjectHandler_AsignarIntegrante_ProyectoInexistenteConCuerpoInvalido(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{nombre:`))
+	req.SetPathValue("id", "999")
+	handler.AsignarIntegrante(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre JSON inválido), se obtuvo %d", rec.Code)
 	}
 }
 
