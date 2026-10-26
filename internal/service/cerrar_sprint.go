@@ -7,8 +7,9 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 )
 
-// CerrarSprint finaliza un Sprint Activo y devuelve al Product Backlog las
-// historias que no se completaron.
+// CerrarSprint finaliza un Sprint Activo y, en la misma operación, registra
+// como arrastradas las historias que no se completaron y las devuelve al
+// Product Backlog.
 type CerrarSprint struct {
 	sprints   repository.SprintRepository
 	historias repository.HistoriasDeSprintRepository
@@ -31,20 +32,14 @@ func (s *CerrarSprint) Ejecutar(ctx context.Context, sprintID int64) (domain.Spr
 	if err != nil {
 		return domain.Sprint{}, err
 	}
-	// ponytail: sin transacción. Primero se liberan las historias y al final
-	// se marca el Sprint: si algo falla a mitad, el Sprint sigue Activo y
-	// reintentar el cierre completa lo que faltó. Transacción si hiciera
-	// falta atomicidad estricta.
+	var noCompletadas []domain.BacklogItem
 	for _, h := range historias {
-		if h.Estado == domain.EstadoCompletada {
-			continue
-		}
-		if err := s.historias.QuitarDeSprint(ctx, h.ID); err != nil {
-			return domain.Sprint{}, err
+		if h.Estado != domain.EstadoCompletada {
+			noCompletadas = append(noCompletadas, h)
 		}
 	}
 
-	if err := s.sprints.Actualizar(ctx, sprint); err != nil {
+	if err := s.sprints.CerrarConArrastre(ctx, sprint, noCompletadas); err != nil {
 		return domain.Sprint{}, err
 	}
 	return sprint, nil
