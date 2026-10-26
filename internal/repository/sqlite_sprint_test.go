@@ -157,21 +157,6 @@ func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
 	if historias[0].Estado != domain.EstadoCompletada || historias[0].SprintID == nil || *historias[0].SprintID != activo.ID {
 		t.Errorf("no se leyeron bien estado/sprint de la historia: %+v", historias[0])
 	}
-
-	if err := repo.QuitarDeSprint(ctx, ids[1]); err != nil {
-		t.Fatalf("no se esperaba error al quitar: %v", err)
-	}
-	historias, _ = repo.ListarPorSprint(ctx, activo.ID)
-	if len(historias) != 1 || historias[0].ID != ids[0] {
-		t.Errorf("se esperaba que solo quede la historia completada en el Sprint activo: %+v", historias)
-	}
-	var estado string
-	if err := db.QueryRow("SELECT estado FROM historias WHERE id = ?", ids[1]).Scan(&estado); err != nil {
-		t.Fatalf("no se pudo consultar el estado de la historia devuelta al backlog: %v", err)
-	}
-	if estado != string(domain.EstadoNueva) {
-		t.Errorf("la historia devuelta al backlog debía quedar en estado Nueva, quedó %q", estado)
-	}
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {

@@ -24,7 +24,6 @@ type sinHistorias struct{}
 func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogItem, error) {
 	return nil, nil
 }
-func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
 
 func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria, *repository.ProjectRepositoryEnMemoria) {
 	t.Helper()

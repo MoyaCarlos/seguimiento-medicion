@@ -24,8 +24,6 @@ func (h *historiasEnMemoria) ListarPorSprint(_ context.Context, sprintID int64) 
 	return resultado, nil
 }
 
-func (h *historiasEnMemoria) QuitarDeSprint(context.Context, int64) error { return nil }
-
 func historia(id int64, estado domain.Estado, sprintID int64, estimacion *int) domain.BacklogItem {
 	return domain.BacklogItem{ID: id, ProyectoID: 1, Estado: estado, EstimacionSP: estimacion, SprintID: &sprintID}
 }

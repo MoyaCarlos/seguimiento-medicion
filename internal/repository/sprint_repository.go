@@ -23,5 +23,4 @@ type SprintRepository interface {
 // Separado de BacklogRepository (ISP): crear historias no necesita esto.
 type HistoriasDeSprintRepository interface {
 	ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error)
-	QuitarDeSprint(ctx context.Context, historiaID int64) error
 }
