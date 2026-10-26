@@ -69,6 +69,13 @@ que solo las no completadas quedan sueltas en el Product Backlog.
    completadas quedan sin Sprint asignado (vuelven al Product Backlog).
 2. **Given** un Sprint está en estado "Pendiente" o ya "Finalizado",
    **When** se intenta cerrarlo, **Then** el sistema rechaza la operación.
+3. **Given** un Sprint "Activo" con una historia no completada estimada en
+   8 Story Points y otra sin estimar, **When** el Scrum Master cierra el
+   Sprint, **Then** ambas quedan registradas como arrastradas de ese Sprint,
+   la primera con 8 Story Points y la segunda sin Story Points (#117).
+4. **Given** una historia arrastrada registrada con 8 Story Points, **When**
+   después se edita su estimación en el Product Backlog, **Then** el
+   registro del Sprint cerrado conserva los 8 Story Points (#117).
 
 ---
 
@@ -146,6 +153,19 @@ Goal ni fechas todavía.
   "Pendiente" para un `Project` si ya existe otro Sprint "Pendiente" para
   ese mismo proyecto (máximo un Sprint "Pendiente" por proyecto a la vez,
   igual criterio que la regla de "un solo Activo").
+- **FR-012** (#117): **WHEN** se cierra un Sprint, el sistema **shall**
+  registrar cada historia no completada como arrastrada de ese Sprint, con
+  una foto de sus Story Points en ese momento (sin Story Points si no
+  estaba estimada). El registro **shall not** cambiar si después se edita la
+  historia en el Product Backlog (MODELO-DE-DATOS.md §4.6, D2a).
+- **FR-013** (#117): El cierre (Sprint a "Finalizado", registro de las
+  arrastradas y vuelta de las no completadas al Product Backlog en "Nueva")
+  **shall** ser una sola operación atómica. **IF** algo falla a mitad,
+  **THEN** el sistema **shall** no aplicar ningún cambio: el Sprint sigue
+  "Activo" y sus historias, vinculadas.
+- **FR-014** (#117): **IF** se pide arrastrar una historia que no está
+  asignada al Sprint que se cierra, o que es de otro proyecto, **THEN** el
+  sistema **shall** rechazar el cierre completo, sin aplicar cambios.
 
 ### Key Entities
 
@@ -155,6 +175,11 @@ Goal ni fechas todavía.
 - **Historia de Usuario** (`BacklogItem`, ya existente): se asocia a un
   Sprint mediante una referencia opcional (una historia puede no tener
   Sprint asignado — está en el Product Backlog — o pertenecer a uno).
+- **Historia arrastrada** (#117, tabla `historias_arrastradas`, migración
+  002): registro de que una historia quedó sin completar al cerrar un
+  Sprint, con la foto de sus Story Points. Una historia puede arrastrarse
+  de varios Sprints. Con las completadas, forma las historias comprometidas
+  del Sprint (D2c) que usan HU-03, HU-09, HU-10 y HU-12.
 
 ## Success Criteria *(mandatory)*
 
@@ -170,6 +195,9 @@ Goal ni fechas todavía.
 - **SC-004**: Las historias completadas de Sprints cerrados siguen siendo
   consultables asociadas a su Sprint de origen (sin pérdida de datos para
   HU-03/HU-12).
+- **SC-005** (#117): Después de cerrar un Sprint, el 100% de sus historias
+  comprometidas (completadas + arrastradas) y sus Story Points siguen
+  consultables, y un cierre fallido deja 0 cambios aplicados.
 
 ## Assumptions
 

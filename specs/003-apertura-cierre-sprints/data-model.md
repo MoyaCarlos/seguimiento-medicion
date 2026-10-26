@@ -42,6 +42,13 @@ asignar una historia a un Sprint por primera vez, ni sus validaciones (ej.
 **HU-06** (Movimiento de Historias al Sprint Backlog), que se construye
 sobre este mismo campo más adelante.
 
+**Actualización (#117)**: `QuitarDeSprint` se eliminó. El cierre ahora es
+una sola llamada atómica, `SprintRepository.CerrarConArrastre(ctx, sprint,
+noCompletadas)`, que además registra las no completadas en
+`historias_arrastradas` con la foto de sus Story Points. La tabla y la
+escritura en una transacción están definidas en
+[`MODELO-DE-DATOS.md` §4.6](../../MODELO-DE-DATOS.md#46-historias_arrastradas--hu-05-cierre-hu-09-hu-10-hu-12-tabla-nueva-migración-002).
+
 ## Relaciones
 
 ```

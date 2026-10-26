@@ -113,6 +113,23 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 - [X] T056 Quitar "NO TERMINADA, NO MERGEAR" del Status de `spec.md` y marcar HU-05 en `docs/PRODUCT-BACKLOG.md` si cambió el alcance
 - [X] T057 COMMIT `Marcar HU-05 como implementada`
 
+## Phase 8: Fix #117 — arrastre registrado y cierre atómico (continúa #99)
+
+Rama `fix/117-arrastre-registrado`. Diseño de `MODELO-DE-DATOS.md` §4.6.
+
+- [X] T058 RED: test de esquema de la migración 002 `historias_arrastradas` (estructura y filas válidas/inválidas, incluida la de Sprint e historia de proyectos distintos con ambos `proyecto_id`)
+- [X] T059 GREEN: migración `002_historias_arrastradas.sql`
+- [X] T060 RED: tests de `CerrarConArrastre` contra SQLite real: foto de SP, `NULL` sin estimar, la foto no cambia al editar la historia, fallo a mitad sin cambios (historia de otro proyecto, historia de otro Sprint), Sprint inexistente
+- [X] T061 GREEN: `SQLiteSprintRepository.CerrarConArrastre` en una transacción con un único `UPDATE historias`
+- [X] T062 RED: tests del fake en memoria (foto y atomicidad)
+- [X] T063 GREEN: `CerrarConArrastre` en el puerto `SprintRepository` y en `SprintRepositoryEnMemoria` (valida todo antes de modificar)
+- [X] T064 RED: tests de `CerrarSprint` delegando el cierre (arrastre de las no completadas y fallo que deja el Sprint `Activo`)
+- [X] T065 GREEN: `CerrarSprint` separa completadas y no completadas y llama a `CerrarConArrastre`
+- [X] T066 REFACTOR: eliminar `QuitarDeSprint`, sin uso
+- [X] T067 RED: escenarios BDD del registro de historias arrastradas con sus Story Points
+- [X] T068 GREEN: pasos BDD
+- [X] T069 Actualizar spec (FR-012 a FR-014, SC-005), data-model y quickstart; `MODELO-DE-DATOS.md` sin cambios porque la migración sigue lo que ya define §4.6
+
 ## Notas de implementación (desvíos respecto al plan)
 
 - **T002**: `EstadoSprint` sin método `EsValida()` — ningún código lo
