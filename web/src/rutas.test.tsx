@@ -29,6 +29,12 @@ describe('registro de rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
   })
 
+  it('la pantalla principal permite crear un proyecto', async () => {
+    abrir('/')
+
+    expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
+  })
+
   it('/projects/:id redirige al panel del proyecto', async () => {
     const router = abrir('/projects/1')
 
