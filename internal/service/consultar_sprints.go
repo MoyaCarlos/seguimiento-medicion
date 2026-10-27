@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sort"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -25,5 +26,16 @@ func NewConsultarSprints(proyectos buscadorProyectos, sprints listadorSprints) *
 }
 
 func (s *ConsultarSprints) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.Sprint, error) {
-	return nil, nil
+	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return nil, err
+	}
+	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)
+	if err != nil {
+		return nil, err
+	}
+	if sprints == nil {
+		sprints = []domain.Sprint{}
+	}
+	sort.Slice(sprints, func(i, j int) bool { return sprints[i].ID < sprints[j].ID })
+	return sprints, nil
 }
