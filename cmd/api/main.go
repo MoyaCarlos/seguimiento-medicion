@@ -48,6 +48,7 @@ func main() {
 		service.NewCrearSprint(proyectos, sprintRepo),
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
+		service.NewConsultarSprints(proyectos, sprintRepo),
 		sprintRepo,
 	)
 

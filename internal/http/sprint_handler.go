@@ -14,14 +14,19 @@ import (
 
 // SprintHandler es el adaptador de entrada para el ciclo de vida de los Sprints.
 type SprintHandler struct {
-	crear   *service.CrearSprint
-	iniciar *service.IniciarSprint
-	cerrar  *service.CerrarSprint
-	sprints repository.SprintRepository
+	crear     *service.CrearSprint
+	iniciar   *service.IniciarSprint
+	cerrar    *service.CerrarSprint
+	consultar *service.ConsultarSprints
+	sprints   repository.SprintRepository
 }
 
-func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, sprints repository.SprintRepository) *SprintHandler {
-	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, sprints: sprints}
+func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, consultar *service.ConsultarSprints, sprints repository.SprintRepository) *SprintHandler {
+	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, consultar: consultar, sprints: sprints}
+}
+
+// Listar atiende GET /projects/{id}/sprints.
+func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // Crear atiende POST /sprints.
