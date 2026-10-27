@@ -24,27 +24,27 @@ Esperado: todo en verde.
 go run ./cmd/api
 ```
 
-En otra terminal, un proyecto con Ana (Scrum Master, creadora) y dos Product Builders, y
+En otra terminal, un proyecto con Carlos (Scrum Master, creador del proyecto) y dos Product Builders, y
 una historia:
 
 ```bash
-curl -s -X POST localhost:8080/projects -d '{"nombre":"Demo","descripcion":"","creador":"Ana","fecha_inicio":null,"fecha_fin":null}'
-curl -s -X POST localhost:8080/projects/1/members -d '{"nombre":"Bruno","rol":"product_builder"}'
-curl -s -X POST localhost:8080/projects/1/members -d '{"nombre":"Carla","rol":"product_builder"}'
-curl -s localhost:8080/projects/1/members        # anotar los id: Ana=1, Bruno=2, Carla=3
+curl -s -X POST localhost:8080/projects -d '{"nombre":"Demo","descripcion":"","creador":"Carlos","fecha_inicio":null,"fecha_fin":null}'
+curl -s -X POST localhost:8080/projects/1/members -d '{"nombre":"Candela","rol":"product_builder"}'
+curl -s -X POST localhost:8080/projects/1/members -d '{"nombre":"Jimena","rol":"product_builder"}'
+curl -s localhost:8080/projects/1/members        # anotar los id: Carlos=1, Candela=2, Jimena=3
 curl -s -X POST localhost:8080/backlog -d '{"proyecto_id":1,"titulo":"Login","descripcion":"d","prioridad":"M"}'
 ```
 
 | # | Petición | Esperado |
 |---|----------|----------|
-| 1 | `POST /backlog/1/votacion` con `{"usuario_id":2}` | 403: Bruno no es Scrum Master |
+| 1 | `POST /backlog/1/votacion` con `{"usuario_id":2}` | 403: Candela no es Scrum Master |
 | 2 | `POST /backlog/1/votacion` con `{"usuario_id":1}` | 201, `ronda: 1`, `revelada_en: null`, los 3 con `ya_voto: false` |
 | 3 | Repetir el paso 2 | 409: la historia ya tiene votación |
 | 4 | `POST /backlog/1/votacion/votos` con `{"usuario_id":2,"valor":4}` | 400 `campo: valor` |
 | 5 | `POST /backlog/1/votacion/votos` con `{"usuario_id":99,"valor":8}` | 403: no es integrante |
-| 6 | `POST /backlog/1/votacion/votos` con `{"usuario_id":2,"valor":8}` | 200; Bruno ve `valor: 8`, Ana y Carla `valor: null` |
-| 7 | `GET /backlog/1/votacion?usuario_id=1` | Bruno `ya_voto: true, valor: null` (Oculto); Ana sin voto |
-| 8 | Ana vota 3 y Carla vota 13, luego Carla vota 5 | 200; Carla ve solo su 5 (reemplazó el 13) |
+| 6 | `POST /backlog/1/votacion/votos` con `{"usuario_id":2,"valor":8}` | 200; Candela ve `valor: 8`, Carlos y Jimena `valor: null` |
+| 7 | `GET /backlog/1/votacion?usuario_id=1` | Candela `ya_voto: true, valor: null` (Oculto); Carlos sin voto |
+| 8 | Carlos vota 3 y Jimena vota 13, luego Jimena vota 5 | 200; Jimena ve solo su 5 (reemplazó el 13) |
 | 9 | `POST /backlog/1/votacion/revelar` con `{"usuario_id":1}` antes del paso 8 | 400 `campo: votos` (falta votar) |
 | 10 | `POST /backlog/1/votacion/revelar` con `{"usuario_id":1}` | 200; valores 3, 8, 5 y `promedio: {exacto: 5.33, carta_sugerida: 5}` |
 | 11 | `POST /backlog/1/votacion/votos` con `{"usuario_id":2,"valor":13}` | 400 `campo: estado` (ronda revelada) |

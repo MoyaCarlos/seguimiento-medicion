@@ -31,8 +31,8 @@ se prueba sola.
 
 **Purpose**: dejar los escenarios BDD escritos antes de implementar (flujo de AGENTS.md).
 
-- [X] T001 Escribir features/votacion_planning_poker.feature en Gherkin español: tag `@HU-02`, Característica con el Como/Quiero/Para de la Descripción de la spec, Antecedentes con un proyecto que tiene a Ana (`scrum_master`), Bruno y Carla (`product_builder`) y una historia "Nueva" del proyecto, con pasos propios de HU-02 para el equipo y la historia (el paso `que existe un proyecto con identificador (\d+)` de features/steps_creacion.go crea el proyecto sin Bruno ni Carla, así que no alcanza; no redefinir pasos existentes ni repetir sus textos), y exactamente 13 escenarios, uno por Acceptance Scenario de spec.md: US1.1 Bruno vota 8 → consultado por Ana figura votó con valor oculto, consultado por Bruno ve 8; US1.2 Bruno cambia 8 por 13 antes de revelar → un solo voto suyo, 13, oculto para los demás; US1.3 voto con 4 rechazado y la ronda no cambia; US1.4 voto de quien no es integrante rechazado; US2.1 votos 3, 5 y 8 → al revelar se ven los tres valores, promedio exacto 5,33 y carta sugerida 5; US2.2 votar o cambiar el voto en una ronda revelada rechazado sin cambios; US2.3 revelar con un integrante sin votar rechazado y los votos siguen ocultos; US2.4 Bruno (Product Builder) intenta revelar → rechazado; US3.1 Ana inicia → ronda 1 sin votos ni revelar; US3.2 iniciar de nuevo una historia con votación → rechazado; US3.3 historia inexistente → "historia no encontrada"; US3.4 Bruno intenta iniciar → rechazado y sin rondas; US3.5 historia "Completada" → rechazado y sin rondas. Comentario en el archivo indicando qué escenario cubre cada categoría (normal: US1.1, US2.1, US3.1; alternativo: US1.2; límite: US2.3; error: el resto). Sin pasos implementados: con el runner estricto, `go test ./features/` FALLA
-- [ ] T002 COMMIT `RED: agregar escenarios BDD de la votación de Planning Poker (fallan)`
+- [X] T001 Escribir features/votacion_planning_poker.feature en Gherkin español: tag `@HU-02`, Característica con el Como/Quiero/Para de la Descripción de la spec, Antecedentes con un proyecto que tiene a Carlos (`scrum_master`), Candela y Jimena (`product_builder`) y una historia "Nueva" del proyecto, con pasos propios de HU-02 para el equipo y la historia (el paso `que existe un proyecto con identificador (\d+)` de features/steps_creacion.go crea el proyecto sin Candela ni Jimena, así que no alcanza; no redefinir pasos existentes ni repetir sus textos), y exactamente 13 escenarios, uno por Acceptance Scenario de spec.md: US1.1 Candela vota 8 → consultado por Carlos figura votó con valor oculto, consultado por Candela ve 8; US1.2 Candela cambia 8 por 13 antes de revelar → un solo voto suyo, 13, oculto para los demás; US1.3 voto con 4 rechazado y la ronda no cambia; US1.4 voto de quien no es integrante rechazado; US2.1 votos 3, 5 y 8 → al revelar se ven los tres valores, promedio exacto 5,33 y carta sugerida 5; US2.2 votar o cambiar el voto en una ronda revelada rechazado sin cambios; US2.3 revelar con un integrante sin votar rechazado y los votos siguen ocultos; US2.4 Candela (Product Builder) intenta revelar → rechazado; US3.1 Carlos inicia → ronda 1 sin votos ni revelar; US3.2 iniciar de nuevo una historia con votación → rechazado; US3.3 historia inexistente → "historia no encontrada"; US3.4 Candela intenta iniciar → rechazado y sin rondas; US3.5 historia "Completada" → rechazado y sin rondas. Comentario en el archivo indicando qué escenario cubre cada categoría (normal: US1.1, US2.1, US3.1; alternativo: US1.2; límite: US2.3; error: el resto). Sin pasos implementados: con el runner estricto, `go test ./features/` FALLA
+- [X] T002 COMMIT `RED: agregar escenarios BDD de la votación de Planning Poker (fallan)`
 
 ---
 
@@ -85,7 +85,7 @@ se prueba sola.
 
 **Goal**: un integrante vota una carta y la consulta muestra quién votó, con el valor oculto para todos salvo para quien consulta.
 
-**Independent Test**: con una ronda 1 abierta sembrada en el repositorio, Bruno vota 8; la consulta de Ana muestra a Bruno con `ya_voto: true, valor: null` y la de Bruno muestra `valor: 8`.
+**Independent Test**: con una ronda 1 abierta sembrada en el repositorio, Candela vota 8; la consulta de Carlos muestra a Candela con `ya_voto: true, valor: null` y la de Candela muestra `valor: 8`.
 
 ### Casos de uso Votar y ConsultarVotacion
 
@@ -115,7 +115,7 @@ se prueba sola.
 
 **Goal**: el Scrum Master revela cuando votaron todos; se ven los valores y el promedio.
 
-**Independent Test**: con una ronda sembrada donde votaron los tres integrantes (3, 5, 8), Ana revela y la respuesta trae los tres valores y `promedio: {exacto: 5.33, carta_sugerida: 5}`.
+**Independent Test**: con una ronda sembrada donde votaron los tres integrantes (3, 5, 8), Carlos revela y la respuesta trae los tres valores y `promedio: {exacto: 5.33, carta_sugerida: 5}`.
 
 - [ ] T040 [US2] RED: en internal/service/revelar_votacion_test.go, tests de `RevelarVotacion.Ejecutar(ctx, historiaID, usuarioID int64, ahora time.Time) (domain.RondaVotacion, error)`: (a) historia inexistente → `ErrHistoriaNoEncontrada`; (b) usuario Product Builder o ajeno → `ErrNoEsScrumMaster` sin revelar; (c) sin ronda → `ErrVotacionNoIniciada`; (d) falta un voto → `ErrFaltanVotos` y la ronda sigue sin revelar; (e) todos votaron → `MarcarRevelada` con `ahora` y la ronda devuelta revelada con promedio; (f) ya revelada → `ErrRondaRevelada`; (g) con dos Scrum Master en el proyecto, cualquiera revela (Assumptions). Stub de `NewRevelarVotacion(historias, proyectos, votaciones)` en internal/service/revelar_votacion.go — confirmar que FALLA
 - [ ] T041 [US2] COMMIT `RED: agregar tests de RevelarVotacion (fallan)`
@@ -134,7 +134,7 @@ se prueba sola.
 
 **Goal**: el Scrum Master abre la ronda 1 de una historia que no esté Completada ni tenga votación.
 
-**Independent Test**: Ana inicia la votación de una historia "Nueva" → 201 con `ronda: 1`, los integrantes con `ya_voto: false` y `revelada_en: null`; un segundo inicio → 409.
+**Independent Test**: Carlos inicia la votación de una historia "Nueva" → 201 con `ronda: 1`, los integrantes con `ya_voto: false` y `revelada_en: null`; un segundo inicio → 409.
 
 - [ ] T048 [US3] RED: en internal/service/iniciar_votacion_test.go, tests de `IniciarVotacion.Ejecutar(ctx, historiaID, usuarioID int64) (domain.RondaVotacion, error)`: (a) historia inexistente → `ErrHistoriaNoEncontrada`; (b) Product Builder o ajeno → `ErrNoEsScrumMaster` sin crear ronda; (c) historia `Completada` → `ErrHistoriaCompletada` sin crear ronda (FR-017); (d) historia "Nueva" y "En progreso" (con Sprint) → crea la ronda 1 sin votos; (e) historia con ronda → `ErrVotacionYaIniciada` (chequeo previo con `ObtenerRondaActual`) y también si `CrearRonda` lo devuelve (carrera); (f) no modifica la historia: `Actualizar` del `fakeHistoriaRepository` no se llama (FR-013). Stub de `NewIniciarVotacion(historias, proyectos, votaciones)` en internal/service/iniciar_votacion.go — confirmar que FALLA
 - [ ] T049 [US3] COMMIT `RED: agregar tests de IniciarVotacion (fallan)`

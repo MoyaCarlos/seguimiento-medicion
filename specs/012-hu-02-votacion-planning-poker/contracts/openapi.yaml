@@ -85,15 +85,15 @@ paths:
                 $ref: '#/components/schemas/Votacion'
               examples:
                 oculta:
-                  summary: Consulta Bruno (votó 8); Ana votó, Carla falta
+                  summary: Consulta Candela (votó 8); Carlos votó, Jimena falta
                   value:
                     historia_id: 3
                     ronda: 1
                     revelada_en: null
                     integrantes:
-                      - { usuario_id: 1, nombre: Ana, rol: scrum_master, ya_voto: true, valor: null }
-                      - { usuario_id: 2, nombre: Bruno, rol: product_builder, ya_voto: true, valor: 8 }
-                      - { usuario_id: 3, nombre: Carla, rol: product_builder, ya_voto: false, valor: null }
+                      - { usuario_id: 1, nombre: Carlos, rol: scrum_master, ya_voto: true, valor: null }
+                      - { usuario_id: 2, nombre: Candela, rol: product_builder, ya_voto: true, valor: 8 }
+                      - { usuario_id: 3, nombre: Jimena, rol: product_builder, ya_voto: false, valor: null }
                     promedio: null
                 revelada:
                   value:
@@ -101,9 +101,9 @@ paths:
                     ronda: 1
                     revelada_en: '2026-10-27T15:04:05Z'
                     integrantes:
-                      - { usuario_id: 1, nombre: Ana, rol: scrum_master, ya_voto: true, valor: 3 }
-                      - { usuario_id: 2, nombre: Bruno, rol: product_builder, ya_voto: true, valor: 8 }
-                      - { usuario_id: 3, nombre: Carla, rol: product_builder, ya_voto: true, valor: 5 }
+                      - { usuario_id: 1, nombre: Carlos, rol: scrum_master, ya_voto: true, valor: 3 }
+                      - { usuario_id: 2, nombre: Candela, rol: product_builder, ya_voto: true, valor: 8 }
+                      - { usuario_id: 3, nombre: Jimena, rol: product_builder, ya_voto: true, valor: 5 }
                     promedio: { exacto: 5.33, carta_sugerida: 5 }
         '400':
           description: Identificador o `usuario_id` inválido.
