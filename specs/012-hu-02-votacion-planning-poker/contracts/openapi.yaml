@@ -64,7 +64,8 @@ paths:
       description: >-
         Antes de revelar, `valor` es null para todos salvo para quien consulta
         (su propio voto). Después de revelar, muestra todos los valores y el
-        promedio. Sin `usuario_id`, todos los valores quedan ocultos.
+        promedio. Sin `usuario_id`, o con el de alguien que no es integrante
+        del proyecto, todos los valores quedan ocultos (no hay voto propio).
       operationId: consultarVotacion
       parameters:
         - $ref: '#/components/parameters/ID'
