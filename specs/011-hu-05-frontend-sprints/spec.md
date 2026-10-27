@@ -12,7 +12,7 @@
 
 ### Session 2026-10-24
 
-- Q: ¿Qué pasa con un Sprint que existe en la base pero la pantalla no conoce (por ejemplo, tras recargar)? → A: Se acepta la limitación; el listado llega con #110. La pantalla muestra un texto visible que lo explica ("Los Sprints existentes no se listan todavía") con la referencia a `docs/curl-frontend-sprint-2.md`. (Decisión del Scrum Master)
+- Q: ¿Qué pasa con un Sprint que existe en la base pero la pantalla no conoce (por ejemplo, tras recargar)? → A: Se acepta la limitación; el listado llega con #110. La pantalla muestra un texto visible que lo explica: "Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se pierden al recargar.", sin rutas de archivos ni comandos. (Decisión del Scrum Master; texto ajustado tras la review de #127)
 - Q: ¿Cada Sprint muestra su identificador? → A: Sí, como "Sprint #<id>", para poder cruzarlo con la API y distinguir varios Sprints Finalizados. (Decisión del Scrum Master)
 - Q: Cuando falla "Crear Sprint", iniciar o cerrar con un error que no pertenece a un campo, ¿dónde se muestra el aviso? → A: Un aviso por Sprint, arriba de su formulario de inicio o de su botón "Cerrar Sprint"; el error de "Crear Sprint" va en un aviso arriba de la pantalla. Cada aviso permanece hasta el próximo envío de su propia acción.
 
@@ -126,7 +126,7 @@ Redactados en formato EARS.
 - **FR-009**: La pantalla **shall** mostrar solo los Sprints creados o modificados durante la sesión; no los recupera al recargar.
 - **FR-010**: La lista de Sprints **shall** tener un único punto de carga inicial, hoy vacío, donde un futuro listado (#110) pueda sumarse sin cambiar el resto.
 
-- **FR-018**: La pantalla **shall** mostrar de forma visible, siempre, el texto "Los Sprints existentes no se listan todavía" con la referencia a `docs/curl-frontend-sprint-2.md`, mientras no exista el listado de Sprints (#110).
+- **FR-018**: La pantalla **shall** mostrar de forma visible, siempre, el texto "Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se pierden al recargar." (sin rutas de archivos ni comandos), mientras no exista el listado de Sprints (#110).
 - **FR-019**: Cada Sprint mostrado **shall** exhibir su identificador como "Sprint #<id>".
 
 **Errores y carga**
