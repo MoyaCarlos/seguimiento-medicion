@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -12,8 +13,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+	cfg := cargarConfig(os.Getenv)
 
-	db, err := repository.AbrirSQLite("seguimiento.db")
+	db, err := repository.AbrirSQLite(cfg.RutaBase)
 	if err != nil {
 		log.Fatalf("abrir base de datos: %v", err)
 	}
@@ -69,8 +71,8 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
-	log.Println("listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	log.Printf("listening on :%s", cfg.Puerto)
+	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {
 		log.Fatal(err)
 	}
 }
