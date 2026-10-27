@@ -27,6 +27,20 @@ func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint
 
 // Listar atiende GET /projects/{id}/sprints.
 func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	sprints, err := h.consultar.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	respuesta := make([]sprintResponse, 0, len(sprints))
+	for _, sprint := range sprints {
+		respuesta = append(respuesta, aRespuestaSprint(sprint))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // Crear atiende POST /sprints.
