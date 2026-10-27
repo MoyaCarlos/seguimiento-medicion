@@ -112,6 +112,8 @@ spec). Este documento registra las decisiones técnicas del diseño.
   iniciar un Sprint pendiente". 403 es nuevo en la API: es el código que corresponde a "sos
   quien decís, pero no tenés permiso"; se agrega en `escribirError`. 409 para el `UNIQUE`,
   como fija la tabla de traducción de `MODELO-DE-DATOS.md` §5.
+- **Validado** en la reunión de definición (2026-10-27): solo el Scrum Master inicia y
+  revela, no se revela hasta que votaron todos y se adopta el 403 para los permisos.
 - **Orden de validación**: id de ruta → historia existe (404) → JSON → `usuario_id` →
   permiso (403) → reglas de estado y de valor. Así la historia inexistente domina (FR-011),
   con el mismo patrón que `SprintHandler.Iniciar`.

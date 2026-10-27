@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-26
 
-**Status**: Draft
+**Status**: Especificada y validada en la reunión de definición (2026-10-27): solo el Scrum Master inicia y revela, no se revela hasta que votaron todos, permisos con 403.
 
 **Input**: User description: "HU-02: Votación de Esfuerzo en Planning Poker
 (issue #2, sub-issue de especificación #44). Como integrante del equipo (Scrum
