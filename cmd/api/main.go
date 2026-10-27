@@ -27,17 +27,22 @@ func main() {
 
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo, proyectos)
-	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
-
 	usuarios := repository.NewSQLiteUserRepository(db)
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
+	backlogHandler := apihttp.NewBacklogHandler(
+		crearHistoria,
+		service.NewConsultarProductBacklog(proyectos, backlogRepo),
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewEditarHistoria(backlogRepo, sprintRepo),
+	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
+	listarProyectos := service.NewListarProyectos(proyectos)
 	editarProyecto := service.NewEditarProyecto(proyectos)
 	asignarIntegrante := service.NewAsignarIntegrante(proyectos, usuarios)
 	listarIntegrantes := service.NewListarIntegrantes(proyectos)
 	obtenerEstadoProyecto := service.NewObtenerEstadoProyecto(proyectos, sprintRepo)
-	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
+	projectHandler := apihttp.NewProjectHandler(crearProyecto, obtenerProyecto, listarProyectos, editarProyecto, asignarIntegrante, listarIntegrantes, obtenerEstadoProyecto)
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
@@ -51,6 +56,9 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
+	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
 	mux.HandleFunc("GET /projects/{id}/status", projectHandler.ObtenerEstado)

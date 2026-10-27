@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Consulta y Edición del Product Backlog (HU-15)
+  version: 1.0.0
+  description: >-
+    Contrato de la consulta del Product Backlog de un proyecto y de la edición
+    de una historia. La edición reemplaza juntos título, descripción, criterios
+    de aceptación y Story Points; prioridad, valor de negocio, estado y Sprint
+    no se editan acá.
+paths:
+  /projects/{id}/backlog:
+    get:
+      summary: Consultar el Product Backlog de un proyecto
+      description: >-
+        Devuelve las historias del proyecto sin Sprint asignado, ordenadas por
+        prioridad MoSCoW (M, S, C, W) y, a igual prioridad, por id ascendente.
+      operationId: consultarProductBacklog
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Product Backlog (puede ser una lista vacía).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Historia'
+              examples:
+                conHistorias:
+                  value:
+                    - id: 3
+                      proyecto_id: 1
+                      titulo: Como usuario quiero iniciar sesión
+                      descripcion: Autenticación con email y contraseña
+                      criterios_aceptacion: "Dado un email válido, cuando ingreso, entonces veo el tablero"
+                      prioridad: M
+                      estado: Nueva
+                      valor_negocio: 13
+                      estimacion_sp: 5
+                    - id: 1
+                      proyecto_id: 1
+                      titulo: Como usuario quiero cerrar sesión
+                      descripcion: Cerrar la sesión activa
+                      criterios_aceptacion: null
+                      prioridad: S
+                      estado: Nueva
+                      valor_negocio: null
+                      estimacion_sp: null
+                vacio:
+                  value: []
+        '400':
+          description: Identificador inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: proyecto no encontrado
+  /backlog/{id}:
+    put:
+      summary: Editar una historia del Product Backlog
+      description: >-
+        Si la historia no existe responde 404 antes de validar el cuerpo. Los
+        cuatro campos son obligatorios como claves; criterios_aceptacion y
+        estimacion_sp aceptan null (o "" para los criterios) para dejarlos vacíos.
+        Una edición con cualquier campo inválido se rechaza entera. Si la historia
+        está en un Sprint Activo o Finalizado y ya tiene Story Points, no se pueden
+        cambiar (D2b); cargarlos cuando estaban en null sí se permite.
+      operationId: editarHistoria
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarHistoriaRequest'
+            examples:
+              valida:
+                value:
+                  titulo: Como usuario quiero iniciar sesión con Google
+                  descripcion: Autenticación con OAuth
+                  criterios_aceptacion: "Dado que tengo cuenta de Google, cuando ingreso, entonces veo el tablero"
+                  estimacion_sp: 8
+              sinEstimacion:
+                value:
+                  titulo: Como usuario quiero cerrar sesión
+                  descripcion: Cerrar la sesión activa
+                  criterios_aceptacion: null
+                  estimacion_sp: null
+      responses:
+        '200':
+          description: Historia editada; devuelve la historia completa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Historia'
+        '400':
+          description: >-
+            JSON inválido, identificador inválido, falta una clave obligatoria
+            o un campo no cumple sus reglas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                tituloVacio:
+                  value:
+                    campo: titulo
+                    mensaje: el título es obligatorio
+                storyPointsFueraDeEscala:
+                  value:
+                    campo: estimacion_sp
+                    mensaje: los Story Points deben ser uno de 1, 2, 3, 5, 8, 13, 21
+                storyPointsCongelados:
+                  summary: Cambio de SP ya cargados con Sprint Activo o Finalizado (D2b)
+                  value:
+                    campo: estimacion_sp
+                    mensaje: los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado
+                criteriosLargos:
+                  value:
+                    campo: criterios_aceptacion
+                    mensaje: los criterios de aceptación no pueden superar los 2000 caracteres
+        '404':
+          description: La historia no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: historia no encontrada
+components:
+  parameters:
+    ID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    EditarHistoriaRequest:
+      type: object
+      required: [titulo, descripcion, criterios_aceptacion, estimacion_sp]
+      properties:
+        titulo:
+          type: string
+          maxLength: 200
+        descripcion:
+          type: string
+          maxLength: 2000
+        criterios_aceptacion:
+          type: string
+          nullable: true
+          maxLength: 2000
+        estimacion_sp:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 5, 8, 13, 21]
+    Historia:
+      type: object
+      required: [id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp]
+      properties:
+        id:
+          type: integer
+          format: int64
+        proyecto_id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        descripcion:
+          type: string
+        criterios_aceptacion:
+          type: string
+          nullable: true
+        prioridad:
+          type: string
+          enum: [M, S, C, W]
+        estado:
+          type: string
+          enum: [Nueva, En progreso, Completada]
+        valor_negocio:
+          type: integer
+          nullable: true
+        estimacion_sp:
+          type: integer
+          nullable: true
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

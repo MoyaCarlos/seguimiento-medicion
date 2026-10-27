@@ -110,3 +110,248 @@ func TestSQLiteBacklogRepository_Guardar_ProyectoInexistenteEsIntegridad(t *test
 		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
 	}
 }
+
+const estadoEnProgreso domain.Estado = "En progreso"
+
+func guardarHistoria(t *testing.T, repo *SQLiteBacklogRepository, proyectoID int64, titulo string, prioridad domain.Prioridad) domain.BacklogItem {
+	t.Helper()
+	item, err := domain.NewBacklogItem(proyectoID, titulo, "Descripción de "+titulo, prioridad, nil)
+	if err != nil {
+		t.Fatalf("no se esperaba error de dominio: %v", err)
+	}
+	guardado, err := repo.Guardar(context.Background(), item)
+	if err != nil {
+		t.Fatalf("no se esperaba error al guardar: %v", err)
+	}
+	return guardado
+}
+
+func asignarASprint(t *testing.T, repo *SQLiteBacklogRepository, historiaID, sprintID int64) {
+	t.Helper()
+	if _, err := repo.db.ExecContext(context.Background(),
+		"UPDATE historias SET sprint_id = ?, estado = ? WHERE id = ?", sprintID, string(estadoEnProgreso), historiaID,
+	); err != nil {
+		t.Fatalf("no se pudo asignar la historia al sprint: %v", err)
+	}
+}
+
+func titulos(historias []domain.BacklogItem) []string {
+	resultado := make([]string, 0, len(historias))
+	for _, h := range historias {
+		resultado = append(resultado, h.Titulo)
+	}
+	return resultado
+}
+
+func TestSQLiteBacklogRepository_ListarSinSprint_ExcluyeConSprintYOtrosProyectos(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	otroProyecto := guardarProyecto(t, repo.db)
+	sprint := guardarSprint(t, NewSQLiteSprintRepository(repo.db), 1)
+
+	guardarHistoria(t, repo, 1, "Sin sprint", domain.PrioridadMust)
+	conSprint := guardarHistoria(t, repo, 1, "Con sprint", domain.PrioridadMust)
+	asignarASprint(t, repo, conSprint.ID, sprint.ID)
+	guardarHistoria(t, repo, otroProyecto, "De otro proyecto", domain.PrioridadMust)
+
+	historias, err := repo.ListarSinSprint(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	if got := titulos(historias); len(got) != 1 || got[0] != "Sin sprint" {
+		t.Errorf("se esperaba solo [Sin sprint], se obtuvo %v", got)
+	}
+}
+
+func TestSQLiteBacklogRepository_ListarSinSprint_OrdenMoSCoWYCreacion(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	guardarHistoria(t, repo, 1, "S1", domain.PrioridadShould)
+	guardarHistoria(t, repo, 1, "M1", domain.PrioridadMust)
+	guardarHistoria(t, repo, 1, "W1", domain.PrioridadWont)
+	guardarHistoria(t, repo, 1, "C1", domain.PrioridadCould)
+	guardarHistoria(t, repo, 1, "M2", domain.PrioridadMust)
+
+	historias, err := repo.ListarSinSprint(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	esperado := []string{"M1", "M2", "S1", "C1", "W1"}
+	got := titulos(historias)
+	if len(got) != len(esperado) {
+		t.Fatalf("se esperaba %v, se obtuvo %v", esperado, got)
+	}
+	for i := range esperado {
+		if got[i] != esperado[i] {
+			t.Fatalf("se esperaba el orden %v, se obtuvo %v", esperado, got)
+		}
+	}
+}
+
+func TestSQLiteBacklogRepository_ListarSinSprint_SinHistoriasDevuelveVacio(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+
+	historias, err := repo.ListarSinSprint(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if historias == nil || len(historias) != 0 {
+		t.Errorf("se esperaba un slice vacío no nil, se obtuvo %#v", historias)
+	}
+}
+
+func TestSQLiteBacklogRepository_ObtenerPorID_Inexistente(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+
+	_, err := repo.ObtenerPorID(context.Background(), 999)
+
+	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
+		t.Fatalf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteBacklogRepository_ObtenerPorID_LeeTodosLosCampos(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	sprint := guardarSprint(t, NewSQLiteSprintRepository(repo.db), 1)
+	valor := 8
+	item, _ := domain.NewBacklogItem(1, "Historia", "Descripción", domain.PrioridadShould, &valor)
+	guardado, err := repo.Guardar(ctx, item)
+	if err != nil {
+		t.Fatalf("no se esperaba error al guardar: %v", err)
+	}
+	asignarASprint(t, repo, guardado.ID, sprint.ID)
+	if _, err := repo.db.ExecContext(ctx,
+		"UPDATE historias SET criterios_aceptacion = ?, estimacion_sp = 5 WHERE id = ?", "Dado, cuando, entonces", guardado.ID,
+	); err != nil {
+		t.Fatalf("no se pudo sembrar la historia: %v", err)
+	}
+
+	h, err := repo.ObtenerPorID(ctx, guardado.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	if h.ID != guardado.ID || h.ProyectoID != 1 || h.Titulo != "Historia" || h.Descripcion != "Descripción" {
+		t.Errorf("datos básicos inesperados: %+v", h)
+	}
+	if h.Prioridad != domain.PrioridadShould || h.Estado != estadoEnProgreso {
+		t.Errorf("prioridad o estado inesperados: %q %q", h.Prioridad, h.Estado)
+	}
+	if h.CriteriosAceptacion == nil || *h.CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("criterios inesperados: %v", h.CriteriosAceptacion)
+	}
+	if h.ValorNegocio == nil || *h.ValorNegocio != 8 {
+		t.Errorf("valor de negocio inesperado: %v", h.ValorNegocio)
+	}
+	if h.EstimacionSP == nil || *h.EstimacionSP != 5 {
+		t.Errorf("estimación inesperada: %v", h.EstimacionSP)
+	}
+	if h.SprintID == nil || *h.SprintID != sprint.ID {
+		t.Errorf("sprint inesperado: %v", h.SprintID)
+	}
+}
+
+func TestSQLiteBacklogRepository_Actualizar(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	sprint := guardarSprint(t, NewSQLiteSprintRepository(repo.db), 1)
+	valor := 13
+	item, _ := domain.NewBacklogItem(1, "Original", "Descripción original", domain.PrioridadCould, &valor)
+	guardado, err := repo.Guardar(ctx, item)
+	if err != nil {
+		t.Fatalf("no se esperaba error al guardar: %v", err)
+	}
+	asignarASprint(t, repo, guardado.ID, sprint.ID)
+
+	criterios, sp := "Criterios nuevos", 3
+	editado := guardado
+	editado.Titulo, editado.Descripcion = "Nuevo", "Descripción nueva"
+	editado.CriteriosAceptacion, editado.EstimacionSP = &criterios, &sp
+	if err := repo.Actualizar(ctx, editado); err != nil {
+		t.Fatalf("no se esperaba error al actualizar: %v", err)
+	}
+
+	h, err := repo.ObtenerPorID(ctx, guardado.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if h.Titulo != "Nuevo" || h.Descripcion != "Descripción nueva" {
+		t.Errorf("título o descripción sin actualizar: %+v", h)
+	}
+	if h.CriteriosAceptacion == nil || *h.CriteriosAceptacion != "Criterios nuevos" {
+		t.Errorf("criterios sin actualizar: %v", h.CriteriosAceptacion)
+	}
+	if h.EstimacionSP == nil || *h.EstimacionSP != 3 {
+		t.Errorf("estimación sin actualizar: %v", h.EstimacionSP)
+	}
+	if h.Prioridad != domain.PrioridadCould || h.Estado != estadoEnProgreso ||
+		h.ValorNegocio == nil || *h.ValorNegocio != 13 || h.SprintID == nil || *h.SprintID != sprint.ID {
+		t.Errorf("se modificaron campos que no se editan: %+v", h)
+	}
+}
+
+func TestSQLiteBacklogRepository_Actualizar_VuelveANull(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	guardado := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	if _, err := repo.db.ExecContext(ctx,
+		"UPDATE historias SET criterios_aceptacion = ?, estimacion_sp = 5 WHERE id = ?", "Algo", guardado.ID,
+	); err != nil {
+		t.Fatalf("no se pudo sembrar la historia: %v", err)
+	}
+
+	guardado.CriteriosAceptacion, guardado.EstimacionSP = nil, nil
+	if err := repo.Actualizar(ctx, guardado); err != nil {
+		t.Fatalf("no se esperaba error al actualizar: %v", err)
+	}
+
+	var (
+		criterios  *string
+		estimacion *int
+	)
+	if err := repo.db.QueryRowContext(ctx,
+		"SELECT criterios_aceptacion, estimacion_sp FROM historias WHERE id = ?", guardado.ID,
+	).Scan(&criterios, &estimacion); err != nil {
+		t.Fatalf("no se pudo releer la historia: %v", err)
+	}
+	if criterios != nil || estimacion != nil {
+		t.Errorf("se esperaban criterios y estimación NULL, se obtuvo %v %v", criterios, estimacion)
+	}
+}
+
+func TestSQLiteBacklogRepository_Guardar_PersisteCriterios(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	item, _ := domain.NewBacklogItem(1, "Historia", "Descripción", domain.PrioridadMust, nil)
+	criterios := "Dado, cuando, entonces"
+	item.CriteriosAceptacion = &criterios
+
+	guardado, err := repo.Guardar(ctx, item)
+	if err != nil {
+		t.Fatalf("no se esperaba error al guardar: %v", err)
+	}
+
+	h, err := repo.ObtenerPorID(ctx, guardado.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if h.CriteriosAceptacion == nil || *h.CriteriosAceptacion != criterios {
+		t.Errorf("se esperaban los criterios guardados, se obtuvo %v", h.CriteriosAceptacion)
+	}
+}
+
+func TestSQLiteBacklogRepository_Guardar_CriteriosNull(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	guardado := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+
+	var criterios *string
+	if err := repo.db.QueryRowContext(context.Background(),
+		"SELECT criterios_aceptacion FROM historias WHERE id = ?", guardado.ID,
+	).Scan(&criterios); err != nil {
+		t.Fatalf("no se pudo releer la historia: %v", err)
+	}
+	if criterios != nil {
+		t.Errorf("se esperaban criterios NULL, se obtuvo %q", *criterios)
+	}
+}

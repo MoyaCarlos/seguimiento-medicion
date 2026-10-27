@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-01
 
-**Status**: Draft
+**Status**: Implementada (backend en Sprint 1 y frontend en Sprint 2), pendiente de revisión por PR.
 
 **Input**: User description: "HU-04: Creación de Proyecto y Asignación de Equipo. Como Scrum Master quiero crear un proyecto y agregar a los integrantes con sus respectivos roles para poder tener un espacio de trabajo organizado y estructurar las responsabilidades del equipo. Prioridad M (Must have). Estado Nueva. Valor de Negocio 21 (Fibonacci). Estimación 8 Story Points."
 
