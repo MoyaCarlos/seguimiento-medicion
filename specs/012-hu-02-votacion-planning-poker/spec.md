@@ -23,6 +23,8 @@ otra sub-issue."
 - Q: Si todavía falta votar algún integrante, ¿qué pasa al presionar "Revelar"? → A: Se rechaza; solo se revela cuando votaron todos los integrantes del proyecto.
 - Q: Sin autenticación, ¿se valida que quien inicia y revela sea el Scrum Master? → A: Sí; la petición indica qué integrante actúa y, si no tiene rol `scrum_master` en el proyecto, se rechaza.
 - Q: ¿Cómo se calcula el "promedio sugerido"? → A: Se informan los dos: el promedio aritmético exacto (3, 5 y 8 → 5,33) y la carta de la baraja más cercana (→ 5).
+- Q: Antes de revelar, ¿quien votó puede ver su propio voto al consultar la votación? → A: Sí; la consulta indica quién consulta, le muestra su propio valor y deja el de los demás como "Oculto".
+- Q: ¿Se puede iniciar la votación de una historia "Completada"? → A: No; se rechaza. Las historias "Nueva" y "En progreso" se pueden votar.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -43,8 +45,9 @@ estimación "sin sesgos", que es el valor que pide la historia.
 
 1. **Given** el Scrum Master inició la votación de una historia del proyecto,
    **When** un integrante selecciona la carta 8 y confirma su voto, **Then** el
-   voto queda registrado en la ronda actual y, al consultar la votación, ese
-   integrante figura como que ya votó, con el valor "Oculto".
+   voto queda registrado en la ronda actual y, cuando otro integrante consulta
+   la votación, el que votó figura como que ya votó, con el valor "Oculto";
+   cuando consulta el propio votante, ve su carta (8).
 2. **Given** la votación de una historia está abierta y un integrante ya votó,
    **When** ese mismo integrante confirma otra carta antes de la revelación,
    **Then** su voto se reemplaza por el nuevo (sigue habiendo un solo voto suyo
@@ -112,6 +115,9 @@ verifica que queda una ronda 1 abierta, sin votos.
 4. **Given** una historia sin votación, **When** un integrante con rol
    Product Builder intenta iniciarla, **Then** el sistema rechaza la operación
    y la historia sigue sin rondas.
+5. **Given** una historia en estado "Completada" y sin votación, **When** el
+   Scrum Master intenta iniciar su votación, **Then** el sistema rechaza la
+   operación y la historia sigue sin rondas.
 
 ### Edge Cases
 
@@ -129,7 +135,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   rechazar el inicio de la votación (la ronda 2 en adelante la abre HU-14).
 - **WHILE** la ronda actual no fue revelada, **WHEN** se consulta la votación,
   **THEN** el sistema **shall** informar qué integrantes ya votaron y cuáles
-  faltan, sin incluir ningún valor de voto.
+  faltan, e incluir solo el valor del voto de quien consulta (el de los demás
+  queda "Oculto").
 - **WHILE** la ronda actual no fue revelada, **WHEN** un integrante que ya votó
   confirma otra carta, **THEN** el sistema **shall** reemplazar su voto
   anterior.
@@ -142,6 +149,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   **shall** rechazarlo con un error de validación sobre el valor.
 - **IF** quien vota no es integrante del proyecto de la historia, **THEN** el
   sistema **shall** rechazar el voto.
+- **IF** la historia está en estado "Completada", **THEN** el sistema
+  **shall** rechazar el inicio de su votación.
 - **IF** se vota sobre una historia que no tiene votación iniciada, **THEN**
   el sistema **shall** rechazar el voto.
 - **IF** la historia indicada no existe, **THEN** el sistema **shall**
@@ -182,7 +191,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-006**: El sistema MUST rechazar el voto de quien no sea integrante del
   proyecto de la historia.
 - **FR-007**: Mientras la ronda no esté revelada, la consulta de la votación
-  MUST informar quién votó y quién falta, sin exponer ningún valor de voto.
+  MUST informar quién votó y quién falta, y exponer solo el valor del voto de
+  quien consulta; el resto de los valores se informa como "Oculto".
 - **FR-008**: El sistema MUST permitir revelar la ronda actual de una historia,
   registrando el momento de la revelación.
 - **FR-009**: Una vez revelada, la consulta de la votación MUST informar el
@@ -204,6 +214,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-016**: El promedio sugerido MUST informarse de dos formas: el promedio
   aritmético exacto, redondeado a 2 decimales, y la carta de la baraja más
   cercana a él; ante un empate entre dos cartas se sugiere la mayor.
+- **FR-017**: El sistema MUST rechazar iniciar la votación de una historia en
+  estado "Completada"; las historias "Nueva" y "En progreso" se pueden votar.
 
 ### Key Entities
 
@@ -222,7 +234,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 ### Measurable Outcomes
 
 - **SC-001**: Antes de la revelación, en el 100% de las consultas de una
-  votación ningún integrante puede ver el valor que eligió otro.
+  votación ningún integrante puede ver el valor que eligió otro (solo el
+  suyo).
 - **SC-002**: Un integrante puede votar en un solo paso (elegir carta y
   confirmar), sin datos adicionales.
 - **SC-003**: Tras revelar, el equipo ve los valores de todos y el promedio en
@@ -247,8 +260,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   historia dice "integrante del equipo (Scrum Master o Product Builder)").
   "Todos" se evalúa al revelar: si se suma un integrante con la ronda abierta,
   también tiene que votar antes de que se pueda revelar.
-- Se puede votar cualquier historia del proyecto, tenga o no Sprint o
-  estimación cargada: votar no modifica la historia (FR-013). La restricción
+- Se puede votar cualquier historia del proyecto que no esté "Completada"
+  (FR-017), tenga o no Sprint o estimación cargada: votar no modifica la
+  historia (FR-013). La restricción
   de no reemplazar la estimación con Sprint `Activo` o `Finalizado` (D2b) es
   de HU-14, al registrar la estimación acordada.
 - Cambiar el voto antes de revelar está permitido: en Planning Poker real se
