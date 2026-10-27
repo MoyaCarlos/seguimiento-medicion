@@ -34,9 +34,10 @@ Se agrega **un solo campo nuevo**, sin tocar nada de lo ya implementado en HU-01
 | SprintID | *int64 | `nil` = sin Sprint asignado (está en el Product Backlog) |
 
 **Importante — alcance acotado**: esta historia (HU-05) agrega el campo y
-los dos métodos mínimos de `BacklogRepository` que necesita para poder
-"soltar" las historias no completadas al cerrar un Sprint
-(`ListarPorSprint`, `QuitarDeSprint`). **No implementa** la lógica de
+lo mínimo que necesita para poder "soltar" las historias no completadas al
+cerrar un Sprint: `BacklogRepository.ListarPorSprint` para leerlas y
+`SprintRepository.CerrarConArrastre` para cerrar (ver la actualización de
+abajo). **No implementa** la lógica de
 asignar una historia a un Sprint por primera vez, ni sus validaciones (ej.
 "no asignar una historia ya Terminada") — eso es el alcance completo de
 **HU-06** (Movimiento de Historias al Sprint Backlog), que se construye
