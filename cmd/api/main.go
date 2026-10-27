@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -12,8 +13,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+	cfg := cargarConfig(os.Getenv)
 
-	db, err := repository.AbrirSQLite("seguimiento.db")
+	db, err := repository.AbrirSQLite(cfg.RutaBase)
 	if err != nil {
 		log.Fatalf("abrir base de datos: %v", err)
 	}
@@ -27,10 +29,14 @@ func main() {
 
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	crearHistoria := service.NewCrearHistoriaBacklog(backlogRepo, proyectos)
-	backlogHandler := apihttp.NewBacklogHandler(crearHistoria)
-
 	usuarios := repository.NewSQLiteUserRepository(db)
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
+	backlogHandler := apihttp.NewBacklogHandler(
+		crearHistoria,
+		service.NewConsultarProductBacklog(proyectos, backlogRepo),
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewEditarHistoria(backlogRepo, sprintRepo),
+	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
 	listarProyectos := service.NewListarProyectos(proyectos)
@@ -52,6 +58,8 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
+	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
+	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
@@ -63,8 +71,8 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 
-	log.Println("listening on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	log.Printf("listening on :%s", cfg.Puerto)
+	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {
 		log.Fatal(err)
 	}
 }

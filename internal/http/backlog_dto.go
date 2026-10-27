@@ -1,6 +1,10 @@
 package http
 
-import "github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+import (
+	"encoding/json"
+
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+)
 
 type crearHistoriaRequest struct {
 	ProyectoID   int64  `json:"proyecto_id"`
@@ -10,15 +14,23 @@ type crearHistoriaRequest struct {
 	ValorNegocio *int   `json:"valor_negocio"`
 }
 
+type editarHistoriaRequest struct {
+	Titulo              string       `json:"titulo"`
+	Descripcion         string       `json:"descripcion"`
+	CriteriosAceptacion *string      `json:"criterios_aceptacion"`
+	EstimacionSP        *json.Number `json:"estimacion_sp"`
+}
+
 type historiaResponse struct {
-	ID           int64  `json:"id"`
-	ProyectoID   int64  `json:"proyecto_id"`
-	Titulo       string `json:"titulo"`
-	Descripcion  string `json:"descripcion"`
-	Prioridad    string `json:"prioridad"`
-	Estado       string `json:"estado"`
-	ValorNegocio *int   `json:"valor_negocio"`
-	EstimacionSP *int   `json:"estimacion_sp"`
+	ID                  int64   `json:"id"`
+	ProyectoID          int64   `json:"proyecto_id"`
+	Titulo              string  `json:"titulo"`
+	Descripcion         string  `json:"descripcion"`
+	CriteriosAceptacion *string `json:"criterios_aceptacion"`
+	Prioridad           string  `json:"prioridad"`
+	Estado              string  `json:"estado"`
+	ValorNegocio        *int    `json:"valor_negocio"`
+	EstimacionSP        *int    `json:"estimacion_sp"`
 }
 
 type errorResponse struct {
@@ -28,13 +40,14 @@ type errorResponse struct {
 
 func aRespuesta(item domain.BacklogItem) historiaResponse {
 	return historiaResponse{
-		ID:           item.ID,
-		ProyectoID:   item.ProyectoID,
-		Titulo:       item.Titulo,
-		Descripcion:  item.Descripcion,
-		Prioridad:    string(item.Prioridad),
-		Estado:       string(item.Estado),
-		ValorNegocio: item.ValorNegocio,
-		EstimacionSP: item.EstimacionSP,
+		ID:                  item.ID,
+		ProyectoID:          item.ProyectoID,
+		Titulo:              item.Titulo,
+		Descripcion:         item.Descripcion,
+		CriteriosAceptacion: item.CriteriosAceptacion,
+		Prioridad:           string(item.Prioridad),
+		Estado:              string(item.Estado),
+		ValorNegocio:        item.ValorNegocio,
+		EstimacionSP:        item.EstimacionSP,
 	}
 }

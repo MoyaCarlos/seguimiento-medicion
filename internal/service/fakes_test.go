@@ -136,3 +136,40 @@ func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.U
 	f.usuarios[u.NombreNormalizado] = u
 	return u, nil
 }
+
+type fakeProductBacklogRepository struct {
+	historias []domain.BacklogItem
+	err       error
+	llamadas  int
+}
+
+func (f *fakeProductBacklogRepository) ListarSinSprint(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
+	f.llamadas++
+	if f.err != nil {
+		return nil, f.err
+	}
+	return f.historias, nil
+}
+
+type fakeHistoriaRepository struct {
+	historias       map[int64]domain.BacklogItem
+	errActualizar   error
+	actualizaciones []domain.BacklogItem
+}
+
+func (f *fakeHistoriaRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.BacklogItem) error {
+	if f.errActualizar != nil {
+		return f.errActualizar
+	}
+	f.actualizaciones = append(f.actualizaciones, item)
+	f.historias[item.ID] = item
+	return nil
+}

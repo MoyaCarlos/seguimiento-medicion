@@ -39,6 +39,21 @@ Principales funcionalidades:
 -   **Testing:** Godog (BDD) + `testing` estándar de Go (TDD).
 -   **Reportes:** generación de PDF con Maroto.
 
+## Correr con Docker
+
+Una sola imagen: el binario Go sirve la API y el frontend, y corre sin root.
+
+```sh
+docker build -t seguimiento-medicion .
+docker run -d --name seg -p 8080:8080 -v seguimiento-data:/data seguimiento-medicion
+```
+
+- `GET http://localhost:8080/health` responde `ok`; la interfaz se abre en `http://localhost:8080`.
+- La base SQLite vive en `/data` (volumen `seguimiento-data`): sobrevive a `docker rm` y a reiniciar el contenedor.
+- Variables de entorno: `PORT` (default `8080`), `DB_PATH` (`/data/seguimiento.db` en la imagen) y `WEB_DIR` (`/app/web/dist`).
+- Si el puerto 8080 está ocupado, publicá en otro: `-p 8081:8080`.
+- Con un directorio del host en lugar de un volumen (`-v $(pwd)/datos:/data`), tiene que ser escribible por el usuario `65532` (`sudo chown 65532:65532 datos`).
+
 ## Especificación de funcionalidades (SDD)
 
 El proyecto aplica **Specification-Driven Development** con

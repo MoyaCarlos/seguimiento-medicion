@@ -32,7 +32,9 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   `fix/<n°-issue>-nombre-corto` para los fixes (ej. `fix/19-integridad-proyecto-id`).
 - Nada de push directo a `main`: todo cambio entra por Pull Request.
 - Mínimo 1 aprobación de otro integrante antes de mergear.
-- El PR debe pasar los tests (Godog + `go test`) antes de mergear.
+- El PR debe pasar los tests (Godog + `go test`) antes de mergear. Lo verifica el CI de
+  GitHub Actions (`.github/workflows/ci.yml`) con los checks `backend` (build, vet, gofmt
+  y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea.
 - **Saltos de línea:** el repo fija LF con `.gitattributes` (`* text=auto eol=lf`), así `gofmt -l .` no marca archivos en Windows. Si ya tenías un clon hecho antes de ese archivo (con CRLF), volvé a clonar o, una sola vez y con el árbol limpio, corré `git rm --cached -r .` y `git reset --hard` para que Git reescriba los archivos con LF. `git add --renormalize .` solo hace falta si alguien llegó a commitear archivos con CRLF.
 
 ### Fixes

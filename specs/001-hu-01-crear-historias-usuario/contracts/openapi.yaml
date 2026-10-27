@@ -46,6 +46,7 @@ paths:
                     proyecto_id: 1
                     titulo: Como usuario quiero iniciar sesión
                     descripcion: Autenticación con email y contraseña
+                    criterios_aceptacion: null
                     prioridad: M
                     estado: Nueva
                     valor_negocio: 13
@@ -117,6 +118,12 @@ components:
           type: string
         descripcion:
           type: string
+        criterios_aceptacion:
+          type: string
+          nullable: true
+          description: >-
+            Siempre null al crear; se cargan al editar la historia (HU-15, ver
+            specs/009-hu-15-consulta-edicion-backlog/contracts/openapi.yaml).
         prioridad:
           type: string
           enum: [M, S, C, W]
