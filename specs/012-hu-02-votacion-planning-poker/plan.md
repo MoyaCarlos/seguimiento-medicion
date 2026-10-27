@@ -96,13 +96,12 @@ internal/service/
 ├── consultar_votacion.go                    # ConsultarVotacion + vista con ocultación (nuevo)
 ├── consultar_votacion_test.go
 ├── integrantes.go                           # rolEnProyecto, compartido por los 4 (nuevo)
-└── fakes_test.go                            # + fake de VotacionRepository si el de memoria no alcanza
+└── fakes_test.go                            # + fakeVotacionRepository (simula las escrituras condicionales, R6)
 
 internal/repository/
 ├── migraciones/003_votacion.sql             # rondas_votacion, votos (§4.7)
 ├── esquema_test.go                          # + estructura y filas de las tablas de la 003
 ├── votacion_repository.go                   # puerto VotacionRepository (nuevo)
-├── votacion_repository_memoria.go           # fake en memoria (nuevo)
 ├── sqlite_votacion.go                       # adaptador SQLite (nuevo)
 └── sqlite_votacion_test.go
 

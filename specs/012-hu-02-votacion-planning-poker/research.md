@@ -60,8 +60,11 @@ spec). Este documento registra las decisiones técnicas del diseño.
 
 - **Decision**: interfaz nueva `VotacionRepository` en `internal/repository/votacion_repository.go`
   con `CrearRonda`, `ObtenerRondaActual`, `GuardarVoto` y `MarcarRevelada`; adaptador
-  `SQLiteVotacionRepository` y `VotacionRepositoryEnMemoria` (fake reutilizable, como
-  `SprintRepositoryEnMemoria`). Ver [data-model.md](./data-model.md).
+  `SQLiteVotacionRepository`. Los tests de service usan un `fakeVotacionRepository` en
+  `internal/service/fakes_test.go` que simula las escrituras condicionales de R6 (un fake sin
+  esa regla ocultaría defectos, punto 2 de #101); el BDD usa SQLite `:memory:`, como HU-15.
+  No se agrega un fake de producción en `internal/repository` porque ninguna otra historia lo
+  necesita todavía (YAGNI). Ver [data-model.md](./data-model.md).
 - **Rationale**: ISP, igual que `HistoriaRepository` / `ProductBacklogRepository`. La ronda
   actual es la de mayor `numero` (§4.7), resuelto con `ORDER BY numero DESC LIMIT 1`.
 
