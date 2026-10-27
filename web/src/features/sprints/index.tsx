@@ -43,8 +43,7 @@ function PantallaSprints({ id }: { id?: string }) {
       <p>Proyecto actual: <strong>{id}</strong></p>
       <p>
         Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se
-        pierden al recargar; los comandos de docs/curl-frontend-sprint-2.md permiten crear e
-        iniciar Sprints por la API.
+        pierden al recargar.
       </p>
       {aviso && <ErrorMessage message={aviso} />}
       {creando && <LoadingIndicator />}
