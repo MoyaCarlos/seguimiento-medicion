@@ -1,6 +1,6 @@
 # Feature Specification: Estado del proyecto en el panel principal (HU-13 Frontend)
 
-**Feature Branch**: `feature/HU-13-frontend`
+**Feature Branch**: `feature/HU-13-frontend-panel`
 
 **Issue**: #41 (parte de #13)
 

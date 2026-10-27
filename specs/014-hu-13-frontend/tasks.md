@@ -1,6 +1,6 @@
 # Tasks: Estado del proyecto en el panel principal (HU-13 Frontend)
 
-**Feature Branch**: `feature/HU-13-frontend`
+**Feature Branch**: `feature/HU-13-frontend-panel`
 
 **Issue**: #41 (parte de #13)
 
@@ -12,6 +12,6 @@
 - [X] T004 COMMIT `RED: agregar tests del estado del proyecto en el panel (fallan)`
 - [X] T005 GREEN: mostrar el estado en `Panel.tsx` y agregar `obtenerEstadoProyecto` en `api.ts`.
 - [X] T006 COMMIT `GREEN: mostrar el estado del proyecto en el panel, tests en verde`
-- [X] T007 Actualizar la rama sobre la versión corregida de HU-04 (`feature/HU-04-frontend`), descartando las copias viejas de la base, el README y las rutas.
-- [X] T008 COMMIT `Merge branch 'feature/HU-04-frontend' into feature/HU-13-frontend`
+- [X] T007 Crear la rama `feature/HU-13-frontend-panel` desde `main` y reaplicar los commits propios (spec, RED y GREEN), sin arrastrar los cambios de HU-04 que ya están en `main`.
+- [X] T008 COMMIT `docs: mover la spec de HU-13 frontend a specs/014-hu-13-frontend`
 - [X] T009 Verificar `npm test`, `npm run lint` y `npm run build` en `web/`.
