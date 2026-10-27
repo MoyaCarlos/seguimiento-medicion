@@ -47,7 +47,7 @@ Constitución v1.0.0 (`.specify/memory/constitution.md`).
 |-----------|----------------|--------|
 | I. Test-First (NON-NEGOTIABLE) | `RondaVotacion` (votar, reemplazar, revelar), `CalcularPromedio`, los 4 services, el repositorio SQLite (incluido el upsert condicional), el test de esquema de la 003 y el handler se hacen con commits RED → GREEN (→ REFACTOR si hay algo que limpiar) | PASS |
 | II. SDD | spec → clarify (5 decisiones registradas) → plan; siguen tasks, analyze, BDD, implement | PASS |
-| III. BDD | `features/votacion_planning_poker.feature` (@HU-02) con un escenario por criterio de la spec: normal, alternativo (cambio de voto), límite (empate en el promedio, integrante que falta) y error (carta inválida, permisos, revelada, completada) | PASS |
+| III. BDD | `features/votacion_planning_poker.feature` (@HU-02) con un escenario por criterio de la spec (13): normal, alternativo (cambio de voto), límite (revelar con un integrante sin votar) y error (carta inválida, permisos, revelada, completada). Los límites del cálculo (empates en el promedio) no son criterios de la spec: los cubren los tests de dominio | PASS |
 | IV. Clean/Hexagonal | Reglas en `internal/domain`; puerto `VotacionRepository` (ISP); SQLite y HTTP como adaptadores; el servicio no ve transacciones (R6) | PASS |
 | V. Clean Code/SOLID/KISS/YAGNI/DRY | Un service por caso de uso; la baraja reutiliza `EsEstimacionValida`; sin Strategy para el promedio hasta que HU-14 lo pida (R3); sin historial de rondas en la API todavía | PASS |
 | VI. Stack | Solo stdlib + `modernc.org/sqlite` + Godog | PASS |

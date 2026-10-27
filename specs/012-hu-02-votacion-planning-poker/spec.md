@@ -265,6 +265,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   historia (FR-013). La restricción
   de no reemplazar la estimación con Sprint `Activo` o `Finalizado` (D2b) es
   de HU-14, al registrar la estimación acordada.
+- Votar no mira el estado de la historia: FR-017 solo frena el inicio. Hoy una
+  historia no puede completarse con la votación abierta (completar historias es
+  de HU-11); si HU-11 lo permite, decide ella si cierra la votación.
 - Cambiar el voto antes de revelar está permitido: en Planning Poker real se
   puede cambiar la carta mientras no se dio vuelta.
 - Detectar diferencias, abrir nuevas rondas y registrar la estimación acordada
