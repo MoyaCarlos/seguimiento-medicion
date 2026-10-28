@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes, useNavigate } from 'react-router'
+import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Component } from './index'
 import { Panel } from './Panel'
 
 const proyecto = {
@@ -25,24 +26,12 @@ function abrir() {
   )
 }
 
-function PanelNavegable() {
-  const navigate = useNavigate()
-  return (
-    <>
-      <button onClick={() => navigate('/projects/4/proyecto')}>Ir al proyecto 4</button>
-      <Panel />
-    </>
-  )
-}
-
 function abrirNavegable() {
-  render(
-    <MemoryRouter initialEntries={['/projects/3/proyecto']}>
-      <Routes>
-        <Route path="/projects/:id/proyecto" element={<PanelNavegable />} />
-      </Routes>
-    </MemoryRouter>,
-  )
+  const router = createMemoryRouter([{ path: '/projects/:id/proyecto/*', element: <Component /> }], {
+    initialEntries: ['/projects/3/proyecto'],
+  })
+  render(<RouterProvider router={router} />)
+  return router
 }
 
 type EstadoDelNuevo = 'En curso' | 'pendiente' | 'error'
@@ -78,9 +67,6 @@ function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
   vi.stubGlobal('fetch', fetchMock)
   return fetchMock
 }
-
-const cambiarAlProyecto4 = () =>
-  userEvent.click(screen.getByRole('button', { name: 'Ir al proyecto 4' }))
 
 function responderEstado(estado: string | null) {
   const fetchMock = vi.fn((url: string) => {
@@ -131,10 +117,10 @@ describe('panel del proyecto', () => {
 
   it('vuelve a consultar el estado al cambiar el id del proyecto', async () => {
     const fetchMock = responderCambio('En curso')
-    abrirNavegable()
+    const router = abrirNavegable()
 
     expect(await screen.findByText('Planificado')).toBeTruthy()
-    await cambiarAlProyecto4()
+    await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
     expect(await screen.findByText('En curso')).toBeTruthy()
@@ -143,10 +129,10 @@ describe('panel del proyecto', () => {
 
   it('muestra Consultando… mientras carga el estado del nuevo proyecto', async () => {
     responderCambio('pendiente')
-    abrirNavegable()
+    const router = abrirNavegable()
 
     expect(await screen.findByText('Planificado')).toBeTruthy()
-    await cambiarAlProyecto4()
+    await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
     expect(screen.getByText('Consultando…')).toBeTruthy()
@@ -155,10 +141,10 @@ describe('panel del proyecto', () => {
 
   it('muestra Sin datos si la consulta del estado falla', async () => {
     responderCambio('error')
-    abrirNavegable()
+    const router = abrirNavegable()
 
     expect(await screen.findByText('Planificado')).toBeTruthy()
-    await cambiarAlProyecto4()
+    await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
     expect(await screen.findByText('Sin datos')).toBeTruthy()

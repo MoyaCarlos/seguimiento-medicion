@@ -12,10 +12,6 @@ function mostrarFecha(fecha: string | null) {
 
 export function Panel() {
   const { id = '' } = useParams()
-  return <PanelDelProyecto key={id} id={id} />
-}
-
-function PanelDelProyecto({ id }: { id: string }) {
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
