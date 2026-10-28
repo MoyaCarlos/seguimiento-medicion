@@ -53,6 +53,10 @@ func main() {
 		sprintRepo,
 	)
 
+	horasRepo := repository.NewSQLiteRegistroHorasRepository(db)
+	imputarHoras := service.NewImputarHoras(backlogRepo, sprintRepo, proyectos, horasRepo)
+	horasHandler := apihttp.NewHorasHandler(imputarHoras, service.NewObtenerHistoria(backlogRepo))
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -60,6 +64,7 @@ func main() {
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
