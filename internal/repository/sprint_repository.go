@@ -15,7 +15,8 @@ type SprintRepository interface {
 	Actualizar(ctx context.Context, s domain.Sprint) error
 	// CerrarConArrastre persiste el Sprint ya cerrado y, en una sola operación
 	// atómica, registra las historias no completadas con la foto de sus Story
-	// Points y las devuelve al Product Backlog en estado Nueva.
+	// Points y las devuelve al Product Backlog en estado Nueva. Devuelve
+	// domain.ErrSprintNoActivo si el Sprint guardado ya no está Activo.
 	CerrarConArrastre(ctx context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error
 }
 

@@ -162,8 +162,8 @@ base garantiza la transición con un `UPDATE` condicional.
 - [X] T091 COMMIT `docs: registrar el resultado de /speckit.analyze del cierre de Sprint`
 - [X] T092 RED: tests de `CerrarConArrastre` contra SQLite real con dos cierres del mismo Sprint leído `Activo`, con y sin historias no completadas: el segundo devuelve el error de Sprint no `Activo` y no registra arrastradas de más
 - [X] T093 COMMIT `RED: agregar tests de dos cierres simultáneos del mismo Sprint (fallan)`
-- [ ] T094 GREEN: `domain.ErrSprintNoActivo` (lo usa `Sprint.Cerrar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Activo'` en `CerrarConArrastre`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Activo`
-- [ ] T095 COMMIT `GREEN: cerrar el Sprint solo si sigue Activo, tests en verde`
+- [X] T094 GREEN: `domain.ErrSprintNoActivo` (lo usa `Sprint.Cerrar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Activo'` en `CerrarConArrastre`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Activo`
+- [X] T095 COMMIT `GREEN: cerrar el Sprint solo si sigue Activo, tests en verde`
 
 ## Notas de implementación (desvíos respecto al plan)
 
