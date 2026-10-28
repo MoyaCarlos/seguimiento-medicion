@@ -22,6 +22,10 @@ export function Panel() {
   useEffect(() => {
     let vigente = true
 
+    setProyecto(undefined)
+    setError('')
+    setCargando(true)
+
     obtenerProyecto(id)
       .then((datos) => {
         if (vigente) setProyecto(datos)
@@ -40,6 +44,10 @@ export function Panel() {
 
   useEffect(() => {
     let vigente = true
+
+    setEstado(undefined)
+    setErrorEstado('')
+    setCargandoEstado(true)
 
     obtenerEstadoProyecto(id)
       .then((respuesta) => {
