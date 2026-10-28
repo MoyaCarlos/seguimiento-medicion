@@ -123,6 +123,12 @@ Goal ni fechas todavía.
   aplica; el otro se rechaza como un Sprint que ya no está "Activo" (FR-015).
   La base garantiza la transición: el cierre solo cambia el estado si
   todavía es "Activo".
+- ¿Qué pasa si se inicia el mismo Sprint dos veces a la vez? → Uno solo se
+  aplica; el otro se rechaza como un Sprint que ya no está "Pendiente" y no
+  pisa el Sprint Goal ni las fechas del primero (FR-016). Iniciar dos
+  Sprints distintos del mismo proyecto a la vez no puede pasar: hay a lo
+  sumo uno "Pendiente" (FR-011), y aun así el índice único parcial de la
+  base impide un segundo "Activo" (FR-004).
 
 ## Requirements *(mandatory)*
 
@@ -174,6 +180,10 @@ Goal ni fechas todavía.
   los dos lo encuentran "Activo", **THEN** el sistema **shall** aplicar solo
   uno y rechazar el otro con el mismo error que un Sprint que no está
   "Activo" (FR-007), sin registrar arrastradas por segunda vez.
+- **FR-016** (#158): **IF** dos inicios del mismo Sprint llegan a la vez y
+  los dos lo encuentran "Pendiente", **THEN** el sistema **shall** aplicar
+  solo uno y rechazar el otro con el mismo error que un Sprint que no está
+  "Pendiente", sin cambiar el Sprint Goal ni las fechas ya guardados.
 
 ### Key Entities
 

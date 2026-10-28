@@ -165,6 +165,25 @@ base garantiza la transición con un `UPDATE` condicional.
 - [X] T094 GREEN: `domain.ErrSprintNoActivo` (lo usa `Sprint.Cerrar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Activo'` en `CerrarConArrastre`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Activo`
 - [X] T095 COMMIT `GREEN: cerrar el Sprint solo si sigue Activo, tests en verde`
 
+## Phase 10: Fix #158 — inicio simultáneo del mismo Sprint
+
+Rama `fix/158-inicio-concurrente`. `IniciarSprint` valida en memoria que el
+Sprint esté `Pendiente` y después llama a `Actualizar`, que no tenía
+condición de estado: dos inicios a la vez pasan los dos y el segundo pisa el
+Goal y las fechas del primero. Dos Sprints `Activo` en el proyecto ya los
+impide el índice `sprints_un_activo_por_proyecto` (test
+`IndiceParcial_SegundoActivo`); lo que falta es la transición del mismo
+Sprint, que se garantiza con un `UPDATE` condicional como en la Phase 9.
+
+- [X] T096 Actualizar spec (FR-016 y caso límite del inicio simultáneo)
+- [X] T097 COMMIT `docs: especificar el inicio simultáneo de un Sprint`
+- [ ] T098 RED: test de `Actualizar` contra SQLite real con dos inicios del mismo Sprint leído `Pendiente`: el segundo devuelve el error de Sprint no `Pendiente` y el Goal guardado es el del primero
+- [ ] T099 COMMIT `RED: agregar test de dos inicios simultáneos del mismo Sprint (falla)`
+- [ ] T100 GREEN: `domain.ErrSprintNoPendiente` (lo usa `Sprint.Iniciar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Pendiente'` en `Actualizar`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Pendiente`
+- [ ] T101 COMMIT `GREEN: iniciar el Sprint solo si sigue Pendiente, test en verde`
+- [ ] T102 REFACTOR: quitar de `IniciarSprint` el comentario que daba la carrera por aceptada
+- [ ] T103 COMMIT `REFACTOR: quitar el comentario de la carrera del inicio, ya cubierta por la base`
+
 ## Notas de implementación (desvíos respecto al plan)
 
 - **T002**: `EstadoSprint` sin método `EsValida()` — ningún código lo
@@ -209,6 +228,7 @@ base garantiza la transición con un `UPDATE` condicional.
 - **Phase 6** (404 antes que 400): solo depende de US1; puede ir antes o después de US3.
 - **Phase 7**: T052-T054 después de US3 (los pasos usan `CrearSprint`); T055-T057 al final de todo.
 - **Phase 9**: depende de la Phase 8 (#117) mergeada; T090 antes del RED.
+- **Phase 10**: depende de la Phase 9 (#145) mergeada.
 
 ## Parallel Example
 
