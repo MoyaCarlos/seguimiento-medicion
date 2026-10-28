@@ -88,6 +88,8 @@ func (r *SQLiteSprintRepository) Actualizar(ctx context.Context, s domain.Sprint
 // registra cada historia no completada en historias_arrastradas con la foto
 // de sus Story Points y la devuelve al Product Backlog en estado Nueva
 // (MODELO-DE-DATOS.md §4.6). Si algo falla, no se aplica nada.
+// Solo cierra el Sprint si en la base sigue Activo: de dos cierres
+// simultáneos, el segundo recibe domain.ErrSprintNoActivo (#145).
 func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -95,12 +97,13 @@ func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	resultado, err := tx.ExecContext(ctx, `UPDATE sprints SET estado = ? WHERE id = ?`, string(s.Estado), s.ID)
+	resultado, err := tx.ExecContext(ctx, `UPDATE sprints SET estado = ? WHERE id = ? AND estado = ?`,
+		string(s.Estado), s.ID, string(domain.SprintActivo))
 	if err != nil {
 		return fmt.Errorf("cerrar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
-		return domain.ErrSprintNoEncontrado
+		return sprintSinCerrar(ctx, tx, s.ID)
 	}
 
 	if len(noCompletadas) > 0 {
@@ -109,6 +112,19 @@ func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain
 		}
 	}
 	return tx.Commit()
+}
+
+// sprintSinCerrar explica por qué el UPDATE condicional no cerró nada: el
+// Sprint no existe o ya no está Activo.
+func sprintSinCerrar(ctx context.Context, tx *sql.Tx, id int64) error {
+	var existe bool
+	if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM sprints WHERE id = ?)", id).Scan(&existe); err != nil {
+		return fmt.Errorf("cerrar sprint %d: %w", id, err)
+	}
+	if !existe {
+		return domain.ErrSprintNoEncontrado
+	}
+	return domain.ErrSprintNoActivo
 }
 
 func arrastrar(ctx context.Context, tx *sql.Tx, s domain.Sprint, historias []domain.BacklogItem) error {
