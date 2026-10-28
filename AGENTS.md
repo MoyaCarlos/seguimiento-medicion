@@ -32,7 +32,7 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   `fix/<n°-issue>-nombre-corto` para los fixes (ej. `fix/19-integridad-proyecto-id`).
 - Nada de push directo a `main`: todo cambio entra por Pull Request.
 - Mínimo 1 aprobación de otro integrante antes de mergear.
-- El PR debe pasar los tests (Godog + `go test`) antes de mergear. Lo verifica el CI de
+- El PR debe pasar los tests (Godog + `go test` en el backend; Vitest en el frontend) antes de mergear. Lo verifica el CI de
   GitHub Actions (`.github/workflows/ci.yml`) con los checks `backend` (build, vet, gofmt
   y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea.
 - **Saltos de línea:** el repo fija LF con `.gitattributes` (`* text=auto eol=lf`), así `gofmt -l .` no marca archivos en Windows. Si ya tenías un clon hecho antes de ese archivo (con CRLF), volvé a clonar o, una sola vez y con el árbol limpio, corré `git rm --cached -r .` y `git reset --hard` para que Git reescriba los archivos con LF. `git add --renormalize .` solo hace falta si alguien llegó a commitear archivos con CRLF.
@@ -62,7 +62,8 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 ### Definition of Done
 Una historia se considera terminada cuando:
 - Código implementado y mergeado a `main`.
-- Tests unitarios (TDD) y escenario BDD correspondiente, ambos en verde.
+- Tests unitarios (TDD) y escenario BDD correspondiente (en el frontend, sus pruebas
+  de componente), ambos en verde.
 - Especificación SDD de la historia escrita en `specs/`.
 - Revisada y aprobada por al menos otro integrante (PR).
 - Sin defectos abiertos bloqueantes para esa historia.
@@ -98,6 +99,11 @@ issue `bug` y se repara en su propia rama `fix/`.
 ### BDD (Behavior-Driven Development)
 - **Godog** (Gherkin) para automatizar escenarios Given-When-Then.
 - Archivos `.feature` en `/features`, con casos normales, alternativos, límite y de error.
+- Para el frontend (React), donde Godog no puede ejercitar la interfaz, los
+  escenarios Given-When-Then de la spec se automatizan como pruebas de componente
+  con Vitest y Testing Library, con el escenario en el nombre de cada prueba. Los
+  comportamientos de la API que el frontend consume siguen cubiertos con Godog en
+  `/features`.
 - No hay comando `/speckit.*` dedicado a esto — se pide directo al agente, después
   de `/speckit.tasks`/`/speckit.analyze` y antes de `/speckit.implement`. Prompt de
   referencia (usado en HU-01, un archivo `.feature` por historia):
@@ -197,16 +203,15 @@ La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP
     migración; ninguno va sin el otro.
   - El `data-model.md` de cada spec **enlaza** a la sección del documento en lugar de
     redefinir tablas.
-  - **Hasta que se mergee #107, `main` sigue con el esquema viejo** (tablas y columnas en
-    inglés): el documento describe el destino y esa diferencia es esperada, no se frena por
-    ella. Cualquier otra contradicción entre el documento y el código se frena y se avisa;
-    no se elige uno en silencio.
+  - **Contradicción entre el documento y el código:** se frena y se avisa; no se elige uno
+    en silencio.
   - **Ante cualquier duda sobre el modelo de datos, se pregunta al Scrum Master o al
     equipo antes de seguir.** Vale para personas y para agentes de IA: no se completa un
     hueco, no se agrega ni se cambia una tabla, columna o restricción y no se resuelve una
     decisión abierta por cuenta propia, ni siquiera con una recomendación razonable.
 - **Testing BDD:** Godog.
 - **Testing TDD:** paquete `testing` estándar de Go.
+- **Testing del frontend:** Vitest y Testing Library (jsdom).
 - **Reportes:** generación de PDF con Maroto (puro Go, sin dependencias externas).
 - **Control de versiones:** Git + GitHub, tablero en GitHub Projects con sub-issues.
 
