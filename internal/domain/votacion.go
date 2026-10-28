@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"maps"
+	"math"
 	"slices"
 	"time"
 )
@@ -77,11 +79,30 @@ type Promedio struct {
 
 // Promedio devuelve el promedio de los votos; false si la ronda no está revelada.
 func (r RondaVotacion) Promedio() (Promedio, bool) {
-	return Promedio{}, false
+	if !r.Revelada() {
+		return Promedio{}, false
+	}
+	valores := make([]int, len(r.Votos))
+	for i, v := range r.Votos {
+		valores[i] = v.Valor
+	}
+	return CalcularPromedio(valores), true
 }
 
 // CalcularPromedio redondea la media a 2 decimales y sugiere la carta más
 // cercana; ante un empate, la mayor.
 func CalcularPromedio(valores []int) Promedio {
-	return Promedio{}
+	suma := 0
+	for _, v := range valores {
+		suma += v
+	}
+	exacto := math.Round(float64(suma)/float64(len(valores))*100) / 100
+
+	carta := 0
+	for _, c := range slices.Sorted(maps.Keys(escalaFibonacci)) {
+		if carta == 0 || math.Abs(float64(c)-exacto) <= math.Abs(float64(carta)-exacto) {
+			carta = c
+		}
+	}
+	return Promedio{Exacto: exacto, CartaSugerida: carta}
 }
