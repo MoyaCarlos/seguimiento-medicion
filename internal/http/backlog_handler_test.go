@@ -192,6 +192,30 @@ func TestBacklogHandler_ConsultarBacklog_DevuelveLasHistorias(t *testing.T) {
 	}
 }
 
+func TestBacklogHandler_ConsultarBacklog_SprintIDNull(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	repo.backlog = []domain.BacklogItem{
+		{ID: 1, ProyectoID: 1, Titulo: "Iniciar sesión", Descripcion: "Con email",
+			Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva},
+	}
+
+	rec := consultarBacklog(handler, "1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp []map[string]json.RawMessage
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if len(resp) != 1 {
+		t.Fatalf("se esperaba 1 historia: %s", rec.Body.String())
+	}
+	if v, ok := resp[0]["sprint_id"]; !ok || string(v) != "null" {
+		t.Errorf("se esperaba sprint_id null, se obtuvo %q (presente: %v)", v, ok)
+	}
+}
+
 func TestBacklogHandler_ConsultarBacklog_VacioEsArreglo(t *testing.T) {
 	handler, _ := nuevoHandlerDePrueba()
 
