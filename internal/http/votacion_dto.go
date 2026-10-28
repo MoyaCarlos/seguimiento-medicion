@@ -6,6 +6,11 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
+// actorRequest identifica a quien inicia o revela la votación.
+type actorRequest struct {
+	UsuarioID int64 `json:"usuario_id"`
+}
+
 type votoRequest struct {
 	UsuarioID int64 `json:"usuario_id"`
 	Valor     int   `json:"valor"`

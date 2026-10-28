@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	nethttp "net/http"
 	"strconv"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -45,7 +46,27 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // Revelar atiende POST /backlog/{id}/votacion/revelar.
-func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) {}
+func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req actorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	if req.UsuarioID <= 0 {
+		escribirUsuarioInvalido(w)
+		return
+	}
+
+	if _, err := h.revelar.Ejecutar(r.Context(), id, req.UsuarioID, time.Now()); err != nil {
+		escribirError(w, err)
+		return
+	}
+	h.responderVista(w, r, id, req.UsuarioID)
+}
 
 // Consultar atiende GET /backlog/{id}/votacion?usuario_id=N. Sin usuario_id
 // todos los votos de una ronda oculta quedan ocultos.

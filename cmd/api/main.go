@@ -70,6 +70,7 @@ func main() {
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
 	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
