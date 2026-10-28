@@ -22,3 +22,15 @@ type RegistroHorasDetalle struct {
 	RegistroHoras
 	NombreIntegrante string
 }
+
+// MinutosDesdeHoras convierte una cantidad de horas en texto decimal a minutos
+// enteros.
+func MinutosDesdeHoras(horas string) (int, error) {
+	return 0, nil
+}
+
+// NewRegistroHoras construye una carga de horas para una historia del Sprint
+// dado. Supone que el service ya verificó el Sprint activo y el integrante.
+func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, horas, actividad, fecha string, ahora time.Time) (RegistroHoras, error) {
+	return RegistroHoras{}, nil
+}
