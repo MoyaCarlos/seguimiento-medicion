@@ -152,12 +152,12 @@ se prueba sola.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T057 Implementar features/steps_votacion.go con los pasos de los 13 escenarios de T001 sobre SQLite `:memory:` (repos SQLite reales y los 4 services, como features/steps_backlog.go; reusar `scenarioContext` de features/steps_creacion.go), y registrar `InitializeScenarioVotacion(ctx, sc)` en features/features_test.go con el comentario `// HU-02`. Para la historia "Completada" (US3.5) sembrar el estado por SQL (hoy no hay endpoint, HU-11), cumpliendo los `CHECK` de §4.4 (Sprint asignado y `fecha_finalizacion`) — `go test ./features/` en verde
-- [ ] T058 COMMIT `GREEN: implementar los pasos BDD de la votación de Planning Poker, escenarios en verde`
-- [ ] T059 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores
-- [ ] T060 Validación manual con specs/012-hu-02-votacion-planning-poker/quickstart.md (pasos 1–14) y registrar el resultado en ese archivo
-- [ ] T061 Actualizar **Status** de specs/012-hu-02-votacion-planning-poker/spec.md a "Implementada, pendiente de revisión por PR" y marcar [X] las tareas hechas en este archivo
-- [ ] T062 COMMIT `docs: registrar la validación de HU-02 y marcar las tareas completadas`
+- [X] T057 Implementar features/steps_votacion.go con los pasos de los 13 escenarios de T001 sobre SQLite `:memory:` (repos SQLite reales y los 4 services, como features/steps_backlog.go; reusar `scenarioContext` de features/steps_creacion.go), y registrar `InitializeScenarioVotacion(ctx, sc)` en features/features_test.go con el comentario `// HU-02`. Para la historia "Completada" (US3.5) sembrar el estado por SQL (hoy no hay endpoint, HU-11), cumpliendo los `CHECK` de §4.4 (Sprint asignado y `fecha_finalizacion`) — `go test ./features/` en verde
+- [X] T058 COMMIT `GREEN: implementar los pasos BDD de la votación de Planning Poker, escenarios en verde`
+- [X] T059 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores
+- [X] T060 Validación manual con specs/012-hu-02-votacion-planning-poker/quickstart.md (pasos 1–14) y registrar el resultado en ese archivo
+- [X] T061 Actualizar **Status** de specs/012-hu-02-votacion-planning-poker/spec.md a "Implementada, pendiente de revisión por PR" y marcar [X] las tareas hechas en este archivo
+- [X] T062 COMMIT `docs: registrar la validación de HU-02 y marcar las tareas completadas`
 
 ---
 

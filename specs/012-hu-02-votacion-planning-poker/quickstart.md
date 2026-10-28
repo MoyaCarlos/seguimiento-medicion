@@ -54,3 +54,12 @@ curl -s -X POST localhost:8080/backlog -d '{"proyecto_id":1,"titulo":"Login","de
 
 > El caso "historia Completada" (400 `campo: estado` al iniciar) se valida con el test de
 > service y el escenario BDD: hoy no hay endpoint para completar una historia (HU-11).
+
+## Resultado de la validación (2026-10-28)
+
+- **Tests automáticos**: `go build`, `go vet`, `gofmt -l .` (sin salida) y `go test ./...` en verde,
+  incluidos los 13 escenarios `@HU-02` (61 escenarios BDD en total).
+- **API manual**: los pasos 1–14 dieron lo esperado, contra un servidor con base nueva. El paso 9 se
+  corrió después del 7, cuando solo había votado Candela. Paso 10: valores 3, 8 y 5 con
+  `promedio: {exacto: 5.33, carta_sugerida: 5}`. Paso 13: `estimacion_sp: null`, sin cambios. Paso 14:
+  tras reiniciar el servidor, la ronda sigue revelada con los mismos valores.
