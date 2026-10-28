@@ -13,11 +13,14 @@ type SprintRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error)
 	ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.Sprint, error)
 	Actualizar(ctx context.Context, s domain.Sprint) error
+	// CerrarConArrastre persiste el Sprint ya cerrado y, en una sola operación
+	// atómica, registra las historias no completadas con la foto de sus Story
+	// Points y las devuelve al Product Backlog en estado Nueva.
+	CerrarConArrastre(ctx context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error
 }
 
 // HistoriasDeSprintRepository es el puerto que usa el cierre de un Sprint.
 // Separado de BacklogRepository (ISP): crear historias no necesita esto.
 type HistoriasDeSprintRepository interface {
 	ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error)
-	QuitarDeSprint(ctx context.Context, historiaID int64) error
 }

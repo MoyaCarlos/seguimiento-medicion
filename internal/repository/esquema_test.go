@@ -121,6 +121,19 @@ var esquemaEsperado = map[string]tablaEsperada{
 			{nombre: "sprints_un_pendiente_por_proyecto", columnas: []string{"proyecto_id"}, where: "WHERE estado = 'Pendiente'"},
 		},
 	},
+	// §4.6 historias_arrastradas
+	"historias_arrastradas": {
+		columnas: []columnaEsperada{
+			{nombre: "sprint_id", tipo: "INTEGER", notNull: true, pk: 1},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true, pk: 2},
+			{nombre: "proyecto_id", tipo: "INTEGER", notNull: true},
+			{nombre: "estimacion_sp", tipo: "INTEGER"},
+		},
+		fks: []string{
+			"historia_id,proyecto_id -> historias(id,proyecto_id)",
+			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
+		},
+	},
 	// §4.7 rondas_votacion
 	"rondas_votacion": {
 		columnas: []columnaEsperada{
@@ -185,8 +198,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Contains(got, 1) || !slices.Contains(got, 3) {
-		t.Errorf("se esperaban las versiones 1 y 3 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3}) {
+		t.Errorf("se esperaban las versiones 1, 2 y 3 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -333,6 +346,7 @@ const (
 	ahora            = "'2026-10-23T00:00:00Z'"
 	insertarSprint   = "INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES "
 	insertarHistoria = "INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion) VALUES "
+	insertarArrastre = "INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES "
 )
 
 // Datos base de cada caso: proyectos 1 y 2, usuario 1 (Scrum Master del 1),
@@ -447,6 +461,17 @@ func TestEsquema_Filas(t *testing.T) {
 		// CA-12 cierre de Sprint
 		{"cierre con UPDATE único", "UPDATE historias SET sprint_id = NULL, estado = 'Nueva' WHERE id = 101", aceptada},
 		{"cierre quitando primero el Sprint", "UPDATE historias SET sprint_id = NULL WHERE id = 101", violaCheck},
+
+		// §4.6 historias_arrastradas
+		{"arrastre con estimación", insertarArrastre + "(11, 100, 1, 8)", aceptada},
+		{"arrastre sin estimar", insertarArrastre + "(11, 100, 1, NULL)", aceptada},
+		{"arrastre repetido en el mismo Sprint", insertarArrastre + "(11, 100, 1, 8), (11, 100, 1, 5)", violaPK},
+		{"arrastre Sprint de otro proyecto con proyecto de la historia", insertarArrastre + "(21, 100, 1, NULL)", violaFK},
+		{"arrastre Sprint de otro proyecto con proyecto del Sprint", insertarArrastre + "(21, 100, 2, NULL)", violaFK},
+		{"arrastre de historia inexistente", insertarArrastre + "(11, 999, 1, NULL)", violaFK},
+		{"historias_arrastradas.sprint_id NULL", insertarArrastre + "(NULL, 100, 1, NULL)", violaNotNull},
+		{"historias_arrastradas.historia_id NULL", insertarArrastre + "(11, NULL, 1, NULL)", violaNotNull},
+		{"historias_arrastradas.proyecto_id NULL", insertarArrastre + "(11, 100, NULL, NULL)", violaNotNull},
 
 		// D9: sin cascadas
 		{"borrar proyecto con historias", "DELETE FROM proyectos WHERE id = 1", violaFK},

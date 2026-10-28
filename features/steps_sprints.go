@@ -32,6 +32,8 @@ type pasosSprint struct {
 	segundo    domain.Sprint
 	completada int64
 	pendiente  int64
+	estimada   int64
+	sinEstimar int64
 	err        error
 }
 
@@ -42,7 +44,7 @@ func (p *pasosSprint) preparar() {
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
-	p.completada, p.pendiente = 0, 0
+	p.completada, p.pendiente, p.estimada, p.sinEstimar = 0, 0, 0, 0
 }
 
 func (p *pasosSprint) nuevoPendiente() (domain.Sprint, error) {
@@ -165,6 +167,71 @@ func (p *pasosSprint) historiasAsignadas() error {
 	return nil
 }
 
+func (p *pasosSprint) historiaNoCompletadaEnElSprint(titulo string, estimacion *int) (int64, error) {
+	item, err := domain.NewBacklogItem(p.base.proyectoID, titulo, "Descripción", domain.PrioridadMust, nil)
+	if err != nil {
+		return 0, err
+	}
+	item.EstimacionSP = estimacion
+	g, err := p.backlog.Guardar(context.Background(), item)
+	if err != nil {
+		return 0, err
+	}
+	// La asignación de historias a un Sprint es de HU-06; acá se simula con SQL.
+	_, err = p.base.db.Exec("UPDATE historias SET sprint_id = ?, estado = ? WHERE id = ?", p.sprint.ID, "En progreso", g.ID)
+	return g.ID, err
+}
+
+func (p *pasosSprint) historiaEstimadaYOtraSinEstimar(puntos int) (err error) {
+	if p.estimada, err = p.historiaNoCompletadaEnElSprint("Historia estimada", &puntos); err != nil {
+		return err
+	}
+	p.sinEstimar, err = p.historiaNoCompletadaEnElSprint("Historia sin estimar", nil)
+	return err
+}
+
+// La edición del Product Backlog es de HU-15; acá se simula con SQL.
+func (p *pasosSprint) cambioLaEstimacion(puntos int) error {
+	_, err := p.base.db.Exec("UPDATE historias SET estimacion_sp = ? WHERE id = ?", puntos, p.estimada)
+	return err
+}
+
+func (p *pasosSprint) estimacionArrastrada(historiaID int64) (sql.NullInt64, error) {
+	if p.err != nil {
+		return sql.NullInt64{}, fmt.Errorf("no se esperaba error al cerrar: %w", p.err)
+	}
+	var estimacion sql.NullInt64
+	err := p.base.db.QueryRow(
+		"SELECT estimacion_sp FROM historias_arrastradas WHERE sprint_id = ? AND historia_id = ?", p.sprint.ID, historiaID,
+	).Scan(&estimacion)
+	if errors.Is(err, sql.ErrNoRows) {
+		return sql.NullInt64{}, fmt.Errorf("la historia %d no quedó registrada como arrastrada del Sprint %d", historiaID, p.sprint.ID)
+	}
+	return estimacion, err
+}
+
+func (p *pasosSprint) estimadaArrastradaCon(puntos int) error {
+	estimacion, err := p.estimacionArrastrada(p.estimada)
+	if err != nil {
+		return err
+	}
+	if !estimacion.Valid || estimacion.Int64 != int64(puntos) {
+		return fmt.Errorf("se esperaban %d Story Points registrados, quedó %v", puntos, estimacion)
+	}
+	return nil
+}
+
+func (p *pasosSprint) sinEstimarArrastradaSinPuntos() error {
+	estimacion, err := p.estimacionArrastrada(p.sinEstimar)
+	if err != nil {
+		return err
+	}
+	if estimacion.Valid {
+		return fmt.Errorf("se esperaba la historia registrada sin Story Points, quedó con %d", estimacion.Int64)
+	}
+	return nil
+}
+
 func (p *pasosSprint) estadoPersistido(id int64) (domain.EstadoSprint, error) {
 	s, err := p.sprints.ObtenerPorID(context.Background(), id)
 	return s.Estado, err
@@ -279,4 +346,8 @@ func inicializarPasosSprint(ctx *godog.ScenarioContext, base *scenarioContext) {
 	ctx.Step(`^la historia no completada queda sin Sprint asignado en el Product Backlog$`, p.noCompletadaVuelveAlBacklog)
 	ctx.Step(`^la historia no completada queda en estado "Nueva"$`, p.noCompletadaVuelveANueva)
 	ctx.Step(`^la historia completada permanece vinculada a ese Sprint$`, p.completadaSigueVinculada)
+	ctx.Step(`^ese Sprint tiene una historia no completada estimada en (\d+) Story Points y otra no completada sin estimar$`, p.historiaEstimadaYOtraSinEstimar)
+	ctx.Step(`^se cambia la estimación de la historia estimada a (\d+) Story Points en el Product Backlog$`, p.cambioLaEstimacion)
+	ctx.Step(`^la historia estimada queda registrada como arrastrada de ese Sprint con (\d+) Story Points$`, p.estimadaArrastradaCon)
+	ctx.Step(`^la historia sin estimar queda registrada como arrastrada de ese Sprint sin Story Points$`, p.sinEstimarArrastradaSinPuntos)
 }
