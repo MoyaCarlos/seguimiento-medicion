@@ -34,13 +34,21 @@ Se agrega **un solo campo nuevo**, sin tocar nada de lo ya implementado en HU-01
 | SprintID | *int64 | `nil` = sin Sprint asignado (está en el Product Backlog) |
 
 **Importante — alcance acotado**: esta historia (HU-05) agrega el campo y
-los dos métodos mínimos de `BacklogRepository` que necesita para poder
-"soltar" las historias no completadas al cerrar un Sprint
-(`ListarPorSprint`, `QuitarDeSprint`). **No implementa** la lógica de
+lo mínimo que necesita para poder "soltar" las historias no completadas al
+cerrar un Sprint: `BacklogRepository.ListarPorSprint` para leerlas y
+`SprintRepository.CerrarConArrastre` para cerrar (ver la actualización de
+abajo). **No implementa** la lógica de
 asignar una historia a un Sprint por primera vez, ni sus validaciones (ej.
 "no asignar una historia ya Terminada") — eso es el alcance completo de
 **HU-06** (Movimiento de Historias al Sprint Backlog), que se construye
 sobre este mismo campo más adelante.
+
+**Actualización (#117)**: `QuitarDeSprint` se eliminó. El cierre ahora es
+una sola llamada atómica, `SprintRepository.CerrarConArrastre(ctx, sprint,
+noCompletadas)`, que además registra las no completadas en
+`historias_arrastradas` con la foto de sus Story Points. La tabla y la
+escritura en una transacción están definidas en
+[`MODELO-DE-DATOS.md` §4.6](../../MODELO-DE-DATOS.md#46-historias_arrastradas--hu-05-cierre-hu-09-hu-10-hu-12-tabla-nueva-migración-002).
 
 ## Relaciones
 
