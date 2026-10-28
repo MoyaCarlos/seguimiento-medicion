@@ -15,7 +15,8 @@ Esperado: todo en verde y `gofmt -l .` sin salida.
 
 ## Prueba manual contra la API
 
-Prerrequisito: el servidor corriendo (`go run ./cmd/api`) sobre una base nueva (la migración
+Prerrequisitos: la CLI `sqlite3` instalada (solo para el paso 3; sirve cualquier cliente de
+SQLite, como DB Browser for SQLite) y el servidor corriendo (`go run ./cmd/api`) sobre una base nueva (la migración
 004 se aplica sola al arrancar). Como HU-06 todavía no está en `main`, la historia se asigna
 al Sprint a mano en la base.
 

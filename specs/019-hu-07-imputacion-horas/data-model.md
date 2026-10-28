@@ -65,9 +65,11 @@ Los textos son orientativos; los fija el test RED de cada caso.
 `RegistroHoras` + `NombreIntegrante string`, armado con `JOIN usuarios`. Igual que
 `domain.Member`, es una vista para mostrar; no se construye por factory.
 
-### `EsfuerzoReal` (vista, no se guarda)
+### `EsfuerzoReal` (resultado del caso de uso, no se guarda)
 
-Total de una historia = `TotalMinutos(detalle)`; se muestra en horas (`minutos / 60`).
+Vive en `internal/service/consultar_esfuerzo_real.go`: es la respuesta de
+`ConsultarEsfuerzoReal`, no una entidad. El cálculo está en el dominio:
+total de una historia = `domain.TotalMinutos(detalle)`; se muestra en horas (`minutos / 60`).
 Una historia sin cargas tiene total 0 y detalle vacío.
 
 ## Puertos (`internal/repository/registro_horas_repository.go`)
@@ -92,7 +94,7 @@ Lecturas que se reutilizan sin cambios: `HistoriaRepository.ObtenerPorID`
 
 | Service | Depende de | Hace |
 |---|---|---|
-| `ImputarHoras` | `HistoriaRepository`, `SprintRepository`, `IntegrantesRepository`, `RegistroHorasRepository` | historia → Sprint activo → integrante → `NewRegistroHoras` → `Registrar` |
+| `ImputarHoras` | `HistoriaRepository`, `SprintRepository`, `IntegrantesRepository`, `RegistroHorasRepository` | historia → Sprint activo → integrante → `NewRegistroHoras` → `Registrar`; devuelve `RegistroHorasDetalle` con el `Nombre` del `Member` encontrado (lo muestra la respuesta 201) |
 | `ConsultarEsfuerzoReal` | `HistoriaRepository`, `RegistroHorasRepository` | historia existe → `ListarPorHistoria` → total |
 
 ## Estados
