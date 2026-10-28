@@ -51,3 +51,16 @@ al Sprint a mano en la base.
    `campo: historia_id`. Consultar el esfuerzo: las cargas anteriores siguen con el
    `sprint_id` del Sprint cerrado.
 8. `POST /backlog/9999/horas` y `GET /backlog/9999/horas`: `404` "historia no encontrada".
+
+## Resultado de la validación (2026-10-28)
+
+- **Tests automáticos**: `go build`, `go vet`, `gofmt -l .` (sin salida) y `go test ./...` en verde,
+  incluidos los 12 escenarios `@HU-07` (16 casos con las filas de los esquemas; 64 casos BDD en
+  total).
+- **API manual**: los pasos 1–8 dieron lo esperado contra un servidor con base nueva. El paso 3 se
+  hizo con el módulo `sqlite3` de Python en lugar de la CLI. Paso 6: los siete casos dieron `400`
+  con el `campo` indicado y `total_minutos` siguió en 240. Paso 7: después del cierre, `400` con
+  `campo: historia_id`, y la carga anterior sigue con `sprint_id: 1`.
+- Para probar con `curl` en Windows, mandar los cuerpos con acentos desde un archivo
+  (`--data-binary @cuerpo.json`): pasados como argumento, la consola los recodifica y llegan al
+  servidor como texto inválido.

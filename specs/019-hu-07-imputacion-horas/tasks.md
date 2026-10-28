@@ -128,10 +128,10 @@ llamada en cmd/api/main.go; es la única excepción a "solo archivos de test y f
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T050 GREEN: en features/steps_horas.go, step definitions de Godog para features/imputacion_horas.feature sobre SQLite `:memory:` con migraciones y los services `ImputarHoras` / `ConsultarEsfuerzoReal` / `CerrarSprint`. Sembrar el Sprint y la historia con `UPDATE historias SET sprint_id = ?` (HU-06 no está en `main`), con fechas relativas a `hoyCivil()` como en features/steps_estado_proyecto.go: el Sprint activo de los Antecedentes empieza hace 7 días y termina dentro de 7, para que las cargas con fecha "ayer" del escenario de consulta caigan en su rango; las columnas `fecha` de las tablas aceptan `hoy` y `ayer`. Definir `InitializeScenarioHoras(ctx *godog.ScenarioContext, base *scenarioContext)` que use `base.db` y registrarla en features/features_test.go como `InitializeScenarioHoras(ctx, sc) // HU-07`. No redefinir pasos existentes — `go test ./features/` en verde
-- [ ] T051 COMMIT `GREEN: implementar los pasos BDD de imputación de horas, escenarios en verde`
-- [ ] T052 Correr `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores (lo mismo que el check `backend` del CI)
-- [ ] T053 Validar a mano con specs/019-hu-07-imputacion-horas/quickstart.md (pasos 1 a 8) y anotar el resultado
+- [X] T050 GREEN: en features/steps_horas.go, step definitions de Godog para features/imputacion_horas.feature sobre SQLite `:memory:` con migraciones y los services `ImputarHoras` / `ConsultarEsfuerzoReal` / `CerrarSprint`. Sembrar el Sprint y la historia con `UPDATE historias SET sprint_id = ?` (HU-06 no está en `main`), con fechas relativas a `hoyCivil()` como en features/steps_estado_proyecto.go: el Sprint activo de los Antecedentes empieza hace 7 días y termina dentro de 7, para que las cargas con fecha "ayer" del escenario de consulta caigan en su rango; las columnas `fecha` de las tablas aceptan `hoy` y `ayer`. Definir `InitializeScenarioHoras(ctx *godog.ScenarioContext, base *scenarioContext)` que use `base.db` y registrarla en features/features_test.go como `InitializeScenarioHoras(ctx, sc) // HU-07`. No redefinir pasos existentes — `go test ./features/` en verde
+- [X] T051 COMMIT `GREEN: implementar los pasos BDD de imputación de horas, escenarios en verde`
+- [X] T052 Correr `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores (lo mismo que el check `backend` del CI)
+- [X] T053 Validar a mano con specs/019-hu-07-imputacion-horas/quickstart.md (pasos 1 a 8) y anotar el resultado
 - [ ] T054 Marcar como `[X]` en este tasks.md las tareas terminadas y, con el OK de la usuaria, actualizar las casillas de las sub-issues #60, #61 y #62 + COMMIT `docs: actualizar el avance de tasks de HU-07`
 
 ---
