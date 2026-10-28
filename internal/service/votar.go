@@ -27,5 +27,27 @@ func NewVotar(historias repository.HistoriaRepository, proyectos repository.Proj
 }
 
 func (s *Votar) Ejecutar(ctx context.Context, input VotarInput) (domain.RondaVotacion, error) {
-	return domain.RondaVotacion{}, nil
+	historia, err := s.historias.ObtenerPorID(ctx, input.HistoriaID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	_, integra, err := rolEnProyecto(ctx, s.proyectos, historia.ProyectoID, input.UsuarioID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	if !integra {
+		return domain.RondaVotacion{}, domain.ErrNoEsIntegrante
+	}
+
+	ronda, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	if err := ronda.Votar(input.UsuarioID, input.Valor); err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	if err := s.votaciones.GuardarVoto(ctx, ronda.ID, domain.Voto{UsuarioID: input.UsuarioID, Valor: input.Valor}); err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	return ronda, nil
 }
