@@ -14,7 +14,10 @@
 
 - Q: ¿Cuál es el tope de horas de una sola carga? → A: 24 horas (un día completo), con el borde inclusivo. Frena errores de tipeo (400 en vez de 4) sin limitar casos reales. Es la regla que D8 de `MODELO-DE-DATOS.md` deja a esta spec; vive en el dominio, no en la base.
 - Q: ¿En qué unidad y con qué precisión se ingresan las horas? → A: En horas con decimales, con precisión de un minuto: se convierten a minutos enteros (1,5 h = 90 min) y se rechaza lo que no da minutos enteros (0,01 h = 0,6 min).
-- Q: ¿Qué fechas acepta una carga? → A: Desde la fecha de inicio del Sprint activo hasta hoy, ambas inclusive. Ni fechas futuras ni anteriores al Sprint al que se atribuyen las horas.
+- Q: ¿Qué fechas acepta una carga? → A: Desde la fecha de inicio del Sprint activo hasta hoy, ambas inclusive. Ni fechas futuras ni anteriores al Sprint al que se atribuyen las horas. (El límite superior se precisa en la pregunta sobre la fecha de fin, más abajo.)
+- Q: ¿Se pueden imputar horas a una historia "Completada" que sigue en el Sprint activo? → A: Sí. Mientras la historia esté en el Sprint "Activo", la carga se acepta cualquiera sea su estado; solo importa el Sprint.
+- Q: Si el Sprint sigue "Activo" después de su fecha de fin, ¿se aceptan cargas con fecha posterior a esa fecha de fin? → A: No. El rango aceptado va desde la fecha de inicio del Sprint hasta la menor entre hoy y su fecha de fin, ambas inclusive, para que las horas caigan siempre dentro del período del Sprint al que se atribuyen.
+- Q: ¿Se limita el total de horas que un integrante puede imputar en un mismo día, sumando sus cargas? → A: No. Solo rige el tope de 24 horas por carga; no hay tope diario por integrante.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -84,7 +87,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** la cantidad de horas no se puede expresar en minutos enteros (por ejemplo, 0,01 h = 0,6 min), **THEN** el sistema **shall** rechazar la carga con un error sobre las horas. La carga mínima válida es 1 minuto.
 - **IF** la actividad está vacía, compuesta solo por espacios o supera los 500 caracteres, **THEN** el sistema **shall** rechazar la carga con un error sobre la actividad.
 - **IF** la fecha falta, no tiene el formato `AAAA-MM-DD` o no es una fecha real (por ejemplo, 2026-02-30), **THEN** el sistema **shall** rechazar la carga con un error sobre la fecha.
-- **IF** la fecha es posterior a hoy o anterior a la fecha de inicio del Sprint activo, **THEN** el sistema **shall** rechazar la carga con un error sobre la fecha. La fecha de inicio del Sprint y la de hoy se aceptan (bordes inclusivos).
+- **IF** la fecha es posterior a hoy, posterior a la fecha de fin del Sprint activo o anterior a su fecha de inicio, **THEN** el sistema **shall** rechazar la carga con un error sobre la fecha. Los bordes se aceptan: la fecha de inicio del Sprint y la menor entre hoy y su fecha de fin.
+- **WHILE** el Sprint sigue "Activo" después de su fecha de fin, **WHEN** se imputan horas con una fecha entre su inicio y su fin, **THEN** el sistema **shall** aceptar la carga; solo se rechazan las fechas posteriores al fin.
+- **WHEN** un integrante imputa varias cargas con la misma fecha (en la misma historia o en distintas), **THEN** el sistema **shall** aceptarlas todas aunque sumen más de 24 horas: el tope es por carga, no por día.
 - **IF** la persona elegida no es integrante del proyecto de la historia (existe en otro proyecto o no existe), **THEN** el sistema **shall** rechazar la carga con un error sobre el integrante.
 - **WHEN** se imputan horas a una historia que no existe, **THEN** el sistema **shall** responder "historia no encontrada" antes de validar los datos de la carga (la existencia domina sobre la validación, igual que en HU-04, HU-05, HU-06 y HU-15).
 - **IF** una carga incumple varias reglas a la vez, **THEN** el sistema **shall** responder con la primera según este orden: historia inexistente, historia fuera del Sprint activo, integrante ajeno al proyecto, horas inválidas, actividad inválida, fecha inválida.
@@ -103,7 +108,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-005**: El sistema MUST rechazar la carga cuando la persona elegida no es integrante del proyecto de la historia.
 - **FR-006**: La cantidad de horas MUST ingresarse en horas, admitiendo decimales, y guardarse convertida a minutos enteros. El sistema MUST rechazar la carga cuando la cantidad no es un número, es cero o negativa, supera las 24 horas (tope por carga) o no da un número entero de minutos.
 - **FR-007**: El sistema MUST rechazar la carga cuando la actividad está vacía, tiene solo espacios o supera los 500 caracteres.
-- **FR-008**: El sistema MUST rechazar la carga cuando la fecha falta, no es una fecha válida, es posterior a hoy o es anterior a la fecha de inicio del Sprint activo.
+- **FR-008**: El sistema MUST rechazar la carga cuando la fecha falta, no es una fecha válida, es posterior a hoy, es posterior a la fecha de fin del Sprint activo o es anterior a su fecha de inicio.
 - **FR-009**: Cada rechazo MUST identificar el campo con problemas (historia, integrante, horas, actividad o fecha) y MUST dejar sin cambios las cargas y el esfuerzo acumulado.
 - **FR-010**: El sistema MUST responder "historia no encontrada" cuando la historia no existe, antes de validar cualquier dato de la carga.
 - **FR-011**: Ante varias reglas incumplidas, el sistema MUST informar la primera según el orden de los Edge Cases, para que la respuesta sea siempre la misma ante la misma petición.
@@ -133,6 +138,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
 - No hay autenticación: igual que en el resto del sistema, "selecciono mi nombre" significa elegir un integrante del proyecto en la carga. El sistema no verifica que quien carga sea esa persona.
 - Asignar historias a un Sprint llega con HU-06 (rama `feature/HU-06-asignar-historias-sprint`, todavía sin mergear). Hasta entonces, los tests siembran historias con Sprint directamente en la base o en los fakes, igual que hizo HU-15.
+- "Hoy" es la fecha local del servidor al recibir la carga, igual que en el estado del proyecto (HU-13). Los tests la fijan en lugar de leer el reloj.
+- Un Sprint "Activo" siempre tiene fecha de inicio y de fin (lo garantiza HU-05), así que el rango de fechas aceptado está siempre definido.
 - Un proyecto tiene como máximo un Sprint "Activo" (HU-05), así que "el Sprint activo" de una historia es el Sprint al que está asignada, cuando ese Sprint está "Activo".
 - La tabla de cargas ya está diseñada en `MODELO-DE-DATOS.md` (§4.8 `registros_horas`, migración 004, D8 y D12): minutos enteros mayores que cero, fecha con formato validado y claves compuestas que garantizan que integrante, historia y Sprint son del mismo proyecto. Esta historia agrega esa migración y no cambia el esquema.
 - El largo máximo de la actividad (500 caracteres) es una regla del dominio, no de la base, igual que los largos de título y descripción (§2 del modelo de datos).
