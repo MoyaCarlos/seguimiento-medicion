@@ -184,3 +184,24 @@ func TestValidarSprintParaImputar(t *testing.T) {
 		})
 	}
 }
+
+func TestTotalMinutos(t *testing.T) {
+	carga := func(minutos int) RegistroHorasDetalle {
+		return RegistroHorasDetalle{RegistroHoras: RegistroHoras{Minutos: minutos}}
+	}
+	casos := []struct {
+		nombre    string
+		registros []RegistroHorasDetalle
+		esperado  int
+	}{
+		{"0,5 h + 1,5 h + 2 h = 4 h exactas", []RegistroHorasDetalle{carga(30), carga(90), carga(120)}, 240},
+		{"sin cargas", []RegistroHorasDetalle{}, 0},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			if got := TotalMinutos(c.registros); got != c.esperado {
+				t.Errorf("se esperaban %d minutos, se obtuvo %d", c.esperado, got)
+			}
+		})
+	}
+}

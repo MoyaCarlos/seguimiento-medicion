@@ -176,6 +176,7 @@ func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.Backl
 
 type fakeRegistroHorasRepository struct {
 	registros    []domain.RegistroHoras
+	listados     int
 	errRegistrar error
 }
 
@@ -189,6 +190,7 @@ func (f *fakeRegistroHorasRepository) Registrar(_ context.Context, r domain.Regi
 }
 
 func (f *fakeRegistroHorasRepository) ListarPorHistoria(_ context.Context, historiaID int64) ([]domain.RegistroHorasDetalle, error) {
+	f.listados++
 	detalle := make([]domain.RegistroHorasDetalle, 0)
 	for _, r := range f.registros {
 		if r.HistoriaID == historiaID {

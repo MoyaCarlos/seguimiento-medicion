@@ -126,3 +126,8 @@ func ValidarSprintParaImputar(historia BacklogItem, sprint Sprint) error {
 	}
 	return nil
 }
+
+// TotalMinutos suma exactamente las duraciones de las cargas (FR-013).
+func TotalMinutos(registros []RegistroHorasDetalle) int {
+	return 0
+}
