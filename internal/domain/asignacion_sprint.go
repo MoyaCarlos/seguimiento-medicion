@@ -11,5 +11,15 @@ var (
 // ValidarAsignacion indica si la historia puede entrar al Sprint y, si no,
 // devuelve el primer motivo según el orden de precedencia de la spec.
 func ValidarAsignacion(h BacklogItem, s Sprint) error {
+	switch {
+	case h.ProyectoID != s.ProyectoID:
+		return ErrSprintDeOtroProyecto
+	case s.Estado == SprintFinalizado:
+		return ErrSprintFinalizado
+	case h.Estado == EstadoCompletada:
+		return ErrHistoriaNoPendiente
+	case h.SprintID != nil:
+		return ErrHistoriaYaAsignada
+	}
 	return nil
 }
