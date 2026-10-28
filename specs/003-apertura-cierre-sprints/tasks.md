@@ -116,19 +116,54 @@ implementación correspondiente en cada fase (RED antes que GREEN).
 ## Phase 8: Fix #117 — arrastre registrado y cierre atómico (continúa #99)
 
 Rama `fix/117-arrastre-registrado`. Diseño de `MODELO-DE-DATOS.md` §4.6.
+No se corrió `/speckit.analyze` antes de implementar esta fase: se corre en
+la Phase 9 (T090) sobre spec, plan y tasks ya actualizados.
 
 - [X] T058 RED: test de esquema de la migración 002 `historias_arrastradas` (estructura y filas válidas/inválidas, incluida la de Sprint e historia de proyectos distintos con ambos `proyecto_id`)
-- [X] T059 GREEN: migración `002_historias_arrastradas.sql`
-- [X] T060 RED: tests de `CerrarConArrastre` contra SQLite real: foto de SP, `NULL` sin estimar, la foto no cambia al editar la historia, fallo a mitad sin cambios (historia de otro proyecto, historia de otro Sprint), Sprint inexistente
-- [X] T061 GREEN: `SQLiteSprintRepository.CerrarConArrastre` en una transacción con un único `UPDATE historias`
-- [X] T062 RED: tests del fake en memoria (foto y atomicidad)
-- [X] T063 GREEN: `CerrarConArrastre` en el puerto `SprintRepository` y en `SprintRepositoryEnMemoria` (valida todo antes de modificar)
-- [X] T064 RED: tests de `CerrarSprint` delegando el cierre (arrastre de las no completadas y fallo que deja el Sprint `Activo`)
-- [X] T065 GREEN: `CerrarSprint` separa completadas y no completadas y llama a `CerrarConArrastre`
-- [X] T066 REFACTOR: eliminar `QuitarDeSprint`, sin uso
-- [X] T067 RED: escenarios BDD del registro de historias arrastradas con sus Story Points
-- [X] T068 GREEN: pasos BDD
-- [X] T069 Actualizar spec (FR-012 a FR-014, SC-005), data-model y quickstart; `MODELO-DE-DATOS.md` sin cambios porque la migración sigue lo que ya define §4.6
+- [X] T059 COMMIT `RED: agregar test de esquema de la migración 002 historias_arrastradas (falla)`
+- [X] T060 GREEN: migración `002_historias_arrastradas.sql`
+- [X] T061 COMMIT `GREEN: agregar la migración 002 historias_arrastradas, test en verde`
+- [X] T062 RED: tests de `CerrarConArrastre` contra SQLite real: foto de SP, `NULL` sin estimar, la foto no cambia al editar la historia, fallo a mitad sin cambios (historia de otro proyecto, historia de otro Sprint), Sprint inexistente
+- [X] T063 COMMIT `RED: agregar tests de CerrarConArrastre en SQLite: foto de SP, NULL y atomicidad (fallan)`
+- [X] T064 GREEN: `SQLiteSprintRepository.CerrarConArrastre` en una transacción con un único `UPDATE historias`
+- [X] T065 COMMIT `GREEN: implementar CerrarConArrastre en SQLite en una transacción, tests en verde`
+- [X] T066 RED: tests del fake en memoria (foto y atomicidad)
+- [X] T067 COMMIT `RED: agregar tests de atomicidad de CerrarConArrastre en el fake en memoria (fallan)`
+- [X] T068 GREEN: `CerrarConArrastre` en el puerto `SprintRepository` y en `SprintRepositoryEnMemoria` (valida todo antes de modificar)
+- [X] T069 COMMIT `GREEN: agregar CerrarConArrastre al puerto y al fake en memoria atómico, tests en verde`
+- [X] T070 RED: tests de `CerrarSprint` delegando el cierre (arrastre de las no completadas y fallo que deja el Sprint `Activo`)
+- [X] T071 COMMIT `RED: agregar tests de CerrarSprint delegando el cierre atómico con arrastre (fallan)`
+- [X] T072 GREEN: `CerrarSprint` separa completadas y no completadas y llama a `CerrarConArrastre`
+- [X] T073 COMMIT `GREEN: CerrarSprint separa las no completadas y delega en CerrarConArrastre, tests en verde`
+- [X] T074 REFACTOR: eliminar `QuitarDeSprint`, sin uso
+- [X] T075 COMMIT `REFACTOR: eliminar QuitarDeSprint, sin uso tras el cierre atómico`
+- [X] T076 RED: escenarios BDD del registro de historias arrastradas con sus Story Points
+- [X] T077 COMMIT `RED: agregar escenarios BDD del registro de historias arrastradas con sus Story Points (fallan)`
+- [X] T078 GREEN: pasos BDD
+- [X] T079 COMMIT `GREEN: implementar los pasos BDD del registro de historias arrastradas, escenarios en verde`
+- [X] T080 Actualizar spec (FR-012 a FR-014, SC-005), data-model y quickstart
+- [X] T081 COMMIT `docs: reflejar en la spec de HU-05 el registro de arrastradas y el cierre atómico`
+- [X] T082 RED: test handler — `ErrHistoriaFueraDelSprint` en `POST /sprints/{id}/cerrar` responde 409 (hoy cae en 500)
+- [X] T083 COMMIT `RED: agregar test de que ErrHistoriaFueraDelSprint responde 409 (hoy cae en 500)`
+- [X] T084 GREEN: mapear `ErrHistoriaFueraDelSprint` a 409 en `escribirError` y documentar el 409 en `contracts/openapi.yaml`
+- [X] T085 COMMIT `GREEN: mapear ErrHistoriaFueraDelSprint a 409 en el cierre de Sprint, test en verde`
+- [X] T086 Quitar las referencias vigentes a `QuitarDeSprint` en `MODELO-DE-DATOS.md` §4.6 y en `data-model.md` (la migración sigue lo que ya define §4.6; solo cambia la descripción de cómo cerraba el Sprint antes de #117)
+- [X] T087 COMMIT `docs: quitar las referencias vigentes a QuitarDeSprint en el modelo de datos`
+
+## Phase 9: Fix #145 — cierre simultáneo del mismo Sprint
+
+Rama `fix/145-cierre-concurrente`. `CerrarSprint` valida en memoria que el
+Sprint esté `Activo`; dos cierres a la vez pasan los dos esa validación. La
+base garantiza la transición con un `UPDATE` condicional.
+
+- [X] T088 Actualizar spec (FR-015 y caso límite del cierre simultáneo) y corregir la Phase 8 de este archivo (tareas de COMMIT, T082-T087)
+- [X] T089 COMMIT `docs: especificar el cierre simultáneo de un Sprint y completar la fase 8 de tasks`
+- [X] T090 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL)
+- [X] T091 COMMIT `docs: registrar el resultado de /speckit.analyze del cierre de Sprint`
+- [X] T092 RED: tests de `CerrarConArrastre` contra SQLite real con dos cierres del mismo Sprint leído `Activo`, con y sin historias no completadas: el segundo devuelve el error de Sprint no `Activo` y no registra arrastradas de más
+- [X] T093 COMMIT `RED: agregar tests de dos cierres simultáneos del mismo Sprint (fallan)`
+- [X] T094 GREEN: `domain.ErrSprintNoActivo` (lo usa `Sprint.Cerrar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Activo'` en `CerrarConArrastre`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Activo`
+- [X] T095 COMMIT `GREEN: cerrar el Sprint solo si sigue Activo, tests en verde`
 
 ## Notas de implementación (desvíos respecto al plan)
 
@@ -173,6 +208,7 @@ Rama `fix/117-arrastre-registrado`. Diseño de `MODELO-DE-DATOS.md` §4.6.
 - **US3 (P2)**: depende de Phase 2 únicamente; no depende de US1/US2. Se ordena después por prioridad de valor, no por dependencia técnica real — se podría adelantar si conviene por reparto de trabajo.
 - **Phase 6** (404 antes que 400): solo depende de US1; puede ir antes o después de US3.
 - **Phase 7**: T052-T054 después de US3 (los pasos usan `CrearSprint`); T055-T057 al final de todo.
+- **Phase 9**: depende de la Phase 8 (#117) mergeada; T090 antes del RED.
 
 ## Parallel Example
 
