@@ -30,12 +30,7 @@ func (h *VotacionHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) 
 		return
 	}
 	var req actorRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
-		return
-	}
-	if req.UsuarioID <= 0 {
-		escribirUsuarioInvalido(w)
+	if !leerPedido(w, r, &req) {
 		return
 	}
 
@@ -54,12 +49,7 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	var req votoRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
-		return
-	}
-	if req.UsuarioID <= 0 {
-		escribirUsuarioInvalido(w)
+	if !leerPedido(w, r, &req) {
 		return
 	}
 
@@ -77,12 +67,7 @@ func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) 
 		return
 	}
 	var req actorRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
-		return
-	}
-	if req.UsuarioID <= 0 {
-		escribirUsuarioInvalido(w)
+	if !leerPedido(w, r, &req) {
 		return
 	}
 
@@ -133,6 +118,19 @@ func (h *VotacionHandler) responderVista(w nethttp.ResponseWriter, r *nethttp.Re
 		return
 	}
 	escribirJSON(w, status, aRespuestaVotacion(vista))
+}
+
+// leerPedido decodifica el cuerpo y exige quien actúa (usuario_id > 0).
+func leerPedido(w nethttp.ResponseWriter, r *nethttp.Request, req interface{ usuario() int64 }) bool {
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return false
+	}
+	if req.usuario() <= 0 {
+		escribirUsuarioInvalido(w)
+		return false
+	}
+	return true
 }
 
 func escribirUsuarioInvalido(w nethttp.ResponseWriter) {
