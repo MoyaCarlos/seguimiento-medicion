@@ -15,11 +15,16 @@ type VotacionHandler struct {
 	votar           *service.Votar
 	consultar       *service.ConsultarVotacion
 	revelar         *service.RevelarVotacion
+	iniciar         *service.IniciarVotacion
 }
 
-func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion) *VotacionHandler {
-	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar}
+func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion) *VotacionHandler {
+	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar}
 }
+
+// Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
+// como la ve quien la inició.
+func (h *VotacionHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {}
 
 // Votar atiende POST /backlog/{id}/votacion/votos. Responde con la vista de
 // quien votó.

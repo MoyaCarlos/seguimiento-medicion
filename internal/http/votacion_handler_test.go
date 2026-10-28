@@ -59,6 +59,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 		service.NewVotar(historias, proyectos, votaciones),
 		service.NewConsultarVotacion(historias, proyectos, votaciones),
 		service.NewRevelarVotacion(historias, proyectos, votaciones),
+		service.NewIniciarVotacion(historias, proyectos, votaciones),
 	)
 }
 
@@ -294,6 +295,70 @@ func TestVotacionHandler_Revelar_Errores(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
 			rec := revelarEn(handler, c.id, c.cuerpo)
+
+			esperarError(t, rec, c.status, c.campo, c.mensaje)
+		})
+	}
+}
+
+// historiaCompletada pasa la historia 3 a Completada dentro de un Sprint: el
+// esquema exige Sprint para todo estado que no sea Nueva.
+const historiaCompletada = `
+INSERT INTO sprints (id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (10, 1, 'g', '2026-10-01', '2026-10-15', 'Activo');
+UPDATE historias SET estado = 'Completada', sprint_id = 10, fecha_finalizacion = '2026-10-10' WHERE id = 3;
+`
+
+func iniciarEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion", bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", id)
+	handler.Iniciar(rec, req)
+	return rec
+}
+
+func TestVotacionHandler_Iniciar_Exitoso(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t)
+
+	rec := iniciarEn(handler, "3", `{"usuario_id":1}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp votacionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.HistoriaID != 3 || resp.Ronda != 1 || resp.ReveladaEn != nil || resp.Promedio != nil {
+		t.Errorf("se esperaba la ronda 1 de la historia 3, oculta y sin promedio, se obtuvo %+v", resp)
+	}
+	esperarValores(t, resp, -1, -1, -1)
+	for _, i := range resp.Integrantes {
+		if i.YaVoto {
+			t.Errorf("nadie votó todavía: %+v", resp.Integrantes)
+		}
+	}
+}
+
+func TestVotacionHandler_Iniciar_Errores(t *testing.T) {
+	casos := map[string]struct {
+		id, cuerpo string
+		previas    []string
+		status     int
+		campo      string
+		mensaje    string
+	}{
+		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin usuario_id":                        {"3", `{}`, nil, nethttp.StatusBadRequest, "usuario_id", ""},
+		"no es Scrum Master":                    {"3", `{"usuario_id":2}`, nil, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"historia Completada":                   {"3", `{"usuario_id":1}`, []string{historiaCompletada}, nethttp.StatusBadRequest, "estado", ""},
+		"ya tiene votación":                     {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusConflict, "", "la historia ya tiene una votación"},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
+
+			rec := iniciarEn(handler, c.id, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
