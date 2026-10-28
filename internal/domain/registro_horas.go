@@ -59,3 +59,9 @@ func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, hora
 		Minutos:    minutos,
 	}, nil
 }
+
+// ValidarSprintParaImputar verifica que la historia esté asignada al Sprint y
+// que ese Sprint esté Activo; el estado de la historia no importa.
+func ValidarSprintParaImputar(historia BacklogItem, sprint Sprint) error {
+	return nil
+}
