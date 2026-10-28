@@ -112,6 +112,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "409":
+          description: >-
+            Una historia que se iba a arrastrar ya no está asignada al Sprint
+            (cambió entre la lectura y el cierre); el cierre no se aplica
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { obtenerProyecto } from './api'
-import type { Proyecto } from './api'
+import { obtenerEstadoProyecto, obtenerProyecto } from './api'
+import type { EstadoProyecto, Proyecto } from './api'
 import { mensajeDeError } from './errores'
 
 function mostrarFecha(fecha: string | null) {
@@ -15,6 +15,9 @@ export function Panel() {
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [estado, setEstado] = useState<EstadoProyecto>()
+  const [errorEstado, setErrorEstado] = useState('')
+  const [cargandoEstado, setCargandoEstado] = useState(true)
 
   useEffect(() => {
     let vigente = true
@@ -28,6 +31,25 @@ export function Panel() {
       })
       .finally(() => {
         if (vigente) setCargando(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [id])
+
+  useEffect(() => {
+    let vigente = true
+
+    obtenerEstadoProyecto(id)
+      .then((respuesta) => {
+        if (vigente) setEstado(respuesta.estado)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setErrorEstado(mensajeDeError(causa))
+      })
+      .finally(() => {
+        if (vigente) setCargandoEstado(false)
       })
 
     return () => {
@@ -70,7 +92,14 @@ export function Panel() {
               <dt>Fin</dt>
               <dd>{mostrarFecha(proyecto.fecha_fin)}</dd>
             </div>
+            <div>
+              <dt>Estado</dt>
+              <dd aria-live="polite">
+                {cargandoEstado ? 'Consultando…' : (estado ?? 'Sin datos')}
+              </dd>
+            </div>
           </dl>
+          {errorEstado && <ErrorMessage message={errorEstado} />}
         </article>
       )}
 

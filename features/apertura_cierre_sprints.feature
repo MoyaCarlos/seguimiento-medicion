@@ -50,6 +50,20 @@ Característica: Apertura y cierre de Sprints
     Y la historia no completada queda en estado "Nueva"
     Y la historia completada permanece vinculada a ese Sprint
 
+  Escenario: El cierre registra las historias arrastradas con sus Story Points
+    Dado que el proyecto tiene un Sprint en estado "Activo"
+    Y ese Sprint tiene una historia no completada estimada en 8 Story Points y otra no completada sin estimar
+    Cuando el Scrum Master cierra el Sprint
+    Entonces la historia estimada queda registrada como arrastrada de ese Sprint con 8 Story Points
+    Y la historia sin estimar queda registrada como arrastrada de ese Sprint sin Story Points
+
+  Escenario: Editar una historia arrastrada no cambia los Story Points registrados
+    Dado que el proyecto tiene un Sprint en estado "Activo"
+    Y ese Sprint tiene una historia no completada estimada en 8 Story Points y otra no completada sin estimar
+    Y el Scrum Master cierra el Sprint
+    Cuando se cambia la estimación de la historia estimada a 13 Story Points en el Product Backlog
+    Entonces la historia estimada queda registrada como arrastrada de ese Sprint con 8 Story Points
+
   Escenario: No se puede cerrar un Sprint que no está Activo
     Dado que existe un Sprint en estado "Pendiente" para el proyecto
     Cuando intento cerrarlo

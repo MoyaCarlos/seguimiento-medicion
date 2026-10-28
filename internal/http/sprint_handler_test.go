@@ -24,7 +24,6 @@ type sinHistorias struct{}
 func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogItem, error) {
 	return nil, nil
 }
-func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
 
 func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria, *repository.ProjectRepositoryEnMemoria) {
 	t.Helper()
@@ -336,6 +335,19 @@ func TestEscribirError_IntegridadReferencialEsConflicto(t *testing.T) {
 		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}
 	if resp := decodificarError(t, rec); resp.Mensaje != "violación de integridad referencial" {
+		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
+	}
+}
+
+func TestEscribirError_HistoriaFueraDelSprintEsConflicto(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	escribirError(rec, fmt.Errorf("cerrar sprint 1: %w", repository.ErrHistoriaFueraDelSprint))
+
+	if rec.Code != nethttp.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := decodificarError(t, rec); resp.Mensaje != "la historia no pertenece al Sprint que se cierra" {
 		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
 	}
 }

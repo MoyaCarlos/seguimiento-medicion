@@ -98,7 +98,7 @@ HU-04 (el proyecto debe existir).
 M (Must have) - Esencial para el MVP. 
 
 ### Estado
-Implementada (el Escenario 3 está pendiente: lo cubre la tarea de integridad referencial).
+Implementada (el Escenario 3, de integridad referencial, se resolvió con el fix #19, PR #103; el frontend se entregó con el PR #125).
 
 ### Valor de Negocio
 21 (Fibonacci) 
@@ -189,7 +189,7 @@ Ninguna (es la base).
 ### Prioridad
 M (Must have) - Requisito fundamental para que el sistema funcione. 
 ### Estado
-Implementada (el Escenario 3 exige fin estrictamente posterior: ajuste pendiente respecto de lo implementado, que acepta fechas iguales).
+Implementada (el ajuste de fecha de fin estrictamente posterior se resolvió con el fix #100, PR #111; GET /projects con #126 y el frontend con el PR #121).
 ### Valor de Negocio
 21 (Fibonacci) 
 ### Estimación
@@ -230,7 +230,7 @@ Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Implementada (falta registrar las historias arrastradas, con sus Story Points, y que el cierre sea atómico: issue #117, depende de #107)
+Implementada (las historias arrastradas y el cierre atómico se resolvieron con el issue #117, PR #136; el frontend con el PR #127; falta la consulta de Sprints, #110, PR #149 abierto)
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -473,7 +473,7 @@ HU-04 (proyecto y fechas), HU-05 (estado de los Sprints).
 ### Prioridad
 S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
 ### Estado
-Implementada
+Implementada (el frontend se entregó con el PR #150, issue #41; queda el fix #151, PR #152 abierto)
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
@@ -544,7 +544,7 @@ Los criterios de aceptación son un texto libre opcional de hasta 2000 caractere
 ### Prioridad
 M (Must have) - El enunciado exige los criterios de aceptación y los Story Points como parte mínima de cada elemento del Product Backlog, HU-06 necesita el listado y HU-03 y HU-10 necesitan los Story Points.
 ### Estado
-Nueva
+Implementada (backend, PR #135; falta el frontend: issue #98)
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación

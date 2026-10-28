@@ -16,6 +16,10 @@ var ErrUsuarioDuplicado = errors.New("el integrante ya existe")
 // ErrIntegridadReferencial indica una violación de llave foránea en la persistencia.
 var ErrIntegridadReferencial = errors.New("violación de integridad referencial")
 
+// ErrHistoriaFueraDelSprint indica que una historia que se pidió arrastrar al
+// cerrar un Sprint no estaba asignada a ese Sprint.
+var ErrHistoriaFueraDelSprint = errors.New("la historia no pertenece al Sprint que se cierra")
+
 // ErrEsquemaViejo indica que la base local tiene un esquema previo a la
 // migración 001 y debe borrarse antes de reiniciar la aplicación.
 var ErrEsquemaViejo = errors.New("seguimiento.db tiene un esquema viejo; borrá el archivo y reiniciá")

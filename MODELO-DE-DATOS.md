@@ -265,7 +265,7 @@ un Sprint pasado (HU-12). Esta tabla registra cuáles quedaron afuera.
 - Historias **comprometidas** de un Sprint = `historias WHERE sprint_id = S` (las completadas) ∪ `historias_arrastradas WHERE sprint_id = S`. **Decidido (D2c, 2026-10-13):** "comprometidas" significa *lo asignado al cerrar el Sprint* (incluidas las historias agregadas con el Sprint ya `Activo`). Es una definición de producto que afecta HU-03, 09, 10 y 12 y ya figura en el backlog.
 - SP **planificados** de S = `SUM(historias.estimacion_sp)` de las completadas + `SUM(historias_arrastradas.estimacion_sp)`. Las completadas no necesitan foto **porque D2b está aprobada** (no se edita `estimacion_sp` con Sprint `Activo`/`Finalizado`).
 
-**Cómo se escribe: una sola operación de repositorio.** El cierre no son tres llamadas sueltas (hoy `CerrarSprint` llama a `QuitarDeSprint` historia por historia y después a `Actualizar`, sin transacción):
+**Cómo se escribe: una sola operación de repositorio.** El cierre no son tres llamadas sueltas (antes de #117, `CerrarSprint` llamaba a `QuitarDeSprint` historia por historia y después a `Actualizar`, sin transacción; `QuitarDeSprint` se eliminó):
 
 1. El caso de uso carga las historias del Sprint y las separa en completadas y no completadas.
 2. Llama a `sprint.Cerrar()` del dominio, que valida que esté `Activo`.
