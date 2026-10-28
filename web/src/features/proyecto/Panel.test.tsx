@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes, useNavigate } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Panel } from './Panel'
 
@@ -12,6 +13,8 @@ const proyecto = {
   creado_en: '2026-09-01T00:00:00Z',
 }
 
+const proyectoBeta = { ...proyecto, id: 4, nombre: 'Proyecto Beta' }
+
 function abrir() {
   render(
     <MemoryRouter initialEntries={['/projects/3/proyecto']}>
@@ -21,6 +24,63 @@ function abrir() {
     </MemoryRouter>,
   )
 }
+
+function PanelNavegable() {
+  const navigate = useNavigate()
+  return (
+    <>
+      <button onClick={() => navigate('/projects/4/proyecto')}>Ir al proyecto 4</button>
+      <Panel />
+    </>
+  )
+}
+
+function abrirNavegable() {
+  render(
+    <MemoryRouter initialEntries={['/projects/3/proyecto']}>
+      <Routes>
+        <Route path="/projects/:id/proyecto" element={<PanelNavegable />} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
+
+type EstadoDelNuevo = 'En curso' | 'pendiente' | 'error'
+
+function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
+  const fetchMock = vi.fn((url: string) => {
+    if (url === '/projects/3') {
+      return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
+    }
+    if (url === '/projects/3/status') {
+      return Promise.resolve(
+        new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
+      )
+    }
+    if (url === '/projects/4') {
+      return Promise.resolve(new Response(JSON.stringify(proyectoBeta), { status: 200 }))
+    }
+    if (url === '/projects/4/status') {
+      if (estadoDelNuevo === 'pendiente') return new Promise<Response>(() => {})
+      if (estadoDelNuevo === 'error') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ mensaje: 'no se pudo calcular el estado' }), {
+            status: 500,
+          }),
+        )
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ estado: estadoDelNuevo }), { status: 200 }),
+      )
+    }
+    return Promise.reject(new Error(`URL inesperada: ${url}`))
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+const cambiarAlProyecto4 = () =>
+  userEvent.click(screen.getByRole('button', { name: 'Ir al proyecto 4' }))
 
 function responderEstado(estado: string | null) {
   const fetchMock = vi.fn((url: string) => {
@@ -66,5 +126,43 @@ describe('panel del proyecto', () => {
 
     expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
     expect(await screen.findByText('no se pudo calcular el estado')).toBeTruthy()
+    expect(await screen.findByText('Sin datos')).toBeTruthy()
+  })
+
+  it('vuelve a consultar el estado al cambiar el id del proyecto', async () => {
+    const fetchMock = responderCambio('En curso')
+    abrirNavegable()
+
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await cambiarAlProyecto4()
+
+    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByText('En curso')).toBeTruthy()
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/projects/4/status')
+  })
+
+  it('muestra Consultando… mientras carga el estado del nuevo proyecto', async () => {
+    responderCambio('pendiente')
+    abrirNavegable()
+
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await cambiarAlProyecto4()
+
+    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(screen.getByText('Consultando…')).toBeTruthy()
+    expect(screen.queryByText('Planificado')).toBeNull()
+  })
+
+  it('muestra Sin datos si la consulta del estado falla', async () => {
+    responderCambio('error')
+    abrirNavegable()
+
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await cambiarAlProyecto4()
+
+    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByText('Sin datos')).toBeTruthy()
+    expect(screen.getByText('no se pudo calcular el estado')).toBeTruthy()
+    expect(screen.queryByText('Planificado')).toBeNull()
   })
 })
