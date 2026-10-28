@@ -55,7 +55,11 @@ func main() {
 
 	horasRepo := repository.NewSQLiteRegistroHorasRepository(db)
 	imputarHoras := service.NewImputarHoras(backlogRepo, sprintRepo, proyectos, horasRepo)
-	horasHandler := apihttp.NewHorasHandler(imputarHoras, service.NewObtenerHistoria(backlogRepo))
+	horasHandler := apihttp.NewHorasHandler(
+		imputarHoras,
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewConsultarEsfuerzoReal(backlogRepo, horasRepo),
+	)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {

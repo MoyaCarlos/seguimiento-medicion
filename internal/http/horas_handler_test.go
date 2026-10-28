@@ -68,6 +68,7 @@ func nuevoEscenarioHorasHTTP(t *testing.T) escenarioHorasHTTP {
 	handler := NewHorasHandler(
 		service.NewImputarHoras(historias, sprints, integrantes, horas),
 		service.NewObtenerHistoria(historias),
+		service.NewConsultarEsfuerzoReal(historias, horas),
 	)
 	return escenarioHorasHTTP{handler: handler, horas: horas, sprint: sprint}
 }
@@ -184,5 +185,96 @@ func TestHorasHandler_Imputar_HorasComoTextoNumerico(t *testing.T) {
 	}
 	if resp.Minutos != 240 {
 		t.Errorf("se esperaban 240 minutos, se obtuvo %d", resp.Minutos)
+	}
+}
+
+func (e escenarioHorasHTTP) consultar(id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/horas", nil)
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	e.handler.ConsultarEsfuerzo(rec, req)
+	return rec
+}
+
+func TestHorasHandler_ConsultarEsfuerzo_ConCargas(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	ayer := hoyCivil().AddDate(0, 0, -1)
+	e.horas.registros = []domain.RegistroHoras{
+		{HistoriaID: 3, SprintID: e.sprint.ID, UsuarioID: 2, Fecha: ayer, Actividad: "Análisis", Minutos: 30},
+		{HistoriaID: 3, SprintID: e.sprint.ID, UsuarioID: 2, Fecha: ayer, Actividad: "Implementación", Minutos: 90},
+	}
+	for i := range e.horas.registros {
+		e.horas.registros[i].ID = int64(i + 1)
+	}
+
+	rec := e.consultar("3")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp esfuerzoRealResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.HistoriaID != 3 || resp.TotalMinutos != 120 || resp.TotalHoras != 2 {
+		t.Errorf("se esperaba la historia 3 con 120 minutos y 2 horas, se obtuvo %+v", resp)
+	}
+	fecha := ayer.Format(time.DateOnly)
+	esperados := []registroHorasResponse{
+		{ID: 1, HistoriaID: 3, SprintID: e.sprint.ID, IntegranteID: 2, Integrante: "Ana", Fecha: fecha, Actividad: "Análisis", Minutos: 30, Horas: 0.5},
+		{ID: 2, HistoriaID: 3, SprintID: e.sprint.ID, IntegranteID: 2, Integrante: "Ana", Fecha: fecha, Actividad: "Implementación", Minutos: 90, Horas: 1.5},
+	}
+	if len(resp.Registros) != len(esperados) {
+		t.Fatalf("se esperaban %d cargas, se obtuvieron %d", len(esperados), len(resp.Registros))
+	}
+	for i, esperado := range esperados {
+		if resp.Registros[i] != esperado {
+			t.Errorf("carga %d:\n se esperaba %+v\n se obtuvo   %+v", i, esperado, resp.Registros[i])
+		}
+	}
+}
+
+func TestHorasHandler_ConsultarEsfuerzo_SinCargas(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+
+	rec := e.consultar("3")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var crudo map[string]json.RawMessage
+	if err := json.Unmarshal(rec.Body.Bytes(), &crudo); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if string(crudo["registros"]) != "[]" || string(crudo["total_minutos"]) != "0" || string(crudo["total_horas"]) != "0" {
+		t.Errorf("se esperaban registros [] y totales 0, se obtuvo %s", rec.Body.String())
+	}
+}
+
+func TestHorasHandler_ConsultarEsfuerzo_Errores(t *testing.T) {
+	casos := []struct {
+		nombre, id     string
+		status         int
+		campo, mensaje string
+	}{
+		{"historia inexistente", "999", nethttp.StatusNotFound, "", "historia no encontrada"},
+		{"id no numérico", "abc", nethttp.StatusBadRequest, "id", ""},
+		{"id cero", "0", nethttp.StatusBadRequest, "id", ""},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			rec := nuevoEscenarioHorasHTTP(t).consultar(c.id)
+
+			if rec.Code != c.status {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
+			}
+			var resp errorResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("respuesta JSON inválida: %v", err)
+			}
+			if resp.Campo != c.campo || (c.mensaje != "" && resp.Mensaje != c.mensaje) {
+				t.Errorf("se esperaba campo %q y mensaje %q, se obtuvo %+v", c.campo, c.mensaje, resp)
+			}
+		})
 	}
 }

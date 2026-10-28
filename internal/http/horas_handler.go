@@ -12,10 +12,15 @@ import (
 type HorasHandler struct {
 	imputar         *service.ImputarHoras
 	obtenerHistoria *service.ObtenerHistoria
+	consultar       *service.ConsultarEsfuerzoReal
 }
 
-func NewHorasHandler(imputar *service.ImputarHoras, obtenerHistoria *service.ObtenerHistoria) *HorasHandler {
-	return &HorasHandler{imputar: imputar, obtenerHistoria: obtenerHistoria}
+func NewHorasHandler(
+	imputar *service.ImputarHoras,
+	obtenerHistoria *service.ObtenerHistoria,
+	consultar *service.ConsultarEsfuerzoReal,
+) *HorasHandler {
+	return &HorasHandler{imputar: imputar, obtenerHistoria: obtenerHistoria, consultar: consultar}
 }
 
 // Imputar atiende POST /backlog/{id}/horas.
@@ -49,6 +54,10 @@ func (h *HorasHandler) Imputar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	escribirJSON(w, nethttp.StatusCreated, aRespuestaHoras(detalle))
+}
+
+// ConsultarEsfuerzo atiende GET /backlog/{id}/horas.
+func (h *HorasHandler) ConsultarEsfuerzo(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // textoDeHoras extrae el texto de horas sin validarlo (lo valida el dominio):

@@ -41,3 +41,10 @@ func aRespuestaHoras(d domain.RegistroHorasDetalle) registroHorasResponse {
 		Horas:        float64(d.Minutos) / 60,
 	}
 }
+
+type esfuerzoRealResponse struct {
+	HistoriaID   int64                   `json:"historia_id"`
+	TotalMinutos int                     `json:"total_minutos"`
+	TotalHoras   float64                 `json:"total_horas"`
+	Registros    []registroHorasResponse `json:"registros"`
+}
