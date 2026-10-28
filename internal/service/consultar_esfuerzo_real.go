@@ -26,5 +26,12 @@ func NewConsultarEsfuerzoReal(historias repository.HistoriaRepository, horas rep
 }
 
 func (s *ConsultarEsfuerzoReal) Ejecutar(ctx context.Context, historiaID int64) (EsfuerzoReal, error) {
-	return EsfuerzoReal{}, nil
+	if _, err := s.historias.ObtenerPorID(ctx, historiaID); err != nil {
+		return EsfuerzoReal{}, err
+	}
+	registros, err := s.horas.ListarPorHistoria(ctx, historiaID)
+	if err != nil {
+		return EsfuerzoReal{}, err
+	}
+	return EsfuerzoReal{HistoriaID: historiaID, TotalMinutos: domain.TotalMinutos(registros), Registros: registros}, nil
 }
