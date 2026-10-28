@@ -21,5 +21,35 @@ func NewRevelarVotacion(historias repository.HistoriaRepository, proyectos repos
 }
 
 func (s *RevelarVotacion) Ejecutar(ctx context.Context, historiaID, usuarioID int64, ahora time.Time) (domain.RondaVotacion, error) {
-	return domain.RondaVotacion{}, nil
+	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	rol, _, err := rolEnProyecto(ctx, s.proyectos, historia.ProyectoID, usuarioID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	if rol != domain.RolScrumMaster {
+		return domain.RondaVotacion{}, domain.ErrNoEsScrumMaster
+	}
+
+	ronda, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	integrantes, err := s.proyectos.ListarIntegrantes(ctx, historia.ProyectoID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	ids := make([]int64, len(integrantes))
+	for i, m := range integrantes {
+		ids[i] = m.UserID
+	}
+	if err := ronda.Revelar(ids, ahora); err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	if err := s.votaciones.MarcarRevelada(ctx, ronda.ID, ahora); err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	return ronda, nil
 }
