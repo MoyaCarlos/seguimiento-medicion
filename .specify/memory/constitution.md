@@ -1,10 +1,14 @@
 <!--
 Sync Impact Report
+
+Versión 1.1.0 (2026-10-28)
 - Version change: 1.0.0 → 1.1.0
 - Modified principles: III (se amplía cómo se cumple en el frontend)
 - Reason: las specs de los frontends (007, 008, 011 y 022) ya automatizan sus
   escenarios como pruebas de componente; se formaliza para que /speckit.analyze
   no lo marque como conflicto.
+
+Versión 1.0.0 (2026-09-07)
 - Version change: (template, no prior content) → 1.0.0
 - Modified principles: none (all 6 are new; template had 5 placeholder slots, one added)
 - Added sections: Core Principles I-VI, Contexto Académico y Criterios de Evaluación,
