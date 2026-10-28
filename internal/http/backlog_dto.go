@@ -21,6 +21,10 @@ type editarHistoriaRequest struct {
 	EstimacionSP        *json.Number `json:"estimacion_sp"`
 }
 
+type asignarSprintRequest struct {
+	SprintID *int64 `json:"sprint_id"`
+}
+
 type historiaResponse struct {
 	ID                  int64   `json:"id"`
 	ProyectoID          int64   `json:"proyecto_id"`

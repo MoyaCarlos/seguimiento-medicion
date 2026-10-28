@@ -36,6 +36,7 @@ func main() {
 		service.NewConsultarProductBacklog(proyectos, backlogRepo),
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewEditarHistoria(backlogRepo, sprintRepo),
+		nil, // se cablea en T026
 	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
