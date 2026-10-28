@@ -2,12 +2,14 @@
 
 **Feature Branch**: `feature/HU-13-frontend-panel`
 
+**Fix Branch**: `fix/151-spec-hu-13-frontend` (issue #151)
+
 **Issue**: #41 (parte de #13)
 
 **Created**: 2026-10-23
 
 **Status**: Implementada y mergeada (PR #150). Las mejoras de esta spec y de sus tests se
-registran en el issue #151.
+registraron en el issue #151 y se integraron en el PR #152.
 
 **Dependencia**: el panel principal pertenece a la pantalla de HU-04
 (`features/proyecto`, PR #121), ya presente en `main`. Esta rama se apoya en esa pantalla
