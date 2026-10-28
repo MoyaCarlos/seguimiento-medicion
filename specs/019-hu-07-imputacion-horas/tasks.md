@@ -132,7 +132,7 @@ llamada en cmd/api/main.go; es la única excepción a "solo archivos de test y f
 - [X] T051 COMMIT `GREEN: implementar los pasos BDD de imputación de horas, escenarios en verde`
 - [X] T052 Correr `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores (lo mismo que el check `backend` del CI)
 - [X] T053 Validar a mano con specs/019-hu-07-imputacion-horas/quickstart.md (pasos 1 a 8) y anotar el resultado
-- [ ] T054 Marcar como `[X]` en este tasks.md las tareas terminadas y, con el OK de la usuaria, actualizar las casillas de las sub-issues #60, #61 y #62 + COMMIT `docs: actualizar el avance de tasks de HU-07`
+- [X] T054 Marcar como `[X]` en este tasks.md las tareas terminadas y, con el OK de la usuaria, actualizar las casillas de las sub-issues #60, #61 y #62 + COMMIT `docs: actualizar el avance de tasks de HU-07`
 
 ---
 
