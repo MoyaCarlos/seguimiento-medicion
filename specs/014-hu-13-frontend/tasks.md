@@ -29,3 +29,6 @@
 - [X] T016 REFACTOR: reiniciar por `key={id}` en vez de `setState` en los efectos.
 - [X] T017 COMMIT `REFACTOR: reiniciar el panel por key en vez de setState en los efectos`
 - [X] T018 Verificar `npm run lint`, `npm test` y `npm run build` en `web/`.
+- [X] T019 REFACTOR: probar el cambio de proyecto por el componente real y quitar el key duplicado; `PanelLayout` ya reinicia por `id`.
+- [X] T020 COMMIT `REFACTOR: probar el cambio de proyecto por la ruta real y quitar el key duplicado`
+- [X] T021 Verificar `npm run lint`, `npm test` y `npm run build` en `web/`.

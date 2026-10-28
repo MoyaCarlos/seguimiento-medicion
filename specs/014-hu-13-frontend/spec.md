@@ -108,6 +108,7 @@ Mostrar en el panel principal del proyecto el estado derivado por la API:
 | Estado visible | `Panel` + `obtenerEstadoProyecto` | test del panel para los tres valores |
 | Consulta al abrir | `useEffect` del panel | test que verifica la llamada a `/projects/{id}/status` |
 | Consulta al cambiar de proyecto | `useEffect` dependiente de `id` | test que navega a otro proyecto y verifica la nueva consulta |
+| Reinicio al cambiar de proyecto | `key={id}` en `PanelLayout` | test que navega por el componente real y no ve el estado anterior |
 | Carga del estado | etiqueta con `Consultando…` | test que cambia de proyecto y verifica el indicador |
 | Error sin ocultar el proyecto | estado de error del panel | test del panel con fallo de la consulta |
 | Estado no inventado | etiqueta con `Sin datos` | test que cambia a un proyecto cuya consulta falla |
