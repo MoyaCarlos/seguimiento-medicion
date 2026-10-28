@@ -87,6 +87,9 @@ issue `bug` y se repara en su propia rama `fix/`.
   escribir código — valió la pena en HU-01, se volvió paso estándar, no opcional.
   En Claude Code los comandos usan guión (`/speckit-specify`); en OpenCode, punto
   (`/speckit.specify`) — mismo comando, distinta sintaxis según la herramienta.
+- Al correr `/speckit-specify` se pasa siempre el número de la spec a mano (`--number N`):
+  el siguiente libre en `specs/` de `origin/main`, sin repetir los reservados por ramas
+  o PR abiertos. La numeración automática de Spec Kit repitió números.
 - Cada spec debe cubrir como mínimo: objetivo, entradas, salidas esperadas, reglas
   de negocio, restricciones, casos límite, condiciones de error y criterios de
   aceptación. Para reglas de negocio/casos límite/errores, redactar en formato
