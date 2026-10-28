@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"math/big"
+	"strings"
+	"time"
+)
 
 // RegistroHoras es una carga de horas trabajadas en una historia, atribuida al
 // Sprint Activo de la historia en el momento de la carga. La duración se guarda
@@ -24,13 +28,34 @@ type RegistroHorasDetalle struct {
 }
 
 // MinutosDesdeHoras convierte una cantidad de horas en texto decimal a minutos
-// enteros.
+// enteros. Usa big.Rat para que la conversión sea exacta (0,1 h = 6 min).
 func MinutosDesdeHoras(horas string) (int, error) {
-	return 0, nil
+	cantidad, ok := new(big.Rat).SetString(horas)
+	if !ok {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben ser un número"}
+	}
+	minutos := cantidad.Mul(cantidad, big.NewRat(60, 1))
+	return int(minutos.Num().Int64()), nil
 }
 
 // NewRegistroHoras construye una carga de horas para una historia del Sprint
 // dado. Supone que el service ya verificó el Sprint activo y el integrante.
 func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, horas, actividad, fecha string, ahora time.Time) (RegistroHoras, error) {
-	return RegistroHoras{}, nil
+	minutos, err := MinutosDesdeHoras(horas)
+	if err != nil {
+		return RegistroHoras{}, err
+	}
+	dia, err := time.Parse(time.DateOnly, fecha)
+	if err != nil {
+		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "formato esperado AAAA-MM-DD"}
+	}
+	return RegistroHoras{
+		ProyectoID: historia.ProyectoID,
+		HistoriaID: historia.ID,
+		UsuarioID:  usuarioID,
+		SprintID:   sprint.ID,
+		Fecha:      dia,
+		Actividad:  strings.TrimSpace(actividad),
+		Minutos:    minutos,
+	}, nil
 }
