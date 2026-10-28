@@ -58,6 +58,7 @@ func main() {
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewVotar(backlogRepo, proyectos, votaciones),
 		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
 	)
 
 	mux := http.NewServeMux()

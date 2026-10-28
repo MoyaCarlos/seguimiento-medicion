@@ -13,10 +13,11 @@ type VotacionHandler struct {
 	obtenerHistoria *service.ObtenerHistoria
 	votar           *service.Votar
 	consultar       *service.ConsultarVotacion
+	revelar         *service.RevelarVotacion
 }
 
-func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion) *VotacionHandler {
-	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar}
+func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion) *VotacionHandler {
+	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar}
 }
 
 // Votar atiende POST /backlog/{id}/votacion/votos. Responde con la vista de
@@ -42,6 +43,9 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 	h.responderVista(w, r, id, req.UsuarioID)
 }
+
+// Revelar atiende POST /backlog/{id}/votacion/revelar.
+func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) {}
 
 // Consultar atiende GET /backlog/{id}/votacion?usuario_id=N. Sin usuario_id
 // todos los votos de una ronda oculta quedan ocultos.

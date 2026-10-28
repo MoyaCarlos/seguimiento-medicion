@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -57,6 +58,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 		service.NewObtenerHistoria(historias),
 		service.NewVotar(historias, proyectos, votaciones),
 		service.NewConsultarVotacion(historias, proyectos, votaciones),
+		service.NewRevelarVotacion(historias, proyectos, votaciones),
 	)
 }
 
@@ -238,6 +240,60 @@ func TestVotacionHandler_Consultar_Errores(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
 			rec := consultarVotacionDe(handler, c.id, c.consulta)
+
+			esperarError(t, rec, c.status, c.campo, c.mensaje)
+		})
+	}
+}
+
+func revelarEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/revelar", bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", id)
+	handler.Revelar(rec, req)
+	return rec
+}
+
+const votosDeTodos = "INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (1, 1, 3), (1, 2, 8), (1, 3, 5)"
+
+func TestVotacionHandler_Revelar_Exitoso(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeTodos)
+
+	resp := leerVotacion(t, revelarEn(handler, "3", `{"usuario_id":1}`))
+
+	esperarValores(t, resp, 3, 8, 5)
+	if resp.ReveladaEn == nil {
+		t.Fatal("se esperaba revelada_en")
+	}
+	if _, err := time.Parse(time.RFC3339, *resp.ReveladaEn); err != nil {
+		t.Errorf("revelada_en debe ser RFC 3339: %v", err)
+	}
+	if resp.Promedio == nil || *resp.Promedio != (promedioResponse{Exacto: 5.33, CartaSugerida: 5}) {
+		t.Errorf("se esperaba el promedio 5.33 / 5, se obtuvo %+v", resp.Promedio)
+	}
+}
+
+func TestVotacionHandler_Revelar_Errores(t *testing.T) {
+	casos := map[string]struct {
+		id, cuerpo string
+		previas    []string
+		status     int
+		campo      string
+		mensaje    string
+	}{
+		"historia inexistente con JSON roto": {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin usuario_id":                     {"3", `{}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusBadRequest, "usuario_id", ""},
+		"no es Scrum Master":                 {"3", `{"usuario_id":2}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"sin votación":                       {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"falta votar Jimena":                 {"3", `{"usuario_id":1}`, []string{rondaAbierta, votosDeCarlosYCandela}, nethttp.StatusBadRequest, "votos", ""},
+		"ya revelada":                        {"3", `{"usuario_id":1}`, []string{rondaRevelada, votosDeTodos}, nethttp.StatusBadRequest, "estado", ""},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
+
+			rec := revelarEn(handler, c.id, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
