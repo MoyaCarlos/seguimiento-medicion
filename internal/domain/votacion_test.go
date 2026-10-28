@@ -152,3 +152,47 @@ func TestRondaVotacion_Revelar_YaRevelada(t *testing.T) {
 		t.Errorf("no debía cambiar el instante de revelación, quedó %v", r.ReveladaEn)
 	}
 }
+
+func TestCalcularPromedio(t *testing.T) {
+	casos := []struct {
+		valores  []int
+		esperado Promedio
+	}{
+		{[]int{3, 5, 8}, Promedio{Exacto: 5.33, CartaSugerida: 5}},
+		{[]int{3, 5}, Promedio{Exacto: 4, CartaSugerida: 5}},
+		{[]int{8, 8, 8}, Promedio{Exacto: 8, CartaSugerida: 8}},
+		{[]int{1, 21}, Promedio{Exacto: 11, CartaSugerida: 13}},
+		{[]int{2, 3}, Promedio{Exacto: 2.5, CartaSugerida: 3}},
+	}
+
+	for _, c := range casos {
+		if got := CalcularPromedio(c.valores); got != c.esperado {
+			t.Errorf("%v: se esperaba %+v, se obtuvo %+v", c.valores, c.esperado, got)
+		}
+	}
+}
+
+func TestRondaVotacion_Promedio_SinRevelar(t *testing.T) {
+	r := rondaAbierta(t)
+	votar(t, &r, 1, 8)
+
+	if p, ok := r.Promedio(); ok {
+		t.Errorf("una ronda sin revelar no debe tener promedio, se obtuvo %+v", p)
+	}
+}
+
+func TestRondaVotacion_Promedio_Revelada(t *testing.T) {
+	r := rondaAbierta(t)
+	votar(t, &r, 1, 3)
+	votar(t, &r, 2, 5)
+	votar(t, &r, 3, 8)
+	if err := r.Revelar([]int64{1, 2, 3}, momentoRevelacion); err != nil {
+		t.Fatalf("no se esperaba error al revelar: %v", err)
+	}
+
+	p, ok := r.Promedio()
+
+	if !ok || p != CalcularPromedio([]int{3, 5, 8}) {
+		t.Errorf("se esperaba el promedio de 3, 5 y 8, se obtuvo %+v (%v)", p, ok)
+	}
+}

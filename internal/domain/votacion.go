@@ -67,3 +67,21 @@ func (r RondaVotacion) Revelada() bool {
 func (r RondaVotacion) indiceDelVoto(usuarioID int64) int {
 	return slices.IndexFunc(r.Votos, func(v Voto) bool { return v.UsuarioID == usuarioID })
 }
+
+// Promedio es el resultado de una ronda revelada: la media exacta y la carta
+// de la baraja más cercana, que es la que se sugiere al equipo.
+type Promedio struct {
+	Exacto        float64
+	CartaSugerida int
+}
+
+// Promedio devuelve el promedio de los votos; false si la ronda no está revelada.
+func (r RondaVotacion) Promedio() (Promedio, bool) {
+	return Promedio{}, false
+}
+
+// CalcularPromedio redondea la media a 2 decimales y sugiere la carta más
+// cercana; ante un empate, la mayor.
+func CalcularPromedio(valores []int) Promedio {
+	return Promedio{}
+}
