@@ -2,6 +2,7 @@ package domain
 
 import (
 	"math/big"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -27,27 +28,65 @@ type RegistroHorasDetalle struct {
 	NombreIntegrante string
 }
 
+const (
+	minutosMaximosPorCarga  = 24 * 60
+	longitudMaximaActividad = 500
+)
+
+// formatoHoras admite solo decimales: big.Rat también aceptaría fracciones
+// (1/2) y notación exponencial (1e1), que se rechazan a propósito (R2).
+var formatoHoras = regexp.MustCompile(`^-?\d+(\.\d+)?$`)
+
 // MinutosDesdeHoras convierte una cantidad de horas en texto decimal a minutos
 // enteros. Usa big.Rat para que la conversión sea exacta (0,1 h = 6 min).
 func MinutosDesdeHoras(horas string) (int, error) {
-	cantidad, ok := new(big.Rat).SetString(horas)
-	if !ok {
+	if horas == "" {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas son obligatorias"}
+	}
+	if !formatoHoras.MatchString(horas) {
 		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben ser un número"}
 	}
-	minutos := cantidad.Mul(cantidad, big.NewRat(60, 1))
+	minutos, _ := new(big.Rat).SetString(horas)
+	minutos.Mul(minutos, big.NewRat(60, 1))
+	if minutos.Sign() <= 0 {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben ser mayores que cero"}
+	}
+	if minutos.Cmp(big.NewRat(minutosMaximosPorCarga, 1)) > 0 {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas no pueden superar 24 por carga"}
+	}
+	if !minutos.IsInt() {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben equivaler a minutos enteros"}
+	}
 	return int(minutos.Num().Int64()), nil
 }
 
 // NewRegistroHoras construye una carga de horas para una historia del Sprint
-// dado. Supone que el service ya verificó el Sprint activo y el integrante.
+// dado. Valida horas, actividad y fecha, en ese orden. Supone que el service ya
+// verificó el Sprint activo y el integrante.
 func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, horas, actividad, fecha string, ahora time.Time) (RegistroHoras, error) {
 	minutos, err := MinutosDesdeHoras(horas)
 	if err != nil {
 		return RegistroHoras{}, err
 	}
+	actividad = strings.TrimSpace(actividad)
+	if actividad == "" {
+		return RegistroHoras{}, ValidationError{Campo: "actividad", Mensaje: "la actividad es obligatoria"}
+	}
+	if len([]rune(actividad)) > longitudMaximaActividad {
+		return RegistroHoras{}, ValidationError{Campo: "actividad", Mensaje: "la actividad no puede superar los 500 caracteres"}
+	}
 	dia, err := time.Parse(time.DateOnly, fecha)
 	if err != nil {
 		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "formato esperado AAAA-MM-DD"}
+	}
+	if dia.After(inicioDelDiaCivil(ahora)) {
+		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior a hoy"}
+	}
+	if dia.After(sprint.FechaFin) {
+		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior al fin del Sprint"}
+	}
+	if dia.Before(sprint.FechaInicio) {
+		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser anterior al inicio del Sprint"}
 	}
 	return RegistroHoras{
 		ProyectoID: historia.ProyectoID,
@@ -55,7 +94,7 @@ func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, hora
 		UsuarioID:  usuarioID,
 		SprintID:   sprint.ID,
 		Fecha:      dia,
-		Actividad:  strings.TrimSpace(actividad),
+		Actividad:  actividad,
 		Minutos:    minutos,
 	}, nil
 }
@@ -63,5 +102,8 @@ func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, hora
 // ValidarSprintParaImputar verifica que la historia esté asignada al Sprint y
 // que ese Sprint esté Activo; el estado de la historia no importa.
 func ValidarSprintParaImputar(historia BacklogItem, sprint Sprint) error {
+	if historia.SprintID == nil || *historia.SprintID != sprint.ID || sprint.Estado != SprintActivo {
+		return ErrHistoriaFueraDelSprintActivo
+	}
 	return nil
 }
