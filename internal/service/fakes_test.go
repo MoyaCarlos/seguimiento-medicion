@@ -211,3 +211,14 @@ func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyect
 	}
 	return resultado, nil
 }
+
+// fakeSprintsQueCuentan envuelve el repositorio en memoria y cuenta las lecturas.
+type fakeSprintsQueCuentan struct {
+	*repository.SprintRepositoryEnMemoria
+	lecturas int
+}
+
+func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
+	f.lecturas++
+	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
+}
