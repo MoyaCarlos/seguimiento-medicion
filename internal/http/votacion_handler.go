@@ -24,7 +24,27 @@ func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service
 
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
 // como la ve quien la inició.
-func (h *VotacionHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {}
+func (h *VotacionHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req actorRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	if req.UsuarioID <= 0 {
+		escribirUsuarioInvalido(w)
+		return
+	}
+
+	if _, err := h.iniciar.Ejecutar(r.Context(), id, req.UsuarioID); err != nil {
+		escribirError(w, err)
+		return
+	}
+	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
+}
 
 // Votar atiende POST /backlog/{id}/votacion/votos. Responde con la vista de
 // quien votó.
@@ -47,7 +67,7 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusOK, id, req.UsuarioID)
 }
 
 // Revelar atiende POST /backlog/{id}/votacion/revelar.
@@ -70,7 +90,7 @@ func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) 
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusOK, id, req.UsuarioID)
 }
 
 // Consultar atiende GET /backlog/{id}/votacion?usuario_id=N. Sin usuario_id
@@ -89,7 +109,7 @@ func (h *VotacionHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request
 		}
 		consultanteID = n
 	}
-	h.responderVista(w, r, id, consultanteID)
+	h.responderVista(w, r, nethttp.StatusOK, id, consultanteID)
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia
@@ -106,13 +126,13 @@ func (h *VotacionHandler) historiaDeRuta(w nethttp.ResponseWriter, r *nethttp.Re
 	return id, true
 }
 
-func (h *VotacionHandler) responderVista(w nethttp.ResponseWriter, r *nethttp.Request, historiaID, consultanteID int64) {
+func (h *VotacionHandler) responderVista(w nethttp.ResponseWriter, r *nethttp.Request, status int, historiaID, consultanteID int64) {
 	vista, err := h.consultar.Ejecutar(r.Context(), historiaID, consultanteID)
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusOK, aRespuestaVotacion(vista))
+	escribirJSON(w, status, aRespuestaVotacion(vista))
 }
 
 func escribirUsuarioInvalido(w nethttp.ResponseWriter) {

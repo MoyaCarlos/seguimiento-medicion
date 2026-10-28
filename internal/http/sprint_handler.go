@@ -122,6 +122,8 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, repository.ErrIntegridadReferencial):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrIntegridadReferencial.Error()})
+	case errors.Is(err, domain.ErrVotacionYaIniciada):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrHistoriaFueraDelSprint.Error()})
 	default:
