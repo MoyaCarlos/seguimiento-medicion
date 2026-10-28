@@ -27,3 +27,11 @@ var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
 // ErrEstimacionCongelada indica un cambio de los Story Points ya cargados de una
 // historia de un Sprint Activo o Finalizado (decisión D2b).
 var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}
+
+// ErrHistoriaFueraDelSprintActivo indica una carga de horas a una historia que
+// no está en un Sprint Activo (HU-07).
+var ErrHistoriaFueraDelSprintActivo = ValidationError{Campo: "historia_id", Mensaje: "solo se imputan horas a historias del Sprint activo"}
+
+// ErrIntegranteAjeno indica una carga de horas de alguien que no es integrante
+// del proyecto de la historia (HU-07).
+var ErrIntegranteAjeno = ValidationError{Campo: "integrante_id", Mensaje: "el integrante no pertenece al proyecto de la historia"}
