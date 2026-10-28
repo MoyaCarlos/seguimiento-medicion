@@ -181,8 +181,8 @@ Sprint, que se garantiza con un `UPDATE` condicional como en la Phase 9.
 - [X] T099 COMMIT `RED: agregar test de dos inicios simultáneos del mismo Sprint (falla)`
 - [X] T100 GREEN: `domain.ErrSprintNoPendiente` (lo usa `Sprint.Iniciar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Pendiente'` en `Actualizar`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Pendiente`
 - [X] T101 COMMIT `GREEN: iniciar el Sprint solo si sigue Pendiente, test en verde`
-- [ ] T102 REFACTOR: quitar de `IniciarSprint` el comentario que daba la carrera por aceptada
-- [ ] T103 COMMIT `REFACTOR: quitar el comentario de la carrera del inicio, ya cubierta por la base`
+- [X] T102 REFACTOR: quitar de `IniciarSprint` el comentario que daba la carrera por aceptada
+- [X] T103 COMMIT `REFACTOR: quitar el comentario de la carrera del inicio, ya cubierta por la base`
 
 ## Notas de implementación (desvíos respecto al plan)
 

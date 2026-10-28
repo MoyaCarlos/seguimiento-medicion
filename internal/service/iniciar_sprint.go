@@ -32,9 +32,9 @@ func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) 
 		return domain.Sprint{}, err
 	}
 
-	// ponytail: chequeo y escritura sin transacción; dos inicios simultáneos
-	// podrían pasar los dos. Alcanza para un equipo; si hiciera falta, índice
-	// único parcial en SQLite sobre (proyecto_id) WHERE estado = 'Activo'.
+	// Estos chequeos dan el mensaje; la carrera la cubre la base: el índice
+	// único parcial impide un segundo Activo y Actualizar solo inicia un
+	// Sprint que sigue Pendiente (#158).
 	delProyecto, err := s.sprints.ListarPorProyecto(ctx, sprint.ProyectoID)
 	if err != nil {
 		return domain.Sprint{}, err
