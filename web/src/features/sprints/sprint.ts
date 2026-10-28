@@ -22,7 +22,3 @@ export function guardarSprint(sprints: Sprint[], sprint: Sprint): Sprint[] {
   const existe = sprints.some((s) => s.id === sprint.id)
   return existe ? sprints.map((s) => (s.id === sprint.id ? sprint : s)) : [...sprints, sprint]
 }
-
-export function cargarSprintsIniciales(): Sprint[] {
-  return []
-}

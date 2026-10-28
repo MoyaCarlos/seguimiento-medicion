@@ -50,6 +50,7 @@ func main() {
 		service.NewCrearSprint(proyectos, sprintRepo),
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
+		service.NewConsultarSprints(proyectos, sprintRepo),
 		sprintRepo,
 	)
 
@@ -67,6 +68,7 @@ func main() {
 	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
+	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
