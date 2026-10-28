@@ -12,7 +12,7 @@
 
 ### Session 2026-10-24
 
-- Q: ¿Qué pasa con un Sprint que existe en la base pero la pantalla no conoce (por ejemplo, tras recargar)? → A: Se acepta la limitación; el listado llega con #110. La pantalla muestra un texto visible que lo explica: "Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se pierden al recargar.", sin rutas de archivos ni comandos. (Decisión del Scrum Master; texto ajustado tras la review de #127)
+- Q: ¿Qué pasa con un Sprint que existe en la base pero la pantalla no conoce (por ejemplo, tras recargar)? → A: Obsoleto desde #110: la pantalla carga los Sprints del proyecto al abrirse (ver [`specs/015-hu-05-consultar-sprints`](../015-hu-05-consultar-sprints/spec.md)). Originalmente se aceptaba la limitación y se mostraba un texto que la explicaba; ese texto se quitó.
 - Q: ¿Cada Sprint muestra su identificador? → A: Sí, como "Sprint #<id>", para poder cruzarlo con la API y distinguir varios Sprints Finalizados. (Decisión del Scrum Master)
 - Q: Cuando falla "Crear Sprint", iniciar o cerrar con un error que no pertenece a un campo, ¿dónde se muestra el aviso? → A: Un aviso por Sprint, arriba de su formulario de inicio o de su botón "Cerrar Sprint"; el error de "Crear Sprint" va en un aviso arriba de la pantalla. Cada aviso permanece hasta el próximo envío de su propia acción.
 
@@ -82,7 +82,7 @@ Como Scrum Master, quiero ver los Sprints en tres secciones (Pendiente, Activo, 
 
 1. **Given** la pantalla recién abierta, **When** no se creó ningún Sprint en la sesión, **Then** se ven las tres secciones, vacías, con un texto que lo indica.
 2. **Given** Sprints en distintos estados, **When** se mira la pantalla, **Then** cada Sprint aparece únicamente en la sección de su estado.
-3. **Given** Sprints creados en la sesión, **When** se recarga la página, **Then** se ven las tres secciones vacías (la API no lista Sprints todavía), sin error.
+3. **Given** Sprints creados en la sesión, **When** se recarga la página, **Then** se ven los Sprints del proyecto cargados desde la API (obsoleto: antes se veían vacías; ver spec 015).
 
 ---
 
@@ -93,7 +93,7 @@ Redactados en formato EARS.
 - **IF** el backend no está corriendo, **THEN** la pantalla **shall** mostrar el error de conexión en el aviso de la acción que falló, sin quedar cargando indefinidamente.
 - **IF** la API responde con un error no interpretable (por ejemplo, un 500), **THEN** la pantalla **shall** mostrar el mensaje genérico en el aviso de la acción que falló, sin romperse.
 - **IF** la API rechaza un envío con un `campo` que el formulario no tiene (por ejemplo `estado`), **THEN** la pantalla **shall** tratarlo como error sin campo visible y mostrarlo en el aviso arriba del formulario.
-- **IF** hay un Sprint Pendiente o Activo en la base que la pantalla no conoce, **THEN** crear otro Sprint o iniciar uno **shall** mostrar el error que devuelve la API, y la salida es el listado futuro (#110) o los comandos `curl` de `docs/curl-frontend-sprint-2.md`.
+- **IF** hay un Sprint Pendiente o Activo en la base que la pantalla no conoce, **THEN** crear otro Sprint o iniciar uno **shall** mostrar el error que devuelve la API, y la pantalla ya muestra los Sprints existentes gracias al listado (#110).
 - **WHEN** empieza un nuevo envío, la pantalla **shall** borrar los errores del envío anterior.
 - **WHEN** hay una operación en curso sobre un Sprint, la pantalla **shall** impedir una segunda operación sobre ese mismo Sprint hasta que termine.
 - **IF** el id del proyecto no está en la URL o no es válido, **THEN** la pantalla **shall** mostrar el error que devuelva la API al operar, sin validar ella misma el id.
@@ -123,10 +123,10 @@ Redactados en formato EARS.
 **Mostrar**
 
 - **FR-008**: La pantalla **shall** mostrar tres secciones fijas (Pendiente, Activo, Finalizado), siempre visibles, y cada Sprint **shall** aparecer solo en la de su estado.
-- **FR-009**: La pantalla **shall** mostrar solo los Sprints creados o modificados durante la sesión; no los recupera al recargar.
-- **FR-010**: La lista de Sprints **shall** tener un único punto de carga inicial, hoy vacío, donde un futuro listado (#110) pueda sumarse sin cambiar el resto.
+- **FR-009** *(reemplazado por la spec 015, FR-F01)*: ~~La pantalla muestra solo los Sprints de la sesión.~~ Ahora recupera los Sprints del proyecto al abrirse y al recargar.
+- **FR-010** *(cumplido por la spec 015)*: el punto de carga inicial es un `useEffect` que pide `GET /projects/{id}/sprints`; las secciones y acciones no cambiaron.
 
-- **FR-018**: La pantalla **shall** mostrar de forma visible, siempre, el texto "Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se pierden al recargar." (sin rutas de archivos ni comandos), mientras no exista el listado de Sprints (#110).
+- **FR-018** *(retirado por la spec 015, FR-F05)*: el texto de limitación "Los Sprints existentes no se listan todavía…" ya no se muestra, porque el listado existe.
 - **FR-019**: Cada Sprint mostrado **shall** exhibir su identificador como "Sprint #<id>".
 
 **Errores y carga**
