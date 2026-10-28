@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -79,6 +80,62 @@ func (r *SQLiteSprintRepository) Actualizar(ctx context.Context, s domain.Sprint
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
 		return domain.ErrSprintNoEncontrado
+	}
+	return nil
+}
+
+// CerrarConArrastre persiste el Sprint cerrado y, en la misma transacción,
+// registra cada historia no completada en historias_arrastradas con la foto
+// de sus Story Points y la devuelve al Product Backlog en estado Nueva
+// (MODELO-DE-DATOS.md §4.6). Si algo falla, no se aplica nada.
+func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("cerrar sprint %d: %w", s.ID, err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	resultado, err := tx.ExecContext(ctx, `UPDATE sprints SET estado = ? WHERE id = ?`, string(s.Estado), s.ID)
+	if err != nil {
+		return fmt.Errorf("cerrar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
+	}
+	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
+		return domain.ErrSprintNoEncontrado
+	}
+
+	if len(noCompletadas) > 0 {
+		if err := arrastrar(ctx, tx, s, noCompletadas); err != nil {
+			return fmt.Errorf("cerrar sprint %d: %w", s.ID, err)
+		}
+	}
+	return tx.Commit()
+}
+
+func arrastrar(ctx context.Context, tx *sql.Tx, s domain.Sprint, historias []domain.BacklogItem) error {
+	ids := make([]any, 0, len(historias)+2)
+	ids = append(ids, string(domain.EstadoNueva), s.ID)
+	for _, h := range historias {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES (?, ?, ?, ?)`,
+			s.ID, h.ID, s.ProyectoID, punteroAValorSQL(h.EstimacionSP),
+		); err != nil {
+			return errorDeEscritura(err)
+		}
+		ids = append(ids, h.ID)
+	}
+
+	marcadores := strings.Repeat(", ?", len(historias))[2:]
+	resultado, err := tx.ExecContext(ctx,
+		`UPDATE historias SET sprint_id = NULL, estado = ? WHERE sprint_id = ? AND id IN (`+marcadores+`)`, ids...)
+	if err != nil {
+		return err
+	}
+	n, err := resultado.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n != int64(len(historias)) {
+		return ErrHistoriaFueraDelSprint
 	}
 	return nil
 }

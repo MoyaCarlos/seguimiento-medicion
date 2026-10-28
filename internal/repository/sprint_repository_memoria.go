@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"slices"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -9,7 +10,8 @@ import (
 // SprintRepositoryEnMemoria implementa SprintRepository sin base de datos.
 // Pensado para tests de cualquier historia que dependa de Sprint (ej. HU-13).
 type SprintRepositoryEnMemoria struct {
-	sprints []domain.Sprint
+	sprints     []domain.Sprint
+	arrastradas map[int64][]domain.BacklogItem
 }
 
 func NewSprintRepositoryEnMemoria() *SprintRepositoryEnMemoria {
@@ -49,4 +51,40 @@ func (r *SprintRepositoryEnMemoria) Actualizar(_ context.Context, s domain.Sprin
 		}
 	}
 	return domain.ErrSprintNoEncontrado
+}
+
+// CerrarConArrastre valida todo antes de modificar nada, así un fallo deja el
+// Sprint y las arrastradas como estaban, igual que la transacción de SQLite.
+// No guarda historias: solo registra la foto de las arrastradas.
+func (r *SprintRepositoryEnMemoria) CerrarConArrastre(_ context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error {
+	i := slices.IndexFunc(r.sprints, func(guardado domain.Sprint) bool { return guardado.ID == s.ID })
+	if i < 0 {
+		return domain.ErrSprintNoEncontrado
+	}
+	for _, h := range noCompletadas {
+		if h.ProyectoID != s.ProyectoID {
+			return ErrIntegridadReferencial
+		}
+		if h.SprintID == nil || *h.SprintID != s.ID {
+			return ErrHistoriaFueraDelSprint
+		}
+	}
+
+	r.sprints[i] = s
+	if r.arrastradas == nil {
+		r.arrastradas = map[int64][]domain.BacklogItem{}
+	}
+	for _, h := range noCompletadas {
+		if h.EstimacionSP != nil {
+			foto := *h.EstimacionSP
+			h.EstimacionSP = &foto
+		}
+		r.arrastradas[s.ID] = append(r.arrastradas[s.ID], h)
+	}
+	return nil
+}
+
+// Arrastradas devuelve las historias registradas al cerrar el Sprint.
+func (r *SprintRepositoryEnMemoria) Arrastradas(sprintID int64) []domain.BacklogItem {
+	return r.arrastradas[sprintID]
 }
