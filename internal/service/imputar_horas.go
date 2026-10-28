@@ -35,8 +35,14 @@ func (s *ImputarHoras) Ejecutar(ctx context.Context, in ImputarHorasInput, ahora
 	if err != nil {
 		return domain.RegistroHorasDetalle{}, err
 	}
+	if historia.SprintID == nil {
+		return domain.RegistroHorasDetalle{}, domain.ErrHistoriaFueraDelSprintActivo
+	}
 	sprint, err := s.sprints.ObtenerPorID(ctx, *historia.SprintID)
 	if err != nil {
+		return domain.RegistroHorasDetalle{}, err
+	}
+	if err := domain.ValidarSprintParaImputar(historia, sprint); err != nil {
 		return domain.RegistroHorasDetalle{}, err
 	}
 	nombre, err := s.nombreDelIntegrante(ctx, historia.ProyectoID, in.IntegranteID)
@@ -54,6 +60,8 @@ func (s *ImputarHoras) Ejecutar(ctx context.Context, in ImputarHorasInput, ahora
 	return domain.RegistroHorasDetalle{RegistroHoras: registro, NombreIntegrante: nombre}, nil
 }
 
+// nombreDelIntegrante devuelve domain.ErrIntegranteAjeno si el usuario no es
+// integrante del proyecto (exista o no).
 func (s *ImputarHoras) nombreDelIntegrante(ctx context.Context, proyectoID, usuarioID int64) (string, error) {
 	integrantes, err := s.integrantes.ListarIntegrantes(ctx, proyectoID)
 	if err != nil {
@@ -64,5 +72,5 @@ func (s *ImputarHoras) nombreDelIntegrante(ctx context.Context, proyectoID, usua
 			return m.Nombre, nil
 		}
 	}
-	return "", nil
+	return "", domain.ErrIntegranteAjeno
 }
