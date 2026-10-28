@@ -68,25 +68,13 @@ func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, hora
 	if err != nil {
 		return RegistroHoras{}, err
 	}
-	actividad = strings.TrimSpace(actividad)
-	if actividad == "" {
-		return RegistroHoras{}, ValidationError{Campo: "actividad", Mensaje: "la actividad es obligatoria"}
-	}
-	if len([]rune(actividad)) > longitudMaximaActividad {
-		return RegistroHoras{}, ValidationError{Campo: "actividad", Mensaje: "la actividad no puede superar los 500 caracteres"}
-	}
-	dia, err := time.Parse(time.DateOnly, fecha)
+	actividad, err = validarActividad(actividad)
 	if err != nil {
-		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "formato esperado AAAA-MM-DD"}
+		return RegistroHoras{}, err
 	}
-	if dia.After(inicioDelDiaCivil(ahora)) {
-		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior a hoy"}
-	}
-	if dia.After(sprint.FechaFin) {
-		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior al fin del Sprint"}
-	}
-	if dia.Before(sprint.FechaInicio) {
-		return RegistroHoras{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser anterior al inicio del Sprint"}
+	dia, err := validarFecha(fecha, sprint, ahora)
+	if err != nil {
+		return RegistroHoras{}, err
 	}
 	return RegistroHoras{
 		ProyectoID: historia.ProyectoID,
@@ -97,6 +85,37 @@ func NewRegistroHoras(historia BacklogItem, sprint Sprint, usuarioID int64, hora
 		Actividad:  actividad,
 		Minutos:    minutos,
 	}, nil
+}
+
+func validarActividad(actividad string) (string, error) {
+	actividad = strings.TrimSpace(actividad)
+	if actividad == "" {
+		return "", ValidationError{Campo: "actividad", Mensaje: "la actividad es obligatoria"}
+	}
+	if len([]rune(actividad)) > longitudMaximaActividad {
+		return "", ValidationError{Campo: "actividad", Mensaje: "la actividad no puede superar los 500 caracteres"}
+	}
+	return actividad, nil
+}
+
+// validarFecha acepta desde el inicio del Sprint hasta la menor entre hoy y
+// su fin, ambas inclusive. Compara primero contra hoy, después contra el fin
+// y por último contra el inicio.
+func validarFecha(fecha string, sprint Sprint, ahora time.Time) (time.Time, error) {
+	dia, err := time.Parse(time.DateOnly, fecha)
+	if err != nil {
+		return time.Time{}, ValidationError{Campo: "fecha", Mensaje: "formato esperado AAAA-MM-DD"}
+	}
+	if dia.After(inicioDelDiaCivil(ahora)) {
+		return time.Time{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior a hoy"}
+	}
+	if dia.After(sprint.FechaFin) {
+		return time.Time{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser posterior al fin del Sprint"}
+	}
+	if dia.Before(sprint.FechaInicio) {
+		return time.Time{}, ValidationError{Campo: "fecha", Mensaje: "la fecha no puede ser anterior al inicio del Sprint"}
+	}
+	return dia, nil
 }
 
 // ValidarSprintParaImputar verifica que la historia esté asignada al Sprint y
