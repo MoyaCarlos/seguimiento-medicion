@@ -216,3 +216,7 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 - Los commits del `.feature` (T007, T031) y de sus pasos (T029, T049) usan `RED:` / `GREEN:` siguiendo el precedente de las specs 009 y 010, aunque la regla 2 de la plantilla pide commit sin prefijo para escenarios.
 - Nunca `git push` ni squash desde las tareas.
 - [P] tasks = different files, no dependencies.
+
+## Excepción de proceso
+
+Entre T007 y T029 el paquete `features` falló a propósito: los 9 escenarios del `.feature` no tenían pasos (RED del BDD) y los GREEN de dominio, repositorio, servicio y handler se verificaron por paquete con `go test ./internal/... ./cmd/...`. T029 puso los 9 escenarios en verde. Los pasos siembran con SQL directo la historia "Completada" y la "ya asignada", porque HU-11 todavía no existe; se reemplazan por el servicio cuando exista. El Sprint a planificar se crea de forma diferida porque los índices únicos de `001_esquema_base.sql` impiden dos Sprints Pendiente (o dos Activo) en un proyecto. `go test -race` no se pudo correr localmente (compilador de C de 32 bits); la prueba de las dos goroutines usa un mutex.
