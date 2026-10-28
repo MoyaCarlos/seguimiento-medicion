@@ -158,8 +158,8 @@ base garantiza la transición con un `UPDATE` condicional.
 
 - [X] T088 Actualizar spec (FR-015 y caso límite del cierre simultáneo) y corregir la Phase 8 de este archivo (tareas de COMMIT, T082-T087)
 - [X] T089 COMMIT `docs: especificar el cierre simultáneo de un Sprint y completar la fase 8 de tasks`
-- [ ] T090 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL)
-- [ ] T091 COMMIT `docs: registrar el resultado de /speckit.analyze del cierre de Sprint`
+- [X] T090 Ejecutar `/speckit.analyze` y registrar resultado y resolución en `research.md` (criterio: 0 CRITICAL)
+- [X] T091 COMMIT `docs: registrar el resultado de /speckit.analyze del cierre de Sprint`
 - [ ] T092 RED: tests de `CerrarConArrastre` contra SQLite real con dos cierres del mismo Sprint leído `Activo`, con y sin historias no completadas: el segundo devuelve el error de Sprint no `Activo` y no registra arrastradas de más
 - [ ] T093 COMMIT `RED: agregar tests de dos cierres simultáneos del mismo Sprint (fallan)`
 - [ ] T094 GREEN: `domain.ErrSprintNoActivo` (lo usa `Sprint.Cerrar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Activo'` en `CerrarConArrastre`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Activo`
