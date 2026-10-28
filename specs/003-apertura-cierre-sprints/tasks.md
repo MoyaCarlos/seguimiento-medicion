@@ -177,8 +177,8 @@ Sprint, que se garantiza con un `UPDATE` condicional como en la Phase 9.
 
 - [X] T096 Actualizar spec (FR-016 y caso límite del inicio simultáneo)
 - [X] T097 COMMIT `docs: especificar el inicio simultáneo de un Sprint`
-- [ ] T098 RED: test de `Actualizar` contra SQLite real con dos inicios del mismo Sprint leído `Pendiente`: el segundo devuelve el error de Sprint no `Pendiente` y el Goal guardado es el del primero
-- [ ] T099 COMMIT `RED: agregar test de dos inicios simultáneos del mismo Sprint (falla)`
+- [X] T098 RED: test de `Actualizar` contra SQLite real con dos inicios del mismo Sprint leído `Pendiente`: el segundo devuelve el error de Sprint no `Pendiente` y el Goal guardado es el del primero
+- [X] T099 COMMIT `RED: agregar test de dos inicios simultáneos del mismo Sprint (falla)`
 - [ ] T100 GREEN: `domain.ErrSprintNoPendiente` (lo usa `Sprint.Iniciar`) y `UPDATE sprints ... WHERE id = ? AND estado = 'Pendiente'` en `Actualizar`; con `RowsAffected` 0 distingue Sprint inexistente de Sprint no `Pendiente`
 - [ ] T101 COMMIT `GREEN: iniciar el Sprint solo si sigue Pendiente, test en verde`
 - [ ] T102 REFACTOR: quitar de `IniciarSprint` el comentario que daba la carrera por aceptada
