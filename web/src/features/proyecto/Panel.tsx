@@ -12,6 +12,10 @@ function mostrarFecha(fecha: string | null) {
 
 export function Panel() {
   const { id = '' } = useParams()
+  return <PanelDelProyecto key={id} id={id} />
+}
+
+function PanelDelProyecto({ id }: { id: string }) {
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
@@ -21,10 +25,6 @@ export function Panel() {
 
   useEffect(() => {
     let vigente = true
-
-    setProyecto(undefined)
-    setError('')
-    setCargando(true)
 
     obtenerProyecto(id)
       .then((datos) => {
@@ -44,10 +44,6 @@ export function Panel() {
 
   useEffect(() => {
     let vigente = true
-
-    setEstado(undefined)
-    setErrorEstado('')
-    setCargandoEstado(true)
 
     obtenerEstadoProyecto(id)
       .then((respuesta) => {
