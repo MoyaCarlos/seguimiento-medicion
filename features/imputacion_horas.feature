@@ -93,7 +93,11 @@ Característica: Imputación de horas trabajadas
       | Ana        | 2     | Pruebas        |
     Cuando consulto el esfuerzo real de la historia
     Entonces el total es de 4 horas
-    Y veo 3 cargas con integrante, fecha, actividad, duración y Sprint
+    Y veo estas cargas, en este orden, con la fecha de hoy y el Sprint activo:
+      | integrante | horas | actividad      |
+      | Ana        | 0.5   | Análisis       |
+      | Jimena     | 1.5   | Implementación |
+      | Ana        | 2     | Pruebas        |
 
   Escenario: Consulta del esfuerzo real de una historia sin cargas
     Cuando consulto el esfuerzo real de la historia
