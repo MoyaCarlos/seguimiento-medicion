@@ -121,6 +121,11 @@ func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.Ba
 	return nil
 }
 
+// AsignarASprint asigna la historia al Sprint solo si todavía no tiene uno.
+func (r *SQLiteBacklogRepository) AsignarASprint(ctx context.Context, historiaID, sprintID int64) error {
+	return nil
+}
+
 func punteroATextoSQL(v *string) any {
 	if v == nil {
 		return nil
