@@ -230,7 +230,7 @@ Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Implementada (falta registrar las historias arrastradas, con sus Story Points, y que el cierre sea atómico: issue #117, PR #136 abierto; también faltan la consulta de Sprints, #110, y el frontend, #26, PR #127)
+Implementada (las historias arrastradas y el cierre atómico se resolvieron con el issue #117, PR #136; el frontend con el PR #127; falta la consulta de Sprints, #110, PR #149 abierto)
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -473,7 +473,7 @@ HU-04 (proyecto y fechas), HU-05 (estado de los Sprints).
 ### Prioridad
 S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
 ### Estado
-Implementada (backend; falta el frontend: issue #41)
+Implementada (el frontend se entregó con el PR #150, issue #41; queda el fix #151, PR #152 abierto)
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
