@@ -32,3 +32,6 @@
 - [X] T019 REFACTOR: probar el cambio de proyecto por el componente real y quitar el key duplicado; `PanelLayout` ya reinicia por `id`.
 - [X] T020 COMMIT `REFACTOR: probar el cambio de proyecto por la ruta real y quitar el key duplicado`
 - [X] T021 Verificar `npm run lint`, `npm test` y `npm run build` en `web/`.
+- [X] T022 Agregar tests de los casos límite: 404 de proyecto inexistente y estado fuera de los tres esperados.
+- [X] T023 Ajustar la trazabilidad de "Consulta al cambiar de proyecto" para reflejar el remontaje por `key={id}`.
+- [X] T024 Actualizar la rama con `main` (merge de #136) antes de mergear el PR.
