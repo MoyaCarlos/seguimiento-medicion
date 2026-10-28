@@ -151,4 +151,28 @@ describe('panel del proyecto', () => {
     expect(screen.getByText('no se pudo calcular el estado')).toBeTruthy()
     expect(screen.queryByText('Planificado')).toBeNull()
   })
+
+  it('muestra el error de un proyecto inexistente y no inventa un estado', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ mensaje: 'no existe el proyecto' }), { status: 404 }),
+        ),
+      ),
+    )
+    abrir()
+
+    expect(await screen.findByText('no existe el proyecto')).toBeTruthy()
+    expect(screen.queryByText('Planificado')).toBeNull()
+    expect(screen.queryByText('Sin datos')).toBeNull()
+  })
+
+  it('muestra tal cual un estado fuera de los tres esperados', async () => {
+    responderEstado('Suspendido')
+    abrir()
+
+    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByText('Suspendido')).toBeTruthy()
+  })
 })
