@@ -3,10 +3,12 @@ Sync Impact Report
 
 Versión 1.1.0 (2026-10-28)
 - Version change: 1.0.0 → 1.1.0
-- Modified principles: III (se amplía cómo se cumple en el frontend)
-- Reason: las specs de los frontends (007, 008, 011 y 022) ya automatizan sus
-  escenarios como pruebas de componente; se formaliza para que /speckit.analyze
-  no lo marque como conflicto.
+- Modified principles: III (se amplía cómo se cumple en el frontend), VI (se agregan Vitest y Testing Library)
+- Reason: Godog no puede ejercitar la interfaz React; los frontends automatizan sus
+  escenarios como pruebas de componente (Vitest y Testing Library), con el escenario
+  en el nombre de cada prueba, como el frontend de HU-01 (spec 008, 'cumple por
+  equivalencia'). Las specs 007 y 011 declararon el Principio III como 'No aplica'.
+  Se formaliza para que /speckit.analyze no marque conflicto en los frontends siguientes.
 
 Versión 1.0.0 (2026-09-07)
 - Version change: (template, no prior content) → 1.0.0
@@ -78,7 +80,8 @@ lógica de negocio y de cálculo de métricas vive en un único lugar.
 ### VI. Stack tecnológico obligatorio
 Backend en Go (API REST). Frontend en React + Vite (SPA). Persistencia en
 SQLite embebido vía `modernc.org/sqlite` (puro Go, sin CGO). BDD con Godog.
-TDD con el paquete `testing` estándar de Go. Reportes en PDF con Maroto
+TDD con el paquete `testing` estándar de Go. Pruebas del frontend con Vitest y
+Testing Library. Reportes en PDF con Maroto
 (puro Go, sin dependencias externas). No se introduce un dependencia nueva
 fuera de este stack sin que el equipo lo decida explícitamente.
 
@@ -97,7 +100,7 @@ son negociables bajo presión de tiempo.
 Branches: `feature/HU-XX-nombre-corto`, `fix/nombre-corto`. Ningún push
 directo a `main`: todo cambio entra por Pull Request, con mínimo 1
 aprobación de otro integrante, y el PR debe pasar los tests (Godog +
-`go test`) antes de mergear. Una historia se considera terminada (Definition
+`go test` en el backend; Vitest en el frontend) antes de mergear. Una historia se considera terminada (Definition
 of Done) cuando: el código está mergeado a `main`; los tests unitarios y el
 escenario BDD correspondiente (en el frontend, sus pruebas de componente)
 están en verde; la especificación SDD de la
