@@ -48,7 +48,7 @@ type escenarioHorasHTTP struct {
 
 // nuevoEscenarioHorasHTTP siembra la historia 3 del proyecto 1 en un Sprint
 // Activo que empezó hace 7 días y termina dentro de 7, y a Ana (usuario 2)
-// como integrante.
+// como integrante. La historia 4 está en el Product Backlog.
 func nuevoEscenarioHorasHTTP(t *testing.T) escenarioHorasHTTP {
 	t.Helper()
 	sprints := repository.NewSprintRepositoryEnMemoria()
@@ -61,6 +61,7 @@ func nuevoEscenarioHorasHTTP(t *testing.T) escenarioHorasHTTP {
 	}
 	historias := &stubBacklogRepository{historias: map[int64]domain.BacklogItem{
 		3: {ID: 3, ProyectoID: 1, Estado: domain.EstadoNueva, SprintID: &sprint.ID},
+		4: {ID: 4, ProyectoID: 1, Estado: domain.EstadoNueva},
 	}}
 	integrantes := &stubProjectRepository{listaMiembros: []domain.Member{{UserID: 2, ProjectID: 1, Nombre: "Ana"}}}
 	horas := &stubRegistroHorasRepository{}
@@ -120,5 +121,68 @@ func TestHorasHandler_Imputar_HorasConDecimales(t *testing.T) {
 	}
 	if resp.Minutos != 90 || resp.Horas != 1.5 {
 		t.Errorf("se esperaban 90 minutos y 1.5 horas, se obtuvo %d y %v", resp.Minutos, resp.Horas)
+	}
+}
+
+func TestHorasHandler_Imputar_Errores(t *testing.T) {
+	hoy := hoyCivil().Format(time.DateOnly)
+	cuerpo := func(integranteID, actividad, horas string) string {
+		return `{"integrante_id": ` + integranteID + `, "fecha": "` + hoy + `", "actividad": "` + actividad + `", "horas": ` + horas + `}`
+	}
+	casos := []struct {
+		nombre, id, cuerpo string
+		status             int
+		campo, mensaje     string
+	}{
+		{"id no numérico", "abc", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "id", ""},
+		{"id cero", "0", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "id", ""},
+		{"historia inexistente con cuerpo inválido", "999", `no es json`, nethttp.StatusNotFound, "", "historia no encontrada"},
+		{"cuerpo que no es JSON", "3", `no es json`, nethttp.StatusBadRequest, "", "JSON inválido"},
+		{"horas como texto no numérico", "3", cuerpo("2", "x", `"abc"`), nethttp.StatusBadRequest, "horas", "las horas deben ser un número"},
+		{"horas ausentes", "3", `{"integrante_id": 2, "fecha": "` + hoy + `", "actividad": "x"}`, nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
+		{"horas nulas", "3", cuerpo("2", "x", "null"), nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
+		{"horas negativas", "3", cuerpo("2", "x", "-2"), nethttp.StatusBadRequest, "horas", "las horas deben ser mayores que cero"},
+		{"actividad vacía", "3", cuerpo("2", "", "1"), nethttp.StatusBadRequest, "actividad", "la actividad es obligatoria"},
+		{"integrante ajeno", "3", cuerpo("99", "x", "1"), nethttp.StatusBadRequest, "integrante_id", "el integrante no pertenece al proyecto de la historia"},
+		{"historia fuera del Sprint activo", "4", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "historia_id", "solo se imputan horas a historias del Sprint activo"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			e := nuevoEscenarioHorasHTTP(t)
+
+			rec := e.imputar(c.id, c.cuerpo)
+
+			if rec.Code != c.status {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
+			}
+			var resp errorResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("respuesta JSON inválida: %v", err)
+			}
+			if resp.Campo != c.campo || (c.mensaje != "" && resp.Mensaje != c.mensaje) {
+				t.Errorf("se esperaba campo %q y mensaje %q, se obtuvo %+v", c.campo, c.mensaje, resp)
+			}
+			if len(e.horas.registros) != 0 {
+				t.Errorf("no se debía registrar ninguna carga, hay %d", len(e.horas.registros))
+			}
+		})
+	}
+}
+
+func TestHorasHandler_Imputar_HorasComoTextoNumerico(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	hoy := hoyCivil().Format(time.DateOnly)
+
+	rec := e.imputar("3", `{"integrante_id": 2, "fecha": "`+hoy+`", "actividad": "Implementar", "horas": "4"}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp registroHorasResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Minutos != 240 {
+		t.Errorf("se esperaban 240 minutos, se obtuvo %d", resp.Minutos)
 	}
 }
