@@ -203,10 +203,8 @@ La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP
     migración; ninguno va sin el otro.
   - El `data-model.md` de cada spec **enlaza** a la sección del documento en lugar de
     redefinir tablas.
-  - **Hasta que se mergee #107, `main` sigue con el esquema viejo** (tablas y columnas en
-    inglés): el documento describe el destino y esa diferencia es esperada, no se frena por
-    ella. Cualquier otra contradicción entre el documento y el código se frena y se avisa;
-    no se elige uno en silencio.
+  - **Contradicción entre el documento y el código:** se frena y se avisa; no se elige uno
+    en silencio.
   - **Ante cualquier duda sobre el modelo de datos, se pregunta al Scrum Master o al
     equipo antes de seguir.** Vale para personas y para agentes de IA: no se completa un
     hueco, no se agrega ni se cambia una tabla, columna o restricción y no se resuelve una
