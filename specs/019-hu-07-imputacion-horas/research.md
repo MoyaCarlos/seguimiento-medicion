@@ -27,7 +27,10 @@ Este documento registra las decisiones técnicas tomadas para el diseño.
   (`0.1 * 60` no da `6` exacto en binario). `big.Rat` es de la biblioteca estándar y
   representa `0.1` como `1/10`, así que `1,5 h → 90` y `0,01 h → 0,6` (se rechaza) son
   exactos. Recibir texto permite además que "texto no numérico" (Escenario 2) sea un error
-  sobre `horas` evaluado en el orden de la spec, y no un "JSON inválido".
+  sobre `horas` evaluado en el orden de la spec, y no un "JSON inválido". El regex existe
+  porque `big.Rat.SetString` también acepta fracciones (`1/2`) y notación exponencial
+  (`1e1`): las dos se rechazan a propósito como "no es un número", porque la spec habla de
+  horas con decimales y el formulario (#63) envía solo eso.
 - **Alternatives considered**: `float64` y redondeo (acepta en silencio 0,01 h como 1 min o
   0 min; contradice la Clarification de precisión); recibir minutos en la API (traslada la
   conversión al frontend y la duplica, rompe DRY; la spec dice que se ingresan horas).
@@ -99,8 +102,9 @@ Este documento registra las decisiones técnicas tomadas para el diseño.
   local a las 00:00 UTC, con el mismo helper `inicioDelDiaCivil` que usa HU-13. La fecha de
   la carga y las del Sprint ya están a las 00:00 UTC (`time.DateOnly`), así que se comparan
   por día. Rango aceptado: `inicio ≤ fecha ≤ min(hoy, fin)`.
-- **Rationale**: misma convención que el estado del proyecto; los tests fijan "hoy" sin leer
-  el reloj (Assumptions de la spec).
+- **Rationale**: misma convención que el estado del proyecto. Los tests de dominio y de
+  service pasan un `ahora` fijo; los del handler y los BDD, que pasan por `time.Now()`, arman
+  las fechas relativas al día actual (R11).
 - **Alternatives considered**: `time.Now().UTC()` (en Argentina, después de las 21 h cambiaría
   de día antes de tiempo).
 

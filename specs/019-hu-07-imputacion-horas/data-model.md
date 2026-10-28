@@ -62,7 +62,8 @@ Los textos son orientativos; los fija el test RED de cada caso.
 
 ### `RegistroHorasDetalle` (vista de lectura)
 
-`RegistroHoras` + `NombreIntegrante string`, armado con `JOIN usuarios`. Igual que
+`RegistroHoras` + `NombreIntegrante string`. Al listar se arma con `JOIN usuarios`; al
+imputar, con el `Nombre` del `Member` que encontró el service. Igual que
 `domain.Member`, es una vista para mostrar; no se construye por factory.
 
 ### `EsfuerzoReal` (resultado del caso de uso, no se guarda)
