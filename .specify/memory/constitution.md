@@ -1,5 +1,10 @@
 <!--
 Sync Impact Report
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: III (se amplía cómo se cumple en el frontend)
+- Reason: las specs de los frontends (007, 008, 011 y 022) ya automatizan sus
+  escenarios como pruebas de componente; se formaliza para que /speckit.analyze
+  no lo marque como conflicto.
 - Version change: (template, no prior content) → 1.0.0
 - Modified principles: none (all 6 are new; template had 5 placeholder slots, one added)
 - Added sections: Core Principles I-VI, Contexto Académico y Criterios de Evaluación,
@@ -43,6 +48,12 @@ Given-When-Then (Gherkin) automatizados con Godog, en `/features`. Los
 escenarios cubren casos normales, alternativos, límite y de error — no solo
 el camino feliz.
 
+Para el frontend (React), donde Godog no puede ejercitar la interfaz, los
+escenarios Given-When-Then de la spec se automatizan como pruebas de
+componente con Vitest y Testing Library, con el escenario en el nombre de
+cada prueba. Los comportamientos de la API que el frontend consume siguen
+cubiertos con Godog en `/features`.
+
 ### IV. Arquitectura Clean/Hexagonal
 La dependencia siempre apunta hacia adentro: `internal/domain` no conoce
 SQLite ni HTTP ni ningún detalle de infraestructura. Patrones aplicados:
@@ -84,7 +95,8 @@ directo a `main`: todo cambio entra por Pull Request, con mínimo 1
 aprobación de otro integrante, y el PR debe pasar los tests (Godog +
 `go test`) antes de mergear. Una historia se considera terminada (Definition
 of Done) cuando: el código está mergeado a `main`; los tests unitarios y el
-escenario BDD correspondiente están en verde; la especificación SDD de la
+escenario BDD correspondiente (en el frontend, sus pruebas de componente)
+están en verde; la especificación SDD de la
 historia está escrita en `specs/`; fue revisada y aprobada por al menos otro
 integrante; y no tiene defectos abiertos bloqueantes.
 
@@ -100,4 +112,4 @@ PATCH para aclaraciones o correcciones de redacción. El Scrum Master
 verifica cumplimiento de esta constitución antes de aprobar cada Pull
 Request.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-10-01
+**Version**: 1.1.0 | **Ratified**: 2026-09-07 | **Last Amended**: 2026-10-28

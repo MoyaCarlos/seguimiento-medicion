@@ -62,7 +62,8 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 ### Definition of Done
 Una historia se considera terminada cuando:
 - Código implementado y mergeado a `main`.
-- Tests unitarios (TDD) y escenario BDD correspondiente, ambos en verde.
+- Tests unitarios (TDD) y escenario BDD correspondiente (en el frontend, sus pruebas
+  de componente), ambos en verde.
 - Especificación SDD de la historia escrita en `specs/`.
 - Revisada y aprobada por al menos otro integrante (PR).
 - Sin defectos abiertos bloqueantes para esa historia.
@@ -98,6 +99,11 @@ issue `bug` y se repara en su propia rama `fix/`.
 ### BDD (Behavior-Driven Development)
 - **Godog** (Gherkin) para automatizar escenarios Given-When-Then.
 - Archivos `.feature` en `/features`, con casos normales, alternativos, límite y de error.
+- Para el frontend (React), donde Godog no puede ejercitar la interfaz, los
+  escenarios Given-When-Then de la spec se automatizan como pruebas de componente
+  con Vitest y Testing Library, con el escenario en el nombre de cada prueba. Los
+  comportamientos de la API que el frontend consume siguen cubiertos con Godog en
+  `/features`.
 - No hay comando `/speckit.*` dedicado a esto — se pide directo al agente, después
   de `/speckit.tasks`/`/speckit.analyze` y antes de `/speckit.implement`. Prompt de
   referencia (usado en HU-01, un archivo `.feature` por historia):
