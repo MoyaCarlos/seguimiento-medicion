@@ -15,6 +15,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioListado(ctx)     // HU-04 (listado)
 			InitializeScenarioEstado(ctx, sc)  // HU-13
 			InitializeScenarioBacklog(ctx, sc) // HU-15
+			InitializeScenarioHoras(ctx, sc)   // HU-07
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
