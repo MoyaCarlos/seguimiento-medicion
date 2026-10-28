@@ -58,6 +58,18 @@ func (h *HorasHandler) Imputar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarEsfuerzo atiende GET /backlog/{id}/horas.
 func (h *HorasHandler) ConsultarEsfuerzo(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	esfuerzo, err := h.consultar.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuestaEsfuerzo(esfuerzo))
 }
 
 // textoDeHoras extrae el texto de horas sin validarlo (lo valida el dominio):

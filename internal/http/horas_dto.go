@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
 // imputarHorasRequest lee horas como json.RawMessage para pasar su texto al
@@ -47,4 +48,17 @@ type esfuerzoRealResponse struct {
 	TotalMinutos int                     `json:"total_minutos"`
 	TotalHoras   float64                 `json:"total_horas"`
 	Registros    []registroHorasResponse `json:"registros"`
+}
+
+func aRespuestaEsfuerzo(e service.EsfuerzoReal) esfuerzoRealResponse {
+	registros := make([]registroHorasResponse, 0, len(e.Registros))
+	for _, r := range e.Registros {
+		registros = append(registros, aRespuestaHoras(r))
+	}
+	return esfuerzoRealResponse{
+		HistoriaID:   e.HistoriaID,
+		TotalMinutos: e.TotalMinutos,
+		TotalHoras:   float64(e.TotalMinutos) / 60,
+		Registros:    registros,
+	}
 }
