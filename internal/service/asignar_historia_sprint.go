@@ -19,5 +19,20 @@ func NewAsignarHistoriaASprint(historias repository.AsignacionHistoriaRepository
 
 // Ejecutar asigna la historia al Sprint y devuelve la historia con su SprintID.
 func (s *AsignarHistoriaASprint) Ejecutar(ctx context.Context, historiaID, sprintID int64) (domain.BacklogItem, error) {
-	return domain.BacklogItem{}, nil
+	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	sprint, err := s.sprints.ObtenerPorID(ctx, sprintID)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	if err := domain.ValidarAsignacion(historia, sprint); err != nil {
+		return domain.BacklogItem{}, err
+	}
+	if err := s.historias.AsignarASprint(ctx, historiaID, sprintID); err != nil {
+		return domain.BacklogItem{}, err
+	}
+	historia.SprintID = &sprintID
+	return historia, nil
 }
