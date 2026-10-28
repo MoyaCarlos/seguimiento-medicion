@@ -86,18 +86,18 @@ Característica: Imputación de horas trabajadas
 
   Escenario: Consulta del esfuerzo real con varias cargas
     Dado que "Jimena" es integrante del proyecto
-    Y que la historia tiene estas cargas:
-      | integrante | horas | actividad      |
-      | Ana        | 0.5   | Análisis       |
-      | Jimena     | 1.5   | Implementación |
-      | Ana        | 2     | Pruebas        |
+    Y que la historia tiene estas cargas, cargadas en este orden:
+      | integrante | horas | actividad      | fecha |
+      | Ana        | 0.5   | Análisis       | hoy   |
+      | Jimena     | 1.5   | Implementación | ayer  |
+      | Ana        | 2     | Pruebas        | hoy   |
     Cuando consulto el esfuerzo real de la historia
     Entonces el total es de 4 horas
-    Y veo estas cargas, en este orden, con la fecha de hoy y el Sprint activo:
-      | integrante | horas | actividad      |
-      | Ana        | 0.5   | Análisis       |
-      | Jimena     | 1.5   | Implementación |
-      | Ana        | 2     | Pruebas        |
+    Y veo estas cargas en este orden, por fecha y luego por orden de carga, todas en el Sprint activo:
+      | integrante | horas | actividad      | fecha |
+      | Jimena     | 1.5   | Implementación | ayer  |
+      | Ana        | 0.5   | Análisis       | hoy   |
+      | Ana        | 2     | Pruebas        | hoy   |
 
   Escenario: Consulta del esfuerzo real de una historia sin cargas
     Cuando consulto el esfuerzo real de la historia
