@@ -111,8 +111,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 ### Escenarios BDD de US2
 
-- [ ] T030 [US2] Agregar a features/asignar_historias_sprint.feature exactamente 3 escenarios, uno por Acceptance Scenario de US2 en spec.md: US2.1 Sprint con historias → solo las de ese Sprint, en orden M, S, C, W y por creación (tabla con título y prioridad, incluyendo historias de otro Sprint que no deben aparecer; el Sprint consultado es el `Pendiente` y el "otro Sprint" es el `Activo` del mismo proyecto, o uno de otro proyecto, porque el índice único `sprints_un_pendiente_por_proyecto` impide dos `Pendiente` en el mismo proyecto); US2.2 Sprint sin historias → Sprint Backlog vacío, sin error; US2.3 Sprint inexistente → "sprint no encontrado". Actualizar el comentario de categorías (normal: US2.1; límite: US2.2; error: US2.3). Con los pasos nuevos sin implementar, `go test ./features/` FALLA
-- [ ] T031 [US2] COMMIT `RED: agregar escenarios BDD de consulta del Sprint Backlog (fallan)`
+- [X] T030 [US2] Agregar a features/asignar_historias_sprint.feature exactamente 3 escenarios, uno por Acceptance Scenario de US2 en spec.md: US2.1 Sprint con historias → solo las de ese Sprint, en orden M, S, C, W y por creación (tabla con título y prioridad, incluyendo historias de otro Sprint que no deben aparecer; el Sprint consultado es el `Pendiente` y el "otro Sprint" es el `Activo` del mismo proyecto, o uno de otro proyecto, porque el índice único `sprints_un_pendiente_por_proyecto` impide dos `Pendiente` en el mismo proyecto); US2.2 Sprint sin historias → Sprint Backlog vacío, sin error; US2.3 Sprint inexistente → "sprint no encontrado". Actualizar el comentario de categorías (normal: US2.1; límite: US2.2; error: US2.3). Con los pasos nuevos sin implementar, `go test ./features/` FALLA
+- [X] T031 [US2] COMMIT `RED: agregar escenarios BDD de consulta del Sprint Backlog (fallan)`
 
 ### Persistencia: orden del Sprint Backlog
 
