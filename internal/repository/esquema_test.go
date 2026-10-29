@@ -134,6 +134,25 @@ var esquemaEsperado = map[string]tablaEsperada{
 			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
 		},
 	},
+	// §4.8 registros_horas
+	"registros_horas": {
+		columnas: []columnaEsperada{
+			{nombre: "id", tipo: "INTEGER", pk: 1},
+			{nombre: "proyecto_id", tipo: "INTEGER", notNull: true},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true},
+			{nombre: "usuario_id", tipo: "INTEGER", notNull: true},
+			{nombre: "sprint_id", tipo: "INTEGER", notNull: true},
+			{nombre: "fecha", tipo: "TEXT", notNull: true},
+			{nombre: "actividad", tipo: "TEXT", notNull: true},
+			{nombre: "minutos", tipo: "INTEGER", notNull: true},
+			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+		},
+		fks: []string{
+			"historia_id,proyecto_id -> historias(id,proyecto_id)",
+			"proyecto_id,usuario_id -> integrantes(proyecto_id,usuario_id)",
+			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
+		},
+	},
 	// §4.7 rondas_votacion
 	"rondas_votacion": {
 		columnas: []columnaEsperada{
@@ -198,8 +217,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3}) {
-		t.Errorf("se esperaban las versiones 1, 2 y 3 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4}) {
+		t.Errorf("se esperaban las versiones 1, 2, 3 y 4 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -347,6 +366,7 @@ const (
 	insertarSprint   = "INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES "
 	insertarHistoria = "INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion) VALUES "
 	insertarArrastre = "INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES "
+	insertarHoras    = "INSERT INTO registros_horas (proyecto_id, historia_id, usuario_id, sprint_id, fecha, actividad, minutos, creado_en) VALUES "
 )
 
 // Datos base de cada caso: proyectos 1 y 2, usuario 1 (Scrum Master del 1),
@@ -472,6 +492,25 @@ func TestEsquema_Filas(t *testing.T) {
 		{"historias_arrastradas.sprint_id NULL", insertarArrastre + "(NULL, 100, 1, NULL)", violaNotNull},
 		{"historias_arrastradas.historia_id NULL", insertarArrastre + "(11, NULL, 1, NULL)", violaNotNull},
 		{"historias_arrastradas.proyecto_id NULL", insertarArrastre + "(11, 100, NULL, NULL)", violaNotNull},
+
+		// §4.8 registros_horas
+		{"horas con 60 minutos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", aceptada},
+		{"horas con 0 minutos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 0, " + ahora + ")", violaCheck},
+		{"horas con minutos negativos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', -30, " + ahora + ")", violaCheck},
+		{"horas con minutos NULL", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', NULL, " + ahora + ")", violaNotNull},
+		{"horas con minutos decimales", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 1.5, " + ahora + ")", violaCheck},
+		{"horas con minutos texto", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 'abc', " + ahora + ")", violaCheck},
+		{"horas fecha sin cero", insertarHoras + "(1, 101, 1, 10, '2026-10-9', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha basura", insertarHoras + "(1, 101, 1, 10, 'basura', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha inexistente", insertarHoras + "(1, 101, 1, 10, '2026-02-30', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha válida", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", aceptada},
+		{"horas de historia de otro proyecto",
+			"INSERT INTO historias (id, proyecto_id, titulo, descripcion, prioridad, estado) VALUES (200, 2, 't', 'd', 'M', 'Nueva');" +
+				insertarHoras + "(1, 200, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+		{"horas en Sprint de otro proyecto", insertarHoras + "(1, 101, 1, 21, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+		{"horas de usuario que no es integrante",
+			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + ");" +
+				insertarHoras + "(1, 101, 2, 10, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
 
 		// D9: sin cascadas
 		{"borrar proyecto con historias", "DELETE FROM proyectos WHERE id = 1", violaFK},

@@ -30,6 +30,8 @@
 >   por primera vez (la historia estaba sin estimar) sí se permite.
 > - Los estados derivados (como el estado del proyecto) y las métricas se calculan al
 >   consultar; no se guardan.
+> - El enunciado habla de registrar esfuerzo "para cada historia o tarea": en este
+>   proyecto no existe la entidad Tarea y el esfuerzo (HU-07) se registra por historia.
 > - Todo requisito mínimo del enunciado tiene una historia dueña. Las historias
 >   14 y 15 se agregaron para cubrir requisitos que ninguna historia tenía.
 
@@ -162,7 +164,7 @@ Nueva
 ### Valor de Negocio
 21 (Fibonacci)
 ### Estimación
-8 Story Points (cálculos de dominio, sin UI — se testea con TDD directo sobre `/internal/domain`). Pendiente de confirmar con el profesor: de dónde salen las "horas estimadas" (el enunciado no lo define); mientras tanto rige el parámetro del proyecto.
+8 Story Points (cálculos de dominio, sin UI — se testea con TDD directo sobre `/internal/domain`). **Decidido por el equipo (2026-10-28):** el enunciado no define de dónde salen las "horas estimadas" y el equipo votó la opción A: horas estimadas = Story Points × "horas por Story Point" fijo del proyecto. Si el profesor aclara otra fuente, se ajusta con un fix.
 
 ---
 
@@ -572,3 +574,41 @@ backlog del Sprint 2 y se reparan cada uno en su propia rama `fix/<n°-issue>-no
 **Decidido por el equipo (2026-10-14), no es un defecto:** #20. Un Sprint se puede iniciar
 con fechas de inicio y de fin anteriores a hoy, porque el equipo pudo haberlo empezado de
 hecho y olvidar declararlo en la aplicación. No se restringe; solo el fin debe ser posterior al inicio.
+
+---
+
+# FIXES DEL SPRINT 2 INCLUIDOS EN EL SPRINT 3
+
+Defectos encontrados durante el Sprint 2 (que terminó el 2026-10-26) y deudas que dejaron
+sus reviews. Cada uno tiene su issue y se repara en su propia rama `fix/<n°-issue>-nombre`
+(ver la convención de Git en `AGENTS.md`); los que se mergean después de `v0.2.0` reciben
+un tag `v0.2.P`.
+
+| Issue | Fix | Historia | Estado |
+|---|---|---|---|
+| #117 | El cierre de un Sprint registra las historias arrastradas con sus Story Points, de forma atómica (migración 002) | HU-05 | Mergeado (PR #136, `v0.2.1`) |
+| #151 | Completar la spec y los tests del estado del proyecto en el panel | HU-13 | Mergeado (PR #152, `v0.2.2`) |
+| #145 | Dos cierres simultáneos de un Sprint pasaban la validación | HU-05 | Mergeado (PR #155, `v0.2.3`) |
+| #158 | Dos inicios simultáneos del mismo Sprint pasaban la validación | HU-05 | Mergeado (PR #160, `v0.2.4`) |
+| #128 | Con el backend apagado, el cliente compartido muestra «502» en vez del error de conexión | frontend base | Abierto, tarea libre |
+| #129 | Los Sprints se numeran de forma global y no por proyecto | HU-05 | Abierto, tarea libre |
+| #130 | `docs/curl-frontend-sprint-2.md` no tiene el comando para cerrar un Sprint | transversal | Abierto, tarea libre |
+| #137 | Ajustes al workflow de CI sugeridos en la review del PR #133 | transversal | Abierto (Carlos) |
+| #146 | El paso BDD del cierre con arrastre usa SQL directo en vez de `EditarHistoria` | HU-05 | Abierto, Sprint 4 |
+| #159 | Documentar el cierre condicional en `MODELO-DE-DATOS.md` §4.6 y en el plan de la spec 003 | HU-05 | Abierto, Sprint 4 |
+
+---
+
+# MEJORAS TÉCNICAS Y DE USABILIDAD (NO SON HISTORIAS DE USUARIO)
+
+Trabajo que no agrega requisitos del enunciado y por eso no es una historia, pero tiene
+issue y entra en los Sprints.
+
+| Issue | Mejora | Estado |
+|---|---|---|
+| #139 | Despliegue continuo en Render: un servicio con la imagen Docker, que se actualiza en cada merge a `main` | Abierto (Carlos) |
+| #144 | Botón «Cargar datos de prueba» (endpoint de demo y pantalla), para el servicio de Render, que no conserva la base | Abierto (Carlos) |
+| #148 | Navegar entre proyectos desde la interfaz (lista y selector) | Abierto (Jimena) |
+| #147 | Mostrar con Markdown la descripción y los criterios de aceptación de las historias | Abierto, tarea libre (depende de #98) |
+| #140 | Test de las rutas HTTP y del cableado de `cmd/api/main.go` | Abierto, tarea libre |
+| #141 | Eliminar `Inicio.tsx`, que ningún archivo importa | Abierto, tarea libre |

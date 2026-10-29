@@ -18,6 +18,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioConsultarSprints(ctx) // HU-05 (consulta)
 			InitializeScenarioAsignacion(ctx, sc)   // HU-06
 			InitializeScenarioVotacion(ctx, sc)     // HU-02
+			InitializeScenarioHoras(ctx, sc)        // HU-07
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

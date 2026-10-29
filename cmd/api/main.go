@@ -56,6 +56,14 @@ func main() {
 		sprintRepo,
 	)
 
+	horasRepo := repository.NewSQLiteRegistroHorasRepository(db)
+	imputarHoras := service.NewImputarHoras(backlogRepo, sprintRepo, proyectos, horasRepo)
+	horasHandler := apihttp.NewHorasHandler(
+		imputarHoras,
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewConsultarEsfuerzoReal(backlogRepo, horasRepo),
+	)
+
 	votaciones := repository.NewSQLiteVotacionRepository(db)
 	votacionHandler := apihttp.NewVotacionHandler(
 		service.NewObtenerHistoria(backlogRepo),
@@ -72,6 +80,8 @@ func main() {
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
+	mux.HandleFunc("GET /backlog/{id}/horas", horasHandler.ConsultarEsfuerzo)
 	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
 	mux.HandleFunc("POST /backlog/{id}/votacion", votacionHandler.Iniciar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
