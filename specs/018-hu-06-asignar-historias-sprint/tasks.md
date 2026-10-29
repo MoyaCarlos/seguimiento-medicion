@@ -136,8 +136,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 - [X] T043 [US2] COMMIT `RED: agregar tests del handler GET /sprints/{id}/backlog (falla)`
 - [X] T044 [US2] GREEN: implementar `ConsultarBacklog` en internal/http/sprint_handler.go: `idDeRuta` → `consultarBacklog.Ejecutar` → `escribirError` / 200 con las historias mapeadas con `aRespuesta` (de internal/http/backlog_dto.go) — `go test ./...` en verde
 - [X] T045 [US2] COMMIT `GREEN: implementar handler GET /sprints/{id}/backlog, test en verde`
-- [ ] T046 [US2] Cablear en cmd/api/main.go: construir `service.NewConsultarSprintBacklog(sprintRepo, backlogRepo)`, pasarlo a `NewSprintHandler` (reemplazar el `nil` de T042) y registrar `mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)` junto a las rutas de `/sprints`
-- [ ] T047 [US2] COMMIT `Cablear GET /sprints/{id}/backlog en cmd/api`
+- [X] T046 [US2] Cablear en cmd/api/main.go: construir `service.NewConsultarSprintBacklog(sprintRepo, backlogRepo)`, pasarlo a `NewSprintHandler` (reemplazar el `nil` de T042) y registrar `mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)` junto a las rutas de `/sprints`
+- [X] T047 [US2] COMMIT `Cablear GET /sprints/{id}/backlog en cmd/api`
 
 ### BDD de US2 en verde
 
