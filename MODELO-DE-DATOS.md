@@ -159,7 +159,7 @@ erDiagram
 Notación: **PK** clave primaria, **UK** única, **FK** clave foránea, `?` admite `NULL`.
 "Existe hoy" indica si ya está en `main` (con otro nombre si corresponde).
 
-### 4.1 `proyectos` — HU-04, HU-13, HU-03 (existe hoy como `projects`)
+### 4.1 `proyectos` — HU-04, HU-13, HU-03 (antes `projects`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -176,7 +176,7 @@ Restricciones de base:
 - `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12)
 - `CHECK (fecha_inicio IS NULL OR fecha_fin IS NULL OR fecha_fin > fecha_inicio)` — fin **estrictamente** posterior (#100). Los bordes inclusivos de HU-13 son una regla de *consulta*, no de almacenamiento.
 
-### 4.2 `usuarios` — HU-04 (existe hoy como `users`)
+### 4.2 `usuarios` — HU-04 (antes `users`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -187,7 +187,7 @@ Restricciones de base:
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
-### 4.3 `integrantes` — HU-04 (existe hoy como `project_members`)
+### 4.3 `integrantes` — HU-04 (antes `project_members`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -198,7 +198,7 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
 Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Hoy no se impone un único Scrum Master por proyecto (ver D4).
 
-### 4.4 `historias` — HU-01, HU-15, HU-06, HU-11, HU-14 (existe hoy como `backlog_items`)
+### 4.4 `historias` — HU-01, HU-15, HU-06, HU-11, HU-14 (antes `backlog_items`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -222,7 +222,7 @@ Restricciones de base:
 
 Orden del Product Backlog (HU-15): `sprint_id IS NULL`, por prioridad `M, S, C, W` y luego `id`. El orden alfabético de `prioridad` **no** sirve (`C` < `M` < `S` < `W`): se ordena con un `CASE` explícito. El "orden de creación" es `id`; por eso no hace falta `creado_en`.
 
-### 4.5 `sprints` — HU-05 (existe hoy, mismo nombre)
+### 4.5 `sprints` — HU-05 (conserva el nombre)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -440,7 +440,7 @@ están cerradas.
 | **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. | No imponerla hasta que una historia la pida. | HU-04 |
 | **D5** | Ninguna historia cubre sacar una historia de un Sprint o pasarla a otro. El modelo lo permitiría con un `UPDATE`, sin reglas. | Fuera de alcance; si HU-06 lo necesita, lo define en su spec. | HU-06 |
 | **D6** | HU-08 refinada ya no tiene "título" del defecto (la versión original sí). | Seguir el backlog refinado: solo descripción. | HU-08 |
-| **D7** | Origen de las "horas estimadas" (pendiente del profesor). | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
+| **D7** | **Cerrada el 2026-10-28** por el equipo (votó la opción A; si el profesor aclara otra fuente, se ajusta). Origen de las "horas estimadas". | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
 | **D8** | Tipo y granularidad de `horas`: decimales (1.5 h) o minutos enteros; tope por carga. **Cerrada el 2026-10-13: minutos enteros.** El tope por carga es una regla del dominio, no de la base: lo fija la spec de HU-07. | Guardar **minutos enteros** (`minutos INTEGER`) y convertir a horas solo al mostrar. Verificado: el `SUM` de SQLite compensa y suma diez cargas de 0,1 h exactamente 1.0, así que el problema no es la suma en la base; es que `0.1 + 0.2` ya no es `0.3` en `float64` (en SQL, `SUM(0.1, 0.2) = 0.3` da falso) y que en Go `0.1 + 0.2 + 0.3` da `0.6000000000000001`, con lo que la desviación de HU-03 entre horas reales y estimadas deja de ser exactamente cero. Con minutos enteros las sumas y comparaciones son exactas. Para que la base garantice que son enteros, la columna lleva `CHECK (typeof(minutos) = 'integer' AND minutos > 0)` (§4.8). El tope por carga lo define la spec de HU-07. | HU-07, 03 |
 | **D9** | `ON DELETE`: ninguna historia borra datos. | Comportamiento por defecto de SQLite (`NO ACTION`) en todo, sin cascadas ni `RESTRICT` explícito (§2). | todas |
 | **D10** | **Cerrada el 2026-10-13** (clarify de HU-15, #94): texto libre opcional, hasta 2000 caracteres, el mismo límite que la descripción; vacío o solo espacios se guarda como `NULL`. Cómo se guardan los criterios de aceptación. | Una columna de texto libre; una tabla hija es YAGNI hasta que una historia pida marcarlos uno por uno. | HU-15 |
@@ -546,6 +546,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    `horas_por_story_point` aceptaba `'abc'`; con el `typeof`, 18 de 18 con el resultado esperado. Si el documento y la migración divergen, ese test falla.
 
 ## 10. Cambios sobre lo que ya está en `main`
+
+> **Histórico:** esta adopción ya se hizo (issue #107, PR #124, migración 001). Se conserva como registro de cómo se decidió; el esquema vigente es el de §4.
 
 ### Encuadre de proceso
 

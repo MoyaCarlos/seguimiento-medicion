@@ -5,16 +5,21 @@ proyecto sin depender de tener un agente de IA disponible todo el tiempo.
 Todo lo que menciona acá está versionado en el repo — si dudás de algo,
 la fuente completa está en los links de la sección [Dónde está todo](#dónde-está-todo).
 
-## Dónde estamos (al 28/09/2026)
+## Dónde estamos (al 28/10/2026)
 
-- **Sprint 0 (Preparación): cerrado.** Repo, tablero, Spec Kit, esqueleto de
-  carpetas, todo commiteado.
-- **Product Backlog: 13 historias** en `docs/PRODUCT-BACKLOG.md`, cargadas
-  como Issues #1-#13 en el tablero.
-- **Sprint 1 (MVP): en definición** — reunión pendiente/en curso para repartir
-  entre los 4: HU-04, HU-01, HU-13, HU-05 (propuesta, a confirmar en la reunión).
-- **Pendiente sin resolver todavía**: la fecha de entrega final del
-  cuatrimestre. Sin eso, el calendario de Sprints 2-4 sigue siendo tentativo.
+- **Sprint 0 (Preparación) y Sprint 1 (MVP): cerrados.** El Sprint 1 terminó el
+  5-oct (`v0.1.0`).
+- **Sprint 2 (La interfaz): cerrado** el 26-oct (`v0.2.0`). Los fixes que se
+  mergean después reciben `v0.2.P`.
+- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 9-nov (el 9 es
+  feriado). El tag `v0.3.0` va el 10-nov. Compromiso firme de 16 SP: HU-02,
+  HU-06 y HU-11; lo demás es stretch.
+- **Sprint 4 (Cierre y entrega final)**: del 10 al 23-nov, con la presentación
+  pedida para el 16-nov.
+- **Product Backlog: 15 historias** en `docs/PRODUCT-BACKLOG.md`, cada una como
+  Issue padre con sub-issues en el tablero.
+- **Despliegue:** decidido en Render, con un solo servicio Docker que se
+  actualiza en cada merge a `main`. Está en curso (issue #139).
 
 ## Tu rol como Scrum Master / Agile Enabler
 
@@ -137,14 +142,14 @@ de test → archivo de implementación.
 
 - [`AGENTS.md`](../AGENTS.md) — metodología completa, arquitectura,
   principios, stack, convenciones de Git/TDD.
-- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 13 historias con
+- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 15 historias con
   todos sus campos.
 - [`docs/GUIA-IA-TERMINAL.md`](GUIA-IA-TERMINAL.md) — cómo usar Claude Code /
   OpenCode, Spec Kit, buenas prácticas, ahorro de tokens.
 - [`docs/METRICA-CONSUMO-MCP.md`](METRICA-CONSUMO-MCP.md) — para mostrarle
   al profesor el costo real de las herramientas de IA usadas.
 - `specs/` — se va llenando historia por historia a medida que avanza la
-  implementación (todavía vacío al 28/09/2026).
+  implementación (una carpeta numerada por spec, `specs/NNN-nombre/`).
 - Tablero: Project "Software Metrics & Estimation" en GitHub, del repo
   `MoyaCarlos/seguimiento-medicion`.
 

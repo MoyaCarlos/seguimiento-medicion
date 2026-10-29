@@ -176,6 +176,57 @@ func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.Backl
 	return nil
 }
 
+type fakeRegistroHorasRepository struct {
+	registros    []domain.RegistroHoras
+	listados     int
+	errRegistrar error
+}
+
+func (f *fakeRegistroHorasRepository) Registrar(_ context.Context, r domain.RegistroHoras) (domain.RegistroHoras, error) {
+	if f.errRegistrar != nil {
+		return domain.RegistroHoras{}, f.errRegistrar
+	}
+	r.ID = int64(len(f.registros) + 1)
+	f.registros = append(f.registros, r)
+	return r, nil
+}
+
+func (f *fakeRegistroHorasRepository) ListarPorHistoria(_ context.Context, historiaID int64) ([]domain.RegistroHorasDetalle, error) {
+	f.listados++
+	detalle := make([]domain.RegistroHorasDetalle, 0)
+	for _, r := range f.registros {
+		if r.HistoriaID == historiaID {
+			detalle = append(detalle, domain.RegistroHorasDetalle{RegistroHoras: r})
+		}
+	}
+	return detalle, nil
+}
+
+type fakeIntegrantesRepository struct {
+	miembros []domain.Member
+}
+
+func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	var resultado []domain.Member
+	for _, m := range f.miembros {
+		if m.ProjectID == proyectoID {
+			resultado = append(resultado, m)
+		}
+	}
+	return resultado, nil
+}
+
+// fakeSprintsQueCuentan envuelve el repositorio en memoria y cuenta las lecturas.
+type fakeSprintsQueCuentan struct {
+	*repository.SprintRepositoryEnMemoria
+	lecturas int
+}
+
+func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
+	f.lecturas++
+	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
+}
+
 // fakeVotacionRepository guarda una ronda por historia y simula las escrituras
 // condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
 // cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
