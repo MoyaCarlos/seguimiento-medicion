@@ -21,7 +21,10 @@ var (
 	ErrYaHaySprintPendiente = ValidationError{Campo: "estado", Mensaje: "el proyecto ya tiene un Sprint pendiente"}
 )
 
-var ErrSprintNoActivo = ValidationError{Campo: "estado", Mensaje: "solo se puede cerrar un Sprint activo"}
+var (
+	ErrSprintNoPendiente = ValidationError{Campo: "estado", Mensaje: "solo se puede iniciar un Sprint pendiente"}
+	ErrSprintNoActivo    = ValidationError{Campo: "estado", Mensaje: "solo se puede cerrar un Sprint activo"}
+)
 
 // NewSprint crea un Sprint en estado Pendiente. El Goal y las fechas se
 // definen recién al iniciarlo.
@@ -35,7 +38,7 @@ func NewSprint(proyectoID int64) (Sprint, error) {
 // Iniciar pasa el Sprint de Pendiente a Activo con su Goal y plazos.
 func (s *Sprint) Iniciar(goal string, inicio, fin time.Time) error {
 	if s.Estado != SprintPendiente {
-		return ValidationError{Campo: "estado", Mensaje: "solo se puede iniciar un Sprint pendiente"}
+		return ErrSprintNoPendiente
 	}
 	goal = strings.TrimSpace(goal)
 	if goal == "" {

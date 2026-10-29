@@ -70,16 +70,20 @@ func (r *SQLiteSprintRepository) ListarPorProyecto(ctx context.Context, proyecto
 	return sprints, filas.Err()
 }
 
+// Actualizar persiste el inicio de un Sprint. Solo lo aplica si en la base
+// sigue Pendiente: de dos inicios simultáneos, el segundo recibe
+// domain.ErrSprintNoPendiente y no pisa el Goal ni las fechas (#158).
 func (r *SQLiteSprintRepository) Actualizar(ctx context.Context, s domain.Sprint) error {
 	resultado, err := r.db.ExecContext(ctx,
-		`UPDATE sprints SET sprint_goal = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id = ?`,
+		`UPDATE sprints SET sprint_goal = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id = ? AND estado = ?`,
 		textoONulo(s.SprintGoal), fechaASQL(s.FechaInicio), fechaASQL(s.FechaFin), string(s.Estado), s.ID,
+		string(domain.SprintPendiente),
 	)
 	if err != nil {
 		return fmt.Errorf("actualizar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
-		return domain.ErrSprintNoEncontrado
+		return sprintSinActualizar(ctx, r.db, s.ID, domain.ErrSprintNoPendiente)
 	}
 	return nil
 }
@@ -103,7 +107,7 @@ func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain
 		return fmt.Errorf("cerrar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
-		return sprintSinCerrar(ctx, tx, s.ID)
+		return sprintSinActualizar(ctx, tx, s.ID, domain.ErrSprintNoActivo)
 	}
 
 	if len(noCompletadas) > 0 {
@@ -114,17 +118,22 @@ func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain
 	return tx.Commit()
 }
 
-// sprintSinCerrar explica por qué el UPDATE condicional no cerró nada: el
-// Sprint no existe o ya no está Activo.
-func sprintSinCerrar(ctx context.Context, tx *sql.Tx, id int64) error {
+type consultable interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
+// sprintSinActualizar explica por qué un UPDATE condicional sobre el estado
+// no cambió nada: el Sprint no existe o ya no está en el estado esperado, y
+// en ese caso devuelve errEstado.
+func sprintSinActualizar(ctx context.Context, db consultable, id int64, errEstado error) error {
 	var existe bool
-	if err := tx.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM sprints WHERE id = ?)", id).Scan(&existe); err != nil {
-		return fmt.Errorf("cerrar sprint %d: %w", id, err)
+	if err := db.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM sprints WHERE id = ?)", id).Scan(&existe); err != nil {
+		return fmt.Errorf("sprint %d: %w", id, err)
 	}
 	if !existe {
 		return domain.ErrSprintNoEncontrado
 	}
-	return domain.ErrSprintNoActivo
+	return errEstado
 }
 
 func arrastrar(ctx context.Context, tx *sql.Tx, s domain.Sprint, historias []domain.BacklogItem) error {

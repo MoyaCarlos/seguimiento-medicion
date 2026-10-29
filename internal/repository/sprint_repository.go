@@ -12,6 +12,8 @@ type SprintRepository interface {
 	Guardar(ctx context.Context, s domain.Sprint) (domain.Sprint, error)
 	ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error)
 	ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.Sprint, error)
+	// Actualizar persiste el inicio de un Sprint. Devuelve
+	// domain.ErrSprintNoPendiente si el Sprint guardado ya no está Pendiente.
 	Actualizar(ctx context.Context, s domain.Sprint) error
 	// CerrarConArrastre persiste el Sprint ya cerrado y, en una sola operación
 	// atómica, registra las historias no completadas con la foto de sus Story
