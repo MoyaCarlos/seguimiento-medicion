@@ -154,4 +154,5 @@ Este documento registra las decisiones técnicas tomadas para el diseño.
   la carga se arman relativas al día actual con `hoyCivil()`, como en
   `steps_estado_proyecto.go` (HU-13). En los tests unitarios de dominio y de service, "hoy"
   se pasa fijo.
-- **Rationale**: HU-06 todavía no está en `main` (Assumptions de la spec).
+- **Rationale**: HU-06 no estaba en `main` al escribir los pasos; entró después con #156
+  (Assumptions de la spec).

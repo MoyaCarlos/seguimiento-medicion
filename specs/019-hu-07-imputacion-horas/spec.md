@@ -138,7 +138,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 ## Assumptions
 
 - No hay autenticación: igual que en el resto del sistema, "selecciono mi nombre" significa elegir un integrante del proyecto en la carga. El sistema no verifica que quien carga sea esa persona.
-- Asignar historias a un Sprint llega con HU-06 (rama `feature/HU-06-asignar-historias-sprint`, todavía sin mergear). Hasta entonces, los tests siembran historias con Sprint directamente en la base o en los fakes, igual que hizo HU-15.
+- Asignar historias a un Sprint llega con HU-06, que ya está en `main` (#156, `PUT /backlog/{id}/sprint`). Los tests de HU-07 se escribieron antes de ese merge y siembran las historias con Sprint directamente en la base o en los fakes, igual que hizo HU-15.
 - "Hoy" es la fecha local del servidor al recibir la carga, igual que en el estado del proyecto (HU-13). Los tests de las reglas la fijan; los de punta a punta usan fechas relativas al día actual.
 - Un Sprint "Activo" siempre tiene fecha de inicio y de fin (lo garantiza HU-05), así que el rango de fechas aceptado está siempre definido.
 - Un proyecto tiene como máximo un Sprint "Activo" (HU-05), así que "el Sprint activo" de una historia es el Sprint al que está asignada, cuando ese Sprint está "Activo".

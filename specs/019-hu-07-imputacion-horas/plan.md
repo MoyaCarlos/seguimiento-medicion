@@ -125,7 +125,7 @@ Notas de alcance (decisiones documentadas, no violaciones):
 | Tema | Decisión | Justificación |
 |------|----------|---------------|
 | Frontend (formulario, errores, acumulado) | Fuera de este incremento; sub-issue #63 | DoD: la sub-issue de Frontend no frena el cierre de la historia |
-| Asignar historias a un Sprint | Los tests siembran `sprint_id` en la base o en el fake | HU-06 todavía no está en `main` (Assumptions) |
+| Asignar historias a un Sprint | Los tests siembran `sprint_id` en la base o en el fake | HU-06 no estaba en `main` al planificar; entró después con #156 (Assumptions) |
 | Editar o borrar cargas | Fuera de alcance | FR-015, D9 |
 | Tope diario por integrante | No se implementa | Clarification: solo tope por carga |
 | Métricas (desviación, horas por Sprint) | Fuera de alcance | HU-03 |
