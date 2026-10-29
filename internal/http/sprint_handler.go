@@ -14,14 +14,33 @@ import (
 
 // SprintHandler es el adaptador de entrada para el ciclo de vida de los Sprints.
 type SprintHandler struct {
-	crear   *service.CrearSprint
-	iniciar *service.IniciarSprint
-	cerrar  *service.CerrarSprint
-	sprints repository.SprintRepository
+	crear     *service.CrearSprint
+	iniciar   *service.IniciarSprint
+	cerrar    *service.CerrarSprint
+	consultar *service.ConsultarSprints
+	sprints   repository.SprintRepository
 }
 
-func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, sprints repository.SprintRepository) *SprintHandler {
-	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, sprints: sprints}
+func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, consultar *service.ConsultarSprints, sprints repository.SprintRepository) *SprintHandler {
+	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, consultar: consultar, sprints: sprints}
+}
+
+// Listar atiende GET /projects/{id}/sprints.
+func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	sprints, err := h.consultar.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	respuesta := make([]sprintResponse, 0, len(sprints))
+	for _, sprint := range sprints {
+		respuesta = append(respuesta, aRespuestaSprint(sprint))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // Crear atiende POST /sprints.
@@ -116,10 +135,14 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	case errors.As(err, &verr):
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
 	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado),
-		errors.Is(err, domain.ErrHistoriaNoEncontrada):
+		errors.Is(err, domain.ErrHistoriaNoEncontrada), errors.Is(err, domain.ErrVotacionNoIniciada):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
+	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
+		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, repository.ErrIntegridadReferencial):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrIntegridadReferencial.Error()})
+	case errors.Is(err, domain.ErrVotacionYaIniciada):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrHistoriaFueraDelSprint.Error()})
 	default:

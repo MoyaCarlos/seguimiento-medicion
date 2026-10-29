@@ -119,6 +119,16 @@ Goal ni fechas todavía.
   (`SprintID` inexistente)? → Se rechaza con error de "no encontrado",
   aunque el cuerpo de la petición también sea inválido: la existencia se
   verifica antes que los datos (mismo criterio que HU-04).
+- ¿Qué pasa si se cierra el mismo Sprint dos veces a la vez? → Uno solo se
+  aplica; el otro se rechaza como un Sprint que ya no está "Activo" (FR-015).
+  La base garantiza la transición: el cierre solo cambia el estado si
+  todavía es "Activo".
+- ¿Qué pasa si se inicia el mismo Sprint dos veces a la vez? → Uno solo se
+  aplica; el otro se rechaza como un Sprint que ya no está "Pendiente" y no
+  pisa el Sprint Goal ni las fechas del primero (FR-016). Iniciar dos
+  Sprints distintos del mismo proyecto a la vez no puede pasar: hay a lo
+  sumo uno "Pendiente" (FR-011), y aun así el índice único parcial de la
+  base impide un segundo "Activo" (FR-004).
 
 ## Requirements *(mandatory)*
 
@@ -166,6 +176,14 @@ Goal ni fechas todavía.
 - **FR-014** (#117): **IF** se pide arrastrar una historia que no está
   asignada al Sprint que se cierra, o que es de otro proyecto, **THEN** el
   sistema **shall** rechazar el cierre completo, sin aplicar cambios.
+- **FR-015** (#145): **IF** dos cierres del mismo Sprint llegan a la vez y
+  los dos lo encuentran "Activo", **THEN** el sistema **shall** aplicar solo
+  uno y rechazar el otro con el mismo error que un Sprint que no está
+  "Activo" (FR-007), sin registrar arrastradas por segunda vez.
+- **FR-016** (#158): **IF** dos inicios del mismo Sprint llegan a la vez y
+  los dos lo encuentran "Pendiente", **THEN** el sistema **shall** aplicar
+  solo uno y rechazar el otro con el mismo error que un Sprint que no está
+  "Pendiente", sin cambiar el Sprint Goal ni las fechas ya guardados.
 
 ### Key Entities
 

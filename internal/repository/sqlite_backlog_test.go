@@ -355,3 +355,102 @@ func TestSQLiteBacklogRepository_Guardar_CriteriosNull(t *testing.T) {
 		t.Errorf("se esperaban criterios NULL, se obtuvo %q", *criterios)
 	}
 }
+
+func sprintsDePrueba(t *testing.T, repo *SQLiteBacklogRepository, proyectoID int64) (activo, pendiente domain.Sprint) {
+	t.Helper()
+	sprints := NewSQLiteSprintRepository(repo.db)
+	activo = iniciarSprint(t, sprints, guardarSprint(t, sprints, proyectoID))
+	pendiente = guardarSprint(t, sprints, proyectoID)
+	return activo, pendiente
+}
+
+func TestSQLiteBacklogRepository_AsignarASprint_AsignaYConservaDatos(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	_, pendiente := sprintsDePrueba(t, repo, 1)
+	historia := guardarHistoria(t, repo, 1, "Iniciar sesión", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET estimacion_sp = 5 WHERE id = ?", historia.ID)
+
+	if err := repo.AsignarASprint(ctx, historia.ID, pendiente.ID); err != nil {
+		t.Fatalf("no se esperaba error al asignar: %v", err)
+	}
+
+	leida, err := repo.ObtenerPorID(ctx, historia.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer: %v", err)
+	}
+	if leida.SprintID == nil || *leida.SprintID != pendiente.ID {
+		t.Errorf("se esperaba el Sprint %d, se obtuvo %v", pendiente.ID, leida.SprintID)
+	}
+	if leida.Estado != domain.EstadoNueva {
+		t.Errorf("se esperaba estado Nueva, se obtuvo %q", leida.Estado)
+	}
+	if leida.EstimacionSP == nil || *leida.EstimacionSP != 5 {
+		t.Errorf("se esperaban 5 Story Points, se obtuvo %v", leida.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_AsignarASprint_SegundaAsignacionYaAsignada(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	activo, pendiente := sprintsDePrueba(t, repo, 1)
+	historia := guardarHistoria(t, repo, 1, "Iniciar sesión", domain.PrioridadMust)
+
+	if err := repo.AsignarASprint(ctx, historia.ID, activo.ID); err != nil {
+		t.Fatalf("no se esperaba error en la primera asignación: %v", err)
+	}
+	err := repo.AsignarASprint(ctx, historia.ID, pendiente.ID)
+
+	if !errors.Is(err, domain.ErrHistoriaYaAsignada) {
+		t.Fatalf("se esperaba ErrHistoriaYaAsignada, se obtuvo %v", err)
+	}
+	if sprintID, _ := sprintYEstadoDeHistoria(t, repo.db, historia.ID); sprintID.Int64 != activo.ID {
+		t.Errorf("la historia debía seguir en el Sprint %d, quedó %v", activo.ID, sprintID)
+	}
+}
+
+func TestSQLiteBacklogRepository_AsignarASprint_SprintDeOtroProyectoEsIntegridad(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	otroProyecto := guardarProyecto(t, repo.db)
+	_, ajeno := sprintsDePrueba(t, repo, otroProyecto)
+	historia := guardarHistoria(t, repo, 1, "Iniciar sesión", domain.PrioridadMust)
+
+	err := repo.AsignarASprint(context.Background(), historia.ID, ajeno.ID)
+
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	}
+	if sprintID, _ := sprintYEstadoDeHistoria(t, repo.db, historia.ID); sprintID.Valid {
+		t.Errorf("la historia debía seguir sin Sprint, quedó %v", sprintID)
+	}
+}
+
+func TestSQLiteBacklogRepository_AsignarASprint_SprintInexistenteEsIntegridad(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	historia := guardarHistoria(t, repo, 1, "Iniciar sesión", domain.PrioridadMust)
+
+	err := repo.AsignarASprint(context.Background(), historia.ID, 999)
+
+	if !errors.Is(err, ErrIntegridadReferencial) {
+		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteBacklogRepository_AsignarASprint_HistoriaArrastradaSeReasigna(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	sprints := NewSQLiteSprintRepository(repo.db)
+	activo, pendiente := sprintsDePrueba(t, repo, 1)
+	arrastrada := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, nil)
+	if err := sprints.CerrarConArrastre(ctx, cerrado(t, activo), []domain.BacklogItem{arrastrada}); err != nil {
+		t.Fatalf("no se esperaba error al cerrar: %v", err)
+	}
+
+	if err := repo.AsignarASprint(ctx, arrastrada.ID, pendiente.ID); err != nil {
+		t.Fatalf("no se esperaba error al reasignar: %v", err)
+	}
+
+	if sprintID, _ := sprintYEstadoDeHistoria(t, repo.db, arrastrada.ID); sprintID.Int64 != pendiente.ID {
+		t.Errorf("la historia debía quedar en el Sprint %d, quedó %v", pendiente.ID, sprintID)
+	}
+}

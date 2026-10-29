@@ -15,6 +15,7 @@ type BacklogHandler struct {
 	consultarBacklog *service.ConsultarProductBacklog
 	obtenerHistoria  *service.ObtenerHistoria
 	editarHistoria   *service.EditarHistoria
+	asignarSprint    *service.AsignarHistoriaASprint
 }
 
 func NewBacklogHandler(
@@ -22,12 +23,14 @@ func NewBacklogHandler(
 	consultarBacklog *service.ConsultarProductBacklog,
 	obtenerHistoria *service.ObtenerHistoria,
 	editarHistoria *service.EditarHistoria,
+	asignarSprint *service.AsignarHistoriaASprint,
 ) *BacklogHandler {
 	return &BacklogHandler{
 		crearHistoria:    crearHistoria,
 		consultarBacklog: consultarBacklog,
 		obtenerHistoria:  obtenerHistoria,
 		editarHistoria:   editarHistoria,
+		asignarSprint:    asignarSprint,
 	}
 }
 
@@ -124,6 +127,38 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		CriteriosAceptacion: req.CriteriosAceptacion,
 		EstimacionSP:        estimacion,
 	})
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(item))
+}
+
+// AsignarSprint atiende PUT /backlog/{id}/sprint.
+func (h *BacklogHandler) AsignarSprint(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	// La historia inexistente domina (404) sobre cualquier validación del cuerpo.
+	if _, err := h.obtenerHistoria.Ejecutar(r.Context(), id); err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	var req asignarSprintRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	if req.SprintID == nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: "sprint_id", Mensaje: "el campo es obligatorio"})
+		return
+	}
+
+	item, err := h.asignarSprint.Ejecutar(r.Context(), id, *req.SprintID)
 	if err != nil {
 		escribirError(w, err)
 		return

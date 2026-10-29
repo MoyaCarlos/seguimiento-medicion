@@ -24,3 +24,12 @@ type HistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
 	Actualizar(ctx context.Context, item domain.BacklogItem) error
 }
+
+// AsignacionHistoriaRepository es el puerto que usa la asignación de una
+// historia a un Sprint. Separado de HistoriaRepository (ISP): la edición no
+// asigna Sprints. AsignarASprint solo asigna si la historia no tiene Sprint y
+// devuelve domain.ErrHistoriaYaAsignada si no afectó ninguna fila.
+type AsignacionHistoriaRepository interface {
+	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
+	AsignarASprint(ctx context.Context, historiaID, sprintID int64) error
+}

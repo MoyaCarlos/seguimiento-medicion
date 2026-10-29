@@ -1,0 +1,147 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation — HU-06 Movimiento de Historias al Sprint Backlog
+  version: 0.1.0
+  description: >
+    Asignación de una historia del Product Backlog a un Sprint y consulta del Sprint Backlog.
+    Precedencia de errores de la asignación: historia inexistente (404) → JSON inválido o
+    sprint_id ausente (400) → Sprint inexistente (404) → Sprint de otro proyecto (400) →
+    Sprint finalizado (400) → historia completada (400) → historia que ya tiene Sprint (400).
+servers:
+  - url: http://localhost:8080
+paths:
+  /backlog/{id}/sprint:
+    put:
+      summary: Asignar una historia del Product Backlog a un Sprint
+      parameters:
+        - $ref: '#/components/parameters/IdHistoria'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignarSprintRequest'
+            example:
+              sprint_id: 3
+      responses:
+        '200':
+          description: Historia asignada; conserva estado Nueva y sus Story Points.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Historia'
+              example:
+                id: 12
+                proyecto_id: 1
+                titulo: Registrar horas
+                descripcion: Como integrante quiero imputar horas
+                criterios_aceptacion: null
+                prioridad: M
+                estado: Nueva
+                valor_negocio: 8
+                estimacion_sp: 5
+                sprint_id: 3
+        '400':
+          description: Petición inválida o regla de asignación incumplida.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                jsonInvalido:
+                  value: { mensaje: JSON inválido }
+                sprintIdAusente:
+                  value: { campo: sprint_id, mensaje: el campo es obligatorio }
+                otroProyecto:
+                  value: { campo: sprint_id, mensaje: el Sprint no pertenece al proyecto de la historia }
+                sprintFinalizado:
+                  value: { campo: sprint_id, mensaje: un Sprint finalizado no admite historias }
+                historiaCompletada:
+                  value: { campo: estado, mensaje: solo se pueden planificar historias pendientes }
+                yaAsignada:
+                  value: { campo: sprint_id, mensaje: la historia ya pertenece a un Sprint }
+        '404':
+          description: La historia o el Sprint no existen.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                historia:
+                  value: { mensaje: historia no encontrada }
+                sprint:
+                  value: { mensaje: sprint no encontrado }
+        '409':
+          description: Violación de integridad referencial detectada por la base (red de seguridad).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /sprints/{id}/backlog:
+    get:
+      summary: Consultar el Sprint Backlog de un Sprint
+      description: >
+        Historias con ese Sprint asignado, ordenadas por prioridad M, S, C, W y luego por id.
+        En un Sprint Finalizado, solo las que siguen asignadas (las completadas).
+      parameters:
+        - $ref: '#/components/parameters/IdSprint'
+      responses:
+        '200':
+          description: Sprint Backlog (lista vacía si el Sprint no tiene historias).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Historia'
+        '404':
+          description: El Sprint no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: sprint no encontrado
+components:
+  parameters:
+    IdHistoria:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    IdSprint:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+  schemas:
+    AsignarSprintRequest:
+      type: object
+      required: [sprint_id]
+      properties:
+        sprint_id:
+          type: integer
+          format: int64
+    Historia:
+      type: object
+      description: >
+        Mismo DTO que GET /projects/{id}/backlog. sprint_id es un campo nuevo de HU-06
+        (null en el Product Backlog).
+      required: [id, proyecto_id, titulo, descripcion, prioridad, estado, sprint_id]
+      properties:
+        id: { type: integer, format: int64 }
+        proyecto_id: { type: integer, format: int64 }
+        titulo: { type: string }
+        descripcion: { type: string }
+        criterios_aceptacion: { type: string, nullable: true }
+        prioridad: { type: string, enum: [M, S, C, W] }
+        estado: { type: string, enum: [Nueva, En progreso, Completada] }
+        valor_negocio: { type: integer, nullable: true }
+        estimacion_sp: { type: integer, nullable: true }
+        sprint_id: { type: integer, format: int64, nullable: true }
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo: { type: string }
+        mensaje: { type: string }
