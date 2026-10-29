@@ -36,6 +36,7 @@ func main() {
 		service.NewConsultarProductBacklog(proyectos, backlogRepo),
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewEditarHistoria(backlogRepo, sprintRepo),
+		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo),
 	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
@@ -61,6 +62,7 @@ func main() {
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)

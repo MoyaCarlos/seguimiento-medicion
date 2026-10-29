@@ -21,6 +21,10 @@ type editarHistoriaRequest struct {
 	EstimacionSP        *json.Number `json:"estimacion_sp"`
 }
 
+type asignarSprintRequest struct {
+	SprintID *int64 `json:"sprint_id"`
+}
+
 type historiaResponse struct {
 	ID                  int64   `json:"id"`
 	ProyectoID          int64   `json:"proyecto_id"`
@@ -31,6 +35,7 @@ type historiaResponse struct {
 	Estado              string  `json:"estado"`
 	ValorNegocio        *int    `json:"valor_negocio"`
 	EstimacionSP        *int    `json:"estimacion_sp"`
+	SprintID            *int64  `json:"sprint_id"`
 }
 
 type errorResponse struct {
@@ -49,5 +54,6 @@ func aRespuesta(item domain.BacklogItem) historiaResponse {
 		Estado:              string(item.Estado),
 		ValorNegocio:        item.ValorNegocio,
 		EstimacionSP:        item.EstimacionSP,
+		SprintID:            item.SprintID,
 	}
 }

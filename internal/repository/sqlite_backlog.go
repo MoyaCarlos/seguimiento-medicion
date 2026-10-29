@@ -121,6 +121,25 @@ func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.Ba
 	return nil
 }
 
+// AsignarASprint asigna la historia al Sprint solo si todavía no tiene uno. La
+// condición va en el mismo UPDATE: si dos asignaciones compiten, solo una
+// encuentra sprint_id IS NULL y la otra recibe domain.ErrHistoriaYaAsignada.
+func (r *SQLiteBacklogRepository) AsignarASprint(ctx context.Context, historiaID, sprintID int64) error {
+	resultado, err := r.db.ExecContext(ctx,
+		"UPDATE historias SET sprint_id = ? WHERE id = ? AND sprint_id IS NULL", sprintID, historiaID)
+	if err != nil {
+		return fmt.Errorf("asignar historia %d al sprint %d: %w", historiaID, sprintID, errorDeEscritura(err))
+	}
+	filas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("asignar historia %d al sprint %d: %w", historiaID, sprintID, err)
+	}
+	if filas == 0 {
+		return domain.ErrHistoriaYaAsignada
+	}
+	return nil
+}
+
 func punteroATextoSQL(v *string) any {
 	if v == nil {
 		return nil
