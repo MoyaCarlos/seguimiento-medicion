@@ -181,9 +181,10 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T068 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida), `go test ./...` y `go test -race ./internal/...` en verde
-- [ ] T069 Validación manual de los pasos 1 y 2 de specs/018-hu-06-asignar-historias-sprint/quickstart.md con la API real (`go run ./cmd/api` sobre una base nueva), anotando el resultado en esta tarea. Para cuerpos con tildes desde Git Bash en Windows, usar `curl --data-binary @archivo.json`
-- [ ] T070 Revisar que contracts/openapi.yaml coincide con las respuestas reales (códigos, `campo`, `mensaje` y `sprint_id`); si hubo diferencias, corregir el contrato + COMMIT `docs: alinear el contrato de HU-06 con la implementación`
+- [X] T068 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida), `go test ./...` y `go test -race ./internal/...` en verde. `go test -race` no se corrió localmente
+- [X] T069 Validación manual de los pasos 1 y 2 de specs/018-hu-06-asignar-historias-sprint/quickstart.md con la API real (`go run ./cmd/api` sobre una base nueva), anotando el resultado en esta tarea. Para cuerpos con tildes desde Git Bash en Windows, usar `curl --data-binary @archivo.json`. Validado a mano contra la API real: PUT /backlog/{id}/sprint → 200 con sprint_id y 400 'la historia ya pertenece a un Sprint' al repetir; GET /sprints/{id}/backlog → 200 con la historia y 404 para un Sprint inexistente
+- [X] T070 Revisar que contracts/openapi.yaml coincide con las respuestas reales (códigos, `campo`, `mensaje` y `sprint_id`); si hubo diferencias, corregir el contrato + COMMIT `docs: alinear el contrato de HU-06 con la implementación`
+  Al comparar con internal/http/sprint_handler.go y backlog_handler.go aparecieron diferencias en el identificador inválido: `PUT /backlog/{id}/sprint` responde 400 `{"campo":"id","mensaje":"el identificador debe ser un entero positivo"}` (parsearID) y `GET /sprints/{id}/backlog` responde 400 `{"campo":"id","mensaje":"identificador inválido"}` (idDeRuta); el contrato no documentaba ninguno de los dos ni el `minimum: 1` de los parámetros. Corregido en el commit `docs: alinear el contrato de HU-06 con la implementación`. Los códigos 200, 404 y 409 y los mensajes de `sprint_id`, `campo` y `mensaje` coinciden con la implementación
 
 ---
 
@@ -220,3 +221,5 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 ## Excepción de proceso
 
 Entre T007 y T029 el paquete `features` falló a propósito: los 9 escenarios del `.feature` no tenían pasos (RED del BDD) y los GREEN de dominio, repositorio, servicio y handler se verificaron por paquete con `go test ./internal/... ./cmd/...`. T029 puso los 9 escenarios en verde. Los pasos siembran con SQL directo la historia "Completada" y la "ya asignada", porque HU-11 todavía no existe; se reemplazan por el servicio cuando exista. El Sprint a planificar se crea de forma diferida porque los índices únicos de `001_esquema_base.sql` impiden dos Sprints Pendiente (o dos Activo) en un proyecto. `go test -race` no se pudo correr localmente (compilador de C de 32 bits); la prueba de las dos goroutines usa un mutex.
+
+Entre T031 y T048 el paquete features volvió a fallar a propósito: los 3 escenarios de US2 no tenían pasos hasta T049. Los tests del handler de la consulta (T042) están en el archivo nuevo internal/http/sprint_handler_backlog_test.go y no en sprint_handler_test.go, para no pisar los tests de #149; el RED de T042 tocó features/steps_consultar_sprints.go solo porque ese archivo llama a NewSprintHandler y el parámetro nuevo rompía la compilación.
