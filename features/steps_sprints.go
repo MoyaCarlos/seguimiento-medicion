@@ -28,6 +28,7 @@ type pasosSprint struct {
 	crear      *service.CrearSprint
 	iniciar    *service.IniciarSprint
 	cerrar     *service.CerrarSprint
+	editar     *service.EditarHistoria
 	sprint     domain.Sprint
 	segundo    domain.Sprint
 	completada int64
@@ -43,6 +44,7 @@ func (p *pasosSprint) preparar() {
 	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
+	p.editar = service.NewEditarHistoria(p.backlog, p.sprints)
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
 	p.completada, p.pendiente, p.estimada, p.sinEstimar = 0, 0, 0, 0
 }
@@ -190,9 +192,20 @@ func (p *pasosSprint) historiaEstimadaYOtraSinEstimar(puntos int) (err error) {
 	return err
 }
 
-// La edición del Product Backlog es de HU-15; acá se simula con SQL.
+// cambioLaEstimacion edita la historia con HU-15. Al cerrar el Sprint la
+// historia volvió al backlog sin Sprint, así que la regla D2b no la bloquea.
 func (p *pasosSprint) cambioLaEstimacion(puntos int) error {
-	_, err := p.base.db.Exec("UPDATE historias SET estimacion_sp = ? WHERE id = ?", puntos, p.estimada)
+	actual, err := p.backlog.ObtenerPorID(context.Background(), p.estimada)
+	if err != nil {
+		return err
+	}
+	_, err = p.editar.Ejecutar(context.Background(), service.EditarHistoriaInput{
+		ID:                  actual.ID,
+		Titulo:              actual.Titulo,
+		Descripcion:         actual.Descripcion,
+		CriteriosAceptacion: actual.CriteriosAceptacion,
+		EstimacionSP:        &puntos,
+	})
 	return err
 }
 
