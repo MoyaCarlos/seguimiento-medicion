@@ -24,7 +24,9 @@ Prerrequisito: el servidor corriendo (`go run ./cmd/api`) sobre una base nueva (
    (`POST /sprints/{id}/iniciar`) con una fecha de inicio anterior o igual a hoy.
 3. Asignar la historia al Sprint (HU-06):
    ```bash
-   curl -s -X PUT localhost:8080/backlog/<historia>/sprint \n     -H 'Content-Type: application/json' \n     -d '{"sprint_id": <sprint>}'
+   curl -s -X PUT localhost:8080/backlog/<historia>/sprint \
+     -H 'Content-Type: application/json' \
+     -d '{"sprint_id": <sprint>}'
    ```
 4. Imputar 4 horas:
    ```bash
@@ -58,8 +60,8 @@ Prerrequisito: el servidor corriendo (`go run ./cmd/api`) sobre una base nueva (
   incluidos los 12 escenarios `@HU-07` (16 casos con las filas de los esquemas; 64 casos BDD en
   total).
 - **API manual**: los pasos 1–8 dieron lo esperado contra un servidor con base nueva. El paso 3 se
-  hizo entonces con un `UPDATE` directo en la base, porque HU-06 todavía no estaba en `main`. Paso 6: los siete casos dieron `400`
-  con el `campo` indicado y `total_minutos` siguió en 240. Paso 7: después del cierre, `400` con
+  hizo entonces con un `UPDATE` directo en la base, porque HU-06 todavía no estaba en `main`.
+  Paso 6: los siete casos dieron `400` con el `campo` indicado y `total_minutos` siguió en 240. Paso 7: después del cierre, `400` con
   `campo: historia_id`, y la carga anterior sigue con `sprint_id: 1`.
 - Para probar con `curl` en Windows, mandar los cuerpos con acentos desde un archivo
   (`--data-binary @cuerpo.json`): pasados como argumento, la consola los recodifica y llegan al
