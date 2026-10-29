@@ -270,9 +270,11 @@ un Sprint pasado (HU-12). Esta tabla registra cuáles quedaron afuera.
 1. El caso de uso carga las historias del Sprint y las separa en completadas y no completadas.
 2. Llama a `sprint.Cerrar()` del dominio, que valida que esté `Activo`.
 3. Entrega al repositorio el Sprint cerrado y las no completadas en **una sola llamada** nueva de `SprintRepository`: `CerrarConArrastre(ctx, sprint, noCompletadas)`.
-4. El adaptador SQLite, en **una transacción**: `UPDATE sprints` a `Finalizado`; `INSERT` en `historias_arrastradas` (con `proyecto_id` y la foto de SP); y `UPDATE historias SET sprint_id = NULL, estado = 'Nueva'` **en un solo `UPDATE`**.
+4. El adaptador SQLite, en **una transacción**: `UPDATE sprints SET estado = 'Finalizado' WHERE id = ? AND estado = 'Activo'`; `INSERT` en `historias_arrastradas` (con `proyecto_id` y la foto de SP); y `UPDATE historias SET sprint_id = NULL, estado = 'Nueva'` **en un solo `UPDATE`**.
 
 Sobre el `UPDATE` único (verificado): hacerlo en dos pasos falla **solo si primero se quita el Sprint** de una historia que sigue `En progreso` (el `CHECK` de §4.4 exige Sprint para ese estado). Si primero se vuelve a `Nueva`, o si la historia ya estaba `Nueva`, los dos pasos pasan. El `UPDATE` único sigue siendo lo más simple y robusto porque **no depende del orden** de las sentencias.
+
+**Por qué el `UPDATE sprints` es condicional (#145).** `sprint.Cerrar()` valida en memoria que el Sprint esté `Activo`, pero dos cierres simultáneos del mismo Sprint pasan los dos esa validación. Con `estado = 'Activo'` en el `WHERE`, solo uno de los dos cambia la fila. El otro no afecta ninguna fila (`RowsAffected` 0): la transacción se revierte sin registrar arrastradas y devuelve `ErrSprintNoActivo`, o `ErrSprintNoEncontrado` si el Sprint no existe. Es una forma de escribir, no una restricción nueva: no cambia el esquema ni agrega migración. El fake en memoria no reproduce la carrera (U1 de la spec 003); esa garantía la da la base.
 
 La transacción es un detalle de SQLite, así que no entra al dominio ni al servicio (arquitectura hexagonal). El fake en memoria debe simular la atomicidad: un fake que no la tiene oculta defectos (punto 2 de #101).
 
