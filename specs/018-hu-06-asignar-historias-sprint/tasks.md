@@ -141,8 +141,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 ### BDD de US2 en verde
 
-- [ ] T048 [US2] GREEN: en features/steps_asignacion.go, agregar los pasos de los 3 escenarios de US2 usando `ConsultarSprintBacklog` sobre `base.db`; las historias de US2.1 se asignan con `AsignarHistoriaASprint` (no con SQL directo). No redefinir pasos existentes — `go test ./features/` en verde (12 escenarios @HU-06)
-- [ ] T049 [US2] COMMIT `GREEN: implementar los pasos BDD de consulta del Sprint Backlog, escenarios en verde`
+- [X] T048 [US2] GREEN: en features/steps_asignacion.go, agregar los pasos de los 3 escenarios de US2 usando `ConsultarSprintBacklog` sobre `base.db`; las historias de US2.1 se asignan con `AsignarHistoriaASprint` (no con SQL directo). No redefinir pasos existentes — `go test ./features/` en verde (12 escenarios @HU-06)
+- [X] T049 [US2] COMMIT `GREEN: implementar los pasos BDD de consulta del Sprint Backlog, escenarios en verde`
 
 **Checkpoint**: US1 y US2 funcionan de punta a punta; el backend de HU-06 está completo.
 
