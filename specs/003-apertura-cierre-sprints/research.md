@@ -59,3 +59,23 @@ existente, HU-01) tenga un método para listar/actualizar historias por
 Sprint — se agrega en `internal/repository/backlog_repository.go` como
 parte de las tasks de esta historia, sin tocar la lógica ya implementada de
 HU-01.
+
+## `/speckit.analyze` del cierre de Sprint (#117 y #145, 2026-10-28)
+
+Corrido sobre spec, plan y tasks con las Phases 8 y 9 ya escritas.
+Resultado: 0 CRITICAL, 3 MEDIUM, 2 LOW; cobertura 100 % (FR-001 a FR-015,
+SC-001 a SC-005).
+
+- **F1 (MEDIUM)**: `MODELO-DE-DATOS.md` §4.6, paso 4, no dice que el
+  `UPDATE sprints` es condicional. Pendiente de decisión del equipo (es
+  descripción, no esquema).
+- **C1 (MEDIUM)**: `plan.md` no menciona #117 ni #145. Pendiente.
+- **U1 (MEDIUM)**: el fake en memoria no rechaza un segundo cierre con una
+  copia vieja del Sprint. Se mantiene así, como pide #145: los tests del
+  servicio no ejercitan la carrera y la garantía es de la base.
+- **D1 (LOW)**: FR-015 sin escenario Godog propio. El comportamiento
+  observable (rechazo de un Sprint que no está Activo) ya lo cubre el
+  escenario "No se puede cerrar un Sprint que no está Activo"; la carrera no
+  se reproduce de forma determinista desde Godog y la cubre el test de
+  repositorio contra SQLite real (T092).
+- **F2 (LOW)**: `data-model.md` no nombra #145; alcanza con el enlace a §4.6.

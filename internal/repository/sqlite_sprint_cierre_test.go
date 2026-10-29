@@ -187,3 +187,62 @@ func TestSQLiteSprintRepository_CerrarConArrastre_SprintInexistente(t *testing.T
 		t.Fatalf("se esperaba ErrSprintNoEncontrado, se obtuvo %v", err)
 	}
 }
+
+// dosLecturasActivas simula dos cierres simultáneos: los dos leyeron el
+// Sprint Activo y pasaron la validación del dominio antes de que el primero
+// llegara a la base.
+func dosLecturasActivas(t *testing.T, repo *SQLiteSprintRepository, id int64) (primero, segundo domain.Sprint) {
+	t.Helper()
+	for _, s := range []*domain.Sprint{&primero, &segundo} {
+		leido, err := repo.ObtenerPorID(context.Background(), id)
+		if err != nil {
+			t.Fatalf("no se pudo leer el Sprint: %v", err)
+		}
+		*s = cerrado(t, leido)
+	}
+	return primero, segundo
+}
+
+func esperarErrorDeSprintNoActivo(t *testing.T, err error) {
+	t.Helper()
+	var verr domain.ValidationError
+	if !errors.As(err, &verr) || verr.Campo != "estado" {
+		t.Fatalf("se esperaba el error de estado de un Sprint que no está Activo, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteSprintRepository_CerrarConArrastre_SegundoCierreSimultaneoSinNoCompletadas(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	ctx := context.Background()
+	activo := iniciarSprint(t, repo, guardarSprint(t, repo, guardarProyecto(t, db)))
+	primero, segundo := dosLecturasActivas(t, repo, activo.ID)
+
+	if err := repo.CerrarConArrastre(ctx, primero, nil); err != nil {
+		t.Fatalf("el primer cierre no debía fallar: %v", err)
+	}
+	err := repo.CerrarConArrastre(ctx, segundo, nil)
+
+	esperarErrorDeSprintNoActivo(t, err)
+}
+
+func TestSQLiteSprintRepository_CerrarConArrastre_SegundoCierreSimultaneoConNoCompletadas(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	ctx := context.Background()
+	proyectoID := guardarProyecto(t, db)
+	activo := iniciarSprint(t, repo, guardarSprint(t, repo, proyectoID))
+	enProgreso := historiaEnSprint(t, db, proyectoID, activo.ID, domain.Estado("En progreso"), sp(5))
+	primero, segundo := dosLecturasActivas(t, repo, activo.ID)
+	noCompletadas := []domain.BacklogItem{enProgreso}
+
+	if err := repo.CerrarConArrastre(ctx, primero, noCompletadas); err != nil {
+		t.Fatalf("el primer cierre no debía fallar: %v", err)
+	}
+	err := repo.CerrarConArrastre(ctx, segundo, noCompletadas)
+
+	esperarErrorDeSprintNoActivo(t, err)
+	if got := arrastradasDe(t, db, activo.ID); len(got) != 1 {
+		t.Errorf("la historia debía quedar arrastrada una sola vez, quedaron %+v", got)
+	}
+}

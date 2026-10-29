@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -251,4 +252,42 @@ func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotaci
 func copiaDeRonda(r domain.RondaVotacion) domain.RondaVotacion {
 	r.Votos = slices.Clone(r.Votos)
 	return r
+}
+
+// fakeAsignacionRepository simula la asignación atómica del repositorio real:
+// el mutex hace indivisible "si no tiene Sprint, cargarlo", como el UPDATE
+// condicional de SQLite.
+type fakeAsignacionRepository struct {
+	mu           sync.Mutex
+	historias    map[int64]domain.BacklogItem
+	asignaciones int
+}
+
+func (f *fakeAsignacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeAsignacionRepository) AsignarASprint(_ context.Context, historiaID, sprintID int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.asignaciones++
+	h := f.historias[historiaID]
+	if h.SprintID != nil {
+		return domain.ErrHistoriaYaAsignada
+	}
+	h.SprintID = &sprintID
+	f.historias[historiaID] = h
+	return nil
+}
+
+func (f *fakeAsignacionRepository) llamadasAAsignar() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.asignaciones
 }

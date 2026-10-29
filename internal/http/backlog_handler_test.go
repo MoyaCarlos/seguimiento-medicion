@@ -7,6 +7,7 @@ import (
 	"errors"
 	nethttp "net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -47,6 +48,16 @@ func (s *stubBacklogRepository) Actualizar(_ context.Context, item domain.Backlo
 	return nil
 }
 
+func (s *stubBacklogRepository) AsignarASprint(_ context.Context, historiaID, sprintID int64) error {
+	h := s.historias[historiaID]
+	if h.SprintID != nil {
+		return domain.ErrHistoriaYaAsignada
+	}
+	h.SprintID = &sprintID
+	s.historias[historiaID] = h
+	return nil
+}
+
 func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 	repo := &stubBacklogRepository{
 		historias: map[int64]domain.BacklogItem{},
@@ -58,6 +69,7 @@ func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 		service.NewConsultarProductBacklog(proyectos, repo),
 		service.NewObtenerHistoria(repo),
 		service.NewEditarHistoria(repo, repo.sprints),
+		service.NewAsignarHistoriaASprint(repo, repo.sprints),
 	), repo
 }
 
@@ -189,6 +201,30 @@ func TestBacklogHandler_ConsultarBacklog_DevuelveLasHistorias(t *testing.T) {
 	}
 	if string(resp[1]["criterios_aceptacion"]) != "null" || string(resp[1]["estimacion_sp"]) != "null" {
 		t.Errorf("se esperaban criterios y estimación null: %s", rec.Body.String())
+	}
+}
+
+func TestBacklogHandler_ConsultarBacklog_SprintIDNull(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	repo.backlog = []domain.BacklogItem{
+		{ID: 1, ProyectoID: 1, Titulo: "Iniciar sesión", Descripcion: "Con email",
+			Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva},
+	}
+
+	rec := consultarBacklog(handler, "1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp []map[string]json.RawMessage
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if len(resp) != 1 {
+		t.Fatalf("se esperaba 1 historia: %s", rec.Body.String())
+	}
+	if v, ok := resp[0]["sprint_id"]; !ok || string(v) != "null" {
+		t.Errorf("se esperaba sprint_id null, se obtuvo %q (presente: %v)", v, ok)
 	}
 }
 
@@ -405,6 +441,154 @@ func TestBacklogHandler_Editar_IDInvalido(t *testing.T) {
 	handler, _ := nuevoHandlerDePrueba()
 
 	rec := editarHistoria(handler, "abc", edicionValidaJSON)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+}
+
+// asignarSprint ejecuta PUT /backlog/{id}/sprint a través de un ServeMux, como en producción.
+func asignarSprint(handler *BacklogHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	mux := nethttp.NewServeMux()
+	mux.HandleFunc("PUT /backlog/{id}/sprint", handler.AsignarSprint)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id+"/sprint", bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(rec, req)
+	return rec
+}
+
+func sembrarSprint(t *testing.T, repo *stubBacklogRepository, proyectoID int64, estado domain.EstadoSprint) domain.Sprint {
+	t.Helper()
+	s, err := repo.sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: proyectoID, Estado: estado})
+	if err != nil {
+		t.Fatalf("no se pudo sembrar el Sprint: %v", err)
+	}
+	return s
+}
+
+func TestBacklogHandler_AsignarSprint_Exitosa(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+	sprint := sembrarSprint(t, repo, 1, domain.SprintPendiente)
+
+	rec := asignarSprint(handler, "3", `{"sprint_id":1}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	if resp.SprintID == nil || *resp.SprintID != sprint.ID {
+		t.Errorf("sprint_id = %v, se esperaba %d", resp.SprintID, sprint.ID)
+	}
+	if resp.ID != 3 || resp.Estado != "Nueva" {
+		t.Errorf("respuesta inesperada: %+v", resp)
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_HistoriaInexistenteDominaSobreElCuerpo(t *testing.T) {
+	for _, cuerpo := range []string{`{}`, `{no-es-json`} {
+		handler, _ := nuevoHandlerDePrueba()
+
+		rec := asignarSprint(handler, "99", cuerpo)
+
+		if rec.Code != nethttp.StatusNotFound {
+			t.Fatalf("cuerpo %q: se esperaba 404, se obtuvo %d", cuerpo, rec.Code)
+		}
+		if resp := leerError(t, rec); resp.Mensaje != "historia no encontrada" {
+			t.Errorf("cuerpo %q: mensaje inesperado: %q", cuerpo, resp.Mensaje)
+		}
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_JSONInvalido(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+
+	rec := asignarSprint(handler, "3", `{no-es-json`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	if resp := leerError(t, rec); resp.Campo != "" || resp.Mensaje != "JSON inválido" {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_SprintIDObligatorio(t *testing.T) {
+	for _, cuerpo := range []string{`{}`, `{"sprint_id":null}`} {
+		handler, repo := nuevoHandlerDePrueba()
+		sembrarHistoria(repo)
+
+		rec := asignarSprint(handler, "3", cuerpo)
+
+		if rec.Code != nethttp.StatusBadRequest {
+			t.Fatalf("cuerpo %q: se esperaba 400, se obtuvo %d", cuerpo, rec.Code)
+		}
+		if resp := leerError(t, rec); resp.Campo != "sprint_id" || resp.Mensaje != "el campo es obligatorio" {
+			t.Errorf("cuerpo %q: error inesperado: %+v", cuerpo, resp)
+		}
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_SprintInexistente(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoria(repo)
+
+	rec := asignarSprint(handler, "3", `{"sprint_id":99}`)
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
+	}
+	if resp := leerError(t, rec); resp.Mensaje != "sprint no encontrado" {
+		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_RechazosDeLaRegla(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		historia func(*domain.BacklogItem)
+		sprint   domain.Sprint
+		campo    string
+		mensaje  string
+	}{
+		{"otro proyecto", func(*domain.BacklogItem) {}, domain.Sprint{ProyectoID: 2, Estado: domain.SprintPendiente},
+			"sprint_id", "el Sprint no pertenece al proyecto de la historia"},
+		{"Sprint finalizado", func(*domain.BacklogItem) {}, domain.Sprint{ProyectoID: 1, Estado: domain.SprintFinalizado},
+			"sprint_id", "un Sprint finalizado no admite historias"},
+		{"historia completada", func(h *domain.BacklogItem) { h.Estado = domain.EstadoCompletada }, domain.Sprint{ProyectoID: 1, Estado: domain.SprintActivo},
+			"estado", "solo se pueden planificar historias pendientes"},
+		{"ya asignada", func(h *domain.BacklogItem) { otro := int64(7); h.SprintID = &otro }, domain.Sprint{ProyectoID: 1, Estado: domain.SprintActivo},
+			"sprint_id", "la historia ya pertenece a un Sprint"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			handler, repo := nuevoHandlerDePrueba()
+			h := sembrarHistoria(repo)
+			c.historia(&h)
+			repo.historias[h.ID] = h
+			sprint, _ := repo.sprints.Guardar(context.Background(), c.sprint)
+
+			rec := asignarSprint(handler, "3", `{"sprint_id":`+strconv.FormatInt(sprint.ID, 10)+`}`)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Campo != c.campo || resp.Mensaje != c.mensaje {
+				t.Errorf("error inesperado: %+v", resp)
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_AsignarSprint_IDInvalido(t *testing.T) {
+	handler, _ := nuevoHandlerDePrueba()
+
+	rec := asignarSprint(handler, "abc", `{"sprint_id":1}`)
 
 	if rec.Code != nethttp.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
