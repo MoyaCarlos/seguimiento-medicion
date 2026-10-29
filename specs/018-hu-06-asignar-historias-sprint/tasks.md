@@ -127,8 +127,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 - [X] T038 [P] [US2] RED: crear internal/service/consultar_sprint_backlog_test.go con `repository.NewSprintRepositoryEnMemoria()` y un doble local de `repository.HistoriasDeSprintRepository` que devuelve las historias sembradas tal cual: (a) Sprint existente → devuelve las historias en el orden que entrega el repositorio; (b) Sprint sin historias (el doble devuelve `nil`) → slice vacío no `nil`; (c) Sprint inexistente → `ErrSprintNoEncontrado` y el listado no se consulta. Crear internal/service/consultar_sprint_backlog.go con `ConsultarSprintBacklog`, `NewConsultarSprintBacklog(sprints repository.SprintRepository, historias repository.HistoriasDeSprintRepository)` y `Ejecutar(ctx, sprintID int64) ([]domain.BacklogItem, error)` vacío. Confirmar que FALLA
 - [X] T039 [US2] COMMIT `RED: agregar tests del caso de uso ConsultarSprintBacklog (falla)`
-- [ ] T040 [US2] GREEN: implementar `Ejecutar` en internal/service/consultar_sprint_backlog.go: `sprints.ObtenerPorID` (404) → `historias.ListarPorSprint` → `nil` se convierte en `make([]domain.BacklogItem, 0)`, igual que `ConsultarProductBacklog` — `go test ./...` en verde
-- [ ] T041 [US2] COMMIT `GREEN: implementar ConsultarSprintBacklog, test en verde`
+- [X] T040 [US2] GREEN: implementar `Ejecutar` en internal/service/consultar_sprint_backlog.go: `sprints.ObtenerPorID` (404) → `historias.ListarPorSprint` → `nil` se convierte en `make([]domain.BacklogItem, 0)`, igual que `ConsultarProductBacklog` — `go test ./...` en verde
+- [X] T041 [US2] COMMIT `GREEN: implementar ConsultarSprintBacklog, test en verde`
 
 ### HTTP: GET /sprints/{id}/backlog
 

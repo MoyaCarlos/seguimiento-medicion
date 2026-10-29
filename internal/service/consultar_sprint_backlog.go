@@ -17,7 +17,18 @@ func NewConsultarSprintBacklog(sprints repository.SprintRepository, historias re
 	return &ConsultarSprintBacklog{sprints: sprints, historias: historias}
 }
 
-// Ejecutar devuelve el Sprint Backlog en el orden que entrega el repositorio.
-func (s *ConsultarSprintBacklog) Ejecutar(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
-	return nil, nil
+// Ejecutar verifica que el Sprint exista y devuelve su Sprint Backlog en el
+// orden que entrega el repositorio.
+func (s *ConsultarSprintBacklog) Ejecutar(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
+	if _, err := s.sprints.ObtenerPorID(ctx, sprintID); err != nil {
+		return nil, err
+	}
+	historias, err := s.historias.ListarPorSprint(ctx, sprintID)
+	if err != nil {
+		return nil, err
+	}
+	if historias == nil {
+		historias = make([]domain.BacklogItem, 0)
+	}
+	return historias, nil
 }
