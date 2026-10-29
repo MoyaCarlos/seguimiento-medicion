@@ -46,6 +46,20 @@ func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarBacklog atiende GET /sprints/{id}/backlog.
 func (h *SprintHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	historias, err := h.consultarBacklog.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	respuesta := make([]historiaResponse, 0, len(historias))
+	for _, historia := range historias {
+		respuesta = append(respuesta, aRespuesta(historia))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // Crear atiende POST /sprints.
