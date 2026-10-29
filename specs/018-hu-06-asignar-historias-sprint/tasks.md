@@ -120,8 +120,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 - [X] T033 [US2] COMMIT `RED: agregar test del orden MoSCoW del Sprint Backlog (falla)`
 - [X] T034 [US2] GREEN: en internal/repository/sqlite_backlog.go, cambiar el `ORDER BY id` de `ListarPorSprint` por `ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id` (MODELO-DE-DATOS.md §4.4) y actualizar su comentario ("en orden de creación" → "por prioridad M, S, C, W y luego por orden de creación") — `go test ./...` en verde
 - [X] T035 [US2] COMMIT `GREEN: ordenar el Sprint Backlog por prioridad MoSCoW, test en verde`
-- [ ] T036 [US2] REFACTOR: extraer en internal/repository/sqlite_backlog.go la constante `ordenBacklog = "ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id"` y usarla en `ListarSinSprint` y `ListarPorSprint` (DRY); mover a la constante el comentario sobre por qué no sirve el orden alfabético — `go test ./...` en verde
-- [ ] T037 [US2] COMMIT `REFACTOR: compartir el orden MoSCoW entre el Product Backlog y el Sprint Backlog`
+- [X] T036 [US2] REFACTOR: extraer en internal/repository/sqlite_backlog.go la constante `ordenBacklog = "ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id"` y usarla en `ListarSinSprint` y `ListarPorSprint` (DRY); mover a la constante el comentario sobre por qué no sirve el orden alfabético — `go test ./...` en verde
+- [X] T037 [US2] COMMIT `REFACTOR: compartir el orden MoSCoW entre el Product Backlog y el Sprint Backlog`
 
 ### Caso de uso: ConsultarSprintBacklog
 
