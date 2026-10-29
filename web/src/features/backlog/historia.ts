@@ -28,6 +28,39 @@ export type HistoriaCreada = {
   estimacion_sp: number | null
 }
 
+export type EstadoHistoria = 'Nueva' | 'En progreso' | 'Completada'
+
+export type Historia = {
+  id: number
+  proyecto_id: number
+  titulo: string
+  descripcion: string
+  criterios_aceptacion: string | null
+  prioridad: Prioridad
+  estado: EstadoHistoria
+  valor_negocio: number | null
+  estimacion_sp: number | null
+  sprint_id: number | null
+}
+
+export type FormularioEdicion = {
+  titulo: string
+  descripcion: string
+  criterios: string
+  estimacion: '' | `${ValorNegocio}`
+}
+
+export type CuerpoEditarHistoria = {
+  titulo: string
+  descripcion: string
+  criterios_aceptacion: string | null
+  estimacion_sp: ValorNegocio | null
+}
+
+export type ErrorEdicion = Partial<
+  Record<'titulo' | 'descripcion' | 'criterios' | 'estimacion', string>
+>
+
 export type ErrorDeCampo = Partial<
   Record<'titulo' | 'descripcion' | 'prioridad' | 'valor_negocio', string>
 >

@@ -25,7 +25,8 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   tests, implementación frontend), reforzando la trazabilidad exigida por la cátedra.
 - Sprints: Sprint 0 (preparación) → Sprint 1 (MVP) → Sprint 2 (interfaz) →
   Sprint 3 (funcionalidad y calidad) → Sprint 4 (cierre y entrega final).
-  Duración/calendario a confirmar según fecha de entrega final.
+  Fechas: Sprint 2 del 5 al 26-oct, Sprint 3 del 27-oct al 9-nov y Sprint 4 del 10 al
+  23-nov; la presentación final está pedida para el 16-nov.
 
 ### Convención de Git
 - Branches: `feature/HU-XX-nombre-corto` para las historias y

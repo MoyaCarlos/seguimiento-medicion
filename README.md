@@ -74,7 +74,7 @@ documentados en [`AGENTS.md`](./AGENTS.md).
 
 ## Documentación del proyecto
 
-- [`docs/PRODUCT-BACKLOG.md`](./docs/PRODUCT-BACKLOG.md) — las 13 historias de usuario.
+- [`docs/PRODUCT-BACKLOG.md`](./docs/PRODUCT-BACKLOG.md) — las 15 historias de usuario.
 - [`docs/GUIA-SCRUM-MASTER.md`](./docs/GUIA-SCRUM-MASTER.md) — checklist de
   ceremonias por Sprint, Definition of Done y entregables del TP.
 - [`docs/GUIA-IA-TERMINAL.md`](./docs/GUIA-IA-TERMINAL.md) — cómo usar los
