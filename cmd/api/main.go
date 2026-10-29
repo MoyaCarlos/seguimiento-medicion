@@ -52,6 +52,7 @@ func main() {
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 		service.NewConsultarSprints(proyectos, sprintRepo),
+		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
 		sprintRepo,
 	)
 
@@ -97,6 +98,7 @@ func main() {
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
+	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
 
 	log.Printf("listening on :%s", cfg.Puerto)
 	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {

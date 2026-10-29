@@ -46,10 +46,15 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 
 const columnasHistoria = `id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id`
 
-// ListarPorSprint devuelve las historias asignadas al Sprint, en orden de creación.
+// ordenBacklog ordena las historias por prioridad M, S, C, W y luego por orden
+// de creación. El orden alfabético de la prioridad no sirve, por eso el CASE.
+const ordenBacklog = "ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id"
+
+// ListarPorSprint devuelve las historias asignadas al Sprint, por prioridad
+// M, S, C, W y luego por orden de creación.
 func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	historias, err := r.listarHistorias(ctx,
-		`SELECT `+columnasHistoria+` FROM historias WHERE sprint_id = ? ORDER BY id`, sprintID)
+		`SELECT `+columnasHistoria+` FROM historias WHERE sprint_id = ? `+ordenBacklog, sprintID)
 	if err != nil {
 		return nil, fmt.Errorf("listar historias del sprint %d: %w", sprintID, err)
 	}
@@ -57,12 +62,10 @@ func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID 
 }
 
 // ListarSinSprint devuelve el Product Backlog del proyecto: las historias sin
-// Sprint, por prioridad M, S, C, W y luego por orden de creación. El orden
-// alfabético de la prioridad no sirve, por eso el CASE.
+// Sprint, en el mismo orden que el Sprint Backlog.
 func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoID int64) ([]domain.BacklogItem, error) {
 	historias, err := r.listarHistorias(ctx,
-		`SELECT `+columnasHistoria+` FROM historias WHERE proyecto_id = ? AND sprint_id IS NULL
-		 ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id`, proyectoID)
+		`SELECT `+columnasHistoria+` FROM historias WHERE proyecto_id = ? AND sprint_id IS NULL `+ordenBacklog, proyectoID)
 	if err != nil {
 		return nil, fmt.Errorf("listar product backlog del proyecto %d: %w", proyectoID, err)
 	}
