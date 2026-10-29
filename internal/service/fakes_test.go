@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -173,6 +174,84 @@ func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.Backl
 	f.actualizaciones = append(f.actualizaciones, item)
 	f.historias[item.ID] = item
 	return nil
+}
+
+// fakeVotacionRepository guarda una ronda por historia y simula las escrituras
+// condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
+// cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
+type fakeVotacionRepository struct {
+	rondas map[int64]domain.RondaVotacion
+	err    error
+}
+
+func (f *fakeVotacionRepository) CrearRonda(_ context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error) {
+	if f.err != nil {
+		return domain.RondaVotacion{}, f.err
+	}
+	if _, ok := f.rondas[r.HistoriaID]; ok {
+		return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
+	}
+	if f.rondas == nil {
+		f.rondas = map[int64]domain.RondaVotacion{}
+	}
+	r.ID = int64(len(f.rondas) + 1)
+	f.rondas[r.HistoriaID] = copiaDeRonda(r)
+	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaID int64) (domain.RondaVotacion, error) {
+	if f.err != nil {
+		return domain.RondaVotacion{}, f.err
+	}
+	r, ok := f.rondas[historiaID]
+	if !ok {
+		return domain.RondaVotacion{}, domain.ErrVotacionNoIniciada
+	}
+	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) GuardarVoto(_ context.Context, rondaID int64, v domain.Voto) error {
+	if f.err != nil {
+		return f.err
+	}
+	r, ok := f.rondaAbierta(rondaID)
+	if !ok {
+		return domain.ErrRondaRevelada
+	}
+	if i := slices.IndexFunc(r.Votos, func(x domain.Voto) bool { return x.UsuarioID == v.UsuarioID }); i >= 0 {
+		r.Votos[i] = v
+	} else {
+		r.Votos = append(r.Votos, v)
+	}
+	f.rondas[r.HistoriaID] = r
+	return nil
+}
+
+func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64, en time.Time) error {
+	if f.err != nil {
+		return f.err
+	}
+	r, ok := f.rondaAbierta(rondaID)
+	if !ok {
+		return domain.ErrRondaRevelada
+	}
+	r.ReveladaEn = &en
+	f.rondas[r.HistoriaID] = r
+	return nil
+}
+
+func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {
+	for _, r := range f.rondas {
+		if r.ID == rondaID && r.ReveladaEn == nil {
+			return copiaDeRonda(r), true
+		}
+	}
+	return domain.RondaVotacion{}, false
+}
+
+func copiaDeRonda(r domain.RondaVotacion) domain.RondaVotacion {
+	r.Votos = slices.Clone(r.Votos)
+	return r
 }
 
 // fakeAsignacionRepository simula la asignación atómica del repositorio real:

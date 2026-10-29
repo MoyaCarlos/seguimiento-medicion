@@ -55,6 +55,15 @@ func main() {
 		sprintRepo,
 	)
 
+	votaciones := repository.NewSQLiteVotacionRepository(db)
+	votacionHandler := apihttp.NewVotacionHandler(
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewVotar(backlogRepo, proyectos, votaciones),
+		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
+	)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -62,6 +71,10 @@ func main() {
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
+	mux.HandleFunc("POST /backlog/{id}/votacion", votacionHandler.Iniciar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)

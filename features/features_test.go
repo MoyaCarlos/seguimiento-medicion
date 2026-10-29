@@ -17,6 +17,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioBacklog(ctx, sc)      // HU-15
 			InitializeScenarioConsultarSprints(ctx) // HU-05 (consulta)
 			InitializeScenarioAsignacion(ctx, sc)   // HU-06
+			InitializeScenarioVotacion(ctx, sc)     // HU-02
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
