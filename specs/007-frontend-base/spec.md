@@ -133,7 +133,7 @@ Redactados en formato EARS.
 - **FR-008**: **WHEN** la API responde un error sin `campo`, el cliente **shall** entregar un error con estado y mensaje, y campo ausente; la pieza de mensaje de error **shall** mostrarlo en un bloque de aviso arriba del formulario, que permanece hasta el próximo envío.
 - **FR-009a**: **IF** no hay conexión con el backend, o el proxy responde 502, 503 o 504, **THEN** el cliente **shall** entregar un error de conexión, distinguible de los errores de la API.
 - **FR-009b**: **IF** el backend responde con un estado de error y un cuerpo que no es `{campo, mensaje}` interpretable (por ejemplo, un 500 o un cuerpo que no es JSON), **THEN** el cliente **shall** entregar un error con ese estado y un mensaje genérico, sin romper la pantalla.
-- **FR-010**: El cliente de la API **shall** tener pruebas automáticas que cubran éxito, 400 con campo, 400 sin campo, 404, 409, respuesta de error no interpretable y falta de conexión. Depende de la decisión de FR-026 (librería de pruebas).
+- **FR-010**: El cliente de la API **shall** tener pruebas automáticas que cubran éxito, 400 con campo, 400 sin campo, 404, 409, respuestas de gateway (502, 503 y 504), respuesta de error no interpretable y falta de conexión. Depende de la decisión de FR-026 (librería de pruebas).
 
 **Ruteo y navegación**
 

@@ -90,10 +90,27 @@ describe('cliente de la API', () => {
     },
   )
 
-  it('trata el 502 con cuerpo como error de conexión', async () => {
+  it('trata el 502 con cuerpo no JSON como error de conexión', async () => {
     respondWith('<html>Bad Gateway</html>', 502)
 
     await expect(post('/projects', {})).rejects.toBeInstanceOf(ConnectionError)
+  })
+
+  it('trata el 502 con cuerpo JSON como error de conexión', async () => {
+    respondWithJson({ mensaje: 'x' }, 502)
+
+    await expect(post('/projects', {})).rejects.toBeInstanceOf(ConnectionError)
+  })
+
+  it('no lee el cuerpo de una respuesta de gateway', async () => {
+    const leerCuerpo = vi.fn(() => Promise.reject(new Error('no se debía leer el cuerpo')))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ status: 502, ok: false, text: leerCuerpo }),
+    )
+
+    await expect(get('/projects/1')).rejects.toBeInstanceOf(ConnectionError)
+    expect(leerCuerpo).not.toHaveBeenCalled()
   })
 
   it('sigue dando un error de la API ante un 500 con cuerpo vacío', async () => {
