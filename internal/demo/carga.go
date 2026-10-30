@@ -6,8 +6,19 @@ package demo
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
+
+	sqlite "modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
+)
+
+var (
+	// ErrYaCargado indica que el proyecto de demostración ya existe.
+	ErrYaCargado = errors.New("los datos de prueba ya están cargados")
+	// ErrIdOcupado indica que el id del proyecto de demostración lo usa otro proyecto.
+	ErrIdOcupado = errors.New("el id 25 ya lo usa otro proyecto")
 )
 
 // Resumen cuenta lo que creó la carga.
@@ -98,8 +109,35 @@ func NewCargador(db *sql.DB, ahora func() time.Time) *Cargador {
 // Cargar crea todos los datos o ninguno.
 func (l *Cargador) Cargar(ctx context.Context) (Resumen, error) {
 	c, err := ejecutarBloques(ctx, l.db, l.ahora(), l.bloques)
+	if esViolacionDeClave(err) {
+		return Resumen{}, l.clasificarConflicto(ctx, err)
+	}
 	if err != nil {
 		return Resumen{}, err
 	}
 	return c.resumen, nil
+}
+
+// clasificarConflicto se llama con la transacción ya deshecha: distingue la
+// carga repetida del id ocupado por el nombre del proyecto 25.
+func (l *Cargador) clasificarConflicto(ctx context.Context, original error) error {
+	var nombre string
+	err := l.db.QueryRowContext(ctx, `SELECT nombre FROM proyectos WHERE id = ?`, proyectoID).Scan(&nombre)
+	switch {
+	case err != nil:
+		return original
+	case nombre == nombreProyecto:
+		return ErrYaCargado
+	default:
+		return ErrIdOcupado
+	}
+}
+
+func esViolacionDeClave(err error) bool {
+	var sqliteErr *sqlite.Error
+	if !errors.As(err, &sqliteErr) {
+		return false
+	}
+	codigo := sqliteErr.Code()
+	return codigo == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || codigo == sqlite3.SQLITE_CONSTRAINT_UNIQUE
 }
