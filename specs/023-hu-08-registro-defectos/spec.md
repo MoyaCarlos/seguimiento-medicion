@@ -14,6 +14,7 @@
 
 - Q: Cuando un defecto ya está "Resuelto", ¿se puede volver a ponerlo en "Pendiente" (reabrirlo) si el error reaparece? → A: No. "Resuelto" es definitivo; si el error vuelve, se registra un defecto nuevo. Así los defectos resueltos de un Sprint ya cerrado no cambian después.
 - Q: Como historia relacionada de un defecto, ¿se puede elegir cualquier historia del proyecto, o solo una que esté en el Sprint "Activo"? → A: Cualquier historia del proyecto, en cualquier Sprint o en el Product Backlog y en cualquier estado. El Sprint de detección indica cuándo se encontró el defecto, no dónde se construyó la historia.
+- Q: En el listado de defectos de un proyecto, ¿en qué orden se muestran? → A: Por orden de registro, el más antiguo primero. Agrupar o filtrar por estado o severidad queda del lado del frontend.
 
 ## User Scenarios & Testing *(mandatory)*
 
