@@ -29,6 +29,7 @@ func ServirSPA(api http.Handler, dirWeb string) http.Handler {
 		case esLecturaDeArchivo(r, archivos):
 			servidorArchivos.ServeHTTP(w, r)
 		case esPedidoDePagina(r):
+			w.Header().Set("Cache-Control", "no-cache")
 			http.ServeFile(w, r, index)
 		default:
 			api.ServeHTTP(w, r)
