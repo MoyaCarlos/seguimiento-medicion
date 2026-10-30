@@ -10,7 +10,7 @@ const sinCuerpo = (status: number) => new Response('404 page not found', { statu
 const resumen = { proyecto_id: 25, usuarios: 4, integrantes: 3, sprints: 3, historias: 10 }
 
 function simularApi(estado: Response | Error, carga?: Response | Promise<Response>) {
-  const fetchSimulado = vi.fn((ruta: string) => {
+  const fetchSimulado = vi.fn((ruta: string, _opciones?: RequestInit) => {
     if (ruta === '/demo/estado') return estado instanceof Error ? Promise.reject(estado) : Promise.resolve(estado)
     return carga ?? Promise.reject(new Error(`ruta inesperada ${ruta}`))
   })
@@ -66,7 +66,7 @@ describe('BotonDatosDePrueba', () => {
     expect(enlace.getAttribute('href')).toBe('/projects/25')
     expect(screen.getByRole('status').textContent).toContain('Datos de prueba cargados')
     const [, opciones] = fetchSimulado.mock.calls.find(([ruta]) => ruta === '/demo/datos')!
-    expect((opciones as RequestInit).method).toBe('POST')
+    expect(opciones?.method).toBe('POST')
   })
 
   it('Dado el botón visible, cuando la carga responde 409 ya cargado, entonces lo muestra como aviso y no como error', async () => {
