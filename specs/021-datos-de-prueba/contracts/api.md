@@ -11,7 +11,7 @@ Sin cuerpo.
 
 | Caso | Estado | Cuerpo |
 |---|---|---|
-| Carga exitosa | 201 | `{"proyecto_id":25,"usuarios":4,"integrantes":3,"sprints":3,"historias":10,"registros_horas":13,"rondas_votacion":1,"votos":3}` |
+| Carga exitosa | 201 | `{"proyecto_id":25,"usuarios":4,"integrantes":3,"sprints":3,"historias":10,"registros_horas":15,"rondas_votacion":1,"votos":3}` |
 | Ya cargado | 409 | `{"mensaje":"los datos de prueba ya están cargados","campo":"ya_cargado"}` |
 | Id 25 de otro proyecto | 409 | `{"mensaje":"el id 25 ya lo usa otro proyecto","campo":"proyecto_id"}` |
 | Error interno (nada queda) | 500 | `{"mensaje":"no se pudieron cargar los datos de prueba"}` |
