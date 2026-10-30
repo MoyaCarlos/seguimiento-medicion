@@ -8,6 +8,13 @@
 
 **Input**: User description: "Botón «Cargar datos de prueba» (issue #144), versión 1: carga de un proyecto de demostración completo (usuarios, proyecto y equipo, Sprints, historias, horas imputadas y una votación revelada) con los datos que ya existen en `main`, para poder mostrar y probar la aplicación sin cargar todo a mano. Trabajo en curso: cada historia futura que agregue tablas o datos extiende la carga con su propio bloque."
 
+## Clarifications
+
+### Session 2026-10-30
+
+- Q: ¿«Razonables frente a lo estimado» es verificable? → A: Sí: en las historias Completadas estimadas, el total imputado queda entre el 50 % y el 150 % de Story Points × horas por Story Point (FR-016).
+- Las demás decisiones (id fijo 25, atomicidad, 404 con la función apagada, Sprint #3 sin goal ni fechas) ya vienen cerradas por el Scrum Master; no quedan ambigüedades críticas.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Cargar el proyecto de demostración (Priority: P1)
@@ -121,7 +128,7 @@ Las reglas se redactan en formato EARS.
 - **FR-013**: El sistema deberá crear los Sprints #1 Finalizado (hoy − 14 a hoy − 8), #2 Activo (hoy − 7 a hoy + 6) y #3 Pendiente sin Sprint Goal ni fechas (por el CHECK de `MODELO-DE-DATOS.md` §4.4).
 - **FR-014**: El sistema deberá crear unas 10 historias del dominio de licencias de conducir con la variedad y el reparto de la User Story 1, escenario 5, donde toda historia Completada tenga fecha de finalización y las estimaciones usen la escala Fibonacci.
 - **FR-015**: El sistema deberá registrar la historia sin completar del Sprint 1 como arrastrada y dejarla en el Product Backlog en estado Nueva, con su registro en `historias_arrastradas`.
-- **FR-016**: El sistema deberá imputar horas a historias de los Sprints 1 y 2, con fechas dentro de cada Sprint y hasta hoy, repartidas entre los integrantes del proyecto.
+- **FR-016**: El sistema deberá imputar horas a historias de los Sprints 1 y 2, con fechas dentro de cada Sprint y hasta hoy, repartidas entre los integrantes del proyecto; para las historias Completadas estimadas, el total imputado queda entre el 50 % y el 150 % de «Story Points × horas por Story Point».
 - **FR-017**: El sistema deberá crear una ronda de votación revelada en una historia sin estimar del Product Backlog, con un voto de cada integrante con rol (Beta Uno, Beta Dos y Beta Tres).
 
 **Idempotencia y errores (No deseado)**
