@@ -54,6 +54,18 @@ docker run -d --name seg -p 8080:8080 -v seguimiento-data:/data seguimiento-medi
 - Si el puerto 8080 está ocupado, publicá en otro: `-p 8081:8080`.
 - Con un directorio del host en lugar de un volumen (`-v $(pwd)/datos:/data`), tiene que ser escribible por el usuario `65532` (`sudo chown 65532:65532 datos`).
 
+## Despliegue en Render
+
+La aplicación está publicada en https://seguimiento-medicion-sprintometro.onrender.com (plan gratis de Render, imagen Docker del `Dockerfile` de la raíz, región Oregon).
+
+- **Cómo se despliega:** cada merge a `main` que toque código se publica solo, después de que pasen los checks de CI (`backend` y `frontend`). No hay pasos manuales.
+- **Qué no redeploya:** los cambios que solo toquen `docs/`, `specs/`, `features/`, `.github/`, `.specify/`, `render.yaml` o cualquier `.md` (incluido `web/README.md`). Cualquier otro archivo sí redeploya.
+- **La base se vacía en cada deploy:** no hay disco persistente, así que cada deploy o reinicio arranca con la base vacía.
+- **El servicio se duerme a los 15 minutos sin tráfico:** el primer pedido después tarda decenas de segundos. Abrí la URL unos minutos antes de una demo.
+- **`DEMO_HABILITADO`:** la variable de entorno (`true` en Render) controlará el botón de datos de prueba cuando se implemente #144; hoy el código de `main` todavía no la lee.
+- **Regla operativa:** no mergear en la hora previa a la presentación del 16-nov, porque un deploy en curso puede dejar la app caída unos minutos y vacía la base.
+- **`render.yaml`:** es solo referencia versionada de la configuración, que se administra a mano en el dashboard. No crear un Blueprint a partir de él: Render lo aplicaría al servicio existente y lo que el archivo no declare podría volver a su valor por defecto (en particular, las rutas ignoradas se reemplazarían por listas vacías).
+
 ## Especificación de funcionalidades (SDD)
 
 El proyecto aplica **Specification-Driven Development** con
