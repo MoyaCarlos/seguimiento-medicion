@@ -84,7 +84,7 @@ Como integrante del equipo, quiero saber que el servicio se duerme, que la base 
 
 1. **Given** el README, **When** se lee, **Then** dice que el servicio se duerme a los 15 minutos y que conviene abrir la URL unos minutos antes de una demo.
 2. **Given** el README, **When** se lee, **Then** dice que la base se vacía en cada deploy o reinicio.
-3. **Given** el README, **When** se lee, **Then** dice que `DEMO_HABILITADO` controla el botón de datos de prueba (#144).
+3. **Given** el README, **When** se lee, **Then** dice que `DEMO_HABILITADO` controlará el botón de datos de prueba cuando se implemente #144.
 4. **Given** el README, **When** se lee, **Then** incluye la regla de no mergear en la hora previa a la presentación del 16-nov.
 
 ---
@@ -109,7 +109,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - Merge que mezcla rutas ignoradas y código: redeploya, porque basta un archivo no ignorado.
 - Merge a `main` con un check en rojo: no debería llegar a `main` por la protección de rama; si llegara, Render no despliega ("After CI Checks Pass").
 - Reinicio por inactividad o deploy: se pierden los datos cargados, incluidos los de prueba.
-- `DEMO_HABILITADO` ausente o distinto de `true`: el botón de datos de prueba no se habilita (comportamiento del #144, fuera de esta spec).
+- `DEMO_HABILITADO` ausente o distinta de `true`: cuando se implemente #144, el botón de datos de prueba no se habilitará (comportamiento del #144, fuera de esta spec). Hoy ningún código la lee.
 - Cambiar solo `render.yaml` o un `.md` de cualquier carpeta (por ejemplo `web/README.md`): no redeploya, porque ambos están en las rutas ignoradas.
 - Un deploy en curso durante la presentación: la app puede quedar no disponible unos minutos.
 
@@ -127,7 +127,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - **FR-008** (Ubicuo): El README MUST listar las rutas que no redeployan: `docs/**`, `specs/**`, `features/**`, `**/*.md` (en los filtros de Render `*` no cruza `/`, así que `*.md` solo cubriría la raíz), `.github/**`, `.specify/**` y `render.yaml`, y aclarar que cualquier otro archivo sí redeploya.
 - **FR-009** (Ubicuo): El README MUST indicar que la base se vacía en cada deploy o reinicio.
 - **FR-010** (Basado en estado): Mientras el servicio lleve 15 minutos sin tráfico, el README MUST indicar que se duerme y que conviene abrir la URL unos minutos antes de una demo.
-- **FR-011** (Ubicuo): El README MUST indicar que `DEMO_HABILITADO` controla el botón de datos de prueba (#144).
+- **FR-011** (Ubicuo): El README MUST indicar que `DEMO_HABILITADO` controlará el botón de datos de prueba cuando se implemente #144, y que hoy el código de `main` todavía no la lee.
 - **FR-012** (Ubicuo): El README MUST incluir la regla operativa: no mergear en la hora previa a la presentación del 16-nov.
 - **FR-013** (Ubicuo): `quickstart.md` MUST registrar el resultado de la verificación manual: `GET /health` responde 200 `ok`, la raíz abre la aplicación y `GET /projects` devuelve JSON.
 - **FR-014** (Ubicuo): La verificación MUST usar solo pedidos de lectura (`GET`) y MUST NOT modificar el servicio ni su configuración.
