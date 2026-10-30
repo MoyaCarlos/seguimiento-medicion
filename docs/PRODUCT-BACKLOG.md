@@ -563,7 +563,7 @@ Implementada (backend, PR #135; falta el frontend: issue #98)
 
 ---
 
-## HU-16: Gestión del Equipo del Proyecto 
+## HU-16: Gestión del Equipo del Proyecto
 ### Descripción
 Como Scrum Master quiero cambiar el rol de un integrante y quitarlo del equipo de un proyecto, conservando todo lo que aportó, para poder mantener el equipo al día sin perder el historial del proyecto.
 ### Criterios de aceptacion (BDD):
@@ -590,7 +590,8 @@ Entonces el sistema responde "no encontrado".
 ### Depende de
 HU-04 (proyecto e integrantes). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
 ### Notas
-La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Decisión del Scrum Master del 2026-10-30, a confirmar con el equipo.
+La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
+Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; HU-17 lo elige de la lista), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Esta historia **reabre la decisión D4** de `MODELO-DE-DATOS.md` (hoy no se impone un único Scrum Master; acá se pide al menos uno activo).
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
 La aplicación de permisos por rol sigue fuera del alcance (ver HU-04).
@@ -605,7 +606,7 @@ Nueva
 
 ---
 
-## HU-17: Gestión de Usuarios 
+## HU-17: Gestión de Usuarios
 ### Descripción
 Como Scrum Master quiero crear y editar usuarios y elegir a los integrantes de un proyecto de entre los usuarios ya creados, para no asignar roles a personas ficticias ni por un error de tipeo, y para que el equipo de pruebas tenga usuarios listos después de cada despliegue.
 ### Criterios de aceptacion (BDD):
@@ -654,7 +655,7 @@ Nueva
 
 ---
 
-## HU-18: Avance de las Historias del Proyecto 
+## HU-18: Avance de las Historias del Proyecto
 ### Descripción
 Como integrante del equipo quiero ver todas las historias del proyecto agrupadas por estado y por Sprint, para saber qué se terminó y qué falta sin revisar los Sprints uno por uno.
 ### Criterios de aceptacion (BDD):
@@ -690,7 +691,7 @@ Nueva
 
 ---
 
-## HU-19: Administración de Mis Proyectos 
+## HU-19: Administración de Mis Proyectos
 ### Descripción
 Como usuario quiero ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), para trabajar solo con lo que me corresponde y poder transferir la propiedad de un proyecto a otra persona.
 ### Criterios de aceptacion (BDD):
@@ -725,7 +726,7 @@ Se entrega por niveles, porque la historia completa necesita identificar a la pe
 1. **Nivel 1, ya en curso:** lista de proyectos y selector para navegar entre ellos (#148).
 2. **Nivel 2, esta historia:** un "usuario actual" elegido de la lista de usuarios (sin contraseña, pensado para la beta) con "mis proyectos", el dueño y las acciones visibles según el rol. Los permisos se aplican en la pantalla: sin autenticación **no son seguridad real**, y el backend no puede saber quién hace cada pedido.
 3. **Nivel 3, después de la entrega:** autenticación y permisos aplicados en el backend. Reabre la decisión de HU-04 de dejar los permisos por rol fuera del alcance, que se consulta con la cátedra.
-El dueño es quien crea el proyecto y se puede transferir a otro usuario. El dueño no existe en el modelo: guardarlo es un cambio de esquema (por ejemplo, una referencia al usuario en `proyectos`, o un tercer rol en `integrantes`), un solo PR con `MODELO-DE-DATOS.md` y la migración. La opción se decide con el Scrum Master y el equipo; no la elige quien implementa. Propuesta a considerar: que la persona a quien se transfiere deba ser integrante del proyecto.
+El dueño es quien crea el proyecto y se puede transferir a otro usuario. El dueño no existe en el modelo: guardarlo es un cambio de esquema (por ejemplo, una referencia al usuario en `proyectos`, o un tercer rol en `integrantes`), un solo PR con `MODELO-DE-DATOS.md` y la migración. La opción se decide con el Scrum Master y el equipo; no la elige quien implementa.
 Cerrar el proyecto de forma manual es otra decisión pendiente (#173).
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 dependen de HU-17 y de perfiles.

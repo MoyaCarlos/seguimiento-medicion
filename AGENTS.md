@@ -56,7 +56,7 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   nunca desde una rama:
   - `v0.N.0` al cerrar el Sprint N (`v0.1.0` = Sprint 1, el MVP).
   - `v0.N.P` por cada fix mergeado después de ese hito (`v0.1.1`, `v0.1.2`, ...).
-  - `v1.0.0` en la entrega final.
+  - `v1.0.0` en la entrega final: el Sprint 5 cierra con `v1.0.0` y no se crea `v0.5.0`.
 - Crearlo y publicarlo: `git tag -a v0.1.0 -m "Sprint 1: MVP" <commit>` y
   `git push origin v0.1.0`. Lo crea el Agile Enabler (o quien él indique).
 - Un tag publicado no se mueve ni se borra: si hay un error, se corrige con el
