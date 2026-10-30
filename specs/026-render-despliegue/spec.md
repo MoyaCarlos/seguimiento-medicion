@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-30
 
-**Status**: Draft (Issue #139)
+**Status**: Implementada, pendiente de revisión por PR (Issue #139)
 
 **Input**: User description: "Despliegue continuo en Render (Issue #139). Infraestructura y documentación, sin tocar código de la aplicación. El servicio ya existe, creado a mano en el dashboard, y funciona en https://seguimiento-medicion-sprintometro.onrender.com. Entregables: `render.yaml` como referencia versionada, sección de README y verificación manual anotada en `quickstart.md`."
 
@@ -121,7 +121,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - **FR-002** (Ubicuo): `render.yaml` MUST usar solo claves definidas en el esquema oficial de Render y MUST validar contra él sin errores.
 - **FR-003** (Ubicuo): `render.yaml` MUST NOT contener secretos ni valores sensibles.
 - **FR-004** (Ubicuo): `render.yaml` MUST llevar un comentario que diga que es solo referencia y que no se crea un Blueprint a partir de él.
-- **FR-005** (No deseado): Si alguien crea un Blueprint en el dashboard a partir de `render.yaml`, entonces Render lo aplicaría al servicio existente y lo que el archivo no declare volvería a su valor por defecto; la spec MUST documentar este riesgo.
+- **FR-005** (No deseado): Si alguien crea un Blueprint en el dashboard a partir de `render.yaml`, entonces Render lo aplicaría al servicio existente y lo que el archivo no declare podría volver a su valor por defecto (varios campos se conservan, pero `buildFilter` se reemplaza por listas vacías); la spec MUST documentar este riesgo.
 - **FR-006** (Ubicuo): El README MUST tener una sección "Despliegue en Render" con la URL pública del servicio.
 - **FR-007** (Basado en evento): Cuando un merge a `main` toca código y los checks pasan, el README MUST indicar que Render redeploya solo.
 - **FR-008** (Ubicuo): El README MUST listar las rutas que no redeployan: `docs/**`, `specs/**`, `features/**`, `**/*.md` (en los filtros de Render `*` no cruza `/`, así que `*.md` solo cubriría la raíz), `.github/**`, `.specify/**` y `render.yaml`, y aclarar que cualquier otro archivo sí redeploya.
@@ -129,13 +129,13 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - **FR-010** (Basado en estado): Mientras el servicio lleve 15 minutos sin tráfico, el README MUST indicar que se duerme y que conviene abrir la URL unos minutos antes de una demo.
 - **FR-011** (Ubicuo): El README MUST indicar que `DEMO_HABILITADO` controlará el botón de datos de prueba cuando se implemente #144, y que hoy el código de `main` todavía no la lee.
 - **FR-012** (Ubicuo): El README MUST incluir la regla operativa: no mergear en la hora previa a la presentación del 16-nov.
-- **FR-013** (Ubicuo): `quickstart.md` MUST registrar el resultado de la verificación manual: `GET /health` responde 200 `ok`, la raíz abre la aplicación y `GET /projects` devuelve JSON.
+- **FR-013** (Ubicuo): `quickstart.md` MUST registrar el resultado de la verificación manual: `GET /health` responde 200 `ok`, la raíz devuelve el `index.html` de la aplicación y `GET /projects` devuelve JSON.
 - **FR-014** (Ubicuo): La verificación MUST usar solo pedidos de lectura (`GET`) y MUST NOT modificar el servicio ni su configuración.
 - **FR-015** (Ubicuo): Esta tarea MUST NOT modificar código de la aplicación, el `Dockerfile`, el esquema de datos ni agregar dependencias.
 
 ### Riesgos
 
-- **Blueprint sobre el servicio existente**: crear un Blueprint a partir de `render.yaml` haría que Render sincronice el archivo con cada push; cualquier ajuste del dashboard que el archivo no declare (por ejemplo la región o las variables) volvería a su valor por defecto. Por eso el archivo es solo referencia y no se crea ningún Blueprint.
+- **Blueprint sobre el servicio existente**: crear un Blueprint a partir de `render.yaml` haría que Render sincronice el archivo con cada push; cualquier ajuste del dashboard que el archivo no declare podría volver a su valor por defecto. Render conserva varios campos, pero `buildFilter` sí se reemplaza por listas vacías, y se perderían las rutas ignoradas. Por eso el archivo es solo referencia y no se crea ningún Blueprint.
 - **Deriva**: si alguien cambia el dashboard y no el archivo (o al revés), el archivo queda desactualizado. Un cambio de configuración se registra en el mismo PR que actualiza `render.yaml` y el README.
 
 ### Key Entities

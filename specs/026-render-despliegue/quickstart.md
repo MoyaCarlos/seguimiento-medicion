@@ -45,3 +45,5 @@ Verificado el 2026-10-30 (11:36, hora local) contra el servicio real, solo con `
 No verificado: abrir la raíz en un navegador real (se comprobó que el servidor entrega el `index.html`, no que la interfaz renderice).
 
 La semántica de los globs de `ignoredPaths` (`*` no cruza `/`; `**/*.md` cubre `.md` de cualquier carpeta) es la que documenta Render para los build filters.
+
+El despliegue continuo de punta a punta (un merge a `main` que termine corriendo en Render) todavía no se probó: la verificación de arriba es de solo lectura. La primera prueba real es el deploy posterior al primer merge que toque código; hay que verificarlo antes de cerrar #139.

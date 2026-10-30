@@ -64,7 +64,7 @@ La aplicación está publicada en https://seguimiento-medicion-sprintometro.onre
 - **El servicio se duerme a los 15 minutos sin tráfico:** el primer pedido después tarda decenas de segundos. Abrí la URL unos minutos antes de una demo.
 - **`DEMO_HABILITADO`:** la variable de entorno (`true` en Render) controlará el botón de datos de prueba cuando se implemente #144; hoy el código de `main` todavía no la lee.
 - **Regla operativa:** no mergear en la hora previa a la presentación del 16-nov, porque un deploy en curso puede dejar la app caída unos minutos y vacía la base.
-- **`render.yaml`:** es solo referencia versionada de la configuración, que se administra a mano en el dashboard. No crear un Blueprint a partir de él: Render lo aplicaría al servicio existente y lo que el archivo no declare volvería a su valor por defecto.
+- **`render.yaml`:** es solo referencia versionada de la configuración, que se administra a mano en el dashboard. No crear un Blueprint a partir de él: Render lo aplicaría al servicio existente y lo que el archivo no declare podría volver a su valor por defecto (en particular, las rutas ignoradas se reemplazarían por listas vacías).
 
 ## Especificación de funcionalidades (SDD)
 

@@ -1,8 +1,8 @@
 # SOLO REFERENCIA versionada de la configuración del servicio en Render (Issue #139).
 # El servicio se creó a mano en el dashboard y se administra ahí.
 # NO crear un Blueprint a partir de este archivo: Render lo aplicaría al servicio
-# existente, lo sincronizaría con cada push y lo que acá no esté declarado volvería
-# a su valor por defecto. Si cambia el dashboard, actualizar este archivo y el README.
+# existente, lo sincronizaría con cada push y lo que acá no esté declarado podría
+# volver a su valor por defecto (en particular buildFilter, que se reemplaza por listas vacías). Si cambia el dashboard, actualizar este archivo y el README.
 # Detalle en specs/026-render-despliegue/.
 services:
   - type: web
