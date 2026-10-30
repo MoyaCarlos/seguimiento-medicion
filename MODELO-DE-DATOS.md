@@ -244,6 +244,8 @@ Restricciones de base:
   `CREATE UNIQUE INDEX sprints_un_pendiente_por_proyecto ON sprints (proyecto_id) WHERE estado = 'Pendiente'`.
   Hoy esa regla vive solo en el servicio y el PR #17 ya registró el límite (dos pedidos simultáneos podrían violarla).
 
+**Por qué el `UPDATE sprints` del inicio es condicional (#158).** `sprint.Iniciar()` valida en memoria que el Sprint esté `Pendiente`, pero dos inicios simultáneos del mismo Sprint pasan los dos esa validación y el segundo pisaba el Goal y las fechas del primero. `Actualizar` escribe con `WHERE id = ? AND estado = 'Pendiente'`: el segundo no afecta ninguna fila (`RowsAffected` 0) y devuelve `ErrSprintNoPendiente`, o `ErrSprintNoEncontrado` si el Sprint no existe. Dos Sprints `Activo` distintos en el mismo proyecto ya los rechaza el índice `sprints_un_activo_por_proyecto`. Como en el cierre (§4.6, #145), no cambia el esquema ni agrega migración.
+
 ### 4.6 `historias_arrastradas` — HU-05 cierre, HU-09, HU-10, HU-12 (**tabla nueva**, migración 002)
 
 Resuelve el hueco D2a. Al cerrar un Sprint, las historias no completadas se quedan
@@ -274,7 +276,7 @@ un Sprint pasado (HU-12). Esta tabla registra cuáles quedaron afuera.
 
 Sobre el `UPDATE` único (verificado): hacerlo en dos pasos falla **solo si primero se quita el Sprint** de una historia que sigue `En progreso` (el `CHECK` de §4.4 exige Sprint para ese estado). Si primero se vuelve a `Nueva`, o si la historia ya estaba `Nueva`, los dos pasos pasan. El `UPDATE` único sigue siendo lo más simple y robusto porque **no depende del orden** de las sentencias.
 
-**Por qué el `UPDATE sprints` es condicional (#145).** `sprint.Cerrar()` valida en memoria que el Sprint esté `Activo`, pero dos cierres simultáneos del mismo Sprint pasan los dos esa validación. Con `estado = 'Activo'` en el `WHERE`, solo uno de los dos cambia la fila. El otro no afecta ninguna fila (`RowsAffected` 0): la transacción se revierte sin registrar arrastradas y devuelve `ErrSprintNoActivo`, o `ErrSprintNoEncontrado` si el Sprint no existe. Es una forma de escribir, no una restricción nueva: no cambia el esquema ni agrega migración. El fake en memoria no reproduce la carrera (U1 de la spec 003); esa garantía la da la base.
+**Por qué el `UPDATE sprints` es condicional (#145).** `sprint.Cerrar()` valida en memoria que el Sprint esté `Activo`, pero dos cierres simultáneos del mismo Sprint pasan los dos esa validación. Con `estado = 'Activo'` en el `WHERE`, solo uno de los dos cambia la fila. El otro no afecta ninguna fila (`RowsAffected` 0): la transacción se revierte sin registrar arrastradas y devuelve `ErrSprintNoActivo`, o `ErrSprintNoEncontrado` si el Sprint no existe. Es una forma de escribir, no una restricción nueva: no cambia el esquema ni agrega migración. El fake en memoria no reproduce la carrera; esa garantía la da la base. El inicio usa el mismo patrón (#158, ver §4.5).
 
 La transacción es un detalle de SQLite, así que no entra al dominio ni al servicio (arquitectura hexagonal). El fake en memoria debe simular la atomicidad: un fake que no la tiene oculta defectos (punto 2 de #101).
 

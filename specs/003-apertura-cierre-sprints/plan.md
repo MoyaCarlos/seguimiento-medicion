@@ -14,7 +14,7 @@ Clean/Hexagonal ya establecida (mismo patrón que HU-01). La existencia del
 proyecto se verifica con el `ProjectRepository` real de HU-04 (ya en
 `main`); en los tests se usa su fake `ProjectRepositoryEnMemoria`.
 
-**Fixes posteriores al plan original** (detalle en `tasks.md`, Phases 8 y 9):
+**Fixes posteriores al plan original** (detalle en `tasks.md`, Phases 8 a 10):
 
 - **#117** (continúa #99): el cierre registra las historias no completadas en
   `historias_arrastradas` (migración 002) y se escribe en una sola operación
@@ -24,6 +24,11 @@ proyecto se verifica con el `ProjectRepository` real de HU-04 (ya en
 - **#145**: el `UPDATE sprints` del cierre es condicional
   (`WHERE estado = 'Activo'`); de dos cierres simultáneos del mismo Sprint,
   el segundo recibe `ErrSprintNoActivo`. No cambia el esquema.
+- **#158**: el `UPDATE sprints` del inicio (`Actualizar`) también es
+  condicional (`WHERE estado = 'Pendiente'`); de dos inicios simultáneos
+  del mismo Sprint, el segundo recibe `ErrSprintNoPendiente` y no pisa el
+  Goal ni las fechas ([MODELO-DE-DATOS.md §4.5](../../MODELO-DE-DATOS.md)).
+  No cambia el esquema.
 
 ## Technical Context
 
