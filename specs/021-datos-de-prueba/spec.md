@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-30
 
-**Status**: Borrador
+**Status**: Implementada, pendiente de revisión por PR.
 
 **Input**: User description: "Botón «Cargar datos de prueba» (issue #144), versión 1: carga de un proyecto de demostración completo (usuarios, proyecto y equipo, Sprints, historias, horas imputadas y una votación revelada) con los datos que ya existen en `main`, para poder mostrar y probar la aplicación sin cargar todo a mano. Trabajo en curso: cada historia futura que agregue tablas o datos extiende la carga con su propio bloque."
 
