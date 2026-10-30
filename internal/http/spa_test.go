@@ -109,3 +109,35 @@ func TestServirSPA_SinDirectorioTodoVaALaAPI(t *testing.T) {
 		}
 	}
 }
+
+func TestServirSPA_PaginaNoSeGuardaSinRevalidar(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
+
+	for _, ruta := range []string{"/projects/1/sprints", "/"} {
+		t.Run(ruta, func(t *testing.T) {
+			rec := pedir(handler, http.MethodGet, ruta, aceptaNavegador)
+
+			if got := rec.Header().Get("Cache-Control"); got != "no-cache" {
+				t.Errorf("Cache-Control = %q, se esperaba no-cache", got)
+			}
+		})
+	}
+}
+
+func TestServirSPA_APIYAssetsNoLlevanCacheControl(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
+
+	casos := []struct{ nombre, ruta, accept string }{
+		{"API", "/projects/1/sprints", "application/json"},
+		{"asset con hash", "/assets/app.js", ""},
+	}
+	for _, caso := range casos {
+		t.Run(caso.nombre, func(t *testing.T) {
+			rec := pedir(handler, http.MethodGet, caso.ruta, caso.accept)
+
+			if got := rec.Header().Get("Cache-Control"); got != "" {
+				t.Errorf("no se esperaba Cache-Control, se obtuvo %q", got)
+			}
+		})
+	}
+}
