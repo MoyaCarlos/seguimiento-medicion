@@ -27,6 +27,6 @@
 
 ## Pendiente de confirmar al implementar
 
-- Que el archivo valide sin errores contra el esquema (T-validar).
+- Que el archivo valide sin errores contra el esquema (T002).
 - Que `buildFilter.ignoredPaths` use la misma semántica de globs que "Ignored Paths" del dashboard: el esquema lo describe como "glob syntax", sin ejemplos; se anota como no verificable sin tocar el dashboard.
 - Si el esquema marca `name` como requerido: se incluye igual para identificar el servicio.

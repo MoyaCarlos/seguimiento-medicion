@@ -99,7 +99,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 **Acceptance Scenarios**:
 
 1. **Given** el servicio despierto, **When** se pide `GET /health`, **Then** responde 200 con cuerpo `ok`.
-2. **Given** el servicio despierto, **When** se abre la raíz en un navegador, **Then** carga la aplicación.
+2. **Given** el servicio despierto, **When** se pide la raíz con `Accept: text/html` (o se abre en un navegador), **Then** devuelve el `index.html` de la aplicación. Si no se pudo abrir en un navegador real, se anota como no verificado.
 3. **Given** el servicio despierto, **When** se pide `GET /projects`, **Then** responde JSON.
 
 ### Edge Cases
