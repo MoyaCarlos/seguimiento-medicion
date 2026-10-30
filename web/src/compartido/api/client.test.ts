@@ -81,6 +81,29 @@ describe('cliente de la API', () => {
     )
   })
 
+  it.each([502, 503, 504])(
+    'lanza un error de conexión si el proxy responde %i con cuerpo vacío',
+    async (status) => {
+      respondWith(null, status)
+
+      await expect(get('/projects/1')).rejects.toBeInstanceOf(ConnectionError)
+    },
+  )
+
+  it('trata el 502 con cuerpo como error de conexión', async () => {
+    respondWith('<html>Bad Gateway</html>', 502)
+
+    await expect(post('/projects', {})).rejects.toBeInstanceOf(ConnectionError)
+  })
+
+  it('sigue dando un error de la API ante un 500 con cuerpo vacío', async () => {
+    respondWith(null, 500)
+
+    await expect(get('/projects/1')).rejects.toEqual(
+      new ApiError(500, 'La API respondió con estado 500'),
+    )
+  })
+
   it('lanza un error de conexión, distinto de los de la API, si no hay respuesta', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
 
