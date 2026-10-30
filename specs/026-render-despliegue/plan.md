@@ -71,4 +71,4 @@ No se modifica nada más.
 - `render.yaml` lleva un comentario al inicio que dice que es solo referencia y por qué no se crea un Blueprint (FR-004, FR-005).
 - Las claves y su correspondencia con el dashboard están en [contracts/render-yaml.md](contracts/render-yaml.md).
 - Una clave que no se pueda validar contra el esquema se deja fuera y se informa (research.md).
-- `render.yaml` no se agrega a `ignoredPaths`: el archivo debe reproducir la configuración actual (ver Clarifications de la spec).
+- `render.yaml` está en `ignoredPaths` y los `.md` se ignoran con `**/*.md`, igual que en el dashboard: el archivo reproduce la configuración actual (ver Clarifications de la spec).

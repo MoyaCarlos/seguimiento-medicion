@@ -22,9 +22,10 @@ services:
         - docs/**
         - specs/**
         - features/**
-        - "*.md"
+        - "**/*.md"
         - .github/**
         - .specify/**
+        - render.yaml
 ```
 
 Correspondencia con el dashboard:

@@ -14,8 +14,9 @@
 
 ### Session 2026-10-30
 
-- Q: ¿Qué cuenta como "toca código" para que Render redeploye? → A: Cualquier cambio en un archivo que no coincida con las rutas ignoradas (por ejemplo `cmd/`, `internal/`, `web/`, `Dockerfile`, `go.mod`, `.dockerignore` y `render.yaml`). Si el merge mezcla rutas ignoradas con una no ignorada, redeploya.
-- Q: ¿`render.yaml` es una ruta ignorada? → A: No: la configuración actual del dashboard no la ignora y esta spec no la cambia. Mergear el PR que agrega `render.yaml` redeploya el servicio y vacía la base una vez.
+- Q: ¿Qué cuenta como "toca código" para que Render redeploye? → A: Cualquier cambio en un archivo que no coincida con las rutas ignoradas (por ejemplo `cmd/`, `internal/`, `web/`, `Dockerfile`, `go.mod` y `.dockerignore`). Si el merge mezcla rutas ignoradas con una no ignorada, redeploya.
+- Q: ¿`render.yaml` es una ruta ignorada? → A: Sí: se agregó a Ignored Paths en el dashboard (2026-10-30, a pedido de la review del PR #200), así que mergear el PR que lo agrega o lo cambia no redeploya ni vacía la base.
+- Q: ¿`*.md` cubre los `.md` de subcarpetas, como `web/README.md`? → A: No: en los filtros de Render `*` no cruza `/`, por lo que `*.md` solo cubría la raíz. El patrón es `**/*.md` (2026-10-30, review del PR #200).
 - Nota: resueltas por el agente a partir de la configuración dada, sin consulta interactiva; Carlos las valida al revisar la spec.
 
 ## Configuración actual del servicio (fuente de verdad)
@@ -33,7 +34,7 @@ Creada a mano en el dashboard de Render; esta spec la documenta, no la cambia.
 | Health Check Path | `/health` |
 | Variable de entorno | `DEMO_HABILITADO=true` |
 | Included Paths | vacío |
-| Ignored Paths | `docs/**`, `specs/**`, `features/**`, `*.md`, `.github/**`, `.specify/**` |
+| Ignored Paths | `docs/**`, `specs/**`, `features/**`, `**/*.md`, `.github/**`, `.specify/**`, `render.yaml` |
 
 El `Dockerfile` ya fija `PORT=8080`, `DB_PATH=/data/seguimiento.db` y `WEB_DIR=/app/web/dist` y corre sin root (ver [`specs/013-docker-imagen`](../013-docker-imagen/spec.md)). No hay disco persistente: la base se vacía en cada reinicio o deploy, y el servicio se duerme tras 15 minutos sin tráfico.
 
@@ -109,7 +110,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - Merge a `main` con un check en rojo: no debería llegar a `main` por la protección de rama; si llegara, Render no despliega ("After CI Checks Pass").
 - Reinicio por inactividad o deploy: se pierden los datos cargados, incluidos los de prueba.
 - `DEMO_HABILITADO` ausente o distinto de `true`: el botón de datos de prueba no se habilita (comportamiento del #144, fuera de esta spec).
-- Cambiar solo `render.yaml` (que no está ignorado) redeploya y vacía la base, aunque no cambie nada de la aplicación.
+- Cambiar solo `render.yaml` o un `.md` de cualquier carpeta (por ejemplo `web/README.md`): no redeploya, porque ambos están en las rutas ignoradas.
 - Un deploy en curso durante la presentación: la app puede quedar no disponible unos minutos.
 
 ## Requirements *(mandatory)*
@@ -123,7 +124,7 @@ Como Agile Enabler, quiero comprobar contra el servicio real, sin modificarlo, q
 - **FR-005** (No deseado): Si alguien crea un Blueprint en el dashboard a partir de `render.yaml`, entonces Render lo aplicaría al servicio existente y lo que el archivo no declare volvería a su valor por defecto; la spec MUST documentar este riesgo.
 - **FR-006** (Ubicuo): El README MUST tener una sección "Despliegue en Render" con la URL pública del servicio.
 - **FR-007** (Basado en evento): Cuando un merge a `main` toca código y los checks pasan, el README MUST indicar que Render redeploya solo.
-- **FR-008** (Ubicuo): El README MUST listar las rutas que no redeployan: `docs/**`, `specs/**`, `features/**`, `*.md`, `.github/**` y `.specify/**`, y aclarar que cualquier otro archivo (incluido `render.yaml`) sí redeploya.
+- **FR-008** (Ubicuo): El README MUST listar las rutas que no redeployan: `docs/**`, `specs/**`, `features/**`, `**/*.md` (en los filtros de Render `*` no cruza `/`, así que `*.md` solo cubriría la raíz), `.github/**`, `.specify/**` y `render.yaml`, y aclarar que cualquier otro archivo sí redeploya.
 - **FR-009** (Ubicuo): El README MUST indicar que la base se vacía en cada deploy o reinicio.
 - **FR-010** (Basado en estado): Mientras el servicio lleve 15 minutos sin tráfico, el README MUST indicar que se duerme y que conviene abrir la URL unos minutos antes de una demo.
 - **FR-011** (Ubicuo): El README MUST indicar que `DEMO_HABILITADO` controla el botón de datos de prueba (#144).

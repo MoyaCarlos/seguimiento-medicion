@@ -28,5 +28,5 @@
 ## Pendiente de confirmar al implementar
 
 - Que el archivo valide sin errores contra el esquema (T002).
-- Que `buildFilter.ignoredPaths` use la misma semántica de globs que "Ignored Paths" del dashboard: el esquema lo describe como "glob syntax", sin ejemplos; se anota como no verificable sin tocar el dashboard.
+- Semántica de los globs de `buildFilter.ignoredPaths`: en los filtros de Render `*` no cruza `/`, por lo que `*.md` solo cubre la raíz y `**/*.md` cubre `.md` de cualquier carpeta (review del PR #200).
 - Si el esquema marca `name` como requerido: se incluye igual para identificar el servicio.

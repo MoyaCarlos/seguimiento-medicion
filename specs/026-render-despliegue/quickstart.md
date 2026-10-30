@@ -42,4 +42,6 @@ Verificado el 2026-10-30 (11:36, hora local) contra el servicio real, solo con `
 | `GET /` con `Accept: text/html` | `200`, `content-type: text/html`, devuelve el `index.html` (`<title>Métrica · Seguimiento de proyectos</title>`, `<div id="root">`, bundle `/assets/index-*.js`) |
 | `GET /projects` | `200`, `content-type: application/json`, cuerpo `[]` (base vacía, coherente con que se vacía en cada deploy) |
 
-No verificado: abrir la raíz en un navegador real (se comprobó que el servidor entrega el `index.html`, no que la interfaz renderice); y que `ignoredPaths` de `render.yaml` use la misma semántica de globs que "Ignored Paths" del dashboard, porque comprobarlo exige tocar el dashboard o hacer merges de prueba.
+No verificado: abrir la raíz en un navegador real (se comprobó que el servidor entrega el `index.html`, no que la interfaz renderice).
+
+La semántica de los globs de `ignoredPaths` (`*` no cruza `/`; `**/*.md` cubre `.md` de cualquier carpeta) es la que documenta Render para los build filters.

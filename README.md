@@ -59,7 +59,7 @@ docker run -d --name seg -p 8080:8080 -v seguimiento-data:/data seguimiento-medi
 La aplicación está publicada en https://seguimiento-medicion-sprintometro.onrender.com (plan gratis de Render, imagen Docker del `Dockerfile` de la raíz, región Oregon).
 
 - **Cómo se despliega:** cada merge a `main` que toque código se publica solo, después de que pasen los checks de CI (`backend` y `frontend`). No hay pasos manuales.
-- **Qué no redeploya:** los cambios que solo toquen `docs/`, `specs/`, `features/`, `*.md`, `.github/` o `.specify/`. Cualquier otro archivo (incluido `render.yaml`) sí redeploya.
+- **Qué no redeploya:** los cambios que solo toquen `docs/`, `specs/`, `features/`, `.github/`, `.specify/`, `render.yaml` o cualquier `.md` (incluido `web/README.md`). Cualquier otro archivo sí redeploya.
 - **La base se vacía en cada deploy:** no hay disco persistente, así que cada deploy o reinicio arranca con la base vacía.
 - **El servicio se duerme a los 15 minutos sin tráfico:** el primer pedido después tarda decenas de segundos. Abrí la URL unos minutos antes de una demo.
 - **`DEMO_HABILITADO`:** la variable de entorno (`true` en Render) controla el botón de datos de prueba (#144).
