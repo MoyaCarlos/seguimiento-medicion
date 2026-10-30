@@ -35,7 +35,10 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 - Mínimo 1 aprobación de otro integrante antes de mergear.
 - El PR debe pasar los tests (Godog + `go test` en el backend; Vitest en el frontend) antes de mergear. Lo verifica el CI de
   GitHub Actions (`.github/workflows/ci.yml`) con los checks `backend` (build, vet, gofmt
-  y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea.
+  y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea (`backend` y `frontend` están
+  configurados como checks requeridos en la protección de `main`).
+- El CI corre en los PR con base `main`. No se usan PR apilados (la protección de `main`
+  exige PR contra `main`), por eso `pull_request.branches` queda en `[main]`.
 - **Saltos de línea:** el repo fija LF con `.gitattributes` (`* text=auto eol=lf`), así `gofmt -l .` no marca archivos en Windows. Si ya tenías un clon hecho antes de ese archivo (con CRLF), volvé a clonar o, una sola vez y con el árbol limpio, corré `git rm --cached -r .` y `git reset --hard` para que Git reescriba los archivos con LF. `git add --renormalize .` solo hace falta si alguien llegó a commitear archivos con CRLF.
 
 ### Fixes
