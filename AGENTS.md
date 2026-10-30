@@ -24,9 +24,11 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   para desglosar el trabajo (especificación SDD, escenarios BDD, implementación backend,
   tests, implementación frontend), reforzando la trazabilidad exigida por la cátedra.
 - Sprints: Sprint 0 (preparación) → Sprint 1 (MVP) → Sprint 2 (interfaz) →
-  Sprint 3 (funcionalidad y calidad) → Sprint 4 (cierre y entrega final).
-  Fechas: Sprint 2 del 5 al 26-oct, Sprint 3 del 27-oct al 9-nov y Sprint 4 del 10 al
-  23-nov; la presentación final está pedida para el 16-nov.
+  Sprint 3 (funcionalidad y calidad) → Sprint 4 (métricas y defectos) →
+  Sprint 5 (cierre y entrega final).
+  Fechas: Sprint 2 del 5 al 26-oct, Sprint 3 del 27-oct al 2-nov, Sprint 4 del 3 al
+  9-nov y Sprint 5 del 10 al 16-nov, día de la entrega del código y la presentación
+  final. El equipo maneja las fechas de los Sprints (ajuste del 30-oct).
 
 ### Convención de Git
 - Branches: `feature/HU-XX-nombre-corto` para las historias y

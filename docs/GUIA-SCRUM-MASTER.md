@@ -11,12 +11,15 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
   5-oct (`v0.1.0`).
 - **Sprint 2 (La interfaz): cerrado** el 26-oct (`v0.2.0`). Los fixes que se
   mergean después reciben `v0.2.P`.
-- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 9-nov (el 9 es
-  feriado). El tag `v0.3.0` va el 10-nov. Compromiso firme de 16 SP: HU-02,
-  HU-06 y HU-11; lo demás es stretch.
-- **Sprint 4 (Cierre y entrega final)**: del 10 al 23-nov, con la presentación
-  pedida para el 16-nov.
-- **Product Backlog: 15 historias** en `docs/PRODUCT-BACKLOG.md`, cada una como
+- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 2-nov. El tag
+  `v0.3.0` va el 3-nov. Compromiso firme de 16 SP: HU-02, HU-06 y HU-11; lo
+  demás es stretch.
+- **Sprint 4 (Métricas y defectos)**: del 3 al 9-nov (el 9 es feriado). HU-03 y
+  HU-08, que son la base de datos de HU-09 y HU-10. El tag `v0.4.0` va el 10-nov.
+- **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
+  código y la presentación. HU-09, HU-10 y el pulido final. El tag `v1.0.0` va
+  el 16-nov. HU-12, HU-14 y las mejoras nuevas entran solo si sobra tiempo.
+- **Product Backlog: 15 historias** (más HU-16, HU-17 y HU-18, propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se
   actualiza en cada merge a `main`. Está en curso (issue #139).
