@@ -69,9 +69,9 @@ Como Scrum Master, quiero que la función esté apagada por defecto y solo se ac
 
 ---
 
-### User Story 4 - Botón en la lista de proyectos (Priority: P2)
+### User Story 4 - Botón en la pantalla de inicio (Priority: P2)
 
-Como integrante del equipo, quiero un botón «Cargar datos de prueba» en la lista de proyectos que aparezca solo cuando la función está habilitada, para cargar la demo con un clic y abrirla enseguida.
+Como integrante del equipo, quiero un botón «Cargar datos de prueba» en la pantalla de inicio de proyectos que aparezca solo cuando la función está habilitada, para cargar la demo con un clic y abrirla enseguida.
 
 **Why this priority**: Es la cara visible, pero la carga es usable por API sin ella.
 
@@ -79,8 +79,8 @@ Como integrante del equipo, quiero un botón «Cargar datos de prueba» en la li
 
 **Acceptance Scenarios**:
 
-1. **Given** que `GET /demo/estado` responde 200, **When** se muestra la lista de proyectos, **Then** aparece el botón «Cargar datos de prueba».
-2. **Given** que `GET /demo/estado` responde 404 o falla, **When** se muestra la lista de proyectos, **Then** no aparece el botón.
+1. **Given** que `GET /demo/estado` responde 200, **When** se muestra la pantalla de inicio, **Then** aparece el botón «Cargar datos de prueba».
+2. **Given** que `GET /demo/estado` responde 404 o falla, **When** se muestra la pantalla de inicio, **Then** no aparece el botón.
 3. **Given** el botón visible, **When** la carga responde 201, **Then** se muestra un aviso de éxito con el enlace «Abrir el proyecto de prueba» a `/projects/25`.
 4. **Given** el botón visible, **When** la carga responde 409 «ya cargado», **Then** se muestra un aviso (no un error) con el mensaje, que incluye el enlace al proyecto de prueba.
 5. **Given** el botón visible, **When** la carga responde otro error (incluido el 409 de id ocupado), **Then** se muestra un mensaje de error.
@@ -141,11 +141,11 @@ Las reglas se redactan en formato EARS.
 
 **Frontend (Basado en evento / Basado en estado)**
 
-- **FR-023**: Mientras `GET /demo/estado` responda 200, la lista de proyectos mostrará el botón «Cargar datos de prueba»; en cualquier otro caso no lo mostrará.
+- **FR-023**: Mientras `GET /demo/estado` responda 200, la pantalla de inicio de proyectos mostrará el botón «Cargar datos de prueba»; en cualquier otro caso no lo mostrará.
 - **FR-024**: Cuando la carga responda 201, la interfaz mostrará un aviso de éxito con el enlace «Abrir el proyecto de prueba» a `/projects/25`.
 - **FR-025**: Cuando la carga responda 409 «ya cargado», la interfaz lo mostrará como aviso, no como error.
 - **FR-026**: Cuando la carga responda cualquier otro error, la interfaz mostrará un mensaje de error.
-- **FR-027**: La interfaz deberá integrar el botón en un componente propio con una única línea de montaje en la lista de proyectos, para no chocar con #148.
+- **FR-027**: La interfaz deberá integrar el botón en un componente propio con una única línea de montaje en la pantalla de inicio, para no chocar con #148.
 
 ### Key Entities
 

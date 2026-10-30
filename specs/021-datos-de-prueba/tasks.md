@@ -51,7 +51,7 @@ description: "Tareas de la spec 021: cargar datos de prueba (TDD con commits por
 - [ ] T026 [US1] COMMIT `RED: agregar tests del bloque de votación (falla)`
 - [ ] T027 [US1] GREEN: internal/demo/bloque_votacion.go con `NuevaRonda`, `Votar` y `Revelar` — tests en verde
 - [ ] T028 [US1] COMMIT `GREEN: implementar el bloque de votación, test en verde`
-- [ ] T029 [US1] RED: tests de `Cargador.Cargar` en internal/demo/carga_test.go: base vacía ⇒ `Resumen` {proyecto 25, 4 usuarios, 3 integrantes, 3 Sprints, 10 historias, 15 registros, 1 ronda, 3 votos}; las fechas se calculan con el reloj inyectado (dos días distintos ⇒ fechas distintas); `Resumen` serializa a los nombres JSON de contracts/api.md — confirmar que FALLA
+- [ ] T029 [US1] RED: tests de `Cargador.Cargar` en internal/demo/carga_test.go: base vacía ⇒ `Resumen` {proyecto 25, 4 usuarios, 3 integrantes, 3 Sprints, 10 historias, 15 registros, 1 ronda, 3 votos}; ninguna otra tabla (defectos, métricas) recibe filas (FR-022); las fechas se calculan con el reloj inyectado (dos días distintos ⇒ fechas distintas); `Resumen` serializa a los nombres JSON de contracts/api.md — confirmar que FALLA
 - [ ] T030 [US1] COMMIT `RED: agregar tests de la carga completa (falla)`
 - [ ] T031 [US1] GREEN: `Cargador`, `Resumen` y la lista ordenada de bloques en internal/demo/carga.go (una sola transacción) — tests en verde
 - [ ] T032 [US1] COMMIT `GREEN: implementar la carga completa en una transacción, test en verde`
@@ -84,7 +84,7 @@ description: "Tareas de la spec 021: cargar datos de prueba (TDD con commits por
 
 ## Phase 6: BDD (Godog)
 
-- [ ] T051 Escribir features/datos_prueba.feature en español con tag `@Issue-144`, Característica con Como/Quiero/Para y cuatro escenarios: carga exitosa, ya cargado, id ocupado, deshabilitado; revisar las cuatro categorías (normal, alternativo, límite, error) e informar cuáles no aplican — sin steps todavía
+- [ ] T051 Escribir features/datos_prueba.feature en español con tag `@Issue-144` (no es una HU, por eso no `@HU-XX`), Característica con Como/Quiero/Para y cuatro escenarios: carga exitosa, ya cargado, id ocupado, deshabilitado; revisar las cuatro categorías (normal, alternativo, límite, error) e informar cuáles no aplican — sin steps todavía
 - [ ] T052 COMMIT `Agregar escenarios BDD de la carga de datos de prueba`
 - [ ] T053 RED: confirmar que `go test ./features/...` FALLA por steps indefinidos (Strict) — escribir features/steps_datos_prueba.go con los steps sobre el handler real y una base en memoria migrada; registrar `InitializeScenarioDatosPrueba` en features/features_test.go solo en T055
 - [ ] T054 COMMIT `RED: agregar pasos de los escenarios de datos de prueba (falla)`
