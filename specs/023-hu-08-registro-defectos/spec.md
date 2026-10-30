@@ -8,6 +8,13 @@
 
 **Input**: User description: "HU-08: Registro y Seguimiento de Bugs (issue #8, sub-issue de spec #64). Como integrante del equipo quiero registrar un defecto técnico indicando su severidad, la historia relacionada y el sprint de detección para poder hacer un seguimiento de la calidad y asegurar que se resuelva antes del despliegue final. Escenario 1 (carga de un nuevo defecto): Dado que se detecta un error técnico y el proyecto tiene un Sprint "Activo", cuando completo el formulario de Defectos con la descripción, nivel de severidad (Alta, Media, Baja) y la historia relacionada, y guardo, entonces el Bug se registra asociado a esa historia, con el Sprint "Activo" como Sprint de detección y estado "Pendiente". Escenario 2 (resolución): Dado que un desarrollador solucionó un Bug pendiente, cuando cambia su estado a "Resuelto", entonces el sistema registra el Sprint de resolución (el Sprint Activo en ese momento) para que luego aparezca en el Dashboard de métricas de calidad. Escenario 3 (sin Sprint activo): Dado que el proyecto no tiene Sprint "Activo", cuando intento registrar un defecto o marcar uno como "Resuelto", entonces el sistema rechaza la operación e indica que no hay un Sprint activo al que asociarlo. Depende de HU-01 (historia relacionada) y HU-05 (Sprints). Prioridad Must, valor 8, estimación 8 SP. Modelo de datos ya definido en MODELO-DE-DATOS.md §4.9 (tabla defectos, migración 005): sin título (D6), historia obligatoria, CHECK (estado='Resuelto') = (sprint_resolucion_id IS NOT NULL), FK compuestas con proyecto_id. Rama: feature/HU-08-registro-defectos desde origin/main."
 
+## Clarifications
+
+### Session 2026-10-30
+
+- Q: Cuando un defecto ya está "Resuelto", ¿se puede volver a ponerlo en "Pendiente" (reabrirlo) si el error reaparece? → A: No. "Resuelto" es definitivo; si el error vuelve, se registra un defecto nuevo. Así los defectos resueltos de un Sprint ya cerrado no cambian después.
+- Q: Como historia relacionada de un defecto, ¿se puede elegir cualquier historia del proyecto, o solo una que esté en el Sprint "Activo"? → A: Cualquier historia del proyecto, en cualquier Sprint o en el Product Backlog y en cualquier estado. El Sprint de detección indica cuándo se encontró el defecto, no dónde se construyó la historia.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Registrar un defecto (Priority: P1)
@@ -103,10 +110,10 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-010**: El sistema MUST responder "proyecto no encontrado" o "defecto no encontrado" cuando el proyecto o el defecto no existen, antes de validar cualquier otro dato.
 - **FR-011**: Cada rechazo MUST identificar el problema (Sprint activo, historia, descripción, severidad o estado del defecto) y MUST dejar sin cambios los defectos del proyecto.
 - **FR-012**: Ante varias reglas incumplidas, el sistema MUST informar la primera según el orden de los Edge Cases, para que la respuesta sea siempre la misma ante la misma petición.
-- **FR-013**: El sistema MUST permitir consultar los defectos de un proyecto existente, en orden de registro, mostrando de cada uno la descripción, la severidad, el estado, la historia relacionada, el Sprint de detección, el Sprint de resolución (vacío si está pendiente) y la fecha de registro.
+- **FR-013**: El sistema MUST permitir consultar los defectos de un proyecto existente, en orden de registro (el más antiguo primero), mostrando de cada uno la descripción, la severidad, el estado, la historia relacionada, el Sprint de detección, el Sprint de resolución (vacío si está pendiente) y la fecha de registro.
 - **FR-014**: Los Sprints de detección y de resolución de un defecto MUST mantenerse aunque la historia relacionada cambie de Sprint después.
 - **FR-015**: Los defectos MUST persistir y seguir disponibles después de cerrar y volver a abrir la aplicación.
-- **FR-016**: En esta historia los defectos no se editan, no se borran y un defecto "Resuelto" no vuelve a "Pendiente".
+- **FR-016**: En esta historia los defectos no se editan ni se borran. "Resuelto" es un estado definitivo: un defecto resuelto nunca vuelve a "Pendiente" y, si el error reaparece, se registra un defecto nuevo.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -134,7 +141,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - Un proyecto tiene como máximo un Sprint "Activo" (HU-05), así que "el Sprint activo" del proyecto está siempre bien definido.
 - El largo máximo de la descripción (2000 caracteres) es una regla del dominio, igual que el de la descripción de una historia (HU-01).
 - La historia relacionada puede estar fuera del Sprint "Activo": un defecto se puede detectar en una historia completada en un Sprint anterior. El Sprint de detección indica cuándo se detectó, no dónde se construyó la historia.
-- La resolución es de un solo sentido. Reabrir un defecto, editarlo o borrarlo queda fuera de esta historia (ninguna historia del backlog borra datos, D9); si hace falta, será una historia nueva.
+- La resolución es de un solo sentido y definitiva: si el error reaparece, se registra un defecto nuevo (decidido en Clarifications). Editar o borrar un defecto queda fuera de esta historia (ninguna historia del backlog borra datos, D9); si hace falta, será una historia nueva.
 - La consulta de defectos no tiene filtros ni paginación (YAGNI): el volumen de un proyecto académico es chico y el frontend puede filtrar por estado si lo necesita.
 - Las métricas de defectos detectados y resueltos por Sprint son de HU-03, y su visualización de HU-09; esta historia solo provee los datos.
 - El frontend (formulario, listado con estado, acción de resolver y mensaje sin Sprint activo) es la sub-issue #68 y se entrega en otro Sprint; esta spec cubre el comportamiento del sistema que esa pantalla va a usar.

@@ -33,3 +33,4 @@
 
 - Las referencias a `MODELO-DE-DATOS.md` (§4.9, §5, D6, D9) están solo en Assumptions y Key Entities, como en las specs anteriores: el esquema es la fuente de verdad del proyecto y la spec no lo redefine.
 - Decisiones tomadas por defecto que conviene confirmar en `/speckit-clarify`: la historia relacionada puede estar fuera del Sprint activo; la resolución es de un solo sentido (no se reabre); largo máximo de la descripción en 2000 caracteres; orden de los errores; la consulta sin filtros.
+- `/speckit-clarify` (2026-10-30) confirmó: la resolución es definitiva, la historia relacionada puede ser cualquiera del proyecto y el listado va por orden de registro. El largo de la descripción y el orden de los errores quedan como están (siguen el criterio de HU-01 y HU-07).
