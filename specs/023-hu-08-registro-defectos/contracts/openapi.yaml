@@ -1,0 +1,253 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Registro y Seguimiento de Defectos (HU-08)
+  version: 1.0.0
+  description: >-
+    Contrato del registro de defectos de un proyecto, su resolución y el listado.
+    El Sprint de detección y el de resolución los asigna el sistema: son el
+    Sprint Activo del proyecto en ese momento. Los defectos no se editan, no se
+    borran y un defecto Resuelto no vuelve a Pendiente.
+paths:
+  /projects/{id}/defectos:
+    post:
+      summary: Registrar un defecto en el proyecto
+      description: >-
+        Registra un defecto en estado Pendiente, con el Sprint Activo del
+        proyecto como Sprint de detección. Si el cuerpo trae estado o Sprints,
+        se ignoran. Orden de evaluación de los errores: id de ruta inválido,
+        proyecto inexistente (404), cuerpo que no es JSON, proyecto sin Sprint
+        activo, historia relacionada, descripción, severidad (400).
+      operationId: registrarDefecto
+      parameters:
+        - $ref: '#/components/parameters/ProyectoID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarDefectoRequest'
+            example:
+              historia_id: 3
+              descripcion: El total de horas no se actualiza al imputar una carga
+              severidad: Alta
+      responses:
+        '201':
+          description: Defecto registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Defecto'
+              example:
+                id: 7
+                proyecto_id: 1
+                historia_id: 3
+                historia: Imputar horas trabajadas
+                descripcion: El total de horas no se actualiza al imputar una carga
+                severidad: Alta
+                estado: Pendiente
+                sprint_deteccion_id: 2
+                sprint_resolucion_id: null
+                creado_en: '2026-10-30T14:05:00Z'
+        '400':
+          description: >-
+            Id de ruta inválido, cuerpo que no es JSON, proyecto sin Sprint
+            activo, o historia, descripción o severidad inválidas. `campo`
+            identifica el dato con problemas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                sinSprintActivo:
+                  value: { campo: sprint_deteccion_id, mensaje: el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de detección }
+                historiaFaltante:
+                  value: { campo: historia_id, mensaje: la historia relacionada es obligatoria }
+                historiaAjena:
+                  value: { campo: historia_id, mensaje: la historia relacionada no existe en el proyecto }
+                descripcionVacia:
+                  value: { campo: descripcion, mensaje: la descripción es obligatoria }
+                severidadInvalida:
+                  value: { campo: severidad, mensaje: la severidad debe ser Alta, Media o Baja }
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { mensaje: proyecto no encontrado }
+        '409':
+          description: Violación de integridad referencial (red de seguridad; no debería ocurrir).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Listar los defectos del proyecto
+      description: >-
+        Devuelve todos los defectos del proyecto en orden de registro (el más
+        antiguo primero), sin filtros ni paginación. Un proyecto sin defectos
+        devuelve una lista vacía.
+      operationId: listarDefectos
+      parameters:
+        - $ref: '#/components/parameters/ProyectoID'
+      responses:
+        '200':
+          description: Defectos del proyecto.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Defecto'
+              example:
+                - id: 7
+                  proyecto_id: 1
+                  historia_id: 3
+                  historia: Imputar horas trabajadas
+                  descripcion: El total de horas no se actualiza al imputar una carga
+                  severidad: Alta
+                  estado: Resuelto
+                  sprint_deteccion_id: 1
+                  sprint_resolucion_id: 2
+                  creado_en: '2026-10-20T10:00:00Z'
+                - id: 8
+                  proyecto_id: 1
+                  historia_id: 5
+                  historia: Listar proyectos
+                  descripcion: El listado no muestra la fecha de fin
+                  severidad: Baja
+                  estado: Pendiente
+                  sprint_deteccion_id: 2
+                  sprint_resolucion_id: null
+                  creado_en: '2026-10-30T14:05:00Z'
+        '400':
+          description: Id de ruta inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El proyecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { mensaje: proyecto no encontrado }
+  /defectos/{id}/resolver:
+    post:
+      summary: Marcar un defecto como resuelto
+      description: >-
+        Pasa el defecto de Pendiente a Resuelto y registra el Sprint Activo del
+        proyecto como Sprint de resolución. No lleva cuerpo. Orden de
+        evaluación de los errores: id de ruta inválido, defecto inexistente
+        (404), defecto ya resuelto, proyecto sin Sprint activo (400).
+      operationId: resolverDefecto
+      parameters:
+        - $ref: '#/components/parameters/DefectoID'
+      responses:
+        '200':
+          description: Defecto resuelto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Defecto'
+              example:
+                id: 7
+                proyecto_id: 1
+                historia_id: 3
+                historia: Imputar horas trabajadas
+                descripcion: El total de horas no se actualiza al imputar una carga
+                severidad: Alta
+                estado: Resuelto
+                sprint_deteccion_id: 2
+                sprint_resolucion_id: 2
+                creado_en: '2026-10-30T14:05:00Z'
+        '400':
+          description: Id de ruta inválido, defecto ya resuelto o proyecto sin Sprint activo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                yaResuelto:
+                  value: { campo: estado, mensaje: el defecto ya está resuelto }
+                sinSprintActivo:
+                  value: { campo: sprint_resolucion_id, mensaje: el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de resolución }
+        '404':
+          description: El defecto no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: { mensaje: defecto no encontrado }
+components:
+  parameters:
+    ProyectoID:
+      name: id
+      in: path
+      required: true
+      description: Identificador del proyecto.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    DefectoID:
+      name: id
+      in: path
+      required: true
+      description: Identificador del defecto.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    RegistrarDefectoRequest:
+      type: object
+      required: [historia_id, descripcion, severidad]
+      properties:
+        historia_id:
+          type: integer
+          format: int64
+          description: >-
+            Id de una historia del proyecto, en cualquier Sprint o en el
+            Product Backlog y en cualquier estado.
+        descripcion:
+          type: string
+          maxLength: 2000
+          description: Obligatoria; se recortan los espacios externos.
+        severidad:
+          type: string
+          enum: [Alta, Media, Baja]
+          description: Exacta, sensible a mayúsculas.
+    Defecto:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        proyecto_id: { type: integer, format: int64 }
+        historia_id: { type: integer, format: int64 }
+        historia:
+          type: string
+          description: Título de la historia relacionada.
+        descripcion: { type: string }
+        severidad:
+          type: string
+          enum: [Alta, Media, Baja]
+        estado:
+          type: string
+          enum: [Pendiente, Resuelto]
+        sprint_deteccion_id: { type: integer, format: int64 }
+        sprint_resolucion_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: null mientras el defecto está Pendiente.
+        creado_en:
+          type: string
+          format: date-time
+          description: Fecha y hora de registro, RFC 3339 UTC.
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo: { type: string }
+        mensaje: { type: string }
