@@ -15,5 +15,10 @@ const (
 
 // EsValida indica si el estado es uno de los que admite el modelo de datos.
 func (e Estado) EsValida() bool {
-	return false
+	switch e {
+	case EstadoNueva, EstadoEnProgreso, EstadoCompletada:
+		return true
+	default:
+		return false
+	}
 }
