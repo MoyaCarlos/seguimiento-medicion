@@ -53,10 +53,10 @@ describe('SprintBacklog', () => {
     render(<SprintBacklog sprintId={4} />)
 
     const [primera, , tercera] = await screen.findAllByRole('listitem')
-    expect(primera.textContent).toContain('Debería tener (S)')
+    expect(primera.textContent).toContain('Should have (S)')
     expect(primera.textContent).toContain('En progreso')
     expect(primera.textContent).toContain('3 SP')
-    expect(tercera.textContent).toContain('No tendrá (W)')
+    expect(tercera.textContent).toContain("Won't have (W)")
     expect(tercera.textContent).toContain('Completada')
     expect(tercera.textContent).toContain('8 SP')
   })
@@ -75,10 +75,10 @@ describe('SprintBacklog', () => {
 
     const items = await screen.findAllByRole('listitem')
     expect(items.map((item) => item.textContent)).toEqual([
-      expect.stringContaining('Debe tener (M)'),
-      expect.stringContaining('Debería tener (S)'),
-      expect.stringContaining('Podría tener (C)'),
-      expect.stringContaining('No tendrá (W)'),
+      expect.stringContaining('Must have (M)'),
+      expect.stringContaining('Should have (S)'),
+      expect.stringContaining('Could have (C)'),
+      expect.stringContaining("Won't have (W)"),
     ])
   })
 
