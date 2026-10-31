@@ -22,3 +22,11 @@ export function guardarSprint(sprints: Sprint[], sprint: Sprint): Sprint[] {
   const existe = sprints.some((s) => s.id === sprint.id)
   return existe ? sprints.map((s) => (s.id === sprint.id ? sprint : s)) : [...sprints, sprint]
 }
+
+export type HistoriaDeSprint = {
+  id: number
+  titulo: string
+  prioridad: 'M' | 'S' | 'C' | 'W'
+  estado: 'Nueva' | 'En progreso' | 'Completada'
+  estimacion_sp: number | null
+}
