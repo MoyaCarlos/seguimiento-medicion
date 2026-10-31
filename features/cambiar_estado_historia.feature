@@ -6,6 +6,7 @@
 # - Límite: la historia completada no vuelve al Product Backlog al cerrar el Sprint (US1.4); el cambio se conserva al volver a consultar (US1.5).
 # - Error: salto Nueva → Completada (US1.6); Sprint Pendiente o Finalizado, Esquema del escenario con dos ejemplos (US1.7); retroceso de estado (US1.8); estado repetido (US1.9);
 #   historia sin Sprint a En progreso (US2.1) y a Completada (US2.2); historia inexistente (US2.3).
+# Una historia solo permanece en un Sprint Finalizado si está Completada: al cerrar el Sprint, las historias Nueva y En progreso vuelven al Product Backlog.
 # Nota: US1.10 (dos cambios simultáneos sobre la misma historia) no es determinista en Godog;
 # se cubre en los tests de repositorio (sqlite_backlog_test.go) y de handler (backlog_handler_test.go).
 
@@ -56,15 +57,15 @@ Característica: Estado de una historia en el Sprint
     Y la historia "Iniciar sesión" del tablero figura en estado "Nueva"
 
   Esquema del escenario: Solo se cambia el estado de historias de un Sprint activo
-    Dado que el tablero del proyecto tiene un Sprint <estado_sprint> con la historia "Iniciar sesión" en estado "Nueva"
-    Cuando pongo la historia "Iniciar sesión" del tablero en estado "En progreso"
+    Dado que el tablero del proyecto tiene un Sprint <estado_sprint> con la historia "Iniciar sesión" en estado "<estado_historia>"
+    Cuando pongo la historia "Iniciar sesión" del tablero en estado "<estado_pedido>"
     Entonces el cambio de estado del tablero se rechaza con el mensaje "solo se cambia el estado de historias de un Sprint activo"
-    Y la historia "Iniciar sesión" del tablero figura en estado "Nueva"
+    Y la historia "Iniciar sesión" del tablero figura en estado "<estado_historia>"
 
     Ejemplos:
-      | estado_sprint |
-      | Pendiente     |
-      | Finalizado    |
+      | estado_sprint | estado_historia | estado_pedido |
+      | Pendiente     | Nueva           | En progreso   |
+      | Finalizado    | Completada      | En progreso   |
 
   Escenario: No se puede volver a un estado anterior
     Dado que el tablero del proyecto tiene un Sprint activo con la historia "Iniciar sesión" en estado "En progreso"
