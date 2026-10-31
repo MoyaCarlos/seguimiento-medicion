@@ -20,5 +20,21 @@ var (
 // si no, devuelve el primer motivo según el orden de precedencia de la spec.
 // s es el Sprint de la historia, o nil si no tiene.
 func ValidarCambioDeEstado(h BacklogItem, s *Sprint, nuevo Estado) error {
+	switch {
+	case !nuevo.EsValida():
+		return ErrEstadoInvalido
+	case h.SprintID == nil && nuevo == EstadoNueva:
+		return ErrEstadoRepetido
+	case h.SprintID == nil:
+		return ErrHistoriaSinSprint
+	case s == nil || s.Estado != SprintActivo:
+		return ErrSprintNoActivoParaEstado
+	case nuevo == h.Estado:
+		return ErrEstadoRepetido
+	case h.Estado == EstadoCompletada || nuevo == EstadoNueva:
+		return ErrRetrocesoEstado
+	case h.Estado == EstadoNueva && nuevo == EstadoCompletada:
+		return ErrSaltoDirecto
+	}
 	return nil
 }
