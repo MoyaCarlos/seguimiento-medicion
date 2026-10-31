@@ -21,5 +21,30 @@ func NewCambiarEstadoHistoria(historias repository.CambioEstadoHistoriaRepositor
 
 // Ejecutar cambia el estado de la historia y la devuelve actualizada.
 func (s *CambiarEstadoHistoria) Ejecutar(ctx context.Context, id int64, nuevo domain.Estado) (domain.BacklogItem, error) {
-	return domain.BacklogItem{}, nil
+	historia, err := s.historias.ObtenerPorID(ctx, id)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	var sprint *domain.Sprint
+	if historia.SprintID != nil {
+		encontrado, err := s.sprints.ObtenerPorID(ctx, *historia.SprintID)
+		if err != nil {
+			return domain.BacklogItem{}, err
+		}
+		sprint = &encontrado
+	}
+	if err := domain.ValidarCambioDeEstado(historia, sprint, nuevo); err != nil {
+		return domain.BacklogItem{}, err
+	}
+	var fecha *time.Time
+	if nuevo == domain.EstadoCompletada {
+		ahora := s.reloj()
+		fecha = &ahora
+	}
+	if err := s.historias.CambiarEstado(ctx, id, historia.Estado, nuevo, fecha); err != nil {
+		return domain.BacklogItem{}, err
+	}
+	historia.Estado = nuevo
+	historia.FechaFinalizacion = fecha
+	return historia, nil
 }
