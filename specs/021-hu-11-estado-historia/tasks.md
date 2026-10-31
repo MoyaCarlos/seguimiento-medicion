@@ -191,8 +191,10 @@ no cambia es el comportamiento pedido.
 
 ## Excepción de proceso
 
-Entre T009 y T029 el paquete `features` falla a propósito: los 9 escenarios de US1 no tienen pasos
-(RED del BDD) y los GREEN de dominio, repositorio, servicio y handler se verifican por paquete con
-`go test ./internal/... ./cmd/...`. T029 pone los 9 escenarios en verde. El escenario de carrera
-(US1.10 de la spec) no se puede reproducir de forma determinista en Godog: se cubre en
-`sqlite_backlog_test.go` y en `backlog_handler_test.go`, como en HU-06.
+Entre T009 y T033 el paquete `features` falla a propósito: los escenarios de HU-11 no tienen pasos (RED del BDD) y los GREEN de dominio, repositorio, servicio y handler se verifican por paquete con `go test ./internal/... ./cmd/...`. T029 pone en verde los 10 corridas de US1 (9 escenarios, con el esquema de US1.7 contado dos veces) y T033 las 3 de US2. Los pasos están en `features/steps_estado_historia.go`.
+
+Orden de los commits: el RED de US2 (T031) se commiteó antes del GREEN de los pasos de US1 (T029). No cambia el resultado: ambos GREEN dejan `features` en verde.
+
+Ajuste del escenario "Solo se cambia el estado de historias de un Sprint activo" después de su RED: un Sprint "Finalizado" no puede tener una historia "Nueva" (al cerrar un Sprint, `CerrarConArrastre` devuelve al Product Backlog las historias que no están "Completada"), así que el ejemplo "Finalizado" usa una historia "Completada", el único estado que el sistema puede producir en un Sprint cerrado. El rechazo y su mensaje no cambian, porque la regla evalúa "Sprint no activo" antes que estado repetido y retroceso (FR-018). Se corrigió en un commit aparte del `.feature`, sin SQL a mano en los pasos.
+
+El escenario de carrera (US1.10 de la spec) no se puede reproducir de forma determinista en Godog: se cubre en `sqlite_backlog_test.go` y en `backlog_handler_test.go`, como en HU-06. `go test -race` no se pudo correr localmente (el compilador de C instalado es de 32 bits); la carrera se prueba con el UPDATE condicional y con dos llamadas seguidas.
