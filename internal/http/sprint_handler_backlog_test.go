@@ -111,4 +111,11 @@ func TestSprintHandler_ConsultarBacklog_IDInvalido(t *testing.T) {
 	if rec.Code != nethttp.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}
+	resp := decodificarError(t, rec)
+	if resp.Campo != "id" {
+		t.Errorf("campo = %q, quería %q", resp.Campo, "id")
+	}
+	if resp.Mensaje != "identificador inválido" {
+		t.Errorf("mensaje = %q, quería %q", resp.Mensaje, "identificador inválido")
+	}
 }
