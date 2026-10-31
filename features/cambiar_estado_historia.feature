@@ -4,7 +4,8 @@
 # - Normal: Nueva → En progreso (US1.1); En progreso → Completada con fecha de finalización (US1.2).
 # - Alternativo: la historia completada aporta sus Story Points como completados (US1.3).
 # - Límite: la historia completada no vuelve al Product Backlog al cerrar el Sprint (US1.4); el cambio se conserva al volver a consultar (US1.5).
-# - Error: salto Nueva → Completada (US1.6); Sprint Pendiente o Finalizado, Esquema del escenario con dos ejemplos (US1.7); retroceso de estado (US1.8); estado repetido (US1.9).
+# - Error: salto Nueva → Completada (US1.6); Sprint Pendiente o Finalizado, Esquema del escenario con dos ejemplos (US1.7); retroceso de estado (US1.8); estado repetido (US1.9);
+#   historia sin Sprint a En progreso (US2.1) y a Completada (US2.2); historia inexistente (US2.3).
 # Nota: US1.10 (dos cambios simultáneos sobre la misma historia) no es determinista en Godog;
 # se cubre en los tests de repositorio (sqlite_backlog_test.go) y de handler (backlog_handler_test.go).
 
@@ -76,3 +77,19 @@ Característica: Estado de una historia en el Sprint
     Cuando pongo la historia "Iniciar sesión" del tablero en estado "En progreso"
     Entonces el cambio de estado del tablero se rechaza con el mensaje "la historia ya está en ese estado"
     Y la historia "Iniciar sesión" del tablero figura en estado "En progreso"
+
+  Escenario: Una historia sin Sprint no puede pasar a En progreso
+    Dado que el tablero del proyecto tiene la historia "Iniciar sesión" sin Sprint
+    Cuando pongo la historia "Iniciar sesión" del tablero en estado "En progreso"
+    Entonces el cambio de estado del tablero se rechaza con el mensaje "primero debe asignarse a un Sprint activo"
+    Y la historia "Iniciar sesión" del tablero figura en estado "Nueva"
+
+  Escenario: Una historia sin Sprint no puede pasar a Completada
+    Dado que el tablero del proyecto tiene la historia "Iniciar sesión" sin Sprint
+    Cuando pongo la historia "Iniciar sesión" del tablero en estado "Completada"
+    Entonces el cambio de estado del tablero se rechaza con el mensaje "primero debe asignarse a un Sprint activo"
+    Y la historia "Iniciar sesión" del tablero figura en estado "Nueva"
+
+  Escenario: No se puede cambiar el estado de una historia inexistente
+    Cuando pongo la historia con identificador 999 del tablero, que no existe, en estado "En progreso"
+    Entonces el cambio de estado del tablero se rechaza con el error "historia no encontrada"
