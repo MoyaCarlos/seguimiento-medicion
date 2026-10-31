@@ -33,7 +33,7 @@ empezar US2. US3 está **bloqueada** hasta que la pantalla de Sprints esté en `
 
 **Purpose**: partir de una base en verde.
 
-- [ ] T001 Verificar en la rama `feature/HU-11-estado-historia` que `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` están en verde antes de empezar. Sin cambios ni commit
+- [X] T001 Verificar en la rama `feature/HU-11-estado-historia` que `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` están en verde antes de empezar. Sin cambios ni commit
 
 ---
 
@@ -43,8 +43,8 @@ empezar US2. US3 está **bloqueada** hasta que la pantalla de Sprints esté en `
 
 **⚠️ CRITICAL**: ninguna historia empieza hasta terminar esta fase.
 
-- [ ] T002 RED: crear internal/domain/estado_test.go con tests de `Estado.EsValida()` y de la constante `EstadoEnProgreso`: `EstadoNueva`, `EstadoEnProgreso` y `EstadoCompletada` devuelven `true`; `domain.Estado("Pendiente")` y `domain.Estado("")` devuelven `false`; `EstadoEnProgreso == "En progreso"` (el valor del enum del modelo). En internal/domain/estado.go agregar `EstadoEnProgreso Estado = "En progreso"` y `func (e Estado) EsValida() bool { return false }` (stub). Confirmar que FALLA
-- [ ] T003 COMMIT `RED: agregar tests del estado En progreso y su validación (falla)`
+- [X] T002 RED: crear internal/domain/estado_test.go con tests de `Estado.EsValida()` y de la constante `EstadoEnProgreso`: `EstadoNueva`, `EstadoEnProgreso` y `EstadoCompletada` devuelven `true`; `domain.Estado("Pendiente")` y `domain.Estado("")` devuelven `false`; `EstadoEnProgreso == "En progreso"` (el valor del enum del modelo). En internal/domain/estado.go agregar `EstadoEnProgreso Estado = "En progreso"` y `func (e Estado) EsValida() bool { return false }` (stub). Confirmar que FALLA
+- [X] T003 COMMIT `RED: agregar tests del estado En progreso y su validación (falla)`
 - [ ] T004 GREEN: implementar `Estado.EsValida()` en internal/domain/estado.go con un `switch` sobre `EstadoNueva`, `EstadoEnProgreso` y `EstadoCompletada`, siguiendo el patrón de `Prioridad.EsValida()` — `go test ./...` en verde
 - [ ] T005 COMMIT `GREEN: agregar el estado En progreso y su validación, test en verde`
 - [ ] T006 Declarar en internal/repository/backlog_repository.go el puerto `CambioEstadoHistoriaRepository { ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error); CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error }`, documentando que `CambiarEstado` solo aplica si la historia sigue en `desde` y devuelve `domain.ErrConflictoEstadoHistoria` si no afectó ninguna fila. Separado de `HistoriaRepository` (ISP, research.md R3): **no** agregar el método a `HistoriaRepository`. Sin lógica
