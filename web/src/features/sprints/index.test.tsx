@@ -78,6 +78,50 @@ describe('pantalla de Sprints', () => {
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/sprints')
   })
 
+  it('US3.2: cada tarjeta de Sprint muestra su Sprint Backlog con las historias de ese Sprint', async () => {
+    const activo: Sprint = { ...pendiente(2), estado: 'Activo', sprint_goal: 'Meta' }
+    const historias: Record<string, unknown[]> = {
+      '2': [{ id: 8, titulo: 'Historia del activo', prioridad: 'M', estado: 'En progreso', estimacion_sp: 5 }],
+      '3': [],
+    }
+    const fetchSimulado = simularApi(
+      conSprints(activo, pendiente(3)),
+      undefined,
+      (sprintId) => respuesta(200, historias[sprintId]),
+    )
+    abrir()
+
+    await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })
+    expect(await within(seccion('Activo')).findByText('Historia del activo')).toBeTruthy()
+    expect(await within(seccion('Pendiente')).findByText('Este Sprint no tiene historias')).toBeTruthy()
+    expect(within(seccion('Pendiente')).queryByText('Historia del activo')).toBeNull()
+    const pedidos = fetchSimulado.mock.calls.map(([ruta]) => ruta)
+    expect(pedidos).toContain('/sprints/2/backlog')
+    expect(pedidos).toContain('/sprints/3/backlog')
+  })
+
+  it('US3.2: si falla el Sprint Backlog de una tarjeta el error queda en esa tarjeta y no en la pantalla', async () => {
+    simularApi(conSprints(pendiente(3)), undefined, () =>
+      respuesta(400, { mensaje: 'identificador de sprint inválido' }),
+    )
+    abrir()
+
+    const tarjeta = (await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' }))
+      .closest('article') as HTMLElement
+    expect((await within(tarjeta).findByRole('alert')).textContent).toBe('identificador de sprint inválido')
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+  })
+
+  it('US3.2: un Sprint creado desde la pantalla muestra también su Sprint Backlog', async () => {
+    const fetchSimulado = simularApi(conSprints(), () => respuesta(201, pendiente(5)))
+    abrir()
+
+    await crear()
+
+    expect(await within(seccion('Pendiente')).findByText('Este Sprint no tiene historias')).toBeTruthy()
+    expect(fetchSimulado.mock.calls.map(([ruta]) => ruta)).toContain('/sprints/5/backlog')
+  })
+
   it('sin Sprints muestra las tres secciones vacías y ya no avisa de ninguna limitación', async () => {
     simularApi(conSprints())
     abrir()
