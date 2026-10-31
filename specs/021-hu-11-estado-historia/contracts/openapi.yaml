@@ -4,7 +4,7 @@ info:
   version: 0.1.0
   description: >
     Cambio de estado de una historia asignada a un Sprint. Precedencia de errores:
-    historia inexistente (404) → JSON inválido o `estado` ausente (400) → estado que no es
+    id de la ruta que no es un entero positivo (400) → historia inexistente (404) → JSON inválido o `estado` ausente (400) → estado que no es
     Nueva, En progreso o Completada (400) → historia sin Sprint (400) → Sprint no activo (400) →
     estado repetido (400) → retroceso (400) → salto directo Nueva → Completada (400). Una carrera
     entre dos cambios simultáneos se informa como 409.
@@ -73,6 +73,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
               examples:
+                idInvalido:
+                  value: { campo: id, mensaje: el identificador debe ser un entero positivo }
                 jsonInvalido:
                   value: { mensaje: JSON inválido }
                 estadoAusente:
