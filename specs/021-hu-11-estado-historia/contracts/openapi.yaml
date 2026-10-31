@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation — HU-11 Actualización de Estado de una Historia
+  version: 0.1.0
+  description: >
+    Cambio de estado de una historia asignada a un Sprint. Precedencia de errores:
+    historia inexistente (404) → JSON inválido o `estado` ausente (400) → estado que no es
+    Nueva, En progreso o Completada (400) → historia sin Sprint (400) → Sprint no activo (400) →
+    estado repetido (400) → retroceso (400) → salto directo Nueva → Completada (400). Una carrera
+    entre dos cambios simultáneos se informa como 409.
+servers:
+  - url: http://localhost:8080
+paths:
+  /backlog/{id}/estado:
+    put:
+      summary: Cambiar el estado de una historia asignada a un Sprint activo
+      description: >
+        Solo se aceptan las transiciones Nueva → En progreso y En progreso → Completada, y solo
+        sobre historias de un Sprint `Activo`. Al completar se registra la fecha de finalización
+        (día, `AAAA-MM-DD`). La historia sigue asignada a su Sprint y no se modifica ningún otro
+        dato.
+      parameters:
+        - $ref: '#/components/parameters/IdHistoria'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarEstadoRequest'
+            examples:
+              iniciar:
+                value: { estado: En progreso }
+              completar:
+                value: { estado: Completada }
+      responses:
+        '200':
+          description: Estado actualizado. Al completar, `fecha_finalizacion` deja de ser null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Historia'
+              examples:
+                enProgreso:
+                  value:
+                    id: 12
+                    proyecto_id: 1
+                    titulo: Registrar horas
+                    descripcion: Como integrante quiero imputar horas
+                    criterios_aceptacion: null
+                    prioridad: M
+                    estado: En progreso
+                    valor_negocio: 8
+                    estimacion_sp: 5
+                    sprint_id: 3
+                    fecha_finalizacion: null
+                completada:
+                  value:
+                    id: 12
+                    proyecto_id: 1
+                    titulo: Registrar horas
+                    descripcion: Como integrante quiero imputar horas
+                    criterios_aceptacion: null
+                    prioridad: M
+                    estado: Completada
+                    valor_negocio: 8
+                    estimacion_sp: 5
+                    sprint_id: 3
+                    fecha_finalizacion: '2026-10-29'
+        '400':
+          description: Petición inválida o transición rechazada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                jsonInvalido:
+                  value: { mensaje: JSON inválido }
+                estadoAusente:
+                  value: { campo: estado, mensaje: el campo es obligatorio }
+                estadoInvalido:
+                  value: { campo: estado, mensaje: el estado debe ser Nueva, En progreso o Completada }
+                sinSprint:
+                  value: { campo: estado, mensaje: primero debe asignarse a un Sprint activo }
+                sprintNoActivo:
+                  value: { campo: estado, mensaje: solo se cambia el estado de historias de un Sprint activo }
+                estadoRepetido:
+                  value: { campo: estado, mensaje: la historia ya está en ese estado }
+                retroceso:
+                  value: { campo: estado, mensaje: 'el estado de una historia solo avanza: no se puede volver a un estado anterior' }
+                saltoDirecto:
+                  value: { campo: estado, mensaje: primero debe pasar por En progreso }
+        '404':
+          description: La historia no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: historia no encontrada
+        '409':
+          description: >
+            Conflicto de carrera: otro cambio modificó el estado de la historia entre la lectura y
+            la escritura. El pedido no se aplicó; hay que recargar y reintentar.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: 'la historia cambió de estado mientras tanto: recargá y volvé a intentar'
+        '500':
+          description: >
+            Red de seguridad de la base: una violación de CHECK o NOT NULL indica un defecto del
+            dominio (MODELO-DE-DATOS.md §5).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  parameters:
+    IdHistoria:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+  schemas:
+    CambiarEstadoRequest:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          type: string
+          enum: [Nueva, En progreso, Completada]
+    Historia:
+      type: object
+      description: >
+        Mismo DTO que GET /projects/{id}/backlog y PUT /backlog/{id}/sprint. HU-11 suma
+        `fecha_finalizacion` como campo aditivo (null mientras la historia no está completada).
+      required: [id, proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion]
+      properties:
+        id: { type: integer, format: int64 }
+        proyecto_id: { type: integer, format: int64 }
+        titulo: { type: string }
+        descripcion: { type: string }
+        criterios_aceptacion: { type: string, nullable: true }
+        prioridad: { type: string, enum: [M, S, C, W] }
+        estado: { type: string, enum: [Nueva, En progreso, Completada] }
+        valor_negocio: { type: integer, nullable: true }
+        estimacion_sp: { type: integer, nullable: true }
+        sprint_id: { type: integer, format: int64, nullable: true }
+        fecha_finalizacion: { type: string, format: date, nullable: true }
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo: { type: string }
+        mensaje: { type: string }
