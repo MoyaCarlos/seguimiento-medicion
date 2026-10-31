@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -49,6 +50,11 @@ type errorResponse struct {
 }
 
 func aRespuesta(item domain.BacklogItem) historiaResponse {
+	var fechaFinalizacion *string
+	if item.FechaFinalizacion != nil {
+		fecha := item.FechaFinalizacion.Format(time.DateOnly)
+		fechaFinalizacion = &fecha
+	}
 	return historiaResponse{
 		ID:                  item.ID,
 		ProyectoID:          item.ProyectoID,
@@ -60,5 +66,6 @@ func aRespuesta(item domain.BacklogItem) historiaResponse {
 		ValorNegocio:        item.ValorNegocio,
 		EstimacionSP:        item.EstimacionSP,
 		SprintID:            item.SprintID,
+		FechaFinalizacion:   fechaFinalizacion,
 	}
 }
