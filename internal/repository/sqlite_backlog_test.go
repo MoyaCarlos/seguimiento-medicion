@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -452,5 +453,116 @@ func TestSQLiteBacklogRepository_AsignarASprint_HistoriaArrastradaSeReasigna(t *
 
 	if sprintID, _ := sprintYEstadoDeHistoria(t, repo.db, arrastrada.ID); sprintID.Int64 != pendiente.ID {
 		t.Errorf("la historia debía quedar en el Sprint %d, quedó %v", pendiente.ID, sprintID)
+	}
+}
+
+func fechaDeFinalizacion(h domain.BacklogItem) string {
+	if h.FechaFinalizacion == nil {
+		return "<nil>"
+	}
+	return h.FechaFinalizacion.Format("2006-01-02")
+}
+
+func TestSQLiteBacklogRepository_CambiarEstado_NuevaAEnProgreso(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, nil)
+
+	if err := repo.CambiarEstado(ctx, historia.ID, domain.EstadoNueva, domain.EstadoEnProgreso, nil); err != nil {
+		t.Fatalf("no se esperaba error al cambiar de estado: %v", err)
+	}
+
+	leida, err := repo.ObtenerPorID(ctx, historia.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer: %v", err)
+	}
+	if leida.Estado != domain.EstadoEnProgreso {
+		t.Errorf("se esperaba estado En progreso, se obtuvo %q", leida.Estado)
+	}
+	if leida.FechaFinalizacion != nil {
+		t.Errorf("se esperaba fecha de finalización nil, se obtuvo %s", fechaDeFinalizacion(leida))
+	}
+}
+
+func TestSQLiteBacklogRepository_CambiarEstado_EnProgresoACompletadaGuardaLaFecha(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoEnProgreso, nil)
+	// La hora de entrada se descarta: solo se persiste el día.
+	fecha := time.Date(2026, time.October, 29, 15, 4, 5, 0, time.UTC)
+
+	if err := repo.CambiarEstado(ctx, historia.ID, domain.EstadoEnProgreso, domain.EstadoCompletada, &fecha); err != nil {
+		t.Fatalf("no se esperaba error al completar: %v", err)
+	}
+
+	leida, err := repo.ObtenerPorID(ctx, historia.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer: %v", err)
+	}
+	if leida.Estado != domain.EstadoCompletada {
+		t.Errorf("se esperaba estado Completada, se obtuvo %q", leida.Estado)
+	}
+	if got := fechaDeFinalizacion(leida); got != "2026-10-29" {
+		t.Errorf("se esperaba fecha de finalización 2026-10-29, se obtuvo %s", got)
+	}
+}
+
+func TestSQLiteBacklogRepository_CambiarEstado_SegundaLlamadaConMismoDesdeEsConflicto(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, nil)
+	fecha := time.Date(2026, time.October, 29, 0, 0, 0, 0, time.UTC)
+
+	if err := repo.CambiarEstado(ctx, historia.ID, domain.EstadoNueva, domain.EstadoEnProgreso, nil); err != nil {
+		t.Fatalf("no se esperaba error en la primera llamada: %v", err)
+	}
+	err := repo.CambiarEstado(ctx, historia.ID, domain.EstadoNueva, domain.EstadoCompletada, &fecha)
+
+	if !errors.Is(err, domain.ErrConflictoEstadoHistoria) {
+		t.Fatalf("se esperaba ErrConflictoEstadoHistoria, se obtuvo %v", err)
+	}
+	if _, estado := sprintYEstadoDeHistoria(t, repo.db, historia.ID); estado != string(domain.EstadoEnProgreso) {
+		t.Errorf("la historia debía quedar En progreso, quedó %q", estado)
+	}
+}
+
+func TestSQLiteBacklogRepository_CambiarEstado_HistoriaInexistenteEsConflicto(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+
+	err := repo.CambiarEstado(context.Background(), 999, domain.EstadoNueva, domain.EstadoEnProgreso, nil)
+
+	if !errors.Is(err, domain.ErrConflictoEstadoHistoria) {
+		t.Fatalf("se esperaba ErrConflictoEstadoHistoria, se obtuvo %v", err)
+	}
+	var total int
+	if err := repo.db.QueryRow("SELECT COUNT(*) FROM historias").Scan(&total); err != nil {
+		t.Fatalf("no se pudo contar: %v", err)
+	}
+	if total != 0 {
+		t.Errorf("no debía existir ninguna historia, hay %d", total)
+	}
+}
+
+func TestSQLiteBacklogRepository_ObtenerPorID_SinFechaDevuelveNil(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	sp := 5
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoEnProgreso, &sp)
+
+	leida, err := repo.ObtenerPorID(ctx, historia.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer: %v", err)
+	}
+
+	if leida.FechaFinalizacion != nil {
+		t.Errorf("se esperaba fecha de finalización nil, se obtuvo %s", fechaDeFinalizacion(leida))
+	}
+	if leida.Estado != domain.EstadoEnProgreso || leida.EstimacionSP == nil || *leida.EstimacionSP != 5 ||
+		leida.SprintID == nil || *leida.SprintID != activo.ID {
+		t.Errorf("las demás columnas no debían cambiar: %+v", leida)
 	}
 }

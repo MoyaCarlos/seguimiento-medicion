@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -137,6 +138,11 @@ func (r *SQLiteBacklogRepository) AsignarASprint(ctx context.Context, historiaID
 	if filas == 0 {
 		return domain.ErrHistoriaYaAsignada
 	}
+	return nil
+}
+
+// CambiarEstado es un stub del RED: todavía no escribe nada.
+func (r *SQLiteBacklogRepository) CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error {
 	return nil
 }
 
