@@ -154,6 +154,8 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 **Diseño realizado**: las funciones de API quedaron en cada feature, `asignarASprint` y `listarSprintsDelProyecto` en web/src/features/backlog/api.ts y `consultarSprintBacklog` en web/src/features/sprints/api.ts, por la regla de aislamiento entre features (ninguna feature importa de otra). `AsignarASprint` vive en backlog y `SprintBacklog` en sprints. El Product Backlog y los Sprints son pantallas distintas, así que el Sprint Backlog se actualiza al abrir la pantalla de Sprints, no en el mismo momento de la asignación. T067 (validación manual) queda pendiente.
 
+**Orden de los tests**: AsignarASprint se implementó dentro del commit de integración del Product Backlog; sus tests directos se agregaron después, en un commit `test:`.
+
 **Goal**: desde la pantalla del proyecto, elegir una historia del Product Backlog y un Sprint `Pendiente` o `Activo`, confirmar la asignación y ver el Sprint Backlog de cada Sprint, con el mensaje de la API ante un rechazo.
 
 **Independent Test**: con la API real, asignar una historia: desaparece del Product Backlog y aparece en el Sprint Backlog del Sprint elegido sin recargar a mano; provocar un rechazo (Sprint cerrado mientras tanto) y ver el `mensaje` de la API con los listados sin cambios.
@@ -175,7 +177,7 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 - [X] T064 [US3] COMMIT `RED: agregar test de integración de la planificación del Sprint en pantalla (falla)`
 - [X] T065 [US3] GREEN: integrar `AsignarASprint` en el listado de web/src/features/backlog/index.tsx y `SprintBacklog` en web/src/features/sprints/SeccionSprints.tsx (o donde #149 muestre los Sprints), refrescando el Product Backlog y el Sprint Backlog afectado tras una asignación correcta; estilos en los `.css` existentes de cada feature — `npm test` en verde
 - [X] T066 [US3] COMMIT `GREEN: integrar la planificación del Sprint en la pantalla del proyecto, test en verde`
-- [ ] T067 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/018-hu-06-asignar-historias-sprint/quickstart.md
+- [X] T067 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/018-hu-06-asignar-historias-sprint/quickstart.md. Validado a mano con la API real y npm run dev: la historia 'Iniciar sesion' se asigna al Sprint #1 desde /projects/1/backlog (desaparece del listado y aparece el aviso) y se ve en el Sprint Backlog de /projects/1/sprints; el Sprint finalizado muestra 'Este Sprint no tiene historias' porque al cerrar la historia no completada vuelve al Product Backlog
 
 **Checkpoint**: la sub-issue de Frontend de HU-06 queda lista para cerrarse.
 
