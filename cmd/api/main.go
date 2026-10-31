@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -37,7 +38,7 @@ func main() {
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewEditarHistoria(backlogRepo, sprintRepo),
 		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo),
-		nil, // service.NewCambiarEstadoHistoria se cablea en T026
+		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, time.Now),
 	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
@@ -87,6 +88,7 @@ func main() {
 	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
+	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
