@@ -47,8 +47,8 @@ empezar US2. US3 está **bloqueada** hasta que la pantalla de Sprints esté en `
 - [X] T003 COMMIT `RED: agregar tests del estado En progreso y su validación (falla)`
 - [X] T004 GREEN: implementar `Estado.EsValida()` en internal/domain/estado.go con un `switch` sobre `EstadoNueva`, `EstadoEnProgreso` y `EstadoCompletada`, siguiendo el patrón de `Prioridad.EsValida()` — `go test ./...` en verde
 - [X] T005 COMMIT `GREEN: agregar el estado En progreso y su validación, test en verde`
-- [ ] T006 Declarar en internal/repository/backlog_repository.go el puerto `CambioEstadoHistoriaRepository { ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error); CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error }`, documentando que `CambiarEstado` solo aplica si la historia sigue en `desde` y devuelve `domain.ErrConflictoEstadoHistoria` si no afectó ninguna fila. Separado de `HistoriaRepository` (ISP, research.md R3): **no** agregar el método a `HistoriaRepository`. Sin lógica
-- [ ] T007 COMMIT `Agregar puerto CambioEstadoHistoriaRepository`
+- [X] T006 Declarar en internal/repository/backlog_repository.go el puerto `CambioEstadoHistoriaRepository { ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error); CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error }`, documentando que `CambiarEstado` solo aplica si la historia sigue en `desde` y devuelve `domain.ErrConflictoEstadoHistoria` si no afectó ninguna fila. Separado de `HistoriaRepository` (ISP, research.md R3): **no** agregar el método a `HistoriaRepository`. Sin lógica
+- [X] T007 COMMIT `Agregar puerto CambioEstadoHistoriaRepository`
 
 **Checkpoint**: la fundación está lista; cualquier historia puede empezar.
 
