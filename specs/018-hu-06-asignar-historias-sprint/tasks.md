@@ -152,7 +152,7 @@ pantalla). US1 queda completa, con su escenario BDD en verde, antes de empezar U
 
 **Bloqueo**: no empezar hasta que estén mergeados en `main` el PR #149 (`GET /projects/{id}/sprints`) y el #98 (listado del backlog en pantalla). Los nombres exactos de componentes y archivos de esta fase se ajustan al código que traigan esos PRs; lo que no cambia es el comportamiento pedido.
 
-**Diseño realizado**: las funciones de API quedaron en cada feature, `asignarASprint` y `listarSprintsDelProyecto` en web/src/features/backlog/api.ts y `consultarSprintBacklog` en web/src/features/sprints/api.ts, por la regla de aislamiento entre features (ninguna feature importa de otra). `AsignarASprint` vive en backlog y `SprintBacklog` en sprints. El Product Backlog y los Sprints son pantallas distintas, así que el Sprint Backlog se actualiza al abrir la pantalla de Sprints, no en el mismo momento de la asignación. T067 (validación manual) queda pendiente.
+**Diseño realizado**: las funciones de API quedaron en cada feature, `asignarASprint` y `listarSprintsDelProyecto` en web/src/features/backlog/api.ts y `consultarSprintBacklog` en web/src/features/sprints/api.ts, por la regla de aislamiento entre features (ninguna feature importa de otra). `AsignarASprint` vive en backlog y `SprintBacklog` en sprints. El Product Backlog y los Sprints son pantallas distintas, así que el Sprint Backlog se actualiza al abrir la pantalla de Sprints, no en el mismo momento de la asignación. T067 (validación manual) está hecha: ver la nota de esa tarea.
 
 **Orden de los tests**: AsignarASprint se implementó dentro del commit de integración del Product Backlog; sus tests directos se agregaron después, en un commit `test:`.
 
