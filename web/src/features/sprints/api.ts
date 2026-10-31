@@ -12,7 +12,5 @@ export const iniciarSprint = (id: number, datos: DatosInicio) =>
 export const listarSprints = (proyectoId: string) =>
   get<Sprint[]>(`/projects/${proyectoId}/sprints`)
 
-export const consultarSprintBacklog = (sprintId: number) => {
-  void sprintId
-  return Promise.resolve([] as HistoriaDeSprint[])
-}
+export const consultarSprintBacklog = (sprintId: number) =>
+  get<HistoriaDeSprint[]>(`/sprints/${sprintId}/backlog`)
