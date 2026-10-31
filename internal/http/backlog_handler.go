@@ -16,6 +16,7 @@ type BacklogHandler struct {
 	obtenerHistoria  *service.ObtenerHistoria
 	editarHistoria   *service.EditarHistoria
 	asignarSprint    *service.AsignarHistoriaASprint
+	cambiarEstado    *service.CambiarEstadoHistoria
 }
 
 func NewBacklogHandler(
@@ -24,6 +25,7 @@ func NewBacklogHandler(
 	obtenerHistoria *service.ObtenerHistoria,
 	editarHistoria *service.EditarHistoria,
 	asignarSprint *service.AsignarHistoriaASprint,
+	cambiarEstado *service.CambiarEstadoHistoria,
 ) *BacklogHandler {
 	return &BacklogHandler{
 		crearHistoria:    crearHistoria,
@@ -31,6 +33,7 @@ func NewBacklogHandler(
 		obtenerHistoria:  obtenerHistoria,
 		editarHistoria:   editarHistoria,
 		asignarSprint:    asignarSprint,
+		cambiarEstado:    cambiarEstado,
 	}
 }
 
@@ -164,6 +167,10 @@ func (h *BacklogHandler) AsignarSprint(w nethttp.ResponseWriter, r *nethttp.Requ
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, aRespuesta(item))
+}
+
+// CambiarEstado atiende PUT /backlog/{id}/estado.
+func (h *BacklogHandler) CambiarEstado(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // parsearEstimacion convierte los Story Points del cuerpo a entero; un número no

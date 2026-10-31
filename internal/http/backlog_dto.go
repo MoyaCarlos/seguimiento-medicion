@@ -25,6 +25,10 @@ type asignarSprintRequest struct {
 	SprintID *int64 `json:"sprint_id"`
 }
 
+type cambiarEstadoRequest struct {
+	Estado string `json:"estado"`
+}
+
 type historiaResponse struct {
 	ID                  int64   `json:"id"`
 	ProyectoID          int64   `json:"proyecto_id"`
@@ -36,6 +40,7 @@ type historiaResponse struct {
 	ValorNegocio        *int    `json:"valor_negocio"`
 	EstimacionSP        *int    `json:"estimacion_sp"`
 	SprintID            *int64  `json:"sprint_id"`
+	FechaFinalizacion   *string `json:"fecha_finalizacion"`
 }
 
 type errorResponse struct {
