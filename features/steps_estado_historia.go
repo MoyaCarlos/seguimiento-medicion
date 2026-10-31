@@ -130,6 +130,24 @@ func (p *pasosEstadoHistoria) tableroConHistoriaConPuntos(estadoSprint, titulo s
 	return p.tableroConHistoria(estadoSprint, titulo, &puntos, estado)
 }
 
+// tableroConHistoriaSinSprint crea la historia con CrearHistoriaBacklog y la
+// deja en el Product Backlog, sin Sprint.
+func (p *pasosEstadoHistoria) tableroConHistoriaSinSprint(titulo string) error {
+	h, err := p.base.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+		ProyectoID: p.base.proyectoID, Titulo: titulo, Descripcion: "Descripción", Prioridad: domain.PrioridadMust,
+	})
+	if err != nil {
+		return err
+	}
+	p.historias[titulo] = h.ID
+	return nil
+}
+
+func (p *pasosEstadoHistoria) pongoInexistenteEnEstado(id int, estado string) error {
+	_, p.err = p.cambiar.Ejecutar(context.Background(), int64(id), domain.Estado(estado))
+	return nil
+}
+
 func (p *pasosEstadoHistoria) pongoEnEstado(titulo, estado string) error {
 	antes, err := p.historia(titulo)
 	if err != nil {
@@ -245,6 +263,13 @@ func (p *pasosEstadoHistoria) rechazadoConMensaje(mensaje string) error {
 	return nil
 }
 
+func (p *pasosEstadoHistoria) rechazadoConError(mensaje string) error {
+	if !errors.Is(p.err, domain.ErrHistoriaNoEncontrada) || p.err.Error() != mensaje {
+		return fmt.Errorf("se esperaba el error %q (ErrHistoriaNoEncontrada), se obtuvo %v", mensaje, p.err)
+	}
+	return nil
+}
+
 // InitializeScenarioEstadoHistoria registra los pasos de HU-11 sobre el
 // contexto de HU-01 (base de datos y proyecto del Background).
 func InitializeScenarioEstadoHistoria(ctx *godog.ScenarioContext, base *scenarioContext) {
@@ -256,6 +281,8 @@ func InitializeScenarioEstadoHistoria(ctx *godog.ScenarioContext, base *scenario
 
 	ctx.Step(`^que el tablero del proyecto tiene un Sprint (activo|Pendiente|Finalizado) con la historia "([^"]*)" en estado "([^"]*)"$`, p.tableroConHistoriaSinPuntos)
 	ctx.Step(`^que el tablero del proyecto tiene un Sprint (activo|Pendiente|Finalizado) con la historia "([^"]*)" de (\d+) Story Points en estado "([^"]*)"$`, p.tableroConHistoriaConPuntos)
+	ctx.Step(`^que el tablero del proyecto tiene la historia "([^"]*)" sin Sprint$`, p.tableroConHistoriaSinSprint)
+	ctx.Step(`^pongo la historia con identificador (\d+) del tablero, que no existe, en estado "([^"]*)"$`, p.pongoInexistenteEnEstado)
 	ctx.Step(`^(?:que )?pongo la historia "([^"]*)" del tablero en estado "([^"]*)"$`, p.pongoEnEstado)
 	ctx.Step(`^consulto de nuevo la historia "([^"]*)" del tablero$`, p.consultoDeNuevo)
 	ctx.Step(`^se cierra el Sprint activo del tablero$`, p.cierroElSprint)
@@ -265,5 +292,6 @@ func InitializeScenarioEstadoHistoria(ctx *godog.ScenarioContext, base *scenario
 	ctx.Step(`^el Sprint activo del tablero cuenta (\d+) Story Points completados$`, p.cuentaPuntosCompletados)
 	ctx.Step(`^la historia "([^"]*)" del tablero permanece en el Sprint cerrado$`, p.permaneceEnElSprintCerrado)
 	ctx.Step(`^la historia "([^"]*)" del tablero no aparece en el Product Backlog del proyecto$`, p.noApareceEnProductBacklog)
+	ctx.Step(`^el cambio de estado del tablero se rechaza con el error "([^"]*)"$`, p.rechazadoConError)
 	ctx.Step(`^el cambio de estado del tablero se rechaza con el mensaje "([^"]*)"$`, p.rechazadoConMensaje)
 }
