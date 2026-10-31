@@ -74,7 +74,7 @@ describe('pantalla de Sprints', () => {
     expect(await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })).toBeTruthy()
     expect(within(seccion('Activo')).getByRole('heading', { name: 'Sprint #2' })).toBeTruthy()
     expect(within(seccion('Finalizado')).getByRole('heading', { name: 'Sprint #1' })).toBeTruthy()
-    expect(screen.queryByText('Cargando…')).toBeNull()
+    await waitFor(() => expect(screen.queryAllByText('Cargando…')).toHaveLength(0))
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/sprints')
   })
 
