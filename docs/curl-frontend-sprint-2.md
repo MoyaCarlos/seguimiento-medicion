@@ -65,6 +65,27 @@ curl -X POST http://localhost:8080/backlog \
   -d '{"proyecto_id":1,"titulo":"Validar dashboard","descripcion":"Historia de ejemplo","prioridad":"M"}'
 ```
 
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"En progreso"}'
+```
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"Completada"}'
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
+
 ### Consultar y actualizar el proyecto
 
 ```bash
@@ -129,6 +150,27 @@ curl -X POST http://localhost:8080/backlog ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"M\"}"
 ```
+
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"En progreso\"}"
+```
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"Completada\"}"
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
 
 ### Consultar y actualizar el proyecto
 
