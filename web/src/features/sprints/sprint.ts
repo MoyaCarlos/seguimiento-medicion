@@ -32,8 +32,8 @@ export type HistoriaDeSprint = {
 }
 
 export const ETIQUETAS_PRIORIDAD: Record<HistoriaDeSprint['prioridad'], string> = {
-  M: 'Debe tener',
-  S: 'Debería tener',
-  C: 'Podría tener',
-  W: 'No tendrá',
+  M: 'Must have',
+  S: 'Should have',
+  C: 'Could have',
+  W: "Won't have",
 }
