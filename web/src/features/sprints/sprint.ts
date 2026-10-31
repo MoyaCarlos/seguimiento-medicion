@@ -30,3 +30,10 @@ export type HistoriaDeSprint = {
   estado: 'Nueva' | 'En progreso' | 'Completada'
   estimacion_sp: number | null
 }
+
+export const ETIQUETAS_PRIORIDAD: Record<HistoriaDeSprint['prioridad'], string> = {
+  M: 'Debe tener',
+  S: 'Debería tener',
+  C: 'Podría tener',
+  W: 'No tendrá',
+}
