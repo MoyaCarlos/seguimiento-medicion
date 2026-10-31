@@ -23,12 +23,9 @@ export type SprintParaAsignar = {
 }
 
 export function asignarASprint(historiaId: number, sprintId: number): Promise<Historia> {
-  void historiaId
-  void sprintId
-  return Promise.resolve(undefined as unknown as Historia)
+  return put<Historia>(`/backlog/${historiaId}/sprint`, { sprint_id: sprintId })
 }
 
 export function listarSprintsDelProyecto(proyectoId: string): Promise<SprintParaAsignar[]> {
-  void proyectoId
-  return Promise.resolve([])
+  return get<SprintParaAsignar[]>(`/projects/${proyectoId}/sprints`)
 }
