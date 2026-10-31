@@ -12,13 +12,22 @@ const respuesta = (status: number, cuerpo: unknown) =>
 const pendiente = (id: number): Sprint => ({ id, proyecto_id: 42, estado: 'Pendiente' })
 
 const RUTA_LISTADO = /^\/projects\/(\d+)\/sprints$/
+const RUTA_BACKLOG = /^\/sprints\/(\d+)\/backlog$/
 
 type Otras = (ruta: string, opciones?: RequestInit) => Response | Promise<Response>
 
-function simularApi(listado: (proyecto: string) => Response | Promise<Response>, otras?: Otras) {
+type Backlog = (sprintId: string) => Response | Promise<Response>
+
+function simularApi(
+  listado: (proyecto: string) => Response | Promise<Response>,
+  otras?: Otras,
+  backlog: Backlog = () => respuesta(200, []),
+) {
   const simulado = vi.fn((ruta: string, opciones?: RequestInit) => {
     const coincide = RUTA_LISTADO.exec(ruta)
     if (coincide) return Promise.resolve(listado(coincide[1]))
+    const coincideBacklog = RUTA_BACKLOG.exec(ruta)
+    if (coincideBacklog) return Promise.resolve(backlog(coincideBacklog[1]))
     return Promise.resolve(otras ? otras(ruta, opciones) : respuesta(404, { mensaje: 'no encontrado' }))
   })
   vi.stubGlobal('fetch', simulado)
