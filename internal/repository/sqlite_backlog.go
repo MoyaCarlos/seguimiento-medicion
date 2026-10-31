@@ -50,8 +50,9 @@ const columnasHistoria = `id, proyecto_id, titulo, descripcion, criterios_acepta
 // de creación. El orden alfabético de la prioridad no sirve, por eso el CASE.
 const ordenBacklog = "ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id"
 
-// ListarPorSprint devuelve las historias asignadas al Sprint, por prioridad
-// M, S, C, W y luego por orden de creación.
+// ListarPorSprint devuelve las historias del Sprint ordenadas por prioridad
+// MoSCoW (M, S, C, W) y luego por id, el mismo orden que el Product Backlog.
+// El cierre de Sprint no depende de este orden.
 func (r *SQLiteBacklogRepository) ListarPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	historias, err := r.listarHistorias(ctx,
 		`SELECT `+columnasHistoria+` FROM historias WHERE sprint_id = ? `+ordenBacklog, sprintID)
