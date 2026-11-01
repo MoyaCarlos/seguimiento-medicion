@@ -35,6 +35,19 @@ const SHOULD: Historia = {
   sprint_id: null,
 }
 
+const MARKDOWN: Historia = {
+  id: 7,
+  proyecto_id: 42,
+  titulo: 'Como usuario quiero ver el formato Markdown',
+  descripcion: '**Importante:** validar el alta.\n\n- primer paso\n- segundo paso',
+  criterios_aceptacion: 'Dado que ingreso\n\n- caso uno\n- caso dos',
+  prioridad: 'M',
+  estado: 'Nueva',
+  valor_negocio: null,
+  estimacion_sp: null,
+  sprint_id: null,
+}
+
 const RUTA_LISTADO = /^\/projects\/([^/]+)\/backlog$/
 const RUTA_EDICION = /^\/backlog\/(\d+)$/
 
@@ -122,6 +135,19 @@ describe('listado del Product Backlog (US1)', () => {
     expect(within(should).getByText('Sin estimar')).toBeTruthy()
     expect(within(should).getByText('Valor de negocio: Sin valor de negocio')).toBeTruthy()
     expect(within(should).getByText('Sin criterios de aceptación')).toBeTruthy()
+  })
+
+  it('US1.4: interpreta Markdown en la descripción y los criterios', async () => {
+    simularApi(conHistorias(MARKDOWN))
+    abrir()
+
+    await screen.findByRole('heading', { name: MARKDOWN.titulo })
+    const articulo = articuloDe(MARKDOWN.titulo)
+
+    expect(articulo.querySelector('strong')?.textContent).toBe('Importante:')
+    expect(articulo.querySelectorAll('li')).toHaveLength(4)
+    expect(within(articulo).getByText('primer paso')).toBeTruthy()
+    expect(within(articulo).getByText('caso dos')).toBeTruthy()
   })
 
   it('US1.2: con el backlog vacío muestra un mensaje y no lo trata como error', async () => {
