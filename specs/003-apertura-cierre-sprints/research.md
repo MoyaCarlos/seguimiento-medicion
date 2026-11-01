@@ -68,7 +68,7 @@ SC-001 a SC-005).
 
 - **F1 (MEDIUM)**: `MODELO-DE-DATOS.md` §4.6, paso 4, no dice que el
   `UPDATE sprints` es condicional. Resuelto en #159 (es descripción, no
-  esquema; texto revisado por el Scrum Master en el PR).
+  esquema; texto pendiente de aprobación del Scrum Master en el PR #161).
 - **C1 (MEDIUM)**: `plan.md` no menciona #117 ni #145. Resuelto en #159:
   nota "Fixes posteriores al plan original" en el Summary.
 - **U1 (MEDIUM)**: el fake en memoria no rechaza un segundo cierre con una
