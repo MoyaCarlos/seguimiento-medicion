@@ -52,6 +52,6 @@ Como consumidor de la API, quiero recibir el número de cada Sprint dentro de su
 
 ## Criterios de aceptación
 
-- [ ] El primer Sprint de cualquier proyecto tiene número 1, y los siguientes 2, 3... dentro de ese proyecto.
-- [ ] La API devuelve `numero` en las respuestas que hoy devuelven un Sprint, sin cambiar el resto del contrato.
-- [ ] `go build`, `go vet`, `gofmt -l` y `go test ./...` en verde; los escenarios de Godog existentes no cambian de comportamiento.
+- [x] El primer Sprint de cualquier proyecto tiene número 1, y los siguientes 2, 3... dentro de ese proyecto.
+- [x] La API devuelve `numero` en las respuestas que hoy devuelven un Sprint, sin cambiar el resto del contrato.
+- [x] `go build`, `go vet`, `gofmt -l` y `go test ./...` en verde; los escenarios de Godog existentes no cambian de comportamiento.
