@@ -19,6 +19,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioAsignacion(ctx, sc)     // HU-06
 			InitializeScenarioVotacion(ctx, sc)       // HU-02
 			InitializeScenarioHoras(ctx, sc)          // HU-07
+			InitializeScenarioDatosPrueba(ctx)        // Issue #144
 			InitializeScenarioEstadoHistoria(ctx, sc) // HU-11
 		},
 		Options: &godog.Options{

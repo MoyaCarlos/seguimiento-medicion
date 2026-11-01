@@ -201,6 +201,88 @@ func TestSQLiteBacklogRepository_ListarSinSprint_SinHistoriasDevuelveVacio(t *te
 	}
 }
 
+func TestSQLiteBacklogRepository_ListarPorSprint_OrdenMoSCoWYCreacion(t *testing.T) {
+	t.Run("ordena por prioridad y luego por creación, y excluye otros Sprints", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		ctx := context.Background()
+		sprints := NewSQLiteSprintRepository(repo.db)
+		activo := iniciarSprint(t, sprints, guardarSprint(t, sprints, 1))
+		pendiente := guardarSprint(t, sprints, 1)
+
+		for _, h := range []struct {
+			titulo    string
+			prioridad domain.Prioridad
+		}{
+			{"S1", domain.PrioridadShould},
+			{"M1", domain.PrioridadMust},
+			{"W1", domain.PrioridadWont},
+			{"C1", domain.PrioridadCould},
+			{"M2", domain.PrioridadMust},
+		} {
+			guardada := guardarHistoria(t, repo, 1, h.titulo, h.prioridad)
+			if err := repo.AsignarASprint(ctx, guardada.ID, pendiente.ID); err != nil {
+				t.Fatalf("no se pudo asignar %q al Sprint Pendiente: %v", h.titulo, err)
+			}
+		}
+		ajena := guardarHistoria(t, repo, 1, "De otro Sprint", domain.PrioridadMust)
+		if err := repo.AsignarASprint(ctx, ajena.ID, activo.ID); err != nil {
+			t.Fatalf("no se pudo asignar la historia del otro Sprint: %v", err)
+		}
+
+		historias, err := repo.ListarPorSprint(ctx, pendiente.ID)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+
+		esperado := []string{"M1", "M2", "S1", "C1", "W1"}
+		got := titulos(historias)
+		if len(got) != len(esperado) {
+			t.Fatalf("se esperaba el orden %v, se obtuvo %v", esperado, got)
+		}
+		for i := range esperado {
+			if got[i] != esperado[i] {
+				t.Fatalf("se esperaba el orden %v, se obtuvo %v", esperado, got)
+			}
+		}
+	})
+
+	t.Run("Sprint sin historias devuelve un slice vacío no nil", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		sprints := NewSQLiteSprintRepository(repo.db)
+		otroProyecto := guardarProyecto(t, repo.db)
+		vacio := guardarSprint(t, sprints, otroProyecto)
+
+		historias, err := repo.ListarPorSprint(context.Background(), vacio.ID)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if historias == nil || len(historias) != 0 {
+			t.Errorf("se esperaba un slice vacío no nil, se obtuvo %#v", historias)
+		}
+	})
+
+	t.Run("Sprint cerrado con arrastre solo conserva la historia completada", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		ctx := context.Background()
+		sprints := NewSQLiteSprintRepository(repo.db)
+		activo := iniciarSprint(t, sprints, guardarSprint(t, sprints, 1))
+		completada := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoCompletada, nil)
+		noCompletada := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, nil)
+
+		if err := sprints.CerrarConArrastre(ctx, cerrado(t, activo), []domain.BacklogItem{noCompletada}); err != nil {
+			t.Fatalf("no se esperaba error al cerrar el Sprint: %v", err)
+		}
+
+		historias, err := repo.ListarPorSprint(ctx, activo.ID)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if len(historias) != 1 || historias[0].ID != completada.ID {
+			t.Errorf("se esperaba solo la historia completada %d, se obtuvo %v", completada.ID, titulos(historias))
+		}
+	})
+}
+
 func TestSQLiteBacklogRepository_ObtenerPorID_Inexistente(t *testing.T) {
 	repo := nuevaBDDePrueba(t)
 
