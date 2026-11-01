@@ -6,7 +6,7 @@ description: "Tareas de Markdown seguro en el Product Backlog (Issue #147): fron
 
 # Tasks: Markdown seguro en el Product Backlog
 
-**Input**: Design documents from `/specs/027-markdown-historias/`
+**Input**: Design documents from `/specs/028-markdown-historias/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
 
@@ -65,8 +65,8 @@ historia que use Markdown en descripción y criterios.
 
 - `npx vitest run src/features/backlog/Markdown.test.tsx`: 4/4 en verde.
 - `npx vitest run src/features/backlog/Listado.test.tsx`: 17/17 en verde.
-- `npm test -- --run`: 213/213 en verde (una corrida previa tuvo un timeout aislado de
-  carga en `rutas.test.tsx`; ese archivo pasó solo y la corrida completa final fue
-  verde).
+- `npm test`: 227/228 en la corrida local; el único fallo fue el timeout de carga de
+  `rutas.test.tsx` en Windows (un flake ya documentado). Ese archivo pasa solo (13/13) y
+  el CI del PR corre la suite en Linux.
 - `npm run lint` y `npm run build`: en verde.
 - Commits de la feature: docs de spec, dependencia, RED/GREEN del componente, RED/GREEN del listado, estilos y este cierre de tareas.

@@ -6,7 +6,11 @@
 
 **Created**: 2026-10-31
 
-**Status**: Implementada (pendiente de PR y review)
+**Status**: Implementada (pendiente de review)
+
+**Nota de numeración**: la spec se creó como 027 y se renumeró a 028 porque el 027
+quedó reservado por el PR #206 (HU-11). Los números 022, 023, 026 y 027 están
+reservados por otras ramas o PR abiertos.
 
 **Dependencia**: el listado y la edición del Product Backlog ya están en `main`
 (spec 020). Esta spec solo cambia cómo se muestra la descripción y los criterios de
@@ -147,11 +151,12 @@ opción más directa para el stack actual.
   `javascript:`).
 - `Listado.test.tsx`: 17/17 en verde, incluido el caso de Markdown en descripción y
   criterios.
-- `npm test -- --run`: 213/213 en verde en la corrida final. Una corrida previa tuvo un
-  timeout aislado de carga en `rutas.test.tsx`; ese archivo pasó solo.
 - `npm run lint` y `npm run build`: en verde. `npm audit --omit=dev`: 0 vulnerabilidades
   de producción (las 4 reportadas son de Vite/Vitest en desarrollo y ya venían con el
   stack).
+- `npm test` (suite completa): 227/228 en la corrida local; el único fallo fue el
+  timeout de carga de `rutas.test.tsx` en Windows (un flake ya documentado). Ese archivo
+  pasa solo (13/13) y el CI del PR corre la suite en Linux.
 
 ## Assumptions
 

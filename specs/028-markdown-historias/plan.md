@@ -2,7 +2,7 @@
 
 **Branch**: `feature/147-markdown-historias` | **Date**: 2026-10-31 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `/specs/027-markdown-historias/spec.md`
+**Input**: Feature specification from `/specs/028-markdown-historias/spec.md`
 
 ## Summary
 
@@ -52,7 +52,7 @@ Sin violaciones. Re-chequeo post-diseño: igual.
 ### Documentation (this feature)
 
 ```text
-specs/027-markdown-historias/
+specs/028-markdown-historias/
 ├── spec.md
 ├── plan.md
 ├── research.md
