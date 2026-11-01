@@ -89,7 +89,7 @@ describe('AsignarASprint', () => {
   })
 
   it('US3.4: tras el 200 llama a onAsignada con la historia devuelta', async () => {
-    const devuelta = { ...HISTORIA, estado: 'Pendiente' as const, sprint_id: 2 }
+    const devuelta = { ...HISTORIA, sprint_id: 2 }
     asignarMock.mockResolvedValue(devuelta)
     const user = userEvent.setup()
     const { onAsignada } = abrir()
