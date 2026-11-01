@@ -65,6 +65,27 @@ curl -X POST http://localhost:8080/backlog \
   -d '{"proyecto_id":1,"titulo":"Validar dashboard","descripcion":"Historia de ejemplo","prioridad":"M"}'
 ```
 
+### Asignar una historia a un Sprint
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/sprint \
+  -H 'Content-Type: application/json' \
+  -d '{"sprint_id":1}'
+```
+
+La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 400 con
+`{"campo":"sprint_id","mensaje":"la historia ya pertenece a un Sprint"}`.
+
+### Consultar el Sprint Backlog
+
+```bash
+curl http://localhost:8080/sprints/1/backlog
+```
+
+Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
+no tiene historias. Si el Sprint no existe, responde 404 con
+`{"mensaje":"sprint no encontrado"}`.
+
 ### Consultar y actualizar el proyecto
 
 ```bash
@@ -129,6 +150,27 @@ curl -X POST http://localhost:8080/backlog ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"M\"}"
 ```
+
+### Asignar una historia a un Sprint
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/sprint ^
+  -H "Content-Type: application/json" ^
+  -d "{\"sprint_id\":1}"
+```
+
+La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 400 con
+`{"campo":"sprint_id","mensaje":"la historia ya pertenece a un Sprint"}`.
+
+### Consultar el Sprint Backlog
+
+```bat
+curl http://localhost:8080/sprints/1/backlog
+```
+
+Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
+no tiene historias. Si el Sprint no existe, responde 404 con
+`{"mensaje":"sprint no encontrado"}`.
 
 ### Consultar y actualizar el proyecto
 
