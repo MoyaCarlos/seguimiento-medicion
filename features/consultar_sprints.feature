@@ -13,6 +13,13 @@ Característica: Consulta de los Sprints de un proyecto
     Entonces el sistema responde 200
     Y recibo los Sprints 2 y 9 en ese orden
 
+  Escenario: Cada proyecto numera sus Sprints desde 1
+    Dado que el proyecto 1 tiene los Sprints 1 y 2
+    Y que el proyecto 2 tiene los Sprints 3 y 4
+    Cuando consulto los Sprints del proyecto 2
+    Entonces el sistema responde 200
+    Y los Sprints recibidos tienen los números 1 y 2
+
   Escenario: Proyecto sin Sprints
     Dado que el proyecto 1 no tiene Sprints
     Cuando consulto los Sprints del proyecto 1
