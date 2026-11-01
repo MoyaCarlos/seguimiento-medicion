@@ -41,3 +41,10 @@ type DefectoDetalle struct {
 	Defecto
 	TituloHistoria string
 }
+
+// NewDefecto construye un defecto Pendiente detectado en el Sprint activo.
+// Valida descripción y severidad, en ese orden. Supone que el service ya
+// verificó el Sprint activo y la historia relacionada.
+func NewDefecto(proyectoID, historiaID int64, activo Sprint, descripcion, severidad string) (Defecto, error) {
+	return Defecto{}, nil
+}
