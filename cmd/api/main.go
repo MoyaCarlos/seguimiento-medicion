@@ -76,6 +76,7 @@ func main() {
 	defectoHandler := apihttp.NewDefectoHandler(
 		obtenerProyecto,
 		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
+		service.NewResolverDefecto(defectosRepo, sprintRepo),
 	)
 
 	mux := http.NewServeMux()

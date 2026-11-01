@@ -72,6 +72,7 @@ func nuevoEscenarioDefectosHTTP() escenarioDefectosHTTP {
 	handler := NewDefectoHandler(
 		service.NewObtenerProyecto(proyectos),
 		service.NewRegistrarDefecto(sprints, historias, defectos),
+		service.NewResolverDefecto(defectos, sprints),
 	)
 	return escenarioDefectosHTTP{handler: handler, sprints: sprints, defectos: defectos}
 }
@@ -182,6 +183,83 @@ func TestDefectoHandler_Registrar_Errores(t *testing.T) {
 			}
 			if len(e.defectos.defectos) != 0 {
 				t.Errorf("no se esperaba ningún defecto registrado, hay %d", len(e.defectos.defectos))
+			}
+		})
+	}
+}
+
+func (e escenarioDefectosHTTP) resolver(id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodPost, "/defectos/"+id+"/resolver", nil)
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	e.handler.Resolver(rec, req)
+	return rec
+}
+
+// pendiente siembra un defecto Pendiente del proyecto 1 detectado en el Sprint dado.
+func (e escenarioDefectosHTTP) pendiente(deteccion domain.Sprint) domain.Defecto {
+	d, _ := e.defectos.Registrar(context.Background(), domain.Defecto{
+		ProyectoID: 1, HistoriaID: 3, SprintDeteccionID: deteccion.ID,
+		Descripcion: "El total no se actualiza", Severidad: domain.SeveridadAlta, Estado: domain.DefectoPendiente,
+	})
+	return d
+}
+
+func TestDefectoHandler_Resolver_Exitoso(t *testing.T) {
+	e := nuevoEscenarioDefectosHTTP()
+	finalizado := e.sprint(t, 1, domain.SprintFinalizado)
+	activo := e.sprint(t, 1, domain.SprintActivo)
+	d := e.pendiente(finalizado)
+
+	rec := e.resolver("1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	resp := leerDefecto(t, rec)
+	if resp["id"] != float64(d.ID) || resp["estado"] != "Resuelto" || resp["historia"] != "Carrito de compras" ||
+		resp["sprint_deteccion_id"] != float64(finalizado.ID) || resp["sprint_resolucion_id"] != float64(activo.ID) {
+		t.Errorf("respuesta inesperada: %v", resp)
+	}
+}
+
+func TestDefectoHandler_Resolver_Errores(t *testing.T) {
+	casos := []struct {
+		nombre, id     string
+		yaResuelto     bool
+		conActivo      bool
+		status         int
+		campo, mensaje string
+	}{
+		{"id no numérico", "abc", false, true, nethttp.StatusBadRequest, "id", ""},
+		{"id cero", "0", false, true, nethttp.StatusBadRequest, "id", ""},
+		{"defecto inexistente", "999", false, true, nethttp.StatusNotFound, "", "defecto no encontrado"},
+		{"ya resuelto", "1", true, true, nethttp.StatusBadRequest, "estado", "el defecto ya está resuelto"},
+		{"sin Sprint activo", "1", false, false, nethttp.StatusBadRequest, "sprint_resolucion_id", ""},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			e := nuevoEscenarioDefectosHTTP()
+			deteccion := e.sprint(t, 1, domain.SprintFinalizado)
+			if c.conActivo {
+				e.sprint(t, 1, domain.SprintActivo)
+			}
+			e.pendiente(deteccion)
+			if c.yaResuelto {
+				e.defectos.defectos[0].Estado, e.defectos.defectos[0].SprintResolucionID = domain.DefectoResuelto, &deteccion.ID
+			}
+
+			rec := e.resolver(c.id)
+
+			if rec.Code != c.status {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
+			}
+			var resp errorResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("respuesta JSON inválida: %v", err)
+			}
+			if resp.Campo != c.campo || (c.mensaje != "" && resp.Mensaje != c.mensaje) {
+				t.Errorf("se esperaba campo %q y mensaje %q, se obtuvo %+v", c.campo, c.mensaje, resp)
 			}
 		})
 	}

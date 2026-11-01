@@ -11,10 +11,15 @@ import (
 type DefectoHandler struct {
 	obtenerProyecto *service.ObtenerProyecto
 	registrar       *service.RegistrarDefecto
+	resolver        *service.ResolverDefecto
 }
 
-func NewDefectoHandler(obtenerProyecto *service.ObtenerProyecto, registrar *service.RegistrarDefecto) *DefectoHandler {
-	return &DefectoHandler{obtenerProyecto: obtenerProyecto, registrar: registrar}
+func NewDefectoHandler(
+	obtenerProyecto *service.ObtenerProyecto,
+	registrar *service.RegistrarDefecto,
+	resolver *service.ResolverDefecto,
+) *DefectoHandler {
+	return &DefectoHandler{obtenerProyecto: obtenerProyecto, registrar: registrar, resolver: resolver}
 }
 
 // Registrar atiende POST /projects/{id}/defectos.
@@ -47,4 +52,8 @@ func (h *DefectoHandler) Registrar(w nethttp.ResponseWriter, r *nethttp.Request)
 		return
 	}
 	escribirJSON(w, nethttp.StatusCreated, aRespuestaDefecto(detalle))
+}
+
+// Resolver atiende POST /defectos/{id}/resolver. No tiene cuerpo.
+func (h *DefectoHandler) Resolver(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
