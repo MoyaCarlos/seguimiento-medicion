@@ -33,7 +33,7 @@ func (c *consultaSprintsContext) iniciar() error {
 	}
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	sprints := repository.NewSQLiteSprintRepository(db)
-	handler := apphttp.NewSprintHandler(nil, nil, nil, service.NewConsultarSprints(proyectos, sprints), sprints)
+	handler := apphttp.NewSprintHandler(nil, nil, nil, service.NewConsultarSprints(proyectos, sprints), nil, sprints)
 	c.db = db
 	c.mux = http.NewServeMux()
 	c.mux.HandleFunc("GET /projects/{id}/sprints", handler.Listar)
