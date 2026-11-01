@@ -65,7 +65,7 @@ Como Product Builder, quiero un único cliente de la API que me devuelva los dat
 1. **Given** una respuesta exitosa del backend, **When** el cliente la procesa, **Then** entrega los datos recibidos.
 2. **Given** una respuesta 400 con `{campo, mensaje}`, **When** el cliente la procesa, **Then** entrega un error que incluye el estado, el campo y el mensaje.
 3. **Given** una respuesta 400, 404 o 409 sin `campo`, **When** el cliente la procesa, **Then** entrega un error con el estado y el mensaje, y sin campo.
-4. **Given** que el backend no responde, **When** el cliente intenta la llamada, **Then** entrega un error de conexión distinguible de los errores de la API.
+4. **Given** que el backend no responde (o el proxy de desarrollo responde 502, 503 o 504), **When** el cliente intenta la llamada, **Then** entrega un error de conexión distinguible de los errores de la API.
 5. **Given** que el backend responde un error con un cuerpo que no es `{campo, mensaje}` (por ejemplo, un 500 con texto), **When** el cliente lo procesa, **Then** entrega un error con el estado y un mensaje genérico, distinguible del error de conexión.
 
 ---
@@ -105,7 +105,7 @@ Como integrante del equipo (aunque no conozca Go ni React), quiero un `web/READM
 
 Redactados en formato EARS.
 
-- **IF** el backend no está corriendo al hacer una llamada, **THEN** el cliente de la API **shall** devolver un error de conexión (FR-009a), y la interfaz **shall** mostrarlo en lugar de quedar cargando indefinidamente.
+- **IF** el backend no está corriendo al hacer una llamada (incluido un 502, 503 o 504 del proxy de desarrollo), **THEN** el cliente de la API **shall** devolver un error de conexión (FR-009a), y la interfaz **shall** mostrarlo en lugar de quedar cargando indefinidamente.
 - **IF** el backend responde con un estado o cuerpo inesperado (por ejemplo, un 500 o un cuerpo que no es JSON), **THEN** el cliente **shall** devolver un error genérico con el estado, sin romper la pantalla.
 - **IF** una respuesta de error no trae `campo` (error general, no de un campo del formulario), **THEN** la interfaz **shall** mostrar el mensaje en un bloque de aviso visible arriba del formulario, que permanece hasta el próximo envío.
 - **IF** el id del proyecto en la URL no corresponde a ningún proyecto, **THEN** la pantalla **shall** poder mostrar el 404 que devuelve la API usando el mismo mecanismo de errores.
@@ -131,9 +131,9 @@ Redactados en formato EARS.
 - **FR-006**: **WHEN** la API responde con éxito, el cliente **shall** entregar los datos recibidos.
 - **FR-007**: **WHEN** la API responde 400, 404 o 409 con `{campo, mensaje}`, el cliente **shall** entregar un error con estado, campo y mensaje.
 - **FR-008**: **WHEN** la API responde un error sin `campo`, el cliente **shall** entregar un error con estado y mensaje, y campo ausente; la pieza de mensaje de error **shall** mostrarlo en un bloque de aviso arriba del formulario, que permanece hasta el próximo envío.
-- **FR-009a**: **IF** no hay conexión con el backend, **THEN** el cliente **shall** entregar un error de conexión, distinguible de los errores de la API.
+- **FR-009a**: **IF** no hay conexión con el backend, o el proxy responde 502, 503 o 504, **THEN** el cliente **shall** entregar un error de conexión, distinguible de los errores de la API.
 - **FR-009b**: **IF** el backend responde con un estado de error y un cuerpo que no es `{campo, mensaje}` interpretable (por ejemplo, un 500 o un cuerpo que no es JSON), **THEN** el cliente **shall** entregar un error con ese estado y un mensaje genérico, sin romper la pantalla.
-- **FR-010**: El cliente de la API **shall** tener pruebas automáticas que cubran éxito, 400 con campo, 400 sin campo, 404, 409, respuesta de error no interpretable y falta de conexión. Depende de la decisión de FR-026 (librería de pruebas).
+- **FR-010**: El cliente de la API **shall** tener pruebas automáticas que cubran éxito, 400 con campo, 400 sin campo, 404, 409, respuestas de gateway (502, 503 y 504), respuesta de error no interpretable y falta de conexión. Depende de la decisión de FR-026 (librería de pruebas).
 
 **Ruteo y navegación**
 
