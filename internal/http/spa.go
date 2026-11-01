@@ -14,7 +14,7 @@ const rutaSalud = "/health"
 // verifica que incluya los prefijos que proxea web/vite.config.ts. Si hace falta
 // que otra ruta (por ejemplo, una descarga de PDF) llegue a la API aun con
 // text/html, agregala como excepción junto a /health.
-var PrefijosAPI = []string{"/backlog", "/projects", "/sprints", rutaSalud}
+var PrefijosAPI = []string{"/backlog", "/projects", "/sprints", "/demo", rutaSalud}
 
 func ServirSPA(api http.Handler, dirWeb string) http.Handler {
 	if info, err := os.Stat(dirWeb); err != nil || !info.IsDir() {
@@ -29,8 +29,11 @@ func ServirSPA(api http.Handler, dirWeb string) http.Handler {
 		case esLecturaDeArchivo(r, archivos):
 			servidorArchivos.ServeHTTP(w, r)
 		case esPedidoDePagina(r):
+			w.Header().Add("Vary", "Accept")
+			w.Header().Set("Cache-Control", "no-cache")
 			http.ServeFile(w, r, index)
 		default:
+			w.Header().Add("Vary", "Accept")
 			api.ServeHTTP(w, r)
 		}
 	})

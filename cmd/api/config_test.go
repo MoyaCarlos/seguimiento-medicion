@@ -39,3 +39,13 @@ func TestCargarConfig_VariableVaciaUsaElDefault(t *testing.T) {
 		t.Errorf("las variables vacías deben caer al default: %+v", cfg)
 	}
 }
+
+func TestCargarConfig_DemoHabilitadoSoloConTrue(t *testing.T) {
+	casos := map[string]bool{"": false, "false": false, "TRUE": false, "1": false, "true": true}
+	for valor, esperado := range casos {
+		cfg := cargarConfig(entornoDe(map[string]string{"DEMO_HABILITADO": valor}))
+		if cfg.DemoHabilitado != esperado {
+			t.Errorf("DEMO_HABILITADO=%q: se esperaba %v, se obtuvo %v", valor, esperado, cfg.DemoHabilitado)
+		}
+	}
+}

@@ -15,6 +15,7 @@ export default defineConfig({
       '/backlog': apiProxy,
       '/projects': apiProxy,
       '/sprints': apiProxy,
+      '/demo': apiProxy,
     },
   },
 })

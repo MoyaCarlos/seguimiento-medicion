@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -73,6 +75,11 @@ func main() {
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 	)
 
+	demoHandler := apihttp.NewDemoHandler(
+		func() bool { return cfg.DemoHabilitado },
+		demo.NewCargador(db, time.Now),
+	)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -99,6 +106,8 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
+
+	demoHandler.Registrar(mux)
 
 	log.Printf("listening on :%s", cfg.Puerto)
 	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {
