@@ -14,15 +14,16 @@ import (
 
 // SprintHandler es el adaptador de entrada para el ciclo de vida de los Sprints.
 type SprintHandler struct {
-	crear     *service.CrearSprint
-	iniciar   *service.IniciarSprint
-	cerrar    *service.CerrarSprint
-	consultar *service.ConsultarSprints
-	sprints   repository.SprintRepository
+	crear            *service.CrearSprint
+	iniciar          *service.IniciarSprint
+	cerrar           *service.CerrarSprint
+	consultar        *service.ConsultarSprints
+	consultarBacklog *service.ConsultarSprintBacklog
+	sprints          repository.SprintRepository
 }
 
-func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, consultar *service.ConsultarSprints, sprints repository.SprintRepository) *SprintHandler {
-	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, consultar: consultar, sprints: sprints}
+func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint, cerrar *service.CerrarSprint, consultar *service.ConsultarSprints, consultarBacklog *service.ConsultarSprintBacklog, sprints repository.SprintRepository) *SprintHandler {
+	return &SprintHandler{crear: crear, iniciar: iniciar, cerrar: cerrar, consultar: consultar, consultarBacklog: consultarBacklog, sprints: sprints}
 }
 
 // Listar atiende GET /projects/{id}/sprints.
@@ -39,6 +40,24 @@ func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	respuesta := make([]sprintResponse, 0, len(sprints))
 	for _, sprint := range sprints {
 		respuesta = append(respuesta, aRespuestaSprint(sprint))
+	}
+	escribirJSON(w, nethttp.StatusOK, respuesta)
+}
+
+// ConsultarBacklog atiende GET /sprints/{id}/backlog.
+func (h *SprintHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	historias, err := h.consultarBacklog.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	respuesta := make([]historiaResponse, 0, len(historias))
+	for _, historia := range historias {
+		respuesta = append(respuesta, aRespuesta(historia))
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
