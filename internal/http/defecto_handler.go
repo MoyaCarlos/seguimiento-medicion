@@ -12,14 +12,16 @@ type DefectoHandler struct {
 	obtenerProyecto *service.ObtenerProyecto
 	registrar       *service.RegistrarDefecto
 	resolver        *service.ResolverDefecto
+	listar          *service.ListarDefectos
 }
 
 func NewDefectoHandler(
 	obtenerProyecto *service.ObtenerProyecto,
 	registrar *service.RegistrarDefecto,
 	resolver *service.ResolverDefecto,
+	listar *service.ListarDefectos,
 ) *DefectoHandler {
-	return &DefectoHandler{obtenerProyecto: obtenerProyecto, registrar: registrar, resolver: resolver}
+	return &DefectoHandler{obtenerProyecto: obtenerProyecto, registrar: registrar, resolver: resolver, listar: listar}
 }
 
 // Registrar atiende POST /projects/{id}/defectos.
@@ -68,4 +70,8 @@ func (h *DefectoHandler) Resolver(w nethttp.ResponseWriter, r *nethttp.Request) 
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, aRespuestaDefecto(detalle))
+}
+
+// Listar atiende GET /projects/{id}/defectos.
+func (h *DefectoHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
 }

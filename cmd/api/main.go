@@ -77,6 +77,7 @@ func main() {
 		obtenerProyecto,
 		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
 		service.NewResolverDefecto(defectosRepo, sprintRepo),
+		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
 	mux := http.NewServeMux()

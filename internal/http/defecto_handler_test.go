@@ -73,6 +73,7 @@ func nuevoEscenarioDefectosHTTP() escenarioDefectosHTTP {
 		service.NewObtenerProyecto(proyectos),
 		service.NewRegistrarDefecto(sprints, historias, defectos),
 		service.NewResolverDefecto(defectos, sprints),
+		service.NewListarDefectos(proyectos, defectos),
 	)
 	return escenarioDefectosHTTP{handler: handler, sprints: sprints, defectos: defectos}
 }
@@ -250,6 +251,84 @@ func TestDefectoHandler_Resolver_Errores(t *testing.T) {
 			}
 
 			rec := e.resolver(c.id)
+
+			if rec.Code != c.status {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
+			}
+			var resp errorResponse
+			if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("respuesta JSON inválida: %v", err)
+			}
+			if resp.Campo != c.campo || (c.mensaje != "" && resp.Mensaje != c.mensaje) {
+				t.Errorf("se esperaba campo %q y mensaje %q, se obtuvo %+v", c.campo, c.mensaje, resp)
+			}
+		})
+	}
+}
+
+func (e escenarioDefectosHTTP) listar(id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/defectos", nil)
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	e.handler.Listar(rec, req)
+	return rec
+}
+
+func TestDefectoHandler_Listar_EnOrdenDeRegistro(t *testing.T) {
+	e := nuevoEscenarioDefectosHTTP()
+	activo := e.sprint(t, 1, domain.SprintActivo)
+	resuelto := e.pendiente(activo)
+	pendiente := e.pendiente(activo)
+	e.defectos.defectos[0].Estado, e.defectos.defectos[0].SprintResolucionID = domain.DefectoResuelto, &activo.ID
+	if _, err := e.defectos.Registrar(context.Background(), domain.Defecto{ProyectoID: 2, HistoriaID: 9}); err != nil {
+		t.Fatalf("no se pudo sembrar el defecto del otro proyecto: %v", err)
+	}
+
+	rec := e.listar("1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp []map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if len(resp) != 2 || resp[0]["id"] != float64(resuelto.ID) || resp[1]["id"] != float64(pendiente.ID) {
+		t.Fatalf("se esperaban los defectos %d y %d en orden, se obtuvo %v", resuelto.ID, pendiente.ID, resp)
+	}
+	if resp[0]["estado"] != "Resuelto" || resp[0]["sprint_resolucion_id"] != float64(activo.ID) {
+		t.Errorf("primer defecto inesperado: %v", resp[0])
+	}
+	if valor, ok := resp[1]["sprint_resolucion_id"]; resp[1]["estado"] != "Pendiente" || !ok || valor != nil {
+		t.Errorf("se esperaba el segundo Pendiente con sprint_resolucion_id null, se obtuvo %v", resp[1])
+	}
+}
+
+func TestDefectoHandler_Listar_ProyectoSinDefectos(t *testing.T) {
+	e := nuevoEscenarioDefectosHTTP()
+
+	rec := e.listar("1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if cuerpo := bytes.TrimSpace(rec.Body.Bytes()); string(cuerpo) != "[]" {
+		t.Errorf("se esperaba [], se obtuvo %s", cuerpo)
+	}
+}
+
+func TestDefectoHandler_Listar_Errores(t *testing.T) {
+	casos := []struct {
+		nombre, id     string
+		status         int
+		campo, mensaje string
+	}{
+		{"id no numérico", "abc", nethttp.StatusBadRequest, "id", ""},
+		{"proyecto inexistente", "999", nethttp.StatusNotFound, "", "proyecto no encontrado"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			rec := nuevoEscenarioDefectosHTTP().listar(c.id)
 
 			if rec.Code != c.status {
 				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
