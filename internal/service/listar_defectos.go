@@ -18,5 +18,8 @@ func NewListarDefectos(proyectos repository.ProjectRepository, defectos reposito
 }
 
 func (s *ListarDefectos) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.DefectoDetalle, error) {
-	return nil, nil
+	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return nil, err
+	}
+	return s.defectos.ListarPorProyecto(ctx, proyectoID)
 }
