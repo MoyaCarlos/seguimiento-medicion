@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"strings"
 	"testing"
 )
@@ -65,5 +66,64 @@ func TestNewDefecto_Rechazos(t *testing.T) {
 				t.Errorf("se esperaba el mensaje %q, se obtuvo %q", c.mensaje, verr.Mensaje)
 			}
 		})
+	}
+}
+
+func defectoPendiente() Defecto {
+	return Defecto{ID: 5, ProyectoID: 1, HistoriaID: 3, SprintDeteccionID: 7, Estado: DefectoPendiente}
+}
+
+func TestDefecto_Resolver(t *testing.T) {
+	casos := []struct {
+		nombre string
+		activo Sprint
+	}{
+		{"en otro Sprint", Sprint{ID: 8, ProyectoID: 1, Estado: SprintActivo}},
+		{"en el mismo Sprint que el de detección", Sprint{ID: 7, ProyectoID: 1, Estado: SprintActivo}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			d := defectoPendiente()
+
+			if err := d.Resolver(&c.activo); err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if d.Estado != DefectoResuelto || d.SprintResolucionID == nil || *d.SprintResolucionID != c.activo.ID {
+				t.Errorf("se esperaba Resuelto en el Sprint %d, se obtuvo %+v", c.activo.ID, d)
+			}
+			if d.SprintDeteccionID != 7 {
+				t.Errorf("el Sprint de detección cambió a %d", d.SprintDeteccionID)
+			}
+		})
+	}
+}
+
+func TestDefecto_ResolverSinSprintActivo(t *testing.T) {
+	d := defectoPendiente()
+
+	err := d.Resolver(nil)
+
+	if !errors.Is(err, ErrSinSprintActivoParaResolver) {
+		t.Fatalf("se esperaba ErrSinSprintActivoParaResolver, se obtuvo %v", err)
+	}
+	if d != defectoPendiente() {
+		t.Errorf("el defecto cambió: %+v", d)
+	}
+}
+
+func TestDefecto_ResolverYaResuelto(t *testing.T) {
+	original := int64(7)
+	for _, activo := range []*Sprint{{ID: 8, ProyectoID: 1, Estado: SprintActivo}, nil} {
+		d := defectoPendiente()
+		d.Estado, d.SprintResolucionID = DefectoResuelto, &original
+
+		err := d.Resolver(activo)
+
+		if !errors.Is(err, ErrDefectoYaResuelto) {
+			t.Fatalf("con activo %v: se esperaba ErrDefectoYaResuelto, se obtuvo %v", activo, err)
+		}
+		if d.SprintResolucionID != &original || original != 7 {
+			t.Errorf("con activo %v: el Sprint de resolución cambió a %v", activo, d.SprintResolucionID)
+		}
 	}
 }

@@ -72,3 +72,10 @@ func NewDefecto(proyectoID, historiaID int64, activo Sprint, descripcion, severi
 		Estado:            DefectoPendiente,
 	}, nil
 }
+
+// Resolver pasa el defecto de Pendiente a Resuelto con el Sprint activo como
+// Sprint de resolución. "Ya resuelto" va antes que la falta de Sprint activo
+// (research.md R3); ante un error el defecto no cambia.
+func (d *Defecto) Resolver(activo *Sprint) error {
+	return nil
+}
