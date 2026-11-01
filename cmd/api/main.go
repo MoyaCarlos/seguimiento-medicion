@@ -72,6 +72,12 @@ func main() {
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 	)
 
+	defectosRepo := repository.NewSQLiteDefectoRepository(db)
+	defectoHandler := apihttp.NewDefectoHandler(
+		obtenerProyecto,
+		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
+	)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -94,6 +100,7 @@ func main() {
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
+	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
