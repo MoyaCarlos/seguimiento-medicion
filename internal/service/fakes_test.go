@@ -220,6 +220,12 @@ func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyect
 type fakeSprintsQueCuentan struct {
 	*repository.SprintRepositoryEnMemoria
 	lecturas int
+	listados int
+}
+
+func (f *fakeSprintsQueCuentan) ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.Sprint, error) {
+	f.listados++
+	return f.SprintRepositoryEnMemoria.ListarPorProyecto(ctx, proyectoID)
 }
 
 func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
@@ -341,4 +347,61 @@ func (f *fakeAsignacionRepository) llamadasAAsignar() int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.asignaciones
+}
+
+// fakeDefectoRepository guarda los defectos en memoria, asigna IDs y cuenta
+// las escrituras.
+type fakeDefectoRepository struct {
+	defectos     []domain.Defecto
+	titulos      map[int64]string
+	registros    int
+	resoluciones int
+	listados     int
+	errRegistrar error
+	errResolver  error
+}
+
+func (f *fakeDefectoRepository) Registrar(_ context.Context, d domain.Defecto) (domain.Defecto, error) {
+	f.registros++
+	if f.errRegistrar != nil {
+		return domain.Defecto{}, f.errRegistrar
+	}
+	d.ID = int64(len(f.defectos) + 1)
+	d.CreadoEn = time.Now().UTC()
+	f.defectos = append(f.defectos, d)
+	return d, nil
+}
+
+func (f *fakeDefectoRepository) ObtenerPorID(_ context.Context, id int64) (domain.DefectoDetalle, error) {
+	for _, d := range f.defectos {
+		if d.ID == id {
+			return domain.DefectoDetalle{Defecto: d, TituloHistoria: f.titulos[d.HistoriaID]}, nil
+		}
+	}
+	return domain.DefectoDetalle{}, domain.ErrDefectoNoEncontrado
+}
+
+func (f *fakeDefectoRepository) Resolver(_ context.Context, d domain.Defecto) error {
+	f.resoluciones++
+	if f.errResolver != nil {
+		return f.errResolver
+	}
+	for i := range f.defectos {
+		if f.defectos[i].ID == d.ID {
+			f.defectos[i] = d
+			return nil
+		}
+	}
+	return domain.ErrDefectoNoEncontrado
+}
+
+func (f *fakeDefectoRepository) ListarPorProyecto(_ context.Context, proyectoID int64) ([]domain.DefectoDetalle, error) {
+	f.listados++
+	detalle := make([]domain.DefectoDetalle, 0)
+	for _, d := range f.defectos {
+		if d.ProyectoID == proyectoID {
+			detalle = append(detalle, domain.DefectoDetalle{Defecto: d, TituloHistoria: f.titulos[d.HistoriaID]})
+		}
+	}
+	return detalle, nil
 }

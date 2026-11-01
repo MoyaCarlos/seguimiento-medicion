@@ -62,3 +62,14 @@ func (s *Sprint) Cerrar() error {
 	s.Estado = SprintFinalizado
 	return nil
 }
+
+// SprintActivoDe devuelve el Sprint Activo de la lista, si hay uno. Un
+// proyecto tiene a lo sumo uno (HU-05).
+func SprintActivoDe(sprints []Sprint) (Sprint, bool) {
+	for _, s := range sprints {
+		if s.Estado == SprintActivo {
+			return s, true
+		}
+	}
+	return Sprint{}, false
+}

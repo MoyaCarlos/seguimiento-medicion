@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/backlog': apiProxy,
+      '/defectos': apiProxy,
       '/projects': apiProxy,
       '/sprints': apiProxy,
     },
