@@ -30,6 +30,7 @@ func ServirSPA(api http.Handler, dirWeb string) http.Handler {
 			servidorArchivos.ServeHTTP(w, r)
 		case esPedidoDePagina(r):
 			w.Header().Add("Vary", "Accept")
+			w.Header().Set("Cache-Control", "no-cache")
 			http.ServeFile(w, r, index)
 		default:
 			w.Header().Add("Vary", "Accept")
