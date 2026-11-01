@@ -77,5 +77,13 @@ func NewDefecto(proyectoID, historiaID int64, activo Sprint, descripcion, severi
 // Sprint de resolución. "Ya resuelto" va antes que la falta de Sprint activo
 // (research.md R3); ante un error el defecto no cambia.
 func (d *Defecto) Resolver(activo *Sprint) error {
+	if d.Estado == DefectoResuelto {
+		return ErrDefectoYaResuelto
+	}
+	if activo == nil {
+		return ErrSinSprintActivoParaResolver
+	}
+	sprintID := activo.ID
+	d.Estado, d.SprintResolucionID = DefectoResuelto, &sprintID
 	return nil
 }
