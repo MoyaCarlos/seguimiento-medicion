@@ -220,6 +220,12 @@ func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyect
 type fakeSprintsQueCuentan struct {
 	*repository.SprintRepositoryEnMemoria
 	lecturas int
+	listados int
+}
+
+func (f *fakeSprintsQueCuentan) ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.Sprint, error) {
+	f.listados++
+	return f.SprintRepositoryEnMemoria.ListarPorProyecto(ctx, proyectoID)
 }
 
 func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
@@ -349,7 +355,10 @@ type fakeDefectoRepository struct {
 	defectos     []domain.Defecto
 	titulos      map[int64]string
 	registros    int
+	resoluciones int
+	listados     int
 	errRegistrar error
+	errResolver  error
 }
 
 func (f *fakeDefectoRepository) Registrar(_ context.Context, d domain.Defecto) (domain.Defecto, error) {
@@ -373,6 +382,10 @@ func (f *fakeDefectoRepository) ObtenerPorID(_ context.Context, id int64) (domai
 }
 
 func (f *fakeDefectoRepository) Resolver(_ context.Context, d domain.Defecto) error {
+	f.resoluciones++
+	if f.errResolver != nil {
+		return f.errResolver
+	}
 	for i := range f.defectos {
 		if f.defectos[i].ID == d.ID {
 			f.defectos[i] = d
@@ -383,6 +396,7 @@ func (f *fakeDefectoRepository) Resolver(_ context.Context, d domain.Defecto) er
 }
 
 func (f *fakeDefectoRepository) ListarPorProyecto(_ context.Context, proyectoID int64) ([]domain.DefectoDetalle, error) {
+	f.listados++
 	detalle := make([]domain.DefectoDetalle, 0)
 	for _, d := range f.defectos {
 		if d.ProyectoID == proyectoID {
