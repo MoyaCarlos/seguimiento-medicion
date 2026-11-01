@@ -17,6 +17,7 @@ Todas envían `Accept: application/json` (necesario para que el proxy de desarro
 - **Éxito (2xx)**: el cuerpo JSON ya leído; `undefined` si el cuerpo viene vacío.
 - **Error de la API**: lanza `ApiError { status, message, field? }`.
 - **Sin respuesta**: lanza `ConnectionError`.
+- **Respuesta de gateway** (502, 503 o 504, con cuerpo o sin él): lanza `ConnectionError`; es lo que devuelve el proxy de desarrollo con el backend apagado (#128).
 - **Respuesta no interpretable** (cuerpo no JSON, éxito o error): lanza `ApiError` con el estado recibido y un mensaje genérico.
 
 ## Casos que cubren las pruebas (FR-010)
@@ -29,6 +30,9 @@ Todas envían `Accept: application/json` (necesario para que el proxy de desarro
 | 404 `{mensaje:"..."}` | `ApiError` estado 404 |
 | 409 `{mensaje:"..."}` | `ApiError` estado 409 |
 | 500 con cuerpo no JSON | `ApiError` estado 500, mensaje genérico |
+| 500 con cuerpo vacío | `ApiError` estado 500, mensaje genérico |
+| 502, 503 o 504 con cuerpo vacío | `ConnectionError` |
+| 502 con cuerpo | `ConnectionError` |
 | `fetch` rechazado | `ConnectionError` |
 
 ## Endpoints existentes (referencia para las features)
