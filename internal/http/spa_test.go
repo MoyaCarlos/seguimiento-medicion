@@ -110,6 +110,71 @@ func TestServirSPA_SinDirectorioTodoVaALaAPI(t *testing.T) {
 	}
 }
 
+func apiConVary() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Add("Vary", "Accept-Encoding")
+		_, _ = w.Write([]byte(cuerpoAPI))
+	})
+}
+
+func valoresVary(rec *httptest.ResponseRecorder) []string {
+	return rec.Header().Values("Vary")
+}
+
+func contiene(valores []string, buscado string) bool {
+	for _, v := range valores {
+		if v == buscado {
+			return true
+		}
+	}
+	return false
+}
+
+func TestServirSPA_RutaCompartidaDeclaraVaryAccept(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
+
+	for _, ruta := range []string{"/projects/1/sprints", "/projects/1/backlog"} {
+		for _, accept := range []string{"text/html", "application/json"} {
+			rec := pedir(handler, http.MethodGet, ruta, accept)
+
+			if !contiene(valoresVary(rec), "Accept") {
+				t.Errorf("%s con Accept %q: se esperaba Vary: Accept, se obtuvo %v", ruta, accept, valoresVary(rec))
+			}
+		}
+	}
+}
+
+func TestServirSPA_ConservaElVaryDeLaAPI(t *testing.T) {
+	handler := ServirSPA(apiConVary(), dirWebDePrueba(t))
+
+	rec := pedir(handler, http.MethodGet, "/projects/1/sprints", "application/json")
+
+	vary := valoresVary(rec)
+	if !contiene(vary, "Accept") || !contiene(vary, "Accept-Encoding") {
+		t.Errorf("se esperaban Accept y Accept-Encoding, se obtuvo %v", vary)
+	}
+}
+
+func TestServirSPA_ArchivosEstaticosNoNegocianContenido(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
+
+	rec := pedir(handler, http.MethodGet, "/assets/app.js", "")
+
+	if contiene(valoresVary(rec), "Accept") {
+		t.Errorf("un asset no debe declarar Vary: Accept, se obtuvo %v", valoresVary(rec))
+	}
+}
+
+func TestServirSPA_SinDirectorioNoAgregaVary(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), filepath.Join(t.TempDir(), "no-existe"))
+
+	rec := pedir(handler, http.MethodGet, "/projects/1/sprints", "text/html")
+
+	if len(valoresVary(rec)) != 0 {
+		t.Errorf("no se esperaba Vary, se obtuvo %v", valoresVary(rec))
+	}
+}
+
 func TestServirSPA_PaginaNoSeGuardaSinRevalidar(t *testing.T) {
 	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
 
