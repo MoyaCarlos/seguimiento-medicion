@@ -425,8 +425,9 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
-requiere confirmación del equipo o del profesor; este documento no la decide. Hoy todas
-están cerradas.
+requiere confirmación del equipo o del profesor; este documento no la decide. Hoy están
+pendientes D4 (reabierta por HU-16) y D14 a D17, que surgieron del beta testing del
+2026-10-30; las demás están cerradas.
 
 | # | Tema | Recomendación | Afecta |
 |---|---|---|---|
@@ -435,7 +436,7 @@ están cerradas.
 | **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se modifica una `estimacion_sp` **ya cargada** de una historia con Sprint `Activo` o `Finalizado`"; cargarla por primera vez (estaba en `NULL`) se permite (decidido el 2026-10-14). Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
 | **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12; quedó reflejada en el backlog con este PR (decisiones transversales y notas de esas historias). | Aceptada: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
 | **D3** | Fechas del proyecto en RFC 3339 y las del Sprint en `YYYY-MM-DD`. | Ambas `YYYY-MM-DD`. No cambia la API (ya expone solo la fecha); sí el repositorio de proyectos. | HU-04, 13 |
-| **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. | No imponerla hasta que una historia la pida. | HU-04 |
+| **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. **Reabierta (PENDIENTE):** HU-16 pide que haya siempre **al menos un** Scrum Master activo (no que sea uno solo). | Hasta que el equipo la confirme, no imponer nada; si se aprueba, la regla es del dominio y se verifica en la misma transacción que el cambio. | HU-04, HU-16 |
 | **D5** | Ninguna historia cubre sacar una historia de un Sprint o pasarla a otro. El modelo lo permitiría con un `UPDATE`, sin reglas. | Fuera de alcance; si HU-06 lo necesita, lo define en su spec. | HU-06 |
 | **D6** | HU-08 refinada ya no tiene "título" del defecto (la versión original sí). | Seguir el backlog refinado: solo descripción. | HU-08 |
 | **D7** | **Cerrada el 2026-10-28** por el equipo (votó la opción A; si el profesor aclara otra fuente, se ajusta). Origen de las "horas estimadas". | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
@@ -445,6 +446,10 @@ están cerradas.
 | **D11** | `CHECK` de la escala Fibonacci. **Decidido el 2026-10-09: sin `CHECK`**, la escala vive solo en el dominio. Si la escala cambia, no hay que recrear tablas. | — (cerrada) | HU-01, 02, 14, 15 |
 | **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
+| **D14** | **PENDIENTE.** Dónde se guarda el dueño de un proyecto (HU-19): el creador, transferible a otro integrante. | Sin recomendación: opciones, una referencia al usuario en `proyectos` o un tercer rol en `integrantes`. Se decide en la spec con el Scrum Master; es cambio de esquema (documento y migración en un solo PR). | HU-19 |
+| **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
+| **D16** | **PENDIENTE.** Cierre manual del proyecto (#173): hoy el estado es derivado y no se guarda. | Guardar la fecha de cierre en `proyectos`; sin cierre manual, el proyecto no pasa a Finalizado. Cambio de esquema. | HU-13 |
+| **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
 
