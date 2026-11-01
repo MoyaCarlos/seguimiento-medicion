@@ -36,6 +36,22 @@ var ErrHistoriaFueraDelSprintActivo = ValidationError{Campo: "historia_id", Mens
 // del proyecto de la historia (HU-07).
 var ErrIntegranteAjeno = ValidationError{Campo: "integrante_id", Mensaje: "el integrante no pertenece al proyecto de la historia"}
 
+// Errores del registro y la resolución de defectos (HU-08).
+var (
+	// ErrDefectoNoEncontrado indica que el defecto solicitado no existe (HU-08).
+	ErrDefectoNoEncontrado = errors.New("defecto no encontrado")
+	// ErrSinSprintActivoParaDetectar indica un registro en un proyecto sin Sprint Activo (HU-08).
+	ErrSinSprintActivoParaDetectar = ValidationError{Campo: "sprint_deteccion_id", Mensaje: "el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de detección"}
+	// ErrSinSprintActivoParaResolver indica una resolución en un proyecto sin Sprint Activo (HU-08).
+	ErrSinSprintActivoParaResolver = ValidationError{Campo: "sprint_resolucion_id", Mensaje: "el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de resolución"}
+	// ErrDefectoYaResuelto indica una resolución de un defecto que ya está Resuelto (HU-08).
+	ErrDefectoYaResuelto = ValidationError{Campo: "estado", Mensaje: "el defecto ya está resuelto"}
+	// ErrHistoriaRelacionadaObligatoria indica un defecto sin historia relacionada (HU-08).
+	ErrHistoriaRelacionadaObligatoria = ValidationError{Campo: "historia_id", Mensaje: "la historia relacionada es obligatoria"}
+	// ErrHistoriaRelacionadaAjena indica una historia relacionada inexistente o de otro proyecto (HU-08).
+	ErrHistoriaRelacionadaAjena = ValidationError{Campo: "historia_id", Mensaje: "la historia relacionada no existe en el proyecto"}
+)
+
 // Errores de la votación de Planning Poker.
 var (
 	// ErrVotacionNoIniciada indica que la historia no tiene una ronda de votación.
