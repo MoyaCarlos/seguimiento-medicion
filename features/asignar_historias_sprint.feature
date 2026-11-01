@@ -1,10 +1,10 @@
 # language: es
 
 # Cobertura por categoría:
-# - Normal: asignación a un Sprint "Pendiente".
+# - Normal: asignación a un Sprint "Pendiente"; consulta del Sprint Backlog de un Sprint con historias (US2.1).
 # - Alternativo: asignación a un Sprint "Activo".
-# - Límite: la asignación conserva el estado "Nueva" y los Story Points; historia que ya está en el mismo Sprint de destino.
-# - Error: historia "Completada"; Sprint "Finalizado"; Sprint de otro proyecto; historia inexistente; Sprint inexistente.
+# - Límite: la asignación conserva el estado "Nueva" y los Story Points; historia que ya está en el mismo Sprint de destino; Sprint sin historias (US2.2).
+# - Error: historia "Completada"; Sprint "Finalizado"; Sprint de otro proyecto; historia inexistente; Sprint inexistente; Sprint inexistente al consultar el Sprint Backlog (US2.3).
 
 @HU-06
 Característica: Movimiento de historias al Sprint Backlog
@@ -74,3 +74,30 @@ Característica: Movimiento de historias al Sprint Backlog
     Cuando asigno la historia "Iniciar sesión" al Sprint con identificador 999, que no existe
     Entonces la asignación se rechaza con error "sprint no encontrado"
     Y la historia "Iniciar sesión" queda sin cambios
+
+  Escenario: Consulta del Sprint Backlog de un Sprint con historias
+    Dado que el proyecto tiene un Sprint "Activo" con la historia "Despliegue" en su Sprint Backlog
+    Y que el proyecto tiene un Sprint "Pendiente" con estas historias, en este orden de creación:
+      | Título       | Prioridad |
+      | Reporte      | S         |
+      | Compra       | M         |
+      | Ajustes      | W         |
+      | Alta usuario | C         |
+      | Pago         | M         |
+    Cuando consulto el Sprint Backlog del Sprint "Pendiente"
+    Entonces veo solo las historias del Sprint "Pendiente", en este orden:
+      | Título       | Prioridad |
+      | Compra       | M         |
+      | Pago         | M         |
+      | Reporte      | S         |
+      | Alta usuario | C         |
+      | Ajustes      | W         |
+
+  Escenario: Consulta del Sprint Backlog de un Sprint sin historias
+    Dado que el proyecto tiene un Sprint "Pendiente" sin historias en su Sprint Backlog
+    Cuando consulto el Sprint Backlog del Sprint "Pendiente"
+    Entonces veo un Sprint Backlog vacío, sin error
+
+  Escenario: Consulta del Sprint Backlog de un Sprint inexistente
+    Cuando consulto el Sprint Backlog del Sprint con identificador 999, que no existe
+    Entonces la consulta del Sprint Backlog se rechaza con error "sprint no encontrado"
