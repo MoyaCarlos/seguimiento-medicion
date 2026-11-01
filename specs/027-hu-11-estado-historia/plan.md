@@ -2,7 +2,7 @@
 
 **Branch**: `feature/HU-11-estado-historia` | **Date**: 2026-10-29 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/021-hu-11-estado-historia/spec.md`
+**Input**: Feature specification from `/specs/027-hu-11-estado-historia/spec.md`
 
 ## Summary
 
@@ -83,7 +83,7 @@ están justificados en [research.md](./research.md) (R1, R3) y no agregan capas 
 ### Documentation (this feature)
 
 ```text
-specs/021-hu-11-estado-historia/
+specs/027-hu-11-estado-historia/
 ├── plan.md              # Este archivo
 ├── research.md          # Phase 0: decisiones y alternativas
 ├── data-model.md        # Phase 1: enlaza a MODELO-DE-DATOS.md §4.4/§5

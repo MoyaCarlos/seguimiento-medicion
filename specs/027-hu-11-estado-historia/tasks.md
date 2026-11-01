@@ -5,7 +5,7 @@ description: "Tareas de HU-11: Actualización de Estado de una Historia en el Sp
 
 # Tasks: Actualización de Estado de una Historia en el Sprint (HU-11)
 
-**Input**: Design documents from `/specs/021-hu-11-estado-historia/`
+**Input**: Design documents from `/specs/027-hu-11-estado-historia/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/openapi.yaml, quickstart.md
 
@@ -145,7 +145,7 @@ no cambia es el comportamiento pedido.
 - [ ] T044 [US3] COMMIT `RED: agregar test de integración del cambio de estado en pantalla (falla)`
 - [ ] T045 [US3] GREEN: integrar `EstadoHistoria` en la lista de historias de la pantalla de Sprints, refrescando la lista tras un 200; estilos en los `.css` existentes de la feature — `npm test` en verde
 - [ ] T046 [US3] COMMIT `GREEN: integrar el cambio de estado en la pantalla del Sprint, test en verde`
-- [ ] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/021-hu-11-estado-historia/quickstart.md
+- [ ] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/027-hu-11-estado-historia/quickstart.md
 
 **Checkpoint**: la sub-issue de Frontend de HU-11 queda lista para cerrarse.
 
@@ -154,7 +154,7 @@ no cambia es el comportamiento pedido.
 ## Phase 6: Polish & Cross-Cutting Concerns
 
 - [X] T048 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida), `go test ./...` y `go test -race ./internal/...` en verde. `go build`, `go vet`, `gofmt -l .` (sin salida) y `go test ./...` en verde; `go test -race` no se corrió localmente (compilador de C de 32 bits)
-- [X] T049 Validación manual de los pasos 1 y 2 de specs/021-hu-11-estado-historia/quickstart.md con la API real (`go run ./cmd/api` sobre una base nueva), anotando el resultado en esta tarea. Para cuerpos con tildes desde Git Bash en Windows, usar `curl --data-binary @archivo.json`. Validado a mano contra la API real: `go run ./cmd/api` sobre una base nueva, con un proyecto, dos historias y el Sprint 1 activo con la historia 1 asignada. Paso 1: `Completada` desde Nueva da 400 `campo: estado`, `primero debe pasar por En progreso`. Paso 2: `En progreso` da 200 con `estado: En progreso` y `fecha_finalizacion: null`. Paso 3: repetir `En progreso` da 400 `la historia ya está en ese estado`. Paso 4: `Nueva` da 400 `el estado de una historia solo avanza...`. Paso 5: `Completada` da 200 con `fecha_finalizacion: 2026-10-31`. Paso 6: `GET /projects/1/backlog` no lista la historia 1 (solo la 2). Paso 7: `En progreso` sobre la completada da 400 `el estado de una historia solo avanza...`. Pasos 8 y 9: `En progreso` y `Completada` sobre la historia 2 (sin Sprint) dan 400 `primero debe asignarse a un Sprint activo`. Además, `PUT /backlog/99/estado` da 404 `historia no encontrada`
+- [X] T049 Validación manual de los pasos 1 y 2 de specs/027-hu-11-estado-historia/quickstart.md con la API real (`go run ./cmd/api` sobre una base nueva), anotando el resultado en esta tarea. Para cuerpos con tildes desde Git Bash en Windows, usar `curl --data-binary @archivo.json`. Validado a mano contra la API real: `go run ./cmd/api` sobre una base nueva, con un proyecto, dos historias y el Sprint 1 activo con la historia 1 asignada. Paso 1: `Completada` desde Nueva da 400 `campo: estado`, `primero debe pasar por En progreso`. Paso 2: `En progreso` da 200 con `estado: En progreso` y `fecha_finalizacion: null`. Paso 3: repetir `En progreso` da 400 `la historia ya está en ese estado`. Paso 4: `Nueva` da 400 `el estado de una historia solo avanza...`. Paso 5: `Completada` da 200 con `fecha_finalizacion: 2026-10-31`. Paso 6: `GET /projects/1/backlog` no lista la historia 1 (solo la 2). Paso 7: `En progreso` sobre la completada da 400 `el estado de una historia solo avanza...`. Pasos 8 y 9: `En progreso` y `Completada` sobre la historia 2 (sin Sprint) dan 400 `primero debe asignarse a un Sprint activo`. Además, `PUT /backlog/99/estado` da 404 `historia no encontrada`
 - [X] T050 Revisar que contracts/openapi.yaml coincide con las respuestas reales (códigos, `campo`, `mensaje` y `fecha_finalizacion`); si hubo diferencias, corregir el contrato + COMMIT `docs: alinear el contrato de HU-11 con la implementación`. Revisado contra backlog_handler.go, sprint_handler.go (`escribirError`) y backlog_dto.go: códigos, `campo`, `mensaje` y `fecha_finalizacion` coinciden. Única diferencia: faltaba el 400 `campo: id`, `el identificador debe ser un entero positivo` (id de la ruta inválido, que precede al 404); corregido en un commit aparte
 
 ---
