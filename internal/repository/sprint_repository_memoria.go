@@ -20,6 +20,12 @@ func NewSprintRepositoryEnMemoria() *SprintRepositoryEnMemoria {
 
 func (r *SprintRepositoryEnMemoria) Guardar(_ context.Context, s domain.Sprint) (domain.Sprint, error) {
 	s.ID = int64(len(r.sprints) + 1)
+	s.Numero = 1
+	for _, guardado := range r.sprints {
+		if guardado.ProyectoID == s.ProyectoID {
+			s.Numero++
+		}
+	}
 	r.sprints = append(r.sprints, s)
 	return s, nil
 }
