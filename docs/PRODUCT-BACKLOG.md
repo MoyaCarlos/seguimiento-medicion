@@ -67,7 +67,7 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 
 * **HU-03: Cálculo de Métricas del Proyecto (Must have).** El motor de cálculo (Story Points planificados/completados, velocidad, horas estimadas/reales, desviación, % completadas, defectos detectados/resueltos) — requisito central del enunciado (punto 7).
 * **HU-09: Dashboard de Métricas (Must have).** Visualización gráfica de lo que calcula HU-03 (punto 8 del enunciado).
-* **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto de historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado).
+* **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto, de un Sprint o del proyecto completo, con historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado; el Sprint 4 pide el informe del proyecto).
 * **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado. Va al final porque su historial muestra métricas (HU-03), esfuerzo (HU-07) y defectos (HU-08), que tienen que existir antes.
 
 ## ***Prioridad 5: Mejoras de calidad del beta testing (Could have / Should have)***
@@ -380,18 +380,27 @@ Nueva
 ### Descripción
 Como Scrum Master quiero exportar un reporte en PDF de un proyecto o Sprint con sus historias, estimaciones, esfuerzo, métricas y defectos para poder compartir el estado del proyecto fuera del sistema (ej. con el profesor/Cliente).
 ### Criterios de aceptacion (BDD):
-Escenario 1: Exportación exitosa.
+Escenario 1: Exportación exitosa de un Sprint.
 Dado que estoy viendo el resumen de un Sprint cerrado,
 Cuando presiono "Exportar a PDF",
 Entonces la librería Maroto debe generar un archivo con: historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos asociados a ese Sprint.
-Escenario 2: Error de generación.
+Escenario 2: Exportación exitosa del proyecto.
+Dado que estoy viendo el resumen de un proyecto con al menos un Sprint finalizado,
+Cuando presiono "Exportar reporte del proyecto",
+Entonces la librería Maroto debe generar un archivo con: los datos del proyecto (nombre, fechas, estado e integrantes), el listado de sus Sprints con Sprint Goal y fechas, y, para el proyecto completo, historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos detectados y resueltos.
+Escenario 3: Proyecto sin Sprints finalizados.
+Dado que un proyecto todavía no tiene ningún Sprint finalizado,
+Cuando solicito el reporte del proyecto,
+Entonces el sistema genera el reporte con los datos del proyecto y su Product Backlog, e informa las métricas como "sin datos" en vez de fallar (igual que HU-03 y HU-09).
+Escenario 4: Error de generación.
 Dado que el proceso de generación del PDF falla (ej. dato faltante),
 Cuando se solicita el reporte,
 Entonces el sistema debe informar el error al usuario en vez de descargar un archivo corrupto o vacío.
 ### Depende de
-HU-05 (Sprint cerrado), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
+HU-04 (datos del proyecto e integrantes), HU-05 (Sprint cerrado), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
 ### Notas
 Las historias "planificadas" son las asignadas al cerrar el Sprint, completadas o no (ver HU-05).
+El reporte del proyecto se agrega con los Sprints finalizados, igual que las métricas de HU-03. El enunciado pide "un reporte de un proyecto o Sprint" y, en el Sprint 4, "exportar un informe del proyecto a un archivo PDF": por eso la historia cubre las dos variantes (decisión del equipo, 2026-10-28).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 9).
 ### Estado
@@ -399,7 +408,7 @@ Nueva
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación
-8 Story Points (integración con Maroto, depende de HU-03, HU-07 y HU-08 para los datos)
+8 Story Points (integración con Maroto, depende de HU-03, HU-07 y HU-08 para los datos). Revisar en el refinamiento del Sprint 4: ahora cubre el reporte de un Sprint y el del proyecto, que comparten el armado del documento.
 
 ---
 
