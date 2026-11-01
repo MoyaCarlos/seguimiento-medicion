@@ -11,6 +11,16 @@ const (
 	SeveridadBaja  Severidad = "Baja"
 )
 
+// EsValida indica si la severidad es exactamente Alta, Media o Baja.
+func (s Severidad) EsValida() bool {
+	switch s {
+	case SeveridadAlta, SeveridadMedia, SeveridadBaja:
+		return true
+	default:
+		return false
+	}
+}
+
 // EstadoDefecto es la etapa de un defecto: Pendiente hasta que se resuelve.
 // Resuelto es definitivo (HU-08, Clarification 1).
 type EstadoDefecto string
@@ -46,5 +56,19 @@ type DefectoDetalle struct {
 // Valida descripción y severidad, en ese orden. Supone que el service ya
 // verificó el Sprint activo y la historia relacionada.
 func NewDefecto(proyectoID, historiaID int64, activo Sprint, descripcion, severidad string) (Defecto, error) {
-	return Defecto{}, nil
+	descripcion, err := validarDescripcion(descripcion)
+	if err != nil {
+		return Defecto{}, err
+	}
+	if !Severidad(severidad).EsValida() {
+		return Defecto{}, ValidationError{Campo: "severidad", Mensaje: "la severidad debe ser Alta, Media o Baja"}
+	}
+	return Defecto{
+		ProyectoID:        proyectoID,
+		HistoriaID:        historiaID,
+		SprintDeteccionID: activo.ID,
+		Descripcion:       descripcion,
+		Severidad:         Severidad(severidad),
+		Estado:            DefectoPendiente,
+	}, nil
 }
