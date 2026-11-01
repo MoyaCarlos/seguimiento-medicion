@@ -50,6 +50,8 @@ paths:
               examples:
                 jsonInvalido:
                   value: { mensaje: JSON inválido }
+                identificadorInvalido:
+                  value: { campo: id, mensaje: el identificador debe ser un entero positivo }
                 sprintIdAusente:
                   value: { campo: sprint_id, mensaje: el campo es obligatorio }
                 otroProyecto:
@@ -94,6 +96,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Historia'
+        '400':
+          description: Identificador inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                campo: id
+                mensaje: identificador inválido
         '404':
           description: El Sprint no existe.
           content:
@@ -108,12 +119,12 @@ components:
       name: id
       in: path
       required: true
-      schema: { type: integer, format: int64 }
+      schema: { type: integer, format: int64, minimum: 1 }
     IdSprint:
       name: id
       in: path
       required: true
-      schema: { type: integer, format: int64 }
+      schema: { type: integer, format: int64, minimum: 1 }
   schemas:
     AsignarSprintRequest:
       type: object

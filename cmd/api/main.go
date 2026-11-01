@@ -54,6 +54,7 @@ func main() {
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 		service.NewConsultarSprints(proyectos, sprintRepo),
+		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
 		sprintRepo,
 	)
 
@@ -104,6 +105,7 @@ func main() {
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
+	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
 
 	demoHandler.Registrar(mux)
 
