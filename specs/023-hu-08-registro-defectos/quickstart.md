@@ -58,3 +58,18 @@ se aplica sola al arrancar).
 
 En Windows, mandar los cuerpos con acentos desde un archivo (`--data-binary @archivo.json`), como
 se anotó en HU-07: pasados como argumento, la consola los recodifica.
+
+## Resultado de la validación manual (2026-10-31)
+
+Contra `go run ./cmd/api` sobre una base nueva, con los cuerpos enviados en UTF-8:
+
+| Paso | Resultado |
+|---|---|
+| 1–2 | Sin Sprint activo: `400` con `campo: sprint_deteccion_id` |
+| 3 | `201`, `estado: Pendiente`, `sprint_deteccion_id` del Sprint activo, `sprint_resolucion_id: null`, título de la historia en `historia` |
+| 4 | Los 7 cuerpos inválidos dan `400` con el `campo` esperado; el listado no cambia |
+| 5 | `200` con el defecto del paso 3 |
+| 6 | `200` `Resuelto` en el Sprint activo; la segunda vez `400` con `campo: estado` |
+| 7 | Sin Sprint activo: `400` con `campo: sprint_resolucion_id`; con un Sprint nuevo, resuelto en él y detectado en el anterior |
+| 8 | `404` "proyecto no encontrado" (POST y GET) y `404` "defecto no encontrado" |
+| 9 | Después de reiniciar, los dos defectos siguen con sus Sprints de detección y resolución |
