@@ -56,4 +56,16 @@ func (h *DefectoHandler) Registrar(w nethttp.ResponseWriter, r *nethttp.Request)
 
 // Resolver atiende POST /defectos/{id}/resolver. No tiene cuerpo.
 func (h *DefectoHandler) Resolver(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+
+	detalle, err := h.resolver.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuestaDefecto(detalle))
 }
