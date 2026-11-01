@@ -18,6 +18,26 @@ func NewResolverDefecto(defectos repository.DefectoRepository, sprints repositor
 	return &ResolverDefecto{defectos: defectos, sprints: sprints}
 }
 
+// Ejecutar valida en el orden de la spec: defecto existente, no resuelto y
+// proyecto con Sprint activo. Devuelve el defecto ya resuelto.
 func (s *ResolverDefecto) Ejecutar(ctx context.Context, defectoID int64) (domain.DefectoDetalle, error) {
-	return domain.DefectoDetalle{}, nil
+	detalle, err := s.defectos.ObtenerPorID(ctx, defectoID)
+	if err != nil {
+		return domain.DefectoDetalle{}, err
+	}
+	sprints, err := s.sprints.ListarPorProyecto(ctx, detalle.ProyectoID)
+	if err != nil {
+		return domain.DefectoDetalle{}, err
+	}
+	var activo *domain.Sprint
+	if sprint, hay := domain.SprintActivoDe(sprints); hay {
+		activo = &sprint
+	}
+	if err := detalle.Defecto.Resolver(activo); err != nil {
+		return domain.DefectoDetalle{}, err
+	}
+	if err := s.defectos.Resolver(ctx, detalle.Defecto); err != nil {
+		return domain.DefectoDetalle{}, err
+	}
+	return detalle, nil
 }
