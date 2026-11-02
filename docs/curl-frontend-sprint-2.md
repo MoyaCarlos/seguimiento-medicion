@@ -57,6 +57,20 @@ curl -X POST http://localhost:8080/sprints/1/iniciar \
   -d '{"sprint_goal":"Validar el seguimiento","fecha_inicio":"2026-10-20","fecha_fin":"2026-11-03"}'
 ```
 
+### Cerrar un Sprint
+
+Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
+ejemplo; reemplazalo por el id real.
+
+```bash
+curl -X POST http://localhost:8080/sprints/1/cerrar
+```
+
+La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
+vuelven al Product Backlog en estado `Nueva`. Cerrar un Sprint que no está Activo
+responde 400 con `{"campo":"estado","mensaje":"solo se puede cerrar un Sprint activo"}`.
+Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
+
 ### Crear una historia
 
 ```bash
@@ -163,6 +177,20 @@ curl -X POST http://localhost:8080/sprints/1/iniciar ^
   -H "Content-Type: application/json" ^
   -d "{\"sprint_goal\":\"Validar el seguimiento\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-11-03\"}"
 ```
+
+### Cerrar un Sprint
+
+Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
+ejemplo; reemplazalo por el id real.
+
+```bat
+curl -X POST http://localhost:8080/sprints/1/cerrar
+```
+
+La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
+vuelven al Product Backlog en estado `Nueva`. Cerrar un Sprint que no está Activo
+responde 400 con `{"campo":"estado","mensaje":"solo se puede cerrar un Sprint activo"}`.
+Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
 
 ### Crear una historia
 
