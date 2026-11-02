@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -138,6 +138,20 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
     expect(votarMock).toHaveBeenCalledTimes(1)
     expect((screen.getByRole('button', { name: '13' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('Given dos pulsaciones de carta en el mismo instante, When se procesan, Then se vota una sola vez', async () => {
+    votarMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Dos')
+    const carta = await screen.findByRole('button', { name: '8' })
+
+    act(() => {
+      carta.click()
+      carta.click()
+    })
+
+    expect(votarMock).toHaveBeenCalledTimes(1)
   })
 
   it('US1.5: Given que el servidor rechaza el voto, When ocurre el error, Then se muestra su mensaje, se vuelve a consultar y las cartas siguen operables', async () => {
