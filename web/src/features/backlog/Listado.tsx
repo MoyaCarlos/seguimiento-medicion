@@ -67,7 +67,8 @@ function PantallaBacklog({ id }: { id: string }) {
   function asignada(historia: Historia, sprintId: number) {
     setHistorias((actuales) => actuales.filter((actual) => actual.id !== historia.id))
     setAsignandoId(null)
-    setAviso(`Historia asignada al Sprint #${sprintId}`)
+    const numero = sprints?.find((sprint) => sprint.id === sprintId)?.numero ?? sprintId
+    setAviso(`Historia asignada al Sprint #${numero}`)
   }
 
   function guardar(actualizada: Historia) {
