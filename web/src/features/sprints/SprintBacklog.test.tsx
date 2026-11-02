@@ -137,6 +137,26 @@ describe('SprintBacklog', () => {
   })
 })
 
+describe('SprintBacklog con registro de horas', () => {
+  it('US1.1: con imputación ofrece "Registrar horas" en cada historia', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, historias)))
+
+    render(<SprintBacklog sprintId={4} imputacion={{ proyectoId: 42, fechaFin: '2026-11-09' }} />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.getAllByRole('button', { name: 'Registrar horas' })).toHaveLength(historias.length)
+  })
+
+  it('US1.4: sin imputación no ofrece "Registrar horas"', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, historias)))
+
+    render(<SprintBacklog sprintId={4} />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.queryByRole('button', { name: 'Registrar horas' })).toBeNull()
+  })
+})
+
 describe('SprintBacklog con cambio de estado', () => {
   const simularEstado = (respuestaPut: Response) => {
     const simulado = vi.fn((_ruta: string, opciones?: RequestInit) =>
