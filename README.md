@@ -65,6 +65,7 @@ La aplicación está publicada en https://seguimiento-medicion-sprintometro.onre
 - **`DEMO_HABILITADO`:** la variable de entorno (`true` en Render) controlará el botón de datos de prueba cuando se implemente #144; hoy el código de `main` todavía no la lee.
 - **Regla operativa:** no mergear en la hora previa a la presentación del 16-nov, porque un deploy en curso puede dejar la app caída unos minutos y vacía la base.
 - **`render.yaml`:** es solo referencia versionada de la configuración, que se administra a mano en el dashboard. No crear un Blueprint a partir de él: Render lo aplicaría al servicio existente y lo que el archivo no declare podría volver a su valor por defecto (en particular, las rutas ignoradas se reemplazarían por listas vacías).
+- **Por qué `render.yaml` está en las rutas ignoradas:** solo porque no se crea un Blueprint. Si alguna vez se crea, Render procesa siempre los cambios de su YAML, aunque la ruta esté ignorada.
 
 ## Especificación de funcionalidades (SDD)
 
