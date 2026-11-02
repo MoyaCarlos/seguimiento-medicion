@@ -8,6 +8,15 @@
 
 **Input**: User description: "HU-02 Frontend (sub-issue #48): pantalla de Planning Poker. El Scrum Master inicia la votación de una historia del Product Backlog; cada integrante elige una carta Fibonacci (1, 2, 3, 5, 8, 13, 21) en secreto; la pantalla muestra quién votó y quién falta (votos de otros «Oculto»); el Scrum Master revela cuando votaron todos y se muestran todos los valores, el promedio exacto y la carta sugerida. Consume la API de la spec 012. Sin inicio de sesión: se elige quién actúa entre los integrantes del proyecto. Votar no modifica Story Points (HU-14 fuera de alcance). Solo frontend (`web/`)."
 
+## Clarifications
+
+### Session 2026-11-02
+
+- Q: ¿Cómo se elige quién actúa si la aplicación no tiene inicio de sesión? → A: Con un selector de integrantes del proyecto (nombre y rol), sin recordar la elección entre visitas; mientras no se elija a nadie no hay cartas ni acciones.
+- Q: ¿Desde dónde se llega a la pantalla de votación? → A: Con un botón «Votar» en cada historia del Product Backlog que navega a una ruta nueva del proyecto (`/projects/:id/backlog/...` queda de la feature del backlog; la pantalla vive en su propia feature con una ruta propia). El backlog solo enlaza por URL; ninguna feature importa a la otra.
+- Q: ¿Cómo se actualiza la vista mientras otros votan? → A: Con un botón «Actualizar» que vuelve a consultar; no hay consulta periódica automática.
+- Q: ¿Qué se muestra cuando el servidor rechaza con 403 (sin permiso) o 409 (votación ya iniciada), que el encargo no listaba? → A: El `mensaje` del servidor tal cual, igual que con 400 y 404; y tras un rechazo la pantalla vuelve a consultar la votación para reflejar el estado real.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Votar en secreto con cartas (Priority: P1)
@@ -135,6 +144,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
 ## Assumptions
 
+- Las decisiones de selector de integrante, botón «Votar» y botón «Actualizar» están registradas en Clarifications.
 - El backend de la spec 012 está implementado y no se modifica; sus rechazos incluyen, además de 400 y 404, 403 (sin permiso) y 409 (votación ya iniciada), todos con un campo `mensaje`.
 - No hay inicio de sesión: se elige quién actúa entre los integrantes del proyecto (selector).
 - Se llega a la pantalla con un botón «Votar» en cada historia del Product Backlog, que navega a una ruta nueva del proyecto.
