@@ -100,6 +100,27 @@ Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]
 no tiene historias. Si el Sprint no existe, responde 404 con
 `{"mensaje":"sprint no encontrado"}`.
 
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"En progreso"}'
+```
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"Completada"}'
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
+
 ### Consultar y actualizar el proyecto
 
 ```bash
@@ -199,6 +220,27 @@ curl http://localhost:8080/sprints/1/backlog
 Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
 no tiene historias. Si el Sprint no existe, responde 404 con
 `{"mensaje":"sprint no encontrado"}`.
+
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"En progreso\"}"
+```
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"Completada\"}"
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
 
 ### Consultar y actualizar el proyecto
 

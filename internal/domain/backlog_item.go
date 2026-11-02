@@ -1,6 +1,9 @@
 package domain
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 const (
 	longitudMaximaTitulo      = 200
@@ -22,6 +25,8 @@ type BacklogItem struct {
 	// SprintID es nil mientras la historia está en el Product Backlog. Su
 	// asignación (con sus validaciones) es alcance de HU-06.
 	SprintID *int64
+	// FechaFinalizacion es nil salvo que la historia esté Completada.
+	FechaFinalizacion *time.Time
 }
 
 // NewBacklogItem construye una historia validando sus invariantes. El estado se
