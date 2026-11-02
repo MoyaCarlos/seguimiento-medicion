@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
-import { consultarVotacion, listarIntegrantes, votar } from './api'
+import { consultarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
 import { Component } from './index'
 import type { Integrante, Votacion } from './votacion'
 
@@ -17,6 +17,7 @@ const INTEGRANTES: Integrante[] = [
 
 const consultarMock = vi.mocked(consultarVotacion)
 const votarMock = vi.mocked(votar)
+const revelarMock = vi.mocked(revelarVotacion)
 const integrantesMock = vi.mocked(listarIntegrantes)
 
 type Servidor = { votos: Record<number, number>; revelada: boolean }
@@ -38,7 +39,7 @@ function vista(consultante?: number): Votacion {
         valor: visible && voto !== undefined ? voto : null,
       }
     }),
-    promedio: null,
+    promedio: servidor.revelada ? { exacto: 5.33, carta_sugerida: 5 } : null,
   }
 }
 
@@ -64,6 +65,10 @@ beforeEach(() => {
   consultarMock.mockImplementation(async (_historia, consultante) => vista(consultante))
   votarMock.mockImplementation(async (_historia, usuario, valor) => {
     servidor.votos[usuario] = valor
+    return vista(usuario)
+  })
+  revelarMock.mockImplementation(async (_historia, usuario) => {
+    servidor.revelada = true
     return vista(usuario)
   })
 })
@@ -179,5 +184,79 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
     await waitFor(() => expect(within(fila('Beta Tres')).getByText('5')).toBeTruthy())
     expect(within(fila('Beta Dos')).getByText('Oculto')).toBeTruthy()
+  })
+})
+
+describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
+  it('US3.1: Given que votaron todos y soy Scrum Master, When pulso Revelar, Then se ven los valores, el promedio exacto y la carta sugerida, sin cartas', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
+
+    await waitFor(() => expect(within(fila('Beta Tres')).getByText('8')).toBeTruthy())
+    expect(revelarMock).toHaveBeenCalledWith(3, 1)
+    expect(within(fila('Beta Uno')).getByText('3')).toBeTruthy()
+    expect(within(fila('Beta Dos')).getByText('5')).toBeTruthy()
+    expect(screen.getByText('Promedio exacto').nextSibling?.textContent).toBe('5,33')
+    expect(screen.getByText('Carta sugerida').nextSibling?.textContent).toBe('5')
+    expect(screen.queryByRole('button', { name: '8' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Revelar' })).toBeNull()
+  })
+
+  it('US3.2: Given que falta votar a Beta Tres, When soy Scrum Master, Then Revelar está deshabilitado y se indica quién falta', async () => {
+    servidor.votos = { 1: 3, 2: 5 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const revelar = (await screen.findByRole('button', { name: 'Revelar' })) as HTMLButtonElement
+
+    expect(revelar.disabled).toBe(true)
+    expect(screen.getByText('Falta votar: Beta Tres')).toBeTruthy()
+  })
+
+  it('US3.3: Given que soy Product Builder, When votaron todos, Then no hay botón Revelar', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Dos')
+
+    await screen.findByRole('button', { name: '8' })
+
+    expect(screen.queryByRole('button', { name: 'Revelar' })).toBeNull()
+  })
+
+  it('US3.4: Given una revelación en curso, When pulso Revelar otra vez, Then se revela una sola vez', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    revelarMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Revelar' }))
+
+    expect(revelarMock).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Revelar' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('US3.5: Given que el servidor rechaza revelar, When ocurre el error, Then se muestra su mensaje y la pantalla sigue operable', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    revelarMock.mockRejectedValue(new ApiError(403, 'solo el Scrum Master del proyecto puede hacerlo'))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('solo el Scrum Master del proyecto puede hacerlo')
+    expect(fila('Beta Uno')).toBeTruthy()
+  })
+
+  it('Given una ronda revelada, When se muestra la pantalla, Then se aclara que registrar la estimación acordada se hace en otra historia', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    abrir()
+
+    expect(await screen.findByText(/registrar la estimación acordada/i)).toBeTruthy()
+    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
   })
 })
