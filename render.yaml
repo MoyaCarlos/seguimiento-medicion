@@ -1,8 +1,10 @@
 # SOLO REFERENCIA versionada de la configuración del servicio en Render (Issue #139).
 # El servicio se creó a mano en el dashboard y se administra ahí.
 # NO crear un Blueprint a partir de este archivo: Render lo aplicaría al servicio
-# existente y lo sincronizaría con cada push. Render conserva la mayoría de los campos
-# omitidos, pero buildFilter se reemplaza por listas vacías (acá sí está declarado).
+# existente y lo sincronizaría con cada push. Render recomienda declarar todas las
+# opciones del servicio: algunas omitidas se conservan (por ejemplo plan o
+# autoDeployTrigger), pero buildFilter se reemplaza por listas vacías (acá sí está
+# declarado) y de otros campos su documentación no aclara qué pasa.
 # Si cambia el dashboard, actualizar este archivo y el README.
 # Detalle en specs/026-render-despliegue/.
 services:
