@@ -9,6 +9,7 @@ import (
 type Sprint struct {
 	ID          int64
 	ProyectoID  int64
+	Numero      int // Posición entre los Sprints del proyecto, por ID. Se deriva al leer (#129).
 	SprintGoal  string
 	FechaInicio time.Time
 	FechaFin    time.Time

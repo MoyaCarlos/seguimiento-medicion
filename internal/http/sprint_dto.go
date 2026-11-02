@@ -19,6 +19,7 @@ type iniciarSprintRequest struct {
 type sprintResponse struct {
 	ID          int64   `json:"id"`
 	ProyectoID  int64   `json:"proyecto_id"`
+	Numero      int     `json:"numero"`
 	SprintGoal  *string `json:"sprint_goal"`
 	FechaInicio *string `json:"fecha_inicio"`
 	FechaFin    *string `json:"fecha_fin"`
@@ -29,6 +30,7 @@ func aRespuestaSprint(s domain.Sprint) sprintResponse {
 	return sprintResponse{
 		ID:          s.ID,
 		ProyectoID:  s.ProyectoID,
+		Numero:      s.Numero,
 		SprintGoal:  textoOpcional(s.SprintGoal),
 		FechaInicio: fechaOpcional(s.FechaInicio),
 		FechaFin:    fechaOpcional(s.FechaFin),

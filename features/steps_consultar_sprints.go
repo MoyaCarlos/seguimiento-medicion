@@ -103,6 +103,19 @@ func (c *consultaSprintsContext) recibeSprintsEnOrden(primero, segundo int) erro
 	return nil
 }
 
+func (c *consultaSprintsContext) recibeNumeros(primero, segundo int) error {
+	var sprints []struct {
+		Numero int `json:"numero"`
+	}
+	if err := json.Unmarshal(c.rec.Body.Bytes(), &sprints); err != nil {
+		return fmt.Errorf("respuesta JSON inválida: %w", err)
+	}
+	if len(sprints) != 2 || sprints[0].Numero != primero || sprints[1].Numero != segundo {
+		return fmt.Errorf("se esperaban los números [%d, %d], se obtuvo %+v", primero, segundo, sprints)
+	}
+	return nil
+}
+
 func (c *consultaSprintsContext) recibeArregloVacio() error {
 	if cuerpo := c.rec.Body.String(); cuerpo != "[]\n" {
 		return fmt.Errorf("se esperaba [], se obtuvo %q", cuerpo)
@@ -128,5 +141,6 @@ func InitializeScenarioConsultarSprints(ctx *godog.ScenarioContext) {
 	ctx.Step(`^consulto los Sprints del proyecto "([^"]*)"$`, c.consultoSprintsDe)
 	ctx.Step(`^el sistema responde (\d+)$`, c.respondeEstado)
 	ctx.Step(`^recibo los Sprints (\d+) y (\d+) en ese orden$`, c.recibeSprintsEnOrden)
+	ctx.Step(`^los Sprints recibidos tienen los números (\d+) y (\d+)$`, c.recibeNumeros)
 	ctx.Step(`^recibo un arreglo de Sprints vacío$`, c.recibeArregloVacio)
 }
