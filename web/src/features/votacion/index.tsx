@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { consultarVotacion, iniciarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
+import { consultarVotacion, iniciarVotacion, listarIntegrantes, obtenerHistoria, revelarVotacion, votar } from './api'
 import { Cartas } from './Cartas'
 import { esVotacionNoIniciada, mensajeDeError } from './errores'
 import { Integrantes } from './Integrantes'
 import { Resultado } from './Resultado'
-import { estaRevelada, faltanPorVotar, puedeRevelar, esScrumMaster, type Integrante, type Votacion } from './votacion'
+import { ResumenHistoria } from './ResumenHistoria'
+import { estaRevelada, faltanPorVotar, puedeRevelar, esScrumMaster, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
 import './votacion.css'
 
 export function Component() {
@@ -21,6 +22,7 @@ type Props = { proyectoId: string; historiaId: number }
 
 function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const [integrantes, setIntegrantes] = useState<Integrante[] | null>(null)
+  const [historia, setHistoria] = useState<HistoriaResumen | null>(null)
   const [actorId, setActorId] = useState<number>()
   const [votacion, setVotacion] = useState<Votacion | null>(null)
   const [sinVotacion, setSinVotacion] = useState(false)
@@ -53,6 +55,20 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
       vigente = false
     }
   }, [proyectoId])
+
+  useEffect(() => {
+    let vigente = true
+
+    obtenerHistoria(proyectoId, historiaId)
+      .then((datos) => {
+        if (vigente) setHistoria(datos)
+      })
+      .catch(() => {})
+
+    return () => {
+      vigente = false
+    }
+  }, [proyectoId, historiaId])
 
   useEffect(() => {
     let vigente = true
@@ -114,10 +130,17 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
             Proyecto actual: <strong>{proyectoId}</strong>
           </p>
         </div>
+        <div className="votacion-encabezado__acciones">
+          <Link className="button button--quiet" to={`/projects/${proyectoId}/backlog`}>
+            Volver al Product Backlog
+          </Link>
         <Button type="button" variant="secondary" onClick={recargar} disabled={enviando || cargando}>
           Actualizar
         </Button>
+        </div>
       </div>
+
+      <ResumenHistoria historiaId={historiaId} historia={historia} />
 
       {errorDeIntegrantes && <ErrorMessage message={errorDeIntegrantes} />}
       {errorDeVotacion && <ErrorMessage message={errorDeVotacion} />}
@@ -192,6 +215,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               )}
             </div>
           )}
+          {puedeVotar && <p className="votacion-consigna">Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?</p>}
           {puedeVotar && (
             <Cartas
               seleccionada={miVoto}
