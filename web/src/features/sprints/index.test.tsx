@@ -12,13 +12,22 @@ const respuesta = (status: number, cuerpo: unknown) =>
 const pendiente = (id: number): Sprint => ({ id, proyecto_id: 42, estado: 'Pendiente' })
 
 const RUTA_LISTADO = /^\/projects\/(\d+)\/sprints$/
+const RUTA_BACKLOG = /^\/sprints\/(\d+)\/backlog$/
 
 type Otras = (ruta: string, opciones?: RequestInit) => Response | Promise<Response>
 
-function simularApi(listado: (proyecto: string) => Response | Promise<Response>, otras?: Otras) {
+type Backlog = (sprintId: string) => Response | Promise<Response>
+
+function simularApi(
+  listado: (proyecto: string) => Response | Promise<Response>,
+  otras?: Otras,
+  backlog: Backlog = () => respuesta(200, []),
+) {
   const simulado = vi.fn((ruta: string, opciones?: RequestInit) => {
     const coincide = RUTA_LISTADO.exec(ruta)
     if (coincide) return Promise.resolve(listado(coincide[1]))
+    const coincideBacklog = RUTA_BACKLOG.exec(ruta)
+    if (coincideBacklog) return Promise.resolve(backlog(coincideBacklog[1]))
     return Promise.resolve(otras ? otras(ruta, opciones) : respuesta(404, { mensaje: 'no encontrado' }))
   })
   vi.stubGlobal('fetch', simulado)
@@ -65,8 +74,52 @@ describe('pantalla de Sprints', () => {
     expect(await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })).toBeTruthy()
     expect(within(seccion('Activo')).getByRole('heading', { name: 'Sprint #2' })).toBeTruthy()
     expect(within(seccion('Finalizado')).getByRole('heading', { name: 'Sprint #1' })).toBeTruthy()
-    expect(screen.queryByText('Cargando…')).toBeNull()
+    await waitFor(() => expect(screen.queryAllByText('Cargando…')).toHaveLength(0))
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/sprints')
+  })
+
+  it('US3.2: cada tarjeta de Sprint muestra su Sprint Backlog con las historias de ese Sprint', async () => {
+    const activo: Sprint = { ...pendiente(2), estado: 'Activo', sprint_goal: 'Meta' }
+    const historias: Record<string, unknown[]> = {
+      '2': [{ id: 8, titulo: 'Historia del activo', prioridad: 'M', estado: 'En progreso', estimacion_sp: 5 }],
+      '3': [],
+    }
+    const fetchSimulado = simularApi(
+      conSprints(activo, pendiente(3)),
+      undefined,
+      (sprintId) => respuesta(200, historias[sprintId]),
+    )
+    abrir()
+
+    await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })
+    expect(await within(seccion('Activo')).findByText('Historia del activo')).toBeTruthy()
+    expect(await within(seccion('Pendiente')).findByText('Este Sprint no tiene historias')).toBeTruthy()
+    expect(within(seccion('Pendiente')).queryByText('Historia del activo')).toBeNull()
+    const pedidos = fetchSimulado.mock.calls.map(([ruta]) => ruta)
+    expect(pedidos).toContain('/sprints/2/backlog')
+    expect(pedidos).toContain('/sprints/3/backlog')
+  })
+
+  it('US3.2: si falla el Sprint Backlog de una tarjeta el error queda en esa tarjeta y no en la pantalla', async () => {
+    simularApi(conSprints(pendiente(3)), undefined, () =>
+      respuesta(400, { mensaje: 'identificador de sprint inválido' }),
+    )
+    abrir()
+
+    const tarjeta = (await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' }))
+      .closest('article') as HTMLElement
+    expect((await within(tarjeta).findByRole('alert')).textContent).toBe('identificador de sprint inválido')
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+  })
+
+  it('US3.2: un Sprint creado desde la pantalla muestra también su Sprint Backlog', async () => {
+    const fetchSimulado = simularApi(conSprints(), () => respuesta(201, pendiente(5)))
+    abrir()
+
+    await crear()
+
+    expect(await within(seccion('Pendiente')).findByText('Este Sprint no tiene historias')).toBeTruthy()
+    expect(fetchSimulado.mock.calls.map(([ruta]) => ruta)).toContain('/sprints/5/backlog')
   })
 
   it('sin Sprints muestra las tres secciones vacías y ya no avisa de ninguna limitación', async () => {
