@@ -38,6 +38,14 @@
   justify-self: stretch;
 }
 
+.esfuerzo-historia select {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
 .esfuerzo-detalle {
   margin: 0;
   padding-left: 1rem;
