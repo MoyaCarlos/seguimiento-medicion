@@ -26,7 +26,8 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const [sinVotacion, setSinVotacion] = useState(false)
   const [cargadaPara, setCargadaPara] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [errorDeCarga, setErrorDeCarga] = useState('')
+  const [errorDeIntegrantes, setErrorDeIntegrantes] = useState('')
+  const [errorDeVotacion, setErrorDeVotacion] = useState('')
   const [errorDeAccion, setErrorDeAccion] = useState('')
   const [recarga, setRecarga] = useState(0)
   const envioEnCurso = useRef(false)
@@ -45,7 +46,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
         if (vigente) setIntegrantes(datos)
       })
       .catch((causa: unknown) => {
-        if (vigente) setErrorDeCarga(mensajeDeError(causa))
+        if (vigente) setErrorDeIntegrantes(mensajeDeError(causa))
       })
 
     return () => {
@@ -61,16 +62,16 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
         if (!vigente) return
         setVotacion(datos)
         setSinVotacion(false)
-        setErrorDeCarga('')
+        setErrorDeVotacion('')
       })
       .catch((causa: unknown) => {
         if (!vigente) return
         if (esVotacionNoIniciada(causa)) {
           setVotacion(null)
           setSinVotacion(true)
-          setErrorDeCarga('')
+          setErrorDeVotacion('')
         } else {
-          setErrorDeCarga(mensajeDeError(causa))
+          setErrorDeVotacion(mensajeDeError(causa))
         }
       })
       .finally(() => {
@@ -118,7 +119,8 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
         </Button>
       </div>
 
-      {errorDeCarga && <ErrorMessage message={errorDeCarga} />}
+      {errorDeIntegrantes && <ErrorMessage message={errorDeIntegrantes} />}
+      {errorDeVotacion && <ErrorMessage message={errorDeVotacion} />}
       {errorDeAccion && <ErrorMessage message={errorDeAccion} />}
       {cargando && <LoadingIndicator />}
 
