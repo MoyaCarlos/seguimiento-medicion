@@ -184,6 +184,26 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
     expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
   })
 
+  it('Given que falla el listado de integrantes y la consulta responde bien, When llega la votación, Then el error de integrantes sigue visible', async () => {
+    integrantesMock.mockRejectedValue(new ApiError(500, 'no se pudieron listar los integrantes'))
+    abrir()
+
+    await screen.findByRole('list')
+
+    expect((await screen.findByRole('alert')).textContent).toBe('no se pudieron listar los integrantes')
+  })
+
+  it('Given que fallan el listado de integrantes y la consulta con mensajes distintos, When ocurren, Then se muestran los dos errores', async () => {
+    integrantesMock.mockRejectedValue(new ApiError(500, 'no se pudieron listar los integrantes'))
+    consultarMock.mockRejectedValue(new ApiError(500, 'no se pudo consultar la votación'))
+    abrir()
+
+    await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(2))
+    const mensajes = screen.getAllByRole('alert').map((alerta) => alerta.textContent)
+    expect(mensajes).toContain('no se pudieron listar los integrantes')
+    expect(mensajes).toContain('no se pudo consultar la votación')
+  })
+
   it('Given que la respuesta de un integrante anterior llega tarde, When ya elegí a otro, Then se descarta y se ve la del actual', async () => {
     servidor.votos = { 2: 8, 3: 5 }
     let resolverTardia: (v: Votacion) => void = () => {}
