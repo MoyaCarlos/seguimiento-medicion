@@ -314,12 +314,12 @@ describe('pantalla de Sprints: registro de horas', () => {
     expect(within(seccion('Finalizado')).queryByRole('button', { name: 'Registrar horas' })).toBeNull()
   })
 
-  it('al cerrar el Sprint desaparece "Registrar horas" y sigue el total', async () => {
+  it('al cerrar el Sprint desaparece "Registrar horas" y sigue el total de la historia completada', async () => {
     const activo: Sprint = { ...pendiente(2), estado: 'Activo', fecha_fin: '2026-11-09' }
     simularApi(
       conSprints(activo),
       () => respuesta(200, { ...activo, estado: 'Finalizado' }),
-      () => respuesta(200, [historia]),
+      () => respuesta(200, [{ ...historia, estado: 'Completada' }]),
     )
     abrir()
     await within(seccion('Activo')).findByRole('button', { name: 'Registrar horas' })
