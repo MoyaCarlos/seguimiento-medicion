@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { FormularioHoras } from './FormularioHoras'
 import { imputarHoras, listarIntegrantes } from './api'
 import { fechaPropuesta } from './horas'
@@ -146,5 +147,120 @@ describe('FormularioHoras: registrar horas', () => {
     const ids = [...document.querySelectorAll('input, select')].map((campo) => campo.id)
     expect(ids).toHaveLength(8)
     expect(new Set(ids).size).toBe(8)
+  })
+})
+
+describe('FormularioHoras: errores', () => {
+  const rechazar = (campo: string | undefined, mensaje: string) =>
+    imputarMock.mockRejectedValueOnce(new ApiError(400, mensaje, campo))
+
+  it('US2.1: sin integrante muestra el error junto a la lista y no envía la carga', async () => {
+    const user = userEvent.setup()
+    abrir()
+    const seleccion = await lista()
+    await user.type(actividad(), 'Revisión del PR')
+    await user.type(horas(), '4')
+
+    await user.click(guardar())
+
+    const error = await screen.findByRole('alert')
+    expect(error.textContent).toBe('Elegí un integrante')
+    expect(seleccion.getAttribute('aria-invalid')).toBe('true')
+    expect(seleccion.getAttribute('aria-describedby')).toBe(error.id)
+    expect(imputarMock).not.toHaveBeenCalled()
+  })
+
+  it('US2.1: un proyecto sin integrantes no permite enviar la carga', async () => {
+    integrantesMock.mockResolvedValue([])
+    const user = userEvent.setup()
+    abrir()
+    await lista()
+
+    await user.click(guardar())
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Elegí un integrante')
+    expect(imputarMock).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['US2.2', 'horas', 'Horas', 'las horas deben ser un número'],
+    ['US2.3', 'actividad', 'Actividad', 'la actividad es obligatoria'],
+    ['US2.4', 'fecha', 'Fecha', 'la fecha no puede ser posterior a hoy'],
+    ['US2.5', 'integrante_id', 'Integrante', 'el integrante no pertenece al proyecto de la historia'],
+  ])('%s: el rechazo de "%s" se muestra junto a su campo', async (_escenario, campo, etiqueta, mensaje) => {
+    rechazar(campo, mensaje)
+    abrir()
+    const user = await completar()
+
+    await user.click(guardar())
+
+    const error = await screen.findByRole('alert')
+    expect(error.textContent).toBe(mensaje)
+    const control = screen.getByLabelText(etiqueta)
+    expect(control.getAttribute('aria-invalid')).toBe('true')
+    expect(control.getAttribute('aria-describedby')).toBe(error.id)
+  })
+
+  it('US2.6: si el Sprint ya se cerró, el mensaje es un aviso general', async () => {
+    rechazar('historia_id', 'solo se imputan horas a historias del Sprint activo')
+    abrir()
+    const user = await completar()
+
+    await user.click(guardar())
+
+    const error = await screen.findByRole('alert')
+    expect(error.textContent).toBe('solo se imputan horas a historias del Sprint activo')
+    expect(error.id).toBe('')
+  })
+
+  it('US2.7: ante un rechazo conserva lo escrito y no avisa que se registró', async () => {
+    rechazar('horas', 'las horas deben ser un número')
+    const { alRegistrar } = abrir()
+    const user = await completar('abc')
+
+    await user.click(guardar())
+
+    await screen.findByRole('alert')
+    expect((await lista()).value).toBe('2')
+    expect(actividad().value).toBe('Revisión del PR')
+    expect(horas().value).toBe('abc')
+    expect(screen.queryByText('Horas registradas')).toBeNull()
+    expect(alRegistrar).not.toHaveBeenCalled()
+  })
+
+  it('US2.8: el error desaparece cuando la carga se acepta', async () => {
+    rechazar('horas', 'las horas deben ser un número')
+    abrir()
+    const user = await completar('abc')
+    await user.click(guardar())
+    await screen.findByRole('alert')
+
+    await user.clear(horas())
+    await user.type(horas(), '4')
+    await user.click(guardar())
+
+    await screen.findByText('Horas registradas')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(horas().getAttribute('aria-invalid')).toBe('false')
+  })
+
+  it('sin conexión al guardar muestra el aviso y conserva lo escrito', async () => {
+    imputarMock.mockRejectedValueOnce(new ConnectionError())
+    abrir()
+    const user = await completar()
+
+    await user.click(guardar())
+
+    expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+    expect(horas().value).toBe('4')
+  })
+
+  it('si falla la consulta de integrantes muestra el error y no permite guardar', async () => {
+    integrantesMock.mockRejectedValue(new ApiError(404, 'proyecto no encontrado'))
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('proyecto no encontrado')
+    expect(screen.queryByRole('button', { name: 'Guardar horas' })).toBeNull()
+    expect(screen.queryByText('Cargando…')).toBeNull()
   })
 })
