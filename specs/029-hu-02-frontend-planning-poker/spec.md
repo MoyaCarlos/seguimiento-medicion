@@ -13,7 +13,7 @@
 ### Session 2026-11-02
 
 - Q: ¿Cómo se elige quién actúa si la aplicación no tiene inicio de sesión? → A: Con un selector de integrantes del proyecto (nombre y rol), sin recordar la elección entre visitas; mientras no se elija a nadie no hay cartas ni acciones.
-- Q: ¿Desde dónde se llega a la pantalla de votación? → A: Con un botón «Votar» en cada historia del Product Backlog que navega a una ruta nueva del proyecto (`/projects/:id/backlog/...` queda de la feature del backlog; la pantalla vive en su propia feature con una ruta propia). El backlog solo enlaza por URL; ninguna feature importa a la otra.
+- Q: ¿Desde dónde se llega a la pantalla de votación? → A: Con un botón «Votar» en cada historia del Product Backlog que navega a una ruta nueva del proyecto (`/projects/:id/votacion/:historiaId`; la pantalla vive en su propia feature). El backlog solo enlaza por URL; ninguna feature importa a la otra.
 - Q: ¿Cómo se actualiza la vista mientras otros votan? → A: Con un botón «Actualizar» que vuelve a consultar; no hay consulta periódica automática.
 - Q: ¿Qué se muestra cuando el servidor rechaza con 403 (sin permiso) o 409 (votación ya iniciada), que el encargo no listaba? → A: El `mensaje` del servidor tal cual, igual que con 400 y 404; y tras un rechazo la pantalla vuelve a consultar la votación para reflejar el estado real.
 
