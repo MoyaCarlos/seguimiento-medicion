@@ -3,9 +3,16 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
-import { consultarVotacion, iniciarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
+import {
+  consultarVotacion,
+  iniciarVotacion,
+  listarIntegrantes,
+  obtenerHistoria,
+  revelarVotacion,
+  votar,
+} from './api'
 import { Component } from './index'
-import type { Integrante, Votacion } from './votacion'
+import type { HistoriaResumen, Integrante, Votacion } from './votacion'
 
 vi.mock('./api')
 
@@ -19,6 +26,15 @@ const consultarMock = vi.mocked(consultarVotacion)
 const votarMock = vi.mocked(votar)
 const revelarMock = vi.mocked(revelarVotacion)
 const iniciarMock = vi.mocked(iniciarVotacion)
+const historiaMock = vi.mocked(obtenerHistoria)
+
+const HISTORIA: HistoriaResumen = {
+  id: 3,
+  titulo: 'Pagar la tasa de la licencia en línea',
+  descripcion: 'Como solicitante quiero pagar la tasa con tarjeta.',
+  prioridad: 'M',
+  estimacion_sp: null,
+}
 const integrantesMock = vi.mocked(listarIntegrantes)
 
 type Servidor = { votos: Record<number, number>; revelada: boolean }
@@ -64,6 +80,7 @@ async function elegirActor(nombre: string) {
 beforeEach(() => {
   servidor = { votos: {}, revelada: false }
   integrantesMock.mockResolvedValue(INTEGRANTES)
+  historiaMock.mockResolvedValue(HISTORIA)
   consultarMock.mockImplementation(async (_historia, consultante) => vista(consultante))
   votarMock.mockImplementation(async (_historia, usuario, valor) => {
     servidor.votos[usuario] = valor
@@ -398,5 +415,70 @@ describe('Pantalla de votación - mantenerla al día (US4)', () => {
     expect(await screen.findByRole('list')).toBeTruthy()
     expect(fila('Beta Uno')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
+
+describe('Pantalla de votación - contexto de la historia', () => {
+  it('Given que la historia está en el listado, When se abre la pantalla, Then se ven su título, su descripción y la consulta con el proyecto y la historia', async () => {
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: HISTORIA.titulo })).toBeTruthy()
+    expect(screen.getByText(HISTORIA.descripcion)).toBeTruthy()
+    expect(screen.getByText('Sin estimar')).toBeTruthy()
+    expect(historiaMock).toHaveBeenCalledWith('25', 3)
+  })
+
+  it('Given que la historia no está en el listado, When se abre la pantalla, Then solo figura "Historia #3" y se puede votar', async () => {
+    historiaMock.mockResolvedValue(null)
+    abrir()
+    await elegirActor('Beta Dos')
+
+    expect(await screen.findByRole('button', { name: '8' })).toBeTruthy()
+    expect(screen.getAllByText('Historia #3').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('heading', { name: HISTORIA.titulo })).toBeNull()
+  })
+
+  it('Given que falla la consulta de la historia, When se abre la pantalla, Then solo figura "Historia #3", sin error y se puede votar', async () => {
+    historiaMock.mockRejectedValue(new ConnectionError())
+    abrir()
+    await elegirActor('Beta Dos')
+
+    expect(await screen.findByRole('button', { name: '8' })).toBeTruthy()
+    expect(screen.getAllByText('Historia #3').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Given una votación abierta y un integrante elegido, When se muestra la pantalla, Then se ve la consigna de la votación', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    expect(
+      await screen.findByText('Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?'),
+    ).toBeTruthy()
+  })
+
+  it('Given una votación abierta sin integrante elegido, When se muestra la pantalla, Then la consigna es elegir quién actúa', async () => {
+    abrir()
+
+    expect(await screen.findByText('Elegí quién actúa para votar')).toBeTruthy()
+    expect(screen.queryByText(/Elegí una carta/)).toBeNull()
+  })
+
+  it('Given una ronda revelada, When se muestra la pantalla, Then no se muestra la consigna de elegir carta', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    abrir()
+
+    await screen.findByText(/registrar la estimación acordada/i)
+
+    expect(screen.queryByText(/Elegí una carta/)).toBeNull()
+  })
+
+  it('Given la pantalla del proyecto 25, When se muestra, Then hay un enlace "Volver al Product Backlog" a /projects/25/backlog', async () => {
+    abrir()
+
+    const enlace = await screen.findByRole('link', { name: 'Volver al Product Backlog' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/25/backlog')
   })
 })
