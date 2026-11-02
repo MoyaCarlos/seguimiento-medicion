@@ -72,6 +72,27 @@ describe('EsfuerzoHistoria: registrar horas', () => {
     expect(((await screen.findByLabelText('Integrante')) as HTMLSelectElement).value).toBe('')
   })
 
+  it('US1.5: mientras envía no se puede cerrar el formulario para volver a guardar', async () => {
+    let terminarEnvio: (valor: unknown) => void = () => {}
+    vi.mocked(imputarHoras).mockReturnValue(new Promise((resolve) => (terminarEnvio = resolve)))
+    const user = userEvent.setup()
+    render(<EsfuerzoHistoria historiaId={12} imputacion={imputacion} />)
+    await user.click(botonRegistrar())
+    await user.selectOptions(await screen.findByLabelText('Integrante'), 'Ana')
+    await user.type(screen.getByLabelText('Actividad'), 'Revisión')
+    await user.type(screen.getByLabelText('Horas'), '4')
+
+    await user.click(screen.getByRole('button', { name: 'Guardar horas' }))
+
+    expect((botonRegistrar() as HTMLButtonElement).disabled).toBe(true)
+    await user.click(botonRegistrar())
+    expect(screen.getByLabelText('Actividad')).toBeTruthy()
+
+    terminarEnvio({})
+    await screen.findByText('Horas registradas')
+    expect((botonRegistrar() as HTMLButtonElement).disabled).toBe(false)
+  })
+
   it('US1.4: sin imputación no se ofrece registrar horas', () => {
     render(<EsfuerzoHistoria historiaId={12} />)
 
