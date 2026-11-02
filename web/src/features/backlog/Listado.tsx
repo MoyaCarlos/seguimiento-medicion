@@ -137,6 +137,9 @@ function PantallaBacklog({ id }: { id: string }) {
                   >
                     Asignar a Sprint
                   </Button>
+                  <Link className="button button--secondary" to={`/projects/${id}/votacion/${historia.id}`}>
+                    Votar
+                  </Link>
                 </div>
               </div>
 
