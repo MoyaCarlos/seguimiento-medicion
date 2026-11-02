@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { agruparPorEstado, guardarSprint, type Sprint } from './sprint'
 
-const sprint = (id: number, estado: Sprint['estado']): Sprint => ({ id, proyecto_id: 1, estado })
+const sprint = (id: number, estado: Sprint['estado']): Sprint => ({ id, numero: id, proyecto_id: 1, estado })
 
 describe('agruparPorEstado', () => {
   it('devuelve las tres claves vacías si no hay Sprints', () => {

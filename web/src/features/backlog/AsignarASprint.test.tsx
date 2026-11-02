@@ -23,9 +23,9 @@ const HISTORIA: Historia = {
 }
 
 const SPRINTS: SprintParaAsignar[] = [
-  { id: 1, estado: 'Finalizado', sprint_goal: 'Sprint viejo' },
-  { id: 2, estado: 'Activo', sprint_goal: 'Sprint en curso' },
-  { id: 3, estado: 'Pendiente', sprint_goal: null },
+  { id: 11, numero: 1, estado: 'Finalizado', sprint_goal: 'Sprint viejo' },
+  { id: 12, numero: 2, estado: 'Activo', sprint_goal: 'Sprint en curso' },
+  { id: 13, numero: 3, estado: 'Pendiente', sprint_goal: null },
 ]
 
 const asignarMock = vi.mocked(asignarASprint)
@@ -63,15 +63,15 @@ describe('AsignarASprint', () => {
   })
 
   it('US3.2: al confirmar llama a asignarASprint con la historia y el Sprint elegidos', async () => {
-    asignarMock.mockResolvedValue({ ...HISTORIA, sprint_id: 3 })
+    asignarMock.mockResolvedValue({ ...HISTORIA, sprint_id: 13 })
     const user = userEvent.setup()
     abrir()
 
-    await user.selectOptions(screen.getByLabelText('Sprint'), '3')
+    await user.selectOptions(screen.getByLabelText('Sprint'), '13')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
     await waitFor(() => expect(asignarMock).toHaveBeenCalledTimes(1))
-    expect(asignarMock).toHaveBeenCalledWith(7, 3)
+    expect(asignarMock).toHaveBeenCalledWith(7, 13)
   })
 
   it('US3.3: el botón de confirmar queda deshabilitado mientras la petición está en curso y no envía dos veces', async () => {
@@ -79,7 +79,7 @@ describe('AsignarASprint', () => {
     const user = userEvent.setup()
     abrir()
 
-    await user.selectOptions(screen.getByLabelText('Sprint'), '2')
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
     const boton = screen.getByRole('button', { name: 'Confirmar asignación' })
     await user.click(boton)
 
@@ -89,16 +89,16 @@ describe('AsignarASprint', () => {
   })
 
   it('US3.4: tras el 200 llama a onAsignada con la historia devuelta', async () => {
-    const devuelta = { ...HISTORIA, sprint_id: 2 }
+    const devuelta = { ...HISTORIA, sprint_id: 12 }
     asignarMock.mockResolvedValue(devuelta)
     const user = userEvent.setup()
     const { onAsignada } = abrir()
 
-    await user.selectOptions(screen.getByLabelText('Sprint'), '2')
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
     await waitFor(() => expect(onAsignada).toHaveBeenCalledTimes(1))
-    expect(onAsignada).toHaveBeenCalledWith(devuelta, 2)
+    expect(onAsignada).toHaveBeenCalledWith(devuelta, 12)
   })
 
   it('US3.5: ante un error muestra el mensaje de la API y no llama a onAsignada', async () => {
@@ -106,7 +106,7 @@ describe('AsignarASprint', () => {
     const user = userEvent.setup()
     const { onAsignada } = abrir()
 
-    await user.selectOptions(screen.getByLabelText('Sprint'), '2')
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
     expect(await screen.findByText('El Sprint ya finalizó')).toBeTruthy()
@@ -114,7 +114,7 @@ describe('AsignarASprint', () => {
   })
 
   it('US3.6: sin Sprints Pendiente/Activo muestra el aviso y no permite confirmar', () => {
-    abrir([{ id: 1, estado: 'Finalizado', sprint_goal: null }])
+    abrir([{ id: 11, numero: 1, estado: 'Finalizado', sprint_goal: null }])
 
     expect(screen.getByText('No hay Sprints disponibles para asignar')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirmar asignación' })).toBeNull()

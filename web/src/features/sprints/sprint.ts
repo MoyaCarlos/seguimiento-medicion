@@ -2,6 +2,7 @@ export const ESTADOS = ['Pendiente', 'Activo', 'Finalizado'] as const
 
 export type Sprint = {
   id: number
+  numero: number
   proyecto_id: number
   sprint_goal?: string | null
   fecha_inicio?: string | null

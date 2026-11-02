@@ -9,7 +9,7 @@ import type { Sprint } from './sprint'
 const respuesta = (status: number, cuerpo: unknown) =>
   new Response(JSON.stringify(cuerpo), { status })
 
-const pendiente = (id: number): Sprint => ({ id, proyecto_id: 42, estado: 'Pendiente' })
+const pendiente = (id: number, numero = id): Sprint => ({ id, numero, proyecto_id: 42, estado: 'Pendiente' })
 
 const RUTA_LISTADO = /^\/projects\/(\d+)\/sprints$/
 const RUTA_BACKLOG = /^\/sprints\/(\d+)\/backlog$/
@@ -54,6 +54,14 @@ const crear = () => userEvent.click(screen.getByRole('button', { name: 'Crear Sp
 afterEach(() => vi.unstubAllGlobals())
 
 describe('pantalla de Sprints', () => {
+  it('numeración por proyecto: la tarjeta muestra el número del Sprint y no su id', async () => {
+    simularApi(conSprints(pendiente(7, 2)))
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: 'Sprint #2' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Sprint #7' })).toBeNull()
+  })
+
   it('conserva el contrato con la base: h1 "Sprints" y el id en un único <strong>', () => {
     simularApi(conSprints())
     abrir()
