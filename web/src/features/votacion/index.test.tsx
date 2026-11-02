@@ -482,3 +482,18 @@ describe('Pantalla de votación - contexto de la historia', () => {
     expect(enlace.getAttribute('href')).toBe('/projects/25/backlog')
   })
 })
+
+describe('Pantalla de votación - teclado', () => {
+  it('Given una carta enfocada con Tab, When se pulsa Enter, Then se vota esa carta', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    const primera = await screen.findByRole('button', { name: '1' })
+
+    await userEvent.tab()
+    while (document.activeElement !== primera) await userEvent.tab()
+    await userEvent.tab()
+    await userEvent.keyboard('{Enter}')
+
+    expect(votarMock).toHaveBeenCalledWith(3, 2, 2)
+  })
+})
