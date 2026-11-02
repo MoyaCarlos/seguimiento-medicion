@@ -21,7 +21,7 @@ export function SeccionSprints({ estado, sprints, alActualizar }: Props) {
           {sprint.fecha_inicio && sprint.fecha_fin && (
             <p>{`${sprint.fecha_inicio} a ${sprint.fecha_fin}`}</p>
           )}
-          <SprintBacklog sprintId={sprint.id} />
+          <SprintBacklog sprintId={sprint.id} permiteCambiarEstado={estado === 'Activo'} />
           {estado === 'Pendiente' && <FormularioInicio sprint={sprint} alActualizar={alActualizar} />}
           {estado === 'Activo' && <BotonCerrar sprint={sprint} alActualizar={alActualizar} />}
         </article>

@@ -282,3 +282,22 @@ describe('pantalla de Sprints', () => {
     expect(screen.getByText('2').tagName).toBe('STRONG')
   })
 })
+
+describe('pantalla de Sprints: cambio de estado de historias', () => {
+  const historia = { id: 7, titulo: 'Registrar horas', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 }
+
+  it('US3.1: solo los Sprints Activos muestran las acciones de las historias', async () => {
+    const activo: Sprint = { ...pendiente(2), estado: 'Activo' }
+    const finalizado: Sprint = { ...pendiente(4), estado: 'Finalizado' }
+    simularApi(conSprints(activo, pendiente(3), finalizado), undefined, () => respuesta(200, [historia]))
+
+    abrir()
+    await waitFor(() => expect(within(seccion('Activo')).getByText('Registrar horas')).toBeTruthy())
+    await waitFor(() => expect(within(seccion('Pendiente')).getByText('Registrar horas')).toBeTruthy())
+    await waitFor(() => expect(within(seccion('Finalizado')).getByText('Registrar horas')).toBeTruthy())
+
+    expect(within(seccion('Activo')).getByRole('button', { name: 'Iniciar' })).toBeTruthy()
+    expect(within(seccion('Pendiente')).queryByRole('button', { name: 'Iniciar' })).toBeNull()
+    expect(within(seccion('Finalizado')).queryByRole('button', { name: 'Iniciar' })).toBeNull()
+  })
+})
