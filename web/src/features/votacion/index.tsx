@@ -109,6 +109,9 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
             Proyecto actual: <strong>{proyectoId}</strong>
           </p>
         </div>
+        <Button type="button" variant="secondary" onClick={recargar} disabled={enviando || cargando}>
+          Actualizar
+        </Button>
       </div>
 
       {errorDeCarga && <ErrorMessage message={errorDeCarga} />}
