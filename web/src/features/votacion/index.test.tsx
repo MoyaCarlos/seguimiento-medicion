@@ -54,7 +54,8 @@ function abrir() {
   )
 }
 
-const fila = (nombre: string) => screen.getByRole('listitem', { name: nombre })
+const fila = (nombre: string) =>
+  within(screen.getByRole('list')).getByText(nombre).closest('li') as HTMLElement
 
 async function elegirActor(nombre: string) {
   await userEvent.selectOptions(await screen.findByLabelText('Quién actúa'), nombre)
@@ -374,7 +375,8 @@ describe('Pantalla de votación - mantenerla al día (US4)', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
 
-    expect(await screen.findByRole('listitem', { name: 'Beta Uno' })).toBeTruthy()
+    expect(await screen.findByRole('list')).toBeTruthy()
+    expect(fila('Beta Uno')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 })

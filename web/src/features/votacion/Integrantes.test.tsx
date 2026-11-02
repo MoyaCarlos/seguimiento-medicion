@@ -11,7 +11,8 @@ const voto = (usuario_id: number, nombre: string, ya_voto: boolean, valor: numbe
   valor,
 })
 
-const fila = (nombre: string) => screen.getByRole('listitem', { name: nombre })
+const fila = (nombre: string) =>
+  within(screen.getByRole('list')).getByText(nombre).closest('li') as HTMLElement
 
 describe('Integrantes', () => {
   it('Given una ronda sin revelar, When se muestran los integrantes, Then quien votó figura "Ya votó" con "Oculto" y quien no, "Falta"', () => {
@@ -42,5 +43,16 @@ describe('Integrantes', () => {
 
     expect(within(fila('Beta Uno')).getByText('Scrum Master')).toBeTruthy()
     expect(within(fila('Beta Dos')).getByText('Product Builder')).toBeTruthy()
+  })
+
+  it('Given la lista de integrantes, When la lee un lector de pantalla, Then ninguna fila lleva aria-label y cada una contiene nombre, rol, estado y valor', () => {
+    render(<Integrantes integrantes={[voto(2, 'Beta Dos', true, 8)]} />)
+
+    const item = fila('Beta Dos')
+    expect(item.hasAttribute('aria-label')).toBe(false)
+    expect(item.textContent).toContain('Beta Dos')
+    expect(item.textContent).toContain('Product Builder')
+    expect(item.textContent).toContain('Ya votó')
+    expect(item.textContent).toContain('Voto: 8')
   })
 })
