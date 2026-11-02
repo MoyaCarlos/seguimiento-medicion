@@ -372,26 +372,26 @@ Nueva
 Como Scrum Master quiero exportar un reporte en PDF de un proyecto o Sprint con sus historias, estimaciones, esfuerzo, métricas y defectos para poder compartir el estado del proyecto fuera del sistema (ej. con el profesor/Cliente).
 ### Criterios de aceptacion (BDD):
 Escenario 1: Exportación exitosa de un Sprint.
-Dado que estoy viendo el resumen de un Sprint cerrado,
+Dado que estoy viendo el resumen de un Sprint finalizado,
 Cuando presiono "Exportar a PDF",
 Entonces la librería Maroto debe generar un archivo con: historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos asociados a ese Sprint.
 Escenario 2: Exportación exitosa del proyecto.
-Dado que estoy viendo el resumen de un proyecto con al menos un Sprint finalizado,
+Dado que estoy viendo el resumen de un proyecto,
 Cuando presiono "Exportar reporte del proyecto",
-Entonces la librería Maroto debe generar un archivo con: los datos del proyecto (nombre, fechas, estado e integrantes), el listado de sus Sprints con Sprint Goal y fechas, y, para el proyecto completo, historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos detectados y resueltos.
+Entonces la librería Maroto debe generar un archivo con: los datos del proyecto (nombre, fechas, estado e integrantes), su Product Backlog actual (las historias sin Sprint, con prioridad y estimación), el listado de sus Sprints finalizados con Sprint Goal y fechas, el Sprint Activo con sus historias si lo hay y, para los Sprints finalizados, historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos detectados y resueltos.
 Escenario 3: Proyecto sin Sprints finalizados.
-Dado que un proyecto todavía no tiene ningún Sprint finalizado,
+Dado que un proyecto todavía no tiene ningún Sprint finalizado (con o sin un Sprint Activo),
 Cuando solicito el reporte del proyecto,
-Entonces el sistema genera el reporte con los datos del proyecto y su Product Backlog, e informa las métricas como "sin datos" en vez de fallar (igual que HU-03 y HU-09).
+Entonces el sistema genera el reporte con los datos del proyecto, su Product Backlog y, si lo hay, el Sprint Activo con sus historias, e informa las métricas, el esfuerzo y los defectos como "sin datos" en vez de fallar (igual que HU-03 y HU-09).
 Escenario 4: Error de generación.
-Dado que el proceso de generación del PDF falla (ej. dato faltante),
+Dado que el proceso de generación del PDF falla por un error real (por ejemplo, Maroto no puede armar el documento, falla la escritura del archivo o la lectura de la base),
 Cuando se solicita el reporte,
 Entonces el sistema debe informar el error al usuario en vez de descargar un archivo corrupto o vacío.
 ### Depende de
-HU-04 (datos del proyecto e integrantes), HU-05 (Sprint cerrado), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
+HU-04 (datos del proyecto e integrantes), HU-13 (estado del proyecto), HU-05 (Sprint finalizado), HU-06 (historias del Sprint Activo), HU-15 (estimaciones), HU-07 (esfuerzo registrado), HU-03 (métricas), HU-08 (defectos).
 ### Notas
 Las historias "planificadas" son las asignadas al cerrar el Sprint, completadas o no (ver HU-05).
-El reporte del proyecto se agrega con los Sprints finalizados, igual que las métricas de HU-03. El enunciado pide "un reporte de un proyecto o Sprint" y, en el Sprint 4, "exportar un informe del proyecto a un archivo PDF": por eso la historia cubre las dos variantes (decisión del equipo, 2026-10-28).
+El reporte del proyecto incluye siempre el Product Backlog actual (decisión del Scrum Master, 2026-11-01). Las métricas, el esfuerzo y los defectos se agregan solo con los Sprints finalizados, igual que las métricas de HU-03; un Sprint Activo se lista con sus historias pero no suma a las métricas. El enunciado pide "un reporte de un proyecto o Sprint" y, en el Sprint 4, "exportar un informe del proyecto a un archivo PDF": por eso la historia cubre las dos variantes (decisión del equipo, 2026-10-28).
 ### Prioridad
 M (Must have) - Requisito central del enunciado (punto 9).
 ### Estado
