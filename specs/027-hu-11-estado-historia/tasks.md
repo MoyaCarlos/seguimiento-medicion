@@ -130,22 +130,24 @@ no cambia es el comportamiento pedido.
 
 **Goal**: desde la pantalla del Sprint activo, cada historia muestra la acción que corresponde a su estado (`Nueva` → "Iniciar", `En progreso` → "Completar"); al confirmar se ve el estado nuevo y la fecha de finalización, y ante un rechazo se muestra el `mensaje` de la API.
 
+**Diseño realizado**: el cliente `cambiarEstadoHistoria` vive en `sprints/api.ts`; `EstadoHistoria` es un componente de la feature `sprints`; `SprintBacklog` recibe la prop `permiteCambiarEstado` y `SeccionSprints` la activa solo para los Sprints Activos; tras un 200 se reemplaza la historia en la lista; el 409 se muestra con el mensaje de la API; el lint del proyecto es oxlint (`npm run lint`).
+
 **Independent Test**: con la API real, iniciar y completar una historia del Sprint activo sin recargar a mano; provocar un rechazo (una historia del Product Backlog o un 409 de carrera) y ver el mensaje del sistema.
 
-- [ ] T034 [US3] Verificar que la pantalla de Sprints está en `main` y traer `main` a la rama con `git merge origin/main` (merge local, sin push); `cd web && npm test` y `go test ./...` en verde. Si falta, detener la fase y avisar
-- [ ] T035 [P] [US3] RED: crear web/src/features/sprints/api.test.ts con tests de `cambiarEstadoHistoria(historiaId, estado)` (hace `PUT /backlog/{historiaId}/estado` con cuerpo `{"estado": estado}` y devuelve la historia) y de que un 400/404/409 rechaza con el `mensaje` de la respuesta, usando el cliente de web/src/compartido/api/client.ts. Exportación vacía en web/src/features/sprints/api.ts. Confirmar que FALLA
-- [ ] T036 [US3] COMMIT `RED: agregar tests del cliente de cambio de estado (falla)`
-- [ ] T037 [US3] GREEN: implementar `cambiarEstadoHistoria` en web/src/features/sprints/api.ts — `npm test` en verde
-- [ ] T038 [US3] COMMIT `GREEN: implementar el cliente de cambio de estado, test en verde`
-- [ ] T039 [P] [US3] RED: crear web/src/features/sprints/EstadoHistoria.test.tsx para el control `EstadoHistoria` (props: la historia y un callback al cambiar): (a) con estado `Nueva` ofrece "Iniciar" y llama a `cambiarEstadoHistoria` con `"En progreso"` (FR-012); (b) con estado `En progreso` ofrece "Completar" y llama con `"Completada"`; (c) con estado `Completada` no ofrece acciones; (d) el botón queda deshabilitado mientras la petición está en curso y no envía dos veces; (e) tras un 200 llama al callback; (f) ante un error muestra el `mensaje` de la API tal cual (incluido el 409) y no llama al callback. Componente vacío en web/src/features/sprints/EstadoHistoria.tsx. Confirmar que FALLA
-- [ ] T040 [US3] COMMIT `RED: agregar tests del componente EstadoHistoria (falla)`
-- [ ] T041 [US3] GREEN: implementar `EstadoHistoria` en web/src/features/sprints/EstadoHistoria.tsx — `npm test` en verde
-- [ ] T042 [US3] COMMIT `GREEN: implementar el componente EstadoHistoria, test en verde`
-- [ ] T043 [US3] RED: en web/src/features/sprints/index.test.tsx (o el archivo de integración de la pantalla de Sprints, según cómo haya quedado), test de integración: cada historia del Sprint activo muestra su control de estado; al iniciar/completar se reflejan el estado nuevo y la fecha de finalización; ante un rechazo se muestra el mensaje y la lista queda como estaba; con un 409 se ve el aviso de recargar y reintentar. Confirmar que FALLA
-- [ ] T044 [US3] COMMIT `RED: agregar test de integración del cambio de estado en pantalla (falla)`
-- [ ] T045 [US3] GREEN: integrar `EstadoHistoria` en la lista de historias de la pantalla de Sprints, refrescando la lista tras un 200; estilos en los `.css` existentes de la feature — `npm test` en verde
-- [ ] T046 [US3] COMMIT `GREEN: integrar el cambio de estado en la pantalla del Sprint, test en verde`
-- [ ] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/027-hu-11-estado-historia/quickstart.md
+- [X] T034 [US3] Verificar que la pantalla de Sprints está en `main` y traer `main` a la rama con `git merge origin/main` (merge local, sin push); `cd web && npm test` y `go test ./...` en verde. Si falta, detener la fase y avisar
+- [X] T035 [P] [US3] RED: crear web/src/features/sprints/api.test.ts con tests de `cambiarEstadoHistoria(historiaId, estado)` (hace `PUT /backlog/{historiaId}/estado` con cuerpo `{"estado": estado}` y devuelve la historia) y de que un 400/404/409 rechaza con el `mensaje` de la respuesta, usando el cliente de web/src/compartido/api/client.ts. Exportación vacía en web/src/features/sprints/api.ts. Confirmar que FALLA
+- [X] T036 [US3] COMMIT `RED: agregar tests del cliente de cambio de estado (falla)`
+- [X] T037 [US3] GREEN: implementar `cambiarEstadoHistoria` en web/src/features/sprints/api.ts — `npm test` en verde
+- [X] T038 [US3] COMMIT `GREEN: implementar el cliente de cambio de estado, test en verde`
+- [X] T039 [P] [US3] RED: crear web/src/features/sprints/EstadoHistoria.test.tsx para el control `EstadoHistoria` (props: la historia y un callback al cambiar): (a) con estado `Nueva` ofrece "Iniciar" y llama a `cambiarEstadoHistoria` con `"En progreso"` (FR-012); (b) con estado `En progreso` ofrece "Completar" y llama con `"Completada"`; (c) con estado `Completada` no ofrece acciones; (d) el botón queda deshabilitado mientras la petición está en curso y no envía dos veces; (e) tras un 200 llama al callback; (f) ante un error muestra el `mensaje` de la API tal cual (incluido el 409) y no llama al callback. Componente vacío en web/src/features/sprints/EstadoHistoria.tsx. Confirmar que FALLA
+- [X] T040 [US3] COMMIT `RED: agregar tests del componente EstadoHistoria (falla)`
+- [X] T041 [US3] GREEN: implementar `EstadoHistoria` en web/src/features/sprints/EstadoHistoria.tsx — `npm test` en verde
+- [X] T042 [US3] COMMIT `GREEN: implementar el componente EstadoHistoria, test en verde`
+- [X] T043 [US3] RED: en web/src/features/sprints/index.test.tsx (o el archivo de integración de la pantalla de Sprints, según cómo haya quedado), test de integración: cada historia del Sprint activo muestra su control de estado; al iniciar/completar se reflejan el estado nuevo y la fecha de finalización; ante un rechazo se muestra el mensaje y la lista queda como estaba; con un 409 se ve el aviso de recargar y reintentar. Confirmar que FALLA
+- [X] T044 [US3] COMMIT `RED: agregar test de integración del cambio de estado en pantalla (falla)`
+- [X] T045 [US3] GREEN: integrar `EstadoHistoria` en la lista de historias de la pantalla de Sprints, refrescando la lista tras un 200; estilos en los `.css` existentes de la feature — `npm test` en verde
+- [X] T046 [US3] COMMIT `GREEN: integrar el cambio de estado en la pantalla del Sprint, test en verde`
+- [X] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/027-hu-11-estado-historia/quickstart.md — Validado a mano con la API real y npm run dev: el Sprint Activo muestra Iniciar en cada historia Nueva; Iniciar la pasa a En progreso y ofrece Completar; Completar muestra 'Completada el 2026-11-01' sin botones; al cerrar el Sprint, la completada queda en el Finalizado con su fecha y sin botones, y la no completada vuelve al Product Backlog. npm run lint (oxlint), npm test (278) y npm run build sin errores
 
 **Checkpoint**: la sub-issue de Frontend de HU-11 queda lista para cerrarse.
 
