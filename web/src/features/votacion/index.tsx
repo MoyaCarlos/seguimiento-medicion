@@ -96,6 +96,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
     }
   }
 
+  const scrumMaster = actor !== undefined && esScrumMaster(actor) ? actor : undefined
   const miVoto = votacion?.integrantes.find((voto) => voto.usuario_id === actorId)?.valor ?? null
   const puedeVotar = votacion !== null && !estaRevelada(votacion) && actor !== undefined
 
@@ -145,17 +146,17 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
       {sinVotacion && (
         <div className="votacion-acciones">
           <p>La historia todavía no tiene votación</p>
-          {esScrumMaster(actor) ? (
+          {scrumMaster && (
             <Button
               type="button"
               disabled={enviando}
-              onClick={() => ejecutar(() => iniciarVotacion(historiaId, actor!.id))}
+              onClick={() => ejecutar(() => iniciarVotacion(historiaId, scrumMaster.id))}
             >
               Iniciar votación
             </Button>
-          ) : (
-            <p>Solo el Scrum Master puede iniciar la votación</p>
           )}
+          {actor && !scrumMaster && <p>Solo el Scrum Master puede iniciar la votación</p>}
+          {!actor && integrantes?.length ? <p>Elegí quién actúa para iniciar la votación</p> : null}
         </div>
       )}
 
@@ -172,12 +173,12 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               <p>Registrar la estimación acordada se hace en otra historia (HU-14).</p>
             </>
           )}
-          {esScrumMaster(actor) && !estaRevelada(votacion) && (
+          {scrumMaster && !estaRevelada(votacion) && (
             <div className="votacion-acciones">
               <Button
                 type="button"
-                disabled={enviando || !puedeRevelar(votacion, actor)}
-                onClick={() => ejecutar(() => revelarVotacion(historiaId, actor!.id))}
+                disabled={enviando || !puedeRevelar(votacion, scrumMaster)}
+                onClick={() => ejecutar(() => revelarVotacion(historiaId, scrumMaster.id))}
               >
                 Revelar
               </Button>
