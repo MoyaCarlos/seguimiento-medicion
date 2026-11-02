@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router'
+import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { consultarVotacion, listarIntegrantes, votar } from './api'
+import { consultarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
 import { Cartas } from './Cartas'
 import { mensajeDeError } from './errores'
 import { Integrantes } from './Integrantes'
-import { estaRevelada, type Integrante, type Votacion } from './votacion'
+import { Resultado } from './Resultado'
+import { estaRevelada, faltanPorVotar, puedeRevelar, esScrumMaster, type Integrante, type Votacion } from './votacion'
 import './votacion.css'
 
 export function Component() {
@@ -134,6 +136,26 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           {!estaRevelada(votacion) && actor === undefined && integrantes?.length ? (
             <p>Elegí quién actúa para votar</p>
           ) : null}
+          {estaRevelada(votacion) && (
+            <>
+              <Resultado promedio={votacion.promedio} />
+              <p>Registrar la estimación acordada se hace en otra historia (HU-14).</p>
+            </>
+          )}
+          {esScrumMaster(actor) && !estaRevelada(votacion) && (
+            <div className="votacion-acciones">
+              <Button
+                type="button"
+                disabled={enviando || !puedeRevelar(votacion, actor)}
+                onClick={() => ejecutar(() => revelarVotacion(historiaId, actor!.id))}
+              >
+                Revelar
+              </Button>
+              {faltanPorVotar(votacion).length > 0 && (
+                <p>Falta votar: {faltanPorVotar(votacion).map((voto) => voto.nombre).join(', ')}</p>
+              )}
+            </div>
+          )}
           {puedeVotar && (
             <Cartas
               seleccionada={miVoto}
