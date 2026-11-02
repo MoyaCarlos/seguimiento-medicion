@@ -22,5 +22,9 @@ export async function listarIntegrantes(proyectoId: string): Promise<Integrante[
   return integrantes.map(({ id, nombre, rol }) => ({ id, nombre, rol }))
 }
 
-export const obtenerHistoria = (_proyectoId: string, _historiaId: number): Promise<HistoriaResumen | null> =>
-  Promise.resolve(null)
+// GET /backlog/{id} no existe todavía (issue #222): se busca en el listado del proyecto,
+// que solo trae historias sin Sprint. Reemplazar solo esta función cuando exista.
+export async function obtenerHistoria(proyectoId: string, historiaId: number): Promise<HistoriaResumen | null> {
+  const historias = await get<HistoriaResumen[]>(`/projects/${proyectoId}/backlog`)
+  return historias.find((historia) => historia.id === historiaId) ?? null
+}
