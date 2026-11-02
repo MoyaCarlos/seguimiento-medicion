@@ -97,6 +97,10 @@
 - [ ] T029 Validar en el navegador la tabla de `specs/029-hu-07-frontend/quickstart.md`, confirmar que el comando de arranque es correcto, cronometrar una carga (SC-001: menos de 1 minuto) y registrar el resultado. Hecho, salvo cronometrar la carga con una persona
 - [X] T030 Marcar el avance y actualizar el Status de `specs/029-hu-07-frontend/spec.md`
 - [X] T031 COMMIT `docs: registrar la validación del frontend de HU-07 (Issue #63)`
+- [X] T032 [US1] Arreglo de la revisión: deshabilitar "Registrar horas" mientras se envía una carga en `web/src/features/sprints/EsfuerzoHistoria.tsx`, para no duplicarla al cerrar y reabrir el formulario (FR-009), con su RED y su GREEN
+- [X] T033 Arreglo de la revisión: limitar el ancho de la lista de integrantes y darle estilo de foco en `web/src/features/sprints/sprints.css`
+- [X] T034 [US3] Agregar la prueba de la reconsulta fallida tras guardar en `web/src/features/sprints/EsfuerzoHistoria.test.tsx`
+- [ ] T035 Registrar como issue `bug` la inestabilidad de las pruebas de `backlog` y de `rutas.test.tsx` con la máquina cargada (también en `main`)
 
 ---
 
