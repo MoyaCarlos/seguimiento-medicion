@@ -339,3 +339,28 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
     expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
   })
 })
+
+describe('Pantalla de votación - mantenerla al día (US4)', () => {
+  it('US4.2: Given que otro integrante votó, When pulso Actualizar, Then se vuelve a consultar y se refleja su voto', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy())
+
+    servidor.votos = { 2: 8 }
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('Oculto')).toBeTruthy())
+    expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
+  })
+
+  it('US4.4: Given que la consulta falló por falta de conexión, When pulso Actualizar y el servidor responde, Then se muestra la votación y desaparece el aviso', async () => {
+    consultarMock.mockRejectedValueOnce(new ConnectionError())
+    abrir()
+    expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+
+    expect(await screen.findByRole('listitem', { name: 'Beta Uno' })).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
