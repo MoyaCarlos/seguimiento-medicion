@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { SprintBacklog } from './SprintBacklog'
 import type { HistoriaDeSprint } from './sprint'
@@ -133,5 +134,79 @@ describe('SprintBacklog', () => {
 
     expect(screen.queryByText('Recuperar clave')).toBeNull()
     expect(screen.getByText('Del Sprint nuevo')).toBeTruthy()
+  })
+})
+
+describe('SprintBacklog con cambio de estado', () => {
+  const simularEstado = (respuestaPut: Response) => {
+    const simulado = vi.fn((ruta: string, opciones?: RequestInit) =>
+      Promise.resolve(
+        opciones?.method === 'PUT' ? respuestaPut : respuesta(200, historias),
+      ),
+    )
+    vi.stubGlobal('fetch', simulado)
+    return simulado
+  }
+
+  it('US3.1: con permiteCambiarEstado muestra las acciones de cada historia que las admite', async () => {
+    simularEstado(respuesta(200, {}))
+
+    render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.getAllByRole('button', { name: 'Iniciar' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Completar' })).toHaveLength(1)
+  })
+
+  it('US3.1: por defecto no muestra ninguna acción', async () => {
+    simularEstado(respuesta(200, {}))
+
+    render(<SprintBacklog sprintId={4} />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('US3.1: iniciar una historia refleja el estado "En progreso" en la lista', async () => {
+    const fetchSimulado = simularEstado(
+      respuesta(200, { ...historias[1], estado: 'En progreso' }),
+    )
+
+    render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
+    await screen.findByText('Iniciar sesión')
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    const item = (await screen.findAllByRole('listitem'))[1]
+    expect(await within(item).findByRole('button', { name: 'Completar' })).toBeTruthy()
+    expect(item.textContent).toContain('En progreso')
+    expect(fetchSimulado.mock.calls.find(([, o]) => o?.method === 'PUT')?.[0]).toBe('/backlog/1/estado')
+  })
+
+  it('US3.2: completar una historia muestra "Completada el AAAA-MM-DD" y quita la acción', async () => {
+    simularEstado(
+      respuesta(200, { ...historias[0], estado: 'Completada', fecha_finalizacion: '2026-10-29' }),
+    )
+
+    render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
+    await screen.findByText('Recuperar clave')
+    await userEvent.click(screen.getByRole('button', { name: 'Completar' }))
+
+    const item = (await screen.findAllByRole('listitem'))[0]
+    expect(await within(item).findByText('Completada el 2026-10-29')).toBeTruthy()
+    expect(within(item).queryByRole('button')).toBeNull()
+  })
+
+  it('US3.7: ante un 409 deja la lista como estaba y muestra el aviso de recargar', async () => {
+    const mensaje = 'la historia cambió de estado mientras tanto: recargá y volvé a intentar'
+    simularEstado(respuesta(409, { mensaje }))
+
+    render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
+    await screen.findByText('Iniciar sesión')
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
+    const item = screen.getAllByRole('listitem')[1]
+    expect(item.textContent).toContain('Nueva')
+    expect(within(item).getByRole('button', { name: 'Iniciar' })).toBeTruthy()
   })
 })
