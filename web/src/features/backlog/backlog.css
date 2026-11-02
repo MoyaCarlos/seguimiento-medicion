@@ -111,7 +111,6 @@
   line-height: 1.6;
   margin: 0;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
 }
 
 .backlog-item__criterios {
@@ -127,11 +126,70 @@
   text-transform: uppercase;
 }
 
-.backlog-item__criterios p {
+.backlog-item__criterios > p {
   line-height: 1.6;
   margin: 0;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.backlog .markdown {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.backlog .markdown > :first-child {
+  margin-top: 0;
+}
+
+.backlog .markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.backlog .markdown p,
+.backlog .markdown ul,
+.backlog .markdown ol,
+.backlog .markdown pre,
+.backlog .markdown blockquote {
+  margin: 0.5rem 0;
+}
+
+.backlog .markdown ul,
+.backlog .markdown ol {
+  padding-left: 1.4rem;
+}
+
+.backlog .markdown li + li {
+  margin-top: 0.2rem;
+}
+
+.backlog .markdown code {
+  background: rgb(128 103 183 / 10%);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.3rem;
+}
+
+.backlog .markdown pre {
+  background: rgb(30 25 45 / 90%);
+  border-radius: 0.5rem;
+  color: #f5f2ff;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.backlog .markdown pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.backlog .markdown a {
+  color: var(--lilac-dark);
+  overflow-wrap: anywhere;
+}
+
+.backlog .markdown img {
+  height: auto;
+  max-width: 100%;
 }
 
 .backlog-edicion {

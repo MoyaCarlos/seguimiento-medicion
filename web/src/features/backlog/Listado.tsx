@@ -9,6 +9,7 @@ import { AsignarASprint } from './AsignarASprint'
 import { Edicion } from './Edicion'
 import { mensajeDeError } from './edicionHistoria'
 import type { Historia } from './historia'
+import { Markdown } from './Markdown'
 import { etiquetaPrioridad } from './opciones'
 import './backlog.css'
 
@@ -153,11 +154,17 @@ function PantallaBacklog({ id }: { id: string }) {
                 </span>
               </p>
 
-              <p className="backlog-item__descripcion">{historia.descripcion}</p>
+              <div className="backlog-item__descripcion">
+                <Markdown texto={historia.descripcion} />
+              </div>
 
               <div className="backlog-item__criterios">
                 <h3>Criterios de aceptación</h3>
-                <p>{historia.criterios_aceptacion ?? 'Sin criterios de aceptación'}</p>
+                {historia.criterios_aceptacion === null ? (
+                  <p>Sin criterios de aceptación</p>
+                ) : (
+                  <Markdown texto={historia.criterios_aceptacion} />
+                )}
               </div>
 
               {editandoId === historia.id && (
