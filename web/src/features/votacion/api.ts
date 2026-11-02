@@ -1,5 +1,5 @@
 import { get, post } from '../../compartido/api/client'
-import type { Integrante, Rol, Votacion } from './votacion'
+import type { HistoriaResumen, Integrante, Rol, Votacion } from './votacion'
 
 type IntegranteDeApi = { id: number; nombre: string; rol: Rol }
 
@@ -21,3 +21,6 @@ export async function listarIntegrantes(proyectoId: string): Promise<Integrante[
   const integrantes = await get<IntegranteDeApi[]>(`/projects/${proyectoId}/members`)
   return integrantes.map(({ id, nombre, rol }) => ({ id, nombre, rol }))
 }
+
+export const obtenerHistoria = (_proyectoId: string, _historiaId: number): Promise<HistoriaResumen | null> =>
+  Promise.resolve(null)

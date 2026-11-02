@@ -3,6 +3,7 @@ import {
   consultarVotacion,
   iniciarVotacion,
   listarIntegrantes,
+  obtenerHistoria,
   revelarVotacion,
   votar,
 } from './api'
@@ -104,5 +105,31 @@ describe('cliente de la votación', () => {
       status: 403,
       message: 'solo el Scrum Master del proyecto puede hacerlo',
     })
+  })
+
+  it('obtenerHistoria busca la historia en GET /projects/{id}/backlog', async () => {
+    const fetchMock = responder([
+      { id: 1, titulo: 'Otra', descripcion: 'x', prioridad: 'S', estimacion_sp: null },
+      { id: 4, titulo: 'Pagar la tasa', descripcion: 'Pagar con tarjeta', prioridad: 'M', estimacion_sp: 8, valor_negocio: 13 },
+    ])
+
+    await expect(obtenerHistoria('25', 4)).resolves.toMatchObject({
+      id: 4,
+      titulo: 'Pagar la tasa',
+      descripcion: 'Pagar con tarjeta',
+      prioridad: 'M',
+      estimacion_sp: 8,
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/25/backlog',
+      expect.objectContaining({ method: 'GET' }),
+    )
+  })
+
+  it('obtenerHistoria devuelve null si la historia no figura en el listado', async () => {
+    responder([{ id: 1, titulo: 'Otra', descripcion: 'x', prioridad: 'S', estimacion_sp: null }])
+
+    await expect(obtenerHistoria('25', 4)).resolves.toBeNull()
   })
 })

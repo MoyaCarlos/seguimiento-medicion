@@ -4,6 +4,16 @@ export type Carta = 1 | 2 | 3 | 5 | 8 | 13 | 21
 
 export const CARTAS: Carta[] = [1, 2, 3, 5, 8, 13, 21]
 
+export type Prioridad = 'M' | 'S' | 'C' | 'W'
+
+export type HistoriaResumen = {
+  id: number
+  titulo: string
+  descripcion: string
+  prioridad: Prioridad
+  estimacion_sp: number | null
+}
+
 export type Integrante = { id: number; nombre: string; rol: Rol }
 
 export type VotoDeIntegrante = {
