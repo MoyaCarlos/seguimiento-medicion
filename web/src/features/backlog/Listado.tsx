@@ -3,7 +3,9 @@ import { Link, useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { listarBacklog } from './api'
+import { listarBacklog, listarSprintsDelProyecto } from './api'
+import type { SprintParaAsignar } from './api'
+import { AsignarASprint } from './AsignarASprint'
 import { Edicion } from './Edicion'
 import { mensajeDeError } from './edicionHistoria'
 import type { Historia } from './historia'
@@ -22,6 +24,9 @@ function PantallaBacklog({ id }: { id: string }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [editandoId, setEditandoId] = useState<number | null>(null)
+  const [asignandoId, setAsignandoId] = useState<number | null>(null)
+  const [sprints, setSprints] = useState<SprintParaAsignar[] | null>(null)
+  const [errorSprints, setErrorSprints] = useState('')
   const [aviso, setAviso] = useState('')
 
   useEffect(() => {
@@ -42,6 +47,28 @@ function PantallaBacklog({ id }: { id: string }) {
       vigente = false
     }
   }, [id])
+
+  useEffect(() => {
+    let vigente = true
+
+    listarSprintsDelProyecto(id)
+      .then((datos) => {
+        if (vigente) setSprints(datos)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setErrorSprints(mensajeDeError(causa))
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [id])
+
+  function asignada(historia: Historia, sprintId: number) {
+    setHistorias((actuales) => actuales.filter((actual) => actual.id !== historia.id))
+    setAsignandoId(null)
+    setAviso(`Historia asignada al Sprint #${sprintId}`)
+  }
 
   function guardar(actualizada: Historia) {
     setHistorias((actuales) =>
@@ -87,16 +114,30 @@ function PantallaBacklog({ id }: { id: string }) {
                   <p className="backlog-item__meta">Historia #{historia.id}</p>
                   <h2 id={`historia-${historia.id}`}>{historia.titulo}</h2>
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    setAviso('')
-                    setEditandoId(historia.id)
-                  }}
-                >
-                  Editar
-                </Button>
+                <div className="backlog-acciones">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setAviso('')
+                      setAsignandoId(null)
+                      setEditandoId(historia.id)
+                    }}
+                  >
+                    Editar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      setAviso('')
+                      setEditandoId(null)
+                      setAsignandoId(historia.id)
+                    }}
+                  >
+                    Asignar a Sprint
+                  </Button>
+                </div>
               </div>
 
               <p className="backlog-item__datos">
@@ -132,6 +173,17 @@ function PantallaBacklog({ id }: { id: string }) {
                   historia={historia}
                   onGuardada={guardar}
                   onCancelar={() => setEditandoId(null)}
+                />
+              )}
+
+              {asignandoId === historia.id && (
+                <AsignarASprint
+                  key={historia.id}
+                  historia={historia}
+                  sprints={sprints}
+                  errorSprints={errorSprints}
+                  onAsignada={asignada}
+                  onCancelar={() => setAsignandoId(null)}
                 />
               )}
             </article>

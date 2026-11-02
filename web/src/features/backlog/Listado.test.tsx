@@ -50,17 +50,34 @@ const MARKDOWN: Historia = {
 
 const RUTA_LISTADO = /^\/projects\/([^/]+)\/backlog$/
 const RUTA_EDICION = /^\/backlog\/(\d+)$/
+const RUTA_SPRINTS = /^\/projects\/([^/]+)\/sprints$/
+const RUTA_ASIGNACION = /^\/backlog\/(\d+)\/sprint$/
 
 type ListadoApi = (proyecto: string) => Response | Promise<Response>
 type EdicionApi = (id: number, opciones?: RequestInit) => Response | Promise<Response>
+type SprintsApi = (proyecto: string) => Response | Promise<Response>
+type AsignacionApi = (id: number, opciones?: RequestInit) => Response | Promise<Response>
 
-function simularApi(listado: ListadoApi, edicion?: EdicionApi) {
+function simularApi(
+  listado: ListadoApi,
+  edicion?: EdicionApi,
+  sprints?: SprintsApi,
+  asignacion?: AsignacionApi,
+) {
   const fetchSimulado = vi.fn((ruta: string, opciones?: RequestInit) => {
     const coincideListado = RUTA_LISTADO.exec(ruta)
     if (coincideListado) return Promise.resolve(listado(coincideListado[1]))
 
     const coincideEdicion = RUTA_EDICION.exec(ruta)
     if (coincideEdicion && edicion) return Promise.resolve(edicion(Number(coincideEdicion[1]), opciones))
+
+    const coincideSprints = RUTA_SPRINTS.exec(ruta)
+    if (coincideSprints && sprints) return Promise.resolve(sprints(coincideSprints[1]))
+
+    const coincideAsignacion = RUTA_ASIGNACION.exec(ruta)
+    if (coincideAsignacion && asignacion) {
+      return Promise.resolve(asignacion(Number(coincideAsignacion[1]), opciones))
+    }
 
     return Promise.resolve(respuesta(404, { mensaje: 'no encontrado' }))
   })
@@ -409,5 +426,142 @@ describe('casos límite del listado y la edición', () => {
 
     expect(await screen.findByText('Historia actualizada')).toBeTruthy()
     expect(fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))).toHaveLength(2)
+  })
+})
+
+const SPRINTS = [
+  { id: 1, estado: 'Finalizado', sprint_goal: 'Sprint viejo' },
+  { id: 2, estado: 'Pendiente', sprint_goal: 'Login' },
+  { id: 3, estado: 'Activo' },
+]
+
+const conSprints = (...sprints: unknown[]) => () => respuesta(200, sprints)
+
+const abrirAsignacion = (titulo: string) =>
+  userEvent.click(within(articuloDe(titulo)).getByRole('button', { name: 'Asignar a Sprint' }))
+
+const llamadasA = (fetchSimulado: ReturnType<typeof vi.fn>, ruta: RegExp) =>
+  fetchSimulado.mock.calls.filter(([url]) => ruta.test(url))
+
+describe('asignación de una historia a un Sprint (US3)', () => {
+  it('US3.1: al asignar envía el sprint_id, la historia sale del listado y se avisa el Sprint', async () => {
+    const fetchSimulado = simularApi(
+      conHistorias(MUST, SHOULD),
+      undefined,
+      conSprints(...SPRINTS),
+      () => respuesta(200, { ...MUST, sprint_id: 2 }),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+    await user.selectOptions(await screen.findByLabelText('Sprint'), '2')
+    await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect((await screen.findByRole('status')).textContent).toBe('Historia asignada al Sprint #2')
+    const [[ruta, opciones]] = llamadasA(fetchSimulado, RUTA_ASIGNACION)
+    expect(ruta).toBe('/backlog/3/sprint')
+    expect((opciones as RequestInit).method).toBe('PUT')
+    expect((opciones as RequestInit).body).toBe(JSON.stringify({ sprint_id: 2 }))
+    expect(screen.queryByRole('heading', { name: MUST.titulo })).toBeNull()
+    expect(
+      articulos().map((articulo) => within(articulo).getByRole('heading', { level: 2 }).textContent),
+    ).toEqual([SHOULD.titulo])
+    expect(screen.queryByLabelText('Sprint')).toBeNull()
+  })
+
+  it('US3.1b: carga los Sprints del proyecto junto con el backlog y ofrece solo Pendientes y Activos', async () => {
+    const fetchSimulado = simularApi(conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+
+    const opciones = within(await screen.findByLabelText('Sprint')).getAllByRole('option')
+    expect(opciones.map((opcion) => opcion.textContent)).toEqual([
+      'Elegí un Sprint',
+      'Sprint #2 (Pendiente) - Login',
+      'Sprint #3 (Activo)',
+    ])
+    expect(llamadasA(fetchSimulado, RUTA_SPRINTS)).toHaveLength(1)
+    expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/backlog')
+  })
+
+  it('US3.2: si la API rechaza la asignación el listado queda igual y se ve su mensaje', async () => {
+    const mensaje = 'la historia debe tener estimación para entrar a un Sprint'
+    simularApi(
+      conHistorias(MUST, SHOULD),
+      undefined,
+      conSprints(...SPRINTS),
+      () => respuesta(400, { campo: 'estimacion_sp', mensaje }),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: SHOULD.titulo })
+
+    await abrirAsignacion(SHOULD.titulo)
+    await user.selectOptions(await screen.findByLabelText('Sprint'), '3')
+    await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
+    expect(articulos()).toHaveLength(2)
+    expect(screen.queryByText(/Historia asignada/)).toBeNull()
+    expect(screen.getByLabelText('Sprint')).toBeTruthy()
+  })
+
+  it('US3.3: sin elegir Sprint avisa y no llama a la API', async () => {
+    const fetchSimulado = simularApi(conHistorias(MUST), undefined, conSprints(...SPRINTS), () =>
+      respuesta(200, MUST),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+    await screen.findByLabelText('Sprint')
+    await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Elegí un Sprint')
+    expect(llamadasA(fetchSimulado, RUTA_ASIGNACION)).toHaveLength(0)
+  })
+
+  it('US3.4: si no hay Sprints disponibles lo indica dentro del control', async () => {
+    simularApi(conHistorias(MUST), undefined, conSprints({ id: 1, estado: 'Finalizado' }))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+
+    expect(await screen.findByText('No hay Sprints disponibles para asignar')).toBeTruthy()
+    expect(screen.queryByLabelText('Sprint')).toBeNull()
+  })
+
+  it('US3.5: si fallan los Sprints el listado no cambia y el error se ve solo en el control de asignar', async () => {
+    simularApi(conHistorias(MUST), undefined, () => respuesta(500, { mensaje: 'error al listar Sprints' }))
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: MUST.titulo })).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText('Cargando…')).toBeNull())
+    expect(screen.queryByRole('alert')).toBeNull()
+
+    await abrirAsignacion(MUST.titulo)
+
+    expect(within(articuloDe(MUST.titulo)).getByRole('alert').textContent).toBe('error al listar Sprints')
+    expect(screen.queryByLabelText('Sprint')).toBeNull()
+  })
+
+  it('US3.6: cancelar cierra el control sin llamar a la API', async () => {
+    const fetchSimulado = simularApi(conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+    await screen.findByLabelText('Sprint')
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByLabelText('Sprint')).toBeNull()
+    expect(llamadasA(fetchSimulado, RUTA_ASIGNACION)).toHaveLength(0)
   })
 })
