@@ -1,4 +1,4 @@
-import { get, post } from '../../compartido/api/client'
+import { get, post, put } from '../../compartido/api/client'
 import type { HistoriaDeSprint, Sprint } from './sprint'
 
 type DatosInicio = { sprint_goal: string; fecha_inicio: string; fecha_fin: string }
@@ -15,7 +15,5 @@ export const listarSprints = (proyectoId: string) =>
 export const consultarSprintBacklog = (sprintId: number) =>
   get<HistoriaDeSprint[]>(`/sprints/${sprintId}/backlog`)
 
-export const cambiarEstadoHistoria = async (
-  _historiaId: number,
-  _estado: 'En progreso' | 'Completada',
-) => {}
+export const cambiarEstadoHistoria = (historiaId: number, estado: 'En progreso' | 'Completada') =>
+  put<HistoriaDeSprint>(`/backlog/${historiaId}/estado`, { estado })
