@@ -31,7 +31,7 @@ description: "Tareas del despliegue en Render (Issue #139): infraestructura y do
 
 **Independent Test**: revisión del README contra FR-006 a FR-012.
 
-- [X] T005 [US1] [US3] Agregar la sección "Despliegue en Render" en README.md, después de "Correr con Docker": URL, despliegue automático tras los checks, rutas que no redeployan y aclaración de que cualquier otro archivo (incluido `render.yaml`) sí redeploya, base vacía en cada deploy o reinicio, sueño a los 15 minutos con la recomendación de abrir la URL antes de una demo, `DEMO_HABILITADO` y el botón de datos de prueba (#144), no mergear en la hora previa a la presentación del 16-nov, y que `render.yaml` es solo referencia (FR-006..FR-012)
+- [X] T005 [US1] [US3] Agregar la sección "Despliegue en Render" en README.md, después de "Correr con Docker": URL, despliegue automático tras los checks, rutas que no redeployan (incluido `render.yaml`) y aclaración de que cualquier otro archivo sí redeploya, base vacía en cada deploy o reinicio, sueño a los 15 minutos con la recomendación de abrir la URL antes de una demo, `DEMO_HABILITADO` y el botón de datos de prueba (#144), no mergear en la hora previa a la presentación del 16-nov, y que `render.yaml` es solo referencia (FR-006..FR-012)
 - [X] T006 [US1] [US3] Revisar que la sección responde las 7 preguntas de SC-002 y que no contradice a "Correr con Docker"
 - [X] T007 [US1] [US3] COMMIT `Documentar el despliegue en Render en el README` (solo README.md)
 
