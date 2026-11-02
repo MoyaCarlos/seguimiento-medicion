@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
-import { consultarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
+import { consultarVotacion, iniciarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
 import { Component } from './index'
 import type { Integrante, Votacion } from './votacion'
 
@@ -18,6 +18,7 @@ const INTEGRANTES: Integrante[] = [
 const consultarMock = vi.mocked(consultarVotacion)
 const votarMock = vi.mocked(votar)
 const revelarMock = vi.mocked(revelarVotacion)
+const iniciarMock = vi.mocked(iniciarVotacion)
 const integrantesMock = vi.mocked(listarIntegrantes)
 
 type Servidor = { votos: Record<number, number>; revelada: boolean }
@@ -258,5 +259,83 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
 
     expect(await screen.findByText(/registrar la estimación acordada/i)).toBeTruthy()
     expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+  })
+})
+
+describe('Pantalla de votación - iniciar la votación (US2)', () => {
+  const SIN_VOTACION = new ApiError(404, 'la historia no tiene votación iniciada')
+  let iniciada: boolean
+
+  beforeEach(() => {
+    iniciada = false
+    consultarMock.mockImplementation(async (_historia, consultante) => {
+      if (!iniciada) throw SIN_VOTACION
+      return vista(consultante)
+    })
+    iniciarMock.mockImplementation(async (_historia, usuario) => {
+      iniciada = true
+      return vista(usuario)
+    })
+  })
+
+  it('US2.0: Given una historia sin votación, When se abre la pantalla, Then se informa que no hay votación, sin cartas ni error', async () => {
+    abrir()
+
+    expect(await screen.findByText('La historia todavía no tiene votación')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: '8' })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('US2.1: Given el Scrum Master elegido, When pulso Iniciar votación, Then aparece la ronda 1 con todos los integrantes en "Falta"', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
+
+    expect(await screen.findByText('Ronda 1')).toBeTruthy()
+    expect(iniciarMock).toHaveBeenCalledWith(3, 1)
+    expect(within(fila('Beta Uno')).getByText('Falta')).toBeTruthy()
+    expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy()
+    expect(within(fila('Beta Tres')).getByText('Falta')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
+  })
+
+  it('US2.2: Given un Product Builder elegido, When la historia no tiene votación, Then no hay botón Iniciar y se indica que solo lo hace el Scrum Master', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    expect(await screen.findByText('Solo el Scrum Master puede iniciar la votación')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
+  })
+
+  it('US2.4: Given un inicio en curso, When pulso Iniciar votación otra vez, Then se inicia una sola vez', async () => {
+    iniciarMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar votación' }))
+
+    expect(iniciarMock).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Iniciar votación' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('US2.5: Given que el servidor rechaza el inicio, When ocurre el error, Then se muestra su mensaje', async () => {
+    iniciarMock.mockRejectedValue(new ApiError(409, 'la historia ya tiene una votación'))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('la historia ya tiene una votación')
+  })
+
+  it('Given una historia inexistente, When se abre la pantalla, Then se muestra "historia no encontrada" y no se ofrece iniciar', async () => {
+    consultarMock.mockRejectedValue(new ApiError(404, 'historia no encontrada'))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    expect((await screen.findByRole('alert')).textContent).toBe('historia no encontrada')
+    expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
   })
 })
