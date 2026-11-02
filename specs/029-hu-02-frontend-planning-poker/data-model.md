@@ -16,4 +16,4 @@ Sin cambios de esquema ni de base: esta spec no define tablas. Las rondas y voto
 - `estaRevelada(votacion)`: `revelada_en !== null`.
 - `faltanPorVotar(votacion)`: integrantes con `ya_voto === false`.
 - `puedeRevelar(votacion, actor)`: actor es Scrum Master, ronda sin revelar y `faltanPorVotar` vacío.
-- `textoDeVoto(integrante, actorId, revelada)`: valor propio o revelado; «Oculto» si votó y es ajeno; «Falta» si no votó.
+- `textoDeVoto(voto)`: «Falta» si no votó; el valor si el backend lo envía (voto propio o ronda revelada); «Oculto» si votó y el valor no viene. El enmascarado lo hace el backend, la pantalla no lo recalcula.

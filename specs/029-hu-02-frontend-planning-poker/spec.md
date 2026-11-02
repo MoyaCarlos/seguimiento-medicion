@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR
 
 **Input**: User description: "HU-02 Frontend (sub-issue #48): pantalla de Planning Poker. El Scrum Master inicia la votación de una historia del Product Backlog; cada integrante elige una carta Fibonacci (1, 2, 3, 5, 8, 13, 21) en secreto; la pantalla muestra quién votó y quién falta (votos de otros «Oculto»); el Scrum Master revela cuando votaron todos y se muestran todos los valores, el promedio exacto y la carta sugerida. Consume la API de la spec 012. Sin inicio de sesión: se elige quién actúa entre los integrantes del proyecto. Votar no modifica Story Points (HU-14 fuera de alcance). Solo frontend (`web/`)."
 
