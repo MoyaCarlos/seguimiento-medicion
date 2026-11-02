@@ -342,3 +342,47 @@ func (f *fakeAsignacionRepository) llamadasAAsignar() int {
 	defer f.mu.Unlock()
 	return f.asignaciones
 }
+
+// llamadaCambioEstado registra los argumentos de una llamada a CambiarEstado.
+type llamadaCambioEstado struct {
+	desde, hacia domain.Estado
+	fecha        *time.Time
+}
+
+// fakeCambioEstadoRepository simula el UPDATE condicional del repositorio real:
+// el mutex hace indivisible "si sigue en desde, pasarla a hacia".
+type fakeCambioEstadoRepository struct {
+	mu        sync.Mutex
+	historias map[int64]domain.BacklogItem
+	llamadas  []llamadaCambioEstado
+}
+
+func (f *fakeCambioEstadoRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeCambioEstadoRepository) CambiarEstado(_ context.Context, id int64, desde, hacia domain.Estado, fecha *time.Time) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.llamadas = append(f.llamadas, llamadaCambioEstado{desde: desde, hacia: hacia, fecha: fecha})
+	h := f.historias[id]
+	if h.Estado != desde {
+		return domain.ErrConflictoEstadoHistoria
+	}
+	h.Estado = hacia
+	h.FechaFinalizacion = fecha
+	f.historias[id] = h
+	return nil
+}
+
+func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.llamadas)
+}
