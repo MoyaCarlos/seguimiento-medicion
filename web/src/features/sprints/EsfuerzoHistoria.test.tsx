@@ -165,6 +165,18 @@ describe('EsfuerzoHistoria: esfuerzo acumulado', () => {
     expect(botonRegistrar()).toBeTruthy()
   })
 
+  it('US3.4: si falla la reconsulta tras guardar, confirma la carga y avisa en lugar del total', async () => {
+    esfuerzoMock.mockResolvedValueOnce(CON_CARGAS).mockRejectedValue(new ApiError(500, 'error interno'))
+    render(<EsfuerzoHistoria historiaId={12} imputacion={imputacion} />)
+    await screen.findByText('Esfuerzo real: 5,5 h')
+
+    await guardarCarga()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('error interno')
+    expect(screen.getByText('Horas registradas')).toBeTruthy()
+    expect(screen.queryByText(/Esfuerzo real/)).toBeNull()
+  })
+
   it('US3.5: el detalle empieza plegado y al desplegarlo muestra cada carga en el orden de la API', async () => {
     esfuerzoMock.mockResolvedValue(CON_CARGAS)
     render(<EsfuerzoHistoria historiaId={12} />)
