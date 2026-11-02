@@ -63,3 +63,12 @@
 .votacion-integrante__voto {
   margin-left: auto;
 }
+
+.votacion-solo-lectores {
+  block-size: 1px;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+}
