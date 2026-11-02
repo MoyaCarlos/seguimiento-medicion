@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-02
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR.
 
 **Input**: User description: "HU-07 Frontend: imputación de horas trabajadas (sub-issue #63 de la HU-07, issue padre #7). El backend ya está en main (spec 019-hu-07-imputacion-horas: POST y GET /backlog/{id}/horas). Alcance: pantalla con formulario de registro de horas (integrante, fecha, actividad y horas) sobre historias del Sprint activo, mostrar los errores de validación que devuelve la API identificando el campo, y mostrar el esfuerzo total acumulado de cada historia. No hay login, por lo que hay que decidir en el clarify cómo se elige quién imputa las horas (propuesta del equipo: elegir al integrante de una lista). Sin cambios de backend ni de esquema."
 
@@ -110,7 +110,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** el total acumulado no da una cantidad exacta con dos decimales (por ejemplo, 61 minutos), **THEN** la pantalla **shall** redondearlo a dos decimales al mostrarlo (1,02 h).
 - **WHEN** se abre el formulario, **THEN** la fecha **shall** proponer el día de hoy o, si el Sprint ya pasó su fecha de fin, esa fecha de fin. La persona puede cambiarla.
 - **WHEN** una carga se guarda correctamente, **THEN** la pantalla **shall** vaciar actividad y horas y **shall** conservar integrante y fecha, para facilitar otra carga.
-- **WHEN** el Sprint se cierra desde esa misma pantalla, **THEN** la pantalla **shall** dejar de ofrecer el registro de horas en sus historias y **shall** seguir mostrando su total.
+- **WHEN** el Sprint se cierra desde esa misma pantalla, **THEN** la pantalla **shall** dejar de ofrecer el registro de horas y **shall** seguir mostrando el total de las historias que quedan en ese Sprint (las "Completada"). Las no completadas vuelven al Product Backlog (HU-05): salen de la tarjeta y su total no se ve hasta que se planifiquen en otro Sprint, aunque sus horas se conservan.
 
 ## Requirements *(mandatory)*
 

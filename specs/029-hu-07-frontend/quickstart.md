@@ -26,6 +26,10 @@ Todo tiene que quedar en verde, incluido `aislamiento.test.ts`.
 | 7 | Actividad válida y fecha de mañana | Error de la API junto a fecha | US2.4 |
 | 8 | Fecha de hoy y guardar | Confirmación; total `1,5 h`; se vacían actividad y horas; siguen integrante y fecha | US1.2, US1.3, US3.3 |
 | 9 | Guardar otra carga de `4` y elegir "Ver detalle" | Total `5,5 h`; se listan las dos cargas | US3.1, US3.5, US3.7 |
-| 10 | Cerrar el Sprint | Sin "Registrar horas" en sus historias; el total sigue visible | US1.4 |
+| 10 | Completar la historia (Iniciar y Completar) y cerrar el Sprint | Sin "Registrar horas"; el total sigue visible. Una historia no completada volvería al backlog y saldría de la tarjeta | US1.4 |
 | 11 | Dejar el formulario abierto en otra pestaña, cerrar el Sprint desde esta y guardar allá | Aviso general: solo se imputan horas a historias del Sprint activo | US2.6 |
 | 12 | Recargar la página | Los totales siguen igual | SC-005 de la spec 019 |
+
+## Resultado de la validación (2026-11-02)
+
+Los 12 pasos pasaron en Chrome con un script automatizado, contra el backend real (`go run ./cmd/api`, sirviendo `web/dist`) y una base temporal, sin errores de consola. Queda pendiente cronometrar una carga hecha por una persona (SC-001).
