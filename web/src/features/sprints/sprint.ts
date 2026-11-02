@@ -29,6 +29,7 @@ export type HistoriaDeSprint = {
   prioridad: 'M' | 'S' | 'C' | 'W'
   estado: 'Nueva' | 'En progreso' | 'Completada'
   estimacion_sp: number | null
+  fecha_finalizacion?: string | null
 }
 
 export const ETIQUETAS_PRIORIDAD: Record<HistoriaDeSprint['prioridad'], string> = {

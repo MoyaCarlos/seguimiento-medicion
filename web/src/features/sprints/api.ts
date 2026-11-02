@@ -14,3 +14,8 @@ export const listarSprints = (proyectoId: string) =>
 
 export const consultarSprintBacklog = (sprintId: number) =>
   get<HistoriaDeSprint[]>(`/sprints/${sprintId}/backlog`)
+
+export const cambiarEstadoHistoria = async (
+  _historiaId: number,
+  _estado: 'En progreso' | 'Completada',
+) => {}
