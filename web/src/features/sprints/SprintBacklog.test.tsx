@@ -139,7 +139,7 @@ describe('SprintBacklog', () => {
 
 describe('SprintBacklog con cambio de estado', () => {
   const simularEstado = (respuestaPut: Response) => {
-    const simulado = vi.fn((ruta: string, opciones?: RequestInit) =>
+    const simulado = vi.fn((_ruta: string, opciones?: RequestInit) =>
       Promise.resolve(
         opciones?.method === 'PUT' ? respuestaPut : respuesta(200, historias),
       ),
