@@ -21,6 +21,7 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
   const [consulta, setConsulta] = useState(0)
   const [detalleAbierto, setDetalleAbierto] = useState(false)
   const [formularioAbierto, setFormularioAbierto] = useState(false)
+  const [enviando, setEnviando] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -78,6 +79,7 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
           type="button"
           variant="secondary"
           aria-expanded={formularioAbierto}
+          disabled={enviando}
           onClick={() => setFormularioAbierto((actual) => !actual)}
         >
           Registrar horas
@@ -89,6 +91,7 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
           proyectoId={imputacion.proyectoId}
           fechaFin={imputacion.fechaFin}
           alRegistrar={() => setConsulta((actual) => actual + 1)}
+          alCambiarEnvio={setEnviando}
         />
       )}
     </div>

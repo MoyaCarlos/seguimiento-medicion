@@ -14,9 +14,10 @@ type Props = {
   proyectoId: number
   fechaFin?: string | null
   alRegistrar: () => void
+  alCambiarEnvio?: (enviando: boolean) => void
 }
 
-export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar }: Props) {
+export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar, alCambiarEnvio }: Props) {
   const [integrantes, setIntegrantes] = useState<IntegranteDeProyecto[]>()
   const [integrante, setIntegrante] = useState('')
   const [fecha, setFecha] = useState(() => fechaPropuesta(new Date(), fechaFin))
@@ -57,6 +58,7 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar 
     }
     setErrores({})
     setEnviando(true)
+    alCambiarEnvio?.(true)
     try {
       await imputarHoras(historiaId, {
         integrante_id: Number(integrante),
@@ -74,6 +76,7 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar 
       else setAviso(clasificado.aviso)
     } finally {
       setEnviando(false)
+      alCambiarEnvio?.(false)
     }
   }
 
