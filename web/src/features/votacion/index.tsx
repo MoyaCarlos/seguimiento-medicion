@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
@@ -29,6 +29,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const [errorDeCarga, setErrorDeCarga] = useState('')
   const [errorDeAccion, setErrorDeAccion] = useState('')
   const [recarga, setRecarga] = useState(0)
+  const envioEnCurso = useRef(false)
 
   const consulta = `${historiaId}/${actorId}/${recarga}`
   const cargando = cargadaPara !== consulta
@@ -82,7 +83,8 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
   }, [historiaId, actorId, consulta])
 
   async function ejecutar(accion: () => Promise<Votacion>) {
-    if (enviando) return
+    if (envioEnCurso.current) return
+    envioEnCurso.current = true
     setErrorDeAccion('')
     setEnviando(true)
     try {
@@ -92,6 +94,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
       setErrorDeAccion(mensajeDeError(causa))
       recargar()
     } finally {
+      envioEnCurso.current = false
       setEnviando(false)
     }
   }
