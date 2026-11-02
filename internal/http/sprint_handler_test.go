@@ -88,6 +88,51 @@ func TestSprintHandler_Crear_Exitoso(t *testing.T) {
 	}
 }
 
+func numeroDeLaRespuesta(t *testing.T, rec *httptest.ResponseRecorder) (id int64, numero int) {
+	t.Helper()
+	var resp struct {
+		ID     int64 `json:"id"`
+		Numero int   `json:"numero"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	return resp.ID, resp.Numero
+}
+
+func TestSprintHandler_NumeraPorProyectoYConservaElNumero(t *testing.T) {
+	handler, _, proyectos := nuevoSprintHandlerConProyectos(t)
+	otroProyecto := sembrarProyectoParaSprints(t, proyectos)
+	proyectoID := sembrarProyectoParaSprints(t, proyectos)
+	handler.Crear(httptest.NewRecorder(), peticionCrearSprint(cuerpoCrearSprint(otroProyecto)))
+
+	creado := httptest.NewRecorder()
+	handler.Crear(creado, peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+	idNum, numero := numeroDeLaRespuesta(t, creado)
+	if numero != 1 {
+		t.Fatalf("crear: se esperaba el número 1, se obtuvo %d (%s)", numero, creado.Body.String())
+	}
+
+	id := strconv.FormatInt(idNum, 10)
+	iniciado := httptest.NewRecorder()
+	handler.Iniciar(iniciado, peticionSprint(id, "iniciar", cuerpoIniciarValido))
+	if _, numero := numeroDeLaRespuesta(t, iniciado); numero != 1 {
+		t.Errorf("iniciar: se esperaba el número 1, se obtuvo %d (%s)", numero, iniciado.Body.String())
+	}
+
+	segundo := httptest.NewRecorder()
+	handler.Crear(segundo, peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+	if _, numero := numeroDeLaRespuesta(t, segundo); numero != 2 {
+		t.Errorf("crear el segundo: se esperaba el número 2, se obtuvo %d (%s)", numero, segundo.Body.String())
+	}
+
+	cerrado := httptest.NewRecorder()
+	handler.Cerrar(cerrado, peticionSprint(id, "cerrar", ""))
+	if _, numero := numeroDeLaRespuesta(t, cerrado); numero != 1 {
+		t.Errorf("cerrar: se esperaba el número 1, se obtuvo %d (%s)", numero, cerrado.Body.String())
+	}
+}
+
 func TestSprintHandler_Crear_ProyectoInexistente(t *testing.T) {
 	handler, _ := nuevoSprintHandlerDePrueba(t)
 	rec := httptest.NewRecorder()
