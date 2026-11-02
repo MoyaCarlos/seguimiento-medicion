@@ -1,16 +1,23 @@
-import type { Integrante, Votacion } from './votacion'
+import { get, post } from '../../compartido/api/client'
+import type { Integrante, Rol, Votacion } from './votacion'
 
-export const consultarVotacion = (_historiaId: number, _usuarioId?: number): Promise<Votacion> =>
-  Promise.reject(new Error('sin implementar'))
+type IntegranteDeApi = { id: number; nombre: string; rol: Rol }
 
-export const iniciarVotacion = (_historiaId: number, _usuarioId: number): Promise<Votacion> =>
-  Promise.reject(new Error('sin implementar'))
+export const consultarVotacion = (historiaId: number, usuarioId?: number) => {
+  const consulta = usuarioId === undefined ? '' : `?usuario_id=${usuarioId}`
+  return get<Votacion>(`/backlog/${historiaId}/votacion${consulta}`)
+}
 
-export const votar = (_historiaId: number, _usuarioId: number, _valor: number): Promise<Votacion> =>
-  Promise.reject(new Error('sin implementar'))
+export const iniciarVotacion = (historiaId: number, usuarioId: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion`, { usuario_id: usuarioId })
 
-export const revelarVotacion = (_historiaId: number, _usuarioId: number): Promise<Votacion> =>
-  Promise.reject(new Error('sin implementar'))
+export const votar = (historiaId: number, usuarioId: number, valor: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/votos`, { usuario_id: usuarioId, valor })
 
-export const listarIntegrantes = (_proyectoId: string): Promise<Integrante[]> =>
-  Promise.reject(new Error('sin implementar'))
+export const revelarVotacion = (historiaId: number, usuarioId: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/revelar`, { usuario_id: usuarioId })
+
+export async function listarIntegrantes(proyectoId: string): Promise<Integrante[]> {
+  const integrantes = await get<IntegranteDeApi[]>(`/projects/${proyectoId}/members`)
+  return integrantes.map(({ id, nombre, rol }) => ({ id, nombre, rol }))
+}
