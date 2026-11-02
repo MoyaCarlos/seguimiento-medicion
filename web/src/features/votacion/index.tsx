@@ -3,9 +3,9 @@ import { useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { consultarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
+import { consultarVotacion, iniciarVotacion, listarIntegrantes, revelarVotacion, votar } from './api'
 import { Cartas } from './Cartas'
-import { mensajeDeError } from './errores'
+import { esVotacionNoIniciada, mensajeDeError } from './errores'
 import { Integrantes } from './Integrantes'
 import { Resultado } from './Resultado'
 import { estaRevelada, faltanPorVotar, puedeRevelar, esScrumMaster, type Integrante, type Votacion } from './votacion'
@@ -23,6 +23,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const [integrantes, setIntegrantes] = useState<Integrante[] | null>(null)
   const [actorId, setActorId] = useState<number>()
   const [votacion, setVotacion] = useState<Votacion | null>(null)
+  const [sinVotacion, setSinVotacion] = useState(false)
   const [cargadaPara, setCargadaPara] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [errorDeCarga, setErrorDeCarga] = useState('')
@@ -58,10 +59,18 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
       .then((datos) => {
         if (!vigente) return
         setVotacion(datos)
+        setSinVotacion(false)
         setErrorDeCarga('')
       })
       .catch((causa: unknown) => {
-        if (vigente) setErrorDeCarga(mensajeDeError(causa))
+        if (!vigente) return
+        if (esVotacionNoIniciada(causa)) {
+          setVotacion(null)
+          setSinVotacion(true)
+          setErrorDeCarga('')
+        } else {
+          setErrorDeCarga(mensajeDeError(causa))
+        }
       })
       .finally(() => {
         if (vigente) setCargadaPara(consulta)
@@ -78,6 +87,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
     setEnviando(true)
     try {
       setVotacion(await accion())
+      setSinVotacion(false)
     } catch (causa) {
       setErrorDeAccion(mensajeDeError(causa))
       recargar()
@@ -126,6 +136,23 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               </option>
             ))}
           </select>
+        </div>
+      )}
+
+      {sinVotacion && (
+        <div className="votacion-acciones">
+          <p>La historia todavía no tiene votación</p>
+          {esScrumMaster(actor) ? (
+            <Button
+              type="button"
+              disabled={enviando}
+              onClick={() => ejecutar(() => iniciarVotacion(historiaId, actor!.id))}
+            >
+              Iniciar votación
+            </Button>
+          ) : (
+            <p>Solo el Scrum Master puede iniciar la votación</p>
+          )}
         </div>
       )}
 
