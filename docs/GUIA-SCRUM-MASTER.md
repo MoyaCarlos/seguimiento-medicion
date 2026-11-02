@@ -5,18 +5,27 @@ proyecto sin depender de tener un agente de IA disponible todo el tiempo.
 Todo lo que menciona acá está versionado en el repo — si dudás de algo,
 la fuente completa está en los links de la sección [Dónde está todo](#dónde-está-todo).
 
-## Dónde estamos (al 28/10/2026)
+## Dónde estamos (al 30/10/2026)
 
 - **Sprint 0 (Preparación) y Sprint 1 (MVP): cerrados.** El Sprint 1 terminó el
   5-oct (`v0.1.0`).
 - **Sprint 2 (La interfaz): cerrado** el 26-oct (`v0.2.0`). Los fixes que se
   mergean después reciben `v0.2.P`.
-- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 9-nov (el 9 es
-  feriado). El tag `v0.3.0` va el 10-nov. Compromiso firme de 16 SP: HU-02,
-  HU-06 y HU-11; lo demás es stretch.
-- **Sprint 4 (Cierre y entrega final)**: del 10 al 23-nov, con la presentación
-  pedida para el 16-nov.
-- **Product Backlog: 15 historias** en `docs/PRODUCT-BACKLOG.md`, cada una como
+- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 2-nov (se acortó
+  de 14 a 7 días). El tag `v0.3.0` va el 3-nov. Compromiso firme de 16 SP: HU-02,
+  HU-06 y HU-11. HU-02 ya está entregada, así que en los 7 días restan HU-06 y
+  HU-11; lo demás es stretch.
+- **Sprint 4 (Métricas y defectos)**: del 3 al 9-nov (el 9 es feriado, así que se
+  trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10. Para
+  llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
+  como stretch. El tag `v0.4.0` va el 10-nov.
+- **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
+  código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP en cinco
+  días hábiles y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
+  alcanza, HU-10 sale en una versión mínima (el reporte de un Sprint) antes que
+  correr la fecha. El tag `v1.0.0` va el 16-nov; este Sprint no crea `v0.5.0`.
+  HU-12, HU-14 y las mejoras nuevas (HU-16 a HU-19) entran solo si sobra tiempo.
+- **Product Backlog: 19 historias** (HU-16 a HU-19 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se
   actualiza en cada merge a `main`. Está en curso (issue #139).
@@ -31,7 +40,7 @@ No sos quien construye el producto (eso son las Product Builders) — sos quien:
 - Mantiene el tablero honesto (que refleje lo que realmente está pasando).
 - Es el punto de contacto con el profesor/Cliente.
 
-## Checklist por Sprint (repetir en cada uno: 1, 2, 3, 4)
+## Checklist por Sprint (repetir en cada uno: 1, 2, 3, 4, 5)
 
 ### Al abrir el Sprint (Planning)
 
@@ -142,7 +151,7 @@ de test → archivo de implementación.
 
 - [`AGENTS.md`](../AGENTS.md) — metodología completa, arquitectura,
   principios, stack, convenciones de Git/TDD.
-- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 15 historias con
+- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 19 historias con
   todos sus campos.
 - [`docs/GUIA-IA-TERMINAL.md`](GUIA-IA-TERMINAL.md) — cómo usar Claude Code /
   OpenCode, Spec Kit, buenas prácticas, ahorro de tokens.

@@ -1,5 +1,6 @@
 import { BotonCerrar } from './BotonCerrar'
 import { FormularioInicio } from './FormularioInicio'
+import { SprintBacklog } from './SprintBacklog'
 import type { Sprint } from './sprint'
 
 type Props = {
@@ -20,6 +21,7 @@ export function SeccionSprints({ estado, sprints, alActualizar }: Props) {
           {sprint.fecha_inicio && sprint.fecha_fin && (
             <p>{`${sprint.fecha_inicio} a ${sprint.fecha_fin}`}</p>
           )}
+          <SprintBacklog sprintId={sprint.id} />
           {estado === 'Pendiente' && <FormularioInicio sprint={sprint} alActualizar={alActualizar} />}
           {estado === 'Activo' && <BotonCerrar sprint={sprint} alActualizar={alActualizar} />}
         </article>
