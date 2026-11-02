@@ -60,13 +60,15 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 - [ ] T019 [US1] COMMIT `RED: agregar tests de la lista de integrantes (falla)`
 - [ ] T020 [US1] GREEN: implementar web/src/features/votacion/Integrantes.tsx usando `textoDeVoto` — `npm test` en verde
 - [ ] T021 [US1] COMMIT `GREEN: implementar la lista de integrantes, test en verde`
-- [ ] T022 [US1] RED: crear web/src/features/votacion/index.test.tsx (pantalla, con `./api` simulado y un router en memoria en `/projects/25/votacion/3`): `US1.0 Given integrantes del proyecto y votación abierta, When se abre la pantalla, Then se pide elegir quién actúa y no hay cartas`; `US1.1 When elijo un integrante y la carta 8, Then se llama a votar con (3, usuario, 8) y se muestra su voto`; `US1.2 Given ya voté, When elijo otra carta, Then se muestra la nueva`; `US1.3 When cambio de integrante, Then se consulta con el nuevo usuario_id y se muestra su voto`; `US1.4 Given un voto en curso, When pulso otra carta, Then votar se llamó una sola vez y las cartas están deshabilitadas`; `US1.5 Given el servidor rechaza el voto, Then se muestra su mensaje, se vuelve a consultar y la pantalla sigue operable`; proyecto sin integrantes muestra el aviso — confirmar que FALLA
+- [ ] T022 [US1] RED: crear web/src/features/votacion/index.test.tsx (pantalla, con `./api` simulado y un router en memoria en `/projects/25/votacion/3`): `US1.0 Given integrantes del proyecto y votación abierta, When se abre la pantalla, Then se pide elegir quién actúa y no hay cartas`; `US1.1 When elijo un integrante y la carta 8, Then se llama a votar con (3, usuario, 8) y se muestra su voto`; `US1.2 Given ya voté, When elijo otra carta, Then se muestra la nueva`; `US1.3 When cambio de integrante, Then se consulta con el nuevo usuario_id y se muestra su voto`; `US1.4 Given un voto en curso, When pulso otra carta, Then votar se llamó una sola vez y las cartas están deshabilitadas`; `US1.5 Given el servidor rechaza el voto, Then se muestra su mensaje, se vuelve a consultar y la pantalla sigue operable`; proyecto sin integrantes muestra el aviso; `Given el servidor no responde, Then se muestra el aviso de conexión`; `Given la respuesta de un integrante anterior llega tarde, Then se descarta` — confirmar que FALLA
 - [ ] T023 [US1] COMMIT `RED: agregar tests de la pantalla de votación, voto secreto (falla)`
 - [ ] T024 [US1] GREEN: implementar web/src/features/votacion/index.tsx (`Component`: lee `id` y `historiaId`, carga integrantes y votación con marca de vigencia, selector, `Cartas`, `Integrantes`, estado `enviando` único) y web/src/features/votacion/votacion.css — `npm test` en verde
 - [ ] T025 [US1] COMMIT `GREEN: implementar la pantalla de votación con voto secreto, test en verde`
 - [ ] T026 [US1] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
-- [ ] T027 [US1] Registrar la ruta `votacion/:historiaId` con `lazy` en web/src/rutas.tsx y agregar una prueba en web/src/rutas.test.tsx que la resuelva
-- [ ] T028 [US1] COMMIT `Registrar la ruta de la votación (Refs #48)`
+- [ ] T027 [US1] RED: agregar en web/src/rutas.test.tsx una prueba que resuelve `/projects/25/votacion/3` hacia la pantalla de votación (no hacia `NoEncontrada`) — confirmar que FALLA
+- [ ] T028 [US1] COMMIT `RED: agregar test de la ruta de la votación (falla)`
+- [ ] T029 [US1] GREEN: registrar la ruta `votacion/:historiaId` con `lazy` en web/src/rutas.tsx — `npm test` en verde
+- [ ] T030 [US1] COMMIT `GREEN: registrar la ruta de la votación, test en verde`
 
 **Checkpoint**: US1 funciona y se prueba sola.
 
@@ -78,15 +80,15 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 **Independent Test**: con todos los votos cargados, «Revelar» muestra 3, 5, 8, promedio 5,33 y carta 5.
 
-- [ ] T029 [US3] RED: crear web/src/features/votacion/Resultado.test.tsx: `Given una ronda revelada con promedio 5.33 y carta 5, When se muestra el resultado, Then se ven "5,33" y la carta sugerida 5`; sin promedio no muestra nada — confirmar que FALLA
-- [ ] T030 [US3] COMMIT `RED: agregar tests del resultado de la votación (falla)`
-- [ ] T031 [US3] GREEN: implementar web/src/features/votacion/Resultado.tsx — `npm test` en verde
-- [ ] T032 [US3] COMMIT `GREEN: implementar el resultado de la votación, test en verde`
-- [ ] T033 [US3] RED: agregar en index.test.tsx: `US3.1 Given votaron todos y soy Scrum Master, When pulso Revelar, Then se llama a revelar y se ven valores, promedio y carta sugerida sin cartas`; `US3.2 Given falta alguien, Then Revelar está deshabilitado y se indica quién falta`; `US3.3 Given soy Product Builder, Then no hay botón Revelar`; `US3.4 Given revelar en curso, When pulso otra vez, Then se llamó una sola vez`; `US3.5 Given el servidor rechaza revelar, Then se muestra su mensaje`; `Given ronda revelada Then se aclara que registrar la estimación acordada es otra historia` — confirmar que FALLA
-- [ ] T034 [US3] COMMIT `RED: agregar tests de revelar los votos en la pantalla (falla)`
-- [ ] T035 [US3] GREEN: agregar «Revelar» y `Resultado` en web/src/features/votacion/index.tsx — `npm test` en verde
-- [ ] T036 [US3] COMMIT `GREEN: implementar la revelación de votos en la pantalla, test en verde`
-- [ ] T037 [US3] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T031 [US3] RED: crear web/src/features/votacion/Resultado.test.tsx: `Given una ronda revelada con promedio 5.33 y carta 5, When se muestra el resultado, Then se ven "5,33" y la carta sugerida 5`; sin promedio no muestra nada — confirmar que FALLA
+- [ ] T032 [US3] COMMIT `RED: agregar tests del resultado de la votación (falla)`
+- [ ] T033 [US3] GREEN: implementar web/src/features/votacion/Resultado.tsx — `npm test` en verde
+- [ ] T034 [US3] COMMIT `GREEN: implementar el resultado de la votación, test en verde`
+- [ ] T035 [US3] RED: agregar en index.test.tsx: `US3.1 Given votaron todos y soy Scrum Master, When pulso Revelar, Then se llama a revelar y se ven valores, promedio y carta sugerida sin cartas`; `US3.2 Given falta alguien, Then Revelar está deshabilitado y se indica quién falta`; `US3.3 Given soy Product Builder, Then no hay botón Revelar`; `US3.4 Given revelar en curso, When pulso otra vez, Then se llamó una sola vez`; `US3.5 Given el servidor rechaza revelar, Then se muestra su mensaje`; `Given ronda revelada Then se aclara que registrar la estimación acordada es otra historia` — confirmar que FALLA
+- [ ] T036 [US3] COMMIT `RED: agregar tests de revelar los votos en la pantalla (falla)`
+- [ ] T037 [US3] GREEN: agregar «Revelar» y `Resultado` en web/src/features/votacion/index.tsx — `npm test` en verde
+- [ ] T038 [US3] COMMIT `GREEN: implementar la revelación de votos en la pantalla, test en verde`
+- [ ] T039 [US3] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: US1 y US3 funcionan juntas.
 
@@ -98,11 +100,11 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 **Independent Test**: historia sin votación + Scrum Master elegido: «Iniciar votación» muestra la ronda 1 con todos «Falta».
 
-- [ ] T038 [US2] RED: agregar en index.test.tsx: `US2.0 Given la API responde 404 "la historia no tiene votación iniciada", Then no hay cartas y se ofrece iniciar`; `US2.1 Given Scrum Master elegido, When pulso Iniciar votación, Then se llama a iniciar y aparece la ronda 1 con todos "Falta"`; `US2.2 Given Product Builder elegido, Then no hay botón Iniciar y se indica que solo el Scrum Master puede iniciar`; `US2.4 Given inicio en curso, When pulso otra vez, Then se llamó una sola vez`; `US2.5 Given el servidor rechaza (409 o historia Completada), Then se muestra su mensaje`; `Given 404 "historia no encontrada" Then se muestra el mensaje y no se ofrece iniciar` — confirmar que FALLA
-- [ ] T039 [US2] COMMIT `RED: agregar tests de iniciar la votación en la pantalla (falla)`
-- [ ] T040 [US2] GREEN: agregar «Iniciar votación» y el estado «sin votación» en web/src/features/votacion/index.tsx usando `esVotacionNoIniciada` — `npm test` en verde
-- [ ] T041 [US2] COMMIT `GREEN: implementar el inicio de la votación en la pantalla, test en verde`
-- [ ] T042 [US2] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T040 [US2] RED: agregar en index.test.tsx: `US2.0 Given la API responde 404 "la historia no tiene votación iniciada", Then no hay cartas y se ofrece iniciar`; `US2.1 Given Scrum Master elegido, When pulso Iniciar votación, Then se llama a iniciar y aparece la ronda 1 con todos "Falta"`; `US2.2 Given Product Builder elegido, Then no hay botón Iniciar y se indica que solo el Scrum Master puede iniciar`; `US2.4 Given inicio en curso, When pulso otra vez, Then se llamó una sola vez`; `US2.5 Given el servidor rechaza (409 o historia Completada), Then se muestra su mensaje`; `Given 404 "historia no encontrada" Then se muestra el mensaje y no se ofrece iniciar` — confirmar que FALLA
+- [ ] T041 [US2] COMMIT `RED: agregar tests de iniciar la votación en la pantalla (falla)`
+- [ ] T042 [US2] GREEN: agregar «Iniciar votación» y el estado «sin votación» en web/src/features/votacion/index.tsx usando `esVotacionNoIniciada` — `npm test` en verde
+- [ ] T043 [US2] COMMIT `GREEN: implementar el inicio de la votación en la pantalla, test en verde`
+- [ ] T044 [US2] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 ---
 
@@ -112,22 +114,22 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 **Independent Test**: desde el backlog pulsar «Votar» y llegar a la pantalla; «Actualizar» refleja un voto nuevo.
 
-- [ ] T043 [US4] RED: agregar en web/src/features/votacion/index.test.tsx: `US4.2 When pulso Actualizar, Then se vuelve a consultar y se reflejan los votos nuevos`; `US4.4 Given el servidor no responde, Then se muestra el aviso de conexión y Actualizar permite reintentar`; `Given respuesta atrasada de otro integrante Then se descarta` — confirmar que FALLA
-- [ ] T044 [US4] COMMIT `RED: agregar tests de actualizar la votación (falla)`
-- [ ] T045 [US4] GREEN: agregar «Actualizar» en web/src/features/votacion/index.tsx — `npm test` en verde
-- [ ] T046 [US4] COMMIT `GREEN: implementar Actualizar en la pantalla de votación, test en verde`
-- [ ] T047 [US4] RED: agregar en web/src/features/backlog/Listado.test.tsx: `US4.1 Given historias en el backlog del proyecto 42, When se muestra, Then cada una tiene un enlace "Votar" a /projects/42/votacion/{id}` — confirmar que FALLA
-- [ ] T048 [US4] COMMIT `RED: agregar test del enlace Votar en el backlog (falla)`
-- [ ] T049 [US4] GREEN: agregar el `Link` «Votar» en web/src/features/backlog/Listado.tsx, sin importar la feature `votacion` — `npm test` (incluye `aislamiento.test.ts`) en verde
-- [ ] T050 [US4] COMMIT `GREEN: agregar el enlace Votar al Product Backlog, test en verde`
+- [ ] T045 [US4] RED: agregar en web/src/features/votacion/index.test.tsx: `US4.2 When pulso Actualizar, Then se vuelve a consultar y se reflejan los votos nuevos`; `US4.4 Given falló la consulta por falta de conexión, When pulso Actualizar y el servidor responde, Then se muestra la votación` — confirmar que FALLA
+- [ ] T046 [US4] COMMIT `RED: agregar tests de actualizar la votación (falla)`
+- [ ] T047 [US4] GREEN: agregar «Actualizar» en web/src/features/votacion/index.tsx — `npm test` en verde
+- [ ] T048 [US4] COMMIT `GREEN: implementar Actualizar en la pantalla de votación, test en verde`
+- [ ] T049 [US4] RED: agregar en web/src/features/backlog/Listado.test.tsx: `US4.1 Given historias en el backlog del proyecto 42, When se muestra, Then cada una tiene un enlace "Votar" a /projects/42/votacion/{id}` — confirmar que FALLA
+- [ ] T050 [US4] COMMIT `RED: agregar test del enlace Votar en el backlog (falla)`
+- [ ] T051 [US4] GREEN: agregar el `Link` «Votar» en web/src/features/backlog/Listado.tsx, sin importar la feature `votacion` — `npm test` (incluye `aislamiento.test.ts`) en verde
+- [ ] T052 [US4] COMMIT `GREEN: agregar el enlace Votar al Product Backlog, test en verde`
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T051 `npm run lint`, `npm test` y `npm run build` sin errores (Node 24, dentro de `web/`)
-- [ ] T052 Validación manual de quickstart.md con el backend desde este worktree (base temporal y `/demo/datos`); apagar backend y frontend al terminar
-- [ ] T053 Actualizar el estado de la spec y marcar las tareas hechas en specs/029-hu-02-frontend-planning-poker/ y COMMIT `Marcar las tareas de la spec 029 como hechas (Refs #48)`
+- [ ] T053 `npm run lint`, `npm test` y `npm run build` sin errores (Node 24, dentro de `web/`)
+- [ ] T054 Validación manual de quickstart.md con el backend desde este worktree (base temporal y `/demo/datos`); apagar backend y frontend al terminar
+- [ ] T055 Actualizar el estado de la spec y marcar las tareas hechas en specs/029-hu-02-frontend-planning-poker/ y COMMIT `Marcar las tareas de la spec 029 como hechas (Refs #48)`
 
 ---
 
