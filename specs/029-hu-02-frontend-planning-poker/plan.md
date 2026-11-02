@@ -68,10 +68,12 @@ web/src/
 └── features/
     ├── backlog/Listado.tsx           # + enlace «Votar» (Link, sin importar votacion)
     └── votacion/
-        ├── index.tsx                 # Component: pantalla, carga, acciones
+        ├── index.tsx                 # Component: composición de bloques
         ├── api.ts                    # cliente: consultar, iniciar, votar, revelar, integrantes
         ├── votacion.ts               # tipos, CARTAS, reglas puras (puedeRevelar, esScrumMaster, ...)
         ├── errores.ts                # mensajeDeError
+        ├── useVotacion.ts            # estado y efectos de la pantalla (hook)
+        ├── ResumenHistoria.tsx       # título, descripción, prioridad y estimación
         ├── Cartas.tsx                # baraja Fibonacci
         ├── Integrantes.tsx           # lista ya votó / falta / Oculto / valor
         ├── Resultado.tsx             # promedio exacto y carta sugerida

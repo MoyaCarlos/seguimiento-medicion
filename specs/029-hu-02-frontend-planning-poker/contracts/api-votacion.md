@@ -9,6 +9,7 @@ Solo lectura de lo que implementa el backend (`internal/http/votacion_handler.go
 | Votar | `POST /backlog/{id}/votacion/votos` `{usuario_id, valor}` | 200 `Votacion` |
 | Revelar | `POST /backlog/{id}/votacion/revelar` `{usuario_id}` | 200 `Votacion` |
 | Integrantes | `GET /projects/{id}/members` | 200 `[{id, proyecto_id, nombre, rol, vinculado_en}]` |
+| Historia (resumen) | `GET /projects/{id}/backlog` (solo historias sin Sprint; se busca la historia por `id`; reemplazable por `GET /backlog/{id}`, issue #222) | 200 `[{id, titulo, descripcion, prioridad, estimacion_sp, ...}]` |
 
 `Votacion` = `{historia_id, ronda, revelada_en|null, integrantes:[{usuario_id, nombre, rol, ya_voto, valor|null}], promedio:{exacto, carta_sugerida}|null}`.
 

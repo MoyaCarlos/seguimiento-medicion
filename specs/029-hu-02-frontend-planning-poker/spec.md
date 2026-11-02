@@ -16,6 +16,11 @@
 - Q: ¿Desde dónde se llega a la pantalla de votación? → A: Con un botón «Votar» en cada historia del Product Backlog que navega a una ruta nueva del proyecto (`/projects/:id/votacion/:historiaId`; la pantalla vive en su propia feature). El backlog solo enlaza por URL; ninguna feature importa a la otra.
 - Q: ¿Cómo se actualiza la vista mientras otros votan? → A: Con un botón «Actualizar» que vuelve a consultar; no hay consulta periódica automática.
 - Q: ¿Qué se muestra cuando el servidor rechaza con 403 (sin permiso) o 409 (votación ya iniciada), que el encargo no listaba? → A: El `mensaje` del servidor tal cual, igual que con 400 y 404; y tras un rechazo la pantalla vuelve a consultar la votación para reflejar el estado real.
+- Q: ¿Cómo sabe quien vota qué historia está estimando, si la API no tiene `GET /backlog/{id}` (issue #222)? → A: La pantalla busca la historia en el listado `GET /projects/{id}/backlog` y muestra su título, descripción, prioridad y estimación actual; si no está (por ejemplo, ya asignada a un Sprint) muestra solo «Historia #N». La búsqueda queda aislada en una función para reemplazarla por `GET /backlog/{id}` cuando exista.
+
+### Session 2026-11-02 (revisión tras la prueba en el navegador)
+
+- Q: ¿Qué se agrega a la pantalla para que se entienda qué se vota? → A: Un resumen de la historia, una consigna visible, un enlace de vuelta al Product Backlog y un aspecto consistente con el resto de los formularios. No se agrega nada de HU-14 (consenso, nuevas rondas, historial, registro de la estimación).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -106,6 +111,11 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHEN** la ronda está revelada, el sistema **shall** mostrar el valor de cada integrante, el promedio exacto y la carta sugerida.
 - **IF** la respuesta llega para un integrante o historia que ya no es el actual, **THEN** el sistema **shall** descartarla.
 - El sistema **shall** no modificar los Story Points de la historia.
+- **WHEN** se abre la pantalla, el sistema **shall** buscar la historia en el listado del Product Backlog del proyecto y mostrar su resumen.
+- **IF** la historia no figura en el listado o el listado no se puede obtener, **THEN** el sistema **shall** mostrar solo «Historia #N» y seguir permitiendo votar.
+- **WHILE** se puede votar, el sistema **shall** mostrar la consigna de la votación; **WHILE** no hay integrante elegido, **shall** pedir elegirlo.
+- **IF** dos acciones (iniciar, votar o revelar) se disparan en el mismo instante, **THEN** el sistema **shall** enviar solo una.
+- **IF** falla el listado de integrantes y la consulta de la votación responde bien (o al revés), **THEN** el sistema **shall** mantener visible el error que persiste.
 
 ## Requirements *(mandatory)*
 
@@ -125,6 +135,14 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-012**: El Product Backlog MUST ofrecer en cada historia un botón «Votar» que navega a la pantalla de votación de esa historia dentro del proyecto.
 - **FR-013**: La pantalla MUST NOT modificar los Story Points de la historia ni ofrecer registrar la estimación acordada (HU-14).
 - **FR-014**: Cada feature del frontend MUST permanecer aislada: la nueva pantalla no importa a otras features y el Product Backlog no importa a la nueva.
+
+- **FR-015**: La pantalla MUST mostrar un resumen de la historia con título, descripción como texto plano, prioridad con las mismas etiquetas del Product Backlog (Must have, Should have, Could have, Won't have) y la estimación actual («Sin estimar» o «N SP»); si la historia no se encuentra, MUST mostrar solo «Historia #N».
+- **FR-016**: La pantalla MUST mostrar la consigna «Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?» cuando se puede votar, y pedir elegir quién actúa cuando falta elegirlo.
+- **FR-017**: La pantalla MUST ofrecer un enlace «Volver al Product Backlog» a `/projects/:id/backlog`.
+- **FR-018**: El selector «Quién actúa» y el resultado (promedio exacto y carta sugerida) MUST verse con el mismo aspecto que los formularios y tarjetas del resto de la aplicación.
+- **FR-019**: Un error al listar los integrantes y un error al consultar la votación MUST mostrarse por separado, sin que uno borre al otro.
+- **FR-020**: Cada integrante de la lista MUST poder leerse completo con un lector de pantalla (nombre, rol, si votó y el valor) sin una etiqueta que tape su contenido.
+- **FR-021**: Las cartas MUST poder elegirse con el teclado, mostrar el foco y acomodarse en un ancho de celular.
 
 ### Key Entities
 
@@ -151,3 +169,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - La vista se actualiza manualmente con el botón «Actualizar», sin consulta periódica automática.
 - Los textos de la interfaz están en español, como el resto de la aplicación.
 - Abrir nuevas rondas, comparar diferencias y registrar la estimación acordada son HU-14 y quedan fuera de alcance.
+
+## Limitaciones conocidas
+
+- Como no hay inicio de sesión, cualquiera puede elegir a otro integrante en el selector «Quién actúa» y ver su voto antes de revelar. El voto es secreto solo si cada persona usa su propio nombre. Resolverlo exige autenticación, que no está en el alcance.
+- «Sin votación» se detecta por el texto exacto del 404 del backend («la historia no tiene votación iniciada»). Si ese mensaje cambia, la pantalla mostraría el error en lugar de ofrecer «Iniciar votación».
+- El resumen de la historia sale del listado `GET /projects/{id}/backlog`, que solo trae historias sin Sprint. Para una historia ya asignada a un Sprint se muestra solo «Historia #N», hasta que exista `GET /backlog/{id}` (issue #222).

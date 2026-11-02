@@ -133,6 +133,45 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 ---
 
+## Phase 8: Mejoras de contexto y calidad (revisión del 2026-11-02)
+
+**Goal**: que se entienda qué se vota, que la pantalla sea accesible y consistente, y dejarla como bloques que HU-14 pueda ampliar. Sin código de HU-14.
+
+- [ ] T056 [US1] RED: en web/src/features/votacion/index.test.tsx, `Given dos pulsaciones de carta en el mismo instante, Then se vota una sola vez` (dos clics dentro de un solo `act`, sin esperar el render) — confirmar que FALLA con el guard actual, que lee un estado desactualizado
+- [ ] T057 [US1] COMMIT `RED: agregar test de doble envío en el mismo instante (falla)`
+- [ ] T058 [US1] GREEN: guardar el envío en curso con una referencia en web/src/features/votacion/index.tsx — `npm test` en verde
+- [ ] T059 [US1] COMMIT `GREEN: evitar el doble envío en el mismo instante, test en verde`
+- [ ] T060 [US1] RED: en Integrantes.test.tsx e index.test.tsx, buscar cada fila por su contenido (`getByText(nombre).closest('li')`) y agregar `Given la lista de integrantes, Then ningún elemento de la lista lleva aria-label y cada fila contiene nombre, rol, estado y valor` — confirmar que FALLA
+- [ ] T061 [US1] COMMIT `RED: agregar test de la lista de integrantes accesible (falla)`
+- [ ] T062 [US1] GREEN: quitar el `aria-label` de web/src/features/votacion/Integrantes.tsx y agregar el rótulo visible solo para lectores de pantalla — `npm test` en verde
+- [ ] T063 [US1] COMMIT `GREEN: hacer legible la lista de integrantes para lectores de pantalla, test en verde`
+- [ ] T064 [US1] RED: en index.test.tsx, `Given que falla el listado de integrantes y la consulta responde bien, Then el error de integrantes sigue visible`, y el caso inverso con ambos errores distintos — confirmar que FALLA
+- [ ] T065 [US1] COMMIT `RED: agregar tests de errores separados de integrantes y votación (falla)`
+- [ ] T066 [US1] GREEN: separar `errorDeIntegrantes` y `errorDeVotacion` en web/src/features/votacion/index.tsx — `npm test` en verde
+- [ ] T067 [US1] COMMIT `GREEN: separar los errores de integrantes y de votación, test en verde`
+- [ ] T068 [US1] RED: en api.test.ts, `obtenerHistoria(proyectoId, historiaId)` devuelve la historia del listado `GET /projects/{id}/backlog` o `null` si no está — confirmar que FALLA
+- [ ] T069 [US1] COMMIT `RED: agregar tests de obtenerHistoria (falla)`
+- [ ] T070 [US1] GREEN: implementar `obtenerHistoria` en api.ts (llamada aislada, reemplazable por #222) y el tipo `HistoriaResumen` en votacion.ts — `npm test` en verde
+- [ ] T071 [US1] COMMIT `GREEN: implementar obtenerHistoria, test en verde`
+- [ ] T072 [US1] RED: crear ResumenHistoria.test.tsx: con la historia (título, descripción en texto plano, «Must have», «5 SP»), sin estimación («Sin estimar») y sin la historia (solo «Historia #N») — confirmar que FALLA
+- [ ] T073 [US1] COMMIT `RED: agregar tests del resumen de la historia (falla)`
+- [ ] T074 [US1] GREEN: implementar ResumenHistoria.tsx con sus propias etiquetas de prioridad (sin importar la feature backlog) — `npm test` en verde
+- [ ] T075 [US1] COMMIT `GREEN: implementar el resumen de la historia, test en verde`
+- [ ] T076 [US1] RED: en index.test.tsx, el resumen aparece en la pantalla (y solo «Historia #N» si `obtenerHistoria` devuelve `null` o falla), la consigna «Elegí una carta: …» aparece cuando se puede votar, y el enlace «Volver al Product Backlog» apunta a `/projects/25/backlog` — confirmar que FALLA
+- [ ] T077 [US1] COMMIT `RED: agregar tests de resumen, consigna y enlace de vuelta en la pantalla (falla)`
+- [ ] T078 [US1] GREEN: cargar la historia, mostrar el resumen, la consigna y el enlace en index.tsx — `npm test` en verde
+- [ ] T079 [US1] COMMIT `GREEN: mostrar resumen, consigna y enlace de vuelta, test en verde`
+- [ ] T080 [US1] RED: en index.test.tsx, `Given una carta enfocada con Tab, When se pulsa Enter, Then se vota` — confirmar el resultado (si ya pasa, se documenta como prueba de cobertura)
+- [ ] T081 [US1] COMMIT `TEST: cubrir la elección de cartas con el teclado`
+- [ ] T082 Estilo en web/src/features/votacion/votacion.css con las variables de App.css: selector igual al de los otros formularios, resultado como tarjeta, foco visible en las cartas y acomodo en celular (`flex-wrap`/`grid`); sin dependencias nuevas
+- [ ] T083 COMMIT `Ajustar el estilo de la pantalla de votación (Refs #48)`
+- [ ] T084 REFACTOR: extraer el estado y los efectos de index.tsx al hook web/src/features/votacion/useVotacion.ts y componer la pantalla con bloques (ResumenHistoria, ronda con integrantes y cartas, Resultado, acciones del Scrum Master), sin props ni código de HU-14 — `npm test` en verde
+- [ ] T085 COMMIT `REFACTOR: extraer useVotacion y componer la pantalla en bloques`
+- [ ] T086 `npm run lint`, `npm test` y `npm run build` sin errores y validación manual de quickstart.md con el backend en 8080 y el frontend en 5173
+- [ ] T087 COMMIT `Marcar las tareas de la fase 8 de la spec 029 como hechas (Refs #48)`
+
+---
+
 ## Dependencies & Execution Order
 
 - Setup → Foundational → US1 → US3 → US2 → US4 → Polish.
