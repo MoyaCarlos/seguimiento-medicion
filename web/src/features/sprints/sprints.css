@@ -27,3 +27,19 @@
   display: grid;
   gap: 0.5rem;
 }
+
+.esfuerzo-historia {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+.esfuerzo-historia form {
+  justify-self: stretch;
+}
+
+.esfuerzo-detalle {
+  margin: 0;
+  padding-left: 1rem;
+  overflow-wrap: anywhere;
+}
