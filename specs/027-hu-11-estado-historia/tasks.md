@@ -147,7 +147,7 @@ no cambia es el comportamiento pedido.
 - [X] T044 [US3] COMMIT `RED: agregar test de integración del cambio de estado en pantalla (falla)`
 - [X] T045 [US3] GREEN: integrar `EstadoHistoria` en la lista de historias de la pantalla de Sprints, refrescando la lista tras un 200; estilos en los `.css` existentes de la feature — `npm test` en verde
 - [X] T046 [US3] COMMIT `GREEN: integrar el cambio de estado en la pantalla del Sprint, test en verde`
-- [ ] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/027-hu-11-estado-historia/quickstart.md
+- [X] T047 [US3] `cd web && npm run lint && npm test && npm run build` sin errores y validación manual del paso 3 de specs/027-hu-11-estado-historia/quickstart.md — Validado a mano con la API real y npm run dev: el Sprint Activo muestra Iniciar en cada historia Nueva; Iniciar la pasa a En progreso y ofrece Completar; Completar muestra 'Completada el 2026-11-01' sin botones; al cerrar el Sprint, la completada queda en el Finalizado con su fecha y sin botones, y la no completada vuelve al Product Backlog. npm run lint (oxlint), npm test (278) y npm run build sin errores
 
 **Checkpoint**: la sub-issue de Frontend de HU-11 queda lista para cerrarse.
 
