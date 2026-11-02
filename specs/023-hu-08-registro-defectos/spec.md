@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-30
 
-**Status**: Draft
+**Status**: Backend implementado (frontend #68 pendiente)
 
 **Input**: User description: "HU-08: Registro y Seguimiento de Bugs (issue #8, sub-issue de spec #64). Como integrante del equipo quiero registrar un defecto técnico indicando su severidad, la historia relacionada y el sprint de detección para poder hacer un seguimiento de la calidad y asegurar que se resuelva antes del despliegue final. Escenario 1 (carga de un nuevo defecto): Dado que se detecta un error técnico y el proyecto tiene un Sprint "Activo", cuando completo el formulario de Defectos con la descripción, nivel de severidad (Alta, Media, Baja) y la historia relacionada, y guardo, entonces el Bug se registra asociado a esa historia, con el Sprint "Activo" como Sprint de detección y estado "Pendiente". Escenario 2 (resolución): Dado que un desarrollador solucionó un Bug pendiente, cuando cambia su estado a "Resuelto", entonces el sistema registra el Sprint de resolución (el Sprint Activo en ese momento) para que luego aparezca en el Dashboard de métricas de calidad. Escenario 3 (sin Sprint activo): Dado que el proyecto no tiene Sprint "Activo", cuando intento registrar un defecto o marcar uno como "Resuelto", entonces el sistema rechaza la operación e indica que no hay un Sprint activo al que asociarlo. Depende de HU-01 (historia relacionada) y HU-05 (Sprints). Prioridad Must, valor 8, estimación 8 SP. Modelo de datos ya definido en MODELO-DE-DATOS.md §4.9 (tabla defectos, migración 005): sin título (D6), historia obligatoria, CHECK (estado='Resuelto') = (sprint_resolucion_id IS NOT NULL), FK compuestas con proyecto_id. Rama: feature/HU-08-registro-defectos desde origin/main."
 

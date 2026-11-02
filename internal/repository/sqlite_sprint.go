@@ -22,9 +22,13 @@ func NewSQLiteSprintRepository(db *sql.DB) *SQLiteSprintRepository {
 	return &SQLiteSprintRepository{db: db}
 }
 
-const columnasSprint = "id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado"
+// El número del Sprint se deriva de los de su proyecto, sin columna propia
+// (#129). Es una subconsulta y no ROW_NUMBER() porque esa función numeraría
+// solo las filas que deja el WHERE de cada consulta.
+const columnasSprint = `id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado,
+	(SELECT COUNT(*) FROM sprints previos WHERE previos.proyecto_id = sprints.proyecto_id AND previos.id <= sprints.id)`
 
-// Guardar persiste un Sprint nuevo y devuelve una copia con el ID asignado.
+// Guardar persiste un Sprint nuevo y lo devuelve con el ID y el número asignados.
 func (r *SQLiteSprintRepository) Guardar(ctx context.Context, s domain.Sprint) (domain.Sprint, error) {
 	resultado, err := r.db.ExecContext(ctx,
 		`INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?)`,
@@ -37,8 +41,7 @@ func (r *SQLiteSprintRepository) Guardar(ctx context.Context, s domain.Sprint) (
 	if err != nil {
 		return domain.Sprint{}, fmt.Errorf("obtener id del sprint: %w", err)
 	}
-	s.ID = id
-	return s, nil
+	return r.ObtenerPorID(ctx, id)
 }
 
 func (r *SQLiteSprintRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
@@ -191,7 +194,7 @@ func escanearSprint(fila escaneable) (domain.Sprint, error) {
 		goal, inicio, fin sql.NullString
 		estado            string
 	)
-	if err := fila.Scan(&s.ID, &s.ProyectoID, &goal, &inicio, &fin, &estado); err != nil {
+	if err := fila.Scan(&s.ID, &s.ProyectoID, &goal, &inicio, &fin, &estado, &s.Numero); err != nil {
 		return domain.Sprint{}, err
 	}
 	s.SprintGoal = goal.String

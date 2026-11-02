@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -44,7 +45,7 @@ func (r *SQLiteBacklogRepository) Guardar(ctx context.Context, item domain.Backl
 	return item, nil
 }
 
-const columnasHistoria = `id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id`
+const columnasHistoria = `id, proyecto_id, titulo, descripcion, criterios_aceptacion, prioridad, estado, valor_negocio, estimacion_sp, sprint_id, fecha_finalizacion`
 
 // ordenBacklog ordena las historias por prioridad M, S, C, W y luego por orden
 // de creación. El orden alfabético de la prioridad no sirve, por eso el CASE.
@@ -101,15 +102,23 @@ func escanearHistoria(fila escaneable) (domain.BacklogItem, error) {
 	var (
 		h                 domain.BacklogItem
 		prioridad, estado string
+		finalizacion      sql.NullString
 	)
 	if err := fila.Scan(&h.ID, &h.ProyectoID, &h.Titulo, &h.Descripcion, &h.CriteriosAceptacion, &prioridad, &estado,
-		&h.ValorNegocio, &h.EstimacionSP, &h.SprintID); err != nil {
+		&h.ValorNegocio, &h.EstimacionSP, &h.SprintID, &finalizacion); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
 		}
 		return domain.BacklogItem{}, fmt.Errorf("leer historia: %w", err)
 	}
 	h.Prioridad, h.Estado = domain.Prioridad(prioridad), domain.Estado(estado)
+	fecha, err := fechaDesdeSQL(finalizacion)
+	if err != nil {
+		return domain.BacklogItem{}, fmt.Errorf("leer fecha de finalización de la historia %d: %w", h.ID, err)
+	}
+	if !fecha.IsZero() {
+		h.FechaFinalizacion = &fecha
+	}
 	return h, nil
 }
 
@@ -140,6 +149,31 @@ func (r *SQLiteBacklogRepository) AsignarASprint(ctx context.Context, historiaID
 	}
 	if filas == 0 {
 		return domain.ErrHistoriaYaAsignada
+	}
+	return nil
+}
+
+// CambiarEstado pasa la historia de "desde" a "hacia" solo si todavía está en
+// "desde". La condición va en el mismo UPDATE: si dos cambios compiten, solo uno
+// la encuentra en ese estado y el otro recibe domain.ErrConflictoEstadoHistoria.
+// Sin fecha, fecha_finalizacion queda NULL.
+func (r *SQLiteBacklogRepository) CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error {
+	var fecha time.Time
+	if fechaFinalizacion != nil {
+		fecha = *fechaFinalizacion
+	}
+	resultado, err := r.db.ExecContext(ctx,
+		"UPDATE historias SET estado = ?, fecha_finalizacion = ? WHERE id = ? AND estado = ?",
+		string(hacia), fechaASQL(fecha), id, string(desde))
+	if err != nil {
+		return fmt.Errorf("cambiar estado de la historia %d: %w", id, errorDeEscritura(err))
+	}
+	filas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("cambiar estado de la historia %d: %w", id, err)
+	}
+	if filas == 0 {
+		return domain.ErrConflictoEstadoHistoria
 	}
 	return nil
 }

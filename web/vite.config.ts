@@ -16,6 +16,7 @@ export default defineConfig({
       '/defectos': apiProxy,
       '/projects': apiProxy,
       '/sprints': apiProxy,
+      '/demo': apiProxy,
     },
   },
 })

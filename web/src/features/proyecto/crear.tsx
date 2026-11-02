@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
+import { BotonDatosDePrueba } from '../../compartido/demo/BotonDatosDePrueba'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
@@ -119,6 +120,7 @@ export function Component() {
           Crear proyecto
         </Button>
       </form>
+      <BotonDatosDePrueba />
     </section>
   )
 }
