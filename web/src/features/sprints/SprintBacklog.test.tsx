@@ -33,7 +33,7 @@ describe('SprintBacklog', () => {
 
     await screen.findByText('Recuperar clave')
     expect(fetchSimulado.mock.calls[0][0]).toBe('/sprints/4/backlog')
-    expect(fetchSimulado.mock.calls[0][1].method).toBe('GET')
+    expect(fetchSimulado.mock.calls[0][1]?.method).toBe('GET')
   })
 
   it('US3.2: muestra el indicador de carga mientras espera la respuesta', () => {
