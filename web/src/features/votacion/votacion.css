@@ -1,36 +1,122 @@
 .votacion {
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.votacion-ronda {
-  color: var(--text-muted, inherit);
-  margin: 0;
+.votacion-encabezado {
+  flex-wrap: wrap;
 }
 
-.votacion-cartas {
+.votacion-encabezado__acciones {
+  align-items: center;
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
 
-.votacion-carta {
-  background: #fff;
-  border: 2px solid currentColor;
-  border-radius: 0.6rem;
-  cursor: pointer;
-  font-size: 1.4rem;
+.votacion-encabezado__acciones .button {
+  text-decoration: none;
+}
+
+.votacion-historia {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgb(80 60 110 / 8%);
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.votacion-historia h2 {
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.votacion-historia__numero {
+  color: var(--muted);
+  font-size: 0.85rem;
   font-weight: 700;
-  min-height: 4.5rem;
-  min-width: 3.5rem;
+  margin: 0;
+}
+
+.votacion-historia__datos {
+  color: var(--lilac-dark);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  font-weight: 700;
+  gap: 0.5rem 1rem;
+  margin: 0;
+}
+
+.votacion-historia__descripcion {
+  line-height: 1.55;
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.votacion .field select {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  max-width: 24rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.votacion .field select:focus {
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
+  outline: none;
+}
+
+.votacion-ronda {
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0;
+}
+
+.votacion-consigna {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.votacion-cartas {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(4rem, 1fr));
+}
+
+.votacion-carta {
+  background: var(--surface);
+  border: 2px solid var(--lilac);
+  border-radius: 0.75rem;
+  color: var(--lilac-dark);
+  cursor: pointer;
+  font-size: 1.5rem;
+  font-weight: 800;
+  min-height: 5rem;
+}
+
+.votacion-carta:hover:not(:disabled) {
+  background: #eee8f8;
 }
 
 .votacion-carta[aria-pressed='true'] {
-  background: currentColor;
-}
-
-.votacion-carta[aria-pressed='true'] {
+  background: var(--lilac);
   color: #fff;
+}
+
+.votacion-carta:focus-visible {
+  box-shadow: 0 0 0 3px rgb(128 103 183 / 35%);
+  outline: 3px solid var(--lilac-dark);
+  outline-offset: 2px;
 }
 
 .votacion-carta:disabled {
@@ -48,20 +134,71 @@
 
 .votacion-integrante {
   align-items: center;
-  border: 1px solid #d0d5dd;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 0.6rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.4rem 0.75rem;
   padding: 0.6rem 0.9rem;
+  position: relative;
 }
 
 .votacion-integrante__nombre {
-  font-weight: 600;
+  font-weight: 700;
+}
+
+.votacion-integrante__rol,
+.votacion-integrante__estado {
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 .votacion-integrante__voto {
   margin-left: auto;
+}
+
+.votacion-acciones {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+}
+
+.votacion-acciones p {
+  margin: 0;
+}
+
+.votacion-resultado {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgb(80 60 110 / 8%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.5rem;
+  margin: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.votacion-resultado div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.votacion-resultado dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.votacion-resultado dd {
+  color: var(--lilac-dark);
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0;
 }
 
 .votacion-solo-lectores {
@@ -71,4 +208,19 @@
   overflow: hidden;
   position: absolute;
   white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .votacion-encabezado {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .votacion .field select {
+    max-width: none;
+  }
+
+  .votacion-cartas {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }

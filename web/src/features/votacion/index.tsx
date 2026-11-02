@@ -122,7 +122,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
 
   return (
     <section className="votacion" aria-labelledby="votacion-title">
-      <div className="page-header">
+      <div className="page-header votacion-encabezado">
         <div>
           <p className="eyebrow">Planning Poker</p>
           <h1 id="votacion-title">Votación de la historia #{historiaId}</h1>

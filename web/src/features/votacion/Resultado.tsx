@@ -5,10 +5,14 @@ export function Resultado({ promedio }: Props) {
 
   return (
     <dl className="votacion-resultado" aria-label="Resultado de la votación">
-      <dt>Promedio exacto</dt>
-      <dd>{promedio.exacto.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</dd>
-      <dt>Carta sugerida</dt>
-      <dd>{promedio.carta_sugerida}</dd>
+      <div>
+        <dt>Promedio exacto</dt>
+        <dd>{promedio.exacto.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</dd>
+      </div>
+      <div>
+        <dt>Carta sugerida</dt>
+        <dd>{promedio.carta_sugerida}</dd>
+      </div>
     </dl>
   )
 }
