@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -16,12 +17,13 @@ import (
 )
 
 type stubBacklogRepository struct {
-	guardados       []domain.BacklogItem
-	backlog         []domain.BacklogItem
-	errListar       error
-	historias       map[int64]domain.BacklogItem
-	actualizaciones []domain.BacklogItem
-	sprints         *repository.SprintRepositoryEnMemoria
+	guardados        []domain.BacklogItem
+	backlog          []domain.BacklogItem
+	errListar        error
+	historias        map[int64]domain.BacklogItem
+	actualizaciones  []domain.BacklogItem
+	sprints          *repository.SprintRepositoryEnMemoria
+	errCambiarEstado error
 }
 
 func (s *stubBacklogRepository) Guardar(_ context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
@@ -58,6 +60,21 @@ func (s *stubBacklogRepository) AsignarASprint(_ context.Context, historiaID, sp
 	return nil
 }
 
+func (s *stubBacklogRepository) CambiarEstado(_ context.Context, id int64, desde, hacia domain.Estado, fecha *time.Time) error {
+	if s.errCambiarEstado != nil {
+		return s.errCambiarEstado
+	}
+	h := s.historias[id]
+	if h.Estado != desde {
+		return domain.ErrConflictoEstadoHistoria
+	}
+	h.Estado, h.FechaFinalizacion = hacia, fecha
+	s.historias[id] = h
+	return nil
+}
+
+func relojDePrueba() time.Time { return time.Date(2026, 10, 29, 15, 30, 0, 0, time.UTC) }
+
 func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 	repo := &stubBacklogRepository{
 		historias: map[int64]domain.BacklogItem{},
@@ -70,6 +87,7 @@ func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 		service.NewObtenerHistoria(repo),
 		service.NewEditarHistoria(repo, repo.sprints),
 		service.NewAsignarHistoriaASprint(repo, repo.sprints),
+		service.NewCambiarEstadoHistoria(repo, repo.sprints, relojDePrueba),
 	), repo
 }
 
@@ -589,6 +607,190 @@ func TestBacklogHandler_AsignarSprint_IDInvalido(t *testing.T) {
 	handler, _ := nuevoHandlerDePrueba()
 
 	rec := asignarSprint(handler, "abc", `{"sprint_id":1}`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+}
+
+// cambiarEstado ejecuta PUT /backlog/{id}/estado a través de un ServeMux, como en producción.
+func cambiarEstado(handler *BacklogHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	mux := nethttp.NewServeMux()
+	mux.HandleFunc("PUT /backlog/{id}/estado", handler.CambiarEstado)
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id+"/estado", bytes.NewBufferString(cuerpo))
+	req.Header.Set("Content-Type", "application/json")
+	mux.ServeHTTP(rec, req)
+	return rec
+}
+
+func sprintEstado(e domain.EstadoSprint) *domain.EstadoSprint { return &e }
+
+// sembrarHistoriaEnSprint deja la historia 3 en un Sprint del estado dado y con el estado indicado.
+func sembrarHistoriaEnSprint(t *testing.T, repo *stubBacklogRepository, sprint domain.EstadoSprint, estado domain.Estado) {
+	t.Helper()
+	s := sembrarSprint(t, repo, 1, sprint)
+	h := sembrarHistoria(repo)
+	h.SprintID, h.Estado = &s.ID, estado
+	repo.historias[h.ID] = h
+}
+
+func TestBacklogHandler_CambiarEstado_AEnProgreso(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoNueva)
+
+	rec := cambiarEstado(handler, "3", `{"estado":"En progreso"}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var crudo map[string]json.RawMessage
+	if err := json.Unmarshal(rec.Body.Bytes(), &crudo); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	if string(crudo["estado"]) != `"En progreso"` {
+		t.Errorf("estado = %s, se esperaba \"En progreso\"", crudo["estado"])
+	}
+	if v, ok := crudo["fecha_finalizacion"]; !ok || string(v) != "null" {
+		t.Errorf("se esperaba fecha_finalizacion null, se obtuvo %q (presente: %v)", v, ok)
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_ACompletada(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoEnProgreso)
+
+	rec := cambiarEstado(handler, "3", `{"estado":"Completada"}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	if resp.Estado != "Completada" {
+		t.Errorf("estado = %q, se esperaba Completada", resp.Estado)
+	}
+	if resp.FechaFinalizacion == nil || *resp.FechaFinalizacion != "2026-10-29" {
+		t.Errorf("fecha_finalizacion = %v, se esperaba 2026-10-29", resp.FechaFinalizacion)
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_HistoriaInexistenteDominaSobreElCuerpo(t *testing.T) {
+	for _, cuerpo := range []string{`{}`, `{no-es-json`} {
+		handler, _ := nuevoHandlerDePrueba()
+
+		rec := cambiarEstado(handler, "99", cuerpo)
+
+		if rec.Code != nethttp.StatusNotFound {
+			t.Fatalf("cuerpo %q: se esperaba 404, se obtuvo %d", cuerpo, rec.Code)
+		}
+		if resp := leerError(t, rec); resp.Mensaje != "historia no encontrada" {
+			t.Errorf("cuerpo %q: mensaje inesperado: %q", cuerpo, resp.Mensaje)
+		}
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_EstadoObligatorio(t *testing.T) {
+	for _, cuerpo := range []string{`{}`, `{"estado":""}`} {
+		handler, repo := nuevoHandlerDePrueba()
+		sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoNueva)
+
+		rec := cambiarEstado(handler, "3", cuerpo)
+
+		if rec.Code != nethttp.StatusBadRequest {
+			t.Fatalf("cuerpo %q: se esperaba 400, se obtuvo %d (%s)", cuerpo, rec.Code, rec.Body.String())
+		}
+		if resp := leerError(t, rec); resp.Campo != "estado" || resp.Mensaje != "el campo es obligatorio" {
+			t.Errorf("cuerpo %q: error inesperado: %+v", cuerpo, resp)
+		}
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_JSONInvalido(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoNueva)
+
+	rec := cambiarEstado(handler, "3", `{no-es-json`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
+	}
+	if resp := leerError(t, rec); resp.Campo != "" || resp.Mensaje != "JSON inválido" {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_EstadoInvalido(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoNueva)
+
+	rec := cambiarEstado(handler, "3", `{"estado":"Pendiente"}`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := leerError(t, rec); resp.Campo != "estado" || resp.Mensaje != "el estado debe ser Nueva, En progreso o Completada" {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_RechazosDeLaRegla(t *testing.T) {
+	casos := []struct {
+		nombre  string
+		sprint  *domain.EstadoSprint
+		actual  domain.Estado
+		nuevo   string
+		mensaje string
+	}{
+		{"historia sin Sprint", nil, domain.EstadoNueva, "En progreso", "primero debe asignarse a un Sprint activo"},
+		{"Sprint pendiente", sprintEstado(domain.SprintPendiente), domain.EstadoNueva, "En progreso", "solo se cambia el estado de historias de un Sprint activo"},
+		{"Sprint finalizado", sprintEstado(domain.SprintFinalizado), domain.EstadoNueva, "En progreso", "solo se cambia el estado de historias de un Sprint activo"},
+		{"estado repetido", sprintEstado(domain.SprintActivo), domain.EstadoEnProgreso, "En progreso", "la historia ya está en ese estado"},
+		{"retroceso", sprintEstado(domain.SprintActivo), domain.EstadoCompletada, "En progreso", "el estado de una historia solo avanza: no se puede volver a un estado anterior"},
+		{"salto directo", sprintEstado(domain.SprintActivo), domain.EstadoNueva, "Completada", "primero debe pasar por En progreso"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			handler, repo := nuevoHandlerDePrueba()
+			if c.sprint == nil {
+				sembrarHistoria(repo)
+			} else {
+				sembrarHistoriaEnSprint(t, repo, *c.sprint, c.actual)
+			}
+
+			rec := cambiarEstado(handler, "3", `{"estado":"`+c.nuevo+`"}`)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Campo != "estado" || resp.Mensaje != c.mensaje {
+				t.Errorf("error inesperado: %+v", resp)
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_Conflicto(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sembrarHistoriaEnSprint(t, repo, domain.SprintActivo, domain.EstadoNueva)
+	repo.errCambiarEstado = domain.ErrConflictoEstadoHistoria
+
+	rec := cambiarEstado(handler, "3", `{"estado":"En progreso"}`)
+
+	if rec.Code != nethttp.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := leerError(t, rec); resp.Campo != "" || resp.Mensaje != "la historia cambió de estado mientras tanto: recargá y volvé a intentar" {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+}
+
+func TestBacklogHandler_CambiarEstado_IDInvalido(t *testing.T) {
+	handler, _ := nuevoHandlerDePrueba()
+
+	rec := cambiarEstado(handler, "abc", `{"estado":"En progreso"}`)
 
 	if rec.Code != nethttp.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)

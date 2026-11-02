@@ -37,6 +37,7 @@ export function put<T>(path: string, body: unknown): Promise<T> {
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
   const response = await send(method, path, body)
+  if (gatewayStatuses.includes(response.status)) throw new ConnectionError()
   const text = await response.text()
   const data = parseJson(text)
 
@@ -59,6 +60,8 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
     throw new ConnectionError()
   }
 }
+
+const gatewayStatuses = [502, 503, 504]
 
 const invalid = Symbol('cuerpo no interpretable')
 

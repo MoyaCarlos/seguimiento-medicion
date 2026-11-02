@@ -17,14 +17,15 @@ import (
 // pasosAsignacion guarda el estado de los escenarios de HU-06. Reutiliza la
 // base y el proyecto del Background, y los services de Sprint de HU-05.
 type pasosAsignacion struct {
-	base      *scenarioContext
-	sprints   *repository.SQLiteSprintRepository
-	backlog   *repository.SQLiteBacklogRepository
-	crear     *service.CrearSprint
-	iniciar   *service.IniciarSprint
-	cerrar    *service.CerrarSprint
-	asignar   *service.AsignarHistoriaASprint
-	consultar *service.ConsultarProductBacklog
+	base             *scenarioContext
+	sprints          *repository.SQLiteSprintRepository
+	backlog          *repository.SQLiteBacklogRepository
+	crear            *service.CrearSprint
+	iniciar          *service.IniciarSprint
+	cerrar           *service.CerrarSprint
+	asignar          *service.AsignarHistoriaASprint
+	consultar        *service.ConsultarProductBacklog
+	consultarBacklog *service.ConsultarSprintBacklog
 
 	estadoPlan string // estado pedido para el Sprint a planificar
 	planID     int64  // 0 hasta que sprintAPlanificar lo crea
@@ -32,6 +33,10 @@ type pasosAsignacion struct {
 	historias  map[string]int64
 	antes      domain.BacklogItem
 	err        error
+
+	sprintsPorEstado map[string]int64
+	sprintBacklog    []domain.BacklogItem
+	errConsulta      error
 }
 
 func (p *pasosAsignacion) preparar() {
@@ -43,9 +48,12 @@ func (p *pasosAsignacion) preparar() {
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints)
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.backlog)
+	p.consultarBacklog = service.NewConsultarSprintBacklog(p.sprints, p.backlog)
 	p.estadoPlan, p.planID, p.otroSprint = "", 0, 0
 	p.historias = map[string]int64{}
 	p.antes, p.err = domain.BacklogItem{}, nil
+	p.sprintsPorEstado = map[string]int64{}
+	p.sprintBacklog, p.errConsulta = nil, nil
 }
 
 // iniciarSprint lleva un Sprint Pendiente a Activo con el Goal y las fechas de HU-05.
@@ -62,22 +70,35 @@ func (p *pasosAsignacion) sprintAPlanificar() (int64, error) {
 	if p.planID != 0 {
 		return p.planID, nil
 	}
+	id, err := p.crearSprintEnEstado(p.estadoPlan)
+	if err != nil {
+		return 0, err
+	}
+	p.planID = id
+	return id, nil
+}
+
+// crearSprintEnEstado crea un Sprint y lo lleva al estado pedido con los
+// services de HU-05: nunca se siembra el estado del Sprint a mano.
+func (p *pasosAsignacion) crearSprintEnEstado(estado string) (int64, error) {
 	s, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
 	if err != nil {
 		return 0, err
 	}
-	if p.estadoPlan != string(domain.SprintPendiente) {
+	switch estado {
+	case string(domain.SprintPendiente):
+		return s.ID, nil
+	case string(domain.SprintActivo):
+		return s.ID, p.iniciarSprint(s.ID)
+	case string(domain.SprintFinalizado):
 		if err := p.iniciarSprint(s.ID); err != nil {
 			return 0, err
 		}
+		_, err := p.cerrar.Ejecutar(context.Background(), s.ID)
+		return s.ID, err
+	default:
+		return 0, fmt.Errorf("estado de Sprint no soportado: %q", estado)
 	}
-	if p.estadoPlan == string(domain.SprintFinalizado) {
-		if _, err := p.cerrar.Ejecutar(context.Background(), s.ID); err != nil {
-			return 0, err
-		}
-	}
-	p.planID = s.ID
-	return s.ID, nil
 }
 
 func (p *pasosAsignacion) tieneSprintAPlanificar(estado string) error {
@@ -86,7 +107,11 @@ func (p *pasosAsignacion) tieneSprintAPlanificar(estado string) error {
 }
 
 func (p *pasosAsignacion) nuevaHistoria(titulo string, puntos *int) (int64, error) {
-	item, err := domain.NewBacklogItem(p.base.proyectoID, titulo, "Descripción", domain.PrioridadMust, nil)
+	return p.nuevaHistoriaCon(titulo, domain.PrioridadMust, puntos)
+}
+
+func (p *pasosAsignacion) nuevaHistoriaCon(titulo string, prioridad domain.Prioridad, puntos *int) (int64, error) {
+	item, err := domain.NewBacklogItem(p.base.proyectoID, titulo, "Descripción", prioridad, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -257,6 +282,105 @@ func (p *pasosAsignacion) quedaSinCambios(titulo string) error {
 	return nil
 }
 
+func (p *pasosAsignacion) sprintConHistoria(estado, titulo string) error {
+	sprintID, err := p.crearSprintEnEstado(estado)
+	if err != nil {
+		return err
+	}
+	p.sprintsPorEstado[estado] = sprintID
+	historiaID, err := p.nuevaHistoriaCon(titulo, domain.PrioridadMust, nil)
+	if err != nil {
+		return err
+	}
+	if _, err := p.asignar.Ejecutar(context.Background(), historiaID, sprintID); err != nil {
+		return fmt.Errorf("no se pudo asignar %q al Sprint %q: %w", titulo, estado, err)
+	}
+	return nil
+}
+
+func (p *pasosAsignacion) sprintConHistorias(estado string, tabla *godog.Table) error {
+	p.estadoPlan = estado
+	sprintID, err := p.sprintAPlanificar()
+	if err != nil {
+		return err
+	}
+	p.sprintsPorEstado[estado] = sprintID
+	for _, fila := range tabla.Rows[1:] {
+		titulo, prioridad := fila.Cells[0].Value, domain.Prioridad(fila.Cells[1].Value)
+		historiaID, err := p.nuevaHistoriaCon(titulo, prioridad, nil)
+		if err != nil {
+			return err
+		}
+		if _, err := p.asignar.Ejecutar(context.Background(), historiaID, sprintID); err != nil {
+			return fmt.Errorf("no se pudo asignar %q al Sprint %q: %w", titulo, estado, err)
+		}
+	}
+	return nil
+}
+
+func (p *pasosAsignacion) sprintSinHistorias(estado string) error {
+	p.estadoPlan = estado
+	sprintID, err := p.sprintAPlanificar()
+	if err != nil {
+		return err
+	}
+	p.sprintsPorEstado[estado] = sprintID
+	return nil
+}
+
+func (p *pasosAsignacion) consultarBacklogDelSprint(estado string) error {
+	sprintID, ok := p.sprintsPorEstado[estado]
+	if !ok {
+		return fmt.Errorf("no existe un Sprint en estado %q", estado)
+	}
+	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), sprintID)
+	return nil
+}
+
+func (p *pasosAsignacion) consultarBacklogDeSprintInexistente(id int) error {
+	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), int64(id))
+	return nil
+}
+
+func (p *pasosAsignacion) veoSoloLasHistoriasDelSprint(estado string, tabla *godog.Table) error {
+	if p.errConsulta != nil {
+		return fmt.Errorf("no se esperaba error al consultar el Sprint Backlog: %w", p.errConsulta)
+	}
+	esperadas := tabla.Rows[1:]
+	if len(p.sprintBacklog) != len(esperadas) {
+		return fmt.Errorf("se esperaban %d historias, se obtuvieron %d: %+v", len(esperadas), len(p.sprintBacklog), p.sprintBacklog)
+	}
+	for i, fila := range esperadas {
+		titulo, prioridad := fila.Cells[0].Value, domain.Prioridad(fila.Cells[1].Value)
+		h := p.sprintBacklog[i]
+		if h.Titulo != titulo || h.Prioridad != prioridad {
+			return fmt.Errorf("en la posición %d se esperaba %q (%s), se obtuvo %q (%s)",
+				i+1, titulo, prioridad, h.Titulo, h.Prioridad)
+		}
+		if h.SprintID == nil || *h.SprintID != p.sprintsPorEstado[estado] {
+			return fmt.Errorf("la historia %q no pertenece al Sprint %q", titulo, estado)
+		}
+	}
+	return nil
+}
+
+func (p *pasosAsignacion) veoSprintBacklogVacio() error {
+	if p.errConsulta != nil {
+		return fmt.Errorf("no se esperaba error al consultar el Sprint Backlog: %w", p.errConsulta)
+	}
+	if len(p.sprintBacklog) != 0 {
+		return fmt.Errorf("se esperaba un Sprint Backlog vacío, se obtuvo %+v", p.sprintBacklog)
+	}
+	return nil
+}
+
+func (p *pasosAsignacion) consultaDelSprintBacklogRechazadaConError(mensaje string) error {
+	if p.errConsulta == nil || !strings.Contains(p.errConsulta.Error(), mensaje) {
+		return fmt.Errorf("se esperaba el error %q, se obtuvo %v", mensaje, p.errConsulta)
+	}
+	return nil
+}
+
 // InitializeScenarioAsignacion registra los pasos de HU-06 sobre el contexto de
 // HU-01 (base de datos y proyecto del Background).
 func InitializeScenarioAsignacion(ctx *godog.ScenarioContext, base *scenarioContext) {
@@ -282,4 +406,13 @@ func InitializeScenarioAsignacion(ctx *godog.ScenarioContext, base *scenarioCont
 	ctx.Step(`^la asignación se rechaza con el mensaje "([^"]*)"$`, p.rechazadaConMensaje)
 	ctx.Step(`^la asignación se rechaza con error "([^"]*)"$`, p.rechazadaConError)
 	ctx.Step(`^la historia "([^"]*)" queda sin cambios$`, p.quedaSinCambios)
+
+	ctx.Step(`^que el proyecto tiene un Sprint "([^"]*)" con la historia "([^"]*)" en su Sprint Backlog$`, p.sprintConHistoria)
+	ctx.Step(`^que el proyecto tiene un Sprint "([^"]*)" con estas historias, en este orden de creación:$`, p.sprintConHistorias)
+	ctx.Step(`^que el proyecto tiene un Sprint "([^"]*)" sin historias en su Sprint Backlog$`, p.sprintSinHistorias)
+	ctx.Step(`^consulto el Sprint Backlog del Sprint "([^"]*)"$`, p.consultarBacklogDelSprint)
+	ctx.Step(`^consulto el Sprint Backlog del Sprint con identificador (\d+), que no existe$`, p.consultarBacklogDeSprintInexistente)
+	ctx.Step(`^veo solo las historias del Sprint "([^"]*)", en este orden:$`, p.veoSoloLasHistoriasDelSprint)
+	ctx.Step(`^veo un Sprint Backlog vacío, sin error$`, p.veoSprintBacklogVacio)
+	ctx.Step(`^la consulta del Sprint Backlog se rechaza con error "([^"]*)"$`, p.consultaDelSprintBacklogRechazadaConError)
 }

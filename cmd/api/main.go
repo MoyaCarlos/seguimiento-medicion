@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -37,6 +39,7 @@ func main() {
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewEditarHistoria(backlogRepo, sprintRepo),
 		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo),
+		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, time.Now),
 	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
@@ -52,6 +55,7 @@ func main() {
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 		service.NewConsultarSprints(proyectos, sprintRepo),
+		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
 		sprintRepo,
 	)
 
@@ -72,6 +76,11 @@ func main() {
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 	)
 
+	demoHandler := apihttp.NewDemoHandler(
+		func() bool { return cfg.DemoHabilitado },
+		demo.NewCargador(db, time.Now),
+	)
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
@@ -86,6 +95,7 @@ func main() {
 	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
+	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
@@ -97,6 +107,9 @@ func main() {
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
+	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
+
+	demoHandler.Registrar(mux)
 
 	log.Printf("listening on :%s", cfg.Puerto)
 	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {
