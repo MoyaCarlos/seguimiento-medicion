@@ -163,4 +163,46 @@ describe('SelectorProyecto', () => {
 
     expect(screen.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
   })
+
+  describe('estados del listado', () => {
+    function abrirConFetch(implementacion: () => Promise<Response>, url = '/projects/1/backlog') {
+      vi.stubGlobal('fetch', vi.fn(implementacion))
+      const router = createMemoryRouter(
+        [{ path: '/projects/:id/*', element: <SelectorProyecto /> }],
+        { initialEntries: [url] },
+      )
+      render(<RouterProvider router={router} />)
+    }
+
+    it('US4.1: mientras carga muestra el indicador y el selector deshabilitado con solo "Proyecto <id>"', () => {
+      abrirConFetch(() => new Promise<Response>(() => {}))
+
+      expect(screen.getByRole('status').textContent).toBe('Cargando…')
+      const selector = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' })
+      expect(selector.disabled).toBe(true)
+      expect(screen.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual(['Proyecto 1'])
+      expect(screen.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+    })
+
+    it('US4.2: si el listado falla muestra el mensaje de la API y el selector deshabilitado con solo "Proyecto <id>"', async () => {
+      abrirConFetch(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'Falló el listado' }), { status: 500 })))
+
+      expect((await screen.findByRole('alert')).textContent).toBe('Falló el listado')
+      const selector = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' })
+      expect(selector.disabled).toBe(true)
+      expect(screen.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual(['Proyecto 1'])
+      expect(screen.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+      expect(screen.queryByRole('status')).toBeNull()
+    })
+
+    it('Cuando la carga se resuelve el selector se habilita con la lista completa y sin indicador', async () => {
+      abrirConFetch(() => Promise.resolve(new Response(JSON.stringify(PROYECTOS), { status: 200 })))
+
+      await screen.findByRole('option', { name: 'Beta (#2)' })
+
+      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).disabled).toBe(false)
+      expect(screen.queryByRole('status')).toBeNull()
+      expect(screen.queryByRole('alert')).toBeNull()
+    })
+  })
 })

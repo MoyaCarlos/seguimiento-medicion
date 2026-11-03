@@ -59,4 +59,28 @@ describe('ListaProyectos', () => {
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
+
+  describe('estados del listado', () => {
+    function abrirConFetch(implementacion: () => Promise<Response>) {
+      vi.stubGlobal('fetch', vi.fn(implementacion))
+      render(<RouterProvider router={createMemoryRouter(
+        [{ path: '/', element: <ListaProyectos /> }],
+        { initialEntries: ['/'] },
+      )} />)
+    }
+
+    it('Mientras carga muestra el indicador de carga', () => {
+      abrirConFetch(() => new Promise<Response>(() => {}))
+
+      expect(screen.getByRole('status').textContent).toBe('Cargando…')
+    })
+
+    it('Si el listado falla muestra el mensaje de la API y ninguna lista', async () => {
+      abrirConFetch(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'Falló el listado' }), { status: 500 })))
+
+      expect((await screen.findByRole('alert')).textContent).toBe('Falló el listado')
+      expect(screen.queryByRole('list')).toBeNull()
+      expect(screen.queryByText(/Todavía no hay proyectos/)).toBeNull()
+    })
+  })
 })

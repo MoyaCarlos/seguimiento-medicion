@@ -68,6 +68,50 @@ describe('registro de rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
   })
 
+  describe('listado de proyectos caído', () => {
+    function simularListadoCaido(extra?: (url: string, init?: RequestInit) => Response | undefined) {
+      const respuestaBase = vi.mocked(fetch).getMockImplementation()!
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: string, init?: RequestInit) => {
+          if (url === '/projects' && (!init?.method || init.method === 'GET')) {
+            return Promise.resolve(new Response(JSON.stringify({ mensaje: 'Listado caído' }), { status: 500 }))
+          }
+          return Promise.resolve(extra?.(url, init) ?? respuestaBase(url, init))
+        }),
+      )
+    }
+
+    it('US4.2: el encabezado muestra el aviso y los enlaces de sección siguen navegando', async () => {
+      simularListadoCaido()
+      const usuario = userEvent.setup()
+      const router = abrir('/projects/42/backlog')
+
+      expect(await screen.findByText('Listado caído')).toBeTruthy()
+      await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
+
+      expect(router.state.location.pathname).toBe('/projects/42/sprints')
+      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).disabled).toBe(true)
+    })
+
+    it('US3.4 y US4.4: en el inicio el aviso no impide crear un proyecto', async () => {
+      simularListadoCaido((url, init) =>
+        url === '/projects' && init?.method === 'POST'
+          ? new Response(JSON.stringify({ ...PROYECTO, id: 77 }), { status: 201 })
+          : undefined)
+      const usuario = userEvent.setup()
+      const router = abrir('/')
+
+      expect(await screen.findByText('Listado caído')).toBeTruthy()
+      await usuario.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
+      await usuario.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
+      await usuario.click(screen.getByRole('button', { name: 'Crear proyecto' }))
+
+      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+      expect(router.state.location.pathname).toBe('/projects/77/proyecto')
+    })
+  })
+
   describe('inicio con lista de proyectos', () => {
     it('US3.1: el inicio muestra el formulario de creación y la lista de proyectos', async () => {
       proyectosSimulados = [{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }]
