@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { consultarVotacion, iniciarVotacion, listarIntegrantes, obtenerHistoria, revelarVotacion, votar } from './api'
 import { esVotacionNoIniciada, mensajeDeError } from './errores'
-import { esScrumMaster, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
+import { esScrumMaster, estaRevelada, sinValores, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
 
 export function useVotacion(proyectoId: string, historiaId: number) {
   const [integrantes, setIntegrantes] = useState<Integrante[] | null>(null)
@@ -108,6 +108,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
 
   function elegirActor(id: number | undefined) {
     setErrorDeAccion('')
+    setVotacion((actual) => (actual && !estaRevelada(actual) ? sinValores(actual) : actual))
     setActorId(id)
   }
 

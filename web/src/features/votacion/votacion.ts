@@ -47,3 +47,8 @@ export function textoDeVoto(voto: VotoDeIntegrante): string {
   if (!voto.ya_voto) return 'Falta'
   return voto.valor === null ? 'Oculto' : String(voto.valor)
 }
+
+export const sinValores = (votacion: Votacion): Votacion => ({
+  ...votacion,
+  integrantes: votacion.integrantes.map((integrante) => ({ ...integrante, valor: null })),
+})
