@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
@@ -144,7 +144,7 @@ describe('FormularioHoras: registrar horas', () => {
     abrir()
 
     const seleccion = await lista()
-    expect(document.activeElement).toBe(seleccion)
+    await waitFor(() => expect(document.activeElement).toBe(seleccion))
   })
 
   describe('foco: al terminar el envío vuelve a donde estaba', () => {
@@ -177,7 +177,7 @@ describe('FormularioHoras: registrar horas', () => {
       envio.responder({})
 
       await screen.findByText('Horas registradas')
-      expect(document.activeElement).toBe(guardar())
+      await waitFor(() => expect(document.activeElement).toBe(guardar()))
     })
 
     it('si se guardó con Enter y se rechaza, vuelve al campo', async () => {
@@ -190,7 +190,7 @@ describe('FormularioHoras: registrar horas', () => {
       envio.rechazar(new ApiError(400, 'las horas deben ser un número', 'horas'))
 
       await screen.findByRole('alert')
-      expect(document.activeElement).toBe(horas())
+      await waitFor(() => expect(document.activeElement).toBe(horas()))
     })
 
     it('si la persona ya se movió a otro control, no le saca el foco', async () => {
