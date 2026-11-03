@@ -348,6 +348,9 @@ funcionando.
 - Persistencia de la última sección o del último proyecto visitado.
 - Rediseño general del encabezado, de la navegación de secciones o del formulario de creación.
 - Actualización automática de la lista después de crear un proyecto.
+- Una página de inicio que muestre primero la lista de proyectos (con el formulario de creación
+  como acción secundaria): queda para una mejora posterior. En esta historia `/` mantiene el
+  formulario de creación seguido de la lista.
 
 ## Trazabilidad
 
