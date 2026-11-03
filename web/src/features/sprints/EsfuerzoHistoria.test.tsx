@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../compartido/api/client'
@@ -42,6 +42,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  // Desmonta antes de resetear: una reconsulta pendiente no debe encontrar el mock vacío.
+  cleanup()
   vi.resetAllMocks()
 })
 
