@@ -795,7 +795,7 @@ Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**,
 Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
 Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Se deciden en la spec con el Scrum Master, no quien implementa: cómo viaja el token y su vencimiento, dónde viven las sesiones (en la base se vacían en cada deploy de Render), cómo se dan de alta las contraseñas de los usuarios que hoy no tienen y las reglas del nombre de usuario.
 ### Prioridad
-S (Should have) - Hace que cada persona actúe a su nombre y que el voto de Planning Poker sea realmente secreto. Se planifica en el Sprint 4, antes de la entrega final, por decisión del Scrum Master (2026-11-03).
+S (Should have) - Hace que cada persona actúe a su nombre. El voto de Planning Poker realmente secreto se logra recién con HU-21, que quita el `usuario_id` del cuerpo y de la query; con HU-20 sola el servidor sigue aceptando el id que mande el cliente. Se planifica en el Sprint 4, antes de la entrega final, por decisión del Scrum Master (2026-11-03).
 ### Estado
 Nueva
 ### Valor de Negocio
@@ -833,12 +833,13 @@ Dado que quien crea un proyecto queda como Scrum Master,
 Cuando se intenta agregar un segundo Scrum Master,
 Entonces el sistema lo rechaza.
 Escenario 7: Identidad de la sesión.
-Cuando voto o registro horas,
-Entonces queda a nombre de la persona con sesión iniciada y no se acepta otro usuario en la petición.
+Dado que inicié sesión,
+Cuando voto, registro horas o consulto la votación de una historia,
+Entonces queda a nombre de la persona con sesión iniciada, y no se acepta otro usuario ni en el cuerpo ni en la query de la petición (`usuario_id`), así que nadie puede ver el voto oculto de otra persona.
 ### Depende de
 HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints) y HU-07 (horas). Se apoya en el issue #236 (índice único de Scrum Master).
 ### Notas
-Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto, lo que cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
+Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y también la identidad que viaja en la query de `GET /backlog/{id}/votacion?usuario_id=N` (`internal/http/votacion_handler.go`), que hoy devuelve el voto del que consulta: con el id de otra persona se vería su voto oculto. Quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto, lo que cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
 Los escenarios de Godog que hoy mandan `usuario_id` se ajustan **en el mismo PR**, con un paso de contexto "Dado que inicié sesión como X" (el check `backend` tiene que estar en verde para mergear). Sin atajos de prueba en el código de producción.
 Si el viernes 13 los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación.
 Absorbe los niveles 2 y 3 de HU-19. Eliminar un proyecto (#232) depende de estos permisos.
