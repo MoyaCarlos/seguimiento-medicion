@@ -315,7 +315,19 @@ func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64
 }
 
 func (f *fakeVotacionRepository) ListarRondasReveladas(_ context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
-	return nil, nil
+	if f.err != nil {
+		return nil, f.err
+	}
+	rondas := make([]domain.RondaVotacion, 0)
+	for _, r := range f.anteriores {
+		if r.HistoriaID == historiaID && r.Revelada() {
+			rondas = append(rondas, copiaDeRonda(r))
+		}
+	}
+	if actual, ok := f.rondas[historiaID]; ok && actual.Revelada() {
+		rondas = append(rondas, copiaDeRonda(actual))
+	}
+	return rondas, nil
 }
 
 func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {

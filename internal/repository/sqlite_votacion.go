@@ -135,5 +135,38 @@ func ningunaFilaEsRondaRevelada(resultado sql.Result) error {
 // única, así que no se puede consultar los votos con las filas de las rondas
 // abiertas (research.md R9).
 func (r *SQLiteVotacionRepository) ListarRondasReveladas(ctx context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
-	return nil, nil
+	filas, err := r.db.QueryContext(ctx,
+		`SELECT r.id, r.numero, r.revelada_en, v.usuario_id, v.valor
+		 FROM rondas_votacion r LEFT JOIN votos v ON v.ronda_id = r.id
+		 WHERE r.historia_id = ? AND r.revelada_en IS NOT NULL
+		 ORDER BY r.numero, v.usuario_id`,
+		historiaID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listar rondas de la historia %d: %w", historiaID, err)
+	}
+	defer filas.Close()
+
+	rondas := make([]domain.RondaVotacion, 0)
+	for filas.Next() {
+		var (
+			id        int64
+			numero    int
+			revelada  string
+			usuarioID sql.NullInt64
+			valor     sql.NullInt64
+		)
+		if err := filas.Scan(&id, &numero, &revelada, &usuarioID, &valor); err != nil {
+			return nil, fmt.Errorf("leer ronda: %w", err)
+		}
+		if len(rondas) == 0 || rondas[len(rondas)-1].ID != id {
+			en := parsearTiempo(revelada)
+			rondas = append(rondas, domain.RondaVotacion{ID: id, HistoriaID: historiaID, Numero: numero, ReveladaEn: &en})
+		}
+		if usuarioID.Valid {
+			actual := &rondas[len(rondas)-1]
+			actual.Votos = append(actual.Votos, domain.Voto{UsuarioID: usuarioID.Int64, Valor: int(valor.Int64)})
+		}
+	}
+	return rondas, filas.Err()
 }
