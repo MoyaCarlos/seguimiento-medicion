@@ -776,16 +776,17 @@ Entonces el sistema lo rechaza indicando el campo.
 Escenario 4: Ingreso exitoso.
 Dado que tengo una cuenta,
 Cuando ingreso con mi usuario y contraseña,
-Entonces accedo a mis proyectos.
+Entonces accedo a la aplicación.
 Escenario 5: Credenciales incorrectas.
 Dado un usuario o una contraseña incorrectos,
 Cuando intento ingresar,
 Entonces el sistema responde "Usuario o contraseña incorrectos" sin revelar cuál de los dos falló.
 Escenario 6: Sesión vencida.
 Dado que mi sesión venció o es inválida,
-Cuando uso la aplicación,
-Entonces se me pide ingresar de nuevo y vuelvo a la pantalla en la que estaba.
+Cuando navego a una ruta del frontend,
+Entonces se me pide ingresar de nuevo y vuelvo a la ruta en la que estaba.
 Escenario 7: Cierre de sesión.
+Dado que tengo la sesión iniciada,
 Cuando cierro sesión,
 Entonces la sesión deja de ser válida.
 ### Depende de
