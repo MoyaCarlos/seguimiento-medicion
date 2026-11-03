@@ -118,8 +118,9 @@ paths:
             PUT /backlog/{id} (HU-15).
         '400':
           description: >-
-            Identificador o JSON inválido, `usuario_id` faltante, valor fuera de la baraja o Story
-            Points congelados por D2b (campo `estimacion_sp`), o ronda actual sin revelar (campo `estado`).
+            Identificador o JSON inválido, `usuario_id` faltante, valor fuera de la baraja o que
+            no es un entero, o Story Points congelados por D2b (campo `estimacion_sp`), o ronda actual sin
+            revelar (campo `estado`).
           content:
             application/json:
               schema:

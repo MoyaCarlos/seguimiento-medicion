@@ -188,6 +188,25 @@ una se prueba sola.
 
 ---
 
+## Phase 8: Correcciones de la revisión independiente
+
+**Purpose**: respetar el contrato con valores que no son enteros, proteger con tests la regla de la ronda actual, y aclarar el mensaje de abrir una ronda en una historia completada.
+
+- [X] T094 RED: en internal/http/votacion_handler_test.go, tests de `estimacion_sp` con `2.5`, `"5"`, `null` y sin el campo → 400 campo `estimacion_sp`; Product Builder con `2.5` → 403. Confirmar que FALLA
+- [X] T095 COMMIT `RED: agregar tests de una estimación que no es entera (fallan)`
+- [X] T096 GREEN: en internal/http/votacion_dto.go, leer `estimacion_sp` como `json.RawMessage`; lo que no sea un entero llega al service como 0, que lo rechaza después de validar el permiso (research.md R10) — `go test ./...` en verde
+- [X] T097 COMMIT `GREEN: rechazar una estimación que no es entera con su campo, tests en verde`
+- [X] T098 Tests de caracterización: en internal/service/registrar_estimacion_test.go, ronda 1 revelada y 2 abierta → `ErrRondaNoRevelada`; en internal/http/votacion_handler_test.go, valor distinto con Sprint Activo → 400 campo `estimacion_sp`. Verificar que detectan un chequeo sobre "alguna ronda revelada" — `go test ./...` en verde
+- [X] T099 COMMIT `Agregar tests de la ronda actual y de D2b en el handler`
+- [X] T100 RED: en internal/service/abrir_nueva_ronda_test.go, `Completada` → `ErrRondaEnHistoriaCompletada`, y en internal/http/votacion_handler_test.go, 400 campo `estado` con su mensaje. Agregar el error en internal/domain/errors.go — confirmar que FALLA
+- [X] T101 COMMIT `RED: agregar tests del error de abrir una ronda en una historia completada (fallan)`
+- [X] T102 GREEN: devolver `ErrRondaEnHistoriaCompletada` en internal/service/abrir_nueva_ronda.go — `go test ./...` en verde
+- [X] T103 COMMIT `GREEN: aclarar el error de abrir una ronda en una historia completada, tests en verde`
+- [X] T104 Actualizar research.md (R10), data-model.md y contracts/openapi.yaml; repetir las comprobaciones con el servidor real
+- [X] T105 COMMIT `docs: registrar las correcciones de la revisión independiente de HU-14`
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **User Stories (Phase 3 a 5)** → **Polish (Phase 6)**.

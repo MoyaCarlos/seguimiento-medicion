@@ -113,12 +113,13 @@ documento registra las decisiones técnicas del diseño.
 | `ErrNoEsScrumMaster` (existente) | sentinel | 403 | abre o registra quien no es Scrum Master, integre o no el proyecto (igual que iniciar y revelar en HU-02) |
 | `ErrRondaYaAbierta` (**nuevo**) | sentinel | 409 | dos aperturas simultáneas de la misma ronda |
 | `ErrRondaNoRevelada` (**nuevo**) | `ValidationError{estado}` | 400 | abrir ronda o registrar con la ronda actual oculta |
-| `ErrHistoriaCompletada` (existente) | `ValidationError{estado}` | 400 | abrir ronda en una historia `Completada` |
-| `ErrEstimacionInvalida` (existente) | `ValidationError{estimacion_sp}` | 400 | valor fuera de la baraja |
+| `ErrRondaEnHistoriaCompletada` (**nuevo**) | `ValidationError{estado}` | 400 | abrir ronda en una historia `Completada` |
+| `ErrEstimacionInvalida` (existente) | `ValidationError{estimacion_sp}` | 400 | valor fuera de la baraja o que no es un entero (decimal, entre comillas, `null`, ausente) |
 | `ErrEstimacionCongelada` (existente) | `ValidationError{estimacion_sp}` | 400 | D2b |
 
-- **Rationale**: se reutilizan los errores existentes y `escribirError` suma solo el 409 de `ErrRondaYaAbierta`. El mensaje de
-  `ErrHistoriaCompletada` ("no se puede votar una historia completada") también sirve para abrir una ronda.
+- **Rationale**: se reutilizan los errores existentes y `escribirError` suma solo el 409 de `ErrRondaYaAbierta`. `estimacion_sp` se
+  lee como `json.RawMessage`: lo que no es un entero llega al service como 0, así un Product Builder recibe 403 también con
+  un valor inválido. No se reutiliza `parsearEstimacion` porque `json.Number` aceptaría `"5"` entre comillas.
 - **Orden de validación**: id de ruta → historia existe (404) → JSON → `usuario_id` → permiso (403) →
   estado de la historia (solo al abrir ronda) → valor → votación iniciada (404) → ronda revelada (400) → D2b.
 

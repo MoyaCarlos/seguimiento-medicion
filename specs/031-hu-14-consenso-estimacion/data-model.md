@@ -55,6 +55,7 @@ Casos de test: `[3,5,8]` y `[3,5]` → `true`; `[5,5,5]`, `[8]` y `[]` → `fals
 ### Errores (`errors.go`)
 
 `ErrRondaNoRevelada = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}` y
+`ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}` y
 `ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")`.
 El resto se reutiliza: ver [research.md R10](./research.md#r10-errores-y-códigos-http).
 
