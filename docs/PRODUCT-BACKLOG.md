@@ -74,7 +74,7 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 
 Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado. HU-16, HU-17 y HU-18 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo.
 
-* **HU-16: Gestión del Equipo del Proyecto (Could have).** Cambiar el rol de un integrante y quitarlo del equipo sin perder lo que aportó; siempre queda al menos un Scrum Master. Extiende HU-04.
+* **HU-16: Gestión del Equipo del Proyecto (Could have).** Agregar a un usuario ya registrado como Product Builder y quitar integrantes sin perder lo que aportaron; el único Scrum Master no se quita ni cambia de rol. Extiende HU-04.
 * **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. Extiende HU-04.
 * **HU-18: Avance de las Historias del Proyecto (Should have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Extiende HU-15 y HU-11.
 * **HU-19: Administración de Mis Proyectos (Could have).** Absorbida por HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03). Su nivel 1, la lista y el selector de proyectos, es #148; los niveles 2 y 3 (mis proyectos, permisos por rol y autenticación) pasan a HU-20 y HU-21. Se descarta la transferencia de la propiedad: el dueño del proyecto es su Scrum Master. Extiende HU-04.
@@ -576,20 +576,20 @@ Implementada (backend, PR #135; falta el frontend: issue #98)
 
 ## HU-16: Gestión del Equipo del Proyecto
 ### Descripción
-Como Scrum Master quiero cambiar el rol de un integrante y quitarlo del equipo de un proyecto, conservando todo lo que aportó, para poder mantener el equipo al día sin perder el historial del proyecto.
+Como Scrum Master quiero agregar a un usuario ya registrado como Product Builder y quitar a un integrante del equipo de un proyecto, conservando todo lo que aportó, para poder mantener el equipo al día sin perder el historial del proyecto.
 ### Criterios de aceptacion (BDD):
-Escenario 1: Cambio de rol.
-Dado que un proyecto tiene un integrante con rol Product Builder,
-Cuando cambio su rol a Scrum Master y guardo,
-Entonces el sistema actualiza su rol y lo muestra en el equipo del proyecto.
+Escenario 1: Agregar a un usuario registrado como Product Builder.
+Dado que soy el Scrum Master del proyecto y existe un usuario registrado que no integra el equipo,
+Cuando lo agrego al proyecto,
+Entonces queda como Product Builder y el sistema lo muestra en el equipo del proyecto, sin ascenso a Scrum Master.
 Escenario 2: Quitar un integrante conservando su historial.
 Dado que un integrante ya votó una estimación e imputó horas,
 Cuando lo quito del equipo,
 Entonces deja de figurar en el equipo y no cuenta en las votaciones nuevas, y sus votos y sus horas siguen en el historial y en las métricas.
 Escenario 3: Volver a sumar a un integrante dado de baja.
 Dado que un integrante fue quitado del equipo,
-Cuando lo asigno de nuevo al proyecto con un rol,
-Entonces el sistema lo reactiva con el rol elegido, sin duplicarlo ni perder su historial.
+Cuando lo agrego de nuevo al proyecto como Product Builder,
+Entonces el sistema lo reactiva con ese rol, sin duplicarlo ni perder su historial.
 Escenario 4: Siempre hay un Scrum Master (único por proyecto).
 Dado que un proyecto tiene un único Scrum Master activo,
 Cuando intento quitarlo o cambiarle el rol,
@@ -602,11 +602,11 @@ Entonces el sistema responde "no encontrado".
 HU-04 (proyecto e integrantes). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
 ### Notas
 La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
-Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; HU-17 lo elige de la lista), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Esta historia **reabre la decisión D4** de `MODELO-DE-DATOS.md` (hoy no se impone un único Scrum Master; acá se pide al menos uno activo).
-Con un único Scrum Master por proyecto (#236), no se puede quitar al Scrum Master ni cambiar su rol sin traspasar antes el rol (fuera de alcance por ahora).
+Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; con HU-21 es quien tiene la sesión iniciada), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Con el Scrum Master único (#236, HU-21) la decisión D4 de `MODELO-DE-DATOS.md` queda cerrada en esos issues: esta historia ya no la reabre.
+Con un único Scrum Master por proyecto (#236), no hay ascenso a Scrum Master y no se puede quitar al Scrum Master ni cambiar su rol: el traspaso del rol queda fuera de alcance hasta definirlo.
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
-La aplicación de permisos por rol sigue fuera del alcance (ver HU-04) (los permisos los cubre HU-21).
+Los permisos por rol quedaron fuera del alcance de HU-04 y los cubre HU-21.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
