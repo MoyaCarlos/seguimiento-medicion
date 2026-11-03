@@ -1,11 +1,14 @@
 import { Link } from 'react-router'
+import { ErrorMessage } from '../componentes/ErrorMessage'
+import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { etiquetaProyecto } from './ruta'
 import { useProyectos } from './useProyectos'
 
 export function ListaProyectos() {
   const proyectos = useProyectos()
 
-  if (proyectos.estado !== 'listo') return null
+  if (proyectos.estado === 'cargando') return <LoadingIndicator />
+  if (proyectos.estado === 'error') return <ErrorMessage message={proyectos.mensaje} />
 
   return (
     <section aria-labelledby="proyectos-existentes-title">

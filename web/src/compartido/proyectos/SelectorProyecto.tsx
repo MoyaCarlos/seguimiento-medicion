@@ -1,5 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { ErrorMessage } from '../componentes/ErrorMessage'
+import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { etiquetaProyecto, rutaDeSeccion } from './ruta'
 import { useProyectos } from './useProyectos'
 
@@ -21,13 +23,15 @@ export function SelectorProyecto() {
     <div className="selector-proyecto">
       <label className="field">
         <span>Proyecto</span>
-        <select value={id} onChange={elegir}>
+        <select value={id} onChange={elegir} disabled={proyectos.estado !== 'listo'}>
           {!actualListado && <option value={id}>{`Proyecto ${id}`}</option>}
           {listados.map((proyecto) => (
             <option key={proyecto.id} value={proyecto.id}>{etiquetaProyecto(proyecto)}</option>
           ))}
         </select>
       </label>
+      {proyectos.estado === 'cargando' && <LoadingIndicator />}
+      {proyectos.estado === 'error' && <ErrorMessage message={proyectos.mensaje} />}
       <Link className="button button--secondary" to="/">Nuevo proyecto</Link>
     </div>
   )
