@@ -2,12 +2,17 @@ package features
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strconv"
+	"strings"
 
 	"github.com/cucumber/godog"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	apphttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -21,6 +26,8 @@ type pasosConsenso struct {
 	historial *service.ConsultarHistorialRondas
 	vista     service.VistaVotacion
 	consulta  service.HistorialRondas
+	mux       *http.ServeMux
+	rec       *httptest.ResponseRecorder
 }
 
 func (c *pasosConsenso) preparar() {
@@ -32,6 +39,10 @@ func (c *pasosConsenso) preparar() {
 	c.abrir = service.NewAbrirNuevaRonda(historias, proyectos, votaciones)
 	c.historial = service.NewConsultarHistorialRondas(historias, proyectos, votaciones)
 	c.vista, c.consulta = service.VistaVotacion{}, service.HistorialRondas{}
+	handler := apphttp.NewVotacionHandler(service.NewObtenerHistoria(historias), nil, nil, nil, nil, c.registrar, nil, nil)
+	c.mux = http.NewServeMux()
+	c.mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", handler.RegistrarEstimacion)
+	c.rec = nil
 }
 
 func (c *pasosConsenso) tieneStoryPointsCargados(sp int) error {
@@ -86,11 +97,56 @@ func (c *pasosConsenso) noInformaDiferencias() error {
 }
 
 func (c *pasosConsenso) registraElValor(nombre string, valor int) error {
+	return c.registraElValorEn(nombre, valor, c.votacion.historiaID)
+}
+
+func (c *pasosConsenso) registraElValorEn(nombre string, valor int, historiaID int64) error {
 	id, err := c.votacion.usuario(nombre)
 	if err != nil {
 		return err
 	}
-	_, c.votacion.err = c.registrar.Ejecutar(context.Background(), c.votacion.historiaID, id, valor)
+	_, c.votacion.err = c.registrar.Ejecutar(context.Background(), historiaID, id, valor)
+	return nil
+}
+
+func (c *pasosConsenso) registraEnInexistente(nombre string, valor, historiaID int) error {
+	return c.registraElValorEn(nombre, valor, int64(historiaID))
+}
+
+func (c *pasosConsenso) registraQuienNoIntegra(nombre string, valor int) error {
+	if _, err := c.votacion.crearUsuario(nombre); err != nil {
+		return err
+	}
+	return c.registraElValor(nombre, valor)
+}
+
+// enviaALaAPI pasa por el handler: el service recibe un int, así que un valor que
+// no es un entero solo se puede expresar en el JSON del pedido.
+func (c *pasosConsenso) enviaALaAPI(nombre, valor string) error {
+	id, err := c.votacion.usuario(nombre)
+	if err != nil {
+		return err
+	}
+	ruta := fmt.Sprintf("/backlog/%d/votacion/estimacion", c.votacion.historiaID)
+	cuerpo := fmt.Sprintf(`{"usuario_id":%d,"estimacion_sp":%s}`, id, valor)
+	c.rec = httptest.NewRecorder()
+	c.mux.ServeHTTP(c.rec, httptest.NewRequest(http.MethodPost, ruta, strings.NewReader(cuerpo)))
+	return nil
+}
+
+func (c *pasosConsenso) apiRechaza(estado int, campo string) error {
+	if c.rec.Code != estado {
+		return fmt.Errorf("se esperaba el estado %d, se obtuvo %d (%s)", estado, c.rec.Code, c.rec.Body.String())
+	}
+	var resp struct {
+		Campo string `json:"campo"`
+	}
+	if err := json.Unmarshal(c.rec.Body.Bytes(), &resp); err != nil {
+		return err
+	}
+	if resp.Campo != campo {
+		return fmt.Errorf("se esperaba una advertencia sobre %q, se obtuvo %q", campo, resp.Campo)
+	}
 	return nil
 }
 
@@ -206,6 +262,9 @@ func InitializeScenarioConsenso(ctx *godog.ScenarioContext, votacion *pasosVotac
 	ctx.Step(`^se consulta la votación de la historia$`, c.consultaLaVotacion)
 	ctx.Step(`^se consulta el historial de rondas de la historia$`, c.consultaElHistorial)
 	ctx.Step(`^"([^"]*)" registra el valor acordado (\d+)$`, c.registraElValor)
+	ctx.Step(`^"([^"]*)" registra el valor acordado (\d+) en la historia con identificador (\d+), que no existe$`, c.registraEnInexistente)
+	ctx.Step(`^"([^"]*)", que no es integrante del proyecto, registra el valor acordado (\d+)$`, c.registraQuienNoIntegra)
+	ctx.Step(`^"([^"]*)" envía a la API el valor acordado (.+)$`, c.enviaALaAPI)
 	ctx.Step(`^"([^"]*)" inicia una nueva ronda$`, c.iniciaNuevaRonda)
 
 	ctx.Step(`^el sistema indica que hay diferencias, con mínimo (\d+) y máximo (\d+)$`, c.hayDiferencias)
@@ -215,6 +274,9 @@ func InitializeScenarioConsenso(ctx *godog.ScenarioContext, votacion *pasosVotac
 	ctx.Step(`^la historia mantiene sus (\d+) Story Points$`, c.tieneStoryPoints)
 	ctx.Step(`^la estimación se rechaza con una advertencia sobre el campo "([^"]*)"$`, votacion.rechazadoConAdvertenciaSobre)
 	ctx.Step(`^la estimación se rechaza porque "([^"]*)" no es Scrum Master del proyecto$`, votacion.noEsScrumMaster)
+	ctx.Step(`^la estimación se rechaza porque la votación no está iniciada$`, c.votacionNoIniciada)
+	ctx.Step(`^la estimación se rechaza con error "historia no encontrada"$`, votacion.historiaNoEncontrada)
+	ctx.Step(`^la API rechaza la estimación con el estado (\d+) y una advertencia sobre el campo "([^"]*)"$`, c.apiRechaza)
 	ctx.Step(`^la ronda actual es la (\d+), abierta y sin votos$`, c.rondaActualAbierta)
 	ctx.Step(`^la ronda (\d+) conserva sus votos en el historial:$`, c.rondaConservaSusVotos)
 	ctx.Step(`^la nueva ronda se rechaza con una advertencia sobre el campo "([^"]*)"$`, votacion.rechazadoConAdvertenciaSobre)
