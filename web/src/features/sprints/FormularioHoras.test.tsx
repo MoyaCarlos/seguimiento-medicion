@@ -244,6 +244,19 @@ describe('FormularioHoras: errores', () => {
     expect(horas().getAttribute('aria-invalid')).toBe('false')
   })
 
+  it('US2.8: el aviso general desaparece cuando la carga se acepta', async () => {
+    rechazar('historia_id', 'solo se imputan horas a historias del Sprint activo')
+    abrir()
+    const user = await completar()
+    await user.click(guardar())
+    await screen.findByRole('alert')
+
+    await user.click(guardar())
+
+    await screen.findByText('Horas registradas')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('sin conexión al guardar muestra el aviso y conserva lo escrito', async () => {
     imputarMock.mockRejectedValueOnce(new ConnectionError())
     abrir()
