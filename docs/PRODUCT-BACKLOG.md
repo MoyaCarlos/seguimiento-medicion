@@ -305,6 +305,7 @@ HU-04 (integrantes), HU-06 (historia dentro de un Sprint), HU-05 (Sprint activo)
 
 ### Notas
 Las horas se guardan como minutos enteros y se convierten a horas solo al mostrarlas. El tope de horas por carga lo define la especificación de esta historia.
+El escenario 1 («selecciono mi nombre») cambia con HU-21 (escenario 7): las horas quedan a nombre de la persona con sesión iniciada y ya no se elige el integrante.
 ### Prioridad
 M (Must have) - Fundamental para que luego se puedan calcular las métricas de desviación de esfuerzo. 
 ### Estado
