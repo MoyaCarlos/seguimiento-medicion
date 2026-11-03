@@ -102,13 +102,6 @@ func main() {
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
 	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
 	mux.HandleFunc("GET /backlog/{id}/horas", horasHandler.ConsultarEsfuerzo)
-	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
-	mux.HandleFunc("POST /backlog/{id}/votacion", votacionHandler.Iniciar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", votacionHandler.RegistrarEstimacion)
-	mux.HandleFunc("POST /backlog/{id}/votacion/rondas", votacionHandler.AbrirRonda)
-	mux.HandleFunc("GET /backlog/{id}/votacion/rondas", votacionHandler.Historial)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
 	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
@@ -127,6 +120,7 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
 
+	votacionHandler.Registrar(mux)
 	demoHandler.Registrar(mux)
 
 	log.Printf("listening on :%s", cfg.Puerto)

@@ -27,6 +27,13 @@ func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service
 
 // Registrar agrega las rutas de la votación al mux.
 func (h *VotacionHandler) Registrar(mux *nethttp.ServeMux) {
+	mux.HandleFunc("GET /backlog/{id}/votacion", h.Consultar)
+	mux.HandleFunc("POST /backlog/{id}/votacion", h.Iniciar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/votos", h.Votar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", h.Revelar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", h.RegistrarEstimacion)
+	mux.HandleFunc("POST /backlog/{id}/votacion/rondas", h.AbrirRonda)
+	mux.HandleFunc("GET /backlog/{id}/votacion/rondas", h.Historial)
 }
 
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
