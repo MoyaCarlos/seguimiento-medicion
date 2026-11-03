@@ -104,7 +104,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHEN** las horas se escriben con coma decimal, **THEN** la pantalla **shall** enviarlas con punto decimal. Es una traducción de formato, no una validación: la cantidad la valida el backend.
 - **WHERE** las horas no son numéricas, la pantalla **shall** enviar el texto tal cual para que el backend responda el error que corresponde.
 - **WHILE** una carga está en curso, la pantalla **shall** deshabilitar el guardado e indicar que está enviando.
-- **WHEN** se abre el formulario, **THEN** la pantalla **shall** consultar los integrantes del proyecto; **WHILE** esa consulta está en curso, **shall** mostrar un indicador de carga.
+- **WHEN** termina una carga, aceptada o rechazada, **THEN** la pantalla **shall** devolver el foco al control desde el que se guardó.
+- **WHEN** se abre el formulario, **THEN** la pantalla **shall** consultar los integrantes del proyecto; **WHILE** esa consulta está en curso, **shall** mostrar un indicador de carga; **WHEN** la lista se muestra, **shall** pasarle el foco.
 - **IF** falla la consulta de integrantes, **THEN** la pantalla **shall** mostrar el error y **shall not** permitir guardar.
 - **IF** el proyecto no tiene integrantes, **THEN** la lista **shall** quedar solo con la opción vacía y guardar **shall** mostrar el error sobre el integrante, sin enviar la carga.
 - **IF** el total acumulado no da una cantidad exacta con dos decimales (por ejemplo, 61 minutos), **THEN** la pantalla **shall** redondearlo a dos decimales al mostrarlo (1,02 h).
