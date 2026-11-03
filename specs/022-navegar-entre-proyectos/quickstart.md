@@ -78,10 +78,10 @@ se muestra un error.
 
 **Esperado**: se navega a `/projects/<otroId>/proyecto`, no a la sub-ruta de edición.
 
-Lo mismo vale para un primer tramo que no es del menú (por ejemplo `/projects/<id>/otra`): se
-navega a `/projects/<otroId>/proyecto`. Si ya está la pantalla de votación, desde
-`/projects/<id>/votacion/<historiaId>` también se cae en `proyecto` y no se traslada el id de la
-historia.
+Lo mismo vale para un primer tramo que no es del menú pero sí está bajo el encabezado del
+proyecto: si ya está la pantalla de votación, desde `/projects/<id>/votacion/<historiaId>` se
+cae en `proyecto` y no se traslada el id de la historia. (`/projects/<id>/otra` muestra "Página
+no encontrada" sin selector, así que no se puede probar a mano; lo cubren las pruebas.)
 
 ### 5. Enlace "Nuevo proyecto"
 

@@ -229,7 +229,10 @@ funcionando.
   `/projects/2/proyecto`. Esto reemplaza la regla anterior de conservar el tramo desconocido:
   evita caer en "Página no encontrada" y evita trasladar identificadores propios de otro proyecto
   (como el de una historia). La regla no depende de que exista la ruta de votación en `main`
-  (PR #229 pendiente): se verifica con la función pura y con `/projects/1/otra`.
+  (PR #229 pendiente): se verifica con la función pura y con un selector montado en una ruta
+  `/projects/:id/*` de prueba. En la app real, `/projects/<id>/otra` no está bajo el encabezado del
+  proyecto (muestra "Página no encontrada" sin selector), así que el caso aplica a las rutas que
+  sí lo están y no son del menú, como `votacion/:historiaId` cuando llegue a `main`.
 - **WHEN** se elige el mismo proyecto que ya está abierto, **THEN** la aplicación **shall not**
   navegar ni reiniciar el estado de la pantalla.
 - **IF** dos proyectos tienen el mismo nombre, **THEN** el selector y la lista **shall**
