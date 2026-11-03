@@ -4,10 +4,25 @@ import { RouterProvider } from 'react-router/dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { rutas } from './rutas'
 
+const PROYECTO = {
+  id: 42,
+  nombre: 'Proyecto simulado',
+  descripcion: '',
+  fecha_inicio: null,
+  fecha_fin: null,
+  creado_en: '2026-10-01T00:00:00Z',
+}
+
+function responderListado(url: string) {
+  if (url === '/projects') return '[]'
+  if (/^\/projects\/\d+$/.test(url)) return JSON.stringify(PROYECTO)
+  return '[]'
+}
+
 beforeEach(() => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(new Response('[]', { status: 200 }))),
+    vi.fn((url: string) => Promise.resolve(new Response(responderListado(url), { status: 200 }))),
   )
 })
 
