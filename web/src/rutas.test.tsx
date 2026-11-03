@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react'
+import { useState } from 'react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { LayoutProyecto } from './compartido/router/LayoutProyecto'
 import { rutas } from './rutas'
 
 const PROYECTO = {
@@ -13,13 +16,16 @@ const PROYECTO = {
   creado_en: '2026-10-01T00:00:00Z',
 }
 
+let proyectosSimulados: { id: number; nombre: string }[] = []
+
 function responderListado(url: string) {
-  if (url === '/projects') return '[]'
+  if (url === '/projects') return JSON.stringify(proyectosSimulados)
   if (/^\/projects\/\d+$/.test(url)) return JSON.stringify(PROYECTO)
   return '[]'
 }
 
 beforeEach(() => {
+  proyectosSimulados = []
   vi.stubGlobal(
     'fetch',
     vi.fn((url: string) => Promise.resolve(new Response(responderListado(url), { status: 200 }))),
@@ -91,6 +97,94 @@ describe('registro de rutas', () => {
     await router.navigate('/projects/2/backlog')
 
     expect(await screen.findByText('2', { selector: 'strong' })).toBeTruthy()
+  })
+
+  describe('selector de proyecto en el encabezado', () => {
+    const DOS_PROYECTOS = [
+      { id: 1, nombre: 'Alfa' },
+      { id: 2, nombre: 'Beta' },
+    ]
+
+    function llamadasAlListado() {
+      return vi.mocked(fetch).mock.calls.filter(([url]) => url === '/projects').length
+    }
+
+    it('US1.1: elegir otro proyecto desde el backlog abre el backlog del proyecto elegido', async () => {
+      proyectosSimulados = DOS_PROYECTOS
+      const usuario = userEvent.setup()
+      const router = abrir('/projects/1/backlog')
+      await screen.findByRole('option', { name: 'Beta (#2)' })
+
+      await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
+
+      expect(router.state.location.pathname).toBe('/projects/2/backlog')
+      expect(await screen.findByRole('heading', { name: 'Product Backlog' })).toBeTruthy()
+      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('2')
+    })
+
+    it('GET /projects se pide una sola vez al montar y no al cambiar de sección del mismo proyecto', async () => {
+      proyectosSimulados = DOS_PROYECTOS
+      const usuario = userEvent.setup()
+      abrir('/projects/1/backlog')
+      await screen.findByRole('option', { name: 'Beta (#2)' })
+
+      await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
+      await screen.findByRole('heading', { name: 'Sprints' })
+
+      expect(llamadasAlListado()).toBe(1)
+    })
+
+    it('US1.4: al cambiar de proyecto la pantalla no muestra datos del proyecto anterior', async () => {
+      proyectosSimulados = DOS_PROYECTOS
+      const historia = {
+        id: 7,
+        proyecto_id: 1,
+        titulo: 'Historia del proyecto uno',
+        descripcion: '',
+        criterios_aceptacion: null,
+        prioridad: 'M',
+        estado: 'Nueva',
+        valor_negocio: null,
+        estimacion_sp: null,
+        sprint_id: null,
+      }
+      const respuestaInicial = vi.mocked(fetch).getMockImplementation()!
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: string) => {
+          if (url === '/projects/1/backlog') {
+            return Promise.resolve(new Response(JSON.stringify([historia]), { status: 200 }))
+          }
+          if (url === '/projects/2/backlog') return new Promise<Response>(() => {})
+          return respuestaInicial(url, undefined)
+        }),
+      )
+      const usuario = userEvent.setup()
+      abrir('/projects/1/backlog')
+      await screen.findByText('Historia del proyecto uno')
+
+      await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
+
+      expect(screen.queryByText('Historia del proyecto uno')).toBeNull()
+    })
+  })
+
+  it('US1.4: el layout remonta cualquier pantalla al cambiar el :id, aunque no tenga su propia key', async () => {
+    function PantallaConEstado() {
+      const [marca] = useState(() => Math.random().toString(36).slice(2))
+      return <span data-testid="marca">{marca}</span>
+    }
+    const router = createMemoryRouter(
+      [{ path: 'projects/:id', element: <LayoutProyecto />, children: [{ path: 'pantalla', element: <PantallaConEstado /> }] }],
+      { initialEntries: ['/projects/1/pantalla'] },
+    )
+    render(<RouterProvider router={router} />)
+    const marcaDelProyecto1 = (await screen.findByTestId('marca')).textContent
+
+    await router.navigate('/projects/2/pantalla')
+
+    await screen.findByText('/projects/2/pantalla', { selector: 'code' })
+    expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1)
   })
 
   it.each(['/no-existe', '/projects/1/otra'])('%s muestra "Página no encontrada"', async (url) => {
