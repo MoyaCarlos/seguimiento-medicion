@@ -417,6 +417,32 @@ func TestVotacionHandler_RegistrarEstimacion_Exitoso(t *testing.T) {
 	}
 }
 
+func TestVotacionHandler_RegistrarEstimacion_ValorNoEntero(t *testing.T) {
+	casos := map[string]string{
+		"decimal":        `{"usuario_id":1,"estimacion_sp":2.5}`,
+		"entre comillas": `{"usuario_id":1,"estimacion_sp":"5"}`,
+		"null":           `{"usuario_id":1,"estimacion_sp":null}`,
+		"sin el campo":   `{"usuario_id":1}`,
+	}
+	for nombre, cuerpo := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada)
+
+			rec := registrarEstimacionEn(handler, "3", cuerpo)
+
+			esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "")
+		})
+	}
+}
+
+func TestVotacionHandler_RegistrarEstimacion_PermisoAntesQueElValor(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada)
+
+	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":2,"estimacion_sp":2.5}`)
+
+	esperarError(t, rec, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo")
+}
+
 func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 	casos := map[string]struct {
 		id, cuerpo string
