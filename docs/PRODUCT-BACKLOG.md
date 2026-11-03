@@ -75,7 +75,7 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado. HU-16, HU-17 y HU-18 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo.
 
 * **HU-16: Gestión del Equipo del Proyecto (Could have).** Agregar a un usuario ya registrado como Product Builder y quitar integrantes sin perder lo que aportaron; el único Scrum Master no se quita ni cambia de rol. Extiende HU-04.
-* **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. Extiende HU-04.
+* **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. A redefinir después de HU-20 y HU-21. Extiende HU-04.
 * **HU-18: Avance de las Historias del Proyecto (Should have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Extiende HU-15 y HU-11.
 * **HU-19: Administración de Mis Proyectos (Could have).** Absorbida por HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03). Su nivel 1, la lista y el selector de proyectos, es #148; los niveles 2 y 3 (mis proyectos, permisos por rol y autenticación) pasan a HU-20 y HU-21. Se descarta la transferencia de la propiedad: el dueño del proyecto es su Scrum Master. Extiende HU-04.
 * **HU-20: Autenticación de usuarios (Should have).** Registrarse e iniciar sesión con un nombre de usuario y una contraseña, para que el sistema sepa quién usa la aplicación. Extiende HU-04.
@@ -657,12 +657,12 @@ HU-04 (usuarios e integrantes) y el issue #144 (botón de datos de prueba).
 No requiere cambio de esquema: `usuarios` ya existe y es independiente de los proyectos (ver `MODELO-DE-DATOS.md` §4.2). La identidad es `nombre_normalizado`, y las demás tablas apuntan por `usuario_id`, por eso renombrar es seguro.
 El contrato de asignación cambia: hoy `POST /projects/{id}/members` recibe un nombre. Se hace en dos pasos para no romper `main`: primero el backend acepta `usuario_id` además del nombre y agrega `GET /users`; después el frontend pasa a elegir de la lista y, en ese mismo PR, se retira el camino del nombre. Lo mismo con el Scrum Master de `POST /projects`.
 Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restricción por perfil ("admin" o "betaTester") queda para cuando se agreguen perfiles, y se discute con el equipo.
-**Alineación pendiente con HU-20 y HU-21** (decisión de producto, sin resolver; HU-17 queda como está hasta que el Scrum Master decida):
+**Alineación pendiente con HU-20 y HU-21** (a redefinir después de HU-20 y HU-21; sus escenarios no se tocan hasta entonces):
 1. Escenario 4: elige de una lista a quien será el Scrum Master del proyecto, pero en HU-21 el Scrum Master es quien crea el proyecto (con la sesión iniciada).
 2. Escenario 3: asigna a un integrante cualquier rol, pero en HU-21 "configurar equipo" solo agrega usuarios ya registrados como Product Builder.
 3. Escenario 1: crea usuarios sin contraseña, pero con HU-20 cada persona se registra sola con la suya.
 4. Si el nombre de usuario de HU-20 es `usuarios.nombre`, renombrar un usuario (escenario 5) cambia su dato de ingreso.
-<!-- decidir: qué queda de HU-17 con HU-20 y HU-21 (se descarta, se reduce o se redefine) -->
+HU-17 se redefine después de HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03); hasta entonces sus escenarios quedan como están. Sigue entrando solo si sobra tiempo, igual que HU-16 y HU-18.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
