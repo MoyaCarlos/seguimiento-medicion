@@ -25,6 +25,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const scrumMaster = actor !== undefined && esScrumMaster(actor) ? actor : undefined
   const reconsultar = useCallback(() => setRecarga((actual) => actual + 1), [])
   const recargar = useCallback(() => {
+    setErrorDeAccion('')
     setActualizacion((actual) => actual + 1)
     reconsultar()
   }, [reconsultar])
