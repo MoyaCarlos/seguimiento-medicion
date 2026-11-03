@@ -103,7 +103,7 @@
 - [X] T035 Registrar como issue `bug` la inestabilidad de las pruebas de `backlog` y de `rutas.test.tsx` con la máquina cargada, también en `main` (#226)
 - [X] T036 [US2] Arreglo de la revisión: agregar la prueba de que el aviso general desaparece al aceptarse la carga en `web/src/features/sprints/FormularioHoras.test.tsx`
 - [X] T037 [US3] Arreglo de la revisión: agregar la prueba de las reconsultas en orden inverso en `web/src/features/sprints/EsfuerzoHistoria.test.tsx`
-- [X] T038 [US1] Arreglo de la revisión: pasar el foco a la lista de integrantes al abrir el formulario y devolverlo al terminar el envío en `web/src/features/sprints/FormularioHoras.tsx`, con su RED y su GREEN
+- [X] T038 [US1] Arreglo de la revisión: pasar el foco a la lista de integrantes al abrir el formulario y devolverlo al terminar el envío en `web/src/features/sprints/FormularioHoras.tsx`, sin sacárselo a quien ya se movió a otro control, con su RED y su GREEN
 
 ---
 
