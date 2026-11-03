@@ -266,3 +266,25 @@ func TestRondaVotacion_Diferencias_Revelada(t *testing.T) {
 		})
 	}
 }
+
+func TestRondaVotacion_Siguiente_Revelada(t *testing.T) {
+	r := rondaConVotos(true, 3, 8)
+
+	siguiente, err := r.Siguiente()
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if siguiente.HistoriaID != r.HistoriaID || siguiente.Numero != 2 || len(siguiente.Votos) != 0 || siguiente.Revelada() {
+		t.Errorf("se esperaba la ronda 2 de la misma historia, sin votos ni revelar, se obtuvo %+v", siguiente)
+	}
+	if r.Numero != 1 || len(r.Votos) != 2 || !r.Revelada() {
+		t.Errorf("la ronda original no debía cambiar, quedó %+v", r)
+	}
+}
+
+func TestRondaVotacion_Siguiente_SinRevelar(t *testing.T) {
+	if _, err := rondaConVotos(false, 3, 8).Siguiente(); !errors.Is(err, ErrRondaNoRevelada) {
+		t.Errorf("se esperaba ErrRondaNoRevelada, se obtuvo %v", err)
+	}
+}
