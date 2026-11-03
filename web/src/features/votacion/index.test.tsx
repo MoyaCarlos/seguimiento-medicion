@@ -307,6 +307,22 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
       'Beta Tres (Product Builder)',
     ])
   })
+
+  it('Given un voto emitido mientras Actualizar consulta, When la consulta responde después, Then el voto sigue visible', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    await screen.findByRole('list')
+    let responder: (v: Votacion) => void = () => {}
+    consultarMock.mockImplementationOnce(() => new Promise((resolver) => (responder = resolver)))
+    const sinVoto = vista(2)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+    await userEvent.click(screen.getByRole('button', { name: '8' }))
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+    await act(async () => responder(sinVoto))
+
+    expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy()
+  })
 })
 
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
