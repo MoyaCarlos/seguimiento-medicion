@@ -15,20 +15,27 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const [errorDeVotacion, setErrorDeVotacion] = useState('')
   const [errorDeAccion, setErrorDeAccion] = useState('')
   const [recarga, setRecarga] = useState(0)
+  const [actualizacion, setActualizacion] = useState(0)
   const envioEnCurso = useRef(false)
 
   const consulta = `${historiaId}/${actorId}/${recarga}`
   const cargando = cargadaPara !== consulta
   const actor = integrantes?.find((integrante) => integrante.id === actorId)
   const scrumMaster = actor !== undefined && esScrumMaster(actor) ? actor : undefined
-  const recargar = useCallback(() => setRecarga((actual) => actual + 1), [])
+  const reconsultar = useCallback(() => setRecarga((actual) => actual + 1), [])
+  const recargar = useCallback(() => {
+    setActualizacion((actual) => actual + 1)
+    reconsultar()
+  }, [reconsultar])
 
   useEffect(() => {
     let vigente = true
 
     listarIntegrantes(proyectoId)
       .then((datos) => {
-        if (vigente) setIntegrantes(datos)
+        if (!vigente) return
+        setIntegrantes(datos)
+        setErrorDeIntegrantes('')
       })
       .catch((causa: unknown) => {
         if (vigente) setErrorDeIntegrantes(mensajeDeError(causa))
@@ -37,7 +44,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     return () => {
       vigente = false
     }
-  }, [proyectoId])
+  }, [proyectoId, actualizacion])
 
   useEffect(() => {
     let vigente = true
@@ -51,7 +58,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     return () => {
       vigente = false
     }
-  }, [proyectoId, historiaId])
+  }, [proyectoId, historiaId, actualizacion])
 
   useEffect(() => {
     let vigente = true
@@ -92,7 +99,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
       setSinVotacion(false)
     } catch (causa) {
       setErrorDeAccion(mensajeDeError(causa))
-      recargar()
+      reconsultar()
     } finally {
       envioEnCurso.current = false
       setEnviando(false)

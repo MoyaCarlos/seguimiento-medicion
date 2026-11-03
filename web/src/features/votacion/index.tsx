@@ -62,7 +62,12 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
 
       {votacion && (
         <>
-          <Ronda votacion={votacion} actor={actor} deshabilitado={enviando} alVotar={estado.votar} />
+          <Ronda
+            votacion={votacion}
+            actor={actor}
+            hayIntegrantes={Boolean(integrantes?.length)}
+            deshabilitado={enviando} alVotar={estado.votar}
+          />
           {estaRevelada(votacion) && (
             <>
               <Resultado promedio={votacion.promedio} />
