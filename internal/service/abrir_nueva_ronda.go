@@ -35,7 +35,7 @@ func (s *AbrirNuevaRonda) Ejecutar(ctx context.Context, historiaID, usuarioID in
 		return domain.RondaVotacion{}, domain.ErrNoEsScrumMaster
 	}
 	if historia.Estado == domain.EstadoCompletada {
-		return domain.RondaVotacion{}, domain.ErrHistoriaCompletada
+		return domain.RondaVotacion{}, domain.ErrRondaEnHistoriaCompletada
 	}
 
 	actual, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)
