@@ -1,8 +1,10 @@
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { navegacion } from '../../navegacion'
+import { SelectorProyecto } from '../proyectos/SelectorProyecto'
 
 export function LayoutProyecto() {
   const { pathname } = useLocation()
+  const { id } = useParams()
 
   return (
     <div className="page-stack">
@@ -10,6 +12,7 @@ export function LayoutProyecto() {
         <div>
           <p className="eyebrow">Métrica · Seguimiento de proyectos</p>
           <p className="route-context">Ruta actual: <code>{pathname}</code></p>
+          <SelectorProyecto />
         </div>
         <nav className="feature-navigation" aria-label="Historias del Sprint 2">
           {navegacion.map(({ ruta, texto }) => (
@@ -24,7 +27,7 @@ export function LayoutProyecto() {
           ))}
         </nav>
       </div>
-      <Outlet />
+      <Outlet key={id} />
     </div>
   )
 }
