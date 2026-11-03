@@ -135,6 +135,60 @@ describe('FormularioHoras: registrar horas', () => {
     expect(imputarMock).toHaveBeenCalledTimes(1)
   })
 
+  it('US1.1: al cargar la lista de integrantes, el foco pasa a ella', async () => {
+    abrir()
+
+    const seleccion = await lista()
+    expect(document.activeElement).toBe(seleccion)
+  })
+
+  describe('US1.5: al terminar el envío el foco vuelve a donde estaba', () => {
+    function enviarConRespuestaPendiente() {
+      let responder: (valor: unknown) => void = () => {}
+      let rechazarEnvio: (error: unknown) => void = () => {}
+      imputarMock.mockReturnValue(
+        new Promise((resolve, reject) => {
+          responder = resolve
+          rechazarEnvio = reject
+        }),
+      )
+      return { responder: (valor: unknown) => responder(valor), rechazar: (error: unknown) => rechazarEnvio(error) }
+    }
+
+    // jsdom no saca el foco de un control deshabilitado, ni con blur(); el navegador sí.
+    function perderFocoComoElNavegador() {
+      const temporal = document.body.appendChild(document.createElement('button'))
+      temporal.focus()
+      temporal.remove()
+    }
+
+    it('si se guardó con el botón, vuelve al botón', async () => {
+      const envio = enviarConRespuestaPendiente()
+      abrir()
+      const user = await completar()
+
+      await user.click(guardar())
+      perderFocoComoElNavegador()
+      envio.responder({})
+
+      await screen.findByText('Horas registradas')
+      expect(document.activeElement).toBe(guardar())
+    })
+
+    it('si se guardó con Enter y se rechaza, vuelve al campo', async () => {
+      const envio = enviarConRespuestaPendiente()
+      abrir()
+      const user = await completar()
+
+      await user.type(horas(), '{Enter}')
+      perderFocoComoElNavegador()
+      envio.rechazar(new ApiError(400, 'las horas deben ser un número', 'horas'))
+
+      await screen.findByRole('alert')
+      expect(document.activeElement).toBe(horas())
+    })
+  })
+
   it('dos formularios abiertos no repiten los id de sus campos', async () => {
     render(
       <>
