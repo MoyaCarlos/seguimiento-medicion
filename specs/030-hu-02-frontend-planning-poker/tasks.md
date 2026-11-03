@@ -170,6 +170,25 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 - [X] T086 `npm run lint`, `npm test` y `npm run build` sin errores y validación manual de quickstart.md con el backend en 8080 y el frontend en 5173 — por API y proxy; el aspecto visual lo revisa quien lo abra en el navegador
 - [X] T087 COMMIT `Marcar las tareas de la fase 8 de la spec 029 como hechas (Refs #48)`
 
+## Phase 9: Correcciones de la revisión del PR #229 (2026-11-03)
+
+- [X] T088 RED: «Actualizar» no vuelve a pedir integrantes ni historia y deja el error de integrantes (FR-011, FR-016)
+- [X] T089 GREEN: `useVotacion` vuelve a pedir integrantes e historia al actualizar, limpia `errorDeIntegrantes` y `Ronda` no pide elegir sin selector
+- [X] T090 RED: al cambiar de integrante sigue visible el voto del anterior, con la consulta en curso y con la consulta fallida (FR-023, SC-002)
+- [X] T091 GREEN: `elegirActor` borra los valores de la ronda sin revelar (`sinValores`)
+- [X] T092 RED: el selector no muestra el rol (FR-001)
+- [X] T093 GREEN: opciones «Nombre (Rol)» con `ETIQUETA_ROL` compartida con `Integrantes`
+- [X] T094 RED: una consulta vieja pisa un voto emitido mientras «Actualizar» consulta (FR-024)
+- [X] T095 GREEN: se descarta la consulta en curso al empezar una acción
+- [X] T096 RED: el mensaje de una acción rechazada sigue tras «Actualizar» (y no se borra en la recarga automática) (FR-011)
+- [X] T097 GREEN: «Actualizar» limpia `errorDeAccion`; la recarga tras un rechazo no
+- [X] T098 RED: `/projects/1/votacion/abc` muestra «#NaN» y consulta al servidor (FR-022)
+- [X] T099 GREEN: validar el id de la ruta y mostrar el aviso sin consultar
+- [X] T100 RED: `.button` no quita el subrayado de los enlaces (FR-025)
+- [X] T101 GREEN: `text-decoration: none` en `.button`
+- [X] T102 REFACTOR: quitar las reglas `text-decoration` repetidas por pantalla
+- [X] T103 `npm run lint`, `npm test` y `npm run build` sin errores y flujo real en el navegador
+
 ---
 
 ## Dependencies & Execution Order

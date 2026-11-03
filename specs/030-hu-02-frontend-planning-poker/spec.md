@@ -131,18 +131,22 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-008**: Tras revelar, la pantalla MUST mostrar el valor de cada integrante, el promedio exacto y la carta sugerida, y dejar de ofrecer cartas.
 - **FR-009**: La pantalla MUST evitar el doble envío de iniciar, votar y revelar mientras haya un pedido en curso.
 - **FR-010**: La pantalla MUST mostrar un mensaje claro por cada error del servidor (validación, no encontrado, sin permiso, conflicto, conexión) sin romperse.
-- **FR-011**: La pantalla MUST ofrecer «Actualizar» para volver a consultar la votación.
+- **FR-011**: La pantalla MUST ofrecer «Actualizar» para volver a consultar la votación, la lista de integrantes y la historia, y MUST limpiar los errores anteriores de integrantes, de consulta y de acciones al responder bien.
 - **FR-012**: El Product Backlog MUST ofrecer en cada historia un botón «Votar» que navega a la pantalla de votación de esa historia dentro del proyecto.
 - **FR-013**: La pantalla MUST NOT modificar los Story Points de la historia ni ofrecer registrar la estimación acordada (HU-14).
 - **FR-014**: Cada feature del frontend MUST permanecer aislada: la nueva pantalla no importa a otras features y el Product Backlog no importa a la nueva.
 
 - **FR-015**: La pantalla MUST mostrar un resumen de la historia con título, descripción como texto plano, prioridad con las mismas etiquetas del Product Backlog (Must have, Should have, Could have, Won't have) y la estimación actual («Sin estimar» o «N SP»); si la historia no se encuentra, MUST mostrar solo «Historia #N».
-- **FR-016**: La pantalla MUST mostrar la consigna «Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?» cuando se puede votar, y pedir elegir quién actúa cuando falta elegirlo.
+- **FR-016**: La pantalla MUST mostrar la consigna «Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?» cuando se puede votar, y pedir elegir quién actúa cuando falta elegirlo y hay selector (si no se pudieron cargar los integrantes, no se pide elegir a nadie).
 - **FR-017**: La pantalla MUST ofrecer un enlace «Volver al Product Backlog» a `/projects/:id/backlog`.
 - **FR-018**: El selector «Quién actúa» y el resultado (promedio exacto y carta sugerida) MUST verse con el mismo aspecto que los formularios y tarjetas del resto de la aplicación.
 - **FR-019**: Un error al listar los integrantes y un error al consultar la votación MUST mostrarse por separado, sin que uno borre al otro.
 - **FR-020**: Cada integrante de la lista MUST poder leerse completo con un lector de pantalla (nombre, rol, si votó y el valor) sin una etiqueta que tape su contenido.
 - **FR-021**: Las cartas MUST poder elegirse con el teclado, mostrar el foco y acomodarse en un ancho de celular.
+- **FR-022**: Si el id de historia de la ruta no es un entero positivo, la pantalla MUST mostrar «La historia "<id>" no es válida» sin consultar al servidor.
+- **FR-023**: Al cambiar de integrante con la ronda sin revelar, la pantalla MUST borrar de inmediato los valores de la última votación conocida (SC-002), sin esperar la respuesta de la nueva consulta.
+- **FR-024**: Una consulta en curso MUST descartarse cuando empieza una acción (votar, iniciar, revelar), para que no pise su resultado.
+- **FR-025**: Los enlaces con aspecto de botón MUST verse igual que los botones (sin subrayado), también el enlace «Votar» del Product Backlog.
 
 ### Key Entities
 
