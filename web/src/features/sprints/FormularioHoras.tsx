@@ -29,15 +29,16 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar,
   const [aviso, setAviso] = useState<string>()
   const [errores, setErrores] = useState<Record<string, string>>({})
   const listaIntegrantes = useRef<HTMLSelectElement>(null)
+  const focoAlAbrir = useRef(document.activeElement)
   const focoAlEnviar = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    if (integrantes) listaIntegrantes.current?.focus()
+    if (integrantes && document.activeElement === focoAlAbrir.current) listaIntegrantes.current?.focus()
   }, [integrantes])
 
   useEffect(() => {
     if (enviando) return
-    focoAlEnviar.current?.focus()
+    if (document.activeElement === document.body) focoAlEnviar.current?.focus()
     focoAlEnviar.current = null
   }, [enviando])
 
