@@ -17,10 +17,11 @@ type VotacionHandler struct {
 	revelar         *service.RevelarVotacion
 	iniciar         *service.IniciarVotacion
 	registrar       *service.RegistrarEstimacion
+	abrir           *service.AbrirNuevaRonda
 }
 
-func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion, registrar *service.RegistrarEstimacion) *VotacionHandler {
-	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar}
+func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion, registrar *service.RegistrarEstimacion, abrir *service.AbrirNuevaRonda) *VotacionHandler {
+	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar, abrir: abrir}
 }
 
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
@@ -116,6 +117,11 @@ func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *netht
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, aRespuesta(historia))
+}
+
+// AbrirRonda atiende POST /backlog/{id}/votacion/rondas. Responde con la ronda
+// nueva tal como la ve quien la abrió.
+func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia

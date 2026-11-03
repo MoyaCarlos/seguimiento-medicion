@@ -62,6 +62,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 		service.NewRevelarVotacion(historias, proyectos, votaciones),
 		service.NewIniciarVotacion(historias, proyectos, votaciones),
 		service.NewRegistrarEstimacion(historias, proyectos, votaciones, repository.NewSQLiteSprintRepository(db)),
+		service.NewAbrirNuevaRonda(historias, proyectos, votaciones),
 	)
 }
 
@@ -438,6 +439,66 @@ func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
 			rec := registrarEstimacionEn(handler, c.id, c.cuerpo)
+
+			esperarError(t, rec, c.status, c.campo, c.mensaje)
+		})
+	}
+}
+
+func abrirRondaEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/rondas", bytes.NewBufferString(cuerpo))
+	req.SetPathValue("id", id)
+	handler.AbrirRonda(rec, req)
+	return rec
+}
+
+func TestVotacionHandler_AbrirRonda_Exitoso(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)
+
+	rec := abrirRondaEn(handler, "3", `{"usuario_id":1}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp votacionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Ronda != 2 || resp.ReveladaEn != nil || resp.Diferencias != nil || resp.Promedio != nil {
+		t.Errorf("se esperaba la ronda 2 oculta, sin diferencias ni promedio, se obtuvo %+v", resp)
+	}
+	for _, i := range resp.Integrantes {
+		if i.YaVoto {
+			t.Errorf("nadie votó todavía en la ronda 2: %+v", i)
+		}
+	}
+	if !strings.Contains(rec.Body.String(), `"diferencias":null`) {
+		t.Errorf("diferencias va en null en una ronda oculta: %s", rec.Body.String())
+	}
+}
+
+func TestVotacionHandler_AbrirRonda_Errores(t *testing.T) {
+	casos := map[string]struct {
+		id, cuerpo string
+		previas    []string
+		status     int
+		campo      string
+		mensaje    string
+	}{
+		"id no numérico":                        {"abc", `{"usuario_id":1}`, nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
+		"sin usuario_id":                        {"3", `{}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
+		"ronda oculta":                          {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
+		"Product Builder":                       {"3", `{"usuario_id":2}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"sin votación":                          {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
+
+			rec := abrirRondaEn(handler, c.id, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
