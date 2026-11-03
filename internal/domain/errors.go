@@ -58,6 +58,8 @@ var (
 	ErrVotacionNoIniciada = errors.New("la historia no tiene votación iniciada")
 	// ErrVotacionYaIniciada indica que la historia ya tiene una ronda de votación.
 	ErrVotacionYaIniciada = errors.New("la historia ya tiene una votación")
+	// ErrRondaYaAbierta indica que otra petición abrió esa misma ronda mientras tanto.
+	ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")
 	// ErrNoEsIntegrante indica que quien actúa no integra el proyecto de la historia.
 	ErrNoEsIntegrante = errors.New("el usuario no es integrante del proyecto")
 	// ErrNoEsScrumMaster indica que la acción es exclusiva del Scrum Master del proyecto.
@@ -67,4 +69,7 @@ var (
 	ErrHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede votar una historia completada"}
 	ErrRondaRevelada      = ValidationError{Campo: "estado", Mensaje: "la ronda ya fue revelada"}
 	ErrFaltanVotos        = ValidationError{Campo: "votos", Mensaje: "faltan votar integrantes del proyecto"}
+	ErrRondaNoRevelada    = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}
+
+	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )

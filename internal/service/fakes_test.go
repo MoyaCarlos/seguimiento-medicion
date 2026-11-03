@@ -233,27 +233,44 @@ func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (dom
 	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
 }
 
-// fakeVotacionRepository guarda una ronda por historia y simula las escrituras
-// condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
-// cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
+// fakeVotacionRepository guarda la ronda actual de cada historia y las anteriores,
+// y simula las escrituras condicionales del adaptador SQLite (research.md R6).
+// Devuelve copias, así un cambio en la ronda del service no llega acá sin pasar
+// por GuardarVoto.
 type fakeVotacionRepository struct {
-	rondas map[int64]domain.RondaVotacion
-	err    error
+	rondas     map[int64]domain.RondaVotacion
+	anteriores []domain.RondaVotacion
+	err        error
 }
 
 func (f *fakeVotacionRepository) CrearRonda(_ context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error) {
 	if f.err != nil {
 		return domain.RondaVotacion{}, f.err
 	}
-	if _, ok := f.rondas[r.HistoriaID]; ok {
+	actual, ok := f.rondas[r.HistoriaID]
+	if ok && r.Numero <= actual.Numero {
 		return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
 	}
 	if f.rondas == nil {
 		f.rondas = map[int64]domain.RondaVotacion{}
 	}
-	r.ID = int64(len(f.rondas) + 1)
+	if ok {
+		f.anteriores = append(f.anteriores, actual)
+	}
+	r.ID = f.siguienteID()
 	f.rondas[r.HistoriaID] = copiaDeRonda(r)
 	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) siguienteID() int64 {
+	var mayor int64
+	for _, r := range f.rondas {
+		mayor = max(mayor, r.ID)
+	}
+	for _, r := range f.anteriores {
+		mayor = max(mayor, r.ID)
+	}
+	return mayor + 1
 }
 
 func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaID int64) (domain.RondaVotacion, error) {
@@ -295,6 +312,22 @@ func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64
 	r.ReveladaEn = &en
 	f.rondas[r.HistoriaID] = r
 	return nil
+}
+
+func (f *fakeVotacionRepository) ListarRondasReveladas(_ context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	rondas := make([]domain.RondaVotacion, 0)
+	for _, r := range f.anteriores {
+		if r.HistoriaID == historiaID && r.Revelada() {
+			rondas = append(rondas, copiaDeRonda(r))
+		}
+	}
+	if actual, ok := f.rondas[historiaID]; ok && actual.Revelada() {
+		rondas = append(rondas, copiaDeRonda(actual))
+	}
+	return rondas, nil
 }
 
 func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {
@@ -448,4 +481,30 @@ func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado 
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.llamadas)
+}
+
+// fakeEstimacionRepository guarda las historias y cuenta las escrituras de la
+// estimación, para comprobar que un rechazo no escribe.
+type fakeEstimacionRepository struct {
+	historias  map[int64]domain.BacklogItem
+	escrituras int
+}
+
+func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int) error {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.ErrHistoriaNoEncontrada
+	}
+	h.EstimacionSP = &sp
+	f.historias[id] = h
+	f.escrituras++
+	return nil
 }
