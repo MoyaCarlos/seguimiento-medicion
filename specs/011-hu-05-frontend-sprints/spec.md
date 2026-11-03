@@ -127,7 +127,7 @@ Redactados en formato EARS.
 - **FR-010** *(cumplido por la spec 015)*: el punto de carga inicial es un `useEffect` que pide `GET /projects/{id}/sprints`; las secciones y acciones no cambiaron.
 
 - **FR-018** *(retirado por la spec 015, FR-F05)*: el texto de limitación "Los Sprints existentes no se listan todavía…" ya no se muestra, porque el listado existe.
-- **FR-019**: Cada Sprint mostrado **shall** exhibir su identificador como "Sprint #<id>".
+- **FR-019**: Cada Sprint mostrado **shall** exhibir su identificador como "Sprint <numero>" (antes "Sprint #<id>"; ver la spec 024 y el issue #129).
 
 **Errores y carga**
 
