@@ -648,3 +648,56 @@ func TestSQLiteBacklogRepository_ObtenerPorID_SinFechaDevuelveNil(t *testing.T) 
 		t.Errorf("las demás columnas no debían cambiar: %+v", leida)
 	}
 }
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_EscribeSoloLosStoryPoints(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+
+	if err := repo.GuardarEstimacion(ctx, historia.ID, 8); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	guardada, err := repo.ObtenerPorID(ctx, historia.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer la historia: %v", err)
+	}
+	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 8 {
+		t.Errorf("se esperaban 8 Story Points, se obtuvo %v", guardada.EstimacionSP)
+	}
+	if guardada.Titulo != historia.Titulo || guardada.Descripcion != historia.Descripcion || guardada.Estado != historia.Estado {
+		t.Errorf("no debía cambiar nada más: antes %+v, ahora %+v", historia, guardada)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_HistoriaInexistente(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+
+	err := repo.GuardarEstimacion(context.Background(), 999, 8)
+
+	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
+		t.Errorf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_NoTocaOtrasHistorias(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	otra := guardarHistoria(t, repo, 1, "Otra", domain.PrioridadMust)
+	if err := repo.GuardarEstimacion(ctx, otra.ID, 3); err != nil {
+		t.Fatalf("no se esperaba error al cargar la otra historia: %v", err)
+	}
+
+	if err := repo.GuardarEstimacion(ctx, historia.ID, 8); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	guardada, err := repo.ObtenerPorID(ctx, otra.ID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer la otra historia: %v", err)
+	}
+	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 3 {
+		t.Errorf("la otra historia debía seguir con 3 Story Points, tiene %v", guardada.EstimacionSP)
+	}
+}

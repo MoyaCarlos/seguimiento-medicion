@@ -222,3 +222,27 @@ func TestBacklogItem_ConDatosEditados_InvalidaNoModificaLaOriginal(t *testing.T)
 		t.Errorf("la historia original fue modificada: %+v", original)
 	}
 }
+
+func TestBacklogItem_ConEstimacion_Valida(t *testing.T) {
+	original := BacklogItem{ID: 3, Titulo: "Original", EstimacionSP: intPtr(3)}
+
+	conEstimacion, err := original.ConEstimacion(5)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if conEstimacion.EstimacionSP == nil || *conEstimacion.EstimacionSP != 5 {
+		t.Errorf("se esperaban 5 Story Points, se obtuvo %v", conEstimacion.EstimacionSP)
+	}
+	if *original.EstimacionSP != 3 {
+		t.Errorf("la historia original no debía cambiar, quedó con %d", *original.EstimacionSP)
+	}
+}
+
+func TestBacklogItem_ConEstimacion_FueraDeLaBaraja(t *testing.T) {
+	for _, valor := range []int{0, 4, 22} {
+		if _, err := (BacklogItem{}).ConEstimacion(valor); !errors.Is(err, ErrEstimacionInvalida) {
+			t.Errorf("con %d se esperaba ErrEstimacionInvalida, se obtuvo %v", valor, err)
+		}
+	}
+}

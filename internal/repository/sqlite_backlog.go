@@ -134,6 +134,22 @@ func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.Ba
 	return nil
 }
 
+// GuardarEstimacion escribe solo los Story Points de la historia.
+func (r *SQLiteBacklogRepository) GuardarEstimacion(ctx context.Context, id int64, sp int) error {
+	resultado, err := r.db.ExecContext(ctx, "UPDATE historias SET estimacion_sp = ? WHERE id = ?", sp, id)
+	if err != nil {
+		return fmt.Errorf("guardar la estimación de la historia %d: %w", id, err)
+	}
+	filas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("guardar la estimación de la historia %d: %w", id, err)
+	}
+	if filas == 0 {
+		return domain.ErrHistoriaNoEncontrada
+	}
+	return nil
+}
+
 // AsignarASprint asigna la historia al Sprint solo si todavía no tiene uno. La
 // condición va en el mismo UPDATE: si dos asignaciones compiten, solo una
 // encuentra sprint_id IS NULL y la otra recibe domain.ErrHistoriaYaAsignada.

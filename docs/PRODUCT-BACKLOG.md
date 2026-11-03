@@ -510,9 +510,9 @@ Dado que se revelaron los votos de una historia,
 Cuando las estimaciones no coinciden,
 Entonces el sistema indica que hay diferencias y cuáles son los valores mínimo y máximo votados.
 Escenario 2: Nueva ronda.
-Dado que se detectaron diferencias entre las estimaciones,
+Dado que se revelaron los votos de una historia, haya o no diferencias entre las estimaciones,
 Cuando el Scrum Master inicia una nueva ronda,
-Entonces el sistema descarta los votos de la ronda anterior (que quedan registrados como historial) y permite votar de nuevo.
+Entonces el sistema descarta los votos de la ronda anterior (que quedan registrados como historial, que se puede consultar) y permite votar de nuevo.
 Escenario 3: Registro de la estimación acordada.
 Dado que el equipo llegó a un acuerdo,
 Cuando el Scrum Master registra el valor acordado,
