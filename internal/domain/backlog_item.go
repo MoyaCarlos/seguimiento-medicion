@@ -120,5 +120,9 @@ func validarDescripcion(descripcion string) (string, error) {
 
 // ConEstimacion devuelve una copia de la historia con esos Story Points.
 func (b BacklogItem) ConEstimacion(sp int) (BacklogItem, error) {
+	if !EsEstimacionValida(sp) {
+		return BacklogItem{}, ErrEstimacionInvalida
+	}
+	b.EstimacionSP = &sp
 	return b, nil
 }
