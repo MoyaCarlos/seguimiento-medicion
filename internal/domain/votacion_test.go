@@ -217,3 +217,52 @@ func TestCoincidenciaExacta_HayDiferencias(t *testing.T) {
 		})
 	}
 }
+
+// siempreDiferencias prueba que la regla de consenso es intercambiable.
+type siempreDiferencias struct{}
+
+func (siempreDiferencias) HayDiferencias([]int) bool { return true }
+
+func rondaConVotos(revelada bool, valores ...int) RondaVotacion {
+	r := RondaVotacion{ID: 1, HistoriaID: 100, Numero: 1}
+	for i, v := range valores {
+		r.Votos = append(r.Votos, Voto{UsuarioID: int64(i + 1), Valor: v})
+	}
+	if revelada {
+		en := momentoRevelacion
+		r.ReveladaEn = &en
+	}
+	return r
+}
+
+func TestRondaVotacion_Diferencias_SinRevelar(t *testing.T) {
+	if _, ok := rondaConVotos(false, 3, 8).Diferencias(CoincidenciaExacta{}); ok {
+		t.Error("una ronda sin revelar no debía informar diferencias")
+	}
+}
+
+func TestRondaVotacion_Diferencias_Revelada(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		ronda    RondaVotacion
+		regla    ReglaConsenso
+		esperado Diferencias
+	}{
+		{"con diferencias", rondaConVotos(true, 3, 5, 8), CoincidenciaExacta{}, Diferencias{Hay: true, Minimo: 3, Maximo: 8}},
+		{"sin importar el orden", rondaConVotos(true, 8, 3, 5), CoincidenciaExacta{}, Diferencias{Hay: true, Minimo: 3, Maximo: 8}},
+		{"sin diferencias", rondaConVotos(true, 5, 5, 5), CoincidenciaExacta{}, Diferencias{Hay: false}},
+		{"otra regla cambia el resultado", rondaConVotos(true, 5, 5, 5), siempreDiferencias{}, Diferencias{Hay: true, Minimo: 5, Maximo: 5}},
+		{"sin votos no consulta la regla", rondaConVotos(true), siempreDiferencias{}, Diferencias{Hay: false}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			got, ok := c.ronda.Diferencias(c.regla)
+			if !ok {
+				t.Fatal("una ronda revelada debía informar diferencias")
+			}
+			if got != c.esperado {
+				t.Errorf("se esperaba %+v, se obtuvo %+v", c.esperado, got)
+			}
+		})
+	}
+}

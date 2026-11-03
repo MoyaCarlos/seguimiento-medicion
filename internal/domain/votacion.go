@@ -119,3 +119,15 @@ type CoincidenciaExacta struct{}
 func (CoincidenciaExacta) HayDiferencias(valores []int) bool {
 	return slices.ContainsFunc(valores, func(v int) bool { return v != valores[0] })
 }
+
+// Diferencias es el resultado de comparar los votos de una ronda revelada.
+// Minimo y Maximo solo tienen sentido si Hay es true.
+type Diferencias struct {
+	Hay            bool
+	Minimo, Maximo int
+}
+
+// Diferencias compara los votos según la regla; false si la ronda no está revelada.
+func (r RondaVotacion) Diferencias(regla ReglaConsenso) (Diferencias, bool) {
+	return Diferencias{}, false
+}
