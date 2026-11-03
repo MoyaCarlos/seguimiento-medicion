@@ -804,8 +804,7 @@ Nueva
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
-5 Story Points - propuesta, a estimar con el equipo
-<!-- decidir: estimación de HU-20 (5 SP) -->
+8 Story Points - propuesta del Scrum Master (2026-11-03)
 
 ---
 
@@ -869,8 +868,7 @@ Nueva
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
-5 Story Points - propuesta, a estimar con el equipo (toca muchos endpoints)
-<!-- decidir: estimación de HU-21 (5 SP); toca todas las rutas de escritura -->
+8 Story Points - propuesta del Scrum Master (2026-11-03); toca todas las rutas de escritura y de lectura
 
 ---
 
