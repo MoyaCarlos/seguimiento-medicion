@@ -18,6 +18,7 @@ export function editarHistoria(
 
 export type SprintParaAsignar = {
   id: number
+  numero: number
   estado: 'Pendiente' | 'Activo' | 'Finalizado'
   sprint_goal?: string | null
 }

@@ -9,7 +9,7 @@ import type { Sprint } from './sprint'
 const respuesta = (status: number, cuerpo: unknown) =>
   new Response(JSON.stringify(cuerpo), { status })
 
-const pendiente = (id: number): Sprint => ({ id, proyecto_id: 42, estado: 'Pendiente' })
+const pendiente = (id: number, numero = id): Sprint => ({ id, numero, proyecto_id: 42, estado: 'Pendiente' })
 
 const RUTA_LISTADO = /^\/projects\/(\d+)\/sprints$/
 const RUTA_BACKLOG = /^\/sprints\/(\d+)\/backlog$/
@@ -54,6 +54,14 @@ const crear = () => userEvent.click(screen.getByRole('button', { name: 'Crear Sp
 afterEach(() => vi.unstubAllGlobals())
 
 describe('pantalla de Sprints', () => {
+  it('numeración por proyecto: la tarjeta muestra el número del Sprint y no su id', async () => {
+    simularApi(conSprints(pendiente(7, 2)))
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: 'Sprint 2' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Sprint 7' })).toBeNull()
+  })
+
   it('conserva el contrato con la base: h1 "Sprints" y el id en un único <strong>', () => {
     simularApi(conSprints())
     abrir()
@@ -71,9 +79,9 @@ describe('pantalla de Sprints', () => {
     abrir()
 
     expect(screen.getByText('Cargando…')).toBeTruthy()
-    expect(await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })).toBeTruthy()
-    expect(within(seccion('Activo')).getByRole('heading', { name: 'Sprint #2' })).toBeTruthy()
-    expect(within(seccion('Finalizado')).getByRole('heading', { name: 'Sprint #1' })).toBeTruthy()
+    expect(await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint 3' })).toBeTruthy()
+    expect(within(seccion('Activo')).getByRole('heading', { name: 'Sprint 2' })).toBeTruthy()
+    expect(within(seccion('Finalizado')).getByRole('heading', { name: 'Sprint 1' })).toBeTruthy()
     await waitFor(() => expect(screen.queryAllByText('Cargando…')).toHaveLength(0))
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/sprints')
   })
@@ -91,7 +99,7 @@ describe('pantalla de Sprints', () => {
     )
     abrir()
 
-    await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' })
+    await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint 3' })
     expect(await within(seccion('Activo')).findByText('Historia del activo')).toBeTruthy()
     expect(await within(seccion('Pendiente')).findByText('Este Sprint no tiene historias')).toBeTruthy()
     expect(within(seccion('Pendiente')).queryByText('Historia del activo')).toBeNull()
@@ -106,7 +114,7 @@ describe('pantalla de Sprints', () => {
     )
     abrir()
 
-    const tarjeta = (await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #3' }))
+    const tarjeta = (await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint 3' }))
       .closest('article') as HTMLElement
     expect((await within(tarjeta).findByRole('alert')).textContent).toBe('identificador de sprint inválido')
     expect(screen.getAllByRole('alert')).toHaveLength(1)
@@ -150,7 +158,7 @@ describe('pantalla de Sprints', () => {
 
     await crear()
 
-    const tarjeta = await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint #5' })
+    const tarjeta = await within(seccion('Pendiente')).findByRole('heading', { name: 'Sprint 5' })
     expect(tarjeta).toBeTruthy()
     const [ruta, opciones] = fetchSimulado.mock.calls.find(([r]) => r === '/sprints') as [string, RequestInit]
     expect(ruta).toBe('/sprints')
@@ -197,24 +205,24 @@ describe('pantalla de Sprints', () => {
     abrir()
 
     await crear()
-    await screen.findByRole('heading', { name: 'Sprint #5' })
+    await screen.findByRole('heading', { name: 'Sprint 5' })
     await user.type(screen.getByLabelText('Sprint Goal'), 'Meta')
     await user.type(screen.getByLabelText('Fecha de inicio'), '2026-10-01')
     await user.type(screen.getByLabelText('Fecha de fin'), '2026-10-15')
     await user.click(screen.getByRole('button', { name: 'Iniciar Sprint' }))
 
     const enActivo = within(seccion('Activo'))
-    expect(await enActivo.findByRole('heading', { name: 'Sprint #5' })).toBeTruthy()
+    expect(await enActivo.findByRole('heading', { name: 'Sprint 5' })).toBeTruthy()
     expect(enActivo.getByText('Meta')).toBeTruthy()
     expect(enActivo.getByText('2026-10-01 a 2026-10-15')).toBeTruthy()
-    expect(within(seccion('Pendiente')).queryByRole('heading', { name: 'Sprint #5' })).toBeNull()
+    expect(within(seccion('Pendiente')).queryByRole('heading', { name: 'Sprint 5' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Iniciar Sprint' })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Cerrar Sprint' }))
 
     const enFinalizado = within(seccion('Finalizado'))
-    expect(await enFinalizado.findByRole('heading', { name: 'Sprint #5' })).toBeTruthy()
-    expect(within(seccion('Activo')).queryByRole('heading', { name: 'Sprint #5' })).toBeNull()
+    expect(await enFinalizado.findByRole('heading', { name: 'Sprint 5' })).toBeTruthy()
+    expect(within(seccion('Activo')).queryByRole('heading', { name: 'Sprint 5' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Cerrar Sprint' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Iniciar Sprint' })).toBeNull()
   })
@@ -230,9 +238,9 @@ describe('pantalla de Sprints', () => {
     abrir()
 
     await crear()
-    await screen.findByRole('heading', { name: 'Sprint #1' })
+    await screen.findByRole('heading', { name: 'Sprint 1' })
     await crear()
-    await screen.findByRole('heading', { name: 'Sprint #2' })
+    await screen.findByRole('heading', { name: 'Sprint 2' })
     const [primera, segunda] = screen.getAllByRole('article')
     await user.click(within(primera).getByRole('button', { name: 'Iniciar Sprint' }))
 
@@ -260,11 +268,11 @@ describe('pantalla de Sprints', () => {
       { initialEntries: ['/projects/1/sprints'] },
     )
     render(<RouterProvider router={router} />)
-    await screen.findByRole('heading', { name: 'Sprint #5' })
+    await screen.findByRole('heading', { name: 'Sprint 5' })
 
     await act(() => router.navigate('/projects/2/sprints'))
 
-    expect(screen.queryByRole('heading', { name: 'Sprint #5' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Sprint 5' })).toBeNull()
     await waitFor(() => expect(fetchSimulado).toHaveBeenCalledWith('/projects/2/sprints', expect.anything()))
     await waitFor(() => expect(screen.queryByText('Cargando…')).toBeNull())
     for (const nombre of ['Pendiente', 'Activo', 'Finalizado']) {

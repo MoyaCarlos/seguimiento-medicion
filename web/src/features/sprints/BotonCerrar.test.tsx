@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BotonCerrar } from './BotonCerrar'
 import type { Sprint } from './sprint'
 
-const activo: Sprint = { id: 7, proyecto_id: 1, estado: 'Activo' }
+const activo: Sprint = { id: 7, numero: 2, proyecto_id: 1, estado: 'Activo' }
 const finalizado: Sprint = { ...activo, estado: 'Finalizado' }
 
 const respuesta = (status: number, cuerpo: unknown) =>

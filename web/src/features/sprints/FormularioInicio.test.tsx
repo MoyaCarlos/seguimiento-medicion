@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FormularioInicio } from './FormularioInicio'
 import type { Sprint } from './sprint'
 
-const pendiente: Sprint = { id: 7, proyecto_id: 1, estado: 'Pendiente' }
+const pendiente: Sprint = { id: 7, numero: 2, proyecto_id: 1, estado: 'Pendiente' }
 const activo: Sprint = {
   ...pendiente,
   estado: 'Activo',
