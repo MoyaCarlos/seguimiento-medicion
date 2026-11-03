@@ -805,6 +805,7 @@ Nueva
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
 5 Story Points - propuesta, a estimar con el equipo
+<!-- decidir: estimación de HU-20 (5 SP) -->
 
 ---
 
@@ -869,6 +870,7 @@ Nueva
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
 5 Story Points - propuesta, a estimar con el equipo (toca muchos endpoints)
+<!-- decidir: estimación de HU-21 (5 SP); toca todas las rutas de escritura -->
 
 ---
 
