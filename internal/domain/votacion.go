@@ -117,5 +117,5 @@ type ReglaConsenso interface {
 type CoincidenciaExacta struct{}
 
 func (CoincidenciaExacta) HayDiferencias(valores []int) bool {
-	return false
+	return slices.ContainsFunc(valores, func(v int) bool { return v != valores[0] })
 }
