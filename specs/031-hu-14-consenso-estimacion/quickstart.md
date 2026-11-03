@@ -57,3 +57,12 @@ curl -s -X POST localhost:8080/backlog/1/votacion -d '{"usuario_id":1}'
 
 > Los casos con Sprint `Activo` o `Finalizado` (D2b), historia `Completada` y dos aperturas simultáneas
 > se validan con los tests de service y repositorio y con los escenarios BDD.
+
+## Resultado de la validación (2026-11-03)
+
+- **Tests automáticos**: `go build`, `go vet`, `gofmt -l .` (sin salida) y `go test ./...` en verde,
+  incluidos los 20 escenarios `@HU-14` (152 escenarios BDD en total, contando cada fila de un esquema).
+- **API manual**: los pasos 1 a 16 dieron lo esperado, contra un servidor con base nueva. Paso 4: `diferencias`
+  con mínimo 3 y máximo 8. Paso 11: `hay_diferencias: false`, con mínimo y máximo en null. Paso 13: la historia
+  queda con 13 Story Points, aunque nadie votó esa carta. Paso 14: se abre la ronda 3 después de registrar la
+  estimación. Paso 16: tras reiniciar el servidor, el historial conserva las rondas 1 y 2.
