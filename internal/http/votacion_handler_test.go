@@ -552,6 +552,14 @@ func TestVotacionHandler_Historial_Errores(t *testing.T) {
 	esperarError(t, historialDe(handler, "999"), nethttp.StatusNotFound, "", "historia no encontrada")
 }
 
+func TestEscribirError_RondaYaAbierta(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	escribirError(rec, domain.ErrRondaYaAbierta)
+
+	esperarError(t, rec, nethttp.StatusConflict, "", domain.ErrRondaYaAbierta.Error())
+}
+
 func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 	casos := []struct {
 		metodo, ruta, cuerpo string
