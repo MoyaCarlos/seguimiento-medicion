@@ -293,6 +293,20 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
 
     expect(within(fila('Beta Dos')).queryByText('8')).toBeNull()
   })
+
+  it('FR-001: Given integrantes con rol, When se abre el selector, Then cada opción muestra "Nombre (Rol)"', async () => {
+    abrir()
+
+    const selector = await screen.findByLabelText('Quién actúa')
+
+    const opciones = within(selector).getAllByRole('option').map((opcion) => opcion.textContent)
+    expect(opciones).toEqual([
+      'Elegí un integrante',
+      'Beta Uno (Scrum Master)',
+      'Beta Dos (Product Builder)',
+      'Beta Tres (Product Builder)',
+    ])
+  })
 })
 
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
