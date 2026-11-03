@@ -32,5 +32,5 @@
 ## Notes
 
 - Los requisitos funcionales son de producto. La sección **Constraints** nombra el stack obligatorio de la constitución (PDF con Maroto) como restricción del proyecto, no como decisión de diseño de esta spec.
-- Supuestos que conviene confirmar en `/speckit.clarify` con el equipo: (1) el reporte de un Sprint no finalizado se rechaza en lugar de generarse con métricas parciales; (2) los defectos se listan con descripción, severidad, estado e historia relacionada; (3) el Sprint Activo se lista solo con sus historias, sin esfuerzo, defectos ni métricas.
+- Decisiones confirmadas en clarify (2026-11-03): (1) el reporte de un Sprint no finalizado se rechaza en lugar de generarse con métricas parciales; (2) los defectos se listan con descripción, severidad, estado e historia relacionada, más sus Sprints de detección y resolución; (3) el Sprint Activo se lista solo con sus historias, sin esfuerzo, defectos ni métricas.
 - HU-03 puede no estar integrada durante el Sprint 4; el reporte se adelanta con "sin datos" en las métricas que dependen de ella, sin duplicar su cálculo.

@@ -10,6 +10,14 @@
 
 **Input**: User description: "HU-10: Generación de Reporte en PDF (issue #10, sub-issues #74 a #78). Como Scrum Master quiero exportar un reporte en PDF de un proyecto o Sprint con sus historias, estimaciones, esfuerzo, métricas y defectos para poder compartir el estado del proyecto fuera del sistema (por ejemplo, con el profesor o el cliente). Escenario 1: al ver el resumen de un Sprint finalizado, presiono 'Exportar a PDF' y obtengo un archivo con historias planificadas y completadas, estimaciones, esfuerzo registrado, métricas (HU-03) y defectos asociados a ese Sprint. Escenario 2: al ver el resumen de un proyecto, presiono 'Exportar reporte del proyecto' y obtengo los datos del proyecto (nombre, fechas, estado e integrantes), su Product Backlog actual (historias sin Sprint, prioridad y estimación), la lista de Sprints finalizados con Sprint Goal y fechas, el Sprint Activo con sus historias si lo hay y, para los Sprints finalizados, historias planificadas y completadas, estimaciones, esfuerzo, métricas y defectos detectados y resueltos. Escenario 3: un proyecto sin Sprints finalizados (con o sin Sprint Activo) genera el reporte con los datos del proyecto, su Product Backlog y el Sprint Activo si existe, e informa métricas, esfuerzo y defectos como 'sin datos' en vez de fallar. Escenario 4: si la generación falla por un error real, el sistema informa el error en vez de descargar un archivo corrupto o vacío. Planificación del Sprint 4 (2026-11-03): la especificación, los escenarios BDD, el backend y los tests (#74 a #77) se adelantan sin depender de HU-03 en su totalidad; hasta que HU-03 esté lista, las métricas se informan como 'sin datos'. El frontend (#78) y el cierre de la historia quedan en el Sprint 5. El reporte es de solo lectura y no modifica datos."
 
+## Clarifications
+
+### Session 2026-11-03
+
+- Q: ¿Qué pasa si se solicita el reporte de un Sprint que no está finalizado? → A: Se rechaza con un mensaje claro y no se genera ningún archivo. El reporte de Sprint es solo para Sprints finalizados; la interfaz solo ofrece el botón en el resumen de uno finalizado.
+- Q: ¿El reporte del proyecto incluye el esfuerzo y los defectos del Sprint Activo? → A: No. El Sprint Activo se lista con sus historias (título, estado y estimación); su esfuerzo, sus métricas y sus defectos no se incluyen ni suman a los totales. Ya está definido en el issue #10 y en las notas del backlog.
+- Q: ¿Qué datos de cada defecto incluye el reporte? → A: Descripción, severidad, estado e historia relacionada, más los Sprints de detección y resolución. Se toma la definición de la spec 023 de HU-08.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Exportar el reporte de un Sprint finalizado (Priority: P1)
