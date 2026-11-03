@@ -68,6 +68,28 @@ describe('registro de rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
   })
 
+  describe('inicio con lista de proyectos', () => {
+    it('US3.1: el inicio muestra el formulario de creación y la lista de proyectos', async () => {
+      proyectosSimulados = [{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }]
+      abrir('/')
+
+      expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
+      expect(await screen.findByRole('link', { name: 'Alfa (#1)' })).toBeTruthy()
+      expect(screen.getByRole('link', { name: 'Beta (#2)' })).toBeTruthy()
+    })
+
+    it('US3.2: un enlace de la lista abre el panel del proyecto', async () => {
+      proyectosSimulados = [{ id: 1, nombre: 'Alfa' }]
+      const usuario = userEvent.setup()
+      const router = abrir('/')
+
+      await usuario.click(await screen.findByRole('link', { name: 'Alfa (#1)' }))
+
+      expect(router.state.location.pathname).toBe('/projects/1/proyecto')
+      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+    })
+  })
+
   it('/projects/:id redirige al panel del proyecto', async () => {
     const router = abrir('/projects/1')
 
