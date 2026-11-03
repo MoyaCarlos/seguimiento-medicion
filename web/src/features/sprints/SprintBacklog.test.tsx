@@ -13,18 +13,27 @@ const historias: HistoriaDeSprint[] = [
   { id: 3, titulo: 'Exportar reporte', prioridad: 'W', estado: 'Completada', estimacion_sp: 8 },
 ]
 
+const SIN_CARGAS = { total_horas: 0, registros: [] }
+
+function simularBacklog(backlog: HistoriaDeSprint[]) {
+  const simulado = vi.fn((ruta: string, _opciones?: RequestInit) =>
+    Promise.resolve(ruta.endsWith('/horas') ? respuesta(200, SIN_CARGAS) : respuesta(200, backlog)),
+  )
+  vi.stubGlobal('fetch', simulado)
+  return simulado
+}
+
 afterEach(() => vi.unstubAllGlobals())
 
 describe('SprintBacklog', () => {
   it('US3.2: al montarse pide GET /sprints/{id}/backlog', async () => {
-    const fetchSimulado = vi.fn().mockResolvedValue(respuesta(200, historias))
-    vi.stubGlobal('fetch', fetchSimulado)
+    const fetchSimulado = simularBacklog(historias)
 
     render(<SprintBacklog sprintId={4} />)
 
     await screen.findByText('Recuperar clave')
     expect(fetchSimulado.mock.calls[0][0]).toBe('/sprints/4/backlog')
-    expect(fetchSimulado.mock.calls[0][1].method).toBe('GET')
+    expect(fetchSimulado.mock.calls[0][1]?.method).toBe('GET')
   })
 
   it('US3.2: muestra el indicador de carga mientras espera la respuesta', () => {
@@ -36,7 +45,7 @@ describe('SprintBacklog', () => {
   })
 
   it('US3.2: lista las historias en el orden recibido', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, historias)))
+    simularBacklog(historias)
 
     render(<SprintBacklog sprintId={4} />)
 
@@ -49,7 +58,7 @@ describe('SprintBacklog', () => {
   })
 
   it('US3.2: cada historia muestra prioridad con su etiqueta en español, estado y Story Points', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, historias)))
+    simularBacklog(historias)
 
     render(<SprintBacklog sprintId={4} />)
 
@@ -70,7 +79,7 @@ describe('SprintBacklog', () => {
       estado: 'Nueva',
       estimacion_sp: 1,
     }))
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, todas)))
+    simularBacklog(todas)
 
     render(<SprintBacklog sprintId={4} />)
 
@@ -84,7 +93,7 @@ describe('SprintBacklog', () => {
   })
 
   it('US3.2: una historia sin estimación muestra "Sin estimar"', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(respuesta(200, historias)))
+    simularBacklog(historias)
 
     render(<SprintBacklog sprintId={4} />)
 
@@ -137,11 +146,59 @@ describe('SprintBacklog', () => {
   })
 })
 
+describe('SprintBacklog con registro de horas', () => {
+  it('US1.1: con imputación ofrece "Registrar horas" en cada historia', async () => {
+    simularBacklog(historias)
+
+    render(<SprintBacklog sprintId={4} imputacion={{ proyectoId: 42, fechaFin: '2026-11-09' }} />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.getAllByRole('button', { name: 'Registrar horas' })).toHaveLength(historias.length)
+  })
+
+  it('US1.4: sin imputación no ofrece "Registrar horas"', async () => {
+    simularBacklog(historias)
+
+    render(<SprintBacklog sprintId={4} />)
+
+    await screen.findByText('Recuperar clave')
+    expect(screen.queryByRole('button', { name: 'Registrar horas' })).toBeNull()
+  })
+
+  it('FR-010: si falla el esfuerzo de una historia, el aviso queda en ella y las demás siguen visibles', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((ruta: string) =>
+        Promise.resolve(
+          ruta === '/backlog/1/horas'
+            ? respuesta(404, { mensaje: 'historia no encontrada' })
+            : ruta.endsWith('/horas')
+              ? respuesta(200, SIN_CARGAS)
+              : respuesta(200, historias),
+        ),
+      ),
+    )
+
+    render(<SprintBacklog sprintId={4} />)
+
+    const [primera, segunda, tercera] = await screen.findAllByRole('listitem')
+    expect((await within(segunda).findByRole('alert')).textContent).toBe('historia no encontrada')
+    expect(segunda.textContent).toContain('Iniciar sesión')
+    expect(await within(primera).findByText('Esfuerzo real: 0 h')).toBeTruthy()
+    expect(await within(tercera).findByText('Esfuerzo real: 0 h')).toBeTruthy()
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+  })
+})
+
 describe('SprintBacklog con cambio de estado', () => {
   const simularEstado = (respuestaPut: Response) => {
-    const simulado = vi.fn((_ruta: string, opciones?: RequestInit) =>
+    const simulado = vi.fn((ruta: string, opciones?: RequestInit) =>
       Promise.resolve(
-        opciones?.method === 'PUT' ? respuestaPut : respuesta(200, historias),
+        opciones?.method === 'PUT'
+          ? respuestaPut
+          : ruta.endsWith('/horas')
+            ? respuesta(200, SIN_CARGAS)
+            : respuesta(200, historias),
       ),
     )
     vi.stubGlobal('fetch', simulado)
