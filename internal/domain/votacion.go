@@ -106,3 +106,16 @@ func CalcularPromedio(valores []int) Promedio {
 	}
 	return Promedio{Exacto: exacto, CartaSugerida: carta}
 }
+
+// ReglaConsenso decide si los votos de una ronda revelada tienen diferencias.
+type ReglaConsenso interface {
+	HayDiferencias(valores []int) bool
+}
+
+// CoincidenciaExacta considera diferencia cualquier voto que no coincida, sin
+// importar la distancia entre las cartas.
+type CoincidenciaExacta struct{}
+
+func (CoincidenciaExacta) HayDiferencias(valores []int) bool {
+	return false
+}

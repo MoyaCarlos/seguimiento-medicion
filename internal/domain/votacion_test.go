@@ -196,3 +196,24 @@ func TestRondaVotacion_Promedio_Revelada(t *testing.T) {
 		t.Errorf("se esperaba el promedio de 3, 5 y 8, se obtuvo %+v (%v)", p, ok)
 	}
 }
+
+func TestCoincidenciaExacta_HayDiferencias(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		valores  []int
+		esperado bool
+	}{
+		{"cartas distintas", []int{3, 5, 8}, true},
+		{"cartas vecinas", []int{3, 5}, true},
+		{"todas iguales", []int{5, 5, 5}, false},
+		{"un solo voto", []int{8}, false},
+		{"sin votos", []int{}, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			if got := (CoincidenciaExacta{}).HayDiferencias(c.valores); got != c.esperado {
+				t.Errorf("HayDiferencias(%v) = %v, se esperaba %v", c.valores, got, c.esperado)
+			}
+		})
+	}
+}
