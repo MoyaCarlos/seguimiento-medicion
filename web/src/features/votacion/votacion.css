@@ -14,10 +14,6 @@
   gap: 0.6rem;
 }
 
-.votacion-encabezado__acciones .button {
-  text-decoration: none;
-}
-
 .votacion-historia {
   background: var(--surface);
   border: 1px solid var(--line);
