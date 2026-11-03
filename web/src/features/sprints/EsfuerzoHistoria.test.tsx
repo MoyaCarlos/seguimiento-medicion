@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../compartido/api/client'
@@ -145,6 +145,28 @@ describe('EsfuerzoHistoria: esfuerzo acumulado', () => {
 
     expect(screen.getByText('Esfuerzo real: 5,5 h')).toBeTruthy()
     expect(screen.queryByText('Cargando…')).toBeNull()
+  })
+
+  it('US3.3: si las reconsultas responden en orden inverso, queda el total de la última', async () => {
+    let responderPrimera: (esfuerzo: EsfuerzoReal) => void = () => {}
+    let responderSegunda: (esfuerzo: EsfuerzoReal) => void = () => {}
+    esfuerzoMock
+      .mockResolvedValueOnce(SIN_CARGAS)
+      .mockReturnValueOnce(new Promise((resolve) => (responderPrimera = resolve)))
+      .mockReturnValueOnce(new Promise((resolve) => (responderSegunda = resolve)))
+    render(<EsfuerzoHistoria historiaId={12} imputacion={imputacion} />)
+    await screen.findByText('Esfuerzo real: 0 h')
+    const user = await guardarCarga()
+    await user.type(screen.getByLabelText('Actividad'), 'Revisión')
+    await user.type(screen.getByLabelText('Horas'), '4')
+    await user.click(screen.getByRole('button', { name: 'Guardar horas' }))
+    await waitFor(() => expect(esfuerzoMock).toHaveBeenCalledTimes(3))
+
+    responderSegunda({ total_horas: 8, registros: [] })
+    await screen.findByText('Esfuerzo real: 8 h')
+    await act(async () => responderPrimera({ total_horas: 4, registros: [] }))
+
+    expect(screen.getByText('Esfuerzo real: 8 h')).toBeTruthy()
   })
 
   it('US3.4: si falla la consulta muestra el aviso en lugar del total', async () => {
