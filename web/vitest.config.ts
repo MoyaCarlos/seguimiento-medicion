@@ -6,5 +6,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
+    css: { include: /features\/proyecto\/estilos\.css/ },
   },
 })
