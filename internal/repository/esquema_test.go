@@ -153,6 +153,25 @@ var esquemaEsperado = map[string]tablaEsperada{
 			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
 		},
 	},
+	// §4.9 defectos
+	"defectos": {
+		columnas: []columnaEsperada{
+			{nombre: "id", tipo: "INTEGER", pk: 1},
+			{nombre: "proyecto_id", tipo: "INTEGER", notNull: true},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true},
+			{nombre: "descripcion", tipo: "TEXT", notNull: true},
+			{nombre: "severidad", tipo: "TEXT", notNull: true},
+			{nombre: "estado", tipo: "TEXT", notNull: true, defecto: "'Pendiente'"},
+			{nombre: "sprint_deteccion_id", tipo: "INTEGER", notNull: true},
+			{nombre: "sprint_resolucion_id", tipo: "INTEGER"},
+			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+		},
+		fks: []string{
+			"historia_id,proyecto_id -> historias(id,proyecto_id)",
+			"sprint_deteccion_id,proyecto_id -> sprints(id,proyecto_id)",
+			"sprint_resolucion_id,proyecto_id -> sprints(id,proyecto_id)",
+		},
+	},
 	// §4.7 rondas_votacion
 	"rondas_votacion": {
 		columnas: []columnaEsperada{
@@ -217,8 +236,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4}) {
-		t.Errorf("se esperaban las versiones 1, 2, 3 y 4 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5}) {
+		t.Errorf("se esperaban las versiones 1, 2, 3, 4 y 5 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -367,6 +386,7 @@ const (
 	insertarHistoria = "INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion) VALUES "
 	insertarArrastre = "INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES "
 	insertarHoras    = "INSERT INTO registros_horas (proyecto_id, historia_id, usuario_id, sprint_id, fecha, actividad, minutos, creado_en) VALUES "
+	insertarDefecto  = "INSERT INTO defectos (proyecto_id, historia_id, descripcion, severidad, estado, sprint_deteccion_id, sprint_resolucion_id, creado_en) VALUES "
 )
 
 // Datos base de cada caso: proyectos 1 y 2, usuario 1 (Scrum Master del 1),
@@ -511,6 +531,23 @@ func TestEsquema_Filas(t *testing.T) {
 		{"horas de usuario que no es integrante",
 			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + ");" +
 				insertarHoras + "(1, 101, 2, 10, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+
+		// §4.9 defectos
+		{"defecto Pendiente sin Sprint de resolución", insertarDefecto + "(1, 100, 'd', 'Alta', 'Pendiente', 10, NULL, " + ahora + ")", aceptada},
+		{"defecto Resuelto con Sprint de resolución", insertarDefecto + "(1, 100, 'd', 'Media', 'Resuelto', 11, 10, " + ahora + ")", aceptada},
+		{"defecto Resuelto sin Sprint de resolución", insertarDefecto + "(1, 100, 'd', 'Baja', 'Resuelto', 10, NULL, " + ahora + ")", violaCheck},
+		{"defecto Pendiente con Sprint de resolución", insertarDefecto + "(1, 100, 'd', 'Alta', 'Pendiente', 10, 10, " + ahora + ")", violaCheck},
+		{"severidad fuera del enum", insertarDefecto + "(1, 100, 'd', 'Crítica', 'Pendiente', 10, NULL, " + ahora + ")", violaCheck},
+		{"estado de defecto fuera del enum", insertarDefecto + "(1, 100, 'd', 'Alta', 'Abierto', 10, NULL, " + ahora + ")", violaCheck},
+		{"defectos.severidad NULL", insertarDefecto + "(1, 100, 'd', NULL, 'Pendiente', 10, NULL, " + ahora + ")", violaNotNull},
+		{"defectos.historia_id NULL", insertarDefecto + "(1, NULL, 'd', 'Alta', 'Pendiente', 10, NULL, " + ahora + ")", violaNotNull},
+		{"defecto sin estado queda Pendiente",
+			"INSERT INTO defectos (proyecto_id, historia_id, descripcion, severidad, sprint_deteccion_id, creado_en) VALUES (1, 100, 'd', 'Alta', 10, " + ahora + ")", aceptada},
+		{"defecto de historia de otro proyecto",
+			"INSERT INTO historias (id, proyecto_id, titulo, descripcion, prioridad, estado) VALUES (200, 2, 't', 'd', 'M', 'Nueva');" +
+				insertarDefecto + "(1, 200, 'd', 'Alta', 'Pendiente', 10, NULL, " + ahora + ")", violaFK},
+		{"defecto detectado en Sprint de otro proyecto", insertarDefecto + "(1, 100, 'd', 'Alta', 'Pendiente', 21, NULL, " + ahora + ")", violaFK},
+		{"defecto resuelto en Sprint de otro proyecto", insertarDefecto + "(1, 100, 'd', 'Alta', 'Resuelto', 10, 21, " + ahora + ")", violaFK},
 
 		// D9: sin cascadas
 		{"borrar proyecto con historias", "DELETE FROM proyectos WHERE id = 1", violaFK},
