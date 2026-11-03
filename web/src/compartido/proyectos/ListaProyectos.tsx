@@ -65,9 +65,9 @@ export function ListaProyectos() {
       {proyectos.estado === 'cargando' && <LoadingIndicator />}
       {proyectos.estado === 'error' && <ErrorMessage message={proyectos.mensaje} />}
       {proyectos.estado === 'listo' && total.length === 0 && (
-        <p>Todavía no hay proyectos. Creá el primero con el formulario.</p>
+        <p className="lista-proyectos__vacio">Todavía no hay proyectos. Creá el primero con el formulario.</p>
       )}
-      {total.length > 0 && visibles.length === 0 && <p>Ningún proyecto coincide con la búsqueda</p>}
+      {total.length > 0 && visibles.length === 0 && <p className="lista-proyectos__vacio">Ningún proyecto coincide con la búsqueda</p>}
       {visibles.length > 0 && (
         <ul className="lista-proyectos__tarjetas">
           {visibles.map((proyecto) => (

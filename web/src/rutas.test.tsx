@@ -68,6 +68,36 @@ describe('registro de rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
   })
 
+  describe('inicio con datos de prueba', () => {
+    it('el aviso de datos ya cargados queda junto a los botones, en el último bloque de la tarjeta del formulario', async () => {
+      const respuestaBase = vi.mocked(fetch).getMockImplementation()!
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: string, init?: RequestInit) => {
+          if (url === '/demo/estado') return Promise.resolve(new Response('{"habilitado":true}', { status: 200 }))
+          if (url === '/demo/datos' && init?.method === 'POST') {
+            return Promise.resolve(new Response(
+              JSON.stringify({ campo: 'ya_cargado', mensaje: 'los datos de prueba ya están cargados' }),
+              { status: 409 },
+            ))
+          }
+          return Promise.resolve(respuestaBase(url, init))
+        }),
+      )
+      const usuario = userEvent.setup()
+      abrir('/')
+
+      const botonDemo = await screen.findByRole('button', { name: 'Cargar datos de prueba' })
+      await usuario.click(botonDemo)
+      const aviso = await screen.findByText(/los datos de prueba ya están cargados/)
+
+      const botonCrear = screen.getByRole('button', { name: 'Crear proyecto' })
+      const tarjeta = botonCrear.closest('section')
+      expect(tarjeta?.lastElementChild).toBe(botonDemo.parentElement)
+      expect(botonDemo.parentElement?.contains(aviso)).toBe(true)
+    })
+  })
+
   describe('listado de proyectos caído', () => {
     function simularListadoCaido(extra?: (url: string, init?: RequestInit) => Response | undefined) {
       const respuestaBase = vi.mocked(fetch).getMockImplementation()!
