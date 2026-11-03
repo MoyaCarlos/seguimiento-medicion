@@ -129,5 +129,18 @@ type Diferencias struct {
 
 // Diferencias compara los votos según la regla; false si la ronda no está revelada.
 func (r RondaVotacion) Diferencias(regla ReglaConsenso) (Diferencias, bool) {
-	return Diferencias{}, false
+	if !r.Revelada() {
+		return Diferencias{}, false
+	}
+	if len(r.Votos) == 0 {
+		return Diferencias{}, true
+	}
+	valores := make([]int, len(r.Votos))
+	for i, v := range r.Votos {
+		valores[i] = v.Valor
+	}
+	if !regla.HayDiferencias(valores) {
+		return Diferencias{}, true
+	}
+	return Diferencias{Hay: true, Minimo: slices.Min(valores), Maximo: slices.Max(valores)}, true
 }
