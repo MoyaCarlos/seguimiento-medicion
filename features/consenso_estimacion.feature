@@ -1,6 +1,7 @@
 # language: es
 
-# Un escenario por Acceptance Scenario de specs/031-hu-14-consenso-estimacion/spec.md.
+# Un escenario por Acceptance Scenario de specs/031-hu-14-consenso-estimacion/spec.md, más los
+# errores del registro que la spec fija en Edge Cases y FR-009, FR-011 y FR-012.
 # Cobertura por categoría:
 # - Normal: diferencias (US1.1); registro de la estimación (US2.1); nueva ronda (US3.1).
 # - Alternativo: sin diferencias (US1.2); reemplazo de una estimación cargada (US2.2); carta que
@@ -9,8 +10,9 @@
 # - Límite: consulta de una ronda oculta (US1.3); primera carga con Sprint Activo (US2.3); primera
 #   carga en una historia Completada (US2.9).
 # - Error: carta fuera de la baraja (US2.4); ronda oculta (US2.5); D2b (US2.6); permisos (US2.7, US3.4);
-#   ronda oculta (US3.3); sin votación (US3.5); historia Completada (US3.6).
-# La historia inexistente no es un criterio de la spec: la cubren los tests de service y handler.
+#   ronda oculta (US3.3); sin votación (US3.5); historia Completada (US3.6); ronda anterior revelada
+#   con la actual abierta (Edge Cases); valor que no es un entero (FR-009); sin votación (FR-009);
+#   quien no integra el proyecto (FR-011); historia inexistente (FR-012).
 
 @HU-14
 Característica: Consenso y registro de la estimación acordada
@@ -109,6 +111,50 @@ Característica: Consenso y registro de la estimación acordada
     Entonces la estimación se rechaza con una advertencia sobre el campo "estado"
     Y la historia mantiene sus 3 Story Points
 
+  Escenario: Estimación con la ronda anterior revelada y la actual sin revelar
+    Dado que la historia tiene 3 Story Points cargados
+    Y que "Carlos" inició la votación de la historia
+    Y que votaron estas cartas:
+      | integrante | carta |
+      | Carlos     | 3     |
+      | Candela    | 5     |
+      | Jimena     | 8     |
+    Y que "Carlos" reveló los votos
+    Y que "Carlos" inició una nueva ronda
+    Cuando "Carlos" registra el valor acordado 5
+    Entonces la estimación se rechaza con una advertencia sobre el campo "estado"
+    Y la historia mantiene sus 3 Story Points
+
+  Escenario: Estimación de una historia sin votación
+    Dado que la historia tiene 3 Story Points cargados
+    Y que la historia todavía no tiene votación
+    Cuando "Carlos" registra el valor acordado 5
+    Entonces la estimación se rechaza porque la votación no está iniciada
+    Y la historia mantiene sus 3 Story Points
+
+  Escenario: Estimación de una historia inexistente
+    Cuando "Carlos" registra el valor acordado 5 en la historia con identificador 999, que no existe
+    Entonces la estimación se rechaza con error "historia no encontrada"
+
+  Esquema del escenario: Estimación con un valor que no es un entero
+    Dado que la historia tiene 3 Story Points cargados
+    Y que "Carlos" inició la votación de la historia
+    Y que votaron estas cartas:
+      | integrante | carta |
+      | Carlos     | 3     |
+      | Candela    | 5     |
+      | Jimena     | 8     |
+    Y que "Carlos" reveló los votos
+    Cuando "Carlos" envía a la API el valor acordado <valor>
+    Entonces la API rechaza la estimación con el estado 400 y una advertencia sobre el campo "estimacion_sp"
+    Y la historia mantiene sus 3 Story Points
+
+    Ejemplos:
+      | valor |
+      | 2.5   |
+      | "5"   |
+      | null  |
+
   Esquema del escenario: Cambio de una estimación cargada con un Sprint <estado>
     Dado que la historia tiene 3 Story Points cargados
     Y que "Carlos" inició la votación de la historia
@@ -139,6 +185,19 @@ Característica: Consenso y registro de la estimación acordada
     Y que "Carlos" reveló los votos
     Cuando "Candela" registra el valor acordado 5
     Entonces la estimación se rechaza porque "Candela" no es Scrum Master del proyecto
+    Y la historia mantiene sus 3 Story Points
+
+  Escenario: Estimación registrada por quien no integra el proyecto
+    Dado que la historia tiene 3 Story Points cargados
+    Y que "Carlos" inició la votación de la historia
+    Y que votaron estas cartas:
+      | integrante | carta |
+      | Carlos     | 3     |
+      | Candela    | 5     |
+      | Jimena     | 8     |
+    Y que "Carlos" reveló los votos
+    Cuando "Valentina", que no es integrante del proyecto, registra el valor acordado 5
+    Entonces la estimación se rechaza porque "Valentina" no es Scrum Master del proyecto
     Y la historia mantiene sus 3 Story Points
 
   Escenario: Estimación con una carta que nadie votó
