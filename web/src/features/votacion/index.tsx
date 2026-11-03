@@ -15,6 +15,8 @@ import './votacion.css'
 export function Component() {
   const { id = '', historiaId = '' } = useParams()
 
+  if (!/^[1-9]\d*$/.test(historiaId)) return <ErrorMessage message={`La historia "${historiaId}" no es válida`} />
+
   return <PantallaVotacion key={`${id}/${historiaId}`} proyectoId={id} historiaId={Number(historiaId)} />
 }
 
