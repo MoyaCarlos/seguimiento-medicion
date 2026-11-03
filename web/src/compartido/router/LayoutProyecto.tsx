@@ -14,7 +14,7 @@ export function LayoutProyecto() {
           <p className="route-context">Ruta actual: <code>{pathname}</code></p>
           <SelectorProyecto />
         </div>
-        <nav className="feature-navigation" aria-label="Historias del Sprint 2">
+        <nav className="feature-navigation" aria-label="Secciones del proyecto">
           {navegacion.map(({ ruta, texto }) => (
             <NavLink
               key={ruta}

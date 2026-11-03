@@ -125,10 +125,10 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T039 RED: agregar a `web/src/rutas.test.tsx` la prueba de que el `<nav>` de secciones de un proyecto se encuentra por rol `navigation` con nombre "Secciones del proyecto" y que ya no existe uno llamado "Historias del Sprint 2"; confirmar que FALLA por aserción (no por import).
-- [ ] T040 COMMIT `RED: esperar el nombre accesible "Secciones del proyecto" en la navegación (falla)`; archivo: `web/src/rutas.test.tsx`.
-- [ ] T041 GREEN: cambiar el `aria-label` del `<nav>` en `web/src/compartido/router/LayoutProyecto.tsx` a "Secciones del proyecto"; ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T042 COMMIT `GREEN: nombrar la navegación "Secciones del proyecto", test en verde`; archivo: `web/src/compartido/router/LayoutProyecto.tsx`.
+- [x] T039 RED: agregar a `web/src/rutas.test.tsx` la prueba de que el `<nav>` de secciones de un proyecto se encuentra por rol `navigation` con nombre "Secciones del proyecto" y que ya no existe uno llamado "Historias del Sprint 2"; confirmar que FALLA por aserción (no por import).
+- [x] T040 COMMIT `RED: esperar el nombre accesible "Secciones del proyecto" en la navegación (falla)`; archivo: `web/src/rutas.test.tsx`.
+- [x] T041 GREEN: cambiar el `aria-label` del `<nav>` en `web/src/compartido/router/LayoutProyecto.tsx` a "Secciones del proyecto"; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T042 COMMIT `GREEN: nombrar la navegación "Secciones del proyecto", test en verde`; archivo: `web/src/compartido/router/LayoutProyecto.tsx`.
 - [ ] T043 Ejecutar desde `web/`: `npm test`, `npm run lint` y `npm run build`; verificar que no haya dependencias nuevas ni cambios en `web/src/features/proyecto/crear.tsx`, `web/src/features/proyecto/crear.test.tsx`, `web/src/navegacion.ts`, la API o el esquema.
 - [ ] T044 Validar `specs/022-navegar-entre-proyectos/quickstart.md` con el backend: lista en el inicio, selector conservando la sección, enlace "Nuevo proyecto", estados de carga/error y fallback del proyecto actual; confirmar que el PR cerrará #148.
 
