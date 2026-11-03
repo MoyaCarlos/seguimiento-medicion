@@ -61,6 +61,7 @@ La aplicación está publicada en https://seguimiento-medicion-sprintometro.onre
 - **Cómo se despliega:** cada merge a `main` que toque código se publica solo, después de que pasen los checks de CI (`backend` y `frontend`). No hay pasos manuales.
 - **Qué no redeploya:** los cambios que solo toquen `docs/`, `specs/`, `features/`, `.github/`, `.specify/`, `render.yaml` o cualquier `.md` (incluido `web/README.md`). Cualquier otro archivo sí redeploya.
 - **La base se vacía en cada deploy:** no hay disco persistente, así que cada deploy o reinicio arranca con la base vacía.
+- **Si el servicio se durmió o se reinició, la base queda vacía:** volver a cargar los datos de prueba antes de la demo del 16-nov.
 - **El servicio se duerme a los 15 minutos sin tráfico:** el primer pedido después tarda decenas de segundos. Abrí la URL unos minutos antes de una demo.
 - **`DEMO_HABILITADO`:** la variable de entorno (`true` en Render) habilita las rutas `/demo/*` y el botón de datos de prueba (`cmd/api` la lee al arrancar; si falta o no es `true`, esas rutas responden 404).
 - **Regla operativa:** no mergear en la hora previa a la presentación del 16-nov, porque un deploy en curso puede dejar la app caída unos minutos y vacía la base.
