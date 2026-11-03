@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import type { ProyectoResumen } from './api'
+import { filtrarProyectos } from './busqueda'
 import { etiquetaProyecto } from './ruta'
 import { useProyectos } from './useProyectos'
 
@@ -32,21 +34,43 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
 
 export function ListaProyectos() {
   const proyectos = useProyectos()
+  const [busqueda, setBusqueda] = useState('')
+
+  const total = proyectos.estado === 'listo' ? proyectos.proyectos : []
+  const visibles = filtrarProyectos(total, busqueda)
+  const hayFiltro = busqueda.trim() !== ''
 
   return (
     <section className="lista-proyectos" aria-labelledby="proyectos-existentes-title">
-      <h2 id="proyectos-existentes-title">
-        Proyectos existentes
-        {proyectos.estado === 'listo' && <> <span className="lista-proyectos__contador">{proyectos.proyectos.length}</span></>}
-      </h2>
+      <div className="lista-proyectos__encabezado">
+        <h2 id="proyectos-existentes-title">
+          Proyectos existentes
+          {proyectos.estado === 'listo' && (
+            <> <span className="lista-proyectos__contador">
+              {hayFiltro ? `${visibles.length} de ${total.length}` : total.length}
+            </span></>
+          )}
+        </h2>
+        {total.length > 0 && (
+          <input
+            className="lista-proyectos__buscador"
+            type="search"
+            aria-label="Buscar proyecto"
+            placeholder="Buscar proyecto…"
+            value={busqueda}
+            onChange={(evento) => setBusqueda(evento.target.value)}
+          />
+        )}
+      </div>
       {proyectos.estado === 'cargando' && <LoadingIndicator />}
       {proyectos.estado === 'error' && <ErrorMessage message={proyectos.mensaje} />}
-      {proyectos.estado === 'listo' && proyectos.proyectos.length === 0 && (
+      {proyectos.estado === 'listo' && total.length === 0 && (
         <p>Todavía no hay proyectos. Creá el primero con el formulario.</p>
       )}
-      {proyectos.estado === 'listo' && proyectos.proyectos.length > 0 && (
+      {total.length > 0 && visibles.length === 0 && <p>Ningún proyecto coincide con la búsqueda</p>}
+      {visibles.length > 0 && (
         <ul className="lista-proyectos__tarjetas">
-          {proyectos.proyectos.map((proyecto) => (
+          {visibles.map((proyecto) => (
             <li key={proyecto.id}>
               <TarjetaProyecto proyecto={proyecto} />
             </li>
