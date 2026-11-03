@@ -155,7 +155,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHEN** el Scrum Master registra un valor acordado válido, **THEN** el sistema **shall**
   guardarlo como la estimación en Story Points de la historia, reemplazando la anterior.
 - **IF** el valor acordado no pertenece a la baraja Fibonacci (1, 2, 3, 5, 8, 13, 21), **THEN**
-  el sistema **shall** rechazarlo con un error de validación sobre el valor.
+  el sistema **shall** rechazarlo con un error de validación sobre la estimación.
 - **IF** la historia no tiene votación iniciada o su ronda actual no fue revelada, **THEN** el
   sistema **shall** rechazar el registro de la estimación. Una ronda anterior revelada no
   alcanza si la actual sigue abierta.
