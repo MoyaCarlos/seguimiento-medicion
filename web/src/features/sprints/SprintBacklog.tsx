@@ -3,21 +3,29 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarSprintBacklog } from './api'
 import { clasificarError } from './errores'
+import { EsfuerzoHistoria, type Imputacion } from './EsfuerzoHistoria'
 import { EstadoHistoria } from './EstadoHistoria'
 import { ETIQUETAS_PRIORIDAD, type HistoriaDeSprint } from './sprint'
 
-type Props = { sprintId: number; permiteCambiarEstado?: boolean }
+type Props = { sprintId: number; permiteCambiarEstado?: boolean; imputacion?: Imputacion }
 
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'listo'; historias: HistoriaDeSprint[] }
   | { tipo: 'error'; mensaje: string }
 
-export function SprintBacklog({ sprintId, permiteCambiarEstado = false }: Props) {
-  return <Consulta key={sprintId} sprintId={sprintId} permiteCambiarEstado={permiteCambiarEstado} />
+export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion }: Props) {
+  return (
+    <Consulta
+      key={sprintId}
+      sprintId={sprintId}
+      permiteCambiarEstado={permiteCambiarEstado}
+      imputacion={imputacion}
+    />
+  )
 }
 
-function Consulta({ sprintId, permiteCambiarEstado }: Props) {
+function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
 
   useEffect(() => {
@@ -68,6 +76,7 @@ function Consulta({ sprintId, permiteCambiarEstado }: Props) {
           {permiteCambiarEstado && (
             <EstadoHistoria historia={historia} alCambiar={reemplazar} />
           )}
+          <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} />
         </li>
       ))}
     </ul>

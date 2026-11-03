@@ -39,7 +39,7 @@ func (s *EditarHistoria) Ejecutar(ctx context.Context, input EditarHistoriaInput
 		return domain.BacklogItem{}, err
 	}
 
-	if err := s.validarEstimacionCongelada(ctx, actual, editada.EstimacionSP); err != nil {
+	if err := validarEstimacionCongelada(ctx, s.sprints, actual, editada.EstimacionSP); err != nil {
 		return domain.BacklogItem{}, err
 	}
 
@@ -47,25 +47,4 @@ func (s *EditarHistoria) Ejecutar(ctx context.Context, input EditarHistoriaInput
 		return domain.BacklogItem{}, err
 	}
 	return editada, nil
-}
-
-// validarEstimacionCongelada impide cambiar los Story Points ya cargados de una
-// historia de un Sprint Activo o Finalizado, para que las métricas históricas
-// se puedan reproducir (D2b). Cargarlos por primera vez sí se permite.
-func (s *EditarHistoria) validarEstimacionCongelada(ctx context.Context, actual domain.BacklogItem, nueva *int) error {
-	if actual.SprintID == nil || actual.EstimacionSP == nil {
-		return nil
-	}
-	if nueva != nil && *nueva == *actual.EstimacionSP {
-		return nil
-	}
-
-	sprint, err := s.sprints.ObtenerPorID(ctx, *actual.SprintID)
-	if err != nil {
-		return err
-	}
-	if sprint.Estado == domain.SprintActivo || sprint.Estado == domain.SprintFinalizado {
-		return domain.ErrEstimacionCongelada
-	}
-	return nil
 }
