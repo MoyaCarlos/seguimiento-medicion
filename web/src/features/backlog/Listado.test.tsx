@@ -459,7 +459,7 @@ describe('asignación de una historia a un Sprint (US3)', () => {
     await user.selectOptions(await screen.findByLabelText('Sprint'), '12')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
-    expect((await screen.findByRole('status')).textContent).toBe('Historia asignada al Sprint #2')
+    expect((await screen.findByRole('status')).textContent).toBe('Historia asignada al Sprint 2')
     const [[ruta, opciones]] = llamadasA(fetchSimulado, RUTA_ASIGNACION)
     expect(ruta).toBe('/backlog/3/sprint')
     expect((opciones as RequestInit).method).toBe('PUT')
@@ -481,8 +481,8 @@ describe('asignación de una historia a un Sprint (US3)', () => {
     const opciones = within(await screen.findByLabelText('Sprint')).getAllByRole('option')
     expect(opciones.map((opcion) => opcion.textContent)).toEqual([
       'Elegí un Sprint',
-      'Sprint #2 (Pendiente) - Login',
-      'Sprint #3 (Activo)',
+      'Sprint 2 (Pendiente) - Login',
+      'Sprint 3 (Activo)',
     ])
     expect(llamadasA(fetchSimulado, RUTA_SPRINTS)).toHaveLength(1)
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/backlog')

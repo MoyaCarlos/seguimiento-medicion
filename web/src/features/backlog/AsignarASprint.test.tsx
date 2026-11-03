@@ -56,8 +56,8 @@ describe('AsignarASprint', () => {
     const opciones = screen.getAllByRole('option').map((opcion) => opcion.textContent)
     expect(opciones).toEqual([
       'Elegí un Sprint',
-      'Sprint #2 (Activo) - Sprint en curso',
-      'Sprint #3 (Pendiente)',
+      'Sprint 2 (Activo) - Sprint en curso',
+      'Sprint 3 (Pendiente)',
     ])
     expect(screen.getByLabelText('Sprint')).toBeTruthy()
   })
