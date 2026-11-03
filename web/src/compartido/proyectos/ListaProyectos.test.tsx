@@ -1,11 +1,16 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { ProyectoResumen } from './api'
 import { ListaProyectos } from './ListaProyectos'
 
-function abrir(proyectos: { id: number; nombre: string }[]) {
+function p(id: number, nombre: string, resto: Partial<ProyectoResumen> = {}): ProyectoResumen {
+  return { id, nombre, descripcion: '', fecha_inicio: null, fecha_fin: null, ...resto }
+}
+
+function abrir(proyectos: ProyectoResumen[]) {
   vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify(proyectos), { status: 200 }))))
   const router = createMemoryRouter(
     [
@@ -24,11 +29,11 @@ afterEach(() => {
 
 describe('ListaProyectos', () => {
   it('US3.1: lista cada proyecto como "<nombre> (#<id>)" con un enlace a su panel, en el orden de la API', async () => {
-    abrir([{ id: 3, nombre: 'Gamma' }, { id: 1, nombre: 'Alfa' }])
+    abrir([p(3, 'Gamma'), p(1, 'Alfa')])
 
     const enlaces = await screen.findAllByRole('link')
 
-    expect(enlaces.map((enlace) => enlace.textContent)).toEqual(['Gamma (#3)', 'Alfa (#1)'])
+    expect(enlaces.map((enlace) => enlace.getAttribute('aria-label'))).toEqual(['Gamma (#3)', 'Alfa (#1)'])
     expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
       '/projects/3/proyecto',
       '/projects/1/proyecto',
@@ -37,7 +42,7 @@ describe('ListaProyectos', () => {
 
   it('US3.2: al activar el enlace de un proyecto se abre su panel', async () => {
     const usuario = userEvent.setup()
-    const router = abrir([{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }])
+    const router = abrir([p(1, 'Alfa'), p(2, 'Beta')])
 
     await usuario.click(await screen.findByRole('link', { name: 'Beta (#2)' }))
 
@@ -45,7 +50,7 @@ describe('ListaProyectos', () => {
   })
 
   it('Límite: con nombres repetidos cada enlace abre el proyecto de su identificador', async () => {
-    abrir([{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Alfa' }])
+    abrir([p(1, 'Alfa'), p(2, 'Alfa')])
 
     const segundo = await screen.findByRole('link', { name: 'Alfa (#2)' })
 
@@ -58,6 +63,68 @@ describe('ListaProyectos', () => {
     expect(await screen.findByText(/Todavía no hay proyectos/)).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+
+  describe('tarjetas y contador', () => {
+    const COMPLETO = p(1, 'Licencia de conducir', {
+      descripcion: 'Trámite de licencia',
+      fecha_inicio: '2026-10-19',
+      fecha_fin: '2026-12-18',
+    })
+
+    it('US3.5: la tarjeta muestra nombre, #id, descripción y fechas y es un único enlace al panel', async () => {
+      abrir([COMPLETO])
+
+      const tarjeta = await screen.findByRole('link', { name: 'Licencia de conducir (#1)' })
+
+      expect(tarjeta.getAttribute('href')).toBe('/projects/1/proyecto')
+      expect(within(tarjeta).getByText('Licencia de conducir')).toBeTruthy()
+      expect(within(tarjeta).getByText('#1')).toBeTruthy()
+      expect(within(tarjeta).getByText('Trámite de licencia')).toBeTruthy()
+      expect(within(tarjeta).getByText('Inicio: 2026-10-19')).toBeTruthy()
+      expect(within(tarjeta).getByText('Fin: 2026-12-18')).toBeTruthy()
+      expect(screen.getAllByRole('link')).toHaveLength(1)
+    })
+
+    it('US3.6: sin descripción ni fechas la tarjeta muestra "Sin descripción" y "Sin definir"', async () => {
+      abrir([p(2, 'Beta')])
+
+      const tarjeta = await screen.findByRole('link', { name: 'Beta (#2)' })
+
+      expect(within(tarjeta).getByText('Sin descripción')).toBeTruthy()
+      expect(within(tarjeta).getByText('Inicio: Sin definir')).toBeTruthy()
+      expect(within(tarjeta).getByText('Fin: Sin definir')).toBeTruthy()
+    })
+
+    it('US3.7: el nombre completo queda en el atributo title de la tarjeta', async () => {
+      const nombreLargo = 'Sistema de turnos del hospital con un nombre bastante largo'
+      abrir([p(3, nombreLargo)])
+
+      const tarjeta = await screen.findByRole('link', { name: `${nombreLargo} (#3)` })
+
+      expect(within(tarjeta).getByText(nombreLargo).getAttribute('title')).toBe(nombreLargo)
+    })
+
+    it('US3.8: el encabezado "Proyectos existentes" muestra la cantidad de proyectos', async () => {
+      abrir([p(1, 'Alfa'), p(2, 'Beta'), p(3, 'Gamma')])
+
+      expect(await screen.findByRole('heading', { name: 'Proyectos existentes 3' })).toBeTruthy()
+    })
+
+    it('Límite: con la lista vacía el contador muestra 0', async () => {
+      abrir([])
+
+      expect(await screen.findByRole('heading', { name: 'Proyectos existentes 0' })).toBeTruthy()
+    })
+
+    it('La tarjeta no muestra estado, Scrum Master ni barra de avance', async () => {
+      abrir([COMPLETO])
+
+      const tarjeta = await screen.findByRole('link', { name: 'Licencia de conducir (#1)' })
+
+      expect(within(tarjeta).queryByText(/Por comenzar|En curso|Finalizado|Scrum Master/)).toBeNull()
+      expect(within(tarjeta).queryByRole('progressbar')).toBeNull()
+    })
   })
 
   describe('estados del listado', () => {
