@@ -122,6 +122,16 @@ describe('registro de rutas', () => {
       expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('2')
     })
 
+    it('US2.1: "Nuevo proyecto" abre la pantalla de creación desde una pantalla de proyecto', async () => {
+      const usuario = userEvent.setup()
+      const router = abrir('/projects/1/backlog')
+
+      await usuario.click(await screen.findByRole('link', { name: 'Nuevo proyecto' }))
+
+      expect(router.state.location.pathname).toBe('/')
+      expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
+    })
+
     it('GET /projects se pide una sola vez al montar y no al cambiar de sección del mismo proyecto', async () => {
       proyectosSimulados = DOS_PROYECTOS
       const usuario = userEvent.setup()

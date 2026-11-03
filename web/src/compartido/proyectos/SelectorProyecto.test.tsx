@@ -133,4 +133,34 @@ describe('SelectorProyecto', () => {
     expect(router.state.location.pathname).toBe('/projects/1/otra')
     expect(router.state.historyAction).toBe(historialAntes)
   })
+
+  it('US2.1: ofrece el enlace "Nuevo proyecto" hacia la pantalla de creación', async () => {
+    abrir('/projects/1/backlog')
+
+    const enlace = await screen.findByRole('link', { name: 'Nuevo proyecto' })
+
+    expect(enlace.getAttribute('href')).toBe('/')
+  })
+
+  it('US2.2: el enlace "Nuevo proyecto" está visible mientras el listado carga', () => {
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})))
+    render(<RouterProvider router={createMemoryRouter(
+      [{ path: '/projects/:id/*', element: <SelectorProyecto /> }],
+      { initialEntries: ['/projects/1/backlog'] },
+    )} />)
+
+    expect(screen.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+  })
+
+  it('US2.2: el enlace "Nuevo proyecto" está visible cuando el listado falla', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('red caída'))))
+    render(<RouterProvider router={createMemoryRouter(
+      [{ path: '/projects/:id/*', element: <SelectorProyecto /> }],
+      { initialEntries: ['/projects/1/backlog'] },
+    )} />)
+
+    await Promise.resolve()
+
+    expect(screen.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+  })
 })
