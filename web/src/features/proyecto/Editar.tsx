@@ -5,6 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { useRecargarProyectos } from '../../compartido/proyectos/recargaProyectos'
 import { aProyectoEditado, editarProyecto, obtenerProyecto } from './api'
 import { CampoDescripcion } from './Campos'
 import { campoDeError, mensajeDeError } from './errores'
@@ -26,6 +27,7 @@ function esCampoDeProyecto(campo: string): campo is keyof DatosProyecto {
 export function Editar() {
   const { id = '' } = useParams()
   const navegar = useNavigate()
+  const recargarProyectos = useRecargarProyectos()
   const [datos, setDatos] = useState(FORMULARIO_VACIO)
   const [errores, setErrores] = useState<ErroresProyecto>({})
   const [errorGeneral, setErrorGeneral] = useState('')
@@ -77,6 +79,7 @@ export function Editar() {
     setEnviando(true)
     try {
       await editarProyecto(id, aProyectoEditado(datos))
+      recargarProyectos()
       navegar(`/projects/${id}/proyecto`)
     } catch (error) {
       const campo = campoDeError(error)
