@@ -152,15 +152,16 @@ investigación externa ni comparación de librerías porque la historia prohíbe
     mantiene la suite existente verde.
   - Un solo commit con todo: rechazado por la constitución y por la evidencia TDD.
 
-### D10. Sin CSS nuevo
+### D10. Estilo mínimo en `App.css`
 
-- **Decision**: Reutilizar las clases y el marcado existentes; no agregar un archivo de estilos ni
-  modificar `App.css`.
-- **Rationale**: La spec limita los archivos permitidos y no pide un rediseño. El navegador
-  aplica estilos base suficientes; el foco es la navegación y los estados.
+- **Decision**: Reutilizar las clases y el marcado existentes, y agregar a `App.css` solo la regla
+  `.field select` equivalente a la de `.field input` (borde, radio, padding y foco). Decisión del
+  Scrum Master (2026-11-03): la restricción original de "sin CSS nuevo" no estaba en `spec.md`
+  sino en esta decisión y en el plan; la lista de archivos permitidos ahora incluye `App.css`.
+- **Rationale**: Sin la regla el `<select>` nativo se ve distinto al resto de los campos.
 - **Alternatives considered**:
-  - Agregar `proyectos.css`: fuera de los archivos permitidos por la spec.
-  - Modificar `App.css`: tampoco está permitido.
+  - Agregar `proyectos.css`: un archivo más para una sola regla compartida con los campos.
+  - No agregar CSS: deja el selector sin estilo.
 
 ### D11. Sin caché compartida ni actualización en vivo
 

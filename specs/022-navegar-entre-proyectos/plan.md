@@ -46,7 +46,7 @@ tramos o proyectos; sin polling ni recargas automáticas. La lista se renderiza 
 
 **Constraints**: Sin dependencias nuevas ni cambios de API/esquema. Archivos permitidos:
 `LayoutProyecto.tsx`, `rutas.tsx`, `rutas.test.tsx`, archivos nuevos en
-`web/src/compartido/proyectos/`; no se tocan
+`web/src/compartido/proyectos/` y `web/src/App.css` (solo estilo del selector); no se tocan
 `features/proyecto/crear.tsx` ni `crear.test.tsx`. Respetar RED/GREEN/REFACTOR y el orden de
 commits pedido. Los escenarios BDD se cubren por equivalencia con pruebas de componente.
 
@@ -117,9 +117,9 @@ web/src/
 **Structure Decision**: El selector y la lista son navegación transversal, no una pantalla de una
 feature, así que viven en `compartido/proyectos/`. `rutas.tsx` compone el inicio con un layout
 local que renderiza el formulario (hijo index lazy existente) y `ListaProyectos`; así no se toca
-`features/proyecto/crear.tsx` y se mantiene el aislamiento entre features. No se agrega CSS
-nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `loading`,
-`message--error`) y el marcado semántico.
+`features/proyecto/crear.tsx` y se mantiene el aislamiento entre features. Solo se agrega
+CSS mínimo en `App.css` (regla `.field select`); se reutilizan clases base existentes
+(`page-stack`, `field`, `button`, `loading`, `message--error`) y el marcado semántico.
 
 ## Design Decisions
 
@@ -276,7 +276,7 @@ cambios.
 | Un `200` sin cuerpo o con un JSON que no es arreglo rompería el render | El hook valida `Array.isArray` y pasa a estado de error. |
 | La respuesta llega después de desmontar el componente | Bandera `vigente` en el `useEffect`; no se actualiza estado tras el desmontaje. |
 | El nuevo `fetch` en el encabezado rompe pruebas de rutas existentes | Primer commit con el mock de `GET /projects`; se ejecuta la suite antes de cambiar el encabezado. |
-| Estilos nuevos fuera de los archivos permitidos | No se agrega CSS; se reutilizan clases y marcado existentes. |
+| Estilos nuevos fuera de los archivos permitidos | `App.css` pasa a ser archivo permitido, solo para estilos del selector; se reutilizan clases y marcado existentes. |
 | La ruta de votación (PR #229) llega a `main` antes o después | `rutaDeSeccion` solo conserva secciones de `navegacion.ts`; no depende de que esa ruta exista. |
 
 ## Complexity Tracking
