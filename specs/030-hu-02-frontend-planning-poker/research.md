@@ -1,4 +1,4 @@
-# Research: Pantalla de Planning Poker (spec 029)
+# Research: Pantalla de Planning Poker (spec 030)
 
 ## R1 — Distinguir «sin votación» de «historia inexistente»
 

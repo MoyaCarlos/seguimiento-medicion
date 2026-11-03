@@ -1,4 +1,4 @@
-# Quickstart: validar la pantalla de Planning Poker (spec 029)
+# Quickstart: validar la pantalla de Planning Poker (spec 030)
 
 ## Prerrequisitos
 

@@ -5,7 +5,7 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 # Tasks: Pantalla de Planning Poker (HU-02, Frontend)
 
-**Input**: Design documents from `/specs/029-hu-02-frontend-planning-poker/`
+**Input**: Design documents from `/specs/030-hu-02-frontend-planning-poker/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/api-votacion.md, quickstart.md
 
@@ -129,7 +129,7 @@ description: "Tareas de HU-02 Frontend: pantalla de Planning Poker (TDD con comm
 
 - [X] T053 `npm run lint`, `npm test` y `npm run build` sin errores (Node 24, dentro de `web/`)
 - [X] T054 Validación manual de quickstart.md con el backend desde este worktree (base temporal y `/demo/datos`); apagar backend y frontend al terminar — hecha por API (curl contra el backend real, directo y a través del proxy de Vite); la revisión visual en el navegador queda a cargo de quien revise el PR
-- [X] T055 Actualizar el estado de la spec y marcar las tareas hechas en specs/029-hu-02-frontend-planning-poker/ y COMMIT `Marcar las tareas de la spec 029 como hechas (Refs #48)`
+- [X] T055 Actualizar el estado de la spec y marcar las tareas hechas en specs/030-hu-02-frontend-planning-poker/ y COMMIT `Marcar las tareas de la spec 029 como hechas (Refs #48)`
 
 ---
 

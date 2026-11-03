@@ -1,4 +1,4 @@
-# Data Model: Pantalla de Planning Poker (spec 029)
+# Data Model: Pantalla de Planning Poker (spec 030)
 
 Sin cambios de esquema ni de base: esta spec no define tablas. Las rondas y votos están en [MODELO-DE-DATOS.md §4.7](../../MODELO-DE-DATOS.md#47-rondas_votacion-y-votos--hu-02-hu-14-tablas-nuevas-migración-003).
 

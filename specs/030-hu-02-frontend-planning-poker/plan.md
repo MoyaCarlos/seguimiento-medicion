@@ -2,7 +2,7 @@
 
 **Branch**: `feature/HU-02-frontend-planning-poker` | **Date**: 2026-11-02 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/029-hu-02-frontend-planning-poker/spec.md`
+**Input**: Feature specification from `/specs/030-hu-02-frontend-planning-poker/spec.md`
 
 ## Summary
 
@@ -48,7 +48,7 @@ Constitución v1.1.0 (`.specify/memory/constitution.md`).
 ### Documentation (this feature)
 
 ```text
-specs/029-hu-02-frontend-planning-poker/
+specs/030-hu-02-frontend-planning-poker/
 ├── spec.md
 ├── plan.md
 ├── research.md
