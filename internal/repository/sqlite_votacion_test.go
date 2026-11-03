@@ -248,3 +248,31 @@ func TestSQLiteVotacionRepository_GuardarVoto_UsuarioInexistente(t *testing.T) {
 		t.Errorf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
 	}
 }
+
+func TestSQLiteVotacionRepository_SegundaRonda(t *testing.T) {
+	ctx := context.Background()
+	e := nuevoEscenarioVotacion(t)
+	primera := crearRonda(t, e)
+	if err := e.repo.GuardarVoto(ctx, primera.ID, domain.Voto{UsuarioID: e.carlos, Valor: 3}); err != nil {
+		t.Fatalf("no se esperaba error al votar: %v", err)
+	}
+	if err := e.repo.MarcarRevelada(ctx, primera.ID, time.Now()); err != nil {
+		t.Fatalf("no se esperaba error al revelar: %v", err)
+	}
+
+	segunda, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: 2})
+	if err != nil {
+		t.Fatalf("no se esperaba error al crear la ronda 2: %v", err)
+	}
+
+	actual, err := e.repo.ObtenerRondaActual(ctx, e.historiaID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer la ronda actual: %v", err)
+	}
+	if actual.ID != segunda.ID || actual.Numero != 2 || len(actual.Votos) != 0 || actual.Revelada() {
+		t.Errorf("la ronda actual debía ser la 2, sin votos ni revelar, es %+v", actual)
+	}
+	if _, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: 2}); !errors.Is(err, domain.ErrVotacionYaIniciada) {
+		t.Errorf("repetir la ronda 2 debía dar ErrVotacionYaIniciada, se obtuvo %v", err)
+	}
+}
