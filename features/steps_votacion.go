@@ -120,22 +120,31 @@ func (p *pasosVotacion) historiaCompletada(estado string) error {
 	if estado != string(domain.EstadoCompletada) {
 		return fmt.Errorf("el paso solo siembra historias %q", domain.EstadoCompletada)
 	}
-	resultado, err := p.base.db.Exec(
-		`INSERT INTO sprints (proyecto_id, estado, sprint_goal, fecha_inicio, fecha_fin) VALUES (?, 'Activo', 'Objetivo', '2026-10-01', '2026-10-15')`,
-		p.proyectoID)
-	if err != nil {
-		return err
-	}
-	sprintID, err := resultado.LastInsertId()
-	if err != nil {
-		return err
-	}
-	if _, err := p.base.db.Exec(
-		`UPDATE historias SET estado = 'Completada', sprint_id = ?, fecha_finalizacion = '2026-10-10' WHERE id = ?`,
-		sprintID, p.historiaID); err != nil {
+	if err := p.completarHistoria(); err != nil {
 		return err
 	}
 	return p.sinVotacion()
+}
+
+func (p *pasosVotacion) completarHistoria() error {
+	sprintID, err := p.sembrarSprint(string(domain.SprintActivo))
+	if err != nil {
+		return err
+	}
+	_, err = p.base.db.Exec(
+		`UPDATE historias SET estado = 'Completada', sprint_id = ?, fecha_finalizacion = '2026-10-10' WHERE id = ?`,
+		sprintID, p.historiaID)
+	return err
+}
+
+func (p *pasosVotacion) sembrarSprint(estado string) (int64, error) {
+	resultado, err := p.base.db.Exec(
+		`INSERT INTO sprints (proyecto_id, estado, sprint_goal, fecha_inicio, fecha_fin) VALUES (?, ?, 'Objetivo', '2026-10-01', '2026-10-15')`,
+		p.proyectoID, estado)
+	if err != nil {
+		return 0, err
+	}
+	return resultado.LastInsertId()
 }
 
 func (p *pasosVotacion) inicio(nombre string) error {
@@ -468,7 +477,7 @@ func (p *pasosVotacion) rondaUnoAbierta() error {
 
 // InitializeScenarioVotacion registra los pasos de HU-02 sobre la base de
 // HU-01.
-func InitializeScenarioVotacion(ctx *godog.ScenarioContext, base *scenarioContext) {
+func InitializeScenarioVotacion(ctx *godog.ScenarioContext, base *scenarioContext) *pasosVotacion {
 	p := &pasosVotacion{base: base}
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		p.preparar()
@@ -510,4 +519,5 @@ func InitializeScenarioVotacion(ctx *godog.ScenarioContext, base *scenarioContex
 	ctx.Step(`^la historia tiene abierta la ronda 1, sin votos y sin revelar$`, p.rondaUnoAbierta)
 	ctx.Step(`^la historia sigue con una sola ronda de votación$`, p.unaSolaRonda)
 	ctx.Step(`^la historia sigue sin rondas de votación$`, p.sinVotacion)
+	return p
 }
