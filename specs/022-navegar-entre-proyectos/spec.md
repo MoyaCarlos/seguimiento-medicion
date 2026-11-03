@@ -303,7 +303,12 @@ funcionando.
 - **FR-028**: (Estilo y composición) En pantallas anchas la lista MUST ir a la derecha del
   formulario de creación; en celular (390 px) MUST apilarse debajo, sin scroll horizontal; la
   tarjeta MUST tener resaltado al pasar el mouse y foco visible con teclado; el nombre largo se
-  corta en dos líneas. No cambia ningún comportamiento ni escenario; se verifica en el navegador.
+  corta en dos líneas. Solo el inicio `/` se ensancha (hasta 1320 px) y el encabezado superior se
+  alinea con ese ancho; el selector del encabezado es una píldora a la izquierda del menú de
+  secciones, con "+ Nuevo proyecto" a su lado, deshabilitado en carga y error, y a todo el ancho en
+  celular. El aviso de "Cargar datos de prueba" ocupa su propia línea debajo de los botones y estos
+  no se estiran. No cambia ningún comportamiento ni escenario; se verifica en el navegador (detalle
+  y atajos en `research.md`, D13).
 - **FR-029**: La tarjeta MUST NOT mostrar el estado del proyecto, el Scrum Master ni una barra de
   avance: el estado lo calcula el backend, el Scrum Master no viene en la lista y el avance sería
   una métrica inventada.
@@ -413,7 +418,7 @@ funcionando.
   migraciones ni el esquema de la base.
 - Archivos permitidos: `web/src/compartido/router/LayoutProyecto.tsx`, `web/src/rutas.tsx` (para
   componer el inicio con el formulario de creación más la lista de proyectos),
-  `web/src/rutas.test.tsx`, `web/src/App.css` (solo estilo del selector), archivos nuevos en `web/src/compartido/proyectos/` (API, hook,
+  `web/src/rutas.test.tsx`, `web/src/App.css` (estilo del selector y del inicio), archivos nuevos en `web/src/compartido/proyectos/` (API, hook,
   selector, lista, composición del inicio y la función pura de ruta) y `web/src/navegacion.ts` solo para leerlo (no se
   modifica).
 - `web/src/features/proyecto/crear.tsx` y `web/src/features/proyecto/crear.test.tsx` NO se

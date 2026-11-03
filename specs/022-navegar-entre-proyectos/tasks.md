@@ -143,8 +143,8 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 - [x] T054 [US5] COMMIT `RED: agregar tests del buscador de proyectos (falla)`; archivo: `web/src/compartido/proyectos/ListaProyectos.test.tsx`.
 - [x] T055 [US5] GREEN: agregar el campo de búsqueda y el estado del filtro a `ListaProyectos.tsx` usando `filtrarProyectos`, contador "N de M" y el mensaje de sin coincidencias; confirmar que pasa.
 - [x] T056 [US5] COMMIT `GREEN: agregar buscador por nombre a ListaProyectos, tests en verde`; archivo: `web/src/compartido/proyectos/ListaProyectos.tsx`.
-- [ ] T057 [US5] Estilo y composición (FR-028, sin prueba automatizada): dos columnas en `/`, tarjetas, buscador y encabezado de la lista en `web/src/App.css` y `web/src/compartido/proyectos/ComposicionInicio.tsx`; se revisa en el navegador (escritorio y 390 px) y se commitea solo con el OK del Scrum Master.
-- [ ] T058 [US5] COMMIT `Estilo: ...` del inicio (tarjetas, buscador y dos columnas) y otro `Estilo: ...` del encabezado del proyecto (selector en píldora y "Nuevo proyecto"); archivos: `web/src/App.css`, `ComposicionInicio.tsx`, `SelectorProyecto.tsx`, `LayoutProyecto.tsx`; actualizar el alcance del estilo en `spec.md` y `research.md`.
+- [x] T057 [US5] Estilo y composición (FR-028, sin prueba automatizada): dos columnas en `/`, tarjetas, buscador y encabezado de la lista en `web/src/App.css` y `web/src/compartido/proyectos/ComposicionInicio.tsx`; se revisa en el navegador (escritorio y 390 px) y se commitea solo con el OK del Scrum Master.
+- [x] T058 [US5] COMMIT `Estilo: ...` del inicio (tarjetas, buscador y dos columnas) y otro `Estilo: ...` del encabezado del proyecto (selector en píldora y "Nuevo proyecto"); archivos: `web/src/App.css`, `ComposicionInicio.tsx`, `SelectorProyecto.tsx`, `LayoutProyecto.tsx`; actualizar el alcance del estilo en `spec.md` y `research.md`.
 
 ---
 

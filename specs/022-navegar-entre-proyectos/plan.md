@@ -46,7 +46,7 @@ tramos o proyectos; sin polling ni recargas automáticas. La lista se renderiza 
 
 **Constraints**: Sin dependencias nuevas ni cambios de API/esquema. Archivos permitidos:
 `LayoutProyecto.tsx`, `rutas.tsx`, `rutas.test.tsx`, archivos nuevos en
-`web/src/compartido/proyectos/` y `web/src/App.css` (solo estilo del selector); no se tocan
+`web/src/compartido/proyectos/` y `web/src/App.css` (estilo del selector y del inicio); no se tocan
 `features/proyecto/crear.tsx` ni `crear.test.tsx`. Respetar RED/GREEN/REFACTOR y el orden de
 commits pedido. Los escenarios BDD se cubren por equivalencia con pruebas de componente.
 

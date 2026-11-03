@@ -152,16 +152,61 @@ investigación externa ni comparación de librerías porque la historia prohíbe
     mantiene la suite existente verde.
   - Un solo commit con todo: rechazado por la constitución y por la evidencia TDD.
 
-### D10. Estilo mínimo en `App.css`
+### D10. Estilo en `App.css`
 
-- **Decision**: Reutilizar las clases y el marcado existentes, y agregar a `App.css` solo la regla
-  `.field select` equivalente a la de `.field input` (borde, radio, padding y foco). Decisión del
+- **Decision**: Reutilizar las clases y el marcado existentes. Primero se agregó a `App.css` solo la
+  regla `.field select` equivalente a la de `.field input` (borde, radio, padding y foco); después,
+  con el OK del Scrum Master (2026-11-03), el estilo del selector del encabezado y del inicio
+  (ver D13), siempre en `App.css` y sin dependencias nuevas. Decisión del
   Scrum Master (2026-11-03): la restricción original de "sin CSS nuevo" no estaba en `spec.md`
   sino en esta decisión y en el plan; la lista de archivos permitidos ahora incluye `App.css`.
 - **Rationale**: Sin la regla el `<select>` nativo se ve distinto al resto de los campos.
 - **Alternatives considered**:
   - Agregar `proyectos.css`: un archivo más para una sola regla compartida con los campos.
   - No agregar CSS: deja el selector sin estilo.
+
+### D13. Estilo del selector y del inicio: alcance, atajos de CSS y un defecto
+
+- **Decision (selector)**: píldora compacta con flecha (la etiqueta "Proyecto" queda solo para
+  lectores de pantalla con `.visually-hidden`), en la fila del menú de secciones y a su izquierda,
+  con el botón secundario "+ Nuevo proyecto" a su lado; deshabilitado en carga y error, con el
+  aviso debajo de la fila; en celular (390 px) ocupa todo el ancho y "Nuevo proyecto" va debajo.
+  Se usan solo las variables de `App.css`.
+- **Decision (inicio)**: solo `/` se ensancha (hasta 1320 px desde 1200 px de viewport), sin cambiar
+  `.app-main` ni las otras pantallas; formulario de 480 a 520 px y la lista en el resto; fechas
+  lado a lado y botones en fila, que se apilan en celular; las dos columnas se apilan por debajo de
+  1100 px.
+- **Atajos de CSS** (para no tocar `crear.tsx`, `BotonDatosDePrueba.tsx` ni el shell; se retiran
+  en el rediseño):
+  - Contenedor más ancho que `.app-main` con un margen izquierdo negativo calculado
+    (`calc((100% - min(1320px, 100vw - 3rem)) / 2)`), solo desde 1200 px.
+  - Encabezado superior alineado con `.app-shell:has(.inicio-composicion) .app-header`; si el
+    navegador no soporta `:has()` el encabezado conserva su ancho de siempre.
+  - La tarjeta del formulario pasa a ser una grilla y tanto el `<form>` como el bloque de "Cargar
+    datos de prueba" usan `display: contents`, para que "Crear proyecto" (que está dentro del
+    formulario) y "Cargar datos de prueba" (que está fuera) compartan una fila. Riesgo conocido:
+    `display: contents` en un formulario puede hacer que lectores de pantalla antiguos pierdan su
+    rol; no se probó con un lector de pantalla.
+  - Las reglas dependen del marcado actual: el bloque de datos de prueba es el último hijo de la
+    tarjeta (`> div:last-child`). Una prueba de componente en `rutas.test.tsx` fija ese contrato.
+- **Defecto encontrado y arreglo (2026-11-03)**: con el aviso de "Cargar datos de prueba" ("los
+  datos de prueba ya están cargados" más el enlace "Abrir el proyecto de prueba", o un error), el
+  bloque de datos de prueba quedaba en una sola celda de la grilla junto a "Crear proyecto": el
+  aviso se mostraba en la misma fila que los botones y "Crear proyecto" se estiraba a toda la
+  altura (125 px en lugar de 42 px). Arreglo: el bloque usa `display: contents`, los dos botones
+  van con `order: 1` y todo lo que no es botón (aviso, error o indicador de carga) ocupa su propia
+  fila debajo (`grid-column: 1 / -1`, `order: 2`), y la tarjeta alinea sus celdas arriba
+  (`align-items: start`) y el botón de datos de prueba no se estira (`justify-self: start`).
+  Verificado en escritorio (1280 px) y celular (390 px) sin aviso, con "ya cargados" (respuesta real
+  409 del backend) y con error (respuesta 500 simulada de `POST /demo/datos`).
+- **Fuera de este arreglo (a propósito)**: el texto del aviso ("los datos de prueba ya están
+  cargados", sin mayúscula inicial) y el color gris del mensaje de error dentro de la tarjeta
+  (`.hu04-tarjeta p` pisa a `.message--error`) ya eran así antes de esta historia; se resuelven en
+  el rediseño (issue #230).
+- **Alternatives considered**:
+  - Modificar `crear.tsx` o `BotonDatosDePrueba.tsx` para agrupar los botones: rechazado, fuera de
+    los archivos permitidos de esta historia.
+  - Ensanchar `.app-main` para todas las pantallas: rechazado por el Scrum Master (opción A).
 
 ### D12. Tarjetas, buscador y dos columnas en el inicio
 
