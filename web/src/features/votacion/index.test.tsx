@@ -74,7 +74,9 @@ const fila = (nombre: string) =>
   within(screen.getByRole('list')).getByText(nombre).closest('li') as HTMLElement
 
 async function elegirActor(nombre: string) {
-  await userEvent.selectOptions(await screen.findByLabelText('Quién actúa'), nombre)
+  const selector = await screen.findByLabelText('Quién actúa')
+  const opcion = within(selector).getByRole('option', { name: new RegExp(`^${nombre}`) })
+  await userEvent.selectOptions(selector, opcion)
 }
 
 beforeEach(() => {
@@ -237,6 +239,33 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
     await waitFor(() => expect(within(fila('Beta Tres')).getByText('5')).toBeTruthy())
     expect(within(fila('Beta Dos')).getByText('Oculto')).toBeTruthy()
+  })
+})
+
+describe('Pantalla de votación - recuperación y consistencia', () => {
+  it('Given que falló el listado de integrantes, When pulso Actualizar y el servidor responde, Then aparece el selector con los integrantes y desaparece el error', async () => {
+    integrantesMock.mockRejectedValueOnce(new ApiError(500, 'no se pudieron listar los integrantes'))
+    abrir()
+    await screen.findByText('no se pudieron listar los integrantes')
+    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
+    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+
+    expect(await screen.findByLabelText('Quién actúa')).toBeTruthy()
+    expect(screen.queryByText('no se pudieron listar los integrantes')).toBeNull()
+    expect(screen.getByText('Elegí quién actúa para votar')).toBeTruthy()
+  })
+
+  it('Given que no cargó la historia, When pulso Actualizar y el servidor responde, Then se ve su resumen', async () => {
+    historiaMock.mockRejectedValueOnce(new ConnectionError())
+    abrir()
+    await screen.findByRole('list')
+    expect(screen.queryByText(HISTORIA.titulo)).toBeNull()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+
+    expect(await screen.findByText(HISTORIA.titulo)).toBeTruthy()
   })
 })
 
