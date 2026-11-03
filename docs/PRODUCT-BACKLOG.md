@@ -711,29 +711,29 @@ Nueva
 
 ## HU-19: Administración de Mis Proyectos
 ### Descripción
-Como usuario quiero ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), para trabajar solo con lo que me corresponde y poder transferir la propiedad de un proyecto a otra persona.
+**Descripción descartada** (la historia quedó absorbida por HU-20 y HU-21, ver Notas): Como usuario quiero ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), para trabajar solo con lo que me corresponde y poder transferir la propiedad de un proyecto a otra persona.
 ### Criterios de aceptacion (BDD):
-Escenario 1: Mis proyectos.
+Escenario 1: Mis proyectos. (Pasa a HU-21, escenario 5.)
 Dado que soy un usuario con proyectos creados por mí y proyectos en los que soy integrante,
 Cuando abro "Administrar proyectos",
 Entonces el sistema lista cada proyecto con mi rol en él (dueño, Scrum Master o Product Builder).
-Escenario 2: El creador es el dueño.
+Escenario 2: El creador es el dueño. (Descartado: el dueño es el Scrum Master.)
 Dado que creo un proyecto,
 Cuando se crea,
 Entonces quedo registrado como su dueño.
-Escenario 3: Acciones según el rol.
+Escenario 3: Acciones según el rol. (Descartado: HU-21, escenarios 1 y 2, cubre las acciones por rol sin dueño ni transferencia.)
 Dado que abro un proyecto de mi lista,
 Cuando miro las acciones disponibles,
 Entonces el dueño puede editar el proyecto, transferirlo y cerrarlo; el Scrum Master administra el equipo y los Sprints; y el Product Builder trabaja con las historias, sin ver las acciones que no le corresponden.
-Escenario 4: Transferir la propiedad.
+Escenario 4: Transferir la propiedad. (Descartado.)
 Dado que soy el dueño de un proyecto,
 Cuando lo transfiero a otro integrante del proyecto,
 Entonces esa persona pasa a ser la dueña y yo conservo mi rol de integrante.
-Escenario 5: Transferencia inválida.
+Escenario 5: Transferencia inválida. (Descartado.)
 Dado que soy el dueño de un proyecto,
 Cuando intento transferirlo a un usuario que no existe, que no es integrante o que soy yo mismo,
 Entonces el sistema rechaza la transferencia y el dueño no cambia.
-Escenario 6: Usuario sin proyectos.
+Escenario 6: Usuario sin proyectos. (Pasa a HU-21, escenario 9.)
 Dado que no creé ni tengo asignado ningún proyecto,
 Cuando abro "Administrar proyectos",
 Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
@@ -744,7 +744,7 @@ Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20
 1. **Nivel 1:** lista de proyectos y selector para navegar entre ellos (#148, PR #231). Es lo que queda de esta historia.
 2. **Nivel 2 (usuario, "mis proyectos" y acciones según el rol):** pasa a HU-21.
 3. **Nivel 3 (autenticación y permisos en el backend):** pasa a HU-20 (autenticación) y HU-21 (permisos).
-Se descarta la transferencia de la propiedad (escenarios 2, 4 y 5): el dueño del proyecto es quien lo crea y queda como su único Scrum Master, así que la decisión D14 de `MODELO-DE-DATOS.md` (dónde guardar al dueño) deja de hacer falta. Un solo Scrum Master por proyecto es el issue #236.
+Se descarta la transferencia de la propiedad (descripción y escenarios 4 y 5), y con ella la figura del dueño (escenarios 2 y 3): el dueño del proyecto es quien lo crea y queda como su único Scrum Master. Los escenarios 1 y 6 pasan a HU-21 (escenarios 5 y 9), así que la decisión D14 de `MODELO-DE-DATOS.md` (dónde guardar al dueño) deja de hacer falta. Un solo Scrum Master por proyecto es el issue #236.
 Cerrar el proyecto de forma manual (#173) y eliminarlo (#232) son decisiones aparte.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 pasaron a HU-21 y HU-20.
