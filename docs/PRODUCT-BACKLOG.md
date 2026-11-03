@@ -792,6 +792,7 @@ Entonces la sesión deja de ser válida.
 HU-04 (usuarios y equipo).
 ### Notas
 Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**, para que lo existente y los escenarios de Godog sigan funcionando. Los permisos por rol son HU-21.
+Cuentas y deploys: en Render (plan gratis) la base entera se vacía en cada deploy, así que no se pierden solo las sesiones: también los usuarios y sus contraseñas. Para la demo hay que recargar los datos de prueba después de cada deploy; el #235 (datos de prueba v2) recrea los usuarios con una contraseña conocida.
 Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
 Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Se deciden en la spec con el Scrum Master, no quien implementa: cómo viaja el token y su vencimiento, dónde viven las sesiones (en la base se vacían en cada deploy de Render), cómo se dan de alta las contraseñas de los usuarios que hoy no tienen y las reglas del nombre de usuario.
 ### Prioridad
