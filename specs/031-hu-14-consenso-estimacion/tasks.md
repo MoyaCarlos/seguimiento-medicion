@@ -165,6 +165,29 @@ una se prueba sola.
 
 ---
 
+## Phase 7: Correcciones de la revisión del PR
+
+**Purpose**: cerrar los huecos que encontró la revisión con errores introducidos a propósito, y aclarar el mensaje de una apertura simultánea.
+
+- [X] T078 Test de caracterización en internal/repository/sqlite_backlog_test.go: `GuardarEstimacion` no cambia los Story Points de otra historia. Se espera que pase de entrada; verificar que detecta un `WHERE` mal escrito — `go test ./...` en verde
+- [X] T079 COMMIT `Agregar test de que guardar la estimación no toca otras historias`
+- [X] T080 RED: en internal/http/votacion_handler_test.go, test de que `(VotacionHandler).Registrar(mux)` atiende las 7 rutas de la votación, cada una con su resultado propio. Stub en internal/http/votacion_handler.go que no registra nada — confirmar que FALLA
+- [X] T081 COMMIT `RED: agregar test de las rutas de la votación (falla)`
+- [X] T082 GREEN: implementar `Registrar` y usarlo desde cmd/api/main.go en lugar de las 7 líneas sueltas, como `demoHandler.Registrar(mux)` — `go test ./...` en verde
+- [X] T083 COMMIT `GREEN: registrar las rutas de la votación desde su handler, test en verde`
+- [X] T084 RED: en internal/service/abrir_nueva_ronda_test.go, test con un fake que pierde la carrera en `CrearRonda`: `AbrirNuevaRonda` devuelve `ErrRondaYaAbierta`. Agregar el error en internal/domain/errors.go — confirmar que FALLA
+- [X] T085 COMMIT `RED: agregar test del error de una apertura simultánea (falla)`
+- [X] T086 GREEN: traducir `ErrVotacionYaIniciada` a `ErrRondaYaAbierta` en internal/service/abrir_nueva_ronda.go — `go test ./...` en verde
+- [X] T087 COMMIT `GREEN: aclarar el error de una apertura simultánea, test en verde`
+- [X] T088 RED: en internal/http/votacion_handler_test.go, test de que `escribirError` responde 409 con el mensaje de `ErrRondaYaAbierta` — confirmar que FALLA
+- [X] T089 COMMIT `RED: agregar test del 409 de una apertura simultánea (falla)`
+- [X] T090 GREEN: agregar el caso en `escribirError` en internal/http/sprint_handler.go — `go test ./...` en verde
+- [X] T091 COMMIT `GREEN: responder 409 a una apertura simultánea, test en verde`
+- [X] T092 Actualizar research.md (R8, R10), data-model.md, plan.md y contracts/openapi.yaml, registrando que el último registro simultáneo gana. Correr `go test -race` y repetir las comprobaciones con el servidor real
+- [X] T093 COMMIT `docs: registrar las correcciones de la revisión de HU-14`
+
+---
+
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **User Stories (Phase 3 a 5)** → **Polish (Phase 6)**.

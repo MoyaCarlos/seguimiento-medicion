@@ -75,7 +75,7 @@ specs/031-hu-14-consenso-estimacion/
 ### Source Code (repository root)
 
 ```text
-cmd/api/main.go                              # wiring: regla de consenso, 3 services y 3 rutas
+cmd/api/main.go                              # wiring: regla de consenso, 3 services y las rutas de la votación
 
 internal/domain/
 ├── votacion.go                              # + Siguiente, Diferencias, ReglaConsenso, CoincidenciaExacta
@@ -118,7 +118,8 @@ features/
 ```
 
 **Structure Decision**: estructura hexagonal ya establecida en `AGENTS.md`. Los endpoints nuevos se suman
-a `VotacionHandler`, porque son parte de la votación de la historia. `escribirError` no cambia (R10).
+a `VotacionHandler`, porque son parte de la votación de la historia. `VotacionHandler.Registrar(mux)` agrupa
+sus rutas, como `DemoHandler`, para poder probarlas. `escribirError` suma el 409 de una apertura simultánea (R10).
 
 ## Complexity Tracking
 

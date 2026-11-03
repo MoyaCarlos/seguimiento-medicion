@@ -81,8 +81,11 @@ documento registra las decisiones técnicas del diseño.
 ## R8. Concurrencia
 
 - **Decision**:
-  - **Abrir ronda**: el `UNIQUE (historia_id, numero)` frena dos aperturas simultáneas; el perdedor
-    recibe `ErrVotacionYaIniciada` (409), que `CrearRonda` ya traduce.
+  - **Abrir ronda**: el `UNIQUE (historia_id, numero)` frena dos aperturas simultáneas. `CrearRonda`
+    devuelve `ErrVotacionYaIniciada`, que `AbrirNuevaRonda` traduce a `ErrRondaYaAbierta` (409), porque
+    "la historia ya tiene una votación" no describe lo que pasó.
+  - **Dos registros simultáneos**: queda el último y las dos peticiones responden 200. Se acepta: el valor
+    final es una carta válida, el Scrum Master lo ve en la respuesta y lo puede volver a registrar.
   - **Registrar estimación**: chequeo y escritura separados, igual que `EditarHistoria`. Se acepta la
     ventana de milisegundos en la que un Sprint se inicia entre el chequeo de D2b y la escritura, o se
     abre una ronda entre el chequeo de revelación y la escritura.
@@ -108,13 +111,13 @@ documento registra las decisiones técnicas del diseño.
 | `ErrHistoriaNoEncontrada` (existente) | sentinel | 404 | historia inexistente (primero de todo) |
 | `ErrVotacionNoIniciada` (existente) | sentinel | 404 | abrir ronda o registrar sin votación |
 | `ErrNoEsScrumMaster` (existente) | sentinel | 403 | abre o registra quien no es Scrum Master, integre o no el proyecto (igual que iniciar y revelar en HU-02) |
-| `ErrVotacionYaIniciada` (existente) | sentinel | 409 | dos aperturas simultáneas de la misma ronda |
+| `ErrRondaYaAbierta` (**nuevo**) | sentinel | 409 | dos aperturas simultáneas de la misma ronda |
 | `ErrRondaNoRevelada` (**nuevo**) | `ValidationError{estado}` | 400 | abrir ronda o registrar con la ronda actual oculta |
 | `ErrHistoriaCompletada` (existente) | `ValidationError{estado}` | 400 | abrir ronda en una historia `Completada` |
 | `ErrEstimacionInvalida` (existente) | `ValidationError{estimacion_sp}` | 400 | valor fuera de la baraja |
 | `ErrEstimacionCongelada` (existente) | `ValidationError{estimacion_sp}` | 400 | D2b |
 
-- **Rationale**: se reutilizan los errores existentes y `escribirError` no cambia. El mensaje de
+- **Rationale**: se reutilizan los errores existentes y `escribirError` suma solo el 409 de `ErrRondaYaAbierta`. El mensaje de
   `ErrHistoriaCompletada` ("no se puede votar una historia completada") también sirve para abrir una ronda.
 - **Orden de validación**: id de ruta → historia existe (404) → JSON → `usuario_id` → permiso (403) →
   estado de la historia (solo al abrir ronda) → valor → votación iniciada (404) → ronda revelada (400) → D2b.

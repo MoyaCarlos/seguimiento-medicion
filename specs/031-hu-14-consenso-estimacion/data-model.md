@@ -54,7 +54,8 @@ Casos de test: `[3,5,8]` y `[3,5]` → `true`; `[5,5,5]`, `[8]` y `[]` → `fals
 
 ### Errores (`errors.go`)
 
-`ErrRondaNoRevelada = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}`.
+`ErrRondaNoRevelada = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}` y
+`ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")`.
 El resto se reutiliza: ver [research.md R10](./research.md#r10-errores-y-códigos-http).
 
 ### Transiciones de una ronda
@@ -73,7 +74,7 @@ Registrar la estimación no cambia ninguna ronda.
 
 | Service | Entrada | Pasos |
 |---|---|---|
-| `AbrirNuevaRonda` | `historiaID`, `usuarioID` | historia existe → Scrum Master → no `Completada` → ronda actual → `Siguiente` → `CrearRonda` |
+| `AbrirNuevaRonda` | `historiaID`, `usuarioID` | historia existe → Scrum Master → no `Completada` → ronda actual → `Siguiente` → `CrearRonda` (`ErrVotacionYaIniciada` → `ErrRondaYaAbierta`) |
 | `RegistrarEstimacion` | `historiaID`, `usuarioID`, `valor` | historia existe → Scrum Master → `ConEstimacion` → ronda actual revelada → D2b → `GuardarEstimacion` |
 | `ConsultarHistorialRondas` | `historiaID` | historia existe → `ListarRondasReveladas` → agrega nombre y rol a cada voto |
 | `ConsultarVotacion` (cambia) | sin cambios | `VistaVotacion` suma `Diferencias *domain.Diferencias`, `nil` sin revelar |

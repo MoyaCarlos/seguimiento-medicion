@@ -51,7 +51,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: Otra petición simultánea abrió esa misma ronda.
+          description: >-
+            Otra petición simultánea abrió esa misma ronda. Mensaje: "otra persona abrió esta ronda
+            mientras tanto: recargá la votación".
           content:
             application/json:
               schema:
