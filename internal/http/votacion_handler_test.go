@@ -515,6 +515,15 @@ func TestVotacionHandler_AbrirRonda_Exitoso(t *testing.T) {
 	}
 }
 
+func TestVotacionHandler_AbrirRonda_HistoriaCompletada(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintActivo,
+		"UPDATE historias SET estado = 'Completada', sprint_id = 1, fecha_finalizacion = '2026-10-10' WHERE id = 3")
+
+	rec := abrirRondaEn(handler, "3", `{"usuario_id":1}`)
+
+	esperarError(t, rec, nethttp.StatusBadRequest, "estado", "no se puede abrir una ronda en una historia completada")
+}
+
 func TestVotacionHandler_AbrirRonda_Errores(t *testing.T) {
 	casos := map[string]struct {
 		id, cuerpo string
