@@ -348,6 +348,22 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
     await waitFor(() => expect(consultarMock).toHaveBeenCalledTimes(3))
     expect(screen.getByText('la ronda ya fue revelada')).toBeTruthy()
   })
+
+  it('Given un id de historia inválido en la ruta, When se abre la pantalla, Then se avisa y no se consulta al servidor', async () => {
+    render(
+      <MemoryRouter initialEntries={['/projects/25/votacion/abc']}>
+        <Routes>
+          <Route path="projects/:id/votacion/:historiaId" element={<Component />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect((await screen.findByRole('alert')).textContent).toBe('La historia "abc" no es válida')
+    expect(screen.queryByText(/NaN/)).toBeNull()
+    expect(consultarMock).not.toHaveBeenCalled()
+    expect(integrantesMock).not.toHaveBeenCalled()
+    expect(historiaMock).not.toHaveBeenCalled()
+  })
 })
 
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
