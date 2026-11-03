@@ -67,4 +67,5 @@ var (
 	ErrHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede votar una historia completada"}
 	ErrRondaRevelada      = ValidationError{Campo: "estado", Mensaje: "la ronda ya fue revelada"}
 	ErrFaltanVotos        = ValidationError{Campo: "votos", Mensaje: "faltan votar integrantes del proyecto"}
+	ErrRondaNoRevelada    = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}
 )
