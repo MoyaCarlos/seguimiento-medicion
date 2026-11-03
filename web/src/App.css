@@ -380,6 +380,7 @@ select {
   line-height: 1.5;
   margin-top: 0.4rem;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .tarjeta-proyecto__fechas {
