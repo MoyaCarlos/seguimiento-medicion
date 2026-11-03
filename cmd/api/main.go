@@ -76,6 +76,14 @@ func main() {
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 	)
 
+	defectosRepo := repository.NewSQLiteDefectoRepository(db)
+	defectoHandler := apihttp.NewDefectoHandler(
+		obtenerProyecto,
+		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
+		service.NewResolverDefecto(defectosRepo, sprintRepo),
+		service.NewListarDefectos(proyectos, defectosRepo),
+	)
+
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },
 		demo.NewCargador(db, time.Now),
@@ -104,6 +112,9 @@ func main() {
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
+	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
+	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
+	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
