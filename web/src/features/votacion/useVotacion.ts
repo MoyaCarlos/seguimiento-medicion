@@ -17,6 +17,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const [recarga, setRecarga] = useState(0)
   const [actualizacion, setActualizacion] = useState(0)
   const envioEnCurso = useRef(false)
+  const accionesIniciadas = useRef(0)
 
   const consulta = `${historiaId}/${actorId}/${recarga}`
   const cargando = cargadaPara !== consulta
@@ -62,16 +63,18 @@ export function useVotacion(proyectoId: string, historiaId: number) {
 
   useEffect(() => {
     let vigente = true
+    const accionesAlConsultar = accionesIniciadas.current
+    const sigueVigente = () => vigente && accionesAlConsultar === accionesIniciadas.current
 
     consultarVotacion(historiaId, actorId)
       .then((datos) => {
-        if (!vigente) return
+        if (!sigueVigente()) return
         setVotacion(datos)
         setSinVotacion(false)
         setErrorDeVotacion('')
       })
       .catch((causa: unknown) => {
-        if (!vigente) return
+        if (!sigueVigente()) return
         if (esVotacionNoIniciada(causa)) {
           setVotacion(null)
           setSinVotacion(true)
@@ -92,6 +95,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   async function ejecutar(accion: () => Promise<Votacion>) {
     if (envioEnCurso.current) return
     envioEnCurso.current = true
+    accionesIniciadas.current += 1
     setErrorDeAccion('')
     setEnviando(true)
     try {
