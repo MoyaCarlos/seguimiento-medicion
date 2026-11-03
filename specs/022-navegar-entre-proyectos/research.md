@@ -199,6 +199,17 @@ investigación externa ni comparación de librerías porque la historia prohíbe
   (`align-items: start`) y el botón de datos de prueba no se estira (`justify-self: start`).
   Verificado en escritorio (1280 px) y celular (390 px) sin aviso, con "ya cargados" (respuesta real
   409 del backend) y con error (respuesta 500 simulada de `POST /demo/datos`).
+- **Deuda para el rediseño general (issue #230)**: los tres atajos de arriba (margen negativo
+  calculado de `.inicio-composicion`, `display: contents` en el formulario y en el bloque de datos
+  de prueba, y la regla `:has()` del encabezado) llevan un comentario en `App.css` que los marca
+  como deuda. Además, el texto del aviso empieza en minúscula ("los datos de prueba ya están
+  cargados") y su enlace "Abrir el proyecto de prueba" se parte en dos líneas en la tarjeta; ambas
+  cosas quedan para #230.
+- **Prueba del aviso**: se pudo agregar sin tocar `crear.tsx` (en `rutas.test.tsx`, fija el
+  marcado del que dependen las reglas). No tiene ciclo RED/GREEN porque no cambia código de
+  producción: el arreglo es solo CSS y el marcado ya cumplía el contrato; se comprobó que falla
+  si el aviso sale del bloque de los botones (mutación manual) y se commiteó junto con el estilo
+  de `/`.
 - **Fuera de este arreglo (a propósito)**: el texto del aviso ("los datos de prueba ya están
   cargados", sin mayúscula inicial) y el color gris del mensaje de error dentro de la tarjeta
   (`.hu04-tarjeta p` pisa a `.message--error`) ya eran así antes de esta historia; se resuelven en

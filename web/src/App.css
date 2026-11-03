@@ -235,6 +235,9 @@ select {
   margin: 0;
 }
 
+/* Atajo: display: contents en el formulario y en el bloque de datos de prueba para poner los botones en fila
+   sin tocar crear.tsx. Puede hacer que lectores de pantalla antiguos pierdan el rol de formulario (no se probó
+   con uno). El aviso empieza en minúscula y su enlace se parte en dos líneas. Todo queda para el rediseño (#230). */
 .inicio-composicion .hu04-tarjeta--angosta form {
   display: contents;
 }
@@ -524,11 +527,13 @@ h1 {
 }
 
 @media (min-width: 1200px) {
+  /* Atajo: margen negativo calculado para ensanchar solo "/". Deuda a rehacer en el rediseño (#230). */
   .inicio-composicion {
     margin-left: calc((100% - min(1320px, 100vw - 3rem)) / 2);
     width: min(1320px, 100vw - 3rem);
   }
 
+  /* Atajo: :has() para alinear el encabezado con "/" sin tocar el shell. Deuda a rehacer en el rediseño (#230). */
   .app-shell:has(.inicio-composicion) .app-header {
     padding-inline: max(1.5rem, calc((100vw - 1320px) / 2));
   }
