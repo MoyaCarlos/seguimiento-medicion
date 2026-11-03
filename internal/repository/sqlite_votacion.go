@@ -130,3 +130,10 @@ func ningunaFilaEsRondaRevelada(resultado sql.Result) error {
 	}
 	return nil
 }
+
+// ListarRondasReveladas lee rondas y votos en una sola consulta: la conexión es
+// única, así que no se puede consultar los votos con las filas de las rondas
+// abiertas (research.md R9).
+func (r *SQLiteVotacionRepository) ListarRondasReveladas(ctx context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
+	return nil, nil
+}

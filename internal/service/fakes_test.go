@@ -314,6 +314,10 @@ func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64
 	return nil
 }
 
+func (f *fakeVotacionRepository) ListarRondasReveladas(_ context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
+	return nil, nil
+}
+
 func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {
 	for _, r := range f.rondas {
 		if r.ID == rondaID && r.ReveladaEn == nil {
