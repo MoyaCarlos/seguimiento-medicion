@@ -811,7 +811,7 @@ Como Scrum Master quiero que las acciones de gestión del proyecto solo las pued
 ### Criterios de aceptacion (BDD):
 Escenario 1: Acción permitida.
 Dado que soy el Scrum Master del proyecto,
-Cuando creo, inicio o cierro un Sprint, inicio o revelo una votación, edito el proyecto o configuro el equipo,
+Cuando creo, inicio o cierro un Sprint, inicio o revelo una votación, inicio una nueva ronda, registro la estimación acordada, edito el proyecto o configuro el equipo,
 Entonces la acción se realiza.
 Escenario 2: Acción no permitida.
 Dado que soy Product Builder,
@@ -819,13 +819,14 @@ Cuando intento una de esas acciones,
 Entonces el sistema responde 403 y la pantalla la muestra deshabilitada con la nota "Solo el Scrum Master puede…".
 Escenario 3: Sin sesión.
 Dado que no inicié sesión,
-Cuando uso una acción protegida,
+Cuando uso una de las acciones que exigen sesión (ver "Qué se protege" en las Notas),
 Entonces el sistema responde 401.
 Escenario 4: No integrante.
 Dado que no soy integrante del proyecto,
 Cuando intento acceder a él,
-Entonces se me informa "No sos integrante de este proyecto".
+Entonces el sistema responde 403 con el mensaje "No sos integrante de este proyecto".
 Escenario 5: Mis proyectos.
+Dado que inicié sesión,
 Cuando consulto mis proyectos,
 Entonces veo solo aquellos donde soy integrante, con mi rol.
 Escenario 6: Un solo Scrum Master.
@@ -836,10 +837,23 @@ Escenario 7: Identidad de la sesión.
 Dado que inicié sesión,
 Cuando voto, registro horas o consulto la votación de una historia,
 Entonces queda a nombre de la persona con sesión iniciada, y no se acepta otro usuario ni en el cuerpo ni en la query de la petición (`usuario_id`), así que nadie puede ver el voto oculto de otra persona.
+Escenario 8: Configurar equipo solo con usuarios registrados.
+Dado que soy el Scrum Master del proyecto,
+Cuando configuro el equipo,
+Entonces solo puedo agregar usuarios ya registrados, y entran como Product Builder.
+Escenario 9: Usuario sin proyectos.
+Dado que inicié sesión y no soy integrante de ningún proyecto,
+Cuando consulto mis proyectos,
+Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
 ### Depende de
 HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints) y HU-07 (horas). Se apoya en el issue #236 (índice único de Scrum Master).
 ### Notas
 Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y también la identidad que viaja en la query de `GET /backlog/{id}/votacion?usuario_id=N` (`internal/http/votacion_handler.go`), que hoy devuelve el voto del que consulta: con el id de otra persona se vería su voto oculto. Quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto, lo que cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
+**Qué se protege.** Todas las rutas que escriben datos exigen sesión (y ser integrante del proyecto, escenario 4); las de gestión exigen además ser Scrum Master (escenario 2):
+- Solo sesión: `POST /projects` (quien lo crea queda como Scrum Master), `POST /backlog`, `PUT /backlog/{id}`, `PUT /backlog/{id}/estado`, `PUT /backlog/{id}/sprint`, `POST /backlog/{id}/horas`, `POST /projects/{id}/defectos`, `POST /defectos/{id}/resolver`, `POST /backlog/{id}/votacion/votos` y `POST /demo/datos`.
+- Sesión y Scrum Master: `POST /sprints`, `POST /sprints/{id}/iniciar`, `POST /sprints/{id}/cerrar`, `POST /backlog/{id}/votacion` (iniciar), `POST /backlog/{id}/votacion/revelar`, `POST /backlog/{id}/votacion/rondas` (nueva ronda), `POST /backlog/{id}/votacion/estimacion` (registrar la estimación, HU-14), `PUT /projects/{id}` y `POST /projects/{id}/members` (equipo).
+- Lecturas (`GET`): a decidir si exigen sesión. <!-- decidir: ¿los GET exigen sesión? (sí/no, y si se limitan al integrante del proyecto) -->
+
 Los escenarios de Godog que hoy mandan `usuario_id` se ajustan **en el mismo PR**, con un paso de contexto "Dado que inicié sesión como X" (el check `backend` tiene que estar en verde para mergear). Sin atajos de prueba en el código de producción.
 Si el viernes 13 los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación.
 Absorbe los niveles 2 y 3 de HU-19. Eliminar un proyecto (#232) depende de estos permisos.
