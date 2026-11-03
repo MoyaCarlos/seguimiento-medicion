@@ -72,12 +72,14 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 
 ## ***Prioridad 5: Mejoras de calidad del beta testing (Could have / Should have)***
 
-Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado: se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. Prioridad, valor y estimación de estas cuatro historias son una propuesta del Scrum Master, a confirmar con el equipo.
+Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado: se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo. HU-20 y HU-21 se planifican antes de la entrega final del 16-nov por decisión del Scrum Master (2026-11-03).
 
 * **HU-16: Gestión del Equipo del Proyecto (Could have).** Cambiar el rol de un integrante y quitarlo del equipo sin perder lo que aportó; siempre queda al menos un Scrum Master. Extiende HU-04.
 * **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. Extiende HU-04.
 * **HU-18: Avance de las Historias del Proyecto (Should have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Extiende HU-15 y HU-11.
-* **HU-19: Administración de Mis Proyectos (Could have).** Ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), con transferencia de la propiedad. Se entrega por niveles. Extiende HU-04.
+* **HU-19: Administración de Mis Proyectos (Could have).** Absorbida por HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03). Su nivel 1, la lista y el selector de proyectos, es #148; los niveles 2 y 3 (mis proyectos, permisos por rol y autenticación) pasan a HU-20 y HU-21. Se descarta la transferencia de la propiedad: el dueño del proyecto es su Scrum Master. Extiende HU-04.
+* **HU-20: Autenticación de usuarios (Should have).** Registrarse e iniciar sesión con un nombre de usuario y una contraseña, para que el sistema sepa quién usa la aplicación. Extiende HU-04.
+* **HU-21: Permisos por rol (Should have).** Que las acciones de gestión del proyecto (Sprints, votación, edición y equipo) solo las pueda hacer el Scrum Master, con la identidad tomada de la sesión, y que cada persona vea solo sus proyectos. Depende de HU-20.
 
 ---
 
@@ -592,6 +594,7 @@ HU-04 (proyecto e integrantes). Afecta a HU-02 (la votación cuenta solo a los i
 ### Notas
 La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
 Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; HU-17 lo elige de la lista), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Esta historia **reabre la decisión D4** de `MODELO-DE-DATOS.md` (hoy no se impone un único Scrum Master; acá se pide al menos uno activo).
+Con un único Scrum Master por proyecto (#236), no se puede quitar al Scrum Master ni cambiar su rol sin traspasar antes el rol (fuera de alcance por ahora).
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
 La aplicación de permisos por rol sigue fuera del alcance (ver HU-04).
@@ -722,20 +725,116 @@ Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crea
 ### Depende de
 HU-04 (proyectos e integrantes), HU-17 (usuarios y elegir quién soy), HU-16 (equipo del proyecto), #148 (navegar entre proyectos desde la interfaz) y la decisión del cierre manual del proyecto (#173).
 ### Notas
-Se entrega por niveles, porque la historia completa necesita identificar a la persona que usa la aplicación y hoy no hay inicio de sesión:
-1. **Nivel 1, ya en curso:** lista de proyectos y selector para navegar entre ellos (#148).
-2. **Nivel 2, esta historia:** un "usuario actual" elegido de la lista de usuarios (sin contraseña, pensado para la beta) con "mis proyectos", el dueño y las acciones visibles según el rol. Los permisos se aplican en la pantalla: sin autenticación **no son seguridad real**, y el backend no puede saber quién hace cada pedido.
-3. **Nivel 3, después de la entrega:** autenticación y permisos aplicados en el backend. Reabre la decisión de HU-04 de dejar los permisos por rol fuera del alcance, que se consulta con la cátedra.
-El dueño es quien crea el proyecto y se puede transferir a otro usuario. El dueño no existe en el modelo: guardarlo es un cambio de esquema (por ejemplo, una referencia al usuario en `proyectos`, o un tercer rol en `integrantes`), un solo PR con `MODELO-DE-DATOS.md` y la migración. La opción se decide con el Scrum Master y el equipo; no la elige quien implementa.
-Cerrar el proyecto de forma manual es otra decisión pendiente (#173).
+Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20 y HU-21, porque la entrega final es el 16-nov y el login real entra antes de esa fecha.
+1. **Nivel 1:** lista de proyectos y selector para navegar entre ellos (#148, PR #231). Es lo que queda de esta historia.
+2. **Nivel 2 (usuario, "mis proyectos" y acciones según el rol):** pasa a HU-21.
+3. **Nivel 3 (autenticación y permisos en el backend):** pasa a HU-20 (autenticación) y HU-21 (permisos).
+Se descarta la transferencia de la propiedad (escenarios 2, 4 y 5): el dueño del proyecto es quien lo crea y queda como su único Scrum Master, así que la decisión D14 de `MODELO-DE-DATOS.md` (dónde guardar al dueño) deja de hacer falta. Un solo Scrum Master por proyecto es el issue #236.
+Cerrar el proyecto de forma manual (#173) y eliminarlo (#232) son decisiones aparte.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 dependen de HU-17 y de perfiles.
+### Estado
+Absorbida por HU-20 y HU-21
+### Valor de Negocio
+8 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+Sin estimación propia: el trabajo restante se estima en HU-20 y HU-21
+
+---
+
+## HU-20: Autenticación de usuarios
+### Descripción
+Como integrante del equipo quiero registrarme e iniciar sesión con un nombre de usuario y una contraseña para que el sistema sepa quién soy y mis acciones queden a mi nombre.
+### Criterios de aceptacion (BDD):
+Escenario 1: Registro exitoso.
+Dado un nombre de usuario que no existe,
+Cuando me registro con una contraseña válida,
+Entonces se crea mi cuenta y quedo con la sesión iniciada.
+Escenario 2: Nombre de usuario repetido.
+Dado que el nombre de usuario ya existe,
+Cuando intento registrarme,
+Entonces el sistema lo rechaza con el mensaje "Ese nombre de usuario ya existe".
+Escenario 3: Contraseña inválida.
+Dado que la contraseña tiene menos de 8 caracteres,
+Cuando me registro,
+Entonces el sistema lo rechaza indicando el campo.
+Escenario 4: Ingreso exitoso.
+Dado que tengo una cuenta,
+Cuando ingreso con mi usuario y contraseña,
+Entonces accedo a mis proyectos.
+Escenario 5: Credenciales incorrectas.
+Dado un usuario o una contraseña incorrectos,
+Cuando intento ingresar,
+Entonces el sistema responde "Usuario o contraseña incorrectos" sin revelar cuál de los dos falló.
+Escenario 6: Sesión vencida.
+Dado que mi sesión venció o es inválida,
+Cuando uso la aplicación,
+Entonces se me pide ingresar de nuevo y vuelvo a la pantalla en la que estaba.
+Escenario 7: Cierre de sesión.
+Cuando cierro sesión,
+Entonces la sesión deja de ser válida.
+### Depende de
+HU-04 (usuarios y equipo).
+### Notas
+Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**, para que lo existente y los escenarios de Godog sigan funcionando. Los permisos por rol son HU-21.
+Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
+Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Se deciden en la spec con el Scrum Master, no quien implementa: cómo viaja el token y su vencimiento, dónde viven las sesiones (en la base se vacían en cada deploy de Render), cómo se dan de alta las contraseñas de los usuarios que hoy no tienen y las reglas del nombre de usuario.
+### Prioridad
+S (Should have) - Hace que cada persona actúe a su nombre y que el voto de Planning Poker sea realmente secreto. Se planifica antes de la entrega final por decisión del Scrum Master (2026-11-03).
 ### Estado
 Nueva
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
-8 Story Points (solo el nivel 2) - propuesta, a estimar con el equipo
+5 Story Points - propuesta, a estimar con el equipo
+
+---
+
+## HU-21: Permisos por rol (segregación de funciones)
+### Descripción
+Como Scrum Master quiero que las acciones de gestión del proyecto solo las pueda hacer el Scrum Master para que el resto del equipo participe sin alterar la planificación.
+### Criterios de aceptacion (BDD):
+Escenario 1: Acción permitida.
+Dado que soy el Scrum Master del proyecto,
+Cuando creo, inicio o cierro un Sprint, inicio o revelo una votación, edito el proyecto o configuro el equipo,
+Entonces la acción se realiza.
+Escenario 2: Acción no permitida.
+Dado que soy Product Builder,
+Cuando intento una de esas acciones,
+Entonces el sistema responde 403 y la pantalla la muestra deshabilitada con la nota "Solo el Scrum Master puede…".
+Escenario 3: Sin sesión.
+Dado que no inicié sesión,
+Cuando uso una acción protegida,
+Entonces el sistema responde 401.
+Escenario 4: No integrante.
+Dado que no soy integrante del proyecto,
+Cuando intento acceder a él,
+Entonces se me informa "No sos integrante de este proyecto".
+Escenario 5: Mis proyectos.
+Cuando consulto mis proyectos,
+Entonces veo solo aquellos donde soy integrante, con mi rol.
+Escenario 6: Un solo Scrum Master.
+Dado que quien crea un proyecto queda como Scrum Master,
+Cuando se intenta agregar un segundo Scrum Master,
+Entonces el sistema lo rechaza.
+Escenario 7: Identidad de la sesión.
+Cuando voto o registro horas,
+Entonces queda a nombre de la persona con sesión iniciada y no se acepta otro usuario en la petición.
+### Depende de
+HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints) y HU-07 (horas). Se apoya en el issue #236 (índice único de Scrum Master).
+### Notas
+Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto, lo que cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
+Los escenarios de Godog que hoy mandan `usuario_id` se ajustan **en el mismo PR**, con un paso de contexto "Dado que inicié sesión como X" (el check `backend` tiene que estar en verde para mergear). Sin atajos de prueba en el código de producción.
+Si el viernes 13 los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación.
+Absorbe los niveles 2 y 3 de HU-19. Eliminar un proyecto (#232) depende de estos permisos.
+### Prioridad
+S (Should have) - Complementa a HU-20: sin permisos en el backend, cualquiera con `curl` puede saltear la pantalla.
+### Estado
+Nueva
+### Valor de Negocio
+8 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+5 Story Points - propuesta, a estimar con el equipo (toca muchos endpoints)
 
 ---
 
@@ -801,4 +900,8 @@ issue y entra en los Sprints.
 | #168 | Rechazar Sprints con fechas fuera del plazo del proyecto (backend) | Abierto, a priorizar |
 | #169 | Mostrar las fechas del proyecto en la pantalla de Sprints y limitar los selectores | Abierto, a priorizar |
 | #173 | Regla del estado del proyecto: cierre manual en vez de «Finalizado» derivado de los Sprints (HU-13) | Abierto, a decidir |
-| #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, a decidir |
+| #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, Sprint 4 (solo los criterios de aceptación; notas y «depende de» quedan para después) |
+| #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, Sprint 5 por pantallas |
+| #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |
+| #235 | Datos de prueba v2: usuarios con contraseña, equipo, historias con criterios, Sprints, horas, votaciones y defectos | Abierto, Sprint 4 |
+| #236 | Un único Scrum Master por proyecto (índice único parcial, cambio de esquema) | Abierto, Sprint 4 |
