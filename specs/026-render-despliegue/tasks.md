@@ -18,7 +18,7 @@ description: "Tareas del despliegue en Render (Issue #139): infraestructura y do
 
 **Independent Test**: validación contra `https://render.com/schema/render.yaml.json` sin errores y comparación valor por valor con la tabla de la spec.
 
-- [X] T001 [US2] Crear render.yaml en la raíz con el contenido de contracts/render-yaml.md, más un comentario inicial que diga que es solo referencia y que no se crea un Blueprint porque Render lo aplicaría al servicio existente, sincronizaría con cada push y lo que falte volvería a su valor por defecto (FR-001, FR-003, FR-004, FR-005)
+- [X] T001 [US2] Crear render.yaml en la raíz con el contenido de contracts/render-yaml.md, más un comentario inicial que diga que es solo referencia y que no se crea un Blueprint porque Render lo aplicaría al servicio existente, sincronizaría con cada push y reemplazaría `buildFilter` por listas vacías si no estuviera declarado (FR-001, FR-003, FR-004, FR-005)
 - [X] T002 [US2] Validar render.yaml contra el esquema oficial (descargado a una carpeta temporal fuera del repo, JSON Schema 2020-12); si alguna clave falla o no se puede validar, quitarla del archivo y anotarla (FR-002). Confirmar 0 errores
 - [X] T003 [US2] Comparar render.yaml con la tabla de configuración de spec.md y la columna "Valor" de research.md: cada valor coincide, sin secretos (SC-001)
 - [X] T004 [US2] COMMIT `Agregar render.yaml como referencia versionada del servicio en Render` (solo render.yaml)
