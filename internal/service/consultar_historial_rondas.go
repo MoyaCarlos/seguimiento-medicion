@@ -42,5 +42,31 @@ func NewConsultarHistorialRondas(historias repository.HistoriaRepository, proyec
 }
 
 func (s *ConsultarHistorialRondas) Ejecutar(ctx context.Context, historiaID int64) (HistorialRondas, error) {
-	return HistorialRondas{}, nil
+	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
+	if err != nil {
+		return HistorialRondas{}, err
+	}
+	rondas, err := s.votaciones.ListarRondasReveladas(ctx, historia.ID)
+	if err != nil {
+		return HistorialRondas{}, err
+	}
+	integrantes, err := s.proyectos.ListarIntegrantes(ctx, historia.ProyectoID)
+	if err != nil {
+		return HistorialRondas{}, err
+	}
+	porUsuario := make(map[int64]domain.Member, len(integrantes))
+	for _, m := range integrantes {
+		porUsuario[m.UserID] = m
+	}
+
+	historial := HistorialRondas{HistoriaID: historia.ID, Rondas: make([]RondaDelHistorial, 0, len(rondas))}
+	for _, r := range rondas {
+		ronda := RondaDelHistorial{Numero: r.Numero, ReveladaEn: *r.ReveladaEn, Votos: make([]VotoRevelado, 0, len(r.Votos))}
+		for _, v := range r.Votos {
+			m := porUsuario[v.UsuarioID]
+			ronda.Votos = append(ronda.Votos, VotoRevelado{UsuarioID: v.UsuarioID, Nombre: m.Nombre, Rol: m.Role, Valor: v.Valor})
+		}
+		historial.Rondas = append(historial.Rondas, ronda)
+	}
+	return historial, nil
 }
