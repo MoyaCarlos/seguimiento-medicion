@@ -17,7 +17,7 @@ type Props = {
 }
 
 function etiquetaDe(sprint: SprintParaAsignar) {
-  const base = `Sprint #${sprint.numero} (${sprint.estado})`
+  const base = `Sprint ${sprint.numero} (${sprint.estado})`
   return sprint.sprint_goal ? `${base} - ${sprint.sprint_goal}` : base
 }
 
