@@ -8,24 +8,26 @@ export function LayoutProyecto() {
 
   return (
     <div className="page-stack">
-      <div className="page-header">
+      <div className="page-header project-header">
         <div>
           <p className="eyebrow">Métrica · Seguimiento de proyectos</p>
           <p className="route-context">Ruta actual: <code>{pathname}</code></p>
-          <SelectorProyecto />
         </div>
-        <nav className="feature-navigation" aria-label="Secciones del proyecto">
-          {navegacion.map(({ ruta, texto }) => (
-            <NavLink
-              key={ruta}
-              to={ruta}
-              className={({ isActive }) =>
-                `feature-navigation__item${isActive ? ' feature-navigation__item--active' : ''}`}
-            >
-              {texto}
-            </NavLink>
-          ))}
-        </nav>
+        <div className="project-bar">
+          <SelectorProyecto />
+          <nav className="feature-navigation" aria-label="Secciones del proyecto">
+            {navegacion.map(({ ruta, texto }) => (
+              <NavLink
+                key={ruta}
+                to={ruta}
+                className={({ isActive }) =>
+                  `feature-navigation__item${isActive ? ' feature-navigation__item--active' : ''}`}
+              >
+                {texto}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
       </div>
       <Outlet key={id} />
     </div>

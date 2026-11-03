@@ -21,8 +21,8 @@ export function SelectorProyecto() {
 
   return (
     <div className="selector-proyecto">
-      <label className="field">
-        <span>Proyecto</span>
+      <label className="field selector-proyecto__campo">
+        <span className="visually-hidden">Proyecto</span>
         <select value={id} onChange={elegir} disabled={proyectos.estado !== 'listo'}>
           {!actualListado && <option value={id}>{`Proyecto ${id}`}</option>}
           {listados.map((proyecto) => (
@@ -30,9 +30,9 @@ export function SelectorProyecto() {
           ))}
         </select>
       </label>
+      <Link className="button button--secondary selector-proyecto__nuevo" to="/">Nuevo proyecto</Link>
       {proyectos.estado === 'cargando' && <LoadingIndicator />}
       {proyectos.estado === 'error' && <ErrorMessage message={proyectos.mensaje} />}
-      <Link className="button button--secondary" to="/">Nuevo proyecto</Link>
     </div>
   )
 }
