@@ -19,6 +19,9 @@ Proyección de solo lectura de un proyecto para la navegación.
 |---|---|---|---|
 | `id` | `number` | `GET /projects` | Identificador único; se usa como `value` de la opción y para armar la ruta. |
 | `nombre` | `string` | `GET /projects` | Texto visible en la etiqueta; no se recorta ni se transforma. |
+| `descripcion` | `string` | `GET /projects` | Solo la usa la tarjeta del inicio; vacía se muestra como "Sin descripción". |
+| `fecha_inicio` | `string \| null` | `GET /projects` | Solo la usa la tarjeta del inicio; `null` se muestra como "Sin definir". |
+| `fecha_fin` | `string \| null` | `GET /projects` | Solo la usa la tarjeta del inicio; `null` se muestra como "Sin definir". |
 
 La etiqueta visible se deriva con `etiquetaProyecto`:
 
@@ -76,6 +79,7 @@ montaje. Volver a montar la pantalla vuelve a pedir el listado.
 | Función | Entrada | Salida | Regla |
 |---|---|---|---|
 | `etiquetaProyecto` | `{ id: number, nombre: string }` | `string` | `${nombre} (#${id})`; dos nombres iguales producen etiquetas distintas por el id. |
+| `filtrarProyectos` | `proyectos: ProyectoResumen[]`, `texto: string` | `ProyectoResumen[]` | Recorta el texto; si queda vacío devuelve todos; si no, deja los que contienen el texto en el nombre sin distinguir mayúsculas ni acentos (NFD sin marcas diacríticas), en el orden recibido. |
 | `rutaDeSeccion` | `pathname: string`, `idNuevo: string \| number` | `string` | Toma el primer tramo después del id si es una sección de `navegacion`; si no hay o no lo es, usa `proyecto`; devuelve `/projects/${idNuevo}/${seccion}`. |
 
 ## Validation Rules
@@ -87,6 +91,7 @@ montaje. Volver a montar la pantalla vuelve a pedir el listado.
 - Una respuesta exitosa que no sea un arreglo se trata como error; no se renderiza una lista
   vacía como si no hubiera datos.
 - El listado se muestra en el orden devuelto por la API; no se ordena ni se pagina en el cliente.
+- El texto de búsqueda es estado local de la pantalla del inicio: no se guarda ni se envía a la API.
 - No se valida el nombre del proyecto en el frontend: se muestra tal como llega.
 
 ## Relationships
@@ -114,6 +119,8 @@ montaje. Volver a montar la pantalla vuelve a pedir el listado.
 | FR-003, FR-004, FR-005 | `SeccionDeProyecto`, `rutaDeSeccion` |
 | FR-006 | Enlace "Nuevo proyecto" (sin entidad nueva) |
 | FR-007, FR-008, FR-009 | `ProyectoResumen`, `ListaProyectos`, `EstadoProyectos` |
+| FR-021 a FR-027 | `ProyectoResumen` ampliado, `filtrarProyectos`, `ListaProyectos` |
+| FR-028, FR-029 | Estilo y composición del inicio (sin entidad nueva) |
 | FR-010, FR-011, FR-012 | `EstadoProyectos` |
 | FR-013 | Reinicio por `:id` en `LayoutProyecto` |
 | FR-014 | Orden del arreglo de `GET /projects` |

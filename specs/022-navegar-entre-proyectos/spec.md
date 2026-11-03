@@ -117,10 +117,58 @@ formulario y que el enlace de uno de ellos abre su panel.
    que invita a crear el primero, junto al formulario.
 4. **Given** que la lista de proyectos falla, **When** se abre `/`, **Then** el formulario de
    creación sigue disponible y usable.
+5. **Given** un proyecto con descripción y fechas, **When** se abre `/`, **Then** su tarjeta
+   muestra el nombre, `#<id>`, la descripción y las fechas de inicio y de fin, y la tarjeta
+   entera es el enlace a su panel.
+6. **Given** un proyecto sin descripción y sin fechas, **When** se abre `/`, **Then** su tarjeta
+   muestra "Sin descripción" y "Sin definir" en lugar de la descripción y de cada fecha.
+7. **Given** un proyecto con un nombre largo, **When** se abre `/`, **Then** la tarjeta ofrece el
+   nombre completo en su atributo `title` (el corte a dos líneas es visual y se verifica en el
+   navegador, no en las pruebas).
+8. **Given** `N` proyectos, **When** se abre `/`, **Then** el encabezado "Proyectos existentes"
+   muestra un contador con `N`.
 
 **Nota de trazabilidad**: el escenario 4 se verifica en las tareas de la lista de US4
 (T035-T038), junto con los demás estados de error de la lista; no se duplica en las tareas de
-US3.
+US3. Los escenarios 5 a 8 se verifican en las tareas de US5.
+
+---
+
+### User Story 5 - Buscar proyectos por nombre en el inicio (Priority: P2)
+
+Como integrante del equipo, en la lista de proyectos del inicio quiero buscar por nombre, para
+encontrar rápido un proyecto cuando hay varios.
+
+**Why this priority**: Mejora la lista del inicio con muchos proyectos; no bloquea la navegación
+principal.
+
+**Independent Test**: Abrir `/` con varios proyectos, escribir parte de un nombre en "Buscar
+proyecto" y comprobar que solo quedan las tarjetas que coinciden y el contador "N de M".
+
+**Acceptance Scenarios**:
+
+1. **Given** una lista con `M` proyectos, **When** se escribe un texto en el campo "Buscar
+   proyecto", **Then** se ven solo los proyectos cuyo nombre contiene ese texto y el contador
+   muestra "N de M" (con `N` los que se ven).
+2. **Given** un proyecto llamado "Gestión de Turnos", **When** se busca "gestion", "TURNOS" o
+   "gestión", **Then** el proyecto aparece (la búsqueda ignora mayúsculas y acentos).
+3. **Given** una búsqueda con espacios al inicio o al final, **When** se escribe, **Then** los
+   espacios se recortan antes de comparar.
+4. **Given** una búsqueda vacía o solo de espacios, **When** se borra el texto, **Then** se ven
+   todos los proyectos y el contador muestra solo "M".
+5. **Given** varios proyectos que coinciden, **When** se filtra, **Then** se ven en el orden en
+   que los devuelve la API.
+6. **Given** un texto que está en la descripción o en el identificador de un proyecto pero no en
+   su nombre, **When** se busca, **Then** ese proyecto no aparece (se filtra solo por nombre).
+7. **Given** un texto que no coincide con ningún nombre, **When** se busca, **Then** se muestra
+   "Ningún proyecto coincide con la búsqueda" y el contador "0 de M"; este mensaje es distinto
+   del de lista vacía.
+8. **Given** que no existe ningún proyecto, **When** se abre `/`, **Then** no se muestra el
+   campo de búsqueda y sí el mensaje "Todavía no hay proyectos".
+9. **Given** que el listado está cargando o falló, **When** se abre `/`, **Then** no se muestra
+   el campo de búsqueda.
+10. **Given** una búsqueda escrita, **When** se filtra o se borra el texto, **Then** no se hacen
+    nuevas llamadas a `GET /projects` (el filtro es del cliente y no se guarda al recargar).
 
 ---
 
@@ -191,6 +239,13 @@ funcionando.
   pantalla del proyecto nuevo **shall** arrancar limpia, sin mezclar datos del anterior.
 - **IF** el listado tarda o falla, **THEN** el enlace "Nuevo proyecto" del encabezado **shall**
   estar disponible igual.
+- **IF** un proyecto no tiene descripción o fecha, **THEN** su tarjeta **shall** mostrar "Sin
+  descripción" o "Sin definir".
+- **WHILE** hay un texto de búsqueda no vacío (después de recortar espacios), **THEN** el
+  contador **shall** mostrar "N de M"; **WHILE** no lo hay, **shall** mostrar solo "M".
+- **IF** ningún nombre coincide con la búsqueda, **THEN** la lista **shall** mostrar "Ningún
+  proyecto coincide con la búsqueda" y **shall** conservar el campo de búsqueda para poder
+  corregirla.
 
 ## Requirements *(mandatory)*
 
@@ -218,10 +273,40 @@ funcionando.
 
 - **FR-007**: La pantalla de inicio (`/`) MUST mostrar, junto al formulario de creación, la
   lista de proyectos existentes obtenida con `GET /projects`.
-- **FR-008**: Cada proyecto de la lista del inicio MUST mostrarse como `<nombre> (#<id>)` y
-  MUST ofrecer un enlace que abra su panel en `/projects/<id>/proyecto`.
+- **FR-008**: Cada proyecto de la lista del inicio MUST mostrarse como una tarjeta que es un
+  único enlace a `/projects/<id>/proyecto`, cuyo nombre accesible es `<nombre> (#<id>)`.
 - **FR-009**: **WHEN** no hay proyectos, el inicio MUST mostrar una invitación a crear el
   primero, sin tratarlo como error.
+
+**Tarjetas y buscador del inicio**
+
+- **FR-021**: La tarjeta de cada proyecto MUST mostrar el nombre (con el texto completo en su
+  atributo `title`), el `#<id>`, la descripción y las fechas de inicio y de fin, con los datos que
+  ya trae `GET /projects` (`id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`).
+- **FR-022**: **IF** falta la descripción o una fecha, la tarjeta MUST mostrar "Sin descripción" o
+  "Sin definir", como el panel del proyecto; las fechas se muestran con el mismo formato que el
+  panel.
+- **FR-023**: El encabezado "Proyectos existentes" MUST mostrar un contador con la cantidad de
+  proyectos que se ven: "N" sin filtro y "N de M" con un filtro activo (texto no vacío después de
+  recortar); con la lista vacía muestra "0". El encabezado "Proyectos existentes" se muestra
+  siempre; el contador solo cuando la lista está lista (no durante la carga ni el error).
+- **FR-024**: **WHEN** la lista está lista y tiene al menos un proyecto, MUST mostrarse un campo
+  de búsqueda (`type="search"`) con nombre accesible "Buscar proyecto"; **IF** la lista está
+  vacía, cargando o con error, MUST NOT mostrarse.
+- **FR-025**: El filtro MUST compararse solo contra el nombre, sin distinguir mayúsculas ni
+  acentos (normalización NFD sin marcas diacríticas) y recortando espacios al inicio y al final;
+  una búsqueda vacía MUST mostrar todos los proyectos.
+- **FR-026**: **IF** ningún nombre coincide, MUST mostrarse "Ningún proyecto coincide con la
+  búsqueda", distinto del mensaje de lista vacía ("Todavía no hay proyectos").
+- **FR-027**: El filtro MUST conservar el orden de la API (FR-014), vivir en el estado de la
+  pantalla (sin persistencia ni debounce) y MUST NOT hacer consultas nuevas a la API.
+- **FR-028**: (Estilo y composición) En pantallas anchas la lista MUST ir a la derecha del
+  formulario de creación; en celular (390 px) MUST apilarse debajo, sin scroll horizontal; la
+  tarjeta MUST tener resaltado al pasar el mouse y foco visible con teclado; el nombre largo se
+  corta en dos líneas. No cambia ningún comportamiento ni escenario; se verifica en el navegador.
+- **FR-029**: La tarjeta MUST NOT mostrar el estado del proyecto, el Scrum Master ni una barra de
+  avance: el estado lo calcula el backend, el Scrum Master no viene en la lista y el avance sería
+  una métrica inventada.
 
 **Estados de la lista**
 
@@ -263,9 +348,9 @@ funcionando.
 
 ### Key Entities
 
-- **Proyecto**: proyecto existente que se lista y se elige. Para esta historia solo se usan su
-  nombre e identificador, que se muestran juntos como `<nombre> (#<id>)`; no se crea, edita ni
-  borra desde la navegación.
+- **Proyecto**: proyecto existente que se lista y se elige. El selector usa su nombre e
+  identificador (`<nombre> (#<id>)`); la tarjeta del inicio usa además la descripción y las
+  fechas de inicio y fin; no se crea, edita ni borra desde la navegación.
 - **Sección del proyecto**: primer tramo de la ruta después del identificador (`proyecto`,
   `backlog`, `sprints`, `status`, o el que exista). Determina a dónde se navega al cambiar de
   proyecto.
@@ -295,8 +380,9 @@ funcionando.
 ## Assumptions
 
 - `GET /projects` ya existe y devuelve todos los proyectos ordenados por identificador (#109);
-  esta historia no agrega endpoints ni campos. El nombre y el identificador son los datos que se
-  muestran en el selector y en la lista del inicio, con el formato `<nombre> (#<id>)`.
+  esta historia no agrega endpoints ni campos. El selector muestra nombre e identificador con el
+  formato `<nombre> (#<id>)`; la tarjeta del inicio suma descripción y fechas, que el listado ya
+  devuelve.
 - La pantalla de creación sigue siendo la de `/`; el enlace "Nuevo proyecto" navega a ella y no
   abre un diálogo ni una pantalla nueva.
 - El enlace de un proyecto desde el inicio abre su panel en `/projects/<id>/proyecto`, porque es
@@ -340,10 +426,13 @@ funcionando.
 
 ## Fuera de alcance
 
-- Cambios en `GET /projects` o en cualquier otro endpoint; paginación, búsqueda, filtros u
-  ordenamiento distinto al de la API.
+- Cambios en `GET /projects` o en cualquier otro endpoint; paginación, búsqueda en el servidor,
+  filtros distintos del buscador por nombre del inicio u ordenamiento distinto al de la API.
 - Crear, editar o borrar proyectos desde el selector o desde la lista del inicio.
-- Mostrar métricas, estado o datos del proyecto en el selector o en la lista.
+- Mostrar métricas, estado, Scrum Master o avance del proyecto en el selector o en la lista (la
+  tarjeta del inicio muestra solo nombre, id, descripción y fechas).
+- Una página de inicio que muestre primero la lista de proyectos y deje el formulario como acción
+  secundaria.
 - Autenticación, autorización por rol o selección de integrante.
 - Persistencia de la última sección o del último proyecto visitado.
 - Rediseño general del encabezado, de la navegación de secciones o del formulario de creación.
@@ -366,4 +455,8 @@ funcionando.
 | FR-014 | Prueba de componente que conserva el orden devuelto por la API |
 | FR-015 | Prueba de componente: `navigation` con nombre "Secciones del proyecto" y ya no "Historias del Sprint 2" |
 | FR-016, FR-017, FR-020 | Revisión del diff, suite existente y ausencia de dependencias nuevas |
+| FR-021, FR-022, FR-029 | Pruebas de componente de `ListaProyectos`: tarjeta con sus datos, `title`, "Sin descripción", "Sin definir", sin estado ni Scrum Master |
+| FR-023, FR-024, FR-026 | Pruebas de componente del contador, del campo de búsqueda y de los mensajes de sin coincidencias y lista vacía |
+| FR-025, FR-027 | Pruebas de Vitest de la función pura de filtrado + pruebas de componente (acentos, mayúsculas, espacios, orden, sin nuevas llamadas) |
+| FR-028 | Revisión en el navegador en escritorio y 390 px (estilo; sin prueba automatizada) |
 | FR-018, FR-019 | Pruebas de Vitest de funciones puras y pruebas de componente con Testing Library |

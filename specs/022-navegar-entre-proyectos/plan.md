@@ -51,8 +51,8 @@ tramos o proyectos; sin polling ni recargas automáticas. La lista se renderiza 
 commits pedido. Los escenarios BDD se cubren por equivalencia con pruebas de componente.
 
 **Scale/Scope**: SPA pequeña, N proyectos sin paginación (se muestran en el orden de la API), una
-pantalla de inicio, un encabezado de proyecto, cinco archivos de producción nuevos y cuatro
-archivos de prueba nuevos. No hay roles ni permisos en esta historia.
+pantalla de inicio, un encabezado de proyecto, siete archivos de producción nuevos (incluidos
+`busqueda.ts` y `ComposicionInicio.tsx`) y cinco archivos de prueba nuevos. No hay roles ni permisos en esta historia.
 
 ## Constitution Check
 
@@ -97,6 +97,8 @@ web/src/
 │   ├── proyectos/                       # Nuevo módulo compartido
 │   │   ├── api.ts                       # ProyectoResumen + listarProyectos()
 │   │   ├── ruta.ts                      # rutaDeSeccion() + etiquetaProyecto()
+│   │   ├── busqueda.ts                  # filtrarProyectos() (nombre, sin mayúsculas ni acentos)
+│   │   ├── busqueda.test.ts
 │   │   ├── ruta.test.ts
 │   │   ├── useProyectos.ts              # Hook de estados cargando/listo/error
 │   │   ├── useProyectos.test.tsx
@@ -185,7 +187,8 @@ CSS mínimo en `App.css` (regla `.field select`); se reutilizan clases base exis
    carga y error (US4) se agregan sobre el mismo componente: `<select>` deshabilitado con la
    única opción `Proyecto <id>` del proyecto actual junto a `LoadingIndicator` o `ErrorMessage`,
    y se habilita con la lista completa al resolverse la carga.
-5. **Lista.** `RED: lista de proyectos (falla)` con `ListaProyectos.test.tsx`; después
+5. **Lista.** (US3 y US4; las tarjetas y el buscador de US5 se agregan después, con su propio
+   ciclo RED/GREEN y sin tocar los comportamientos anteriores.) `RED: lista de proyectos (falla)` con `ListaProyectos.test.tsx`; después
    `GREEN: implementar ListaProyectos.tsx, tests en verde`. Cubre carga, error, vacío, orden y
    enlaces a `/projects/<id>/proyecto`.
 6. **Integración.** `RED: navegación integrada en rutas (falla)` agregando a `rutas.test.tsx` los
@@ -234,9 +237,17 @@ CSS mínimo en `App.css` (regla `.field select`); se reutilizan clases base exis
 - Al resolverse la carga, el `<select>` se habilita con la lista completa.
 - El enlace "Nuevo proyecto" está visible en todos los estados.
 
+**Búsqueda (`busqueda.test.ts`)**
+
+- Coincidencia parcial; ignora mayúsculas y acentos; recorta espacios; vacío devuelve todos; solo
+  por nombre; conserva el orden.
+
 **Lista (`ListaProyectos.test.tsx`)**
 
-- Enlaces `/projects/<id>/proyecto` con etiqueta `<nombre> (#<id>)`, en el orden de la API.
+- Tarjeta enlace a `/projects/<id>/proyecto` con nombre accesible `<nombre> (#<id>)`, nombre,
+  `#<id>`, descripción y fechas; "Sin descripción" y "Sin definir"; `title` con el nombre completo.
+- Contador "N" y "N de M"; buscador visible solo con la lista lista y no vacía; sin coincidencias;
+  sin nuevas llamadas a la API al filtrar; orden de la API.
 - Estados de carga, error y vacío; en vacío se invita a crear el primero.
 - No se muestra error cuando la lista está vacía.
 

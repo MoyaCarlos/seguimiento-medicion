@@ -163,6 +163,20 @@ investigación externa ni comparación de librerías porque la historia prohíbe
   - Agregar `proyectos.css`: un archivo más para una sola regla compartida con los campos.
   - No agregar CSS: deja el selector sin estilo.
 
+### D12. Tarjetas, buscador y dos columnas en el inicio
+
+- **Decision**: La lista del inicio sigue la referencia visual del prototipo de Scrum Master
+  (2026-11-03): dos columnas (formulario a la izquierda, lista a la derecha; apiladas en celular),
+  encabezado con contador, tarjeta enlace con nombre, id, descripción y fechas, y un buscador por
+  nombre del lado del cliente. Se usan los colores y variables reales de `App.css`.
+  No se toma del prototipo el estado, el Scrum Master, la barra de avance ni el orden inverso.
+- **Rationale**: Es un cambio de presentación y de filtrado local sobre datos que `GET /projects`
+  ya devuelve; el estado lo calcula el backend y duplicarlo en el frontend rompería DRY.
+- **Alternatives considered**:
+  - Buscar en el servidor: rechazado, no hay endpoint ni se permite cambiar la API.
+  - Filtrar también por descripción o id: rechazado, la búsqueda es solo por nombre.
+  - Fechas con otro formato que el del panel: rechazado por consistencia con `Panel.tsx`.
+
 ### D11. Sin caché compartida ni actualización en vivo
 
 - **Decision**: Cada consumidor pide la lista al montarse. No hay caché, polling ni refresco

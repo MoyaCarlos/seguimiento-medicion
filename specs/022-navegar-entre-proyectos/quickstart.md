@@ -42,6 +42,16 @@ Esperado:
 
 **Esperado**: se abre `/projects/<id>/proyecto` con el panel de ese proyecto.
 
+### 1b. Tarjetas, contador y buscador
+
+1. En `/`, comprobar que la lista queda a la derecha del formulario (en celular de 390 px, debajo).
+2. Verificar el contador junto a "Proyectos existentes" y que cada tarjeta muestra nombre, `#id`,
+   descripción y fechas ("Sin descripción" y "Sin definir" cuando faltan).
+3. Escribir en "Buscar proyecto" un texto con otras mayúsculas o sin acentos.
+
+**Esperado**: solo quedan las tarjetas cuyo nombre coincide, el contador pasa a "N de M" y, sin
+coincidencias, aparece "Ningún proyecto coincide con la búsqueda".
+
 ### 2. Estado vacío del inicio
 
 1. Abrir `/` con una base sin proyectos.

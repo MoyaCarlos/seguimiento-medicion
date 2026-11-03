@@ -12,7 +12,7 @@ interfaz que consumen las pantallas y el uso que hace del endpoint existente `GE
 - **Endpoint**: `GET /projects`, ya existente y sin cambios (ver
   [spec 010](../../010-hu-04-listar-proyectos/spec.md)).
 - **Cliente**: `web/src/compartido/api/client.ts` (`get`) con `Accept: application/json`.
-- **Respuesta exitosa**: `200` con un arreglo de proyectos. La interfaz solo usa `id` y `nombre`.
+- **Respuesta exitosa**: `200` con un arreglo de proyectos. El selector usa `id` y `nombre`; la tarjeta del inicio usa además `descripcion`, `fecha_inicio` y `fecha_fin`.
   El orden del arreglo se conserva en la lista y en el selector.
 - **Lista vacía**: `200` con `[]`; se muestra la invitación a crear el primer proyecto en el
   inicio y la opción sintética del proyecto actual en el encabezado.
@@ -91,8 +91,17 @@ Devuelve una unión discriminada:
 ## `ListaProyectos` Contract
 
 - Se monta en `/`, junto al formulario de creación (composición en `rutas.tsx`).
-- **Lista**: un enlace por proyecto, con etiqueta `<nombre> (#<id>)`, a
-  `/projects/<id>/proyecto`, en el orden de la API.
+- **Lista**: una tarjeta por proyecto que es un único enlace a `/projects/<id>/proyecto`, con
+  nombre accesible `<nombre> (#<id>)` (`aria-label`) y la descripción y las fechas como
+  descripción accesible, en el orden de la API.
+- **Tarjeta**: nombre (con `title` igual al nombre completo), `#<id>`, descripción o "Sin
+  descripción", fecha de inicio y de fin o "Sin definir". No muestra estado, Scrum Master ni avance.
+- **Encabezado**: título "Proyectos existentes" y contador "N" (sin filtro) o "N de M" (con
+  filtro activo).
+- **Buscador**: `<input type="search">` con nombre accesible "Buscar proyecto", visible solo con
+  la lista lista y con al menos un proyecto. Filtra por nombre con `filtrarProyectos`; sin
+  coincidencias muestra "Ningún proyecto coincide con la búsqueda".
+- **Composición**: formulario a la izquierda y lista a la derecha; apilados en celular.
 - **Carga**: muestra `LoadingIndicator`.
 - **Error**: muestra `ErrorMessage` con el mensaje del hook; el formulario de creación sigue
   disponible.
