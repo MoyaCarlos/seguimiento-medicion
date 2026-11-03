@@ -460,6 +460,7 @@ Entonces el sistema muestra el detalle completo de ese Sprint (historias, esfuer
 HU-05 (Sprints cerrados), HU-03 (métricas), HU-07 (esfuerzo), HU-08 (defectos), HU-11 (historias completadas).
 ### Notas
 Las historias que se muestran como comprometidas son las asignadas al cerrar el Sprint, completadas o no (ver HU-05).
+Planificada en el Sprint 5, después de HU-03, de la que depende (2026-11-03).
 ### Prioridad
 S (Should have) - Requisito explícito del enunciado (punto 3).
 ### Estado
@@ -528,6 +529,7 @@ Entonces el sistema rechaza la operación y la historia mantiene su estimación 
 HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
 ### Notas
 No bloquea al cálculo de métricas ni al reporte: los Story Points también se cargan de forma directa al editar el Product Backlog (HU-15).
+Planificación (2026-11-03): el backend va en el Sprint 4 (ya mergeado en el PR #237); el frontend (#93) queda en el Sprint 5.
 ### Prioridad
 S (Should have) - Completa el requisito de Planning Poker del enunciado (punto 4).
 ### Estado

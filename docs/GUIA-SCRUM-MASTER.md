@@ -21,14 +21,15 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
   llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
   como stretch. También figuran en el plan de este Sprint HU-20 (autenticación) y
   las mejoras #235 (datos de prueba v2) y #236 (un único Scrum Master por
-  proyecto). El tag `v0.4.0` va el 10-nov.
+  proyecto). El backend de HU-14 ya quedó mergeado (PR #237). El tag `v0.4.0` va el 10-nov.
 - **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
   código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP, que con HU-21 (8) y HU-12 (3) suman 27 SP en cinco
   días hábiles (más el frontend de HU-14), y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
   alcanza, HU-10 sale en una versión mínima (el reporte de un Sprint) antes que
   correr la fecha. El tag `v1.0.0` va el 16-nov; este Sprint no crea `v0.5.0`.
-  HU-21 (permisos por rol) figura en el plan de este Sprint; HU-12 y el backend
-  de HU-14 también forman parte del plan y ya no dependen de que sobre tiempo.
+  HU-21 (permisos por rol), HU-12 (después de HU-03, su dependencia) y el
+  frontend de HU-14 (#93) figuran en el plan de este Sprint y no dependen de que
+  sobre tiempo.
   Solo HU-16, HU-17 y HU-18 entran si sobra tiempo.
 - **Product Backlog: 21 historias** (HU-16 a HU-21 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
