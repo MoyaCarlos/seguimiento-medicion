@@ -19,6 +19,11 @@ type votoRequest struct {
 	Valor int `json:"valor"`
 }
 
+type estimacionRequest struct {
+	actorRequest
+	EstimacionSP int `json:"estimacion_sp"`
+}
+
 type votacionResponse struct {
 	HistoriaID  int64                      `json:"historia_id"`
 	Ronda       int                        `json:"ronda"`

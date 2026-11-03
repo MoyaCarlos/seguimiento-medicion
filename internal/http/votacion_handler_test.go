@@ -61,6 +61,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 		service.NewConsultarVotacion(historias, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(historias, proyectos, votaciones),
 		service.NewIniciarVotacion(historias, proyectos, votaciones),
+		service.NewRegistrarEstimacion(historias, proyectos, votaciones, repository.NewSQLiteSprintRepository(db)),
 	)
 }
 
@@ -389,6 +390,56 @@ func TestVotacionHandler_Consultar_Diferencias(t *testing.T) {
 			if !strings.Contains(rec.Body.String(), c.esperado) {
 				t.Errorf("se esperaba %s en %s", c.esperado, rec.Body.String())
 			}
+		})
+	}
+}
+
+func registrarEstimacionEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/estimacion", bytes.NewBufferString(cuerpo))
+	req.SetPathValue("id", id)
+	handler.RegistrarEstimacion(rec, req)
+	return rec
+}
+
+func TestVotacionHandler_RegistrarEstimacion_Exitoso(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)
+
+	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"estimacion_sp":5`) {
+		t.Errorf("se esperaba la historia con 5 Story Points: %s", rec.Body.String())
+	}
+}
+
+func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
+	casos := map[string]struct {
+		id, cuerpo string
+		previas    []string
+		status     int
+		campo      string
+		mensaje    string
+	}{
+		"id no numérico":                        {"abc", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente con JSON roto":    {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
+		"sin usuario_id":                        {"3", `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
+		"carta fuera de la baraja":              {"3", `{"usuario_id":1,"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},
+		"ronda oculta":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
+		"Product Builder":                       {"3", `{"usuario_id":2,"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"sin votación":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
+
+			rec := registrarEstimacionEn(handler, c.id, c.cuerpo)
+
+			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
 	}
 }

@@ -75,6 +75,7 @@ func main() {
 		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewRegistrarEstimacion(backlogRepo, proyectos, votaciones, sprintRepo),
 	)
 
 	defectosRepo := repository.NewSQLiteDefectoRepository(db)
