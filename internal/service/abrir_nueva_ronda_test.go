@@ -126,3 +126,24 @@ func TestAbrirNuevaRonda_Rechaza(t *testing.T) {
 		})
 	}
 }
+
+// ganaOtraApertura lee la ronda revelada, pero rechaza la escritura: simula que
+// otra apertura ganó entre la lectura y el INSERT.
+type ganaOtraApertura struct {
+	*fakeVotacionRepository
+}
+
+func (ganaOtraApertura) CrearRonda(context.Context, domain.RondaVotacion) (domain.RondaVotacion, error) {
+	return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
+}
+
+func TestAbrirNuevaRonda_PierdeLaCarrera(t *testing.T) {
+	votaciones := ganaOtraApertura{votacionRevelada(votosDe(3, 8)...)}
+	servicio := NewAbrirNuevaRonda(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
+
+	_, err := servicio.Ejecutar(context.Background(), 3, carlos)
+
+	if !errors.Is(err, domain.ErrRondaYaAbierta) {
+		t.Errorf("se esperaba ErrRondaYaAbierta, se obtuvo %v", err)
+	}
+}
