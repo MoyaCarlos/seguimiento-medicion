@@ -18,13 +18,17 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
 - **Sprint 4 (Métricas y defectos)**: del 3 al 9-nov (el 9 es feriado, así que se
   trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10. Para
   llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
-  como stretch. El tag `v0.4.0` va el 10-nov.
+  como stretch. También figuran en el plan de este Sprint HU-20 (autenticación) y
+  las mejoras #235 (datos de prueba v2) y #236 (un único Scrum Master por
+  proyecto). El tag `v0.4.0` va el 10-nov.
 - **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
   código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP en cinco
   días hábiles y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
   alcanza, HU-10 sale en una versión mínima (el reporte de un Sprint) antes que
   correr la fecha. El tag `v1.0.0` va el 16-nov; este Sprint no crea `v0.5.0`.
-  HU-12, HU-14 y las mejoras nuevas (HU-16 a HU-21) entran solo si sobra tiempo.
+  HU-21 (permisos por rol) figura en el plan de este Sprint; HU-12 y el backend
+  de HU-14 también forman parte del plan y ya no dependen de que sobre tiempo.
+  Solo HU-16, HU-17 y HU-18 entran si sobra tiempo.
 - **Product Backlog: 21 historias** (HU-16 a HU-21 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se

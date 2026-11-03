@@ -72,7 +72,7 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 
 ## ***Prioridad 5: Mejoras de calidad del beta testing (Could have / Should have)***
 
-Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado: se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo. HU-20 y HU-21 se planifican antes de la entrega final del 16-nov por decisión del Scrum Master (2026-11-03).
+Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado. HU-16, HU-17 y HU-18 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo.
 
 * **HU-16: Gestión del Equipo del Proyecto (Could have).** Cambiar el rol de un integrante y quitarlo del equipo sin perder lo que aportó; siempre queda al menos un Scrum Master. Extiende HU-04.
 * **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. Extiende HU-04.
@@ -789,7 +789,7 @@ Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**,
 Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
 Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Se deciden en la spec con el Scrum Master, no quien implementa: cómo viaja el token y su vencimiento, dónde viven las sesiones (en la base se vacían en cada deploy de Render), cómo se dan de alta las contraseñas de los usuarios que hoy no tienen y las reglas del nombre de usuario.
 ### Prioridad
-S (Should have) - Hace que cada persona actúe a su nombre y que el voto de Planning Poker sea realmente secreto. Se planifica antes de la entrega final por decisión del Scrum Master (2026-11-03).
+S (Should have) - Hace que cada persona actúe a su nombre y que el voto de Planning Poker sea realmente secreto. Se planifica en el Sprint 4, antes de la entrega final, por decisión del Scrum Master (2026-11-03).
 ### Estado
 Nueva
 ### Valor de Negocio
