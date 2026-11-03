@@ -430,9 +430,9 @@ describe('casos límite del listado y la edición', () => {
 })
 
 const SPRINTS = [
-  { id: 1, estado: 'Finalizado', sprint_goal: 'Sprint viejo' },
-  { id: 2, estado: 'Pendiente', sprint_goal: 'Login' },
-  { id: 3, estado: 'Activo' },
+  { id: 11, numero: 1, estado: 'Finalizado', sprint_goal: 'Sprint viejo' },
+  { id: 12, numero: 2, estado: 'Pendiente', sprint_goal: 'Login' },
+  { id: 13, numero: 3, estado: 'Activo' },
 ]
 
 const conSprints = (...sprints: unknown[]) => () => respuesta(200, sprints)
@@ -449,21 +449,21 @@ describe('asignación de una historia a un Sprint (US3)', () => {
       conHistorias(MUST, SHOULD),
       undefined,
       conSprints(...SPRINTS),
-      () => respuesta(200, { ...MUST, sprint_id: 2 }),
+      () => respuesta(200, { ...MUST, sprint_id: 12 }),
     )
     const user = userEvent.setup()
     abrir()
     await screen.findByRole('heading', { name: MUST.titulo })
 
     await abrirAsignacion(MUST.titulo)
-    await user.selectOptions(await screen.findByLabelText('Sprint'), '2')
+    await user.selectOptions(await screen.findByLabelText('Sprint'), '12')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
-    expect((await screen.findByRole('status')).textContent).toBe('Historia asignada al Sprint #2')
+    expect((await screen.findByRole('status')).textContent).toBe('Historia asignada al Sprint 2')
     const [[ruta, opciones]] = llamadasA(fetchSimulado, RUTA_ASIGNACION)
     expect(ruta).toBe('/backlog/3/sprint')
     expect((opciones as RequestInit).method).toBe('PUT')
-    expect((opciones as RequestInit).body).toBe(JSON.stringify({ sprint_id: 2 }))
+    expect((opciones as RequestInit).body).toBe(JSON.stringify({ sprint_id: 12 }))
     expect(screen.queryByRole('heading', { name: MUST.titulo })).toBeNull()
     expect(
       articulos().map((articulo) => within(articulo).getByRole('heading', { level: 2 }).textContent),
@@ -481,8 +481,8 @@ describe('asignación de una historia a un Sprint (US3)', () => {
     const opciones = within(await screen.findByLabelText('Sprint')).getAllByRole('option')
     expect(opciones.map((opcion) => opcion.textContent)).toEqual([
       'Elegí un Sprint',
-      'Sprint #2 (Pendiente) - Login',
-      'Sprint #3 (Activo)',
+      'Sprint 2 (Pendiente) - Login',
+      'Sprint 3 (Activo)',
     ])
     expect(llamadasA(fetchSimulado, RUTA_SPRINTS)).toHaveLength(1)
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/backlog')
@@ -501,7 +501,7 @@ describe('asignación de una historia a un Sprint (US3)', () => {
     await screen.findByRole('heading', { name: SHOULD.titulo })
 
     await abrirAsignacion(SHOULD.titulo)
-    await user.selectOptions(await screen.findByLabelText('Sprint'), '3')
+    await user.selectOptions(await screen.findByLabelText('Sprint'), '13')
     await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
 
     expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
@@ -527,7 +527,7 @@ describe('asignación de una historia a un Sprint (US3)', () => {
   })
 
   it('US3.4: si no hay Sprints disponibles lo indica dentro del control', async () => {
-    simularApi(conHistorias(MUST), undefined, conSprints({ id: 1, estado: 'Finalizado' }))
+    simularApi(conHistorias(MUST), undefined, conSprints({ id: 11, numero: 1, estado: 'Finalizado' }))
     abrir()
     await screen.findByRole('heading', { name: MUST.titulo })
 
