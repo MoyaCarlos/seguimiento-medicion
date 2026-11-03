@@ -107,8 +107,7 @@ documento registra las decisiones técnicas del diseño.
 |---|---|---|---|
 | `ErrHistoriaNoEncontrada` (existente) | sentinel | 404 | historia inexistente (primero de todo) |
 | `ErrVotacionNoIniciada` (existente) | sentinel | 404 | abrir ronda o registrar sin votación |
-| `ErrNoEsScrumMaster` (existente) | sentinel | 403 | abre o registra quien no es Scrum Master |
-| `ErrNoEsIntegrante` (existente) | sentinel | 403 | abre o registra quien no integra el proyecto |
+| `ErrNoEsScrumMaster` (existente) | sentinel | 403 | abre o registra quien no es Scrum Master, integre o no el proyecto (igual que iniciar y revelar en HU-02) |
 | `ErrVotacionYaIniciada` (existente) | sentinel | 409 | dos aperturas simultáneas de la misma ronda |
 | `ErrRondaNoRevelada` (**nuevo**) | `ValidationError{estado}` | 400 | abrir ronda o registrar con la ronda actual oculta |
 | `ErrHistoriaCompletada` (existente) | `ValidationError{estado}` | 400 | abrir ronda en una historia `Completada` |
