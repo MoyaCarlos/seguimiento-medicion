@@ -13,6 +13,7 @@ const pendiente = (id: number, numero = id): Sprint => ({ id, numero, proyecto_i
 
 const RUTA_LISTADO = /^\/projects\/(\d+)\/sprints$/
 const RUTA_BACKLOG = /^\/sprints\/(\d+)\/backlog$/
+const RUTA_HORAS = /^\/backlog\/\d+\/horas$/
 
 type Otras = (ruta: string, opciones?: RequestInit) => Response | Promise<Response>
 
@@ -28,6 +29,7 @@ function simularApi(
     if (coincide) return Promise.resolve(listado(coincide[1]))
     const coincideBacklog = RUTA_BACKLOG.exec(ruta)
     if (coincideBacklog) return Promise.resolve(backlog(coincideBacklog[1]))
+    if (RUTA_HORAS.test(ruta)) return Promise.resolve(respuesta(200, { total_horas: 1.5, registros: [] }))
     return Promise.resolve(otras ? otras(ruta, opciones) : respuesta(404, { mensaje: 'no encontrado' }))
   })
   vi.stubGlobal('fetch', simulado)
@@ -284,7 +286,7 @@ describe('pantalla de Sprints', () => {
 })
 
 describe('pantalla de Sprints: cambio de estado de historias', () => {
-  const historia = { id: 7, titulo: 'Registrar horas', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 }
+  const historia = { id: 7, titulo: 'Exportar reporte', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 }
 
   it('US3.1: solo los Sprints Activos muestran las acciones de las historias', async () => {
     const activo: Sprint = { ...pendiente(2), estado: 'Activo' }
@@ -292,12 +294,47 @@ describe('pantalla de Sprints: cambio de estado de historias', () => {
     simularApi(conSprints(activo, pendiente(3), finalizado), undefined, () => respuesta(200, [historia]))
 
     abrir()
-    await waitFor(() => expect(within(seccion('Activo')).getByText('Registrar horas')).toBeTruthy())
-    await waitFor(() => expect(within(seccion('Pendiente')).getByText('Registrar horas')).toBeTruthy())
-    await waitFor(() => expect(within(seccion('Finalizado')).getByText('Registrar horas')).toBeTruthy())
+    await waitFor(() => expect(within(seccion('Activo')).getByText('Exportar reporte')).toBeTruthy())
+    await waitFor(() => expect(within(seccion('Pendiente')).getByText('Exportar reporte')).toBeTruthy())
+    await waitFor(() => expect(within(seccion('Finalizado')).getByText('Exportar reporte')).toBeTruthy())
 
     expect(within(seccion('Activo')).getByRole('button', { name: 'Iniciar' })).toBeTruthy()
     expect(within(seccion('Pendiente')).queryByRole('button', { name: 'Iniciar' })).toBeNull()
     expect(within(seccion('Finalizado')).queryByRole('button', { name: 'Iniciar' })).toBeNull()
+  })
+})
+
+describe('pantalla de Sprints: registro de horas', () => {
+  const historia = { id: 7, titulo: 'Exportar reporte', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 }
+
+  it('FR-001: "Registrar horas" solo aparece en el Sprint Activo, y el total en todos', async () => {
+    const activo: Sprint = { ...pendiente(2), estado: 'Activo', fecha_fin: '2026-11-09' }
+    const finalizado: Sprint = { ...pendiente(4), estado: 'Finalizado' }
+    simularApi(conSprints(activo, pendiente(3), finalizado), undefined, () => respuesta(200, [historia]))
+
+    abrir()
+
+    for (const nombre of ['Activo', 'Pendiente', 'Finalizado']) {
+      expect(await within(seccion(nombre)).findByText('Esfuerzo real: 1,5 h')).toBeTruthy()
+    }
+    expect(within(seccion('Activo')).getByRole('button', { name: 'Registrar horas' })).toBeTruthy()
+    expect(within(seccion('Pendiente')).queryByRole('button', { name: 'Registrar horas' })).toBeNull()
+    expect(within(seccion('Finalizado')).queryByRole('button', { name: 'Registrar horas' })).toBeNull()
+  })
+
+  it('al cerrar el Sprint desaparece "Registrar horas" y sigue el total de la historia completada', async () => {
+    const activo: Sprint = { ...pendiente(2), estado: 'Activo', fecha_fin: '2026-11-09' }
+    simularApi(
+      conSprints(activo),
+      () => respuesta(200, { ...activo, estado: 'Finalizado' }),
+      () => respuesta(200, [{ ...historia, estado: 'Completada' }]),
+    )
+    abrir()
+    await within(seccion('Activo')).findByRole('button', { name: 'Registrar horas' })
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cerrar Sprint' }))
+
+    expect(await within(seccion('Finalizado')).findByText('Esfuerzo real: 1,5 h')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Registrar horas' })).toBeNull()
   })
 })

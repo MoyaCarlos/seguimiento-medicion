@@ -49,7 +49,7 @@ func consultar(t *testing.T, servicio *ConsultarVotacion, consultanteID int64) V
 }
 
 func TestConsultarVotacion_HistoriaInexistente(t *testing.T) {
-	servicio := NewConsultarVotacion(historias(), equipoDelProyecto(), votacionAbierta())
+	servicio := NewConsultarVotacion(historias(), equipoDelProyecto(), votacionAbierta(), domain.CoincidenciaExacta{})
 
 	_, err := servicio.Ejecutar(context.Background(), 999, carlos)
 
@@ -59,7 +59,7 @@ func TestConsultarVotacion_HistoriaInexistente(t *testing.T) {
 }
 
 func TestConsultarVotacion_SinVotacion(t *testing.T) {
-	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), &fakeVotacionRepository{})
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), &fakeVotacionRepository{}, domain.CoincidenciaExacta{})
 
 	_, err := servicio.Ejecutar(context.Background(), 3, carlos)
 
@@ -70,7 +70,7 @@ func TestConsultarVotacion_SinVotacion(t *testing.T) {
 
 func TestConsultarVotacion_Abierta_SoloElVotoPropioEsVisible(t *testing.T) {
 	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 8})
-	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
 
 	vista := consultar(t, servicio, candela)
 
@@ -86,7 +86,7 @@ func TestConsultarVotacion_Abierta_SoloElVotoPropioEsVisible(t *testing.T) {
 
 func TestConsultarVotacion_Abierta_SinConsultanteIntegrante(t *testing.T) {
 	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 8})
-	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
 
 	for _, consultanteID := range []int64{0, ajeno} {
 		vista := consultar(t, servicio, consultanteID)
@@ -99,7 +99,7 @@ func TestConsultarVotacion_IntegranteSumadoConLaRondaAbierta(t *testing.T) {
 	equipo := equipoDelProyecto()
 	equipo.listaMiembros = append([]domain.Member{{UserID: 4, ProjectID: 1, Nombre: "Ana", Role: domain.RolProductBuilder}}, equipo.listaMiembros...)
 	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3})
-	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipo, votaciones)
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipo, votaciones, domain.CoincidenciaExacta{})
 
 	vista := consultar(t, servicio, carlos)
 
@@ -109,7 +109,7 @@ func TestConsultarVotacion_IntegranteSumadoConLaRondaAbierta(t *testing.T) {
 func TestConsultarVotacion_Revelada_TodosLosValoresYElPromedio(t *testing.T) {
 	votaciones := votacionRevelada(
 		domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 5}, domain.Voto{UsuarioID: jimena, Valor: 8})
-	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
 
 	vista := consultar(t, servicio, ajeno)
 
@@ -126,7 +126,7 @@ func TestConsultarVotacion_NoEscribe(t *testing.T) {
 	historiasRepo := historias(historiaDelBacklog())
 	equipo := equipoDelProyecto()
 	votaciones := votacionAbierta(domain.Voto{UsuarioID: candela, Valor: 8})
-	servicio := NewConsultarVotacion(historiasRepo, equipo, votaciones)
+	servicio := NewConsultarVotacion(historiasRepo, equipo, votaciones, domain.CoincidenciaExacta{})
 
 	consultar(t, servicio, candela)
 
@@ -136,5 +136,41 @@ func TestConsultarVotacion_NoEscribe(t *testing.T) {
 	ronda := votaciones.rondas[3]
 	if ronda.ReveladaEn != nil || len(ronda.Votos) != 1 || ronda.Votos[0] != (domain.Voto{UsuarioID: candela, Valor: 8}) {
 		t.Errorf("la consulta no debía cambiar la ronda, quedó %+v", ronda)
+	}
+}
+
+func TestConsultarVotacion_Oculta_NoInformaDiferencias(t *testing.T) {
+	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 8})
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
+
+	for _, consultanteID := range []int64{0, candela} {
+		if vista := consultar(t, servicio, consultanteID); vista.Diferencias != nil {
+			t.Errorf("una ronda oculta no debía informar diferencias, se obtuvo %+v", vista.Diferencias)
+		}
+	}
+}
+
+func TestConsultarVotacion_Revelada_InformaDiferencias(t *testing.T) {
+	votaciones := votacionRevelada(
+		domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 5}, domain.Voto{UsuarioID: jimena, Valor: 8})
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
+
+	vista := consultar(t, servicio, ajeno)
+
+	esperadas := domain.Diferencias{Hay: true, Minimo: 3, Maximo: 8}
+	if vista.Diferencias == nil || *vista.Diferencias != esperadas {
+		t.Errorf("se esperaba %+v, se obtuvo %+v", esperadas, vista.Diferencias)
+	}
+}
+
+func TestConsultarVotacion_Revelada_SinDiferencias(t *testing.T) {
+	votaciones := votacionRevelada(
+		domain.Voto{UsuarioID: carlos, Valor: 5}, domain.Voto{UsuarioID: candela, Valor: 5}, domain.Voto{UsuarioID: jimena, Valor: 5})
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones, domain.CoincidenciaExacta{})
+
+	vista := consultar(t, servicio, carlos)
+
+	if vista.Diferencias == nil || vista.Diferencias.Hay {
+		t.Errorf("se esperaba que no hubiera diferencias, se obtuvo %+v", vista.Diferencias)
 	}
 }

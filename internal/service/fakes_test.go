@@ -220,6 +220,12 @@ func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyect
 type fakeSprintsQueCuentan struct {
 	*repository.SprintRepositoryEnMemoria
 	lecturas int
+	listados int
+}
+
+func (f *fakeSprintsQueCuentan) ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.Sprint, error) {
+	f.listados++
+	return f.SprintRepositoryEnMemoria.ListarPorProyecto(ctx, proyectoID)
 }
 
 func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
@@ -227,27 +233,44 @@ func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (dom
 	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
 }
 
-// fakeVotacionRepository guarda una ronda por historia y simula las escrituras
-// condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
-// cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
+// fakeVotacionRepository guarda la ronda actual de cada historia y las anteriores,
+// y simula las escrituras condicionales del adaptador SQLite (research.md R6).
+// Devuelve copias, así un cambio en la ronda del service no llega acá sin pasar
+// por GuardarVoto.
 type fakeVotacionRepository struct {
-	rondas map[int64]domain.RondaVotacion
-	err    error
+	rondas     map[int64]domain.RondaVotacion
+	anteriores []domain.RondaVotacion
+	err        error
 }
 
 func (f *fakeVotacionRepository) CrearRonda(_ context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error) {
 	if f.err != nil {
 		return domain.RondaVotacion{}, f.err
 	}
-	if _, ok := f.rondas[r.HistoriaID]; ok {
+	actual, ok := f.rondas[r.HistoriaID]
+	if ok && r.Numero <= actual.Numero {
 		return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
 	}
 	if f.rondas == nil {
 		f.rondas = map[int64]domain.RondaVotacion{}
 	}
-	r.ID = int64(len(f.rondas) + 1)
+	if ok {
+		f.anteriores = append(f.anteriores, actual)
+	}
+	r.ID = f.siguienteID()
 	f.rondas[r.HistoriaID] = copiaDeRonda(r)
 	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) siguienteID() int64 {
+	var mayor int64
+	for _, r := range f.rondas {
+		mayor = max(mayor, r.ID)
+	}
+	for _, r := range f.anteriores {
+		mayor = max(mayor, r.ID)
+	}
+	return mayor + 1
 }
 
 func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaID int64) (domain.RondaVotacion, error) {
@@ -289,6 +312,22 @@ func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64
 	r.ReveladaEn = &en
 	f.rondas[r.HistoriaID] = r
 	return nil
+}
+
+func (f *fakeVotacionRepository) ListarRondasReveladas(_ context.Context, historiaID int64) ([]domain.RondaVotacion, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	rondas := make([]domain.RondaVotacion, 0)
+	for _, r := range f.anteriores {
+		if r.HistoriaID == historiaID && r.Revelada() {
+			rondas = append(rondas, copiaDeRonda(r))
+		}
+	}
+	if actual, ok := f.rondas[historiaID]; ok && actual.Revelada() {
+		rondas = append(rondas, copiaDeRonda(actual))
+	}
+	return rondas, nil
 }
 
 func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {
@@ -343,6 +382,63 @@ func (f *fakeAsignacionRepository) llamadasAAsignar() int {
 	return f.asignaciones
 }
 
+// fakeDefectoRepository guarda los defectos en memoria, asigna IDs y cuenta
+// las escrituras.
+type fakeDefectoRepository struct {
+	defectos     []domain.Defecto
+	titulos      map[int64]string
+	registros    int
+	resoluciones int
+	listados     int
+	errRegistrar error
+	errResolver  error
+}
+
+func (f *fakeDefectoRepository) Registrar(_ context.Context, d domain.Defecto) (domain.Defecto, error) {
+	f.registros++
+	if f.errRegistrar != nil {
+		return domain.Defecto{}, f.errRegistrar
+	}
+	d.ID = int64(len(f.defectos) + 1)
+	d.CreadoEn = time.Now().UTC()
+	f.defectos = append(f.defectos, d)
+	return d, nil
+}
+
+func (f *fakeDefectoRepository) ObtenerPorID(_ context.Context, id int64) (domain.DefectoDetalle, error) {
+	for _, d := range f.defectos {
+		if d.ID == id {
+			return domain.DefectoDetalle{Defecto: d, TituloHistoria: f.titulos[d.HistoriaID]}, nil
+		}
+	}
+	return domain.DefectoDetalle{}, domain.ErrDefectoNoEncontrado
+}
+
+func (f *fakeDefectoRepository) Resolver(_ context.Context, d domain.Defecto) error {
+	f.resoluciones++
+	if f.errResolver != nil {
+		return f.errResolver
+	}
+	for i := range f.defectos {
+		if f.defectos[i].ID == d.ID {
+			f.defectos[i] = d
+			return nil
+		}
+	}
+	return domain.ErrDefectoNoEncontrado
+}
+
+func (f *fakeDefectoRepository) ListarPorProyecto(_ context.Context, proyectoID int64) ([]domain.DefectoDetalle, error) {
+	f.listados++
+	detalle := make([]domain.DefectoDetalle, 0)
+	for _, d := range f.defectos {
+		if d.ProyectoID == proyectoID {
+			detalle = append(detalle, domain.DefectoDetalle{Defecto: d, TituloHistoria: f.titulos[d.HistoriaID]})
+		}
+	}
+	return detalle, nil
+}
+
 // llamadaCambioEstado registra los argumentos de una llamada a CambiarEstado.
 type llamadaCambioEstado struct {
 	desde, hacia domain.Estado
@@ -385,4 +481,30 @@ func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado 
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return slices.Clone(f.llamadas)
+}
+
+// fakeEstimacionRepository guarda las historias y cuenta las escrituras de la
+// estimación, para comprobar que un rechazo no escribe.
+type fakeEstimacionRepository struct {
+	historias  map[int64]domain.BacklogItem
+	escrituras int
+}
+
+func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int) error {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.ErrHistoriaNoEncontrada
+	}
+	h.EstimacionSP = &sp
+	f.historias[id] = h
+	f.escrituras++
+	return nil
 }

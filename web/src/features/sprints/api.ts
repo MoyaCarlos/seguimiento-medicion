@@ -1,4 +1,5 @@
 import { get, post, put } from '../../compartido/api/client'
+import type { DatosImputacion, EsfuerzoReal, IntegranteDeProyecto } from './horas'
 import type { HistoriaDeSprint, Sprint } from './sprint'
 
 type DatosInicio = { sprint_goal: string; fecha_inicio: string; fecha_fin: string }
@@ -17,3 +18,12 @@ export const consultarSprintBacklog = (sprintId: number) =>
 
 export const cambiarEstadoHistoria = (historiaId: number, estado: 'En progreso' | 'Completada') =>
   put<HistoriaDeSprint>(`/backlog/${historiaId}/estado`, { estado })
+
+export const consultarEsfuerzo = (historiaId: number) =>
+  get<EsfuerzoReal>(`/backlog/${historiaId}/horas`)
+
+export const imputarHoras = (historiaId: number, datos: DatosImputacion) =>
+  post<unknown>(`/backlog/${historiaId}/horas`, datos)
+
+export const listarIntegrantes = (proyectoId: number) =>
+  get<IntegranteDeProyecto[]>(`/projects/${proyectoId}/members`)

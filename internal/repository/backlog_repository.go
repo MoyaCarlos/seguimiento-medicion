@@ -26,6 +26,15 @@ type HistoriaRepository interface {
 	Actualizar(ctx context.Context, item domain.BacklogItem) error
 }
 
+// EstimacionHistoriaRepository es el puerto que usa el registro de la estimación
+// acordada. Separado de HistoriaRepository (ISP): escribe solo los Story Points,
+// así no pisa una edición simultánea. GuardarEstimacion devuelve
+// domain.ErrHistoriaNoEncontrada si no afectó ninguna fila.
+type EstimacionHistoriaRepository interface {
+	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
+	GuardarEstimacion(ctx context.Context, id int64, sp int) error
+}
+
 // AsignacionHistoriaRepository es el puerto que usa la asignación de una
 // historia a un Sprint. Separado de HistoriaRepository (ISP): la edición no
 // asigna Sprints. AsignarASprint solo asigna si la historia no tiene Sprint y

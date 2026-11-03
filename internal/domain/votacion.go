@@ -31,6 +31,14 @@ func NuevaRonda(historiaID int64) (RondaVotacion, error) {
 	return RondaVotacion{HistoriaID: historiaID, Numero: 1}, nil
 }
 
+// Siguiente crea la ronda que sigue a esta, que tiene que estar revelada.
+func (r RondaVotacion) Siguiente() (RondaVotacion, error) {
+	if !r.Revelada() {
+		return RondaVotacion{}, ErrRondaNoRevelada
+	}
+	return RondaVotacion{HistoriaID: r.HistoriaID, Numero: r.Numero + 1}, nil
+}
+
 // Votar registra el voto del usuario o reemplaza el que ya tenía.
 func (r *RondaVotacion) Votar(usuarioID int64, valor int) error {
 	if r.Revelada() {
@@ -105,4 +113,42 @@ func CalcularPromedio(valores []int) Promedio {
 		}
 	}
 	return Promedio{Exacto: exacto, CartaSugerida: carta}
+}
+
+// ReglaConsenso decide si los votos de una ronda revelada tienen diferencias.
+type ReglaConsenso interface {
+	HayDiferencias(valores []int) bool
+}
+
+// CoincidenciaExacta considera diferencia cualquier voto que no coincida, sin
+// importar la distancia entre las cartas.
+type CoincidenciaExacta struct{}
+
+func (CoincidenciaExacta) HayDiferencias(valores []int) bool {
+	return slices.ContainsFunc(valores, func(v int) bool { return v != valores[0] })
+}
+
+// Diferencias es el resultado de comparar los votos de una ronda revelada.
+// Minimo y Maximo solo tienen sentido si Hay es true.
+type Diferencias struct {
+	Hay            bool
+	Minimo, Maximo int
+}
+
+// Diferencias compara los votos según la regla; false si la ronda no está revelada.
+func (r RondaVotacion) Diferencias(regla ReglaConsenso) (Diferencias, bool) {
+	if !r.Revelada() {
+		return Diferencias{}, false
+	}
+	if len(r.Votos) == 0 {
+		return Diferencias{}, true
+	}
+	valores := make([]int, len(r.Votos))
+	for i, v := range r.Votos {
+		valores[i] = v.Valor
+	}
+	if !regla.HayDiferencias(valores) {
+		return Diferencias{}, true
+	}
+	return Diferencias{Hay: true, Minimo: slices.Min(valores), Maximo: slices.Max(valores)}, true
 }
