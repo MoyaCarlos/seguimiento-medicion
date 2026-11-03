@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -45,5 +46,9 @@ func (s *AbrirNuevaRonda) Ejecutar(ctx context.Context, historiaID, usuarioID in
 	if err != nil {
 		return domain.RondaVotacion{}, err
 	}
-	return s.votaciones.CrearRonda(ctx, siguiente)
+	ronda, err := s.votaciones.CrearRonda(ctx, siguiente)
+	if errors.Is(err, domain.ErrVotacionYaIniciada) {
+		return domain.RondaVotacion{}, domain.ErrRondaYaAbierta
+	}
+	return ronda, err
 }
