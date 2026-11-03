@@ -69,7 +69,7 @@ Reemplaza el stub `cargarSprintsIniciales()` de la spec [011](../011-hu-05-front
 - **FR-F04**: **WHEN** cambia el `:id` del proyecto, **THEN** el sistema **shall** volver a cargar y no dejar a la vista los Sprints del anterior.
 - **FR-F05**: el sistema **shall** dejar de mostrar el texto de limitación de la spec 011 (FR-018).
 - **FR-F06**: **WHEN** se crea, inicia o cierra un Sprint, **THEN** el sistema **shall** seguir actualizándolo en el estado (`guardarSprint`).
-- Se muestra "Sprint #<id>"; el campo `numero` es el issue #129.
+- Se muestra "Sprint <numero>" (decidido en el issue #129 y aplicado por la spec 024).
 
 ### Criterios de aceptación
 
