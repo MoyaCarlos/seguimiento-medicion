@@ -100,6 +100,7 @@ func TestRegistrarEstimacion_Rechaza(t *testing.T) {
 		{"carta fuera de la baraja", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, carlos, 4, domain.ErrEstimacionInvalida},
 		{"ronda oculta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
 		{"sin votación", escenarioEstimacion{sp: intPtr(3), votaciones: &fakeVotacionRepository{}}, 3, carlos, 5, domain.ErrVotacionNoIniciada},
+		{"ronda anterior revelada y actual abierta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionConRondaUnoReveladaYDosAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
 		{"valor distinto con Sprint Activo", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintActivo, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
 		{"valor distinto con Sprint Finalizado", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
 	}

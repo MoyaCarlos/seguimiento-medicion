@@ -417,6 +417,16 @@ func TestVotacionHandler_RegistrarEstimacion_Exitoso(t *testing.T) {
 	}
 }
 
+const sprintActivo = "INSERT INTO sprints (id, proyecto_id, estado, sprint_goal, fecha_inicio, fecha_fin) VALUES (1, 1, 'Activo', 'Objetivo', '2026-10-01', '2026-10-15')"
+
+func TestVotacionHandler_RegistrarEstimacion_Congelada(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintActivo, "UPDATE historias SET sprint_id = 1, estimacion_sp = 3 WHERE id = 3")
+
+	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+
+	esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado")
+}
+
 func TestVotacionHandler_RegistrarEstimacion_ValorNoEntero(t *testing.T) {
 	casos := map[string]string{
 		"decimal":        `{"usuario_id":1,"estimacion_sp":2.5}`,
