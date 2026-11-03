@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { agruparPorEstado, cargarSprintsIniciales, guardarSprint, type Sprint } from './sprint'
+import { agruparPorEstado, guardarSprint, type Sprint } from './sprint'
 
-const sprint = (id: number, estado: Sprint['estado']): Sprint => ({ id, proyecto_id: 1, estado })
+const sprint = (id: number, estado: Sprint['estado']): Sprint => ({ id, numero: id, proyecto_id: 1, estado })
 
 describe('agruparPorEstado', () => {
   it('devuelve las tres claves vacías si no hay Sprints', () => {
@@ -42,11 +42,5 @@ describe('guardarSprint', () => {
     guardarSprint(lista, sprint(2, 'Pendiente'))
 
     expect(lista).toEqual([sprint(1, 'Pendiente')])
-  })
-})
-
-describe('cargarSprintsIniciales', () => {
-  it('devuelve una lista vacía mientras no exista el listado', () => {
-    expect(cargarSprintsIniciales()).toEqual([])
   })
 })

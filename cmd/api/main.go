@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -36,6 +38,8 @@ func main() {
 		service.NewConsultarProductBacklog(proyectos, backlogRepo),
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewEditarHistoria(backlogRepo, sprintRepo),
+		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo),
+		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, time.Now),
 	)
 	crearProyecto := service.NewCrearProyecto(proyectos, usuarios)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
@@ -50,7 +54,31 @@ func main() {
 		service.NewCrearSprint(proyectos, sprintRepo),
 		service.NewIniciarSprint(sprintRepo),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
+		service.NewConsultarSprints(proyectos, sprintRepo),
+		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
 		sprintRepo,
+	)
+
+	horasRepo := repository.NewSQLiteRegistroHorasRepository(db)
+	imputarHoras := service.NewImputarHoras(backlogRepo, sprintRepo, proyectos, horasRepo)
+	horasHandler := apihttp.NewHorasHandler(
+		imputarHoras,
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewConsultarEsfuerzoReal(backlogRepo, horasRepo),
+	)
+
+	votaciones := repository.NewSQLiteVotacionRepository(db)
+	votacionHandler := apihttp.NewVotacionHandler(
+		service.NewObtenerHistoria(backlogRepo),
+		service.NewVotar(backlogRepo, proyectos, votaciones),
+		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
+	)
+
+	demoHandler := apihttp.NewDemoHandler(
+		func() bool { return cfg.DemoHabilitado },
+		demo.NewCargador(db, time.Now),
 	)
 
 	mux := http.NewServeMux()
@@ -60,6 +88,14 @@ func main() {
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
+	mux.HandleFunc("GET /backlog/{id}/horas", horasHandler.ConsultarEsfuerzo)
+	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
+	mux.HandleFunc("POST /backlog/{id}/votacion", votacionHandler.Iniciar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
+	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
+	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
 	mux.HandleFunc("POST /projects", projectHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}", projectHandler.Obtener)
@@ -67,9 +103,13 @@ func main() {
 	mux.HandleFunc("PUT /projects/{id}", projectHandler.Editar)
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
+	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
+	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
+
+	demoHandler.Registrar(mux)
 
 	log.Printf("listening on :%s", cfg.Puerto)
 	if err := http.ListenAndServe(":"+cfg.Puerto, apihttp.ServirSPA(mux, cfg.DirWeb)); err != nil {

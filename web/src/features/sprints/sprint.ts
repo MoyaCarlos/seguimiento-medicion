@@ -2,6 +2,7 @@ export const ESTADOS = ['Pendiente', 'Activo', 'Finalizado'] as const
 
 export type Sprint = {
   id: number
+  numero: number
   proyecto_id: number
   sprint_goal?: string | null
   fecha_inicio?: string | null
@@ -23,6 +24,18 @@ export function guardarSprint(sprints: Sprint[], sprint: Sprint): Sprint[] {
   return existe ? sprints.map((s) => (s.id === sprint.id ? sprint : s)) : [...sprints, sprint]
 }
 
-export function cargarSprintsIniciales(): Sprint[] {
-  return []
+export type HistoriaDeSprint = {
+  id: number
+  titulo: string
+  prioridad: 'M' | 'S' | 'C' | 'W'
+  estado: 'Nueva' | 'En progreso' | 'Completada'
+  estimacion_sp: number | null
+  fecha_finalizacion?: string | null
+}
+
+export const ETIQUETAS_PRIORIDAD: Record<HistoriaDeSprint['prioridad'], string> = {
+  M: 'Must have',
+  S: 'Should have',
+  C: 'Could have',
+  W: "Won't have",
 }

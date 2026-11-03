@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Votación de Planning Poker (HU-02)
+  version: 1.0.0
+  description: >-
+    Contrato de la votación de esfuerzo de una historia: iniciarla, votar en
+    secreto, revelar y consultar la ronda actual. La API no tiene
+    autenticación: quien actúa se indica con `usuario_id` (el `id` que devuelve
+    GET /projects/{id}/members). Detectar diferencias, abrir nuevas rondas y
+    registrar la estimación acordada son de HU-14.
+paths:
+  /backlog/{id}/votacion:
+    post:
+      summary: Iniciar la votación de una historia
+      description: >-
+        Abre la ronda 1. Solo el Scrum Master del proyecto de la historia, y
+        solo si la historia no está Completada ni tiene ya una votación.
+      operationId: iniciarVotacion
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Actor'
+            example:
+              usuario_id: 1
+      responses:
+        '201':
+          description: Votación iniciada (ronda 1, sin votos).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Votacion'
+        '400':
+          description: >-
+            Identificador inválido, JSON inválido, `usuario_id` faltante
+            (campo `usuario_id`) o historia Completada (campo `estado`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Quien inicia no es Scrum Master del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe (domina sobre cualquier otro error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: La historia ya tiene una votación.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Consultar la ronda actual
+      description: >-
+        Antes de revelar, `valor` es null para todos salvo para quien consulta
+        (su propio voto). Después de revelar, muestra todos los valores y el
+        promedio. Sin `usuario_id`, o con el de alguien que no es integrante
+        del proyecto, todos los valores quedan ocultos (no hay voto propio).
+      operationId: consultarVotacion
+      parameters:
+        - $ref: '#/components/parameters/ID'
+        - name: usuario_id
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Estado de la ronda actual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Votacion'
+              examples:
+                oculta:
+                  summary: Consulta Candela (votó 8); Carlos votó, Jimena falta
+                  value:
+                    historia_id: 3
+                    ronda: 1
+                    revelada_en: null
+                    integrantes:
+                      - { usuario_id: 1, nombre: Carlos, rol: scrum_master, ya_voto: true, valor: null }
+                      - { usuario_id: 2, nombre: Candela, rol: product_builder, ya_voto: true, valor: 8 }
+                      - { usuario_id: 3, nombre: Jimena, rol: product_builder, ya_voto: false, valor: null }
+                    promedio: null
+                revelada:
+                  value:
+                    historia_id: 3
+                    ronda: 1
+                    revelada_en: '2026-10-27T15:04:05Z'
+                    integrantes:
+                      - { usuario_id: 1, nombre: Carlos, rol: scrum_master, ya_voto: true, valor: 3 }
+                      - { usuario_id: 2, nombre: Candela, rol: product_builder, ya_voto: true, valor: 8 }
+                      - { usuario_id: 3, nombre: Jimena, rol: product_builder, ya_voto: true, valor: 5 }
+                    promedio: { exacto: 5.33, carta_sugerida: 5 }
+        '400':
+          description: Identificador o `usuario_id` inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe o no tiene votación iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /backlog/{id}/votacion/votos:
+    post:
+      summary: Votar (o cambiar el voto) en la ronda actual
+      description: >-
+        Registra la carta de un integrante. Si ya había votado en esta ronda,
+        reemplaza su voto. La respuesta es la vista de quien votó.
+      operationId: votar
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VotoRequest'
+            example:
+              usuario_id: 2
+              valor: 8
+      responses:
+        '200':
+          description: Voto registrado; los votos de los demás siguen ocultos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Votacion'
+        '400':
+          description: >-
+            Identificador o JSON inválido, `usuario_id` faltante, carta fuera de
+            la baraja (campo `valor`) o ronda ya revelada (campo `estado`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Quien vota no es integrante del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe o no tiene votación iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /backlog/{id}/votacion/revelar:
+    post:
+      summary: Revelar la ronda actual
+      description: Solo el Scrum Master, y solo cuando votaron todos los integrantes.
+      operationId: revelarVotacion
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Actor'
+            example:
+              usuario_id: 1
+      responses:
+        '200':
+          description: Ronda revelada, con todos los valores y el promedio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Votacion'
+        '400':
+          description: >-
+            Identificador o JSON inválido, `usuario_id` faltante, falta votar
+            algún integrante (campo `votos`) o la ronda ya fue revelada (campo
+            `estado`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Quien revela no es Scrum Master del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe o no tiene votación iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  parameters:
+    ID:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la historia.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    Actor:
+      type: object
+      required: [usuario_id]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+          minimum: 1
+    VotoRequest:
+      type: object
+      required: [usuario_id, valor]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+          minimum: 1
+        valor:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13, 21]
+    Votacion:
+      type: object
+      required: [historia_id, ronda, revelada_en, integrantes, promedio]
+      properties:
+        historia_id:
+          type: integer
+          format: int64
+        ronda:
+          type: integer
+          description: Número de la ronda actual (1 en HU-02).
+        revelada_en:
+          type: string
+          format: date-time
+          nullable: true
+          description: RFC 3339 UTC; null mientras los votos están ocultos.
+        integrantes:
+          type: array
+          description: Todos los integrantes del proyecto, ordenados por usuario_id.
+          items:
+            $ref: '#/components/schemas/VotoDeIntegrante'
+        promedio:
+          allOf:
+            - $ref: '#/components/schemas/Promedio'
+          nullable: true
+    VotoDeIntegrante:
+      type: object
+      required: [usuario_id, nombre, rol, ya_voto, valor]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        rol:
+          type: string
+          enum: [scrum_master, product_builder]
+        ya_voto:
+          type: boolean
+        valor:
+          type: integer
+          nullable: true
+          description: >-
+            null si no votó o si el voto está oculto para quien consulta
+            (ya_voto true y valor null = "Oculto").
+    Promedio:
+      type: object
+      required: [exacto, carta_sugerida]
+      properties:
+        exacto:
+          type: number
+          description: Media aritmética redondeada a 2 decimales.
+        carta_sugerida:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13, 21]
+          description: Carta más cercana a `exacto`; ante empate, la mayor.
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

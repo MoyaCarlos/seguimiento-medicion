@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -21,6 +22,14 @@ type editarHistoriaRequest struct {
 	EstimacionSP        *json.Number `json:"estimacion_sp"`
 }
 
+type asignarSprintRequest struct {
+	SprintID *int64 `json:"sprint_id"`
+}
+
+type cambiarEstadoRequest struct {
+	Estado string `json:"estado"`
+}
+
 type historiaResponse struct {
 	ID                  int64   `json:"id"`
 	ProyectoID          int64   `json:"proyecto_id"`
@@ -31,6 +40,8 @@ type historiaResponse struct {
 	Estado              string  `json:"estado"`
 	ValorNegocio        *int    `json:"valor_negocio"`
 	EstimacionSP        *int    `json:"estimacion_sp"`
+	SprintID            *int64  `json:"sprint_id"`
+	FechaFinalizacion   *string `json:"fecha_finalizacion"`
 }
 
 type errorResponse struct {
@@ -39,6 +50,11 @@ type errorResponse struct {
 }
 
 func aRespuesta(item domain.BacklogItem) historiaResponse {
+	var fechaFinalizacion *string
+	if item.FechaFinalizacion != nil {
+		fecha := item.FechaFinalizacion.Format(time.DateOnly)
+		fechaFinalizacion = &fecha
+	}
 	return historiaResponse{
 		ID:                  item.ID,
 		ProyectoID:          item.ProyectoID,
@@ -49,5 +65,7 @@ func aRespuesta(item domain.BacklogItem) historiaResponse {
 		Estado:              string(item.Estado),
 		ValorNegocio:        item.ValorNegocio,
 		EstimacionSP:        item.EstimacionSP,
+		SprintID:            item.SprintID,
+		FechaFinalizacion:   fechaFinalizacion,
 	}
 }

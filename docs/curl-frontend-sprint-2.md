@@ -57,6 +57,20 @@ curl -X POST http://localhost:8080/sprints/1/iniciar \
   -d '{"sprint_goal":"Validar el seguimiento","fecha_inicio":"2026-10-20","fecha_fin":"2026-11-03"}'
 ```
 
+### Cerrar un Sprint
+
+Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
+ejemplo; reemplazalo por el id real.
+
+```bash
+curl -X POST http://localhost:8080/sprints/1/cerrar
+```
+
+La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
+vuelven al Product Backlog en estado `Nueva`. Cerrar un Sprint que no está Activo
+responde 400 con `{"campo":"estado","mensaje":"solo se puede cerrar un Sprint activo"}`.
+Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
+
 ### Crear una historia
 
 ```bash
@@ -64,6 +78,48 @@ curl -X POST http://localhost:8080/backlog \
   -H 'Content-Type: application/json' \
   -d '{"proyecto_id":1,"titulo":"Validar dashboard","descripcion":"Historia de ejemplo","prioridad":"M"}'
 ```
+
+### Asignar una historia a un Sprint
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/sprint \
+  -H 'Content-Type: application/json' \
+  -d '{"sprint_id":1}'
+```
+
+La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 400 con
+`{"campo":"sprint_id","mensaje":"la historia ya pertenece a un Sprint"}`.
+
+### Consultar el Sprint Backlog
+
+```bash
+curl http://localhost:8080/sprints/1/backlog
+```
+
+Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
+no tiene historias. Si el Sprint no existe, responde 404 con
+`{"mensaje":"sprint no encontrado"}`.
+
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"En progreso"}'
+```
+
+```bash
+curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H 'Content-Type: application/json' \
+  -d '{"estado":"Completada"}'
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
 
 ### Consultar y actualizar el proyecto
 
@@ -122,6 +178,20 @@ curl -X POST http://localhost:8080/sprints/1/iniciar ^
   -d "{\"sprint_goal\":\"Validar el seguimiento\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-11-03\"}"
 ```
 
+### Cerrar un Sprint
+
+Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
+ejemplo; reemplazalo por el id real.
+
+```bat
+curl -X POST http://localhost:8080/sprints/1/cerrar
+```
+
+La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
+vuelven al Product Backlog en estado `Nueva`. Cerrar un Sprint que no está Activo
+responde 400 con `{"campo":"estado","mensaje":"solo se puede cerrar un Sprint activo"}`.
+Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
+
 ### Crear una historia
 
 ```bat
@@ -129,6 +199,48 @@ curl -X POST http://localhost:8080/backlog ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"M\"}"
 ```
+
+### Asignar una historia a un Sprint
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/sprint ^
+  -H "Content-Type: application/json" ^
+  -d "{\"sprint_id\":1}"
+```
+
+La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 400 con
+`{"campo":"sprint_id","mensaje":"la historia ya pertenece a un Sprint"}`.
+
+### Consultar el Sprint Backlog
+
+```bat
+curl http://localhost:8080/sprints/1/backlog
+```
+
+Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
+no tiene historias. Si el Sprint no existe, responde 404 con
+`{"mensaje":"sprint no encontrado"}`.
+
+### Cambiar el estado de una historia
+
+La historia debe estar asignada a un Sprint activo. Primero se pasa a
+`En progreso` y después a `Completada`; el estado solo avanza.
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"En progreso\"}"
+```
+
+```bat
+curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Content-Type: application/json" ^
+  -d "{\"estado\":\"Completada\"}"
+```
+
+La respuesta es la historia con su `estado` y, al completarla, su
+`fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
+`404` si la historia no existe y `409` si otro cambio la modificó antes.
 
 ### Consultar y actualizar el proyecto
 

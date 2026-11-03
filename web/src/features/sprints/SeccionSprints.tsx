@@ -1,5 +1,6 @@
 import { BotonCerrar } from './BotonCerrar'
 import { FormularioInicio } from './FormularioInicio'
+import { SprintBacklog } from './SprintBacklog'
 import type { Sprint } from './sprint'
 
 type Props = {
@@ -15,11 +16,12 @@ export function SeccionSprints({ estado, sprints, alActualizar }: Props) {
       {sprints.length === 0 && <p>No hay Sprints</p>}
       {sprints.map((sprint) => (
         <article key={sprint.id} className="sprint-tarjeta">
-          <h3>{`Sprint #${sprint.id}`}</h3>
+          <h3>{`Sprint ${sprint.numero}`}</h3>
           {sprint.sprint_goal && <p>{sprint.sprint_goal}</p>}
           {sprint.fecha_inicio && sprint.fecha_fin && (
             <p>{`${sprint.fecha_inicio} a ${sprint.fecha_fin}`}</p>
           )}
+          <SprintBacklog sprintId={sprint.id} permiteCambiarEstado={estado === 'Activo'} />
           {estado === 'Pendiente' && <FormularioInicio sprint={sprint} alActualizar={alActualizar} />}
           {estado === 'Activo' && <BotonCerrar sprint={sprint} alActualizar={alActualizar} />}
         </article>

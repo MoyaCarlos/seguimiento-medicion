@@ -121,6 +121,61 @@ var esquemaEsperado = map[string]tablaEsperada{
 			{nombre: "sprints_un_pendiente_por_proyecto", columnas: []string{"proyecto_id"}, where: "WHERE estado = 'Pendiente'"},
 		},
 	},
+	// §4.6 historias_arrastradas
+	"historias_arrastradas": {
+		columnas: []columnaEsperada{
+			{nombre: "sprint_id", tipo: "INTEGER", notNull: true, pk: 1},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true, pk: 2},
+			{nombre: "proyecto_id", tipo: "INTEGER", notNull: true},
+			{nombre: "estimacion_sp", tipo: "INTEGER"},
+		},
+		fks: []string{
+			"historia_id,proyecto_id -> historias(id,proyecto_id)",
+			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
+		},
+	},
+	// §4.8 registros_horas
+	"registros_horas": {
+		columnas: []columnaEsperada{
+			{nombre: "id", tipo: "INTEGER", pk: 1},
+			{nombre: "proyecto_id", tipo: "INTEGER", notNull: true},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true},
+			{nombre: "usuario_id", tipo: "INTEGER", notNull: true},
+			{nombre: "sprint_id", tipo: "INTEGER", notNull: true},
+			{nombre: "fecha", tipo: "TEXT", notNull: true},
+			{nombre: "actividad", tipo: "TEXT", notNull: true},
+			{nombre: "minutos", tipo: "INTEGER", notNull: true},
+			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+		},
+		fks: []string{
+			"historia_id,proyecto_id -> historias(id,proyecto_id)",
+			"proyecto_id,usuario_id -> integrantes(proyecto_id,usuario_id)",
+			"sprint_id,proyecto_id -> sprints(id,proyecto_id)",
+		},
+	},
+	// §4.7 rondas_votacion
+	"rondas_votacion": {
+		columnas: []columnaEsperada{
+			{nombre: "id", tipo: "INTEGER", pk: 1},
+			{nombre: "historia_id", tipo: "INTEGER", notNull: true},
+			{nombre: "numero", tipo: "INTEGER", notNull: true},
+			{nombre: "revelada_en", tipo: "TEXT"},
+		},
+		fks:     []string{"historia_id -> historias(id)"},
+		uniques: []string{"historia_id,numero"},
+	},
+	// §4.7 votos
+	"votos": {
+		columnas: []columnaEsperada{
+			{nombre: "ronda_id", tipo: "INTEGER", notNull: true, pk: 1},
+			{nombre: "usuario_id", tipo: "INTEGER", notNull: true, pk: 2},
+			{nombre: "valor", tipo: "INTEGER", notNull: true},
+		},
+		fks: []string{
+			"ronda_id -> rondas_votacion(id)",
+			"usuario_id -> usuarios(id)",
+		},
+	},
 	// §9 punto 1 migraciones_aplicadas
 	"migraciones_aplicadas": {
 		columnas: []columnaEsperada{
@@ -162,8 +217,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Contains(got, 1) {
-		t.Errorf("se esperaba la versión 1 registrada, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4}) {
+		t.Errorf("se esperaban las versiones 1, 2, 3 y 4 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -306,9 +361,12 @@ const (
 	violaCheck       = 275
 	violaNotNull     = 1299
 	violaUnique      = 2067
+	violaPK          = 1555
 	ahora            = "'2026-10-23T00:00:00Z'"
 	insertarSprint   = "INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES "
 	insertarHistoria = "INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion) VALUES "
+	insertarArrastre = "INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES "
+	insertarHoras    = "INSERT INTO registros_horas (proyecto_id, historia_id, usuario_id, sprint_id, fecha, actividad, minutos, creado_en) VALUES "
 )
 
 // Datos base de cada caso: proyectos 1 y 2, usuario 1 (Scrum Master del 1),
@@ -424,6 +482,36 @@ func TestEsquema_Filas(t *testing.T) {
 		{"cierre con UPDATE único", "UPDATE historias SET sprint_id = NULL, estado = 'Nueva' WHERE id = 101", aceptada},
 		{"cierre quitando primero el Sprint", "UPDATE historias SET sprint_id = NULL WHERE id = 101", violaCheck},
 
+		// §4.6 historias_arrastradas
+		{"arrastre con estimación", insertarArrastre + "(11, 100, 1, 8)", aceptada},
+		{"arrastre sin estimar", insertarArrastre + "(11, 100, 1, NULL)", aceptada},
+		{"arrastre repetido en el mismo Sprint", insertarArrastre + "(11, 100, 1, 8), (11, 100, 1, 5)", violaPK},
+		{"arrastre Sprint de otro proyecto con proyecto de la historia", insertarArrastre + "(21, 100, 1, NULL)", violaFK},
+		{"arrastre Sprint de otro proyecto con proyecto del Sprint", insertarArrastre + "(21, 100, 2, NULL)", violaFK},
+		{"arrastre de historia inexistente", insertarArrastre + "(11, 999, 1, NULL)", violaFK},
+		{"historias_arrastradas.sprint_id NULL", insertarArrastre + "(NULL, 100, 1, NULL)", violaNotNull},
+		{"historias_arrastradas.historia_id NULL", insertarArrastre + "(11, NULL, 1, NULL)", violaNotNull},
+		{"historias_arrastradas.proyecto_id NULL", insertarArrastre + "(11, 100, NULL, NULL)", violaNotNull},
+
+		// §4.8 registros_horas
+		{"horas con 60 minutos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", aceptada},
+		{"horas con 0 minutos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 0, " + ahora + ")", violaCheck},
+		{"horas con minutos negativos", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', -30, " + ahora + ")", violaCheck},
+		{"horas con minutos NULL", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', NULL, " + ahora + ")", violaNotNull},
+		{"horas con minutos decimales", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 1.5, " + ahora + ")", violaCheck},
+		{"horas con minutos texto", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 'abc', " + ahora + ")", violaCheck},
+		{"horas fecha sin cero", insertarHoras + "(1, 101, 1, 10, '2026-10-9', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha basura", insertarHoras + "(1, 101, 1, 10, 'basura', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha inexistente", insertarHoras + "(1, 101, 1, 10, '2026-02-30', 'a', 60, " + ahora + ")", violaCheck},
+		{"horas fecha válida", insertarHoras + "(1, 101, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", aceptada},
+		{"horas de historia de otro proyecto",
+			"INSERT INTO historias (id, proyecto_id, titulo, descripcion, prioridad, estado) VALUES (200, 2, 't', 'd', 'M', 'Nueva');" +
+				insertarHoras + "(1, 200, 1, 10, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+		{"horas en Sprint de otro proyecto", insertarHoras + "(1, 101, 1, 21, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+		{"horas de usuario que no es integrante",
+			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + ");" +
+				insertarHoras + "(1, 101, 2, 10, '2026-10-09', 'a', 60, " + ahora + ")", violaFK},
+
 		// D9: sin cascadas
 		{"borrar proyecto con historias", "DELETE FROM proyectos WHERE id = 1", violaFK},
 	}
@@ -432,6 +520,67 @@ func TestEsquema_Filas(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			db := nuevaBDMigrada(t)
 			if _, err := db.Exec(datosBase); err != nil {
+				t.Fatalf("no se pudieron cargar los datos base: %v", err)
+			}
+
+			_, err := db.Exec(c.sentencia)
+
+			if got := codigoDeViolacion(t, err); got != c.esperado {
+				t.Fatalf("se esperaba el código %d, se obtuvo %d (%v)", c.esperado, got, err)
+			}
+		})
+	}
+}
+
+const (
+	insertarRonda = "INSERT INTO rondas_votacion (historia_id, numero, revelada_en) VALUES "
+	insertarVoto  = "INSERT INTO votos (ronda_id, usuario_id, valor) VALUES "
+)
+
+// Sobre datosBase: usuario 2 (Product Builder del proyecto 1) y la ronda 500
+// (número 1, sin revelar) de la historia 100, con el voto del usuario 1.
+const datosVotacion = `
+INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Candela', 'candela', ` + ahora + `);
+INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (1, 2, 'product_builder', ` + ahora + `);
+INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (500, 100, 1, NULL);
+INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (500, 1, 8);
+`
+
+func TestEsquema_FilasVotacion(t *testing.T) {
+	casos := []struct {
+		nombre    string
+		sentencia string
+		esperado  int
+	}{
+		// §4.7 rondas_votacion
+		{"ronda sin revelar", insertarRonda + "(101, 1, NULL)", aceptada},
+		{"ronda revelada", insertarRonda + "(101, 1, '2026-10-27T15:04:05Z')", aceptada},
+		{"ronda siguiente de la misma historia", insertarRonda + "(100, 2, NULL)", aceptada},
+		{"ronda con número repetido", insertarRonda + "(100, 1, NULL)", violaUnique},
+		{"ronda de historia inexistente", insertarRonda + "(999, 1, NULL)", violaFK},
+		{"rondas_votacion.historia_id NULL", insertarRonda + "(NULL, 1, NULL)", violaNotNull},
+		{"rondas_votacion.numero NULL", insertarRonda + "(101, NULL, NULL)", violaNotNull},
+
+		// §4.7 votos
+		{"voto de otro integrante", insertarVoto + "(500, 2, 5)", aceptada},
+		{"voto fuera de la escala (lo valida el dominio, D11)", insertarVoto + "(500, 2, 4)", aceptada},
+		{"segundo voto del mismo integrante", insertarVoto + "(500, 1, 3)", violaPK},
+		{"voto en ronda inexistente", insertarVoto + "(999, 2, 5)", violaFK},
+		{"voto de usuario inexistente", insertarVoto + "(500, 999, 5)", violaFK},
+		{"votos.valor NULL", insertarVoto + "(500, 2, NULL)", violaNotNull},
+		// La PK compuesta de SQLite admite NULL sin el NOT NULL explícito.
+		{"votos.ronda_id NULL", insertarVoto + "(NULL, 2, 5)", violaNotNull},
+		{"votos.usuario_id NULL", insertarVoto + "(500, NULL, 5)", violaNotNull},
+
+		// D9: sin cascadas
+		{"borrar ronda con votos", "DELETE FROM rondas_votacion WHERE id = 500", violaFK},
+		{"borrar historia con rondas", "DELETE FROM historias WHERE id = 100", violaFK},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			db := nuevaBDMigrada(t)
+			if _, err := db.Exec(datosBase + datosVotacion); err != nil {
 				t.Fatalf("no se pudieron cargar los datos base: %v", err)
 			}
 

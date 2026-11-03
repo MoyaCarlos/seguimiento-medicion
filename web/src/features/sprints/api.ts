@@ -1,5 +1,5 @@
-import { post } from '../../compartido/api/client'
-import type { Sprint } from './sprint'
+import { get, post, put } from '../../compartido/api/client'
+import type { HistoriaDeSprint, Sprint } from './sprint'
 
 type DatosInicio = { sprint_goal: string; fecha_inicio: string; fecha_fin: string }
 
@@ -8,3 +8,12 @@ export const crearSprint = (proyectoId: number) =>
 
 export const iniciarSprint = (id: number, datos: DatosInicio) =>
   post<Sprint>(`/sprints/${id}/iniciar`, datos)
+
+export const listarSprints = (proyectoId: string) =>
+  get<Sprint[]>(`/projects/${proyectoId}/sprints`)
+
+export const consultarSprintBacklog = (sprintId: number) =>
+  get<HistoriaDeSprint[]>(`/sprints/${sprintId}/backlog`)
+
+export const cambiarEstadoHistoria = (historiaId: number, estado: 'En progreso' | 'Completada') =>
+  put<HistoriaDeSprint>(`/backlog/${historiaId}/estado`, { estado })

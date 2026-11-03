@@ -24,7 +24,6 @@ type sinHistorias struct{}
 func (sinHistorias) ListarPorSprint(context.Context, int64) ([]domain.BacklogItem, error) {
 	return nil, nil
 }
-func (sinHistorias) QuitarDeSprint(context.Context, int64) error { return nil }
 
 func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria, *repository.ProjectRepositoryEnMemoria) {
 	t.Helper()
@@ -34,6 +33,8 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 		service.NewCrearSprint(proyectos, sprints),
 		service.NewIniciarSprint(sprints),
 		service.NewCerrarSprint(sprints, sinHistorias{}),
+		service.NewConsultarSprints(proyectos, sprints),
+		nil,
 		sprints,
 	)
 	return handler, sprints, proyectos
@@ -84,6 +85,51 @@ func TestSprintHandler_Crear_Exitoso(t *testing.T) {
 	}
 	if resp.SprintGoal != nil || resp.FechaInicio != nil || resp.FechaFin != nil {
 		t.Errorf("un Sprint Pendiente no tiene Goal ni fechas: %+v", resp)
+	}
+}
+
+func numeroDeLaRespuesta(t *testing.T, rec *httptest.ResponseRecorder) (id int64, numero int) {
+	t.Helper()
+	var resp struct {
+		ID     int64 `json:"id"`
+		Numero int   `json:"numero"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%s)", err, rec.Body.String())
+	}
+	return resp.ID, resp.Numero
+}
+
+func TestSprintHandler_NumeraPorProyectoYConservaElNumero(t *testing.T) {
+	handler, _, proyectos := nuevoSprintHandlerConProyectos(t)
+	otroProyecto := sembrarProyectoParaSprints(t, proyectos)
+	proyectoID := sembrarProyectoParaSprints(t, proyectos)
+	handler.Crear(httptest.NewRecorder(), peticionCrearSprint(cuerpoCrearSprint(otroProyecto)))
+
+	creado := httptest.NewRecorder()
+	handler.Crear(creado, peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+	idNum, numero := numeroDeLaRespuesta(t, creado)
+	if numero != 1 {
+		t.Fatalf("crear: se esperaba el número 1, se obtuvo %d (%s)", numero, creado.Body.String())
+	}
+
+	id := strconv.FormatInt(idNum, 10)
+	iniciado := httptest.NewRecorder()
+	handler.Iniciar(iniciado, peticionSprint(id, "iniciar", cuerpoIniciarValido))
+	if _, numero := numeroDeLaRespuesta(t, iniciado); numero != 1 {
+		t.Errorf("iniciar: se esperaba el número 1, se obtuvo %d (%s)", numero, iniciado.Body.String())
+	}
+
+	segundo := httptest.NewRecorder()
+	handler.Crear(segundo, peticionCrearSprint(cuerpoCrearSprint(proyectoID)))
+	if _, numero := numeroDeLaRespuesta(t, segundo); numero != 2 {
+		t.Errorf("crear el segundo: se esperaba el número 2, se obtuvo %d (%s)", numero, segundo.Body.String())
+	}
+
+	cerrado := httptest.NewRecorder()
+	handler.Cerrar(cerrado, peticionSprint(id, "cerrar", ""))
+	if _, numero := numeroDeLaRespuesta(t, cerrado); numero != 1 {
+		t.Errorf("cerrar: se esperaba el número 1, se obtuvo %d (%s)", numero, cerrado.Body.String())
 	}
 }
 
@@ -335,6 +381,19 @@ func TestEscribirError_IntegridadReferencialEsConflicto(t *testing.T) {
 		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}
 	if resp := decodificarError(t, rec); resp.Mensaje != "violación de integridad referencial" {
+		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
+	}
+}
+
+func TestEscribirError_HistoriaFueraDelSprintEsConflicto(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	escribirError(rec, fmt.Errorf("cerrar sprint 1: %w", repository.ErrHistoriaFueraDelSprint))
+
+	if rec.Code != nethttp.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := decodificarError(t, rec); resp.Mensaje != "la historia no pertenece al Sprint que se cierra" {
 		t.Errorf("mensaje inesperado: %q", resp.Mensaje)
 	}
 }

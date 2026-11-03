@@ -32,6 +32,9 @@ go test ./internal/... -run Sprint -v
 2. `CerrarSprint(ctx, sprintID)` → Sprint pasa a `Finalizado`.
 3. Verificar: la historia no completada tiene `SprintID == nil` (volvió al
    backlog); la completada conserva su `SprintID` original.
+4. (#117) Verificar en `historias_arrastradas` una fila por cada historia no
+   completada de ese Sprint, con `estimacion_sp` igual a la que tenía al
+   cerrar (`NULL` si no estaba estimada).
 
 ## Correr el escenario BDD (Godog)
 

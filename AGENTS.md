@@ -24,17 +24,23 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   para desglosar el trabajo (especificación SDD, escenarios BDD, implementación backend,
   tests, implementación frontend), reforzando la trazabilidad exigida por la cátedra.
 - Sprints: Sprint 0 (preparación) → Sprint 1 (MVP) → Sprint 2 (interfaz) →
-  Sprint 3 (funcionalidad y calidad) → Sprint 4 (cierre y entrega final).
-  Duración/calendario a confirmar según fecha de entrega final.
+  Sprint 3 (funcionalidad y calidad) → Sprint 4 (métricas y defectos) →
+  Sprint 5 (cierre y entrega final).
+  Fechas: Sprint 2 del 5 al 26-oct, Sprint 3 del 27-oct al 2-nov, Sprint 4 del 3 al
+  9-nov y Sprint 5 del 10 al 16-nov, día de la entrega del código y la presentación
+  final. El equipo maneja las fechas de los Sprints (ajuste del 30-oct).
 
 ### Convención de Git
 - Branches: `feature/HU-XX-nombre-corto` para las historias y
   `fix/<n°-issue>-nombre-corto` para los fixes (ej. `fix/19-integridad-proyecto-id`).
 - Nada de push directo a `main`: todo cambio entra por Pull Request.
 - Mínimo 1 aprobación de otro integrante antes de mergear.
-- El PR debe pasar los tests (Godog + `go test`) antes de mergear. Lo verifica el CI de
+- El PR debe pasar los tests (Godog + `go test` en el backend; Vitest en el frontend) antes de mergear. Lo verifica el CI de
   GitHub Actions (`.github/workflows/ci.yml`) con los checks `backend` (build, vet, gofmt
-  y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea.
+  y `go test`) y `frontend` (lint, tests y build): sin esos dos checks en verde no se mergea (`backend` y `frontend` están
+  configurados como checks requeridos en la protección de `main`).
+- El CI corre en los PR con base `main`. No se usan PR apilados (la protección de `main`
+  exige PR contra `main`), por eso `pull_request.branches` queda en `[main]`.
 - **Saltos de línea:** el repo fija LF con `.gitattributes` (`* text=auto eol=lf`), así `gofmt -l .` no marca archivos en Windows. Si ya tenías un clon hecho antes de ese archivo (con CRLF), volvé a clonar o, una sola vez y con el árbol limpio, corré `git rm --cached -r .` y `git reset --hard` para que Git reescriba los archivos con LF. `git add --renormalize .` solo hace falta si alguien llegó a commitear archivos con CRLF.
 
 ### Fixes
@@ -53,7 +59,7 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
   nunca desde una rama:
   - `v0.N.0` al cerrar el Sprint N (`v0.1.0` = Sprint 1, el MVP).
   - `v0.N.P` por cada fix mergeado después de ese hito (`v0.1.1`, `v0.1.2`, ...).
-  - `v1.0.0` en la entrega final.
+  - `v1.0.0` en la entrega final: el Sprint 5 cierra con `v1.0.0` y no se crea `v0.5.0`.
 - Crearlo y publicarlo: `git tag -a v0.1.0 -m "Sprint 1: MVP" <commit>` y
   `git push origin v0.1.0`. Lo crea el Agile Enabler (o quien él indique).
 - Un tag publicado no se mueve ni se borra: si hay un error, se corrige con el
@@ -62,7 +68,8 @@ y herramientas de Inteligencia Artificial como soporte al proceso.
 ### Definition of Done
 Una historia se considera terminada cuando:
 - Código implementado y mergeado a `main`.
-- Tests unitarios (TDD) y escenario BDD correspondiente, ambos en verde.
+- Tests unitarios (TDD) y escenario BDD correspondiente (en el frontend, sus pruebas
+  de componente), ambos en verde.
 - Especificación SDD de la historia escrita en `specs/`.
 - Revisada y aprobada por al menos otro integrante (PR).
 - Sin defectos abiertos bloqueantes para esa historia.
@@ -86,6 +93,9 @@ issue `bug` y se repara en su propia rama `fix/`.
   escribir código — valió la pena en HU-01, se volvió paso estándar, no opcional.
   En Claude Code los comandos usan guión (`/speckit-specify`); en OpenCode, punto
   (`/speckit.specify`) — mismo comando, distinta sintaxis según la herramienta.
+- Al correr `/speckit-specify` se pasa siempre el número de la spec a mano (`--number N`):
+  el siguiente libre en `specs/` de `origin/main`, sin repetir los reservados por ramas
+  o PR abiertos. La numeración automática de Spec Kit repitió números.
 - Cada spec debe cubrir como mínimo: objetivo, entradas, salidas esperadas, reglas
   de negocio, restricciones, casos límite, condiciones de error y criterios de
   aceptación. Para reglas de negocio/casos límite/errores, redactar en formato
@@ -98,6 +108,11 @@ issue `bug` y se repara en su propia rama `fix/`.
 ### BDD (Behavior-Driven Development)
 - **Godog** (Gherkin) para automatizar escenarios Given-When-Then.
 - Archivos `.feature` en `/features`, con casos normales, alternativos, límite y de error.
+- Para el frontend (React), donde Godog no puede ejercitar la interfaz, los
+  escenarios Given-When-Then de la spec se automatizan como pruebas de componente
+  con Vitest y Testing Library, con el escenario en el nombre de cada prueba. Los
+  comportamientos de la API que el frontend consume siguen cubiertos con Godog en
+  `/features`.
 - No hay comando `/speckit.*` dedicado a esto — se pide directo al agente, después
   de `/speckit.tasks`/`/speckit.analyze` y antes de `/speckit.implement`. Prompt de
   referencia (usado en HU-01, un archivo `.feature` por historia):
@@ -197,16 +212,15 @@ La dependencia siempre apunta hacia adentro: el dominio no conoce SQLite ni HTTP
     migración; ninguno va sin el otro.
   - El `data-model.md` de cada spec **enlaza** a la sección del documento en lugar de
     redefinir tablas.
-  - **Hasta que se mergee #107, `main` sigue con el esquema viejo** (tablas y columnas en
-    inglés): el documento describe el destino y esa diferencia es esperada, no se frena por
-    ella. Cualquier otra contradicción entre el documento y el código se frena y se avisa;
-    no se elige uno en silencio.
+  - **Contradicción entre el documento y el código:** se frena y se avisa; no se elige uno
+    en silencio.
   - **Ante cualquier duda sobre el modelo de datos, se pregunta al Scrum Master o al
     equipo antes de seguir.** Vale para personas y para agentes de IA: no se completa un
     hueco, no se agrega ni se cambia una tabla, columna o restricción y no se resuelve una
     decisión abierta por cuenta propia, ni siquiera con una recomendación razonable.
 - **Testing BDD:** Godog.
 - **Testing TDD:** paquete `testing` estándar de Go.
+- **Testing del frontend:** Vitest y Testing Library (jsdom).
 - **Reportes:** generación de PDF con Maroto (puro Go, sin dependencias externas).
 - **Control de versiones:** Git + GitHub, tablero en GitHub Projects con sub-issues.
 

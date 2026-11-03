@@ -1,8 +1,19 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { rutas } from './rutas'
+
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.resolve(new Response('[]', { status: 200 }))),
+  )
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 function abrir(url: string) {
   const router = createMemoryRouter(rutas, { initialEntries: [url] })
@@ -14,6 +25,7 @@ describe('registro de rutas', () => {
   it.each([
     ['/projects/42/proyecto', 'Panel del proyecto'],
     ['/projects/42/backlog', 'Product Backlog'],
+    ['/projects/42/backlog/nueva', 'Nueva historia'],
     ['/projects/42/sprints', 'Sprints'],
     ['/projects/42/status', 'Estado del proyecto'],
   ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo) => {

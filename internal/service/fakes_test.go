@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"slices"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -172,4 +174,215 @@ func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.Backl
 	f.actualizaciones = append(f.actualizaciones, item)
 	f.historias[item.ID] = item
 	return nil
+}
+
+type fakeRegistroHorasRepository struct {
+	registros    []domain.RegistroHoras
+	listados     int
+	errRegistrar error
+}
+
+func (f *fakeRegistroHorasRepository) Registrar(_ context.Context, r domain.RegistroHoras) (domain.RegistroHoras, error) {
+	if f.errRegistrar != nil {
+		return domain.RegistroHoras{}, f.errRegistrar
+	}
+	r.ID = int64(len(f.registros) + 1)
+	f.registros = append(f.registros, r)
+	return r, nil
+}
+
+func (f *fakeRegistroHorasRepository) ListarPorHistoria(_ context.Context, historiaID int64) ([]domain.RegistroHorasDetalle, error) {
+	f.listados++
+	detalle := make([]domain.RegistroHorasDetalle, 0)
+	for _, r := range f.registros {
+		if r.HistoriaID == historiaID {
+			detalle = append(detalle, domain.RegistroHorasDetalle{RegistroHoras: r})
+		}
+	}
+	return detalle, nil
+}
+
+type fakeIntegrantesRepository struct {
+	miembros []domain.Member
+}
+
+func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	var resultado []domain.Member
+	for _, m := range f.miembros {
+		if m.ProjectID == proyectoID {
+			resultado = append(resultado, m)
+		}
+	}
+	return resultado, nil
+}
+
+// fakeSprintsQueCuentan envuelve el repositorio en memoria y cuenta las lecturas.
+type fakeSprintsQueCuentan struct {
+	*repository.SprintRepositoryEnMemoria
+	lecturas int
+}
+
+func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
+	f.lecturas++
+	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
+}
+
+// fakeVotacionRepository guarda una ronda por historia y simula las escrituras
+// condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
+// cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
+type fakeVotacionRepository struct {
+	rondas map[int64]domain.RondaVotacion
+	err    error
+}
+
+func (f *fakeVotacionRepository) CrearRonda(_ context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error) {
+	if f.err != nil {
+		return domain.RondaVotacion{}, f.err
+	}
+	if _, ok := f.rondas[r.HistoriaID]; ok {
+		return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
+	}
+	if f.rondas == nil {
+		f.rondas = map[int64]domain.RondaVotacion{}
+	}
+	r.ID = int64(len(f.rondas) + 1)
+	f.rondas[r.HistoriaID] = copiaDeRonda(r)
+	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaID int64) (domain.RondaVotacion, error) {
+	if f.err != nil {
+		return domain.RondaVotacion{}, f.err
+	}
+	r, ok := f.rondas[historiaID]
+	if !ok {
+		return domain.RondaVotacion{}, domain.ErrVotacionNoIniciada
+	}
+	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) GuardarVoto(_ context.Context, rondaID int64, v domain.Voto) error {
+	if f.err != nil {
+		return f.err
+	}
+	r, ok := f.rondaAbierta(rondaID)
+	if !ok {
+		return domain.ErrRondaRevelada
+	}
+	if i := slices.IndexFunc(r.Votos, func(x domain.Voto) bool { return x.UsuarioID == v.UsuarioID }); i >= 0 {
+		r.Votos[i] = v
+	} else {
+		r.Votos = append(r.Votos, v)
+	}
+	f.rondas[r.HistoriaID] = r
+	return nil
+}
+
+func (f *fakeVotacionRepository) MarcarRevelada(_ context.Context, rondaID int64, en time.Time) error {
+	if f.err != nil {
+		return f.err
+	}
+	r, ok := f.rondaAbierta(rondaID)
+	if !ok {
+		return domain.ErrRondaRevelada
+	}
+	r.ReveladaEn = &en
+	f.rondas[r.HistoriaID] = r
+	return nil
+}
+
+func (f *fakeVotacionRepository) rondaAbierta(rondaID int64) (domain.RondaVotacion, bool) {
+	for _, r := range f.rondas {
+		if r.ID == rondaID && r.ReveladaEn == nil {
+			return copiaDeRonda(r), true
+		}
+	}
+	return domain.RondaVotacion{}, false
+}
+
+func copiaDeRonda(r domain.RondaVotacion) domain.RondaVotacion {
+	r.Votos = slices.Clone(r.Votos)
+	return r
+}
+
+// fakeAsignacionRepository simula la asignación atómica del repositorio real:
+// el mutex hace indivisible "si no tiene Sprint, cargarlo", como el UPDATE
+// condicional de SQLite.
+type fakeAsignacionRepository struct {
+	mu           sync.Mutex
+	historias    map[int64]domain.BacklogItem
+	asignaciones int
+}
+
+func (f *fakeAsignacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeAsignacionRepository) AsignarASprint(_ context.Context, historiaID, sprintID int64) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.asignaciones++
+	h := f.historias[historiaID]
+	if h.SprintID != nil {
+		return domain.ErrHistoriaYaAsignada
+	}
+	h.SprintID = &sprintID
+	f.historias[historiaID] = h
+	return nil
+}
+
+func (f *fakeAsignacionRepository) llamadasAAsignar() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.asignaciones
+}
+
+// llamadaCambioEstado registra los argumentos de una llamada a CambiarEstado.
+type llamadaCambioEstado struct {
+	desde, hacia domain.Estado
+	fecha        *time.Time
+}
+
+// fakeCambioEstadoRepository simula el UPDATE condicional del repositorio real:
+// el mutex hace indivisible "si sigue en desde, pasarla a hacia".
+type fakeCambioEstadoRepository struct {
+	mu        sync.Mutex
+	historias map[int64]domain.BacklogItem
+	llamadas  []llamadaCambioEstado
+}
+
+func (f *fakeCambioEstadoRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeCambioEstadoRepository) CambiarEstado(_ context.Context, id int64, desde, hacia domain.Estado, fecha *time.Time) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.llamadas = append(f.llamadas, llamadaCambioEstado{desde: desde, hacia: hacia, fecha: fecha})
+	h := f.historias[id]
+	if h.Estado != desde {
+		return domain.ErrConflictoEstadoHistoria
+	}
+	h.Estado = hacia
+	h.FechaFinalizacion = fecha
+	f.historias[id] = h
+	return nil
+}
+
+func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.llamadas)
 }

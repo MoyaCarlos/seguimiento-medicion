@@ -9,11 +9,11 @@ Tal como lo devuelve la API (ver el esquema `Sprint` en [`specs/003-apertura-cie
 - `sprint_goal`, `fecha_inicio`, `fecha_fin`: texto o ausentes mientras el Sprint está Pendiente.
 - `estado`: `Pendiente` | `Activo` | `Finalizado`.
 
-## Sprints de la sesión
+## Sprints de la pantalla
 Lista en memoria de la pantalla. Reglas:
 - Una respuesta de la API reemplaza al Sprint con el mismo `id`, o lo agrega si es nuevo.
 - Se agrupa por `estado`; cada grupo se ordena por `id` ascendente.
-- Se pierde al recargar; empieza vacía (único punto de carga: `cargarSprintsIniciales`).
+- Empieza vacía y se carga con `GET /projects/{id}/sprints` al abrir la pantalla o cambiar de proyecto (spec 015); los Sprints creados, iniciados o cerrados se siguen actualizando con `guardarSprint`.
 
 ## Transiciones que la pantalla ofrece
 | Estado | Acción ofrecida | Resultado confirmado por la API |

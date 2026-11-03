@@ -157,21 +157,6 @@ func TestSQLiteBacklogRepository_HistoriasDeSprint(t *testing.T) {
 	if historias[0].Estado != domain.EstadoCompletada || historias[0].SprintID == nil || *historias[0].SprintID != activo.ID {
 		t.Errorf("no se leyeron bien estado/sprint de la historia: %+v", historias[0])
 	}
-
-	if err := repo.QuitarDeSprint(ctx, ids[1]); err != nil {
-		t.Fatalf("no se esperaba error al quitar: %v", err)
-	}
-	historias, _ = repo.ListarPorSprint(ctx, activo.ID)
-	if len(historias) != 1 || historias[0].ID != ids[0] {
-		t.Errorf("se esperaba que solo quede la historia completada en el Sprint activo: %+v", historias)
-	}
-	var estado string
-	if err := db.QueryRow("SELECT estado FROM historias WHERE id = ?", ids[1]).Scan(&estado); err != nil {
-		t.Fatalf("no se pudo consultar el estado de la historia devuelta al backlog: %v", err)
-	}
-	if estado != string(domain.EstadoNueva) {
-		t.Errorf("la historia devuelta al backlog debía quedar en estado Nueva, quedó %q", estado)
-	}
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
@@ -228,6 +213,49 @@ func TestSQLiteSprintRepository_IndiceParcial_SegundoActivo(t *testing.T) {
 	var verr domain.ValidationError
 	if !errors.As(err, &verr) || verr != esperado {
 		t.Fatalf("se esperaba %v, se obtuvo %v", esperado, err)
+	}
+}
+
+func TestSQLiteSprintRepository_NumeraLosSprintsPorProyecto(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteSprintRepository(db)
+	proyectoA, proyectoB := guardarProyecto(t, db), guardarProyecto(t, db)
+	ctx := context.Background()
+
+	primeroA := guardarSprint(t, repo, proyectoA)
+	primeroB := guardarSprint(t, repo, proyectoB)
+	iniciarSprint(t, repo, primeroA)
+	segundoA := guardarSprint(t, repo, proyectoA)
+	iniciarSprint(t, repo, primeroB)
+	segundoB := guardarSprint(t, repo, proyectoB)
+
+	for nombre, caso := range map[string]struct {
+		sprint   domain.Sprint
+		esperado int
+	}{
+		"primero de A": {primeroA, 1},
+		"primero de B": {primeroB, 1},
+		"segundo de A": {segundoA, 2},
+		"segundo de B": {segundoB, 2},
+	} {
+		if caso.sprint.Numero != caso.esperado {
+			t.Errorf("%s al guardar: se esperaba el número %d, se obtuvo %d", nombre, caso.esperado, caso.sprint.Numero)
+		}
+		leido, err := repo.ObtenerPorID(ctx, caso.sprint.ID)
+		if err != nil {
+			t.Fatalf("no se esperaba error al leer: %v", err)
+		}
+		if leido.Numero != caso.esperado {
+			t.Errorf("%s al leer: se esperaba el número %d, se obtuvo %d", nombre, caso.esperado, leido.Numero)
+		}
+	}
+
+	delProyecto, err := repo.ListarPorProyecto(ctx, proyectoB)
+	if err != nil {
+		t.Fatalf("no se esperaba error al listar: %v", err)
+	}
+	if len(delProyecto) != 2 || delProyecto[0].Numero != 1 || delProyecto[1].Numero != 2 {
+		t.Errorf("se esperaban los números 1 y 2, se obtuvo %+v", delProyecto)
 	}
 }
 

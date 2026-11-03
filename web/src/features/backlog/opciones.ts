@@ -11,6 +11,8 @@ export const PRIORIDADES: { codigo: Prioridad; etiqueta: string }[] = [
 
 export const VALORES_NEGOCIO: ValorNegocio[] = [1, 2, 3, 5, 8, 13, 21]
 
+export const STORY_POINTS: ValorNegocio[] = [1, 2, 3, 5, 8, 13, 21]
+
 export function etiquetaPrioridad(codigo: Prioridad): string {
   return PRIORIDADES.find((prioridad) => prioridad.codigo === codigo)?.etiqueta ?? codigo
 }

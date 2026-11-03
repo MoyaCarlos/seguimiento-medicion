@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -23,4 +24,22 @@ type ProductBacklogRepository interface {
 type HistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
 	Actualizar(ctx context.Context, item domain.BacklogItem) error
+}
+
+// AsignacionHistoriaRepository es el puerto que usa la asignación de una
+// historia a un Sprint. Separado de HistoriaRepository (ISP): la edición no
+// asigna Sprints. AsignarASprint solo asigna si la historia no tiene Sprint y
+// devuelve domain.ErrHistoriaYaAsignada si no afectó ninguna fila.
+type AsignacionHistoriaRepository interface {
+	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
+	AsignarASprint(ctx context.Context, historiaID, sprintID int64) error
+}
+
+// CambioEstadoHistoriaRepository es el puerto que usa el cambio de estado de
+// una historia. Separado de HistoriaRepository (ISP): la edición no cambia
+// estados. CambiarEstado solo aplica si la historia sigue en "desde" y
+// devuelve domain.ErrConflictoEstadoHistoria si no afectó ninguna fila.
+type CambioEstadoHistoriaRepository interface {
+	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
+	CambiarEstado(ctx context.Context, id int64, desde, hacia domain.Estado, fechaFinalizacion *time.Time) error
 }

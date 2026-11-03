@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -21,9 +22,13 @@ func NewSQLiteSprintRepository(db *sql.DB) *SQLiteSprintRepository {
 	return &SQLiteSprintRepository{db: db}
 }
 
-const columnasSprint = "id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado"
+// El número del Sprint se deriva de los de su proyecto, sin columna propia
+// (#129). Es una subconsulta y no ROW_NUMBER() porque esa función numeraría
+// solo las filas que deja el WHERE de cada consulta.
+const columnasSprint = `id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado,
+	(SELECT COUNT(*) FROM sprints previos WHERE previos.proyecto_id = sprints.proyecto_id AND previos.id <= sprints.id)`
 
-// Guardar persiste un Sprint nuevo y devuelve una copia con el ID asignado.
+// Guardar persiste un Sprint nuevo y lo devuelve con el ID y el número asignados.
 func (r *SQLiteSprintRepository) Guardar(ctx context.Context, s domain.Sprint) (domain.Sprint, error) {
 	resultado, err := r.db.ExecContext(ctx,
 		`INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?)`,
@@ -36,8 +41,7 @@ func (r *SQLiteSprintRepository) Guardar(ctx context.Context, s domain.Sprint) (
 	if err != nil {
 		return domain.Sprint{}, fmt.Errorf("obtener id del sprint: %w", err)
 	}
-	s.ID = id
-	return s, nil
+	return r.ObtenerPorID(ctx, id)
 }
 
 func (r *SQLiteSprintRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Sprint, error) {
@@ -69,16 +73,97 @@ func (r *SQLiteSprintRepository) ListarPorProyecto(ctx context.Context, proyecto
 	return sprints, filas.Err()
 }
 
+// Actualizar persiste el inicio de un Sprint. Solo lo aplica si en la base
+// sigue Pendiente: de dos inicios simultáneos, el segundo recibe
+// domain.ErrSprintNoPendiente y no pisa el Goal ni las fechas (#158).
 func (r *SQLiteSprintRepository) Actualizar(ctx context.Context, s domain.Sprint) error {
 	resultado, err := r.db.ExecContext(ctx,
-		`UPDATE sprints SET sprint_goal = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id = ?`,
+		`UPDATE sprints SET sprint_goal = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id = ? AND estado = ?`,
 		textoONulo(s.SprintGoal), fechaASQL(s.FechaInicio), fechaASQL(s.FechaFin), string(s.Estado), s.ID,
+		string(domain.SprintPendiente),
 	)
 	if err != nil {
 		return fmt.Errorf("actualizar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
 	}
 	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
+		return sprintSinActualizar(ctx, r.db, s.ID, domain.ErrSprintNoPendiente)
+	}
+	return nil
+}
+
+// CerrarConArrastre persiste el Sprint cerrado y, en la misma transacción,
+// registra cada historia no completada en historias_arrastradas con la foto
+// de sus Story Points y la devuelve al Product Backlog en estado Nueva
+// (MODELO-DE-DATOS.md §4.6). Si algo falla, no se aplica nada.
+// Solo cierra el Sprint si en la base sigue Activo: de dos cierres
+// simultáneos, el segundo recibe domain.ErrSprintNoActivo (#145).
+func (r *SQLiteSprintRepository) CerrarConArrastre(ctx context.Context, s domain.Sprint, noCompletadas []domain.BacklogItem) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("cerrar sprint %d: %w", s.ID, err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	resultado, err := tx.ExecContext(ctx, `UPDATE sprints SET estado = ? WHERE id = ? AND estado = ?`,
+		string(s.Estado), s.ID, string(domain.SprintActivo))
+	if err != nil {
+		return fmt.Errorf("cerrar sprint %d: %w", s.ID, errorDeEscrituraDeSprint(s, err))
+	}
+	if n, err := resultado.RowsAffected(); err == nil && n == 0 {
+		return sprintSinActualizar(ctx, tx, s.ID, domain.ErrSprintNoActivo)
+	}
+
+	if len(noCompletadas) > 0 {
+		if err := arrastrar(ctx, tx, s, noCompletadas); err != nil {
+			return fmt.Errorf("cerrar sprint %d: %w", s.ID, err)
+		}
+	}
+	return tx.Commit()
+}
+
+type consultable interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
+
+// sprintSinActualizar explica por qué un UPDATE condicional sobre el estado
+// no cambió nada: el Sprint no existe o ya no está en el estado esperado, y
+// en ese caso devuelve errEstado.
+func sprintSinActualizar(ctx context.Context, db consultable, id int64, errEstado error) error {
+	var existe bool
+	if err := db.QueryRowContext(ctx, "SELECT EXISTS (SELECT 1 FROM sprints WHERE id = ?)", id).Scan(&existe); err != nil {
+		return fmt.Errorf("sprint %d: %w", id, err)
+	}
+	if !existe {
 		return domain.ErrSprintNoEncontrado
+	}
+	return errEstado
+}
+
+func arrastrar(ctx context.Context, tx *sql.Tx, s domain.Sprint, historias []domain.BacklogItem) error {
+	ids := make([]any, 0, len(historias)+2)
+	ids = append(ids, string(domain.EstadoNueva), s.ID)
+	for _, h := range historias {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES (?, ?, ?, ?)`,
+			s.ID, h.ID, s.ProyectoID, punteroAValorSQL(h.EstimacionSP),
+		); err != nil {
+			return errorDeEscritura(err)
+		}
+		ids = append(ids, h.ID)
+	}
+
+	marcadores := strings.Repeat(", ?", len(historias))[2:]
+	resultado, err := tx.ExecContext(ctx,
+		`UPDATE historias SET sprint_id = NULL, estado = ? WHERE sprint_id = ? AND id IN (`+marcadores+`)`, ids...)
+	if err != nil {
+		return err
+	}
+	n, err := resultado.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n != int64(len(historias)) {
+		return ErrHistoriaFueraDelSprint
 	}
 	return nil
 }
@@ -109,7 +194,7 @@ func escanearSprint(fila escaneable) (domain.Sprint, error) {
 		goal, inicio, fin sql.NullString
 		estado            string
 	)
-	if err := fila.Scan(&s.ID, &s.ProyectoID, &goal, &inicio, &fin, &estado); err != nil {
+	if err := fila.Scan(&s.ID, &s.ProyectoID, &goal, &inicio, &fin, &estado, &s.Numero); err != nil {
 		return domain.Sprint{}, err
 	}
 	s.SprintGoal = goal.String

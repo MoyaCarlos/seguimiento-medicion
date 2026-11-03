@@ -159,7 +159,7 @@ erDiagram
 Notación: **PK** clave primaria, **UK** única, **FK** clave foránea, `?` admite `NULL`.
 "Existe hoy" indica si ya está en `main` (con otro nombre si corresponde).
 
-### 4.1 `proyectos` — HU-04, HU-13, HU-03 (existe hoy como `projects`)
+### 4.1 `proyectos` — HU-04, HU-13, HU-03 (antes `projects`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -176,7 +176,7 @@ Restricciones de base:
 - `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12)
 - `CHECK (fecha_inicio IS NULL OR fecha_fin IS NULL OR fecha_fin > fecha_inicio)` — fin **estrictamente** posterior (#100). Los bordes inclusivos de HU-13 son una regla de *consulta*, no de almacenamiento.
 
-### 4.2 `usuarios` — HU-04 (existe hoy como `users`)
+### 4.2 `usuarios` — HU-04 (antes `users`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -187,7 +187,7 @@ Restricciones de base:
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
-### 4.3 `integrantes` — HU-04 (existe hoy como `project_members`)
+### 4.3 `integrantes` — HU-04 (antes `project_members`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -198,7 +198,7 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
 Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Hoy no se impone un único Scrum Master por proyecto (ver D4).
 
-### 4.4 `historias` — HU-01, HU-15, HU-06, HU-11, HU-14 (existe hoy como `backlog_items`)
+### 4.4 `historias` — HU-01, HU-15, HU-06, HU-11, HU-14 (antes `backlog_items`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -222,7 +222,7 @@ Restricciones de base:
 
 Orden del Product Backlog (HU-15): `sprint_id IS NULL`, por prioridad `M, S, C, W` y luego `id`. El orden alfabético de `prioridad` **no** sirve (`C` < `M` < `S` < `W`): se ordena con un `CASE` explícito. El "orden de creación" es `id`; por eso no hace falta `creado_en`.
 
-### 4.5 `sprints` — HU-05 (existe hoy, mismo nombre)
+### 4.5 `sprints` — HU-05 (conserva el nombre)
 
 | Columna | Tipo | Notas |
 |---|---|---|
@@ -243,6 +243,8 @@ Restricciones de base:
   `CREATE UNIQUE INDEX sprints_un_activo_por_proyecto ON sprints (proyecto_id) WHERE estado = 'Activo'` y
   `CREATE UNIQUE INDEX sprints_un_pendiente_por_proyecto ON sprints (proyecto_id) WHERE estado = 'Pendiente'`.
   Hoy esa regla vive solo en el servicio y el PR #17 ya registró el límite (dos pedidos simultáneos podrían violarla).
+
+**Por qué el `UPDATE sprints` del inicio es condicional (#158).** `sprint.Iniciar()` valida en memoria que el Sprint esté `Pendiente`, pero dos inicios simultáneos del mismo Sprint pasan los dos esa validación y el segundo pisaba el Goal y las fechas del primero. `Actualizar` escribe con `WHERE id = ? AND estado = 'Pendiente'`: el segundo no afecta ninguna fila (`RowsAffected` 0) y devuelve `ErrSprintNoPendiente`, o `ErrSprintNoEncontrado` si el Sprint no existe. Dos Sprints `Activo` distintos en el mismo proyecto ya los rechaza el índice `sprints_un_activo_por_proyecto`. Como en el cierre (§4.6, #145), no cambia el esquema ni agrega migración.
 
 ### 4.6 `historias_arrastradas` — HU-05 cierre, HU-09, HU-10, HU-12 (**tabla nueva**, migración 002)
 
@@ -265,14 +267,16 @@ un Sprint pasado (HU-12). Esta tabla registra cuáles quedaron afuera.
 - Historias **comprometidas** de un Sprint = `historias WHERE sprint_id = S` (las completadas) ∪ `historias_arrastradas WHERE sprint_id = S`. **Decidido (D2c, 2026-10-13):** "comprometidas" significa *lo asignado al cerrar el Sprint* (incluidas las historias agregadas con el Sprint ya `Activo`). Es una definición de producto que afecta HU-03, 09, 10 y 12 y ya figura en el backlog.
 - SP **planificados** de S = `SUM(historias.estimacion_sp)` de las completadas + `SUM(historias_arrastradas.estimacion_sp)`. Las completadas no necesitan foto **porque D2b está aprobada** (no se edita `estimacion_sp` con Sprint `Activo`/`Finalizado`).
 
-**Cómo se escribe: una sola operación de repositorio.** El cierre no son tres llamadas sueltas (hoy `CerrarSprint` llama a `QuitarDeSprint` historia por historia y después a `Actualizar`, sin transacción):
+**Cómo se escribe: una sola operación de repositorio.** El cierre no son tres llamadas sueltas (antes de #117, `CerrarSprint` llamaba a `QuitarDeSprint` historia por historia y después a `Actualizar`, sin transacción; `QuitarDeSprint` se eliminó):
 
 1. El caso de uso carga las historias del Sprint y las separa en completadas y no completadas.
 2. Llama a `sprint.Cerrar()` del dominio, que valida que esté `Activo`.
 3. Entrega al repositorio el Sprint cerrado y las no completadas en **una sola llamada** nueva de `SprintRepository`: `CerrarConArrastre(ctx, sprint, noCompletadas)`.
-4. El adaptador SQLite, en **una transacción**: `UPDATE sprints` a `Finalizado`; `INSERT` en `historias_arrastradas` (con `proyecto_id` y la foto de SP); y `UPDATE historias SET sprint_id = NULL, estado = 'Nueva'` **en un solo `UPDATE`**.
+4. El adaptador SQLite, en **una transacción**: `UPDATE sprints SET estado = 'Finalizado' WHERE id = ? AND estado = 'Activo'`; `INSERT` en `historias_arrastradas` (con `proyecto_id` y la foto de SP); y `UPDATE historias SET sprint_id = NULL, estado = 'Nueva'` **en un solo `UPDATE`**.
 
 Sobre el `UPDATE` único (verificado): hacerlo en dos pasos falla **solo si primero se quita el Sprint** de una historia que sigue `En progreso` (el `CHECK` de §4.4 exige Sprint para ese estado). Si primero se vuelve a `Nueva`, o si la historia ya estaba `Nueva`, los dos pasos pasan. El `UPDATE` único sigue siendo lo más simple y robusto porque **no depende del orden** de las sentencias.
+
+**Por qué el `UPDATE sprints` es condicional (#145).** `sprint.Cerrar()` valida en memoria que el Sprint esté `Activo`, pero dos cierres simultáneos del mismo Sprint pasan los dos esa validación. Con `estado = 'Activo'` en el `WHERE`, solo uno de los dos cambia la fila. El otro no afecta ninguna fila (`RowsAffected` 0): la transacción se revierte sin registrar arrastradas y devuelve `ErrSprintNoActivo`, o `ErrSprintNoEncontrado` si el Sprint no existe. Es una forma de escribir, no una restricción nueva: no cambia el esquema ni agrega migración. El fake en memoria no reproduce la carrera; esa garantía la da la base. El inicio usa el mismo patrón (#158, ver §4.5).
 
 La transacción es un detalle de SQLite, así que no entra al dominio ni al servicio (arquitectura hexagonal). El fake en memoria debe simular la atomicidad: un fake que no la tiene oculta defectos (punto 2 de #101).
 
@@ -425,8 +429,9 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
-requiere confirmación del equipo o del profesor; este documento no la decide. Hoy todas
-están cerradas.
+requiere confirmación del equipo o del profesor; este documento no la decide. Hoy están
+pendientes D4 (reabierta por HU-16) y D14 a D17, que surgieron del beta testing del
+2026-10-30; las demás están cerradas.
 
 | # | Tema | Recomendación | Afecta |
 |---|---|---|---|
@@ -435,16 +440,20 @@ están cerradas.
 | **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se modifica una `estimacion_sp` **ya cargada** de una historia con Sprint `Activo` o `Finalizado`"; cargarla por primera vez (estaba en `NULL`) se permite (decidido el 2026-10-14). Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
 | **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12; quedó reflejada en el backlog con este PR (decisiones transversales y notas de esas historias). | Aceptada: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
 | **D3** | Fechas del proyecto en RFC 3339 y las del Sprint en `YYYY-MM-DD`. | Ambas `YYYY-MM-DD`. No cambia la API (ya expone solo la fecha); sí el repositorio de proyectos. | HU-04, 13 |
-| **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. | No imponerla hasta que una historia la pida. | HU-04 |
+| **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. **Reabierta (PENDIENTE):** HU-16 pide que haya siempre **al menos un** Scrum Master activo (no que sea uno solo). | Hasta que el equipo la confirme, no imponer nada; si se aprueba, la regla es del dominio y se verifica en la misma transacción que el cambio. | HU-04, HU-16 |
 | **D5** | Ninguna historia cubre sacar una historia de un Sprint o pasarla a otro. El modelo lo permitiría con un `UPDATE`, sin reglas. | Fuera de alcance; si HU-06 lo necesita, lo define en su spec. | HU-06 |
 | **D6** | HU-08 refinada ya no tiene "título" del defecto (la versión original sí). | Seguir el backlog refinado: solo descripción. | HU-08 |
-| **D7** | Origen de las "horas estimadas" (pendiente del profesor). | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
+| **D7** | **Cerrada el 2026-10-28** por el equipo (votó la opción A; si el profesor aclara otra fuente, se ajusta). Origen de las "horas estimadas". | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
 | **D8** | Tipo y granularidad de `horas`: decimales (1.5 h) o minutos enteros; tope por carga. **Cerrada el 2026-10-13: minutos enteros.** El tope por carga es una regla del dominio, no de la base: lo fija la spec de HU-07. | Guardar **minutos enteros** (`minutos INTEGER`) y convertir a horas solo al mostrar. Verificado: el `SUM` de SQLite compensa y suma diez cargas de 0,1 h exactamente 1.0, así que el problema no es la suma en la base; es que `0.1 + 0.2` ya no es `0.3` en `float64` (en SQL, `SUM(0.1, 0.2) = 0.3` da falso) y que en Go `0.1 + 0.2 + 0.3` da `0.6000000000000001`, con lo que la desviación de HU-03 entre horas reales y estimadas deja de ser exactamente cero. Con minutos enteros las sumas y comparaciones son exactas. Para que la base garantice que son enteros, la columna lleva `CHECK (typeof(minutos) = 'integer' AND minutos > 0)` (§4.8). El tope por carga lo define la spec de HU-07. | HU-07, 03 |
 | **D9** | `ON DELETE`: ninguna historia borra datos. | Comportamiento por defecto de SQLite (`NO ACTION`) en todo, sin cascadas ni `RESTRICT` explícito (§2). | todas |
 | **D10** | **Cerrada el 2026-10-13** (clarify de HU-15, #94): texto libre opcional, hasta 2000 caracteres, el mismo límite que la descripción; vacío o solo espacios se guarda como `NULL`. Cómo se guardan los criterios de aceptación. | Una columna de texto libre; una tabla hija es YAGNI hasta que una historia pida marcarlos uno por uno. | HU-15 |
 | **D11** | `CHECK` de la escala Fibonacci. **Decidido el 2026-10-09: sin `CHECK`**, la escala vive solo en el dominio. Si la escala cambia, no hay que recrear tablas. | — (cerrada) | HU-01, 02, 14, 15 |
 | **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
+| **D14** | **PENDIENTE.** Dónde se guarda el dueño de un proyecto (HU-19): el creador, transferible a otro integrante. | Sin recomendación: opciones, una referencia al usuario en `proyectos` o un tercer rol en `integrantes`. Se decide en la spec con el Scrum Master; es cambio de esquema (documento y migración en un solo PR). | HU-19 |
+| **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
+| **D16** | **PENDIENTE.** Cierre manual del proyecto (#173): hoy el estado es derivado y no se guarda. | Guardar la fecha de cierre en `proyectos`; sin cierre manual, el proyecto no pasa a Finalizado. Cambio de esquema. | HU-13 |
+| **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
 
@@ -544,6 +553,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    `horas_por_story_point` aceptaba `'abc'`; con el `typeof`, 18 de 18 con el resultado esperado. Si el documento y la migración divergen, ese test falla.
 
 ## 10. Cambios sobre lo que ya está en `main`
+
+> **Histórico:** esta adopción ya se hizo (issue #107, PR #124, migración 001). Se conserva como registro de cómo se decidió; el esquema vigente es el de §4.
 
 ### Encuadre de proceso
 

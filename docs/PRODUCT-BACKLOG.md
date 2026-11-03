@@ -30,6 +30,8 @@
 >   por primera vez (la historia estaba sin estimar) sí se permite.
 > - Los estados derivados (como el estado del proyecto) y las métricas se calculan al
 >   consultar; no se guardan.
+> - El enunciado habla de registrar esfuerzo "para cada historia o tarea": en este
+>   proyecto no existe la entidad Tarea y el esfuerzo (HU-07) se registra por historia.
 > - Todo requisito mínimo del enunciado tiene una historia dueña. Las historias
 >   14 y 15 se agregaron para cubrir requisitos que ninguna historia tenía.
 
@@ -68,6 +70,15 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 * **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto de historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado).
 * **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado. Va al final porque su historial muestra métricas (HU-03), esfuerzo (HU-07) y defectos (HU-08), que tienen que existir antes.
 
+## ***Prioridad 5: Mejoras de calidad del beta testing (Could have / Should have)***
+
+Surgieron al probar la aplicación desplegada en Render (2026-10-30). No son requisitos del enunciado: se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. Prioridad, valor y estimación de estas cuatro historias son una propuesta del Scrum Master, a confirmar con el equipo.
+
+* **HU-16: Gestión del Equipo del Proyecto (Could have).** Cambiar el rol de un integrante y quitarlo del equipo sin perder lo que aportó; siempre queda al menos un Scrum Master. Extiende HU-04.
+* **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. Extiende HU-04.
+* **HU-18: Avance de las Historias del Proyecto (Should have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Extiende HU-15 y HU-11.
+* **HU-19: Administración de Mis Proyectos (Could have).** Ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), con transferencia de la propiedad. Se entrega por niveles. Extiende HU-04.
+
 ---
 
 # HISTORIAS DE USUARIO
@@ -98,7 +109,7 @@ HU-04 (el proyecto debe existir).
 M (Must have) - Esencial para el MVP. 
 
 ### Estado
-Implementada (el Escenario 3 está pendiente: lo cubre la tarea de integridad referencial).
+Implementada (el Escenario 3, de integridad referencial, se resolvió con el fix #19, PR #103; el frontend se entregó con el PR #125).
 
 ### Valor de Negocio
 21 (Fibonacci) 
@@ -162,7 +173,7 @@ Nueva
 ### Valor de Negocio
 21 (Fibonacci)
 ### Estimación
-8 Story Points (cálculos de dominio, sin UI — se testea con TDD directo sobre `/internal/domain`). Pendiente de confirmar con el profesor: de dónde salen las "horas estimadas" (el enunciado no lo define); mientras tanto rige el parámetro del proyecto.
+8 Story Points (cálculos de dominio, sin UI — se testea con TDD directo sobre `/internal/domain`). **Decidido por el equipo (2026-10-28):** el enunciado no define de dónde salen las "horas estimadas" y el equipo votó la opción A: horas estimadas = Story Points × "horas por Story Point" fijo del proyecto. Si el profesor aclara otra fuente, se ajusta con un fix.
 
 ---
 
@@ -189,7 +200,7 @@ Ninguna (es la base).
 ### Prioridad
 M (Must have) - Requisito fundamental para que el sistema funcione. 
 ### Estado
-Implementada (el Escenario 3 exige fin estrictamente posterior: ajuste pendiente respecto de lo implementado, que acepta fechas iguales).
+Implementada (el ajuste de fecha de fin estrictamente posterior se resolvió con el fix #100, PR #111; GET /projects con #126 y el frontend con el PR #121).
 ### Valor de Negocio
 21 (Fibonacci) 
 ### Estimación
@@ -230,7 +241,7 @@ Al cerrar, el sistema registra qué historias quedaron sin completar y sus Story
 ### Prioridad
 M (Must have) - Sin esto no hay marco iterativo ágil. 
 ### Estado
-Implementada (falta registrar las historias arrastradas, con sus Story Points, y que el cierre sea atómico: issue #117, depende de #107)
+Implementada (las historias arrastradas y el cierre atómico se resolvieron con el issue #117, PR #136; el frontend con el PR #127; falta la consulta de Sprints, #110, PR #149 abierto)
 ### Valor de Negocio
 21 (Fibonacci) 
 
@@ -473,7 +484,7 @@ HU-04 (proyecto y fechas), HU-05 (estado de los Sprints).
 ### Prioridad
 S (Should have) - Extiende HU-04, no bloquea el resto del sistema.
 ### Estado
-Implementada
+Implementada (el frontend se entregó con el PR #150, issue #41; queda el fix #151, PR #152 abierto)
 ### Valor de Negocio
 8 (Fibonacci)
 ### Estimación
@@ -544,11 +555,187 @@ Los criterios de aceptación son un texto libre opcional de hasta 2000 caractere
 ### Prioridad
 M (Must have) - El enunciado exige los criterios de aceptación y los Story Points como parte mínima de cada elemento del Product Backlog, HU-06 necesita el listado y HU-03 y HU-10 necesitan los Story Points.
 ### Estado
-Nueva
+Implementada (backend, PR #135; falta el frontend: issue #98)
 ### Valor de Negocio
 13 (Fibonacci)
 ### Estimación
 5 Story Points
+
+---
+
+## HU-16: Gestión del Equipo del Proyecto
+### Descripción
+Como Scrum Master quiero cambiar el rol de un integrante y quitarlo del equipo de un proyecto, conservando todo lo que aportó, para poder mantener el equipo al día sin perder el historial del proyecto.
+### Criterios de aceptacion (BDD):
+Escenario 1: Cambio de rol.
+Dado que un proyecto tiene un integrante con rol Product Builder,
+Cuando cambio su rol a Scrum Master y guardo,
+Entonces el sistema actualiza su rol y lo muestra en el equipo del proyecto.
+Escenario 2: Quitar un integrante conservando su historial.
+Dado que un integrante ya votó una estimación e imputó horas,
+Cuando lo quito del equipo,
+Entonces deja de figurar en el equipo y no cuenta en las votaciones nuevas, y sus votos y sus horas siguen en el historial y en las métricas.
+Escenario 3: Volver a sumar a un integrante dado de baja.
+Dado que un integrante fue quitado del equipo,
+Cuando lo asigno de nuevo al proyecto con un rol,
+Entonces el sistema lo reactiva con el rol elegido, sin duplicarlo ni perder su historial.
+Escenario 4: Siempre hay un Scrum Master.
+Dado que un proyecto tiene un único Scrum Master activo,
+Cuando intento quitarlo o cambiarle el rol,
+Entonces el sistema rechaza el cambio con un mensaje claro y no modifica el equipo.
+Escenario 5: Integrante o proyecto inexistente.
+Dado que intento modificar un integrante o un proyecto que no existen,
+Cuando envío la petición,
+Entonces el sistema responde "no encontrado".
+### Depende de
+HU-04 (proyecto e integrantes). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
+### Notas
+La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
+Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; HU-17 lo elige de la lista), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Esta historia **reabre la decisión D4** de `MODELO-DE-DATOS.md` (hoy no se impone un único Scrum Master; acá se pide al menos uno activo).
+La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
+El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
+La aplicación de permisos por rol sigue fuera del alcance (ver HU-04).
+### Prioridad
+C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
+### Estado
+Nueva
+### Valor de Negocio
+5 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+5 Story Points - propuesta, a estimar con el equipo
+
+---
+
+## HU-17: Gestión de Usuarios
+### Descripción
+Como Scrum Master quiero crear y editar usuarios y elegir a los integrantes de un proyecto de entre los usuarios ya creados, para no asignar roles a personas ficticias ni por un error de tipeo, y para que el equipo de pruebas tenga usuarios listos después de cada despliegue.
+### Criterios de aceptacion (BDD):
+Escenario 1: Alta de un usuario.
+Dado que ingreso un nombre válido que no existe,
+Cuando creo el usuario,
+Entonces el sistema lo agrega a la lista de usuarios, sin rol (el rol se asigna por proyecto).
+Escenario 2: Usuario repetido.
+Dado que ya existe un usuario con ese nombre, sin distinguir mayúsculas ni espacios externos,
+Cuando intento crearlo otra vez,
+Entonces el sistema rechaza el alta con un mensaje claro y no crea un duplicado.
+Escenario 3: Elegir integrantes de la lista.
+Dado que existen usuarios creados,
+Cuando asigno un integrante a un proyecto,
+Entonces elijo a la persona de la lista y le asigno un rol, y no puedo escribir un nombre libre.
+Escenario 4: Elegir al Scrum Master al crear el proyecto.
+Dado que existen usuarios creados,
+Cuando creo un proyecto,
+Entonces elijo de la lista a quien será su Scrum Master.
+Escenario 5: Edición del nombre.
+Dado que existe un usuario que participa en varios proyectos,
+Cuando cambio su nombre a uno que no está en uso,
+Entonces el nombre cambia en todos los proyectos y el historial (votos, horas, equipos) sigue asociado a la misma persona.
+Escenario 6: Edición con un nombre en uso.
+Dado que existe otro usuario con el nombre que ingreso,
+Cuando guardo el cambio,
+Entonces el sistema lo rechaza y no modifica al usuario.
+Escenario 7: Usuarios predeterminados de la demo.
+Dado que uso el botón de datos de prueba,
+Cuando se cargan los datos,
+Entonces se crean los usuarios predeterminados sin rol, y si ya existen no se duplican.
+### Depende de
+HU-04 (usuarios e integrantes) y el issue #144 (botón de datos de prueba).
+### Notas
+No requiere cambio de esquema: `usuarios` ya existe y es independiente de los proyectos (ver `MODELO-DE-DATOS.md` §4.2). La identidad es `nombre_normalizado`, y las demás tablas apuntan por `usuario_id`, por eso renombrar es seguro.
+El contrato de asignación cambia: hoy `POST /projects/{id}/members` recibe un nombre. Se hace en dos pasos para no romper `main`: primero el backend acepta `usuario_id` además del nombre y agrega `GET /users`; después el frontend pasa a elegir de la lista y, en ese mismo PR, se retira el camino del nombre. Lo mismo con el Scrum Master de `POST /projects`.
+Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restricción por perfil ("admin" o "betaTester") queda para cuando se agreguen perfiles, y se discute con el equipo.
+### Prioridad
+C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
+### Estado
+Nueva
+### Valor de Negocio
+8 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+8 Story Points - propuesta, a estimar con el equipo
+
+---
+
+## HU-18: Avance de las Historias del Proyecto
+### Descripción
+Como integrante del equipo quiero ver todas las historias del proyecto agrupadas por estado y por Sprint, para saber qué se terminó y qué falta sin revisar los Sprints uno por uno.
+### Criterios de aceptacion (BDD):
+Escenario 1: Vista de avance.
+Dado que un proyecto tiene historias en distintos estados y Sprints,
+Cuando abro la pantalla "Estado" del proyecto,
+Entonces el sistema las muestra agrupadas en Nueva, En progreso y Completada, con la cantidad de historias y de Story Points de cada grupo.
+Escenario 2: Sprint de cada historia.
+Dado que una historia pertenece a un Sprint,
+Cuando miro su grupo,
+Entonces veo el Sprint al que pertenece; si no tiene Sprint, se indica que está en el Product Backlog.
+Escenario 3: Proyecto sin historias.
+Dado que un proyecto no tiene historias,
+Cuando abro la pantalla "Estado",
+Entonces el sistema muestra un mensaje de que no hay historias y los totales en cero.
+Escenario 4: Proyecto inexistente.
+Dado que el proyecto no existe,
+Cuando abro la pantalla "Estado",
+Entonces el sistema responde "no encontrado".
+### Depende de
+HU-01 (historias), HU-05 y HU-06 (Sprints y su backlog), HU-11 (estado de la historia), HU-15 (Story Points).
+### Notas
+Es una vista de solo lectura: no recalcula métricas (eso es HU-03) ni cambia el Product Backlog de HU-15, que sigue mostrando solo las historias sin Sprint.
+Reemplaza el texto "esta pantalla será implementada" de la pestaña Estado (`/projects/{id}/status`). El panel del proyecto conserva el estado Planificado / En curso / Finalizado de HU-13.
+### Prioridad
+S (Should have) - Responde a la pregunta básica de seguimiento ("¿qué está terminado y qué no?") que hoy no se puede contestar desde la pantalla.
+### Estado
+Nueva
+### Valor de Negocio
+8 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+5 Story Points - propuesta, a estimar con el equipo
+
+---
+
+## HU-19: Administración de Mis Proyectos
+### Descripción
+Como usuario quiero ver los proyectos que creé y los que tengo asignados, y administrarlos según mi rol (dueño, Scrum Master o Product Builder), para trabajar solo con lo que me corresponde y poder transferir la propiedad de un proyecto a otra persona.
+### Criterios de aceptacion (BDD):
+Escenario 1: Mis proyectos.
+Dado que soy un usuario con proyectos creados por mí y proyectos en los que soy integrante,
+Cuando abro "Administrar proyectos",
+Entonces el sistema lista cada proyecto con mi rol en él (dueño, Scrum Master o Product Builder).
+Escenario 2: El creador es el dueño.
+Dado que creo un proyecto,
+Cuando se crea,
+Entonces quedo registrado como su dueño.
+Escenario 3: Acciones según el rol.
+Dado que abro un proyecto de mi lista,
+Cuando miro las acciones disponibles,
+Entonces el dueño puede editar el proyecto, transferirlo y cerrarlo; el Scrum Master administra el equipo y los Sprints; y el Product Builder trabaja con las historias, sin ver las acciones que no le corresponden.
+Escenario 4: Transferir la propiedad.
+Dado que soy el dueño de un proyecto,
+Cuando lo transfiero a otro integrante del proyecto,
+Entonces esa persona pasa a ser la dueña y yo conservo mi rol de integrante.
+Escenario 5: Transferencia inválida.
+Dado que soy el dueño de un proyecto,
+Cuando intento transferirlo a un usuario que no existe, que no es integrante o que soy yo mismo,
+Entonces el sistema rechaza la transferencia y el dueño no cambia.
+Escenario 6: Usuario sin proyectos.
+Dado que no creé ni tengo asignado ningún proyecto,
+Cuando abro "Administrar proyectos",
+Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
+### Depende de
+HU-04 (proyectos e integrantes), HU-17 (usuarios y elegir quién soy), HU-16 (equipo del proyecto), #148 (navegar entre proyectos desde la interfaz) y la decisión del cierre manual del proyecto (#173).
+### Notas
+Se entrega por niveles, porque la historia completa necesita identificar a la persona que usa la aplicación y hoy no hay inicio de sesión:
+1. **Nivel 1, ya en curso:** lista de proyectos y selector para navegar entre ellos (#148).
+2. **Nivel 2, esta historia:** un "usuario actual" elegido de la lista de usuarios (sin contraseña, pensado para la beta) con "mis proyectos", el dueño y las acciones visibles según el rol. Los permisos se aplican en la pantalla: sin autenticación **no son seguridad real**, y el backend no puede saber quién hace cada pedido.
+3. **Nivel 3, después de la entrega:** autenticación y permisos aplicados en el backend. Reabre la decisión de HU-04 de dejar los permisos por rol fuera del alcance, que se consulta con la cátedra.
+El dueño es quien crea el proyecto y se puede transferir a otro usuario. El dueño no existe en el modelo: guardarlo es un cambio de esquema (por ejemplo, una referencia al usuario en `proyectos`, o un tercer rol en `integrantes`), un solo PR con `MODELO-DE-DATOS.md` y la migración. La opción se decide con el Scrum Master y el equipo; no la elige quien implementa.
+Cerrar el proyecto de forma manual es otra decisión pendiente (#173).
+### Prioridad
+C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 dependen de HU-17 y de perfiles.
+### Estado
+Nueva
+### Valor de Negocio
+8 (Fibonacci) - propuesta, a confirmar con el equipo
+### Estimación
+8 Story Points (solo el nivel 2) - propuesta, a estimar con el equipo
 
 ---
 
@@ -572,3 +759,46 @@ backlog del Sprint 2 y se reparan cada uno en su propia rama `fix/<n°-issue>-no
 **Decidido por el equipo (2026-10-14), no es un defecto:** #20. Un Sprint se puede iniciar
 con fechas de inicio y de fin anteriores a hoy, porque el equipo pudo haberlo empezado de
 hecho y olvidar declararlo en la aplicación. No se restringe; solo el fin debe ser posterior al inicio.
+
+---
+
+# FIXES DEL SPRINT 2 INCLUIDOS EN EL SPRINT 3
+
+Defectos encontrados durante el Sprint 2 (que terminó el 2026-10-26) y deudas que dejaron
+sus reviews. Cada uno tiene su issue y se repara en su propia rama `fix/<n°-issue>-nombre`
+(ver la convención de Git en `AGENTS.md`); los que se mergean después de `v0.2.0` reciben
+un tag `v0.2.P`.
+
+| Issue | Fix | Historia | Estado |
+|---|---|---|---|
+| #117 | El cierre de un Sprint registra las historias arrastradas con sus Story Points, de forma atómica (migración 002) | HU-05 | Mergeado (PR #136, `v0.2.1`) |
+| #151 | Completar la spec y los tests del estado del proyecto en el panel | HU-13 | Mergeado (PR #152, `v0.2.2`) |
+| #145 | Dos cierres simultáneos de un Sprint pasaban la validación | HU-05 | Mergeado (PR #155, `v0.2.3`) |
+| #158 | Dos inicios simultáneos del mismo Sprint pasaban la validación | HU-05 | Mergeado (PR #160, `v0.2.4`) |
+| #128 | Con el backend apagado, el cliente compartido muestra «502» en vez del error de conexión | frontend base | Abierto, tarea libre |
+| #129 | Los Sprints se numeran de forma global y no por proyecto | HU-05 | Abierto, tarea libre |
+| #130 | `docs/curl-frontend-sprint-2.md` no tiene el comando para cerrar un Sprint | transversal | Abierto, tarea libre |
+| #137 | Ajustes al workflow de CI sugeridos en la review del PR #133 | transversal | Abierto (Carlos) |
+| #146 | El paso BDD del cierre con arrastre usa SQL directo en vez de `EditarHistoria` | HU-05 | Mergeado (PR #163) |
+| #159 | Documentar el cierre condicional en `MODELO-DE-DATOS.md` §4.6 y en el plan de la spec 003 | HU-05 | Abierto, Sprint 4 |
+| #172 | Al recargar la página, las listas de Sprints y del backlog pueden no cargar (falta `Vary: Accept` en `ServirSPA`) | transversal | Abierto, Sprint 3 |
+
+---
+
+# MEJORAS TÉCNICAS Y DE USABILIDAD (NO SON HISTORIAS DE USUARIO)
+
+Trabajo que no agrega requisitos del enunciado y por eso no es una historia, pero tiene
+issue y entra en los Sprints.
+
+| Issue | Mejora | Estado |
+|---|---|---|
+| #139 | Despliegue continuo en Render: un servicio con la imagen Docker, que se actualiza en cada merge a `main` | Abierto (Carlos) |
+| #144 | Botón «Cargar datos de prueba» (endpoint de demo y pantalla), para el servicio de Render, que no conserva la base | Abierto (Carlos) |
+| #148 | Navegar entre proyectos desde la interfaz (lista y selector) | Abierto (Jimena) |
+| #147 | Mostrar con Markdown la descripción y los criterios de aceptación de las historias | Abierto, tarea libre (depende de #98) |
+| #140 | Test de las rutas HTTP y del cableado de `cmd/api/main.go` | Abierto, tarea libre |
+| #141 | Eliminar `Inicio.tsx`, que ningún archivo importa | Abierto, tarea libre |
+| #168 | Rechazar Sprints con fechas fuera del plazo del proyecto (backend) | Abierto, a priorizar |
+| #169 | Mostrar las fechas del proyecto en la pantalla de Sprints y limitar los selectores | Abierto, a priorizar |
+| #173 | Regla del estado del proyecto: cierre manual en vez de «Finalizado» derivado de los Sprints (HU-13) | Abierto, a decidir |
+| #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, a decidir |

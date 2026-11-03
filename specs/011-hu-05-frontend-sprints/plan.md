@@ -61,7 +61,7 @@ specs/011-hu-05-frontend-sprints/
 
 ```text
 web/src/features/sprints/
-├── index.tsx              # exporta Component: estado local, "Crear Sprint", aviso de crear, texto de limitación
+├── index.tsx              # exporta Component: estado local, carga inicial, "Crear Sprint", aviso de crear
 ├── sprints.css            # estilos propios de la feature
 ├── api.ts                 # crearSprint, iniciarSprint (sobre post del cliente compartido)
 ├── BotonCerrar.tsx        # botón "Cerrar Sprint" + cerrarSprint (aislado por #117)
@@ -80,14 +80,14 @@ web/src/features/sprints/
 
 ## Design decisions
 
-1. **Estado local, un único punto de carga.** `index.tsx` guarda `sprints: Sprint[]` con `useState`, inicializado por `cargarSprintsIniciales()`, que hoy devuelve `[]` (FR-010). Cuando exista #110 se reemplaza el cuerpo de esa función (o se hace un `useEffect`) sin tocar secciones ni acciones. Cada respuesta de la API reemplaza al Sprint por `id` (`guardarSprint`); la API es la fuente de verdad.
+1. **Estado local, un único punto de carga.** `index.tsx` guarda `sprints: Sprint[]` con `useState`, inicializado por `cargarSprintsIniciales()`, que hoy devuelve `[]` (FR-010). Cuando exista #110 se reemplaza el cuerpo de esa función (o se hace un `useEffect`) sin tocar secciones ni acciones (hecho en la spec 015: `useEffect` con `listarSprints`). Cada respuesta de la API reemplaza al Sprint por `id` (`guardarSprint`); la API es la fuente de verdad.
 2. **Agrupación y orden.** `agruparPorEstado(sprints)` devuelve `{ Pendiente, Activo, Finalizado }`, cada lista ordenada por `id` ascendente. Las tres secciones se renderizan siempre, con texto "No hay Sprints" cuando están vacías (FR-008).
 3. **Clasificación de errores.** `clasificarError(error, campos)` recibe cualquier error lanzado: si es `ApiError` con `field` incluido en `campos` (`sprint_goal`, `fecha_inicio`, `fecha_fin`) devuelve `{ campo, mensaje }`; cualquier otro caso (`ApiError` sin campo o con `estado`, `proyecto_id`, `id`; `ConnectionError`; error desconocido) devuelve `{ aviso: mensaje }`. No valida nada del dominio (FR-011).
 4. **Avisos por acción (clarify).** Cada `FormularioInicio` y cada `BotonCerrar` guardan su propio `aviso`/`errores` y los borran al empezar un envío; el de "Crear Sprint" vive en `index.tsx`. Un error de un Sprint no se ve en otro.
 5. **Carga y doble envío.** Cada componente de acción tiene su `enviando`: muestra `LoadingIndicator` y deshabilita su botón (FR-014). Formulario y botón de cierre nunca coexisten en el mismo Sprint, así que no hay dos operaciones simultáneas sobre uno.
 6. **Fechas.** `<Field type="date">` nativo; el valor ya es `AAAA-MM-DD`. Sin librería ni selector propio.
 7. **Proyecto.** `useParams().id` convertido con `Number`; no se valida, el backend responde 400/404 y se muestra su mensaje (spec, caso límite).
-8. **Texto de limitación y encabezado de Sprint.** El texto "Los Sprints existentes no se listan todavía. Los que ves son los de esta visita y se pierden al recargar." (sin rutas ni comandos) va fijo en `index.tsx` (FR-018); cada tarjeta muestra "Sprint #<id>" (FR-019).
+8. **Texto de limitación y encabezado de Sprint.** ~~Texto de limitación~~ (retirado en la spec 015); cada tarjeta muestra "Sprint #<id>" (FR-019).
 9. **Aislamiento del cierre.** `BotonCerrar` recibe `sprint` y `alActualizar(sprint)`; no sabe de secciones ni de otros componentes. `cerrarSprint` vive en `BotonCerrar.tsx` por FR-007; `api.ts` solo tiene `crearSprint` e `iniciarSprint`. Si #117 cambia la llamada o la respuesta, solo cambia `BotonCerrar.tsx`.
 10. **Contrato de la API.** No se redefine: se enlaza al de la spec 003. Ver [contracts/pantalla-y-api.md](contracts/pantalla-y-api.md).
 11. **Contrato con la base (FR-020).** `Component` renderiza un `<h1>` con el texto exacto "Sprints" y una línea "Proyecto actual: <strong>{id}</strong>", con el id de la URL en un único `<strong>`; ningún otro elemento muestra solo ese número (los "Sprint #<id>" de las tarjetas llevan el prefijo en el mismo texto). `web/src/rutas.test.tsx` lo verifica y no se modifica.

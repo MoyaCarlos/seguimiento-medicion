@@ -21,3 +21,7 @@ vendor/
 # SO
 .DS_Store
 Thumbs.db
+
+# Informes locales de revisión (no se commitean)
+docs/reviews/
+INFORME-*.md

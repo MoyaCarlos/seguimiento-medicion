@@ -4,7 +4,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HistoriaCreada } from './historia'
-import { Component } from './index'
+import { Component } from './crear'
 
 const HISTORIA: HistoriaCreada = {
   id: 7,

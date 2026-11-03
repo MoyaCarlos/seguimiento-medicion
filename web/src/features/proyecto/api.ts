@@ -3,6 +3,8 @@ import type { DatosProyecto } from './validacion'
 
 export type Rol = 'scrum_master' | 'product_builder'
 
+export type EstadoProyecto = 'Planificado' | 'En curso' | 'Finalizado'
+
 export type Proyecto = {
   id: number
   nombre: string
@@ -45,6 +47,9 @@ export const crearProyecto = (datos: NuevoProyecto) =>
 
 export const obtenerProyecto = (id: string) =>
   get<Proyecto>(`/projects/${id}`)
+
+export const obtenerEstadoProyecto = (id: string) =>
+  get<{ estado: EstadoProyecto }>(`/projects/${id}/status`)
 
 export const editarProyecto = (id: string, datos: ProyectoEditado) =>
   put<Proyecto>(`/projects/${id}`, datos)
