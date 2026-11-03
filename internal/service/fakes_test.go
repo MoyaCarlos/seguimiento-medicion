@@ -233,27 +233,44 @@ func (f *fakeSprintsQueCuentan) ObtenerPorID(ctx context.Context, id int64) (dom
 	return f.SprintRepositoryEnMemoria.ObtenerPorID(ctx, id)
 }
 
-// fakeVotacionRepository guarda una ronda por historia y simula las escrituras
-// condicionales del adaptador SQLite (research.md R6). Devuelve copias, así un
-// cambio en la ronda del service no llega acá sin pasar por GuardarVoto.
+// fakeVotacionRepository guarda la ronda actual de cada historia y las anteriores,
+// y simula las escrituras condicionales del adaptador SQLite (research.md R6).
+// Devuelve copias, así un cambio en la ronda del service no llega acá sin pasar
+// por GuardarVoto.
 type fakeVotacionRepository struct {
-	rondas map[int64]domain.RondaVotacion
-	err    error
+	rondas     map[int64]domain.RondaVotacion
+	anteriores []domain.RondaVotacion
+	err        error
 }
 
 func (f *fakeVotacionRepository) CrearRonda(_ context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error) {
 	if f.err != nil {
 		return domain.RondaVotacion{}, f.err
 	}
-	if _, ok := f.rondas[r.HistoriaID]; ok {
+	actual, ok := f.rondas[r.HistoriaID]
+	if ok && r.Numero <= actual.Numero {
 		return domain.RondaVotacion{}, domain.ErrVotacionYaIniciada
 	}
 	if f.rondas == nil {
 		f.rondas = map[int64]domain.RondaVotacion{}
 	}
-	r.ID = int64(len(f.rondas) + 1)
+	if ok {
+		f.anteriores = append(f.anteriores, actual)
+	}
+	r.ID = f.siguienteID()
 	f.rondas[r.HistoriaID] = copiaDeRonda(r)
 	return copiaDeRonda(r), nil
+}
+
+func (f *fakeVotacionRepository) siguienteID() int64 {
+	var mayor int64
+	for _, r := range f.rondas {
+		mayor = max(mayor, r.ID)
+	}
+	for _, r := range f.anteriores {
+		mayor = max(mayor, r.ID)
+	}
+	return mayor + 1
 }
 
 func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaID int64) (domain.RondaVotacion, error) {
