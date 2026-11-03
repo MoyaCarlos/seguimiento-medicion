@@ -33,7 +33,10 @@ func NuevaRonda(historiaID int64) (RondaVotacion, error) {
 
 // Siguiente crea la ronda que sigue a esta, que tiene que estar revelada.
 func (r RondaVotacion) Siguiente() (RondaVotacion, error) {
-	return RondaVotacion{}, nil
+	if !r.Revelada() {
+		return RondaVotacion{}, ErrRondaNoRevelada
+	}
+	return RondaVotacion{HistoriaID: r.HistoriaID, Numero: r.Numero + 1}, nil
 }
 
 // Votar registra el voto del usuario o reemplaza el que ya tenía.
