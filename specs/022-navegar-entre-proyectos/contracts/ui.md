@@ -126,6 +126,7 @@ Devuelve una unión discriminada:
 ## Out of Scope
 
 - Nuevos endpoints o parámetros de `GET /projects`.
-- Autenticación, permisos, paginación, búsqueda, filtros y ordenamiento distinto.
+- Autenticación, permisos, paginación, filtros distintos de la búsqueda por nombre (ver `ListaProyectos`) y
+  ordenamiento distinto.
 - Persistencia del proyecto o de la sección elegida.
 - Cambios en los contratos de creación, edición o consulta de proyectos existentes.

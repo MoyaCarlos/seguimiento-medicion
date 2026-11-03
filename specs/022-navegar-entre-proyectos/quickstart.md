@@ -36,8 +36,8 @@ Esperado:
 1. Levantar el backend: `go run ./cmd/api` desde la raíz.
 2. Levantar el frontend: `npm run dev` desde `web/`.
 3. Abrir `http://localhost:5173/`.
-4. Verificar que debajo del formulario "Crear proyecto" aparece la lista de proyectos existentes,
-   cada uno como `<nombre> (#<id>)`.
+4. Verificar que a la derecha del formulario "Crear proyecto" (debajo en celular) aparece la lista de
+   proyectos existentes, cada uno como `<nombre> (#<id>)`.
 5. Activar el enlace de un proyecto.
 
 **Esperado**: se abre `/projects/<id>/proyecto` con el panel de ese proyecto.

@@ -6,7 +6,7 @@
 
 **Created**: 2026-10-27
 
-**Status**: Draft
+**Status**: Implementada (Issue #148), pendiente de revisión por PR.
 
 **Input**: User description: "Issue #148: Navegar entre proyectos desde la interfaz (lista y selector). Solo frontend; no cambia la API ni el esquema. Esta historia modifica archivos de la base (compartido/router/LayoutProyecto.tsx y web/src/rutas.test.tsx) porque el issue lo asigna expresamente.
 
