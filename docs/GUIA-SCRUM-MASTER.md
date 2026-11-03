@@ -24,8 +24,8 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
   días hábiles y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
   alcanza, HU-10 sale en una versión mínima (el reporte de un Sprint) antes que
   correr la fecha. El tag `v1.0.0` va el 16-nov; este Sprint no crea `v0.5.0`.
-  HU-12, HU-14 y las mejoras nuevas (HU-16 a HU-19) entran solo si sobra tiempo.
-- **Product Backlog: 19 historias** (HU-16 a HU-19 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
+  HU-12, HU-14 y las mejoras nuevas (HU-16 a HU-21) entran solo si sobra tiempo.
+- **Product Backlog: 21 historias** (HU-16 a HU-21 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se
   actualiza en cada merge a `main`. Está en curso (issue #139).

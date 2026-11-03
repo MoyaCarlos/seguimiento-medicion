@@ -581,7 +581,7 @@ Escenario 3: Volver a sumar a un integrante dado de baja.
 Dado que un integrante fue quitado del equipo,
 Cuando lo asigno de nuevo al proyecto con un rol,
 Entonces el sistema lo reactiva con el rol elegido, sin duplicarlo ni perder su historial.
-Escenario 4: Siempre hay un Scrum Master.
+Escenario 4: Siempre hay un Scrum Master (único por proyecto).
 Dado que un proyecto tiene un único Scrum Master activo,
 Cuando intento quitarlo o cambiarle el rol,
 Entonces el sistema rechaza el cambio con un mensaje claro y no modifica el equipo.
@@ -597,7 +597,7 @@ Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; 
 Con un único Scrum Master por proyecto (#236), no se puede quitar al Scrum Master ni cambiar su rol sin traspasar antes el rol (fuera de alcance por ahora).
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
-La aplicación de permisos por rol sigue fuera del alcance (ver HU-04).
+La aplicación de permisos por rol sigue fuera del alcance (ver HU-04) (los permisos los cubre HU-21).
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
@@ -732,7 +732,7 @@ Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20
 Se descarta la transferencia de la propiedad (escenarios 2, 4 y 5): el dueño del proyecto es quien lo crea y queda como su único Scrum Master, así que la decisión D14 de `MODELO-DE-DATOS.md` (dónde guardar al dueño) deja de hacer falta. Un solo Scrum Master por proyecto es el issue #236.
 Cerrar el proyecto de forma manual (#173) y eliminarlo (#232) son decisiones aparte.
 ### Prioridad
-C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 dependen de HU-17 y de perfiles.
+C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 pasaron a HU-21 y HU-20.
 ### Estado
 Absorbida por HU-20 y HU-21
 ### Valor de Negocio
