@@ -18,10 +18,11 @@ type VotacionHandler struct {
 	iniciar         *service.IniciarVotacion
 	registrar       *service.RegistrarEstimacion
 	abrir           *service.AbrirNuevaRonda
+	historial       *service.ConsultarHistorialRondas
 }
 
-func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion, registrar *service.RegistrarEstimacion, abrir *service.AbrirNuevaRonda) *VotacionHandler {
-	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar, abrir: abrir}
+func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion, registrar *service.RegistrarEstimacion, abrir *service.AbrirNuevaRonda, historial *service.ConsultarHistorialRondas) *VotacionHandler {
+	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar, abrir: abrir, historial: historial}
 }
 
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
@@ -136,6 +137,10 @@ func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Reques
 		return
 	}
 	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
+}
+
+// Historial atiende GET /backlog/{id}/votacion/rondas.
+func (h *VotacionHandler) Historial(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia

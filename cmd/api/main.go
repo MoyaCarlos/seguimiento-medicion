@@ -77,6 +77,7 @@ func main() {
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 		service.NewRegistrarEstimacion(backlogRepo, proyectos, votaciones, sprintRepo),
 		service.NewAbrirNuevaRonda(backlogRepo, proyectos, votaciones),
+		service.NewConsultarHistorialRondas(backlogRepo, proyectos, votaciones),
 	)
 
 	defectosRepo := repository.NewSQLiteDefectoRepository(db)

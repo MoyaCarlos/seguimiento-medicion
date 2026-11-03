@@ -63,6 +63,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 		service.NewIniciarVotacion(historias, proyectos, votaciones),
 		service.NewRegistrarEstimacion(historias, proyectos, votaciones, repository.NewSQLiteSprintRepository(db)),
 		service.NewAbrirNuevaRonda(historias, proyectos, votaciones),
+		service.NewConsultarHistorialRondas(historias, proyectos, votaciones),
 	)
 }
 
@@ -503,4 +504,50 @@ func TestVotacionHandler_AbrirRonda_Errores(t *testing.T) {
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
 	}
+}
+
+func historialDe(handler *VotacionHandler, id string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/votacion/rondas", nil)
+	req.SetPathValue("id", id)
+	handler.Historial(rec, req)
+	return rec
+}
+
+func TestVotacionHandler_Historial_SoloRondasReveladas(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela,
+		"INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (2, 3, 2, NULL)",
+		"INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (2, 1, 13)")
+
+	rec := historialDe(handler, "3")
+
+	esperado := `{"historia_id":3,"rondas":[{"ronda":1,"revelada_en":"2026-10-27T15:04:05Z","votos":[` +
+		`{"usuario_id":1,"nombre":"Carlos","rol":"scrum_master","valor":3},` +
+		`{"usuario_id":2,"nombre":"Candela","rol":"product_builder","valor":8}]}]}`
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if strings.TrimSpace(rec.Body.String()) != esperado {
+		t.Errorf("se esperaba %s, se obtuvo %s", esperado, rec.Body.String())
+	}
+}
+
+func TestVotacionHandler_Historial_SinRondasReveladas(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+	rec := historialDe(handler, "3")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"rondas":[]`) {
+		t.Errorf("rondas va como lista vacía, no null: %s", rec.Body.String())
+	}
+}
+
+func TestVotacionHandler_Historial_Errores(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t)
+
+	esperarError(t, historialDe(handler, "abc"), nethttp.StatusBadRequest, "id", "")
+	esperarError(t, historialDe(handler, "999"), nethttp.StatusNotFound, "", "historia no encontrada")
 }

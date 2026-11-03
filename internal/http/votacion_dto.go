@@ -60,6 +60,36 @@ func aRespuestaDiferencias(d domain.Diferencias) *diferenciasResponse {
 	return &diferenciasResponse{HayDiferencias: true, Minimo: &d.Minimo, Maximo: &d.Maximo}
 }
 
+type historialRondasResponse struct {
+	HistoriaID int64                   `json:"historia_id"`
+	Rondas     []rondaReveladaResponse `json:"rondas"`
+}
+
+type rondaReveladaResponse struct {
+	Ronda      int                    `json:"ronda"`
+	ReveladaEn string                 `json:"revelada_en"`
+	Votos      []votoReveladoResponse `json:"votos"`
+}
+
+type votoReveladoResponse struct {
+	UsuarioID int64  `json:"usuario_id"`
+	Nombre    string `json:"nombre"`
+	Rol       string `json:"rol"`
+	Valor     int    `json:"valor"`
+}
+
+func aRespuestaHistorial(h service.HistorialRondas) historialRondasResponse {
+	respuesta := historialRondasResponse{HistoriaID: h.HistoriaID, Rondas: make([]rondaReveladaResponse, 0, len(h.Rondas))}
+	for _, r := range h.Rondas {
+		ronda := rondaReveladaResponse{Ronda: r.Numero, ReveladaEn: r.ReveladaEn.UTC().Format(time.RFC3339), Votos: make([]votoReveladoResponse, 0, len(r.Votos))}
+		for _, v := range r.Votos {
+			ronda.Votos = append(ronda.Votos, votoReveladoResponse{UsuarioID: v.UsuarioID, Nombre: v.Nombre, Rol: string(v.Rol), Valor: v.Valor})
+		}
+		respuesta.Rondas = append(respuesta.Rondas, ronda)
+	}
+	return respuesta
+}
+
 func aRespuestaVotacion(v service.VistaVotacion) votacionResponse {
 	respuesta := votacionResponse{
 		HistoriaID:  v.HistoriaID,
