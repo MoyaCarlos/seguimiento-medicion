@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { etiquetaProyecto, rutaDeSeccion } from './ruta'
 import { useProyectos } from './useProyectos'
 
@@ -18,14 +18,17 @@ export function SelectorProyecto() {
   }
 
   return (
-    <label className="field">
-      <span>Proyecto</span>
-      <select value={id} onChange={elegir}>
-        {!actualListado && <option value={id}>{`Proyecto ${id}`}</option>}
-        {listados.map((proyecto) => (
-          <option key={proyecto.id} value={proyecto.id}>{etiquetaProyecto(proyecto)}</option>
-        ))}
-      </select>
-    </label>
+    <div className="selector-proyecto">
+      <label className="field">
+        <span>Proyecto</span>
+        <select value={id} onChange={elegir}>
+          {!actualListado && <option value={id}>{`Proyecto ${id}`}</option>}
+          {listados.map((proyecto) => (
+            <option key={proyecto.id} value={proyecto.id}>{etiquetaProyecto(proyecto)}</option>
+          ))}
+        </select>
+      </label>
+      <Link className="button button--secondary" to="/">Nuevo proyecto</Link>
+    </div>
   )
 }
