@@ -267,6 +267,32 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
 
     expect(await screen.findByText(HISTORIA.titulo)).toBeTruthy()
   })
+
+  it('US1.3: Given que Beta Dos votó 8 y la consulta de Beta Tres está en curso, When cambio de integrante, Then no se ve el 8 de Beta Dos', async () => {
+    servidor.votos = { 2: 8 }
+    abrir()
+    await elegirActor('Beta Dos')
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+
+    consultarMock.mockReturnValueOnce(new Promise(() => {}))
+    await elegirActor('Beta Tres')
+
+    expect(within(fila('Beta Dos')).queryByText('8')).toBeNull()
+    expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
+  })
+
+  it('US1.3: Given que Beta Dos votó 8 y la consulta de Beta Tres falla, When cambio de integrante, Then el 8 de Beta Dos no queda en pantalla', async () => {
+    servidor.votos = { 2: 8 }
+    abrir()
+    await elegirActor('Beta Dos')
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+
+    consultarMock.mockRejectedValueOnce(new ConnectionError())
+    await elegirActor('Beta Tres')
+    await screen.findByText('No se pudo conectar con el servidor')
+
+    expect(within(fila('Beta Dos')).queryByText('8')).toBeNull()
+  })
 })
 
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
