@@ -551,3 +551,35 @@ func TestVotacionHandler_Historial_Errores(t *testing.T) {
 	esperarError(t, historialDe(handler, "abc"), nethttp.StatusBadRequest, "id", "")
 	esperarError(t, historialDe(handler, "999"), nethttp.StatusNotFound, "", "historia no encontrada")
 }
+
+func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
+	casos := []struct {
+		metodo, ruta, cuerpo string
+		status               int
+		esperado             string
+	}{
+		{nethttp.MethodGet, "/backlog/3/votacion", "", nethttp.StatusOK, `"diferencias":{`},
+		{nethttp.MethodPost, "/backlog/3/votacion", `{"usuario_id":1}`, nethttp.StatusConflict, "la historia ya tiene una votación"},
+		{nethttp.MethodPost, "/backlog/3/votacion/votos", `{"usuario_id":2,"valor":8}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
+		{nethttp.MethodPost, "/backlog/3/votacion/revelar", `{"usuario_id":1}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
+		{nethttp.MethodPost, "/backlog/3/votacion/estimacion", `{"usuario_id":1,"estimacion_sp":5}`, nethttp.StatusOK, `"estimacion_sp":5`},
+		{nethttp.MethodPost, "/backlog/3/votacion/rondas", `{"usuario_id":1}`, nethttp.StatusCreated, `"ronda":2`},
+		{nethttp.MethodGet, "/backlog/3/votacion/rondas", "", nethttp.StatusOK, `"rondas":[{"ronda":1`},
+	}
+	for _, c := range casos {
+		t.Run(c.metodo+" "+c.ruta, func(t *testing.T) {
+			mux := nethttp.NewServeMux()
+			nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela).Registrar(mux)
+			rec := httptest.NewRecorder()
+
+			mux.ServeHTTP(rec, httptest.NewRequest(c.metodo, c.ruta, strings.NewReader(c.cuerpo)))
+
+			if rec.Code != c.status {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
+			}
+			if !strings.Contains(rec.Body.String(), c.esperado) {
+				t.Errorf("se esperaba %s en %s", c.esperado, rec.Body.String())
+			}
+		})
+	}
+}
