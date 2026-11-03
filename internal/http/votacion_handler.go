@@ -123,7 +123,7 @@ func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *netht
 		return
 	}
 
-	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.EstimacionSP)
+	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.valor())
 	if err != nil {
 		escribirError(w, err)
 		return

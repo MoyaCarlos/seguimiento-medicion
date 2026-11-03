@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -21,7 +22,17 @@ type votoRequest struct {
 
 type estimacionRequest struct {
 	actorRequest
-	EstimacionSP int `json:"estimacion_sp"`
+	EstimacionSP json.RawMessage `json:"estimacion_sp"`
+}
+
+// valor devuelve 0 si estimacion_sp no es un entero: queda fuera de la baraja y
+// el service lo rechaza después de validar el permiso.
+func (e estimacionRequest) valor() int {
+	var valor int
+	if err := json.Unmarshal(e.EstimacionSP, &valor); err != nil {
+		return 0
+	}
+	return valor
 }
 
 type votacionResponse struct {
