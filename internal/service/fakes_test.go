@@ -449,3 +449,29 @@ func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado 
 	defer f.mu.Unlock()
 	return slices.Clone(f.llamadas)
 }
+
+// fakeEstimacionRepository guarda las historias y cuenta las escrituras de la
+// estimación, para comprobar que un rechazo no escribe.
+type fakeEstimacionRepository struct {
+	historias  map[int64]domain.BacklogItem
+	escrituras int
+}
+
+func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
+	}
+	return h, nil
+}
+
+func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int) error {
+	h, ok := f.historias[id]
+	if !ok {
+		return domain.ErrHistoriaNoEncontrada
+	}
+	h.EstimacionSP = &sp
+	f.historias[id] = h
+	f.escrituras++
+	return nil
+}
