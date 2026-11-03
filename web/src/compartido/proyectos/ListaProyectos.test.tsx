@@ -127,6 +127,121 @@ describe('ListaProyectos', () => {
     })
   })
 
+  describe('buscador', () => {
+    const PROYECTOS = [
+      p(1, 'Gestión de Turnos', { descripcion: 'Agenda médica' }),
+      p(2, 'Licencia de conducir', { descripcion: 'Incluye gestión de turnos' }),
+      p(3, 'Tienda en línea'),
+      p(4, 'Gestión de Stock'),
+    ]
+
+    const nombresVisibles = () => screen.queryAllByRole('link').map((enlace) => enlace.getAttribute('aria-label'))
+
+    async function abrirYBuscar(texto: string) {
+      const usuario = userEvent.setup()
+      abrir(PROYECTOS)
+      const campo = await screen.findByRole('searchbox', { name: 'Buscar proyecto' })
+      if (texto) await usuario.type(campo, texto)
+      return { usuario, campo }
+    }
+
+    it('US5.1: al escribir muestra solo los proyectos cuyo nombre coincide y el contador "N de M"', async () => {
+      await abrirYBuscar('tienda')
+
+      expect(nombresVisibles()).toEqual(['Tienda en línea (#3)'])
+      expect(screen.getByRole('heading', { name: 'Proyectos existentes 1 de 4' })).toBeTruthy()
+    })
+
+    it('US5.2: ignora mayúsculas y acentos', async () => {
+      await abrirYBuscar('GESTION')
+
+      expect(nombresVisibles()).toEqual(['Gestión de Turnos (#1)', 'Gestión de Stock (#4)'])
+    })
+
+    it('US5.2: buscar con acento encuentra un nombre sin acento', async () => {
+      const usuario = userEvent.setup()
+      abrir([p(7, 'Cafeteria del club')])
+      await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'cafetería')
+
+      expect(nombresVisibles()).toEqual(['Cafeteria del club (#7)'])
+    })
+
+    it('US5.3: recorta los espacios al inicio y al final', async () => {
+      await abrirYBuscar('  tienda  ')
+
+      expect(nombresVisibles()).toEqual(['Tienda en línea (#3)'])
+    })
+
+    it('US5.4: borrar la búsqueda o dejar solo espacios vuelve a mostrar todos con el contador "M"', async () => {
+      const { usuario, campo } = await abrirYBuscar('tienda')
+
+      await usuario.clear(campo)
+      expect(nombresVisibles()).toHaveLength(4)
+      expect(screen.getByRole('heading', { name: 'Proyectos existentes 4' })).toBeTruthy()
+
+      await usuario.type(campo, '   ')
+      expect(nombresVisibles()).toHaveLength(4)
+      expect(screen.getByRole('heading', { name: 'Proyectos existentes 4' })).toBeTruthy()
+    })
+
+    it('US5.5: conserva el orden de la API entre los resultados', async () => {
+      await abrirYBuscar('gestion')
+
+      expect(nombresVisibles()).toEqual(['Gestión de Turnos (#1)', 'Gestión de Stock (#4)'])
+    })
+
+    it('US5.6: no filtra por descripción ni por identificador', async () => {
+      const { usuario, campo } = await abrirYBuscar('agenda')
+      expect(nombresVisibles()).toEqual([])
+
+      await usuario.clear(campo)
+      await usuario.type(campo, '3')
+      expect(nombresVisibles()).toEqual([])
+    })
+
+    it('US5.7: sin coincidencias muestra el mensaje, "0 de M" y conserva el buscador', async () => {
+      await abrirYBuscar('zzz')
+
+      expect(screen.getByText('Ningún proyecto coincide con la búsqueda')).toBeTruthy()
+      expect(screen.queryByText(/Todavía no hay proyectos/)).toBeNull()
+      expect(screen.getByRole('heading', { name: 'Proyectos existentes 0 de 4' })).toBeTruthy()
+      expect(screen.getByRole('searchbox', { name: 'Buscar proyecto' })).toBeTruthy()
+    })
+
+    it('US5.8: con la lista vacía no hay buscador y se invita a crear el primero', async () => {
+      abrir([])
+
+      expect(await screen.findByText(/Todavía no hay proyectos/)).toBeTruthy()
+      expect(screen.queryByRole('searchbox')).toBeNull()
+      expect(screen.queryByText('Ningún proyecto coincide con la búsqueda')).toBeNull()
+    })
+
+    it('US5.9: mientras carga y si el listado falla no hay buscador', async () => {
+      vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})))
+      const { unmount } = render(<RouterProvider router={createMemoryRouter(
+        [{ path: '/', element: <ListaProyectos /> }],
+        { initialEntries: ['/'] },
+      )} />)
+      expect(screen.queryByRole('searchbox')).toBeNull()
+      unmount()
+
+      vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'Caído' }), { status: 500 }))))
+      render(<RouterProvider router={createMemoryRouter(
+        [{ path: '/', element: <ListaProyectos /> }],
+        { initialEntries: ['/'] },
+      )} />)
+      await screen.findByRole('alert')
+      expect(screen.queryByRole('searchbox')).toBeNull()
+    })
+
+    it('US5.10: filtrar y borrar la búsqueda no vuelve a llamar a GET /projects', async () => {
+      const { usuario, campo } = await abrirYBuscar('tienda')
+      await usuario.clear(campo)
+
+      expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('estados del listado', () => {
     function abrirConFetch(implementacion: () => Promise<Response>) {
       vi.stubGlobal('fetch', vi.fn(implementacion))
