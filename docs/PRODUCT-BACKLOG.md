@@ -192,7 +192,7 @@ Entonces el sistema genera el proyecto en la base de datos SQLite y me redirige 
 Escenario 2: Asignación de integrantes y roles.
 Dado que estoy en la vista de configuración del proyecto recién creado,
 Cuando ingreso el nombre de un integrante y selecciono su rol (Scrum Master o Product Builder),
-Entonces el sistema vincula al usuario al proyecto y registra su rol (la aplicación de permisos por rol queda fuera del alcance por ahora).
+Entonces el sistema vincula al usuario al proyecto y registra su rol (la aplicación de permisos por rol queda fuera del alcance de esta historia; la cubre HU-21).
 Escenario 3: Fechas del proyecto inválidas.
 Dado que estoy editando un proyecto existente,
 Cuando ingreso una fecha de fin igual o anterior a la fecha de inicio y guardo,
@@ -859,7 +859,7 @@ Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elim
 
 Los escenarios de Godog que hoy mandan `usuario_id` se ajustan **en el mismo PR**, con un paso de contexto "Dado que inicié sesión como X" (el check `backend` tiene que estar en verde para mergear). Sin atajos de prueba en el código de producción.
 Plan B: si el 13-nov los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación. Cumplir solo la parte de pantalla no alcanza para el Definition of Done: quedarían incumplidos los escenarios 2, 3 y 7. Si se cae al plan B, hay que declararlo.
-<!-- decidir: HU-04 dejó los permisos por rol fuera del alcance y la frase que lo consultaba con la cátedra se quitó en fa04597; ¿se vuelve a consultar? -->
+Permisos por rol: decisión del Scrum Master y del equipo (2026-11-03), documentada, sin consulta a la cátedra: los profesores solo piden lo que está en el enunciado original y el resto de las adiciones las decide el equipo.
 Absorbe los niveles 2 y 3 de HU-19. Eliminar un proyecto (#232) depende de estos permisos.
 ### Prioridad
 S (Should have) - Complementa a HU-20: sin permisos en el backend, cualquiera con `curl` puede saltear la pantalla.
