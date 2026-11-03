@@ -365,3 +365,30 @@ func TestVotacionHandler_Iniciar_Errores(t *testing.T) {
 		})
 	}
 }
+
+func TestVotacionHandler_Consultar_Diferencias(t *testing.T) {
+	casos := map[string]struct {
+		previas  []string
+		esperado string
+	}{
+		"ronda oculta": {[]string{rondaAbierta, votosDeCarlosYCandela}, `"diferencias":null`},
+		"revelada con diferencias": {[]string{rondaRevelada, votosDeCarlosYCandela},
+			`"diferencias":{"hay_diferencias":true,"minimo":3,"maximo":8}`},
+		"revelada sin diferencias": {[]string{rondaRevelada, "INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (1, 1, 5), (1, 2, 5)"},
+			`"diferencias":{"hay_diferencias":false,"minimo":null,"maximo":null}`},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
+
+			rec := consultarVotacionDe(handler, "3", "?usuario_id=1")
+
+			if rec.Code != nethttp.StatusOK {
+				t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if !strings.Contains(rec.Body.String(), c.esperado) {
+				t.Errorf("se esperaba %s en %s", c.esperado, rec.Body.String())
+			}
+		})
+	}
+}
