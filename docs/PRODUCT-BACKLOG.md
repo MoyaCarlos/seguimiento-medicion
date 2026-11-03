@@ -656,6 +656,12 @@ HU-04 (usuarios e integrantes) y el issue #144 (botón de datos de prueba).
 No requiere cambio de esquema: `usuarios` ya existe y es independiente de los proyectos (ver `MODELO-DE-DATOS.md` §4.2). La identidad es `nombre_normalizado`, y las demás tablas apuntan por `usuario_id`, por eso renombrar es seguro.
 El contrato de asignación cambia: hoy `POST /projects/{id}/members` recibe un nombre. Se hace en dos pasos para no romper `main`: primero el backend acepta `usuario_id` además del nombre y agrega `GET /users`; después el frontend pasa a elegir de la lista y, en ese mismo PR, se retira el camino del nombre. Lo mismo con el Scrum Master de `POST /projects`.
 Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restricción por perfil ("admin" o "betaTester") queda para cuando se agreguen perfiles, y se discute con el equipo.
+**Alineación pendiente con HU-20 y HU-21** (decisión de producto, sin resolver; HU-17 queda como está hasta que el Scrum Master decida):
+1. Escenario 4: elige de una lista a quien será el Scrum Master del proyecto, pero en HU-21 el Scrum Master es quien crea el proyecto (con la sesión iniciada).
+2. Escenario 3: asigna a un integrante cualquier rol, pero en HU-21 "configurar equipo" solo agrega usuarios ya registrados como Product Builder.
+3. Escenario 1: crea usuarios sin contraseña, pero con HU-20 cada persona se registra sola con la suya.
+4. Si el nombre de usuario de HU-20 es `usuarios.nombre`, renombrar un usuario (escenario 5) cambia su dato de ingreso.
+<!-- decidir: qué queda de HU-17 con HU-20 y HU-21 (se descarta, se reduce o se redefine) -->
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
