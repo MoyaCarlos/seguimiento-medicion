@@ -117,3 +117,8 @@ func validarDescripcion(descripcion string) (string, error) {
 	}
 	return descripcion, nil
 }
+
+// ConEstimacion devuelve una copia de la historia con esos Story Points.
+func (b BacklogItem) ConEstimacion(sp int) (BacklogItem, error) {
+	return b, nil
+}
