@@ -129,6 +129,9 @@ components:
         id:
           type: integer
           format: int64
+        numero:
+          type: integer
+          description: Posición del Sprint entre los de su proyecto; se deriva al leer.
         proyecto_id:
           type: integer
           format: int64
