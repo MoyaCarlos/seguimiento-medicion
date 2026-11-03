@@ -155,7 +155,7 @@ de test → archivo de implementación.
 
 - [`AGENTS.md`](../AGENTS.md) — metodología completa, arquitectura,
   principios, stack, convenciones de Git/TDD.
-- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 19 historias con
+- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 21 historias (HU-19 absorbida por HU-20 y HU-21) con
   todos sus campos.
 - [`docs/GUIA-IA-TERMINAL.md`](GUIA-IA-TERMINAL.md) — cómo usar Claude Code /
   OpenCode, Spec Kit, buenas prácticas, ahorro de tokens.
