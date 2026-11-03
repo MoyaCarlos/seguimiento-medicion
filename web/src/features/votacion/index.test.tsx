@@ -323,6 +323,31 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
 
     expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy()
   })
+
+  it('Given una acción rechazada, When pulso Actualizar y el servidor responde, Then el mensaje de la acción desaparece', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    await screen.findByRole('list')
+    votarMock.mockRejectedValueOnce(new ApiError(409, 'la ronda ya fue revelada'))
+    await userEvent.click(screen.getByRole('button', { name: '8' }))
+    await screen.findByText('la ronda ya fue revelada')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+
+    await waitFor(() => expect(screen.queryByText('la ronda ya fue revelada')).toBeNull())
+  })
+
+  it('Given una acción rechazada, When se recarga sola la consulta, Then el mensaje de la acción sigue visible', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    await screen.findByRole('list')
+    votarMock.mockRejectedValueOnce(new ApiError(409, 'la ronda ya fue revelada'))
+    await userEvent.click(screen.getByRole('button', { name: '8' }))
+    await screen.findByText('la ronda ya fue revelada')
+
+    await waitFor(() => expect(consultarMock).toHaveBeenCalledTimes(3))
+    expect(screen.getByText('la ronda ya fue revelada')).toBeTruthy()
+  })
 })
 
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
