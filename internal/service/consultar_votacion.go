@@ -73,5 +73,8 @@ func (s *ConsultarVotacion) Ejecutar(ctx context.Context, historiaID, consultant
 	if promedio, ok := ronda.Promedio(); ok {
 		vista.Promedio = &promedio
 	}
+	if diferencias, ok := ronda.Diferencias(s.regla); ok {
+		vista.Diferencias = &diferencias
+	}
 	return vista, nil
 }
