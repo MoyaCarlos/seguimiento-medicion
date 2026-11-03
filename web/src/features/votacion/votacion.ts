@@ -1,5 +1,10 @@
 export type Rol = 'scrum_master' | 'product_builder'
 
+export const ETIQUETA_ROL: Record<Rol, string> = {
+  scrum_master: 'Scrum Master',
+  product_builder: 'Product Builder',
+}
+
 export type Carta = 1 | 2 | 3 | 5 | 8 | 13 | 21
 
 export const CARTAS: Carta[] = [1, 2, 3, 5, 8, 13, 21]

@@ -1,9 +1,4 @@
-import { textoDeVoto, type Rol, type VotoDeIntegrante } from './votacion'
-
-const ETIQUETA_ROL: Record<Rol, string> = {
-  scrum_master: 'Scrum Master',
-  product_builder: 'Product Builder',
-}
+import { ETIQUETA_ROL, textoDeVoto, type VotoDeIntegrante } from './votacion'
 
 export function Integrantes({ integrantes }: { integrantes: VotoDeIntegrante[] }) {
   return (

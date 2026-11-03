@@ -1,4 +1,4 @@
-import type { Integrante } from './votacion'
+import { ETIQUETA_ROL, type Integrante } from './votacion'
 
 type Props = {
   integrantes: Integrante[]
@@ -20,7 +20,7 @@ export function SelectorActor({ integrantes, actorId, deshabilitado, alElegir }:
         <option value="">Elegí un integrante</option>
         {integrantes.map((integrante) => (
           <option key={integrante.id} value={integrante.id}>
-            {integrante.nombre}
+            {integrante.nombre} ({ETIQUETA_ROL[integrante.rol]})
           </option>
         ))}
       </select>
