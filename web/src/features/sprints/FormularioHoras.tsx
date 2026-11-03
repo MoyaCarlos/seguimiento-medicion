@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
@@ -28,6 +28,18 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar,
   const [errorIntegrantes, setErrorIntegrantes] = useState<string>()
   const [aviso, setAviso] = useState<string>()
   const [errores, setErrores] = useState<Record<string, string>>({})
+  const listaIntegrantes = useRef<HTMLSelectElement>(null)
+  const focoAlEnviar = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (integrantes) listaIntegrantes.current?.focus()
+  }, [integrantes])
+
+  useEffect(() => {
+    if (enviando) return
+    focoAlEnviar.current?.focus()
+    focoAlEnviar.current = null
+  }, [enviando])
 
   useEffect(() => {
     let vigente = true
@@ -57,6 +69,7 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar,
       return
     }
     setErrores({})
+    focoAlEnviar.current = document.activeElement as HTMLElement | null
     setEnviando(true)
     alCambiarEnvio?.(true)
     try {
@@ -92,6 +105,7 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar,
       <div className="field">
         <label htmlFor={id('integrante')}>Integrante</label>
         <select
+          ref={listaIntegrantes}
           id={id('integrante')}
           name="integrante"
           value={integrante}
