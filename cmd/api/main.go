@@ -107,6 +107,8 @@ func main() {
 	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", votacionHandler.RegistrarEstimacion)
+	mux.HandleFunc("POST /backlog/{id}/votacion/rondas", votacionHandler.AbrirRonda)
+	mux.HandleFunc("GET /backlog/{id}/votacion/rondas", votacionHandler.Historial)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
 	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
