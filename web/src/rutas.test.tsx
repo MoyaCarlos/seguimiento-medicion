@@ -134,6 +134,14 @@ describe('registro de rutas', () => {
     })
   })
 
+  it('el menú de secciones de un proyecto se llama "Secciones del proyecto"', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' })
+
+    expect(screen.getByRole('navigation', { name: 'Secciones del proyecto' })).toBeTruthy()
+    expect(screen.queryByRole('navigation', { name: 'Historias del Sprint 2' })).toBeNull()
+  })
+
   it('/projects/:id redirige al panel del proyecto', async () => {
     const router = abrir('/projects/1')
 
