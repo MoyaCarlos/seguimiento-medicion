@@ -28,6 +28,11 @@ const actividad = () => screen.getByLabelText('Actividad') as HTMLInputElement
 const horas = () => screen.getByLabelText('Horas') as HTMLInputElement
 const guardar = () => screen.getByRole('button', { name: 'Guardar horas' }) as HTMLButtonElement
 
+function renderizarOtroControl() {
+  render(<input aria-label="Otro control" />)
+  return screen.getByLabelText('Otro control')
+}
+
 async function completar(texto = '4') {
   const user = userEvent.setup()
   await user.selectOptions(await lista(), 'Ana')
@@ -135,14 +140,14 @@ describe('FormularioHoras: registrar horas', () => {
     expect(imputarMock).toHaveBeenCalledTimes(1)
   })
 
-  it('US1.1: al cargar la lista de integrantes, el foco pasa a ella', async () => {
+  it('foco: al cargar la lista de integrantes, el foco pasa a ella', async () => {
     abrir()
 
     const seleccion = await lista()
     expect(document.activeElement).toBe(seleccion)
   })
 
-  describe('US1.5: al terminar el envío el foco vuelve a donde estaba', () => {
+  describe('foco: al terminar el envío vuelve a donde estaba', () => {
     function enviarConRespuestaPendiente() {
       let responder: (valor: unknown) => void = () => {}
       let rechazarEnvio: (error: unknown) => void = () => {}
@@ -187,6 +192,33 @@ describe('FormularioHoras: registrar horas', () => {
       await screen.findByRole('alert')
       expect(document.activeElement).toBe(horas())
     })
+
+    it('si la persona ya se movió a otro control, no le saca el foco', async () => {
+      const envio = enviarConRespuestaPendiente()
+      abrir()
+      const user = await completar()
+      const otroControl = renderizarOtroControl()
+
+      await user.click(guardar())
+      otroControl.focus()
+      envio.responder({})
+
+      await screen.findByText('Horas registradas')
+      expect(document.activeElement).toBe(otroControl)
+    })
+  })
+
+  it('foco: si la persona se movió mientras cargaba la lista, no le saca el foco', async () => {
+    let responderLista: (lista: typeof INTEGRANTES) => void = () => {}
+    integrantesMock.mockReturnValue(new Promise((resolve) => (responderLista = resolve)))
+    abrir()
+    const otroControl = renderizarOtroControl()
+
+    otroControl.focus()
+    responderLista(INTEGRANTES)
+
+    await lista()
+    expect(document.activeElement).toBe(otroControl)
   })
 
   it('dos formularios abiertos no repiten los id de sus campos', async () => {
