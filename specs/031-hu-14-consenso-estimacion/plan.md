@@ -43,7 +43,7 @@ Constitución v1.1.0 (`.specify/memory/constitution.md`).
 | Principio | Cómo se cumple | Estado |
 |-----------|----------------|--------|
 | I. Test-First (NON-NEGOTIABLE) | `CoincidenciaExacta`, `Diferencias`, `Siguiente`, `ConEstimacion`, los services, el repositorio y el handler se hacen con commits RED → GREEN (→ REFACTOR si hay algo que limpiar). Extraer D2b es un commit `REFACTOR:` | PASS |
-| II. SDD | spec → clarify (6 decisiones registradas) → plan; siguen tasks, analyze, BDD, implement. La reunión de definición sigue pendiente | PASS |
+| II. SDD | spec → clarify (6 decisiones registradas) → plan; siguen tasks, analyze, BDD, implement. Decisiones validadas en la reunión de definición | PASS |
 | III. BDD | `features/consenso_estimacion.feature` (@HU-14) con un escenario por criterio de la spec (20): normal, alternativo (sin diferencias, carta no votada), límite (primera carga con Sprint `Activo`) y error (permisos, baraja, sin revelar, D2b, Completada) | PASS |
 | IV. Clean/Hexagonal | Reglas en `internal/domain`; puerto `EstimacionHistoriaRepository` (ISP); SQLite y HTTP como adaptadores; Strategy para el consenso, como nombra este principio | PASS |
 | V. Clean Code/SOLID/KISS/YAGNI/DRY | Un service por caso de uso; D2b en un solo lugar (R6). Strategy con una sola regla: ver Complexity Tracking | PASS |

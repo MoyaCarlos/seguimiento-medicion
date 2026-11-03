@@ -4,7 +4,7 @@
 
 **Created**: 2026-11-03
 
-**Status**: Draft. Clarificada; pendiente de la reunión de definición.
+**Status**: Especificada y validada por el equipo en la reunión de definición.
 
 **Input**: User description: "HU-14: Consenso y Registro de la Estimación Acordada
 (issue #42, sub-issue de especificación #89). Como Scrum Master quiero que, al
