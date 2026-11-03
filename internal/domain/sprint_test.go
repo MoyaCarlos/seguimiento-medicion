@@ -122,3 +122,28 @@ func TestSprint_Cerrar_SoloDesdeActivo(t *testing.T) {
 	_ = finalizado.Cerrar()
 	esperarErrorDeValidacion(t, finalizado.Cerrar(), "estado")
 }
+
+func TestSprintActivoDe(t *testing.T) {
+	pendiente := Sprint{ID: 1, Estado: SprintPendiente}
+	finalizado := Sprint{ID: 2, Estado: SprintFinalizado}
+	activo := Sprint{ID: 3, Estado: SprintActivo}
+
+	casos := []struct {
+		nombre   string
+		sprints  []Sprint
+		esperado Sprint
+		hay      bool
+	}{
+		{"sin Sprints", nil, Sprint{}, false},
+		{"solo Pendiente y Finalizado", []Sprint{finalizado, pendiente}, Sprint{}, false},
+		{"un Activo entre otros", []Sprint{finalizado, activo, pendiente}, activo, true},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			got, hay := SprintActivoDe(c.sprints)
+			if hay != c.hay || got != c.esperado {
+				t.Errorf("se esperaba (%+v, %v), se obtuvo (%+v, %v)", c.esperado, c.hay, got, hay)
+			}
+		})
+	}
+}
