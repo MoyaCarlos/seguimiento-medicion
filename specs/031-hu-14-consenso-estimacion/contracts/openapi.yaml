@@ -1,0 +1,236 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Consenso y estimación acordada (HU-14)
+  version: 1.0.0
+  description: >-
+    Extiende la votación de HU-02 (specs/012-hu-02-votacion-planning-poker/contracts/openapi.yaml):
+    abrir una nueva ronda, consultar el historial y registrar la estimación acordada. La API no
+    tiene autenticación: quien actúa se indica con `usuario_id`. Además, GET /backlog/{id}/votacion
+    suma el campo `diferencias` (ver el schema Diferencias), sin cambiar los campos existentes.
+paths:
+  /backlog/{id}/votacion/rondas:
+    post:
+      summary: Abrir una nueva ronda
+      description: >-
+        Solo el Scrum Master, con la ronda actual revelada, haya o no diferencias. La ronda anterior
+        queda como historial. Votar, revelar y consultar pasan a operar sobre la nueva.
+      operationId: abrirNuevaRonda
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Actor'
+            example:
+              usuario_id: 1
+      responses:
+        '201':
+          description: >-
+            Ronda abierta, sin votos. El cuerpo es el `Votacion` del contrato de HU-02, con
+            `diferencias` en null.
+        '400':
+          description: >-
+            Identificador o JSON inválido, `usuario_id` faltante (campo `usuario_id`), ronda actual
+            sin revelar o historia Completada (campo `estado`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Quien abre la ronda no es Scrum Master del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe (domina sobre cualquier otro error) o no tiene votación iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: >-
+            Otra petición simultánea abrió esa misma ronda. Mensaje: "otra persona abrió esta ronda
+            mientras tanto: recargá la votación".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Consultar el historial de rondas
+      description: >-
+        Devuelve solo las rondas reveladas, ordenadas por número. Una ronda sin revelar no aparece.
+        No pide `usuario_id`: esos votos ya son visibles para todo el equipo.
+      operationId: consultarHistorialRondas
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Historial; `rondas` queda vacío si no hay rondas reveladas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistorialRondas'
+              example:
+                historia_id: 3
+                rondas:
+                  - ronda: 1
+                    revelada_en: '2026-11-03T15:04:05Z'
+                    votos:
+                      - { usuario_id: 1, nombre: Carlos, rol: scrum_master, valor: 3 }
+                      - { usuario_id: 2, nombre: Candela, rol: product_builder, valor: 8 }
+        '400':
+          description: Identificador inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /backlog/{id}/votacion/estimacion:
+    post:
+      summary: Registrar la estimación acordada
+      description: >-
+        Solo el Scrum Master, con la ronda actual revelada. El valor puede ser cualquier carta de la
+        baraja, aunque nadie la haya votado. Se puede repetir: no cierra la votación.
+      operationId: registrarEstimacion
+      parameters:
+        - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimacionRequest'
+            example:
+              usuario_id: 1
+              estimacion_sp: 5
+      responses:
+        '200':
+          description: >-
+            Estimación registrada. El cuerpo es la historia, con la misma forma que devuelve
+            PUT /backlog/{id} (HU-15).
+        '400':
+          description: >-
+            Identificador o JSON inválido, `usuario_id` faltante, valor fuera de la baraja o que
+            no es un entero, o Story Points congelados por D2b (campo `estimacion_sp`), o ronda actual sin
+            revelar (campo `estado`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Quien registra no es Scrum Master del proyecto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: La historia no existe (domina sobre cualquier otro error) o no tiene votación iniciada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  parameters:
+    ID:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la historia.
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  schemas:
+    Actor:
+      type: object
+      required: [usuario_id]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+          minimum: 1
+    EstimacionRequest:
+      type: object
+      required: [usuario_id, estimacion_sp]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+          minimum: 1
+        estimacion_sp:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13, 21]
+    Diferencias:
+      type: object
+      nullable: true
+      description: >-
+        Campo nuevo de `Votacion` (HU-02). Es null mientras la ronda no está revelada, para no dar
+        pistas de los votos ocultos.
+      required: [hay_diferencias, minimo, maximo]
+      properties:
+        hay_diferencias:
+          type: boolean
+          description: true si algún voto no coincide, sin importar la distancia entre las cartas.
+        minimo:
+          type: integer
+          nullable: true
+          description: Voto más bajo; null si no hay diferencias.
+        maximo:
+          type: integer
+          nullable: true
+          description: Voto más alto; null si no hay diferencias.
+    HistorialRondas:
+      type: object
+      required: [historia_id, rondas]
+      properties:
+        historia_id:
+          type: integer
+          format: int64
+        rondas:
+          type: array
+          items:
+            $ref: '#/components/schemas/RondaRevelada'
+    RondaRevelada:
+      type: object
+      required: [ronda, revelada_en, votos]
+      properties:
+        ronda:
+          type: integer
+        revelada_en:
+          type: string
+          format: date-time
+        votos:
+          type: array
+          items:
+            $ref: '#/components/schemas/VotoRevelado'
+    VotoRevelado:
+      type: object
+      required: [usuario_id, nombre, rol, valor]
+      properties:
+        usuario_id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        rol:
+          type: string
+          enum: [scrum_master, product_builder]
+        valor:
+          type: integer
+          enum: [1, 2, 3, 5, 8, 13, 21]
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string
