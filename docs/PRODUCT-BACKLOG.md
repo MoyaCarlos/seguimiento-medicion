@@ -748,6 +748,7 @@ Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20
 2. **Nivel 2 (usuario, "mis proyectos" y acciones según el rol):** pasa a HU-21.
 3. **Nivel 3 (autenticación y permisos en el backend):** pasa a HU-20 (autenticación) y HU-21 (permisos).
 Se descarta la transferencia de la propiedad (descripción y escenarios 4 y 5), y con ella la figura del dueño (escenarios 2 y 3): el dueño del proyecto es quien lo crea y queda como su único Scrum Master. Los escenarios 1 y 6 pasan a HU-21 (escenarios 5 y 9), así que la decisión D14 de `MODELO-DE-DATOS.md` (dónde guardar al dueño) deja de hacer falta. Un solo Scrum Master por proyecto es el issue #236.
+El escenario 3 (acciones por rol) queda reemplazado por los escenarios 1 y 2 de HU-21 (confirmado, 2026-11-03).
 Cerrar el proyecto de forma manual (#173) y eliminarlo (#232) son decisiones aparte.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; los niveles 2 y 3 pasaron a HU-21 y HU-20.
