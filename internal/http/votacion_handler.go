@@ -122,6 +122,20 @@ func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *netht
 // AbrirRonda atiende POST /backlog/{id}/votacion/rondas. Responde con la ronda
 // nueva tal como la ve quien la abrió.
 func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req actorRequest
+	if !leerPedido(w, r, &req) {
+		return
+	}
+
+	if _, err := h.abrir.Ejecutar(r.Context(), id, req.UsuarioID); err != nil {
+		escribirError(w, err)
+		return
+	}
+	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia
