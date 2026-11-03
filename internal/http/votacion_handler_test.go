@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -57,7 +58,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 	return NewVotacionHandler(
 		service.NewObtenerHistoria(historias),
 		service.NewVotar(historias, proyectos, votaciones),
-		service.NewConsultarVotacion(historias, proyectos, votaciones),
+		service.NewConsultarVotacion(historias, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(historias, proyectos, votaciones),
 		service.NewIniciarVotacion(historias, proyectos, votaciones),
 	)

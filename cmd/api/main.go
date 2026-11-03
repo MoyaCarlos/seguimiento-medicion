@@ -9,6 +9,7 @@ import (
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -71,7 +72,7 @@ func main() {
 	votacionHandler := apihttp.NewVotacionHandler(
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewVotar(backlogRepo, proyectos, votaciones),
-		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
 	)

@@ -38,7 +38,7 @@ func (p *pasosVotacion) preparar() {
 	p.iniciar = service.NewIniciarVotacion(historias, proyectos, p.votaciones)
 	p.votar = service.NewVotar(historias, proyectos, p.votaciones)
 	p.revelar = service.NewRevelarVotacion(historias, proyectos, p.votaciones)
-	p.consultar = service.NewConsultarVotacion(historias, proyectos, p.votaciones)
+	p.consultar = service.NewConsultarVotacion(historias, proyectos, p.votaciones, domain.CoincidenciaExacta{})
 	p.usuarios = map[string]int64{}
 	p.proyectoID, p.historiaID = 0, 0
 	p.antes, p.err = domain.RondaVotacion{}, nil

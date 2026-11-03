@@ -17,6 +17,7 @@ type VistaVotacion struct {
 	ReveladaEn  *time.Time
 	Integrantes []VotoDeIntegrante
 	Promedio    *domain.Promedio
+	Diferencias *domain.Diferencias
 }
 
 // VotoDeIntegrante indica si un integrante ya votó. Valor es nil mientras la
@@ -34,10 +35,11 @@ type ConsultarVotacion struct {
 	historias  repository.HistoriaRepository
 	proyectos  repository.ProjectRepository
 	votaciones repository.VotacionRepository
+	regla      domain.ReglaConsenso
 }
 
-func NewConsultarVotacion(historias repository.HistoriaRepository, proyectos repository.ProjectRepository, votaciones repository.VotacionRepository) *ConsultarVotacion {
-	return &ConsultarVotacion{historias: historias, proyectos: proyectos, votaciones: votaciones}
+func NewConsultarVotacion(historias repository.HistoriaRepository, proyectos repository.ProjectRepository, votaciones repository.VotacionRepository, regla domain.ReglaConsenso) *ConsultarVotacion {
+	return &ConsultarVotacion{historias: historias, proyectos: proyectos, votaciones: votaciones, regla: regla}
 }
 
 // Ejecutar devuelve a todos los integrantes del proyecto ordenados por id, así
