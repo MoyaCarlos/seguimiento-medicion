@@ -101,7 +101,7 @@ Devuelve una unión discriminada:
 ## Home Composition Contract
 
 - `/` sigue mostrando la pantalla existente `features/proyecto/crear` sin modificarla.
-- La ruta índice es hija de un layout pathless en `rutas.tsx` que renderiza el formulario
+- La ruta índice es hija de un layout pathless (`ComposicionInicio`, en `compartido/proyectos/`, usado desde `rutas.tsx`) que renderiza el formulario
   (`Outlet`) y `ListaProyectos`.
 - La composición no altera el comportamiento de creación ni sus pruebas.
 

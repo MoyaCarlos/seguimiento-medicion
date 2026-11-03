@@ -13,7 +13,8 @@ investigación externa ni comparación de librerías porque la historia prohíbe
 ### D1. Componer el inicio sin modificar `crear.tsx`
 
 - **Decision**: En `web/src/rutas.tsx`, la ruta índice pasa a ser hija de un layout pathless
-  local `ComposicionInicio` que renderiza `<Outlet />` (el formulario lazy actual) y
+  `ComposicionInicio` (en `compartido/proyectos/ComposicionInicio.tsx`, para no exportar un
+  componente junto con la configuración de rutas) que renderiza `<Outlet />` (el formulario lazy actual) y
   `<ListaProyectos />`.
 - **Rationale**: El formulario sigue siendo el mismo módulo `features/proyecto/crear`; no se
   toca su código ni su prueba. `rutas.tsx` ya es el registro de rutas y es uno de los archivos

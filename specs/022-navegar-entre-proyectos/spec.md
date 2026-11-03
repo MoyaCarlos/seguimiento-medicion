@@ -328,7 +328,7 @@ funcionando.
 - Archivos permitidos: `web/src/compartido/router/LayoutProyecto.tsx`, `web/src/rutas.tsx` (para
   componer el inicio con el formulario de creación más la lista de proyectos),
   `web/src/rutas.test.tsx`, archivos nuevos en `web/src/compartido/proyectos/` (API, hook,
-  selector, lista y la función pura de ruta) y `web/src/navegacion.ts` solo para leerlo (no se
+  selector, lista, composición del inicio y la función pura de ruta) y `web/src/navegacion.ts` solo para leerlo (no se
   modifica).
 - `web/src/features/proyecto/crear.tsx` y `web/src/features/proyecto/crear.test.tsx` NO se
   modifican: sus pruebas afirman cuántas veces se llama a `fetch` y agregar allí el

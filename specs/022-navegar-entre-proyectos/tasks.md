@@ -72,10 +72,10 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Independent Test**: desde `/projects/1/backlog`, pulsar "Nuevo proyecto" y llegar a `/` con el formulario de creación; el enlace sigue visible durante la carga y ante error.
 
-- [ ] T019 [US2] RED: agregar a `web/src/compartido/proyectos/SelectorProyecto.test.tsx` y a `web/src/rutas.test.tsx` las pruebas del enlace "Nuevo proyecto": link accesible, `href` `/`, visible con el listado cargando o en error y clic desde una pantalla de proyecto que abre `/` con "Crear proyecto"; confirmar que FALLA.
-- [ ] T020 [US2] COMMIT `RED: agregar tests del enlace Nuevo proyecto (falla)`; archivos: `web/src/compartido/proyectos/SelectorProyecto.test.tsx` y `web/src/rutas.test.tsx`.
-- [ ] T021 [US2] GREEN: agregar a `web/src/compartido/proyectos/SelectorProyecto.tsx` el enlace "Nuevo proyecto" a `/` como enlace real (no un `Button` ni una acción de botón), fuera de la rama de datos, para que quede visible y operativo en todos los estados; ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T022 [US2] COMMIT `GREEN: implementar enlace Nuevo proyecto, test en verde`; archivo: `web/src/compartido/proyectos/SelectorProyecto.tsx`.
+- [x] T019 [US2] RED: agregar a `web/src/compartido/proyectos/SelectorProyecto.test.tsx` y a `web/src/rutas.test.tsx` las pruebas del enlace "Nuevo proyecto": link accesible, `href` `/`, visible con el listado cargando o en error y clic desde una pantalla de proyecto que abre `/` con "Crear proyecto"; confirmar que FALLA.
+- [x] T020 [US2] COMMIT `RED: agregar tests del enlace Nuevo proyecto (falla)`; archivos: `web/src/compartido/proyectos/SelectorProyecto.test.tsx` y `web/src/rutas.test.tsx`.
+- [x] T021 [US2] GREEN: agregar a `web/src/compartido/proyectos/SelectorProyecto.tsx` el enlace "Nuevo proyecto" a `/` como enlace real (no un `Button` ni una acción de botón), fuera de la rama de datos, para que quede visible y operativo en todos los estados; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T022 [US2] COMMIT `GREEN: implementar enlace Nuevo proyecto, test en verde`; archivo: `web/src/compartido/proyectos/SelectorProyecto.tsx`.
 
 **Checkpoint**: US2 funciona de forma independiente.
 
@@ -89,14 +89,14 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Trazabilidad**: el escenario 4 de US3 (la lista falla en el inicio y el formulario sigue disponible) no se prueba en esta fase: se verifica en las tareas de lista de US4 (T035-T038).
 
-- [ ] T023 [US3] RED: crear `web/src/compartido/proyectos/ListaProyectos.test.tsx` con listas de enlaces a `/projects/<id>/proyecto`, etiquetas `<nombre> (#<id>)`, orden de la API e invitación a crear cuando está vacía; crear antes `ListaProyectos.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
-- [ ] T024 [US3] COMMIT `RED: agregar tests de ListaProyectos (falla)`; archivos: `ListaProyectos.test.tsx` y el stub `ListaProyectos.tsx` en `web/src/compartido/proyectos/`.
-- [ ] T025 [US3] GREEN: implementar `web/src/compartido/proyectos/ListaProyectos.tsx` con la lista y el estado vacío; no agregar todavía el indicador de carga ni el mensaje de error (US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T026 [US3] COMMIT `GREEN: implementar ListaProyectos, test en verde`; archivo: `web/src/compartido/proyectos/ListaProyectos.tsx`.
-- [ ] T027 [US3] RED: agregar a `web/src/rutas.test.tsx` la integración del inicio: `/` muestra "Crear proyecto" y la lista, y un enlace de la lista abre el panel; confirmar que FALLA.
-- [ ] T028 [US3] COMMIT `RED: agregar integración del inicio con lista (falla)`; archivo: `web/src/rutas.test.tsx`.
-- [ ] T029 [US3] GREEN: modificar `web/src/rutas.tsx` para definir `ComposicionInicio` (layout pathless con `<Outlet />` y `<ListaProyectos />`) y convertir la ruta índice en su hija; no tocar `web/src/features/proyecto/crear.tsx`; ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T030 [US3] COMMIT `GREEN: componer formulario y lista en el inicio, tests en verde`; archivo: `web/src/rutas.tsx`.
+- [x] T023 [US3] RED: crear `web/src/compartido/proyectos/ListaProyectos.test.tsx` con listas de enlaces a `/projects/<id>/proyecto`, etiquetas `<nombre> (#<id>)`, orden de la API e invitación a crear cuando está vacía; crear antes `ListaProyectos.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
+- [x] T024 [US3] COMMIT `RED: agregar tests de ListaProyectos (falla)`; archivos: `ListaProyectos.test.tsx` y el stub `ListaProyectos.tsx` en `web/src/compartido/proyectos/`.
+- [x] T025 [US3] GREEN: implementar `web/src/compartido/proyectos/ListaProyectos.tsx` con la lista y el estado vacío; no agregar todavía el indicador de carga ni el mensaje de error (US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T026 [US3] COMMIT `GREEN: implementar ListaProyectos, test en verde`; archivo: `web/src/compartido/proyectos/ListaProyectos.tsx`.
+- [x] T027 [US3] RED: agregar a `web/src/rutas.test.tsx` la integración del inicio: `/` muestra "Crear proyecto" y la lista, y un enlace de la lista abre el panel; confirmar que FALLA.
+- [x] T028 [US3] COMMIT `RED: agregar integración del inicio con lista (falla)`; archivo: `web/src/rutas.test.tsx`.
+- [x] T029 [US3] GREEN: crear `web/src/compartido/proyectos/ComposicionInicio.tsx` (layout pathless con `<Outlet />` y `<ListaProyectos />`) y modificar `web/src/rutas.tsx` para convertir la ruta índice en su hija; no tocar `web/src/features/proyecto/crear.tsx`; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T030 [US3] COMMIT `GREEN: componer formulario y lista en el inicio, tests en verde`; archivos: `web/src/rutas.tsx` y `web/src/compartido/proyectos/ComposicionInicio.tsx`.
 
 **Checkpoint**: US3 funciona de forma independiente.
 

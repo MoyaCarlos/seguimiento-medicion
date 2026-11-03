@@ -123,8 +123,8 @@ nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `l
 
 ## Design Decisions
 
-1. **Composición del inicio sin tocar `crear.tsx`.** En `rutas.tsx` se define un componente local
-   `ComposicionInicio` que renderiza `<Outlet />` (el formulario lazy actual) seguido de
+1. **Composición del inicio sin tocar `crear.tsx`.** En `compartido/proyectos/ComposicionInicio.tsx` se define
+   `ComposicionInicio`, que `rutas.tsx` usa como layout pathless y que renderiza `<Outlet />` (el formulario lazy actual) seguido de
    `<ListaProyectos />`. La ruta índice pasa a ser hija de ese layout pathless. Alternativa
    descartada: modificar `crear.tsx`, porque sus pruebas afirman la cantidad exacta de llamadas a
    `fetch` y agregar el `GET /projects` allí las rompería.
@@ -269,7 +269,7 @@ cambios.
 
 | Riesgo | Mitigación |
 |---|---|
-| La composición del inicio podría requerir tocar `crear.tsx` | Se usa un layout pathless en `rutas.tsx` con `<Outlet />`; el formulario queda intacto y sus pruebas no cambian. |
+| La composición del inicio podría requerir tocar `crear.tsx` | Se usa un layout pathless (`ComposicionInicio`, usado en `rutas.tsx`) con `<Outlet />`; el formulario queda intacto y sus pruebas no cambian. |
 | El selector y la lista podrían pedir la lista dos veces en la misma pantalla | Nunca conviven: el selector vive en `LayoutProyecto` y la lista en `/`. Cada uno hace un solo pedido al montarse. |
 | `Outlet` sin `key` conservaría el estado de una pantalla al cambiar de proyecto | Se monta `<Outlet key={id} />`; se conservan además las `key` existentes de las pantallas. |
 | El proyecto actual no aparece en el listado y el `<select>` quedaría sin opción válida | Se agrega la opción sintética `Proyecto <id>` y se selecciona por `value`. |
