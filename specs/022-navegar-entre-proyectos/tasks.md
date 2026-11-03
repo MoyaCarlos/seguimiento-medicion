@@ -23,8 +23,8 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Agregar en `web/src/rutas.test.tsx` el `fetch` simulado con `beforeEach`/`afterEach`: una `Response` nueva por llamada, `[]` para `GET /projects`, un proyecto completo para `GET /projects/:id` y `[]` para `GET /projects/:id/members`; ejecutar `npm test` desde `web/` y confirmar que la suite existente sigue en verde.
-- [ ] T002 COMMIT `test(rutas): simular GET /projects`; archivo: `web/src/rutas.test.tsx`.
+- [x] T001 Agregar en `web/src/rutas.test.tsx` el `fetch` simulado con `beforeEach`/`afterEach`: una `Response` nueva por llamada, `[]` para `GET /projects`, un proyecto completo para `GET /projects/:id` y `[]` para `GET /projects/:id/members`; ejecutar `npm test` desde `web/` y confirmar que la suite existente sigue en verde.
+- [x] T002 COMMIT `test(rutas): simular GET /projects`; archivo: `web/src/rutas.test.tsx`.
 
 **Checkpoint**: la suite existente queda verde antes y después de que el encabezado pida el listado. T001-T002 son infraestructura de prueba, no un ciclo RED; los ciclos RED/GREEN empiezan en T003.
 
@@ -34,14 +34,14 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **⚠️ CRITICAL**: ninguna historia puede empezar hasta completar la lógica pura y el hook.
 
-- [ ] T003 [P] RED: crear `web/src/compartido/proyectos/ruta.test.ts` con los casos de `rutaDeSeccion` (`/projects/1/backlog`, `/projects/1/proyecto/edit`, `/projects/1`, `/projects/1/otra` y `/projects/1/votacion/3` → `/projects/2/proyecto`, y barra final) y `etiquetaProyecto` (`Alfa (#7)` y nombres repetidos); crear antes `web/src/compartido/proyectos/ruta.ts` con un stub mínimo (funciones que devuelven un valor vacío) para que el RED falle por aserción y no por import inexistente; ejecutar `npm test` desde `web/` y confirmar que FALLA.
-- [ ] T004 COMMIT `RED: agregar tests de rutaDeSeccion y etiquetaProyecto (falla)`; archivos: `web/src/compartido/proyectos/ruta.test.ts` y el stub `web/src/compartido/proyectos/ruta.ts`.
-- [ ] T005 GREEN: implementar `web/src/compartido/proyectos/ruta.ts` con `rutaDeSeccion(pathname, idNuevo)` (conserva el primer tramo solo si está en `navegacion` de `web/src/navegacion.ts`; si no, `proyecto`) y `etiquetaProyecto({ id, nombre })` según `contracts/ui.md`; ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T006 COMMIT `GREEN: implementar rutaDeSeccion y etiquetaProyecto, tests en verde`; archivo: `web/src/compartido/proyectos/ruta.ts`.
-- [ ] T007 [P] RED: crear `web/src/compartido/proyectos/useProyectos.test.tsx` con `renderHook` y `fetch` simulado: estado inicial `cargando`, éxito `listo` conservando el orden, error del cliente, respuesta `200` que no es arreglo y desmontaje antes de resolver; crear antes `api.ts` y `useProyectos.ts` con stubs mínimos (el hook devuelve siempre `cargando`) para que el RED falle por aserción; confirmar que FALLA.
-- [ ] T008 COMMIT `RED: agregar tests de useProyectos (falla)`; archivos: `useProyectos.test.tsx` y los stubs `api.ts` y `useProyectos.ts` en `web/src/compartido/proyectos/`.
-- [ ] T009 GREEN: implementar `web/src/compartido/proyectos/api.ts` (`ProyectoResumen` con `id: number` y `nombre: string`, `listarProyectos()` con `get('/projects')`) y `web/src/compartido/proyectos/useProyectos.ts` (unión `cargando | listo | error`, bandera `vigente` y mensaje para respuestas no interpretables); ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T010 COMMIT `GREEN: implementar listarProyectos y useProyectos, tests en verde`; archivos: `web/src/compartido/proyectos/api.ts` y `web/src/compartido/proyectos/useProyectos.ts`.
+- [x] T003 [P] RED: crear `web/src/compartido/proyectos/ruta.test.ts` con los casos de `rutaDeSeccion` (`/projects/1/backlog`, `/projects/1/proyecto/edit`, `/projects/1`, `/projects/1/otra` y `/projects/1/votacion/3` → `/projects/2/proyecto`, y barra final) y `etiquetaProyecto` (`Alfa (#7)` y nombres repetidos); crear antes `web/src/compartido/proyectos/ruta.ts` con un stub mínimo (funciones que devuelven un valor vacío) para que el RED falle por aserción y no por import inexistente; ejecutar `npm test` desde `web/` y confirmar que FALLA.
+- [x] T004 COMMIT `RED: agregar tests de rutaDeSeccion y etiquetaProyecto (falla)`; archivos: `web/src/compartido/proyectos/ruta.test.ts` y el stub `web/src/compartido/proyectos/ruta.ts`.
+- [x] T005 GREEN: implementar `web/src/compartido/proyectos/ruta.ts` con `rutaDeSeccion(pathname, idNuevo)` (conserva el primer tramo solo si está en `navegacion` de `web/src/navegacion.ts`; si no, `proyecto`) y `etiquetaProyecto({ id, nombre })` según `contracts/ui.md`; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T006 COMMIT `GREEN: implementar rutaDeSeccion y etiquetaProyecto, tests en verde`; archivo: `web/src/compartido/proyectos/ruta.ts`.
+- [x] T007 [P] RED: crear `web/src/compartido/proyectos/useProyectos.test.tsx` con `renderHook` y `fetch` simulado: estado inicial `cargando`, éxito `listo` conservando el orden, error del cliente, respuesta `200` que no es arreglo y desmontaje antes de resolver; crear antes `api.ts` y `useProyectos.ts` con stubs mínimos (el hook devuelve siempre `cargando`) para que el RED falle por aserción; confirmar que FALLA.
+- [x] T008 COMMIT `RED: agregar tests de useProyectos (falla)`; archivos: `useProyectos.test.tsx` y los stubs `api.ts` y `useProyectos.ts` en `web/src/compartido/proyectos/`.
+- [x] T009 GREEN: implementar `web/src/compartido/proyectos/api.ts` (`ProyectoResumen` con `id: number` y `nombre: string`, `listarProyectos()` con `get('/projects')`) y `web/src/compartido/proyectos/useProyectos.ts` (unión `cargando | listo | error`, bandera `vigente` y mensaje para respuestas no interpretables); ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T010 COMMIT `GREEN: implementar listarProyectos y useProyectos, tests en verde`; archivos: `web/src/compartido/proyectos/api.ts` y `web/src/compartido/proyectos/useProyectos.ts`.
 
 **Checkpoint**: `ruta.ts`, `api.ts` y `useProyectos.ts` listos; el selector y la lista pueden consumirlos.
 
@@ -53,14 +53,14 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Independent Test**: abrir `/projects/1/backlog` con dos proyectos cargados, elegir el 2 y comprobar `/projects/2/backlog`, el selector marcando el 2 y la pantalla del backlog reiniciada.
 
-- [ ] T011 [US1] RED: crear `web/src/compartido/proyectos/SelectorProyecto.test.tsx` con `createMemoryRouter` y `fetch` simulado: combobox accesible con nombre "Proyecto" que se enfoca con Tab y se puede operar con el teclado (`userEvent.tab()` y `selectOptions`), opciones `<nombre> (#<id>)` en orden, proyecto actual seleccionado por `:id`, fallback `Proyecto <id>` cuando el actual no está en la lista (incluida lista vacía), cambio a otro proyecto a la misma sección, desde una ruta fuera del menú (`/projects/1/otra`) a `/projects/2/proyecto`, mismo proyecto sin navegar y dos proyectos con el mismo nombre que abren el elegido por su `#id`; crear antes `SelectorProyecto.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
-- [ ] T012 [US1] COMMIT `RED: agregar tests de navegación del selector (falla)`; archivos: `SelectorProyecto.test.tsx` y el stub `SelectorProyecto.tsx` en `web/src/compartido/proyectos/`.
-- [ ] T013 [US1] GREEN: implementar `web/src/compartido/proyectos/SelectorProyecto.tsx` con el `<select>`, opciones, fallback y navegación mediante `rutaDeSeccion`; no agregar todavía el enlace "Nuevo proyecto" ni los estados de carga/error (US2/US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T014 [US1] COMMIT `GREEN: implementar navegación del selector, test en verde`; archivo: `web/src/compartido/proyectos/SelectorProyecto.tsx`.
-- [ ] T015 [US1] RED: agregar a `web/src/rutas.test.tsx` la integración del selector con dos proyectos: cambiar de `/projects/1/backlog` a `/projects/2/backlog`; además, contar las llamadas al `fetch` simulado: `GET /projects` se pide una sola vez al montar el layout y no se vuelve a pedir al cambiar de sección dentro del mismo proyecto; además, cargar un título en el backlog de 1, cambiar a 2 y verificar que el formulario de 2 arranca vacío; confirmar que FALLA.
-- [ ] T016 [US1] COMMIT `RED: agregar integración de navegación entre proyectos (falla)`; archivo: `web/src/rutas.test.tsx`.
-- [ ] T017 [US1] GREEN: modificar `web/src/compartido/router/LayoutProyecto.tsx` para montar `<SelectorProyecto />` en el encabezado y `<Outlet key={id} />`; ejecutar `npm test` desde `web/` y confirmar que pasa.
-- [ ] T018 [US1] COMMIT `GREEN: montar selector y reiniciar por :id, tests en verde`; archivo: `web/src/compartido/router/LayoutProyecto.tsx`.
+- [x] T011 [US1] RED: crear `web/src/compartido/proyectos/SelectorProyecto.test.tsx` con `createMemoryRouter` y `fetch` simulado: combobox accesible con nombre "Proyecto" que se enfoca con Tab y se puede operar con el teclado (`userEvent.tab()` y `selectOptions`), opciones `<nombre> (#<id>)` en orden, proyecto actual seleccionado por `:id`, fallback `Proyecto <id>` cuando el actual no está en la lista (incluida lista vacía), cambio a otro proyecto a la misma sección, desde una ruta fuera del menú (`/projects/1/otra`) a `/projects/2/proyecto`, mismo proyecto sin navegar y dos proyectos con el mismo nombre que abren el elegido por su `#id`; crear antes `SelectorProyecto.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
+- [x] T012 [US1] COMMIT `RED: agregar tests de navegación del selector (falla)`; archivos: `SelectorProyecto.test.tsx` y el stub `SelectorProyecto.tsx` en `web/src/compartido/proyectos/`.
+- [x] T013 [US1] GREEN: implementar `web/src/compartido/proyectos/SelectorProyecto.tsx` con el `<select>`, opciones, fallback y navegación mediante `rutaDeSeccion`; no agregar todavía el enlace "Nuevo proyecto" ni los estados de carga/error (US2/US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T014 [US1] COMMIT `GREEN: implementar navegación del selector, test en verde`; archivo: `web/src/compartido/proyectos/SelectorProyecto.tsx`.
+- [x] T015 [US1] RED: agregar a `web/src/rutas.test.tsx` la integración del selector con dos proyectos: cambiar de `/projects/1/backlog` a `/projects/2/backlog`; además, contar las llamadas al `fetch` simulado: `GET /projects` se pide una sola vez al montar el layout y no se vuelve a pedir al cambiar de sección dentro del mismo proyecto; además, cargar un título en el backlog de 1, cambiar a 2 y verificar que el formulario de 2 arranca vacío; confirmar que FALLA.
+- [x] T016 [US1] COMMIT `RED: agregar integración de navegación entre proyectos (falla)`; archivo: `web/src/rutas.test.tsx`.
+- [x] T017 [US1] GREEN: modificar `web/src/compartido/router/LayoutProyecto.tsx` para montar `<SelectorProyecto />` en el encabezado y `<Outlet key={id} />`; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [x] T018 [US1] COMMIT `GREEN: montar selector y reiniciar por :id, tests en verde`; archivo: `web/src/compartido/router/LayoutProyecto.tsx`.
 
 **Checkpoint**: US1 funciona de forma independiente y el cambio de proyecto reinicia el estado de la pantalla.
 
