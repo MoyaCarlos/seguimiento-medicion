@@ -3,6 +3,7 @@ package http
 import (
 	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
@@ -24,6 +25,7 @@ type votacionResponse struct {
 	ReveladaEn  *string                    `json:"revelada_en"`
 	Integrantes []votoDeIntegranteResponse `json:"integrantes"`
 	Promedio    *promedioResponse          `json:"promedio"`
+	Diferencias *diferenciasResponse       `json:"diferencias"`
 }
 
 type votoDeIntegranteResponse struct {
@@ -37,6 +39,20 @@ type votoDeIntegranteResponse struct {
 type promedioResponse struct {
 	Exacto        float64 `json:"exacto"`
 	CartaSugerida int     `json:"carta_sugerida"`
+}
+
+// diferenciasResponse informa los extremos solo si hay diferencias.
+type diferenciasResponse struct {
+	HayDiferencias bool `json:"hay_diferencias"`
+	Minimo         *int `json:"minimo"`
+	Maximo         *int `json:"maximo"`
+}
+
+func aRespuestaDiferencias(d domain.Diferencias) *diferenciasResponse {
+	if !d.Hay {
+		return &diferenciasResponse{}
+	}
+	return &diferenciasResponse{HayDiferencias: true, Minimo: &d.Minimo, Maximo: &d.Maximo}
 }
 
 func aRespuestaVotacion(v service.VistaVotacion) votacionResponse {
@@ -56,6 +72,9 @@ func aRespuestaVotacion(v service.VistaVotacion) votacionResponse {
 	}
 	if v.Promedio != nil {
 		respuesta.Promedio = &promedioResponse{Exacto: v.Promedio.Exacto, CartaSugerida: v.Promedio.CartaSugerida}
+	}
+	if v.Diferencias != nil {
+		respuesta.Diferencias = aRespuestaDiferencias(*v.Diferencias)
 	}
 	return respuesta
 }
