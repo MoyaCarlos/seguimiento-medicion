@@ -101,6 +101,21 @@ func (h *VotacionHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request
 // RegistrarEstimacion atiende POST /backlog/{id}/votacion/estimacion. Responde
 // con la historia.
 func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req estimacionRequest
+	if !leerPedido(w, r, &req) {
+		return
+	}
+
+	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.EstimacionSP)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(historia))
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia
