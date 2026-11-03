@@ -1,6 +1,6 @@
 # Research: Navegar entre proyectos desde la interfaz
 
-**Feature**: #148 (cierra #141) | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
+**Feature**: #148 | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
 
 ## Scope
 
@@ -111,9 +111,13 @@ investigación externa ni comparación de librerías porque la historia prohíbe
 
 - **Decision**:
   - `rutaDeSeccion(pathname, idNuevo)`: divide el pathname, toma el tercer segmento (índice 2
-    después de `projects` e `id`) o `proyecto` si no existe, y arma `/projects/<idNuevo>/<sección>`.
+    después de `projects` e `id`); si no existe o no está en `navegacion` (`web/src/navegacion.ts`)
+    usa `proyecto`; arma `/projects/<idNuevo>/<sección>`.
   - `etiquetaProyecto({ id, nombre })`: devuelve `${nombre} (#${id})`.
-- **Rationale**: La regla del issue es explícita: conservar solo el primer tramo después del id.
+- **Rationale**: La regla del issue es conservar solo el primer tramo después del id. Decisión del
+  Scrum Master (2026-11-02): si ese tramo no es una sección del menú (p. ej. `votacion/:historiaId`)
+  se cae en `proyecto`, sin tabla de rutas, para no llegar a una pantalla inexistente ni trasladar
+  el id de una historia de otro proyecto.
   Las funciones son deterministas, no dependen de React y se prueban con Vitest.
 - **Alternatives considered**:
   - Usar `useParams`/`useLocation` para armar la ruta dentro del selector: rechazado porque
@@ -137,7 +141,7 @@ investigación externa ni comparación de librerías porque la historia prohíbe
 - **Decision**: Primero un commit de infraestructura que simula `GET /projects` en
   `rutas.test.tsx` (respuesta nueva por llamada y despacho por URL, para no alterar los `GET
   /projects/:id` y `/members` existentes); después RED/GREEN de lógica pura, hook, selector,
-  lista e integración; al final eliminación de `Inicio.tsx` y verificación. Un commit por fase,
+  lista e integración; al final el nombre accesible del `<nav>` y la verificación. Un commit por fase,
   REFACTOR solo si hay algo que limpiar.
 - **Rationale**: La suite existente queda verde antes y después de que el encabezado empiece a
   pedir la lista, y cada comportamiento tiene evidencia RED/GREEN. Es la secuencia pedida por el

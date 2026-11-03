@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `/specs/022-navegar-entre-proyectos/spec.md`
 
-**Note**: Plan de implementación de la historia #148 (cierra #141). Solo frontend; la API y el
+**Note**: Plan de implementación de la historia #148 (solo cierra #148; #141 ya se cerró con el PR #208). Solo frontend; la API y el
 esquema de la base no cambian.
 
 ## Summary
@@ -14,8 +14,8 @@ en el encabezado de cada pantalla de proyecto que conserva la sección actual al
 proyecto, un enlace permanente a "Nuevo proyecto" y la lista de proyectos en la pantalla de
 inicio junto al formulario de creación. La lógica pura de ruta y etiqueta, el acceso a la API y
 el estado de la lista viven en `web/src/compartido/proyectos/`; las pantallas consumen piezas
-compartidas y no se toca `features/proyecto/crear.tsx` ni su prueba. Se elimina el `Inicio.tsx`
-sin uso y se cierra #141.
+compartidas y no se toca `features/proyecto/crear.tsx` ni su prueba. Además se corrige el nombre accesible
+del `<nav>` de secciones ("Secciones del proyecto").
 
 ## Technical Context
 
@@ -46,7 +46,7 @@ tramos o proyectos; sin polling ni recargas automáticas. La lista se renderiza 
 
 **Constraints**: Sin dependencias nuevas ni cambios de API/esquema. Archivos permitidos:
 `LayoutProyecto.tsx`, `rutas.tsx`, `rutas.test.tsx`, archivos nuevos en
-`web/src/compartido/proyectos/` y eliminación de `Inicio.tsx`; no se tocan
+`web/src/compartido/proyectos/`; no se tocan
 `features/proyecto/crear.tsx` ni `crear.test.tsx`. Respetar RED/GREEN/REFACTOR y el orden de
 commits pedido. Los escenarios BDD se cubren por equivalencia con pruebas de componente.
 
@@ -105,8 +105,7 @@ web/src/
 │   │   ├── ListaProyectos.tsx
 │   │   └── ListaProyectos.test.tsx
 │   └── router/
-│       ├── LayoutProyecto.tsx           # Modificado: monta el selector y reinicia por :id
-│       └── Inicio.tsx                   # Eliminado (sin uso, #141)
+│       └── LayoutProyecto.tsx           # Modificado: selector, reinicio por :id y nombre del <nav>
 ├── features/
 │   └── proyecto/
 │       ├── crear.tsx                    # SIN CAMBIOS
@@ -134,7 +133,9 @@ nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `l
    desmontaje con una bandera `vigente`. Alternativa descartada: contexto global o store, porque
    selector y lista nunca conviven y sería abstracción innecesaria (YAGNI).
 3. **Ruta pura y etiqueta pura.** `rutaDeSeccion(pathname, idNuevo)` toma el primer tramo después
-   del id (o `proyecto` si no hay tramo) y arma `/projects/<idNuevo>/<sección>`.
+   del id si es una sección del menú de `web/src/navegacion.ts` (si no hay tramo o no es del menú,
+   usa `proyecto`) y arma `/projects/<idNuevo>/<sección>`. No hay tabla de rutas: las rutas con
+   id de historia (`votacion/:historiaId`) caen en `proyecto`.
    `etiquetaProyecto({ id, nombre })` devuelve `<nombre> (#<id>)`. Ambas se prueban con Vitest
    antes de implementar.
 4. **Selector nativo accesible.** `<select>` con etiqueta accesible "Proyecto", opciones con la
@@ -192,9 +193,9 @@ nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `l
    falla del listado con navegación de secciones operativa y reinicio de estado por `:id`.
    Después `GREEN: montar selector, componer el inicio y reiniciar por :id` en `LayoutProyecto.tsx`
    y `rutas.tsx`. REFACTOR si corresponde.
-7. **Limpieza.** Eliminar `web/src/compartido/router/Inicio.tsx`, verificar que no queden
-   referencias, correr `npm test`, `npm run lint` y `npm run build`. Commit
-   `chore: eliminar Inicio.tsx sin uso`. El PR cierra #148 y #141 en su descripción.
+7. **Nombre accesible y cierre.** `RED:` prueba del `<nav>` "Secciones del proyecto"; `GREEN:` cambio
+   en `LayoutProyecto.tsx`; después `npm test`, `npm run lint` y `npm run build`. El PR cierra #148
+   (#141 ya está cerrado).
 
 > El primer commit es infraestructura de prueba fuera del ciclo RED/GREEN porque solo prepara el
 > entorno de prueba para que la suite existente siga verde. Los commits de los pasos 2 a 6 siguen el
@@ -207,7 +208,9 @@ nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `l
 - `/projects/1/backlog` + `2` → `/projects/2/backlog`.
 - `/projects/1/proyecto/edit` + `2` → `/projects/2/proyecto` (solo el primer tramo).
 - `/projects/1` + `2` → `/projects/2/proyecto` (sin tramo).
-- `/projects/1/otra` + `2` → `/projects/2/otra` (sección desconocida).
+- `/projects/1/otra` + `2` → `/projects/2/proyecto` (sección desconocida).
+- `/projects/1/votacion/3` + `2` → `/projects/2/proyecto` (ruta con id de historia; no depende de
+  que la pantalla de votación exista en `main`).
 - `/projects/1/backlog/` + `2` → `/projects/2/backlog` (barra final).
 - `etiquetaProyecto({ id: 7, nombre: 'Alfa' })` → `Alfa (#7)`.
 - Dos proyectos con el mismo nombre producen etiquetas distintas por el `#id`.
@@ -245,6 +248,7 @@ nuevo: se reutilizan clases base existentes (`page-stack`, `field`, `button`, `l
 - "Nuevo proyecto" lleva a `/` desde una pantalla de proyecto.
 - Con el listado en error, el selector muestra el error y los enlaces de sección siguen
   navegando.
+- El `<nav>` de secciones tiene el nombre accesible "Secciones del proyecto".
 - Cambiar el `:id` remonta la pantalla y no conserva estado del proyecto anterior (se conserva y
   amplía la prueba existente de reinicio).
 - La suite existente se mantiene verde con el `GET /projects` simulado.
@@ -273,7 +277,7 @@ cambios.
 | La respuesta llega después de desmontar el componente | Bandera `vigente` en el `useEffect`; no se actualiza estado tras el desmontaje. |
 | El nuevo `fetch` en el encabezado rompe pruebas de rutas existentes | Primer commit con el mock de `GET /projects`; se ejecuta la suite antes de cambiar el encabezado. |
 | Estilos nuevos fuera de los archivos permitidos | No se agrega CSS; se reutilizan clases y marcado existentes. |
-| `web/README.md` menciona el `Inicio.tsx` eliminado | Queda fuera de los archivos permitidos; se registra como deuda documental para el equipo, sin bloquear esta historia. |
+| La ruta de votación (PR #229) llega a `main` antes o después | `rutaDeSeccion` solo conserva secciones de `navegacion.ts`; no depende de que esa ruta exista. |
 
 ## Complexity Tracking
 

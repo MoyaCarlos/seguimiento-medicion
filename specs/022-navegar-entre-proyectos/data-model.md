@@ -1,6 +1,6 @@
 # Data Model: Navegar entre proyectos desde la interfaz
 
-**Feature**: #148 (cierra #141) | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
+**Feature**: #148 | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
 
 ## Scope
 
@@ -42,7 +42,7 @@ Tramo de navegación que se conserva al cambiar de proyecto. No se persiste.
 | `backlog` | Primer tramo | Se conserva al cambiar de proyecto. |
 | `sprints` | Primer tramo | Se conserva al cambiar de proyecto. |
 | `status` | Primer tramo | Se conserva al cambiar de proyecto. |
-| Otro texto | Primer tramo | Se conserva tal cual; la pantalla de destino puede no existir. |
+| Otro texto | Primer tramo | No es del menú (`navegacion.ts`): se reemplaza por `proyecto`. |
 
 `rutaDeSeccion(pathname, idNuevo)` devuelve siempre `/projects/<idNuevo>/<sección>`. Los tramos
 posteriores al primero (por ejemplo `edit` en `/proyecto/edit`) se descartan.
@@ -76,7 +76,7 @@ montaje. Volver a montar la pantalla vuelve a pedir el listado.
 | Función | Entrada | Salida | Regla |
 |---|---|---|---|
 | `etiquetaProyecto` | `{ id: number, nombre: string }` | `string` | `${nombre} (#${id})`; dos nombres iguales producen etiquetas distintas por el id. |
-| `rutaDeSeccion` | `pathname: string`, `idNuevo: string \| number` | `string` | Toma el primer tramo después del id; si no hay, usa `proyecto`; devuelve `/projects/${idNuevo}/${seccion}`. |
+| `rutaDeSeccion` | `pathname: string`, `idNuevo: string \| number` | `string` | Toma el primer tramo después del id si es una sección de `navegacion`; si no hay o no lo es, usa `proyecto`; devuelve `/projects/${idNuevo}/${seccion}`. |
 
 ## Validation Rules
 
@@ -117,6 +117,6 @@ montaje. Volver a montar la pantalla vuelve a pedir el listado.
 | FR-010, FR-011, FR-012 | `EstadoProyectos` |
 | FR-013 | Reinicio por `:id` en `LayoutProyecto` |
 | FR-014 | Orden del arreglo de `GET /projects` |
-| FR-015 | Eliminación de `Inicio.tsx` |
+| FR-015 | Nombre accesible "Secciones del proyecto" del `<nav>` de `LayoutProyecto` |
 | FR-016, FR-017 | Sin cambios de API/esquema; reutilización de piezas |
 | FR-018, FR-019, FR-020 | Funciones puras y pruebas de componente |

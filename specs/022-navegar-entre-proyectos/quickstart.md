@@ -1,6 +1,6 @@
 # Quickstart: Navegar entre proyectos desde la interfaz
 
-**Feature**: #148 (cierra #141) | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
+**Feature**: #148 | **Date**: 2026-10-27 | **Spec**: [spec.md](./spec.md)
 
 ## Prerequisites
 
@@ -67,6 +67,11 @@ se muestra un error.
 2. Elegir otro proyecto en el selector.
 
 **Esperado**: se navega a `/projects/<otroId>/proyecto`, no a la sub-ruta de edición.
+
+Lo mismo vale para un primer tramo que no es del menú (por ejemplo `/projects/<id>/otra`): se
+navega a `/projects/<otroId>/proyecto`. Si ya está la pantalla de votación, desde
+`/projects/<id>/votacion/<historiaId>` también se cae en `proyecto` y no se traslada el id de la
+historia.
 
 ### 5. Enlace "Nuevo proyecto"
 

@@ -38,7 +38,7 @@
   etiqueta de proyecto usa `<nombre> (#<id>)` en el selector y en la lista.
 - Las referencias a `GET /projects`, rutas y archivos son contrato y restricciones del issue
   #148 y de esta revisión (archivos permitidos: `LayoutProyecto.tsx`, `rutas.tsx`,
-  `rutas.test.tsx`, nuevos en `compartido/proyectos/` y eliminación de `Inicio.tsx`;
+  `rutas.test.tsx`, nuevos en `compartido/proyectos/`;
   `crear.tsx` y `crear.test.tsx` quedan fuera), no decisiones de implementación agregadas por la
   spec. Se mantiene la convención del proyecto de documentar la trazabilidad y las restricciones
   de entrega.

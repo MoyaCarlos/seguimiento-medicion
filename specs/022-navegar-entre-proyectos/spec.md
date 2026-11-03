@@ -2,7 +2,7 @@
 
 **Feature Branch**: `feature/148-navegacion-proyectos`
 
-**Issue**: #148 (cierra además #141)
+**Issue**: #148
 
 **Created**: 2026-10-27
 
@@ -16,7 +16,9 @@ Alcance:
 - En la pantalla de inicio (/), junto al formulario de crear proyecto, la lista de proyectos existentes con un enlace a cada uno.
 - Estados de la lista: cargando (LoadingIndicator), vacía (invita a crear un proyecto) y error de la API (ErrorMessage) sin romper la pantalla: el encabezado y la navegación de secciones siguen funcionando.
 - Al cambiar de proyecto, el estado de las pantallas se reinicia por el :id (ya existe el reinicio por key; no romperlo).
-- Se elimina web/src/compartido/router/Inicio.tsx (sin uso, issue #141) y este trabajo cierra también #141.
+- El nombre accesible del `<nav>` de secciones deja de decir "Historias del Sprint 2" y pasa a "Secciones del proyecto".
+
+(Actualización 2026-11-02: `Inicio.tsx` ya fue eliminado por el PR #208 y el issue #141 está cerrado; esta historia no lo toca. Cambio de sección desconocida decidido por el Scrum Master: ver FR-003 y FR-004.)
 
 Restricciones: sin dependencias nuevas; reutilizar LoadingIndicator, ErrorMessage y el cliente de compartido/api; Button no aplica porque esta historia solo navega con enlaces y un <select>; la lógica pura (por ejemplo, armar la ruta del nuevo proyecto a partir de la ruta actual) en funciones con pruebas de Vitest, y las pantallas con pruebas de componente con Testing Library y fetch simulado. Las pruebas existentes de rutas.test.tsx deben seguir pasando (con un fetch simulado de GET /projects)."
 
@@ -64,6 +66,10 @@ del proyecto 2 y que el selector marca el 2 como actual.
    como `<nombre> (#<id>)`.
 4. **Given** una pantalla con estado propio del proyecto 1, **When** se elige el proyecto 2,
    **Then** las pantallas del proyecto 2 arrancan sin datos ni estado del proyecto 1.
+5. **Given** una ruta cuyo primer tramo no es una sección del menú (por ejemplo
+   `/projects/1/votacion/3`, una pantalla con identificador de historia, o `/projects/1/otra`),
+   **When** se elige el proyecto 2, **Then** la aplicación navega a `/projects/2/proyecto` y no
+   traslada ni el tramo desconocido ni el identificador de la historia.
 
 ---
 
@@ -169,9 +175,13 @@ funcionando.
   a cualquiera de los proyectos listados.
 - **IF** la dirección es `/projects/<id>` sin sección, **THEN** la sección usada al cambiar de
   proyecto **shall** ser `proyecto`.
-- **IF** la sección actual no es una de las conocidas (por ejemplo, `/projects/1/otra`),
-  **THEN** al cambiar de proyecto **shall** conservarse ese mismo primer tramo
-  (`/projects/2/otra`), aunque la pantalla de destino muestre "Página no encontrada".
+- **IF** el primer tramo de la ruta actual no es una sección del menú de `navegacion.ts`
+  (`proyecto`, `backlog`, `sprints`, `status`), por ejemplo `/projects/1/otra` o
+  `/projects/1/votacion/3`, **THEN** al cambiar de proyecto **shall** navegarse a
+  `/projects/2/proyecto`. Esto reemplaza la regla anterior de conservar el tramo desconocido:
+  evita caer en "Página no encontrada" y evita trasladar identificadores propios de otro proyecto
+  (como el de una historia). La regla no depende de que exista la ruta de votación en `main`
+  (PR #229 pendiente): se verifica con la función pura y con `/projects/1/otra`.
 - **WHEN** se elige el mismo proyecto que ya está abierto, **THEN** la aplicación **shall not**
   navegar ni reiniciar el estado de la pantalla.
 - **IF** dos proyectos tienen el mismo nombre, **THEN** el selector y la lista **shall**
@@ -195,7 +205,8 @@ funcionando.
   `:id` de la URL, de forma visible y accesible.
 - **FR-003**: **WHEN** se elige un proyecto distinto del actual, la aplicación MUST navegar a
   `/projects/<id elegido>/<sección>`, donde `<sección>` es el primer tramo de la ruta actual
-  después del `:id`; si no hay ningún tramo, MUST usar `proyecto`.
+  después del `:id` **solo si** es una sección del menú de `web/src/navegacion.ts`; si no hay
+  ningún tramo o no es una sección del menú, MUST usar `proyecto`.
 - **FR-004**: Al cambiar de proyecto MUST conservarse únicamente el primer tramo de la sección
   actual; los tramos posteriores (sub-rutas) MUST NOT trasladarse al proyecto nuevo.
 - **FR-005**: **WHEN** se elige el proyecto que ya está abierto, la aplicación MUST NOT navegar
@@ -235,8 +246,9 @@ funcionando.
 
 **Limpieza y alcance**
 
-- **FR-015**: MUST eliminarse `web/src/compartido/router/Inicio.tsx`, que no tiene uso, y el
-  trabajo MUST cerrar el issue #141.
+- **FR-015**: El `<nav>` de secciones de `LayoutProyecto` MUST tener el nombre accesible
+  "Secciones del proyecto" (hoy dice "Historias del Sprint 2", que ya no describe la navegación).
+  Los enlaces y su comportamiento no cambian.
 - **FR-016**: La historia MUST NOT modificar la API, el esquema de la base ni el contrato de
   `GET /projects`; solo consume el listado existente.
 - **FR-017**: La interfaz MUST reutilizar `LoadingIndicator`, `ErrorMessage` y el cliente de
@@ -289,9 +301,12 @@ funcionando.
   abre un diálogo ni una pantalla nueva.
 - El enlace de un proyecto desde el inicio abre su panel en `/projects/<id>/proyecto`, porque es
   la sección por defecto del proyecto.
-- Las secciones que existen hoy son `proyecto`, `backlog`, `sprints` y `status`. Si la ruta trae
-  otra sección, se conserva tal cual como primer tramo; que la pantalla de destino exista o no es
-  responsabilidad del registro de rutas actual.
+- Las secciones del menú hoy son `proyecto`, `backlog`, `sprints` y `status` (`web/src/navegacion.ts`).
+  Si la ruta trae otro primer tramo (incluidas rutas con identificador de historia como
+  `votacion/:historiaId`), se cae en `proyecto`. Sin tabla de rutas ni mapeo a secciones padre.
+- `Inicio.tsx` ya no existe en `main` (PR #208, issue #141 cerrado); esta historia solo cierra #148.
+- La pantalla `/` queda como formulario de creación seguido de la lista de proyectos; el acceso a
+  "Nuevo proyecto" vive en el encabezado de las pantallas de proyecto.
 - Si el proyecto actual no está en el listado, se muestra como "Proyecto `<id>`" para no perder
   el contexto ni marcar otro proyecto por error. No se inventa un nombre.
 - La lista se obtiene al abrir cada pantalla. No se exige actualización en vivo después de crear
@@ -313,13 +328,11 @@ funcionando.
 - Archivos permitidos: `web/src/compartido/router/LayoutProyecto.tsx`, `web/src/rutas.tsx` (para
   componer el inicio con el formulario de creación más la lista de proyectos),
   `web/src/rutas.test.tsx`, archivos nuevos en `web/src/compartido/proyectos/` (API, hook,
-  selector, lista y la función pura de ruta) y la eliminación de
-  `web/src/compartido/router/Inicio.tsx`.
+  selector, lista y la función pura de ruta) y `web/src/navegacion.ts` solo para leerlo (no se
+  modifica).
 - `web/src/features/proyecto/crear.tsx` y `web/src/features/proyecto/crear.test.tsx` NO se
   modifican: sus pruebas afirman cuántas veces se llama a `fetch` y agregar allí el
   `GET /projects` las rompería.
-- La eliminación de `web/src/compartido/router/Inicio.tsx` no debe dejar importaciones ni
-  referencias a ese archivo.
 - Sin dependencias nuevas. Se reutilizan `LoadingIndicator`, `ErrorMessage` y el cliente de la
   API; no hay acciones de botón (solo enlaces y un `<select>`).
 - Las pruebas de `web/src/rutas.test.tsx` deben simular `GET /projects` para que el encabezado
@@ -341,13 +354,13 @@ funcionando.
 | Requisito | Verificación prevista |
 |---|---|
 | FR-001, FR-002 | Prueba de componente del encabezado con listado simulado, etiqueta `<nombre> (#<id>)` y `:id` actual |
-| FR-003, FR-004, FR-005 | Pruebas de Vitest de la función pura que arma la ruta + prueba de navegación del selector |
+| FR-003, FR-004, FR-005 | Pruebas de Vitest de la función pura que arma la ruta (incluye `/projects/1/votacion/3` y `/projects/1/otra` → `proyecto`) + prueba de navegación del selector |
 | FR-006, FR-012 | Prueba de componente: enlace "Nuevo proyecto" visible y operativo en cada estado |
 | FR-007, FR-008, FR-009 | Pruebas de componente del inicio con lista con datos (etiqueta `<nombre> (#<id>)`) y lista vacía |
 | FR-010, FR-011, FR-012 | Pruebas de componente con `fetch` demorado, fallido y exitoso; selector deshabilitado con la única opción "Proyecto `<id>`" |
 | US3 escenario 4 (falla del listado en `/`) | Se verifica en las tareas de la lista de US4 (T035-T038), no en las tareas de US3 |
 | FR-013 | Prueba de navegación entre dos `:id` distintos, sin datos del anterior (incluye la prueba existente de reinicio) |
 | FR-014 | Prueba de componente que conserva el orden devuelto por la API |
-| FR-015 | Búsqueda de referencias a `Inicio.tsx` y compilación del frontend |
+| FR-015 | Prueba de componente: `navigation` con nombre "Secciones del proyecto" y ya no "Historias del Sprint 2" |
 | FR-016, FR-017, FR-020 | Revisión del diff, suite existente y ausencia de dependencias nuevas |
 | FR-018, FR-019 | Pruebas de Vitest de funciones puras y pruebas de componente con Testing Library |

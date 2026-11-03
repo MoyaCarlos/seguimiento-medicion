@@ -11,7 +11,7 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Tests**: OBLIGATORIOS. La constitución del proyecto (Principio I, NON-NEGOTIABLE) exige TDD estricto con un commit por fase. No son opcionales en este proyecto. La cobertura BDD se cumple por equivalencia con pruebas de componente (Vitest + Testing Library); no se agregan escenarios Godog.
 
-**Organización**: las fases siguen el orden pedido: preparar el fetch simulado, lógica pura, hook, selector, lista e integración, y al final eliminar `Inicio.tsx`. Cada comportamiento con lógica tiene su ciclo RED → COMMIT → GREEN → COMMIT. Los commits son tareas propias y no se marcan hasta ejecutar `git commit`.
+**Organización**: las fases siguen el orden pedido: preparar el fetch simulado, lógica pura, hook, selector, lista e integración, y al final el nombre accesible del `<nav>` y la verificación. Cada comportamiento con lógica tiene su ciclo RED → COMMIT → GREEN → COMMIT. Los commits son tareas propias y no se marcan hasta ejecutar `git commit`.
 
 **Rutas**: los comandos `npm` y las rutas `web/...` se ejecutan desde `web/`; las rutas de `specs/` y los comandos `git` se ejecutan desde la raíz del repo.
 
@@ -34,12 +34,12 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **⚠️ CRITICAL**: ninguna historia puede empezar hasta completar la lógica pura y el hook.
 
-- [ ] T003 [P] RED: crear `web/src/compartido/proyectos/ruta.test.ts` con los casos de `rutaDeSeccion` (`/projects/1/backlog`, `/projects/1/proyecto/edit`, `/projects/1`, sección desconocida y barra final) y `etiquetaProyecto` (`Alfa (#7)` y nombres repetidos); importar desde `./ruta`, ejecutar `npm test` desde `web/` y confirmar que FALLA.
-- [ ] T004 COMMIT `RED: agregar tests de rutaDeSeccion y etiquetaProyecto (falla)`; archivo: `web/src/compartido/proyectos/ruta.test.ts`.
-- [ ] T005 GREEN: implementar `web/src/compartido/proyectos/ruta.ts` con `rutaDeSeccion(pathname, idNuevo)` y `etiquetaProyecto({ id, nombre })` según `contracts/ui.md`; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [ ] T003 [P] RED: crear `web/src/compartido/proyectos/ruta.test.ts` con los casos de `rutaDeSeccion` (`/projects/1/backlog`, `/projects/1/proyecto/edit`, `/projects/1`, `/projects/1/otra` y `/projects/1/votacion/3` → `/projects/2/proyecto`, y barra final) y `etiquetaProyecto` (`Alfa (#7)` y nombres repetidos); crear antes `web/src/compartido/proyectos/ruta.ts` con un stub mínimo (funciones que devuelven un valor vacío) para que el RED falle por aserción y no por import inexistente; ejecutar `npm test` desde `web/` y confirmar que FALLA.
+- [ ] T004 COMMIT `RED: agregar tests de rutaDeSeccion y etiquetaProyecto (falla)`; archivos: `web/src/compartido/proyectos/ruta.test.ts` y el stub `web/src/compartido/proyectos/ruta.ts`.
+- [ ] T005 GREEN: implementar `web/src/compartido/proyectos/ruta.ts` con `rutaDeSeccion(pathname, idNuevo)` (conserva el primer tramo solo si está en `navegacion` de `web/src/navegacion.ts`; si no, `proyecto`) y `etiquetaProyecto({ id, nombre })` según `contracts/ui.md`; ejecutar `npm test` desde `web/` y confirmar que pasa.
 - [ ] T006 COMMIT `GREEN: implementar rutaDeSeccion y etiquetaProyecto, tests en verde`; archivo: `web/src/compartido/proyectos/ruta.ts`.
-- [ ] T007 [P] RED: crear `web/src/compartido/proyectos/useProyectos.test.tsx` con `renderHook` y `fetch` simulado: estado inicial `cargando`, éxito `listo` conservando el orden, error del cliente, respuesta `200` que no es arreglo y desmontaje antes de resolver; confirmar que FALLA.
-- [ ] T008 COMMIT `RED: agregar tests de useProyectos (falla)`; archivo: `web/src/compartido/proyectos/useProyectos.test.tsx`.
+- [ ] T007 [P] RED: crear `web/src/compartido/proyectos/useProyectos.test.tsx` con `renderHook` y `fetch` simulado: estado inicial `cargando`, éxito `listo` conservando el orden, error del cliente, respuesta `200` que no es arreglo y desmontaje antes de resolver; crear antes `api.ts` y `useProyectos.ts` con stubs mínimos (el hook devuelve siempre `cargando`) para que el RED falle por aserción; confirmar que FALLA.
+- [ ] T008 COMMIT `RED: agregar tests de useProyectos (falla)`; archivos: `useProyectos.test.tsx` y los stubs `api.ts` y `useProyectos.ts` en `web/src/compartido/proyectos/`.
 - [ ] T009 GREEN: implementar `web/src/compartido/proyectos/api.ts` (`ProyectoResumen` con `id: number` y `nombre: string`, `listarProyectos()` con `get('/projects')`) y `web/src/compartido/proyectos/useProyectos.ts` (unión `cargando | listo | error`, bandera `vigente` y mensaje para respuestas no interpretables); ejecutar `npm test` desde `web/` y confirmar que pasa.
 - [ ] T010 COMMIT `GREEN: implementar listarProyectos y useProyectos, tests en verde`; archivos: `web/src/compartido/proyectos/api.ts` y `web/src/compartido/proyectos/useProyectos.ts`.
 
@@ -53,8 +53,8 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Independent Test**: abrir `/projects/1/backlog` con dos proyectos cargados, elegir el 2 y comprobar `/projects/2/backlog`, el selector marcando el 2 y la pantalla del backlog reiniciada.
 
-- [ ] T011 [US1] RED: crear `web/src/compartido/proyectos/SelectorProyecto.test.tsx` con `createMemoryRouter` y `fetch` simulado: combobox accesible "Proyecto", opciones `<nombre> (#<id>)` en orden, proyecto actual seleccionado por `:id`, fallback `Proyecto <id>` cuando el actual no está en la lista (incluida lista vacía), cambio a otro proyecto a la misma sección y mismo proyecto sin navegar; confirmar que FALLA.
-- [ ] T012 [US1] COMMIT `RED: agregar tests de navegación del selector (falla)`; archivo: `web/src/compartido/proyectos/SelectorProyecto.test.tsx`.
+- [ ] T011 [US1] RED: crear `web/src/compartido/proyectos/SelectorProyecto.test.tsx` con `createMemoryRouter` y `fetch` simulado: combobox accesible "Proyecto", opciones `<nombre> (#<id>)` en orden, proyecto actual seleccionado por `:id`, fallback `Proyecto <id>` cuando el actual no está en la lista (incluida lista vacía), cambio a otro proyecto a la misma sección, desde una ruta fuera del menú (`/projects/1/otra`) a `/projects/2/proyecto`, y mismo proyecto sin navegar; crear antes `SelectorProyecto.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
+- [ ] T012 [US1] COMMIT `RED: agregar tests de navegación del selector (falla)`; archivos: `SelectorProyecto.test.tsx` y el stub `SelectorProyecto.tsx` en `web/src/compartido/proyectos/`.
 - [ ] T013 [US1] GREEN: implementar `web/src/compartido/proyectos/SelectorProyecto.tsx` con el `<select>`, opciones, fallback y navegación mediante `rutaDeSeccion`; no agregar todavía el enlace "Nuevo proyecto" ni los estados de carga/error (US2/US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
 - [ ] T014 [US1] COMMIT `GREEN: implementar navegación del selector, test en verde`; archivo: `web/src/compartido/proyectos/SelectorProyecto.tsx`.
 - [ ] T015 [US1] RED: agregar a `web/src/rutas.test.tsx` la integración del selector con dos proyectos: cambiar de `/projects/1/backlog` a `/projects/2/backlog`; además, cargar un título en el backlog de 1, cambiar a 2 y verificar que el formulario de 2 arranca vacío; confirmar que FALLA.
@@ -89,8 +89,8 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 **Trazabilidad**: el escenario 4 de US3 (la lista falla en el inicio y el formulario sigue disponible) no se prueba en esta fase: se verifica en las tareas de lista de US4 (T035-T038).
 
-- [ ] T023 [US3] RED: crear `web/src/compartido/proyectos/ListaProyectos.test.tsx` con listas de enlaces a `/projects/<id>/proyecto`, etiquetas `<nombre> (#<id>)`, orden de la API e invitación a crear cuando está vacía; confirmar que FALLA.
-- [ ] T024 [US3] COMMIT `RED: agregar tests de ListaProyectos (falla)`; archivo: `web/src/compartido/proyectos/ListaProyectos.test.tsx`.
+- [ ] T023 [US3] RED: crear `web/src/compartido/proyectos/ListaProyectos.test.tsx` con listas de enlaces a `/projects/<id>/proyecto`, etiquetas `<nombre> (#<id>)`, orden de la API e invitación a crear cuando está vacía; crear antes `ListaProyectos.tsx` con un stub mínimo (renderiza vacío) para que falle por aserción; confirmar que FALLA.
+- [ ] T024 [US3] COMMIT `RED: agregar tests de ListaProyectos (falla)`; archivos: `ListaProyectos.test.tsx` y el stub `ListaProyectos.tsx` en `web/src/compartido/proyectos/`.
 - [ ] T025 [US3] GREEN: implementar `web/src/compartido/proyectos/ListaProyectos.tsx` con la lista y el estado vacío; no agregar todavía el indicador de carga ni el mensaje de error (US4); ejecutar `npm test` desde `web/` y confirmar que pasa.
 - [ ] T026 [US3] COMMIT `GREEN: implementar ListaProyectos, test en verde`; archivo: `web/src/compartido/proyectos/ListaProyectos.tsx`.
 - [ ] T027 [US3] RED: agregar a `web/src/rutas.test.tsx` la integración del inicio: `/` muestra "Crear proyecto" y la lista, y un enlace de la lista abre el panel; confirmar que FALLA.
@@ -123,18 +123,20 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T039 Eliminar `web/src/compartido/router/Inicio.tsx` y verificar que no queden importaciones ni referencias; no modificar `web/src/features/proyecto/crear.tsx` ni `web/src/features/proyecto/crear.test.tsx`.
-- [ ] T040 COMMIT `chore: eliminar Inicio.tsx sin uso`; archivo eliminado: `web/src/compartido/router/Inicio.tsx`.
-- [ ] T041 Ejecutar desde `web/`: `npm test`, `npm run lint` y `npm run build`; verificar que no haya dependencias nuevas ni cambios en `web/src/features/proyecto/crear.tsx`, `web/src/features/proyecto/crear.test.tsx`, la API o el esquema, y que no queden referencias a `Inicio.tsx`.
-- [ ] T042 Validar `specs/022-navegar-entre-proyectos/quickstart.md` con el backend: lista en el inicio, selector conservando la sección, enlace "Nuevo proyecto", estados de carga/error y fallback del proyecto actual; confirmar que el PR cerrará #148 y #141.
+- [ ] T039 RED: agregar a `web/src/rutas.test.tsx` la prueba de que el `<nav>` de secciones de un proyecto se encuentra por rol `navigation` con nombre "Secciones del proyecto" y que ya no existe uno llamado "Historias del Sprint 2"; confirmar que FALLA por aserción (no por import).
+- [ ] T040 COMMIT `RED: esperar el nombre accesible "Secciones del proyecto" en la navegación (falla)`; archivo: `web/src/rutas.test.tsx`.
+- [ ] T041 GREEN: cambiar el `aria-label` del `<nav>` en `web/src/compartido/router/LayoutProyecto.tsx` a "Secciones del proyecto"; ejecutar `npm test` desde `web/` y confirmar que pasa.
+- [ ] T042 COMMIT `GREEN: nombrar la navegación "Secciones del proyecto", test en verde`; archivo: `web/src/compartido/router/LayoutProyecto.tsx`.
+- [ ] T043 Ejecutar desde `web/`: `npm test`, `npm run lint` y `npm run build`; verificar que no haya dependencias nuevas ni cambios en `web/src/features/proyecto/crear.tsx`, `web/src/features/proyecto/crear.test.tsx`, `web/src/navegacion.ts`, la API o el esquema.
+- [ ] T044 Validar `specs/022-navegar-entre-proyectos/quickstart.md` con el backend: lista en el inicio, selector conservando la sección, enlace "Nuevo proyecto", estados de carga/error y fallback del proyecto actual; confirmar que el PR cerrará #148.
 
-**Checkpoint**: `Inicio.tsx` eliminado, suite/lint/build verdes y quickstart validado.
+**Checkpoint**: nombre accesible corregido, suite/lint/build verdes y quickstart validado.
 
 ---
 
 ## Dependencies & Execution Order
 
-- **Setup (T001-T002)** → **Foundational (T003-T010)** → **US1 (T011-T018)** → **US2 (T019-T022)** → **US3 (T023-T030)** → **US4 (T031-T038)** → **Polish (T039-T042)**.
+- **Setup (T001-T002)** → **Foundational (T003-T010)** → **US1 (T011-T018)** → **US2 (T019-T022)** → **US3 (T023-T030)** → **US4 (T031-T038)** → **Polish (T039-T044)**.
 - Dentro de cada comportamiento: RED → COMMIT → GREEN → COMMIT. Nunca se agrupan test e implementación en el mismo commit.
 - US1 depende de Foundational y deja el selector montado.
 - US2 depende de US1 porque agrega el enlace al selector ya montado.
@@ -157,8 +159,10 @@ description: "Tareas de Navegar entre proyectos desde la interfaz (TDD con commi
 
 ## Notes
 
+- Todo RED falla por aserción, nunca por un import inexistente: el módulo se crea con un stub mínimo en el mismo commit RED.
 - Tests obligatorios por constitución; no hay tareas de REFACTOR planificadas porque no hay limpieza prevista. Si durante la implementación aparece algo que limpiar, se agrega una tarea REFACTOR con su commit y los tests en verde.
 - No se agregan dependencias, endpoints ni cambios de esquema.
 - No se agregan escenarios Godog: la cobertura BDD es por equivalencia con Vitest + Testing Library.
-- `web/README.md` menciona el `Inicio.tsx` eliminado; queda fuera de los archivos permitidos y se registra como deuda documental, sin bloquear esta historia.
-- El PR debe incluir `Closes #148` y `Closes #141` en la descripción.
+- `Inicio.tsx` ya fue eliminado por el PR #208 (issue #141 cerrado); esta historia no lo toca.
+- El PR debe incluir `Closes #148` en la descripción (sin `Closes #141`).
+- Frontend: los escenarios Given-When-Then de la spec se automatizan como pruebas de componente (Vitest + Testing Library) con el escenario en el nombre de cada prueba; no hay `.feature` de Godog porque la API no cambia.

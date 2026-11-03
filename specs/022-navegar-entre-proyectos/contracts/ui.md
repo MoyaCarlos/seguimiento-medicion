@@ -1,6 +1,6 @@
 # UI Contract: Navegar entre proyectos desde la interfaz
 
-**Feature**: #148 (cierra #141) | **Date**: 2026-10-27 | **Spec**: [spec.md](../spec.md)
+**Feature**: #148 | **Date**: 2026-10-27 | **Spec**: [spec.md](../spec.md)
 
 ## Purpose
 
@@ -30,7 +30,8 @@ No se modifica `GET /projects`, ni su contrato OpenAPI, ni el esquema de la base
 - **Entrada**: pathname actual (`string`) e identificador del proyecto elegido (`string` o
   `number`).
 - **Salida**: `/projects/<idNuevo>/<sección>`.
-- **Regla**: `<sección>` es el primer tramo después del `:id`; si no hay tramo, es `proyecto`.
+- **Regla**: `<sección>` es el primer tramo después del `:id` si es una sección del menú
+  (`navegacion` de `web/src/navegacion.ts`); si no hay tramo o no es del menú, es `proyecto`.
   Los tramos posteriores se descartan.
 
 | Entrada | Salida |
@@ -38,7 +39,8 @@ No se modifica `GET /projects`, ni su contrato OpenAPI, ni el esquema de la base
 | `('/projects/1/backlog', 2)` | `/projects/2/backlog` |
 | `('/projects/1/proyecto/edit', 2)` | `/projects/2/proyecto` |
 | `('/projects/1', 2)` | `/projects/2/proyecto` |
-| `('/projects/1/otra', 2)` | `/projects/2/otra` |
+| `('/projects/1/otra', 2)` | `/projects/2/proyecto` |
+| `('/projects/1/votacion/3', 2)` | `/projects/2/proyecto` |
 | `('/projects/1/backlog/', '2')` | `/projects/2/backlog` |
 
 ### `etiquetaProyecto({ id, nombre })`
