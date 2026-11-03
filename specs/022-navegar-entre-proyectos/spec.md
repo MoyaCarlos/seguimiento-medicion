@@ -305,8 +305,8 @@ funcionando.
   pantalla (sin persistencia ni debounce) y MUST NOT hacer consultas nuevas a la API.
 - **FR-028**: (Estilo y composición) En pantallas anchas la lista MUST ir a la derecha del
   formulario de creación; en celular (390 px) MUST apilarse debajo, sin scroll horizontal; la
-  tarjeta MUST tener resaltado al pasar el mouse y foco visible con teclado; el nombre largo se
-  corta en dos líneas. Solo el inicio `/` se ensancha (hasta 1320 px) y el encabezado superior se
+  tarjeta MUST tener resaltado al pasar el mouse y foco visible con teclado; el nombre y la descripción largos se
+  cortan en dos líneas, aun sin espacios. Solo el inicio `/` se ensancha (hasta 1320 px) y el encabezado superior se
   alinea con ese ancho; el selector del encabezado es una píldora a la izquierda del menú de
   secciones, con "+ Nuevo proyecto" a su lado, deshabilitado en carga y error, y a todo el ancho en
   celular. El aviso de "Cargar datos de prueba" ocupa su propia línea debajo de los botones y estos
