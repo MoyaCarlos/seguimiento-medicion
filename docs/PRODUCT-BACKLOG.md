@@ -849,7 +849,7 @@ Dado que inicié sesión y no soy integrante de ningún proyecto,
 Cuando consulto mis proyectos,
 Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
 ### Depende de
-HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints) y HU-07 (horas). Se apoya en el issue #236 (índice único de Scrum Master).
+HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints), HU-06, HU-07 (horas) y HU-11. Se apoya en el issue #236 (índice único de Scrum Master).
 ### Notas
 Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y también la identidad que viaja en la query de `GET /backlog/{id}/votacion?usuario_id=N` (`internal/http/votacion_handler.go`), que hoy devuelve el voto del que consulta: con el id de otra persona se vería su voto oculto. Quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto, lo que cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
 **Qué se protege.** Todas las rutas que escriben datos exigen sesión (y ser integrante del proyecto, escenario 4); las de gestión exigen además ser Scrum Master (escenario 2):
@@ -858,7 +858,8 @@ Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elim
 - Lecturas (`GET`): a decidir si exigen sesión. <!-- decidir: ¿los GET exigen sesión? (sí/no, y si se limitan al integrante del proyecto) -->
 
 Los escenarios de Godog que hoy mandan `usuario_id` se ajustan **en el mismo PR**, con un paso de contexto "Dado que inicié sesión como X" (el check `backend` tiene que estar en verde para mergear). Sin atajos de prueba en el código de producción.
-Si el viernes 13 los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación.
+Plan B: si el 13-nov los permisos en el backend no están completos, se entrega con las acciones ocultas en la pantalla y se declara el límite en la documentación. Cumplir solo la parte de pantalla no alcanza para el Definition of Done: quedarían incumplidos los escenarios 2, 3 y 7. Si se cae al plan B, hay que declararlo.
+<!-- decidir: HU-04 dejó los permisos por rol fuera del alcance y la frase que lo consultaba con la cátedra se quitó en fa04597; ¿se vuelve a consultar? -->
 Absorbe los niveles 2 y 3 de HU-19. Eliminar un proyecto (#232) depende de estos permisos.
 ### Prioridad
 S (Should have) - Complementa a HU-20: sin permisos en el backend, cualquiera con `curl` puede saltear la pantalla.
