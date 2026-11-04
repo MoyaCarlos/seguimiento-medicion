@@ -199,6 +199,8 @@ Cuando ingreso una fecha de fin igual o anterior a la fecha de inicio y guardo,
 Entonces el sistema rechaza el cambio con un error de validación y no guarda.
 ### Depende de
 Ninguna (es la base).
+### Notas
+El escenario 2 («selecciono su rol (Scrum Master o Product Builder)») cambia con HU-21 (escenario 8): agregar integrantes es siempre como Product Builder. El #236 (Sprint 4) llega antes que HU-21: hasta que HU-21 cambie la pantalla, el backend rechaza un segundo Scrum Master con 409 y la pantalla muestra ese mensaje.
 ### Prioridad
 M (Must have) - Requisito fundamental para que el sistema funcione. 
 ### Estado
