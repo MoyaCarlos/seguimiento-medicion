@@ -76,3 +76,7 @@ var (
 
 // ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
 var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}
+
+// ErrCargaEnSprintFinalizado indica una carga de Story Points en una historia
+// sin estimar de un Sprint Finalizado (decisión D2b, reabierta en HU-03).
+var ErrCargaEnSprintFinalizado = ValidationError{Campo: "estimacion_sp", Mensaje: "no se pueden cargar Story Points en un Sprint Finalizado"}

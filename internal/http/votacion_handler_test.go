@@ -636,3 +636,12 @@ func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 		})
 	}
 }
+
+func TestVotacionHandler_RegistrarEstimacion_CargaConSprintFinalizado(t *testing.T) {
+	sprintFinalizado := strings.Replace(sprintActivo, "'Activo'", "'Finalizado'", 1)
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintFinalizado, "UPDATE historias SET sprint_id = 1, estimacion_sp = NULL WHERE id = 3")
+
+	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+
+	esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "no se pueden cargar Story Points en un Sprint Finalizado")
+}
