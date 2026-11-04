@@ -221,3 +221,21 @@ func TestCalcularMetricas_SinSprintsFinalizados(t *testing.T) {
 		})
 	}
 }
+
+func TestCalcularMetricas_ValoresQueNoSePuedenCalcular(t *testing.T) {
+	for _, horasPorSP := range []float64{1e308, 1e306, 1e-320} {
+		resultado := CalcularMetricas([]DatosMetricasSprint{
+			{SprintID: 1, HistoriasCompletadas: 1, SPCompletados: 16, SPArrastrados: 8, MinutosReales: 3960},
+		}, horas(horasPorSP))
+
+		for nombre, valor := range map[string]*float64{
+			"horas estimadas":       resultado.Proyecto.HorasEstimadas,
+			"desviación en horas":   resultado.Proyecto.DesviacionHoras,
+			"desviación porcentual": resultado.Proyecto.DesviacionPorcentaje,
+		} {
+			if valor != nil && (math.IsInf(*valor, 0) || math.IsNaN(*valor)) {
+				t.Errorf("con %v horas, %s: se esperaba sin datos, se obtuvo %v", horasPorSP, nombre, *valor)
+			}
+		}
+	}
+}

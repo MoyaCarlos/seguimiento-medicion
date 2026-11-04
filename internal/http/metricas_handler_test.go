@@ -155,3 +155,18 @@ func TestMetricasHandler_Consultar_Errores(t *testing.T) {
 		})
 	}
 }
+
+func TestMetricasHandler_Consultar_ConHorasExtremasRespondeJSONValido(t *testing.T) {
+	horas := 1e308
+	datos := stubDatosMetricas{datos: []domain.DatosMetricasSprint{{SprintID: 7, Numero: 1, HistoriasCompletadas: 1, SPCompletados: 16, MinutosReales: 60}}}
+
+	rec := consultarMetricas(t, &horas, datos, "1")
+
+	proyecto, _ := cuerpoJSON(t, rec)["proyecto"].(map[string]any)
+	if valor, existe := proyecto["horas_estimadas"]; !existe || valor != nil {
+		t.Errorf("horas_estimadas: se esperaba null, se obtuvo %v", valor)
+	}
+	if proyecto["horas_reales"] != 1.0 {
+		t.Errorf("horas_reales: se esperaba 1, se obtuvo %v", proyecto["horas_reales"])
+	}
+}
