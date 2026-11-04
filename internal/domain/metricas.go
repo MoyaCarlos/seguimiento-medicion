@@ -55,8 +55,15 @@ func CalcularMetricas(datos []DatosMetricasSprint, horasPorSP *float64) Metricas
 	}
 
 	proyecto := calcularDe(total, horasPorSP)
-	proyecto.Velocidad = redondear(float64(total.SPCompletados) / float64(len(datos)))
+	proyecto.Velocidad = velocidadPromedio(total.SPCompletados, len(datos))
 	return MetricasProyecto{HorasPorStoryPoint: horasPorSP, Proyecto: proyecto, Sprints: sprints}
+}
+
+func velocidadPromedio(spCompletados, sprintsFinalizados int) float64 {
+	if sprintsFinalizados == 0 {
+		return 0
+	}
+	return redondear(float64(spCompletados) / float64(sprintsFinalizados))
 }
 
 func (d DatosMetricasSprint) sumar(otro DatosMetricasSprint) DatosMetricasSprint {

@@ -96,8 +96,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 - [X] T031 [US2] RED: en internal/domain/metricas_test.go, `CalcularMetricas` sin datos: con parámetro, ceros y `DesviacionPorcentaje` `nil`; sin parámetro, además `HorasEstimadas` y `DesviacionHoras` `nil`; `Velocidad` es 0 y no `NaN`; `Sprints` es vacío y no `nil`. En internal/http/metricas_handler_test.go, el cuerpo tiene `"sprints":[]` — confirmar que FALLA
 - [X] T032 [US2] COMMIT `RED: agregar tests de las métricas de un proyecto sin Sprints cerrados (fallan)`
-- [ ] T033 [US2] GREEN: cubrir el caso sin Sprints en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
-- [ ] T034 [US2] COMMIT `GREEN: informar las métricas de un proyecto sin Sprints cerrados, tests en verde`
+- [X] T033 [US2] GREEN: cubrir el caso sin Sprints en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
+- [X] T034 [US2] COMMIT `GREEN: informar las métricas de un proyecto sin Sprints cerrados, tests en verde`
 
 **Checkpoint**: US1 y US2 completan el cálculo (MVP).
 
