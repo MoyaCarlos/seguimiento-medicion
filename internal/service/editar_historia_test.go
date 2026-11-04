@@ -96,20 +96,24 @@ func TestEditarHistoria_PropagaErrorDeActualizar(t *testing.T) {
 
 func TestEditarHistoria_StoryPointsSegunEstadoDelSprint(t *testing.T) {
 	casos := []struct {
-		nombre         string
-		estadoSprint   domain.EstadoSprint
-		spActual       *int
-		spNuevo        *int
-		debeRechazarse bool
+		nombre       string
+		estadoSprint domain.EstadoSprint
+		spActual     *int
+		spNuevo      *int
+		errEsperado  error
 	}{
-		{"pendiente permite cambiarlos", domain.SprintPendiente, intPtr(3), intPtr(5), false},
-		{"activo rechaza cambiarlos", domain.SprintActivo, intPtr(3), intPtr(5), true},
-		{"finalizado rechaza cambiarlos", domain.SprintFinalizado, intPtr(3), intPtr(5), true},
-		{"activo rechaza borrarlos", domain.SprintActivo, intPtr(3), nil, true},
-		{"finalizado rechaza borrarlos", domain.SprintFinalizado, intPtr(3), nil, true},
-		{"activo permite la carga inicial", domain.SprintActivo, nil, intPtr(5), false},
-		{"finalizado permite la carga inicial", domain.SprintFinalizado, nil, intPtr(5), false},
-		{"activo permite reenviar el mismo valor", domain.SprintActivo, intPtr(3), intPtr(3), false},
+		{"pendiente permite cambiarlos", domain.SprintPendiente, intPtr(3), intPtr(5), nil},
+		{"activo rechaza cambiarlos", domain.SprintActivo, intPtr(3), intPtr(5), domain.ErrEstimacionCongelada},
+		{"finalizado rechaza cambiarlos", domain.SprintFinalizado, intPtr(3), intPtr(5), domain.ErrEstimacionCongelada},
+		{"activo rechaza borrarlos", domain.SprintActivo, intPtr(3), nil, domain.ErrEstimacionCongelada},
+		{"finalizado rechaza borrarlos", domain.SprintFinalizado, intPtr(3), nil, domain.ErrEstimacionCongelada},
+		{"sin Sprint permite la carga inicial", "", nil, intPtr(5), nil},
+		{"pendiente permite la carga inicial", domain.SprintPendiente, nil, intPtr(5), nil},
+		{"activo permite la carga inicial", domain.SprintActivo, nil, intPtr(5), nil},
+		{"finalizado rechaza la carga inicial", domain.SprintFinalizado, nil, intPtr(5), domain.ErrCargaEnSprintFinalizado},
+		{"finalizado permite editar sin cargar", domain.SprintFinalizado, nil, nil, nil},
+		{"activo permite reenviar el mismo valor", domain.SprintActivo, intPtr(3), intPtr(3), nil},
+		{"finalizado permite reenviar el mismo valor", domain.SprintFinalizado, intPtr(3), intPtr(3), nil},
 	}
 
 	for _, tc := range casos {
@@ -117,17 +121,19 @@ func TestEditarHistoria_StoryPointsSegunEstadoDelSprint(t *testing.T) {
 			historia := historiaDelBacklog()
 			historia.EstimacionSP = tc.spActual
 			servicio, repo, sprints := nuevoEditarHistoria()
-			sprint, _ := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: tc.estadoSprint})
-			historia.SprintID = &sprint.ID
+			if tc.estadoSprint != "" {
+				sprint, _ := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: tc.estadoSprint})
+				historia.SprintID = &sprint.ID
+			}
 			repo.historias[historia.ID] = historia
 			input := edicionValida(historia.ID)
 			input.EstimacionSP = tc.spNuevo
 
 			editada, err := servicio.Ejecutar(context.Background(), input)
 
-			if tc.debeRechazarse {
-				if !errors.Is(err, domain.ErrEstimacionCongelada) {
-					t.Fatalf("se esperaba domain.ErrEstimacionCongelada, se obtuvo %v", err)
+			if tc.errEsperado != nil {
+				if !errors.Is(err, tc.errEsperado) {
+					t.Fatalf("se esperaba %v, se obtuvo %v", tc.errEsperado, err)
 				}
 				if len(repo.actualizaciones) != 0 {
 					t.Errorf("no se esperaba actualizar la historia")

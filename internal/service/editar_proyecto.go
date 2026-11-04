@@ -15,6 +15,10 @@ type EditarProyectoInput struct {
 	Descripcion string
 	FechaInicio *time.Time
 	FechaFin    *time.Time
+	// HorasPorSPEnviadas distingue no mencionar el parámetro (lo conserva) de
+	// enviarlo sin valor (HorasPorSP nil, lo borra).
+	HorasPorSPEnviadas bool
+	HorasPorSP         *string
 }
 
 // EditarProyecto aplica una edición simple reutilizando las validaciones del alta.
@@ -36,6 +40,13 @@ func (s *EditarProyecto) Ejecutar(ctx context.Context, input EditarProyectoInput
 	editado, err := actual.ConDatosEditados(input.Nombre, input.Descripcion, input.FechaInicio, input.FechaFin)
 	if err != nil {
 		return domain.Project{}, err
+	}
+
+	if input.HorasPorSPEnviadas {
+		editado, err = editado.ConHorasPorStoryPoint(input.HorasPorSP)
+		if err != nil {
+			return domain.Project{}, err
+		}
 	}
 
 	if err := s.proyectos.Actualizar(ctx, editado); err != nil {
