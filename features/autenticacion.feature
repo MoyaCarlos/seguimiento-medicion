@@ -25,10 +25,10 @@ Característica: Autenticación de usuarios
   Escenario: Nombre de usuario repetido con otras mayúsculas
     Dado que ya existe la cuenta "ana.perez"
     Cuando me registro con el nombre de usuario "Ana.Perez" y la contraseña "otra-clave-larga"
-    Entonces el registro se rechaza con el mensaje "Ese nombre de usuario ya existe"
+    Entonces el registro de la cuenta se rechaza con el mensaje "Ese nombre de usuario ya existe"
     Y no se crea ninguna cuenta nueva
 
   Escenario: Contraseña de menos de 8 caracteres
     Cuando me registro con el nombre de usuario "ana.perez" y la contraseña "corta12"
-    Entonces el registro se rechaza indicando el campo "contrasena"
+    Entonces el registro de la cuenta se rechaza indicando el campo "contrasena"
     Y no se crea ninguna cuenta nueva
