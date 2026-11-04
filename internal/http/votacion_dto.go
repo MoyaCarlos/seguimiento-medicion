@@ -17,7 +17,17 @@ func (a actorRequest) usuario() int64 { return a.UsuarioID }
 
 type votoRequest struct {
 	actorRequest
-	Valor int `json:"valor"`
+	Valor json.RawMessage `json:"valor"`
+}
+
+// valor devuelve 0 si el campo no es un entero: queda fuera de la baraja y el
+// service lo rechaza después de validar el permiso.
+func (v votoRequest) valor() int {
+	var valor int
+	if err := json.Unmarshal(v.Valor, &valor); err != nil {
+		return 0
+	}
+	return valor
 }
 
 type estimacionRequest struct {
