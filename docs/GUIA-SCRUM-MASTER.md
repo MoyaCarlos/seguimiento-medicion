@@ -21,7 +21,8 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
   llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
   como stretch. También figuran en el plan de este Sprint HU-20 (autenticación) y
   las mejoras #235 (datos de prueba v2), #236 (un único Scrum Master por
-  proyecto) y #174 (solo los criterios de aceptación al crear una historia) y la base del rediseño visual #230. El backend de HU-14 ya quedó mergeado (PR #237). El tag `v0.4.0` va el 10-nov.
+  proyecto), #174 (solo los criterios de aceptación al crear una historia) y la
+  base del rediseño visual #230. El backend de HU-14 ya quedó mergeado (PR #237). El tag `v0.4.0` va el 10-nov.
 - **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
   código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP, que con HU-21 (8) y HU-12 (3) suman 27 SP en cinco
   días hábiles (más el frontend de HU-14), y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
