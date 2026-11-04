@@ -94,8 +94,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 **Independent Test**: un proyecto recién creado responde 200, con `sprints: []` y los valores en cero; `desviacion_porcentaje` es `null` y, sin parámetro, también `horas_estimadas` y `desviacion_horas`.
 
-- [ ] T031 [US2] RED: en internal/domain/metricas_test.go, `CalcularMetricas` sin datos: con parámetro, ceros y `DesviacionPorcentaje` `nil`; sin parámetro, además `HorasEstimadas` y `DesviacionHoras` `nil`; `Velocidad` es 0 y no `NaN`; `Sprints` es vacío y no `nil`. En internal/http/metricas_handler_test.go, el cuerpo tiene `"sprints":[]` — confirmar que FALLA
-- [ ] T032 [US2] COMMIT `RED: agregar tests de las métricas de un proyecto sin Sprints cerrados (fallan)`
+- [X] T031 [US2] RED: en internal/domain/metricas_test.go, `CalcularMetricas` sin datos: con parámetro, ceros y `DesviacionPorcentaje` `nil`; sin parámetro, además `HorasEstimadas` y `DesviacionHoras` `nil`; `Velocidad` es 0 y no `NaN`; `Sprints` es vacío y no `nil`. En internal/http/metricas_handler_test.go, el cuerpo tiene `"sprints":[]` — confirmar que FALLA
+- [X] T032 [US2] COMMIT `RED: agregar tests de las métricas de un proyecto sin Sprints cerrados (fallan)`
 - [ ] T033 [US2] GREEN: cubrir el caso sin Sprints en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
 - [ ] T034 [US2] COMMIT `GREEN: informar las métricas de un proyecto sin Sprints cerrados, tests en verde`
 

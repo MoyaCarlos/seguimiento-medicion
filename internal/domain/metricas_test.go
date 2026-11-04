@@ -194,3 +194,30 @@ func TestCalcularMetricas_DelProyecto(t *testing.T) {
 		}
 	})
 }
+
+func TestCalcularMetricas_SinSprintsFinalizados(t *testing.T) {
+	casos := []struct {
+		nombre     string
+		datos      []DatosMetricasSprint
+		horasPorSP *float64
+		esperadas  Metricas
+	}{
+		{nombre: "con horas por Story Point", horasPorSP: horas(4), esperadas: Metricas{HorasEstimadas: horas(0), DesviacionHoras: horas(0)}},
+		{nombre: "sin horas por Story Point", esperadas: Metricas{}},
+		{nombre: "con una lista vacía", datos: []DatosMetricasSprint{}, horasPorSP: horas(4), esperadas: Metricas{HorasEstimadas: horas(0), DesviacionHoras: horas(0)}},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			resultado := CalcularMetricas(c.datos, c.horasPorSP)
+
+			esperarMetricas(t, resultado.Proyecto, c.esperadas)
+			if math.IsNaN(resultado.Proyecto.Velocidad) {
+				t.Error("la velocidad no debe ser NaN")
+			}
+			if resultado.Sprints == nil || len(resultado.Sprints) != 0 {
+				t.Errorf("se esperaba un slice vacío y no nil, se obtuvo %#v", resultado.Sprints)
+			}
+		})
+	}
+}

@@ -108,6 +108,27 @@ func TestMetricasHandler_Consultar_SinHorasPorStoryPoint(t *testing.T) {
 	}
 }
 
+func TestMetricasHandler_Consultar_SinSprintsFinalizados(t *testing.T) {
+	horas := 4.0
+
+	rec := consultarMetricas(t, &horas, stubDatosMetricas{datos: []domain.DatosMetricasSprint{}}, "1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	cuerpo := cuerpoJSON(t, rec)
+	if sprints, esLista := cuerpo["sprints"].([]any); !esLista || len(sprints) != 0 {
+		t.Errorf("se esperaba una lista vacía de Sprints, se obtuvo %v", cuerpo["sprints"])
+	}
+	proyecto, _ := cuerpo["proyecto"].(map[string]any)
+	if proyecto["velocidad"] != 0.0 || proyecto["horas_estimadas"] != 0.0 {
+		t.Errorf("se esperaban velocidad y horas estimadas en cero, se obtuvo %v", proyecto)
+	}
+	if valor, existe := proyecto["desviacion_porcentaje"]; !existe || valor != nil {
+		t.Errorf("desviacion_porcentaje: se esperaba null, se obtuvo %v", valor)
+	}
+}
+
 func TestMetricasHandler_Consultar_Errores(t *testing.T) {
 	casos := []struct {
 		nombre  string
