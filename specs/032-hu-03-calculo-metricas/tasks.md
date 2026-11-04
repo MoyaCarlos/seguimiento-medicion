@@ -63,8 +63,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T008 [US1] COMMIT `RED: agregar tests de las métricas de un Sprint (fallan)`
 - [X] T009 [US1] GREEN: implementar el cálculo por Sprint en internal/domain/metricas.go, con la aritmética de research.md R4 — `go test ./internal/... ./cmd/...` en verde
 - [X] T010 [US1] COMMIT `GREEN: implementar las métricas de un Sprint, tests en verde`
-- [ ] T011 [US1] RED: en internal/domain/metricas_test.go, valores del proyecto: dos Sprints con 5 y 8 SP completados → 13 y velocidad 6,5; porcentajes recalculados sobre los totales; historia de 3 SP arrastrada en un Sprint y completada en otro → 6 planificados, 3 completados, 24 horas y 50% (US1.9); `Sprints` conserva el orden recibido; redondeo a dos decimales calculado desde los totales enteros y no desde los valores redondeados de cada Sprint; una desviación de −0,001 horas se informa como `0` y no como `-0` — confirmar que FALLA
-- [ ] T012 [US1] COMMIT `RED: agregar tests de las métricas del proyecto (fallan)`
+- [X] T011 [US1] RED: en internal/domain/metricas_test.go, valores del proyecto: dos Sprints con 5 y 8 SP completados → 13 y velocidad 6,5; porcentajes recalculados sobre los totales; historia de 3 SP arrastrada en un Sprint y completada en otro → 6 planificados, 3 completados, 24 horas y 50% (US1.9); `Sprints` conserva el orden recibido; redondeo a dos decimales calculado desde los totales enteros y no desde los valores redondeados de cada Sprint; una desviación de −0,001 horas se informa como `0` y no como `-0` — confirmar que FALLA
+- [X] T012 [US1] COMMIT `RED: agregar tests de las métricas del proyecto (fallan)`
 - [ ] T013 [US1] GREEN: implementar los valores del proyecto en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
 - [ ] T014 [US1] COMMIT `GREEN: implementar las métricas del proyecto, tests en verde`
 - [ ] T015 [US1] Definir el puerto `DatosMetricasRepository` con `ListarDatosSprintsFinalizados(ctx, proyectoID) ([]domain.DatosMetricasSprint, error)` en internal/repository/metricas_repository.go

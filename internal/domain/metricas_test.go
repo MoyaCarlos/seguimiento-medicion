@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func horas(valor float64) *float64 { return &valor }
 
@@ -124,4 +127,70 @@ func TestCalcularMetricas_DeUnSprint(t *testing.T) {
 			esperarMetricas(t, sprint.Metricas, c.esperadas)
 		})
 	}
+}
+
+func TestCalcularMetricas_DelProyecto(t *testing.T) {
+	t.Run("suma los Sprints y promedia la velocidad", func(t *testing.T) {
+		resultado := CalcularMetricas([]DatosMetricasSprint{
+			{SprintID: 1, Numero: 1, HistoriasCompletadas: 1, SPCompletados: 5, MinutosReales: 600, DefectosDetectados: 2, DefectosResueltos: 1},
+			{SprintID: 2, Numero: 2, HistoriasCompletadas: 2, HistoriasArrastradas: 1, SPCompletados: 8, SPArrastrados: 3, MinutosReales: 1800, DefectosDetectados: 1},
+		}, horas(4))
+
+		esperarMetricas(t, resultado.Proyecto, Metricas{
+			SPPlanificados: 16, SPCompletados: 13, Velocidad: 6.5, PorcentajeCompletadas: 75,
+			HorasEstimadas: horas(64), HorasReales: 40, DesviacionHoras: horas(-24), DesviacionPorcentaje: horas(-37.5),
+			DefectosDetectados: 3, DefectosResueltos: 1,
+		})
+		if len(resultado.Sprints) != 2 || resultado.Sprints[0].SprintID != 1 || resultado.Sprints[1].SprintID != 2 {
+			t.Errorf("se esperaba conservar el orden recibido: %+v", resultado.Sprints)
+		}
+	})
+
+	t.Run("una historia arrastrada cuenta en cada Sprint", func(t *testing.T) {
+		resultado := CalcularMetricas([]DatosMetricasSprint{
+			{SprintID: 1, Numero: 1, HistoriasArrastradas: 1, SPArrastrados: 3},
+			{SprintID: 2, Numero: 2, HistoriasCompletadas: 1, SPCompletados: 3},
+		}, horas(4))
+
+		proyecto := resultado.Proyecto
+		if proyecto.SPPlanificados != 6 || proyecto.SPCompletados != 3 || proyecto.PorcentajeCompletadas != 50 {
+			t.Errorf("se esperaban 6 SP planificados, 3 completados y 50%%, se obtuvo %+v", proyecto)
+		}
+		esperarValor(t, "horas estimadas", proyecto.HorasEstimadas, horas(24))
+	})
+
+	t.Run("sin horas por Story Point el proyecto no tiene estimadas ni desviación", func(t *testing.T) {
+		resultado := CalcularMetricas([]DatosMetricasSprint{{SprintID: 1, HistoriasCompletadas: 1, SPCompletados: 5, MinutosReales: 60}}, nil)
+
+		esperarMetricas(t, resultado.Proyecto, Metricas{SPPlanificados: 5, SPCompletados: 5, Velocidad: 5, PorcentajeCompletadas: 100, HorasReales: 1})
+	})
+
+	t.Run("redondea desde los totales y no desde los valores de cada Sprint", func(t *testing.T) {
+		resultado := CalcularMetricas([]DatosMetricasSprint{
+			{SprintID: 1, MinutosReales: 20},
+			{SprintID: 2, MinutosReales: 20},
+		}, nil)
+
+		if resultado.Sprints[0].Metricas.HorasReales != 0.33 {
+			t.Errorf("cada Sprint debía informar 0.33 horas, se obtuvo %v", resultado.Sprints[0].Metricas.HorasReales)
+		}
+		if resultado.Proyecto.HorasReales != 0.67 {
+			t.Errorf("el proyecto debía informar 0.67 horas, se obtuvo %v", resultado.Proyecto.HorasReales)
+		}
+	})
+
+	t.Run("una desviación mínima negativa se informa como cero sin signo", func(t *testing.T) {
+		resultado := CalcularMetricas([]DatosMetricasSprint{
+			{SprintID: 1, HistoriasCompletadas: 1, SPCompletados: 1, MinutosReales: 60},
+		}, horas(1.00001))
+
+		for nombre, valor := range map[string]*float64{
+			"desviación en horas":   resultado.Proyecto.DesviacionHoras,
+			"desviación porcentual": resultado.Proyecto.DesviacionPorcentaje,
+		} {
+			if valor == nil || *valor != 0 || math.Signbit(*valor) {
+				t.Errorf("%s: se esperaba 0 sin signo, se obtuvo %v", nombre, valor)
+			}
+		}
+	})
 }
