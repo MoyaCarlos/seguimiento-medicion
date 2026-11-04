@@ -15,6 +15,7 @@ export const rutas: RouteObject[] = [
           { index: true, element: <Navigate to="proyecto" replace /> },
           { path: 'proyecto/*', lazy: () => import('./features/proyecto') },
           { path: 'backlog/*', lazy: () => import('./features/backlog') },
+          { path: 'votacion/:historiaId', lazy: () => import('./features/votacion') },
           { path: 'sprints/*', lazy: () => import('./features/sprints') },
           { path: 'status/*', lazy: () => import('./features/estado') },
         ],
