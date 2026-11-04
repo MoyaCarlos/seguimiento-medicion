@@ -1,4 +1,5 @@
 import { get, post, put } from '../../compartido/api/client'
+import { aHorasPorStoryPoint } from './validacion'
 import type { DatosProyecto } from './validacion'
 
 export type Rol = 'scrum_master' | 'product_builder'
@@ -36,6 +37,7 @@ export type ProyectoEditado = {
   descripcion: string
   fecha_inicio: string | null
   fecha_fin: string | null
+  horas_por_story_point: number | null
 }
 
 export type NuevoIntegrante = {
@@ -74,6 +76,7 @@ export const aProyectoEditado = (datos: DatosProyecto): ProyectoEditado => ({
   descripcion: datos.descripcion.trim(),
   fecha_inicio: datos.fecha_inicio || null,
   fecha_fin: datos.fecha_fin || null,
+  horas_por_story_point: aHorasPorStoryPoint(datos.horas_por_story_point),
 })
 
 export const ETIQUETAS_ROL: Record<Rol, string> = {

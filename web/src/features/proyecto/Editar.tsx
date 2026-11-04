@@ -47,7 +47,7 @@ export function Editar() {
           fecha_inicio: proyecto.fecha_inicio ?? '',
           fecha_fin: proyecto.fecha_fin ?? '',
           creador: '',
-          horas_por_story_point: '',
+          horas_por_story_point: proyecto.horas_por_story_point?.toString() ?? '',
         })
       })
       .catch((causa: unknown) => {
@@ -97,8 +97,8 @@ export function Editar() {
       <p className="eyebrow">Proyecto · Edición</p>
       <h2 id="editar-title">Editar proyecto</h2>
       <p className="hu04-intro">
-        Corregí el nombre, la descripción o las fechas. Los cambios se guardan sobre el
-        proyecto actual.
+        Corregí el nombre, la descripción, las fechas o las horas por Story Point. Los
+        cambios se guardan sobre el proyecto actual.
       </p>
 
       {cargando && <LoadingIndicator />}
@@ -143,6 +143,16 @@ export function Editar() {
               error={errores.fecha_fin}
             />
           </div>
+
+          <Field
+            id="horas_por_story_point"
+            name="horas_por_story_point"
+            inputMode="decimal"
+            label="Horas por Story Point (opcional)"
+            value={datos.horas_por_story_point}
+            onChange={(evento) => actualizar('horas_por_story_point', evento.target.value)}
+            error={errores.horas_por_story_point}
+          />
 
           {enviando && <LoadingIndicator />}
 

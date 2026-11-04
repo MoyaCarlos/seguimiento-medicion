@@ -80,9 +80,9 @@ El código de referencia es `origin/main` del 2026-11-03.
 
 ## R11. Pantalla de edición
 
-- **Decision**: agregar `horas_por_story_point: string` a `DatosProyecto`. `aProyectoEditado` envía `null` si está vacío y `Number(valor)` si no; `aNuevoProyecto` lo ignora. `validarEdicion` rechaza lo que no sea un número mayor que cero.
-- **Rationale**: `FORMULARIO_VACIO` define qué campos del backend se muestran junto a un input, así que el error se ubica solo al agregar la clave. Es un `Field` con `type="number"`.
-- **Alternatives considered**: un tipo aparte para la edición (más código para un campo).
+- **Decision**: agregar `horas_por_story_point: string` a `DatosProyecto`. `aProyectoEditado` envía `null` si está vacío y el número si no; `aNuevoProyecto` lo ignora. `validarEdicion` rechaza lo que no sea un número mayor que cero. El campo es un `Field` de texto con `inputMode="decimal"`, que acepta punto o coma decimal.
+- **Rationale**: `FORMULARIO_VACIO` define qué campos del backend se muestran junto a un input, así que el error se ubica solo al agregar la clave. Con `type="number"`, el navegador entrega un texto inválido como vacío, lo que borraría el parámetro sin avisar; además, un teclado decimal en español solo ofrece la coma.
+- **Alternatives considered**: `type="number"` (por lo anterior); un tipo aparte para la edición (más código para un campo).
 
 ## R12. Orden de trabajo con `main`
 
