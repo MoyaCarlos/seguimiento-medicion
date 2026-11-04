@@ -796,3 +796,23 @@ func TestBacklogHandler_CambiarEstado_IDInvalido(t *testing.T) {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
 	}
 }
+
+func TestBacklogHandler_Editar_CargaConSprintFinalizado(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint, _ := repo.sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: domain.SprintFinalizado})
+	h := sembrarHistoria(repo)
+	h.SprintID, h.EstimacionSP = &sprint.ID, nil
+	repo.historias[h.ID] = h
+
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5}`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := leerError(t, rec); resp.Campo != "estimacion_sp" || resp.Mensaje != domain.ErrCargaEnSprintFinalizado.Mensaje {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+	if len(repo.actualizaciones) != 0 {
+		t.Errorf("no se esperaba persistir la edición")
+	}
+}
