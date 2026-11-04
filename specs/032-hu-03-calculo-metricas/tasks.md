@@ -165,8 +165,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T062 Implementar features/steps_metricas.go con `InitializeScenarioMetricas`, reutilizando pasos existentes sin colisiones de regex, y registrarlo en features/features_test.go — `go test ./features/` en verde
-- [ ] T063 COMMIT `Agregar pasos BDD de cálculo de métricas`
+- [X] T062 Implementar features/steps_metricas.go con `InitializeScenarioMetricas`, reutilizando pasos existentes sin colisiones de regex, y registrarlo en features/features_test.go — `go test ./features/` en verde
+- [X] T063 COMMIT `Agregar pasos BDD de cálculo de métricas`
 - [ ] T064 Correr `go build ./...`, `go vet ./...`, `gofmt -l .` y `go test ./...`, y en web/ `npm run lint`, `npm test` y `npm run build`, sin errores; validar la sintaxis de specs/032-hu-03-calculo-metricas/contracts/openapi.yaml
 - [ ] T065 Validar specs/032-hu-03-calculo-metricas/quickstart.md con la aplicación levantada; si algún valor no coincide, se frena y se avisa
 - [ ] T066 (solo si hay algo que limpiar) REFACTOR de lo que haya quedado duplicado + COMMIT `REFACTOR: <qué se limpió>`
