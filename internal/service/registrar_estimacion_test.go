@@ -54,7 +54,7 @@ func TestRegistrarEstimacion_Acepta(t *testing.T) {
 			c.escenario.votaciones = votacionReveladaConDiferencias()
 			servicio, repo := nuevoRegistrarEstimacion(c.escenario)
 
-			historia, err := servicio.Ejecutar(context.Background(), repo.historias[3], carlos, c.valor)
+			historia, err := servicio.Ejecutar(context.Background(), 3, carlos, c.valor)
 
 			if err != nil {
 				t.Fatalf("no se esperaba error: %v", err)
@@ -72,7 +72,7 @@ func TestRegistrarEstimacion_Acepta(t *testing.T) {
 func TestRegistrarEstimacion_MismoValorConSprintActivo_NoEscribe(t *testing.T) {
 	servicio, repo := nuevoRegistrarEstimacion(escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintActivo, votaciones: votacionReveladaConDiferencias()})
 
-	historia, err := servicio.Ejecutar(context.Background(), repo.historias[3], carlos, 3)
+	historia, err := servicio.Ejecutar(context.Background(), 3, carlos, 3)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -101,33 +101,35 @@ func TestRegistrarEstimacion_NoCargaLosVotos(t *testing.T) {
 	votaciones := votacionQueNoDebeCargarVotos{votacionReveladaConDiferencias(), t}
 	servicio := NewRegistrarEstimacion(repo, equipoDelProyecto(), votaciones, repository.NewSprintRepositoryEnMemoria())
 
-	if _, err := servicio.Ejecutar(context.Background(), historia, carlos, 5); err != nil {
+	if _, err := servicio.Ejecutar(context.Background(), 3, carlos, 5); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 }
 
 func TestRegistrarEstimacion_Rechaza(t *testing.T) {
 	casos := []struct {
-		nombre    string
-		escenario escenarioEstimacion
-		usuarioID int64
-		valor     int
-		esperado  error
+		nombre     string
+		escenario  escenarioEstimacion
+		historiaID int64
+		usuarioID  int64
+		valor      int
+		esperado   error
 	}{
-		{"Product Builder", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, candela, 5, domain.ErrNoEsScrumMaster},
-		{"quien no integra el proyecto", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, ajeno, 5, domain.ErrNoEsScrumMaster},
-		{"carta fuera de la baraja", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, carlos, 4, domain.ErrEstimacionInvalida},
-		{"ronda oculta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionAbierta()}, carlos, 5, domain.ErrRondaNoRevelada},
-		{"sin votación", escenarioEstimacion{sp: intPtr(3), votaciones: &fakeVotacionRepository{}}, carlos, 5, domain.ErrVotacionNoIniciada},
-		{"ronda anterior revelada y actual abierta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionConRondaUnoReveladaYDosAbierta()}, carlos, 5, domain.ErrRondaNoRevelada},
-		{"valor distinto con Sprint Activo", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintActivo, votaciones: votacionReveladaConDiferencias()}, carlos, 5, domain.ErrEstimacionCongelada},
-		{"valor distinto con Sprint Finalizado", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, carlos, 5, domain.ErrEstimacionCongelada},
+		{"historia inexistente", escenarioEstimacion{votaciones: votacionReveladaConDiferencias()}, 999, carlos, 5, domain.ErrHistoriaNoEncontrada},
+		{"Product Builder", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, candela, 5, domain.ErrNoEsScrumMaster},
+		{"quien no integra el proyecto", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, ajeno, 5, domain.ErrNoEsScrumMaster},
+		{"carta fuera de la baraja", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, carlos, 4, domain.ErrEstimacionInvalida},
+		{"ronda oculta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
+		{"sin votación", escenarioEstimacion{sp: intPtr(3), votaciones: &fakeVotacionRepository{}}, 3, carlos, 5, domain.ErrVotacionNoIniciada},
+		{"ronda anterior revelada y actual abierta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionConRondaUnoReveladaYDosAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
+		{"valor distinto con Sprint Activo", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintActivo, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
+		{"valor distinto con Sprint Finalizado", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
 			servicio, repo := nuevoRegistrarEstimacion(c.escenario)
 
-			_, err := servicio.Ejecutar(context.Background(), repo.historias[3], c.usuarioID, c.valor)
+			_, err := servicio.Ejecutar(context.Background(), c.historiaID, c.usuarioID, c.valor)
 
 			if !errors.Is(err, c.esperado) {
 				t.Errorf("se esperaba %v, se obtuvo %v", c.esperado, err)

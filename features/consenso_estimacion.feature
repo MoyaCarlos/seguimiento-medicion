@@ -10,8 +10,7 @@
 #   carga en una historia Completada (US2.9).
 # - Error: carta fuera de la baraja (US2.4); ronda oculta (US2.5); D2b (US2.6); permisos (US2.7, US3.4);
 #   ronda oculta (US3.3); sin votación (US3.5); historia Completada (US3.6).
-# La historia inexistente no es un criterio de la spec: la cubren los tests de service y handler
-# (la de registrar la estimación, los del handler, que es quien lee la historia).
+# La historia inexistente no es un criterio de la spec: la cubren los tests de service y handler.
 
 @HU-14
 Característica: Consenso y registro de la estimación acordada

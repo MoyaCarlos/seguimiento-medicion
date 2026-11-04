@@ -70,10 +70,9 @@ documento registra las decisiones técnicas del diseño.
 
 ## R7. Escritura de la estimación
 
-- **Decision**: puerto nuevo `EstimacionHistoriaRepository` con `GuardarEstimacion(ctx, id, sp)`,
-  implementado en `SQLiteBacklogRepository` con `UPDATE historias SET estimacion_sp = ? WHERE id = ?`.
-  El service recibe la historia que ya leyó el handler para responder 404 antes de validar el pedido
-  (FR-011), así no la lee dos veces (#251).
+- **Decision**: puerto nuevo `EstimacionHistoriaRepository` con `ObtenerPorID` y
+  `GuardarEstimacion(ctx, id, sp)`, implementado en `SQLiteBacklogRepository` con
+  `UPDATE historias SET estimacion_sp = ? WHERE id = ?`.
 - **Rationale**: `HistoriaRepository.Actualizar` también reescribe título, descripción y criterios, y
   pisaría una edición simultánea de HU-15. La separación sigue el patrón de
   `AsignacionHistoriaRepository` y `CambioEstadoHistoriaRepository` (ISP).

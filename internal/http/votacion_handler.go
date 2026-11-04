@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
@@ -115,7 +114,7 @@ func (h *VotacionHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request
 // RegistrarEstimacion atiende POST /backlog/{id}/votacion/estimacion. Responde
 // con la historia.
 func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *nethttp.Request) {
-	historia, ok := h.cargarHistoria(w, r)
+	id, ok := h.historiaDeRuta(w, r)
 	if !ok {
 		return
 	}
@@ -124,12 +123,12 @@ func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *netht
 		return
 	}
 
-	actualizada, err := h.registrar.Ejecutar(r.Context(), historia, req.UsuarioID, req.valor())
+	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.valor())
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusOK, aRespuesta(actualizada))
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(historia))
 }
 
 // AbrirRonda atiende POST /backlog/{id}/votacion/rondas. Responde con la ronda
@@ -165,24 +164,18 @@ func (h *VotacionHandler) Historial(w nethttp.ResponseWriter, r *nethttp.Request
 	escribirJSON(w, nethttp.StatusOK, aRespuestaHistorial(historial))
 }
 
-func (h *VotacionHandler) historiaDeRuta(w nethttp.ResponseWriter, r *nethttp.Request) (int64, bool) {
-	historia, ok := h.cargarHistoria(w, r)
-	return historia.ID, ok
-}
-
-// cargarHistoria valida el id de la ruta y que la historia exista: la historia
+// historiaDeRuta valida el id de la ruta y que la historia exista: la historia
 // inexistente domina (404) sobre cualquier validación del pedido (FR-011).
-func (h *VotacionHandler) cargarHistoria(w nethttp.ResponseWriter, r *nethttp.Request) (domain.BacklogItem, bool) {
+func (h *VotacionHandler) historiaDeRuta(w nethttp.ResponseWriter, r *nethttp.Request) (int64, bool) {
 	id, ok := idDeRuta(w, r)
 	if !ok {
-		return domain.BacklogItem{}, false
+		return 0, false
 	}
-	historia, err := h.obtenerHistoria.Ejecutar(r.Context(), id)
-	if err != nil {
+	if _, err := h.obtenerHistoria.Ejecutar(r.Context(), id); err != nil {
 		escribirError(w, err)
-		return domain.BacklogItem{}, false
+		return 0, false
 	}
-	return historia, true
+	return id, true
 }
 
 func (h *VotacionHandler) responderVista(w nethttp.ResponseWriter, r *nethttp.Request, status int, historiaID, consultanteID int64) {

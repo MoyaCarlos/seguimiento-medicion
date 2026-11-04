@@ -76,7 +76,7 @@ Registrar la estimación no cambia ninguna ronda.
 | Service | Entrada | Pasos |
 |---|---|---|
 | `AbrirNuevaRonda` | `historiaID`, `usuarioID` | historia existe → Scrum Master → no `Completada` → ronda actual → `Siguiente` → `CrearRonda` (`ErrVotacionYaIniciada` → `ErrRondaYaAbierta`) |
-| `RegistrarEstimacion` | `historia` (la lee el handler, que comprueba que existe), `usuarioID`, `valor` | Scrum Master → `ConEstimacion` → ronda actual revelada → D2b → `GuardarEstimacion` |
+| `RegistrarEstimacion` | `historiaID`, `usuarioID`, `valor` | historia existe → Scrum Master → `ConEstimacion` → ronda actual revelada → D2b → `GuardarEstimacion` |
 | `ConsultarHistorialRondas` | `historiaID` | historia existe → `ListarRondasReveladas` → agrega nombre y rol a cada voto |
 | `ConsultarVotacion` (cambia) | sin cambios | `VistaVotacion` suma `Diferencias *domain.Diferencias`, `nil` sin revelar |
 
@@ -96,6 +96,7 @@ RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error)
 
 // backlog_repository.go: puerto nuevo, separado de HistoriaRepository (ISP).
 type EstimacionHistoriaRepository interface {
+    ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
     GuardarEstimacion(ctx context.Context, id int64, sp int) error
 }
 ```
