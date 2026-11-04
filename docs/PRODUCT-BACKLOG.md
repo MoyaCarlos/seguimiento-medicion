@@ -604,7 +604,7 @@ Dado que intento modificar un integrante o un proyecto que no existen,
 Cuando envío la petición,
 Entonces el sistema responde "no encontrado".
 ### Depende de
-HU-04 (proyecto e integrantes). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
+HU-04 (proyecto e integrantes) y HU-20 (autenticación). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
 ### Notas
 La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
 Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; con HU-21 es quien tiene la sesión iniciada), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Con el Scrum Master único (#236, HU-21) la decisión D4 de `MODELO-DE-DATOS.md` queda cerrada en esos issues: esta historia ya no la reabre.
@@ -743,7 +743,7 @@ Dado que no creé ni tengo asignado ningún proyecto,
 Cuando abro "Administrar proyectos",
 Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
 ### Depende de
-HU-04 (proyectos e integrantes), HU-17 (usuarios y elegir quién soy), HU-16 (equipo del proyecto), #148 (navegar entre proyectos desde la interfaz) y la decisión del cierre manual del proyecto (#173).
+HU-04 (proyectos e integrantes), #148 (navegar entre proyectos desde la interfaz) y la decisión del cierre manual del proyecto (#173).
 ### Notas
 Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20 y HU-21, porque la entrega final es el 16-nov y el login real entra antes de esa fecha.
 1. **Nivel 1:** lista de proyectos y selector para navegar entre ellos (#148, PR #231). Es lo que queda de esta historia.
@@ -855,7 +855,7 @@ Dado que inicié sesión y no soy integrante de ningún proyecto,
 Cuando consulto mis proyectos,
 Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
 ### Depende de
-HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints), HU-06, HU-07 (horas) y HU-11. Se apoya en el issue #236 (índice único de Scrum Master).
+HU-20 (autenticación), HU-02 (Planning Poker), HU-04, HU-05 (Sprints), HU-06, HU-07 (horas), HU-08 (defectos), HU-11, HU-14 y HU-15. Se apoya en el issue #236 (índice único de Scrum Master).
 ### Notas
 Es el PR 2 de 2 del login. Los endpoints toman el usuario de la sesión: se elimina `usuario_id` del cuerpo de la votación y `integrante_id` del registro de horas, y también la identidad que viaja en la query de `GET /backlog/{id}/votacion?usuario_id=N` (`internal/http/votacion_handler.go`), que hoy devuelve el voto del que consulta: con el id de otra persona se vería su voto oculto. Quien crea un proyecto queda como su Scrum Master. "Configurar equipo" solo agrega usuarios ya registrados, como Product Builder. Hay un único Scrum Master por proyecto y su traspaso queda fuera de alcance hasta después de la entrega, como límite declarado: no se puede quitar ni cambiar el rol del único Scrum Master (HU-16). Esto cierra la decisión D4 de `MODELO-DE-DATOS.md`; la decisión D14 (dueño) deja de hacer falta.
 **Qué se protege.** Rutas sin sesión: el registro y el ingreso (HU-20), `GET /health`, el `index.html` con los archivos estáticos del frontend y `POST /demo/datos` (lo protege la variable `DEMO_HABILITADO`; es lo que crea los usuarios de la demo tras cada deploy, cuando todavía nadie tiene cuenta). Todo lo demás exige sesión y responde 401 sin ella (escenario 3).
