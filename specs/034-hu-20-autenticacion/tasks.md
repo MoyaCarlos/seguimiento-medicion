@@ -108,10 +108,10 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [X] T048 [US1] COMMIT `GREEN: implementar handler POST /auth/registro, test en verde`
 - [X] T049 [US1] Cablear en `cmd/api/main.go` los repositorios SQLite de credenciales y sesiones, `ServicioContrasenas` (600 000 iteraciones), `EmisorSesiones` (con `time.Now`), `RegistrarUsuario`, `AuthHandler` y la ruta `POST /auth/registro`
 - [X] T050 [US1] COMMIT `Cablear POST /auth/registro en cmd/api`
-- [ ] T051 [US1] RED: crear `features/autenticacion.feature` con los escenarios 1 (registro exitoso, queda con sesión), 2 (nombre repetido, «Ese nombre de usuario ya existe», también con otras mayúsculas) y 3 (contraseña de menos de 8 caracteres, se rechaza indicando el campo `contrasena`) crear `features/steps_autenticacion.go` con `InitializeScenarioAutenticacion(ctx *godog.ScenarioContext)` vacía (stub) y registrarla en `features/features_test.go`, de modo que el paquete compile; `go test ./features/` debe FALLAR por pasos sin definir (Strict), no por compilación
-- [ ] T052 [US1] COMMIT `RED: agregar escenarios BDD de registro (fallan)` (incluye el stub, si lo hay)
-- [ ] T053 [US1] GREEN: completar `features/steps_autenticacion.go` (stub de T051) con la base de pruebas (SQLite en memoria con migraciones, servicios y `AuthHandler` reales con iteraciones de PBKDF2 bajas inyectadas, reloj controlable) y los pasos de los escenarios 1 a 3; `go test ./features/` en verde
-- [ ] T054 [US1] COMMIT `GREEN: agregar pasos BDD de registro, escenarios en verde`
+- [X] T051 [US1] RED: crear `features/autenticacion.feature` con los escenarios 1 (registro exitoso, queda con sesión), 2 (nombre repetido, «Ese nombre de usuario ya existe», también con otras mayúsculas) y 3 (contraseña de menos de 8 caracteres, se rechaza indicando el campo `contrasena`) crear `features/steps_autenticacion.go` con `InitializeScenarioAutenticacion(ctx *godog.ScenarioContext)` vacía (stub) y registrarla en `features/features_test.go`, de modo que el paquete compile; `go test ./features/` debe FALLAR por pasos sin definir (Strict), no por compilación
+- [X] T052 [US1] COMMIT `RED: agregar escenarios BDD de registro (fallan)` (incluye el stub, si lo hay)
+- [X] T053 [US1] GREEN: completar `features/steps_autenticacion.go` (stub de T051) con la base de pruebas (SQLite en memoria con migraciones, servicios y `AuthHandler` reales con iteraciones de PBKDF2 bajas inyectadas, reloj controlable) y los pasos de los escenarios 1 a 3; `go test ./features/` en verde
+- [X] T054 [US1] COMMIT `GREEN: agregar pasos BDD de registro, escenarios en verde`
 
 **Checkpoint**: US1 funcional y verificable por sí sola.
 
