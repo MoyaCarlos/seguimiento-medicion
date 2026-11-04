@@ -81,8 +81,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T026 [US1] COMMIT `RED: agregar tests del handler GET /projects/{id}/metricas (fallan)`
 - [X] T027 [US1] GREEN: implementar `MetricasHandler.Consultar` y sus DTO en internal/http/metricas_handler.go e internal/http/metricas_dto.go — `go test ./internal/... ./cmd/...` en verde
 - [X] T028 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/metricas, tests en verde`
-- [ ] T029 [US1] Cablear el repositorio, el service, el handler y la ruta `GET /projects/{id}/metricas` en cmd/api/main.go
-- [ ] T030 [US1] COMMIT `Cablear GET /projects/{id}/metricas en cmd/api`
+- [X] T029 [US1] Cablear el repositorio, el service, el handler y la ruta `GET /projects/{id}/metricas` en cmd/api/main.go
+- [X] T030 [US1] COMMIT `Cablear GET /projects/{id}/metricas en cmd/api`
 
 **Checkpoint**: la consulta funciona con la aplicación levantada (quickstart.md, paso 1).
 
