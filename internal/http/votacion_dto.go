@@ -20,29 +20,23 @@ type votoRequest struct {
 	Valor json.RawMessage `json:"valor"`
 }
 
-// valor devuelve 0 si el campo no es un entero: queda fuera de la baraja y el
-// service lo rechaza después de validar el permiso.
-func (v votoRequest) valor() int {
-	var valor int
-	if err := json.Unmarshal(v.Valor, &valor); err != nil {
-		return 0
-	}
-	return valor
-}
+func (v votoRequest) valor() int { return cartaDe(v.Valor) }
 
 type estimacionRequest struct {
 	actorRequest
 	EstimacionSP json.RawMessage `json:"estimacion_sp"`
 }
 
-// valor devuelve 0 si estimacion_sp no es un entero: queda fuera de la baraja y
-// el service lo rechaza después de validar el permiso.
-func (e estimacionRequest) valor() int {
-	var valor int
-	if err := json.Unmarshal(e.EstimacionSP, &valor); err != nil {
+func (e estimacionRequest) valor() int { return cartaDe(e.EstimacionSP) }
+
+// cartaDe devuelve 0 si el campo no es un entero: queda fuera de la baraja y el
+// service lo rechaza después de validar el permiso.
+func cartaDe(campo json.RawMessage) int {
+	var carta int
+	if err := json.Unmarshal(campo, &carta); err != nil {
 		return 0
 	}
-	return valor
+	return carta
 }
 
 type votacionResponse struct {

@@ -26,12 +26,8 @@ func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historiaID, usuarioI
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
-	rol, _, err := rolEnProyecto(ctx, s.proyectos, historia.ProyectoID, usuarioID)
-	if err != nil {
+	if err := exigirScrumMaster(ctx, s.proyectos, historia.ProyectoID, usuarioID); err != nil {
 		return domain.BacklogItem{}, err
-	}
-	if rol != domain.RolScrumMaster {
-		return domain.BacklogItem{}, domain.ErrNoEsScrumMaster
 	}
 
 	conEstimacion, err := historia.ConEstimacion(valor)
