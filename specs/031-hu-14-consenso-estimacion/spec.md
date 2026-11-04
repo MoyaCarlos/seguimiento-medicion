@@ -168,6 +168,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   con rol Scrum Master, **THEN** el sistema **shall** rechazar la operación sin modificar nada.
 - **IF** la historia indicada no existe, **THEN** el sistema **shall** responder "historia no
   encontrada", antes de validar el resto de los datos (decisión transversal del backlog).
+- **IF** el registro de la estimación incumple más de una regla, **THEN** el sistema **shall**
+  informar la primera en este orden: permiso, `estimacion_sp`, votación iniciada y ronda actual
+  revelada, D2b.
 - **WHERE** el valor acordado es una carta válida, el sistema **shall** aceptarlo aunque nadie
   lo haya votado en la ronda.
 - **IF** ya se registró una estimación, **THEN** el sistema **shall** seguir permitiendo otra

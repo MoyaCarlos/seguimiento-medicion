@@ -27,12 +27,8 @@ func (s *AbrirNuevaRonda) Ejecutar(ctx context.Context, historiaID, usuarioID in
 	if err != nil {
 		return domain.RondaVotacion{}, err
 	}
-	rol, _, err := rolEnProyecto(ctx, s.proyectos, historia.ProyectoID, usuarioID)
-	if err != nil {
+	if err := exigirScrumMaster(ctx, s.proyectos, historia.ProyectoID, usuarioID); err != nil {
 		return domain.RondaVotacion{}, err
-	}
-	if rol != domain.RolScrumMaster {
-		return domain.RondaVotacion{}, domain.ErrNoEsScrumMaster
 	}
 	if historia.Estado == domain.EstadoCompletada {
 		return domain.RondaVotacion{}, domain.ErrRondaEnHistoriaCompletada
