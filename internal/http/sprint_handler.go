@@ -159,6 +159,12 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
+	case errors.Is(err, domain.ErrCredencialesInvalidas):
+		escribirJSON(w, nethttp.StatusUnauthorized, errorResponse{Mensaje: domain.ErrCredencialesInvalidas.Error()})
+	case errors.Is(err, domain.ErrNoAutenticado):
+		escribirJSON(w, nethttp.StatusUnauthorized, errorResponse{Mensaje: domain.ErrNoAutenticado.Error()})
+	case errors.Is(err, domain.ErrNombreUsuarioEnUso):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: domain.ErrNombreUsuarioEnUso.Error()})
 	case errors.Is(err, repository.ErrIntegridadReferencial):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrIntegridadReferencial.Error()})
 	case errors.Is(err, domain.ErrVotacionYaIniciada):
