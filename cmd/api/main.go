@@ -88,6 +88,10 @@ func main() {
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
+	metricasHandler := apihttp.NewMetricasHandler(
+		service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db)),
+	)
+
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },
 		demo.NewCargador(db, time.Now),
@@ -112,6 +116,7 @@ func main() {
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
+	mux.HandleFunc("GET /projects/{id}/metricas", metricasHandler.Consultar)
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
