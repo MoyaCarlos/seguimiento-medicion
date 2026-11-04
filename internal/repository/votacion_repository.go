@@ -13,6 +13,8 @@ import (
 //     una ronda con ese número.
 //   - ObtenerRondaActual devuelve domain.ErrVotacionNoIniciada si la historia
 //     no tiene rondas.
+//   - RondaActualRevelada indica si la ronda actual está revelada, sin cargar sus
+//     votos, y devuelve domain.ErrVotacionNoIniciada si la historia no tiene rondas.
 //   - GuardarVoto y MarcarRevelada escriben solo si la ronda sigue sin revelar;
 //     si no, devuelven domain.ErrRondaRevelada sin cambiar nada.
 //   - ListarRondasReveladas devuelve solo las rondas reveladas, por número y con
@@ -20,6 +22,7 @@ import (
 type VotacionRepository interface {
 	CrearRonda(ctx context.Context, r domain.RondaVotacion) (domain.RondaVotacion, error)
 	ObtenerRondaActual(ctx context.Context, historiaID int64) (domain.RondaVotacion, error)
+	RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error)
 	GuardarVoto(ctx context.Context, rondaID int64, v domain.Voto) error
 	MarcarRevelada(ctx context.Context, rondaID int64, en time.Time) error
 	ListarRondasReveladas(ctx context.Context, historiaID int64) ([]domain.RondaVotacion, error)

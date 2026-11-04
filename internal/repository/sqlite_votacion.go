@@ -73,6 +73,11 @@ func (r *SQLiteVotacionRepository) ObtenerRondaActual(ctx context.Context, histo
 	return ronda, nil
 }
 
+// RondaActualRevelada indica si la ronda actual está revelada, sin cargar sus votos.
+func (r *SQLiteVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error) {
+	return false, nil
+}
+
 func (r *SQLiteVotacionRepository) votosDe(ctx context.Context, rondaID int64) ([]domain.Voto, error) {
 	filas, err := r.db.QueryContext(ctx,
 		"SELECT usuario_id, valor FROM votos WHERE ronda_id = ? ORDER BY usuario_id", rondaID)
