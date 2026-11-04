@@ -20,3 +20,16 @@ func rolEnProyecto(ctx context.Context, proyectos repository.ProjectRepository, 
 	}
 	return "", false, nil
 }
+
+// exigirScrumMaster devuelve ErrNoEsScrumMaster si el usuario no tiene ese rol
+// en el proyecto, también si no lo integra.
+func exigirScrumMaster(ctx context.Context, proyectos repository.ProjectRepository, proyectoID, usuarioID int64) error {
+	rol, _, err := rolEnProyecto(ctx, proyectos, proyectoID, usuarioID)
+	if err != nil {
+		return err
+	}
+	if rol != domain.RolScrumMaster {
+		return domain.ErrNoEsScrumMaster
+	}
+	return nil
+}

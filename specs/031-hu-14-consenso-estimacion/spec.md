@@ -24,7 +24,7 @@ otra sub-issue (#93)."
 - Q: ¿Se puede iniciar una nueva ronda si la ronda revelada no tiene diferencias? → A: Sí; lo decide el Scrum Master.
 - Q: ¿El historial de rondas se puede consultar o solo queda guardado? → A: Se puede consultar en la API; la pantalla no entra en esta historia.
 - Q: ¿El valor acordado puede ser cualquier carta de la baraja, o tiene que ser una de las votadas en la ronda? → A: Cualquier carta de la baraja, aunque nadie la haya votado.
-- Q: ¿Se puede registrar la estimación acordada de una historia "Completada"? → A: Sí, sujeto solo a D2b: se permite si no tenía estimación, o si no está en un Sprint `Activo` o `Finalizado`.
+- Q: ¿Se puede registrar la estimación acordada de una historia "Completada"? → A: Sí, sujeto solo a D2b: se permite si no tenía estimación, o si no está en un Sprint `Activo` o `Finalizado`. **Actualizado por la spec 032 (HU-03, 2026-11-03):** con un Sprint `Finalizado` tampoco se permite si no tenía estimación.
 - Q: Después de registrar la estimación, ¿se puede abrir otra ronda y registrar otro valor? → A: Sí; registrar no cierra la votación y siguen valiendo las mismas reglas, incluida D2b.
 
 ## User Scenarios & Testing *(mandatory)*
@@ -168,6 +168,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   con rol Scrum Master, **THEN** el sistema **shall** rechazar la operación sin modificar nada.
 - **IF** la historia indicada no existe, **THEN** el sistema **shall** responder "historia no
   encontrada", antes de validar el resto de los datos (decisión transversal del backlog).
+- **IF** el registro de la estimación incumple más de una regla, **THEN** el sistema **shall**
+  informar la primera en este orden: permiso, `estimacion_sp`, votación iniciada y ronda actual
+  revelada, D2b.
 - **WHERE** el valor acordado es una carta válida, el sistema **shall** aceptarlo aunque nadie
   lo haya votado en la ronda.
 - **IF** ya se registró una estimación, **THEN** el sistema **shall** seguir permitiendo otra
@@ -200,7 +203,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   votación iniciada.
 - **FR-010**: El sistema MUST rechazar, sin cambiar la estimación, un valor distinto del cargado
   cuando la historia ya tiene estimación y está asignada a un Sprint `Activo` o `Finalizado`
-  (D2b). Cargarla por primera vez sí se permite.
+  (D2b). Cargarla por primera vez se permite, salvo con un Sprint `Finalizado`, donde MUST
+  rechazarse (spec 032, HU-03).
 - **FR-011**: El sistema MUST rechazar iniciar una nueva ronda o registrar la estimación cuando
   quien lo pide no sea integrante del proyecto con rol Scrum Master.
 - **FR-012**: El sistema MUST responder "historia no encontrada" para cualquier operación sobre

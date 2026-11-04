@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"path/filepath"
 	"testing"
@@ -317,5 +318,83 @@ func TestSQLiteProjectRepository_MiembroDuplicado(t *testing.T) {
 	}
 	if _, err := proyectos.AgregarIntegrante(ctx, m); !errors.Is(err, ErrMiembroDuplicado) {
 		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
+	}
+}
+
+func sembrarHorasPorStoryPoint(t *testing.T, db *sql.DB, proyectoID int64, horas any) {
+	t.Helper()
+	if _, err := db.Exec("UPDATE proyectos SET horas_por_story_point = ? WHERE id = ?", horas, proyectoID); err != nil {
+		t.Fatalf("no se pudo sembrar el parámetro: %v", err)
+	}
+}
+
+func TestSQLiteProjectRepository_LeeLasHorasPorStoryPoint(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	conValor := guardarProyecto(t, db)
+	sinValor := guardarProyecto(t, db)
+	sembrarHorasPorStoryPoint(t, db, conValor, 2.5)
+
+	leido, err := repo.ObtenerPorID(ctx, conValor)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if leido.HorasPorStoryPoint == nil || *leido.HorasPorStoryPoint != 2.5 {
+		t.Errorf("se esperaban 2.5 horas, se obtuvo %v", leido.HorasPorStoryPoint)
+	}
+	sinDefinir, err := repo.ObtenerPorID(ctx, sinValor)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if sinDefinir.HorasPorStoryPoint != nil {
+		t.Errorf("se esperaba sin definir, se obtuvo %v", *sinDefinir.HorasPorStoryPoint)
+	}
+
+	listados, err := repo.Listar(ctx)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if len(listados) != 2 || listados[0].HorasPorStoryPoint == nil || *listados[0].HorasPorStoryPoint != 2.5 || listados[1].HorasPorStoryPoint != nil {
+		t.Errorf("el listado no trae el parámetro: %+v", listados)
+	}
+}
+
+func TestSQLiteProjectRepository_ActualizarLasHorasPorStoryPoint(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	id := guardarProyecto(t, db)
+	proyecto, err := repo.ObtenerPorID(ctx, id)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	horas := 4.0
+	proyecto.HorasPorStoryPoint = &horas
+	if err := repo.Actualizar(ctx, proyecto); err != nil {
+		t.Fatalf("no se esperaba error al guardar: %v", err)
+	}
+	guardado, _ := repo.ObtenerPorID(ctx, id)
+	if guardado.HorasPorStoryPoint == nil || *guardado.HorasPorStoryPoint != 4 {
+		t.Fatalf("se esperaban 4 horas, se obtuvo %v", guardado.HorasPorStoryPoint)
+	}
+
+	guardado.Nombre = "Otro nombre"
+	if err := repo.Actualizar(ctx, guardado); err != nil {
+		t.Fatalf("no se esperaba error al editar otro dato: %v", err)
+	}
+	editado, _ := repo.ObtenerPorID(ctx, id)
+	if editado.HorasPorStoryPoint == nil || *editado.HorasPorStoryPoint != 4 {
+		t.Fatalf("editar otro dato debía conservar el valor, se obtuvo %v", editado.HorasPorStoryPoint)
+	}
+
+	editado.HorasPorStoryPoint = nil
+	if err := repo.Actualizar(ctx, editado); err != nil {
+		t.Fatalf("no se esperaba error al borrar: %v", err)
+	}
+	borrado, _ := repo.ObtenerPorID(ctx, id)
+	if borrado.HorasPorStoryPoint != nil {
+		t.Fatalf("se esperaba sin definir, se obtuvo %v", *borrado.HorasPorStoryPoint)
 	}
 }

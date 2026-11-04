@@ -190,6 +190,32 @@ func TestVotacionHandler_Votar_Errores(t *testing.T) {
 	}
 }
 
+func TestVotacionHandler_Votar_ValorNoEntero(t *testing.T) {
+	casos := map[string]string{
+		"decimal":        `{"usuario_id":2,"valor":2.5}`,
+		"entre comillas": `{"usuario_id":2,"valor":"5"}`,
+		"null":           `{"usuario_id":2,"valor":null}`,
+		"sin el campo":   `{"usuario_id":2}`,
+	}
+	for nombre, cuerpo := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+			rec := votarEn(handler, "3", cuerpo)
+
+			esperarError(t, rec, nethttp.StatusBadRequest, "valor", "")
+		})
+	}
+}
+
+func TestVotacionHandler_Votar_PermisoAntesQueElValor(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+	rec := votarEn(handler, "3", `{"usuario_id":9,"valor":2.5}`)
+
+	esperarError(t, rec, nethttp.StatusForbidden, "", "el usuario no es integrante del proyecto")
+}
+
 func TestVotacionHandler_Consultar_SoloElVotoPropioEsVisible(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeCarlosYCandela)
 
@@ -464,6 +490,7 @@ func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 		"id no numérico":                        {"abc", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusBadRequest, "id", ""},
 		"historia inexistente con JSON roto":    {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"historia inexistente con pedido bueno": {"999", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
 		"sin usuario_id":                        {"3", `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
 		"carta fuera de la baraja":              {"3", `{"usuario_id":1,"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},
@@ -635,4 +662,13 @@ func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVotacionHandler_RegistrarEstimacion_CargaConSprintFinalizado(t *testing.T) {
+	sprintFinalizado := strings.Replace(sprintActivo, "'Activo'", "'Finalizado'", 1)
+	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintFinalizado, "UPDATE historias SET sprint_id = 1, estimacion_sp = NULL WHERE id = 3")
+
+	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+
+	esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "no se pueden cargar Story Points en un Sprint Finalizado")
 }
