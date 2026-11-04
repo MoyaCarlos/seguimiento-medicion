@@ -190,6 +190,32 @@ func TestVotacionHandler_Votar_Errores(t *testing.T) {
 	}
 }
 
+func TestVotacionHandler_Votar_ValorNoEntero(t *testing.T) {
+	casos := map[string]string{
+		"decimal":        `{"usuario_id":2,"valor":2.5}`,
+		"entre comillas": `{"usuario_id":2,"valor":"5"}`,
+		"null":           `{"usuario_id":2,"valor":null}`,
+		"sin el campo":   `{"usuario_id":2}`,
+	}
+	for nombre, cuerpo := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+			rec := votarEn(handler, "3", cuerpo)
+
+			esperarError(t, rec, nethttp.StatusBadRequest, "valor", "")
+		})
+	}
+}
+
+func TestVotacionHandler_Votar_PermisoAntesQueElValor(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+	rec := votarEn(handler, "3", `{"usuario_id":9,"valor":2.5}`)
+
+	esperarError(t, rec, nethttp.StatusForbidden, "", "el usuario no es integrante del proyecto")
+}
+
 func TestVotacionHandler_Consultar_SoloElVotoPropioEsVisible(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeCarlosYCandela)
 
