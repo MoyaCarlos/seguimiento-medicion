@@ -73,8 +73,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T018 [US1] COMMIT `RED: agregar tests de la lectura de los datos de métricas (fallan)`
 - [X] T019 [US1] GREEN: implementar la consulta única con subconsultas correlacionadas en internal/repository/sqlite_metricas.go, ordenada por `sprints.id` (research.md R2 y R3) — `go test ./internal/... ./cmd/...` en verde
 - [X] T020 [US1] COMMIT `GREEN: leer los datos de métricas, tests en verde`
-- [ ] T021 [US1] RED: en internal/service/calcular_metricas_test.go, con fakes: proyecto inexistente → `ErrProyectoNoEncontrado` sin consultar los datos; usa `HorasPorStoryPoint` del proyecto; un error del repositorio se propaga; no llama a ninguna escritura (FR-015). Stub en internal/service/calcular_metricas.go — confirmar que FALLA
-- [ ] T022 [US1] COMMIT `RED: agregar tests del caso de uso CalcularMetricas (fallan)`
+- [X] T021 [US1] RED: en internal/service/calcular_metricas_test.go, con fakes: proyecto inexistente → `ErrProyectoNoEncontrado` sin consultar los datos; usa `HorasPorStoryPoint` del proyecto; un error del repositorio se propaga; no llama a ninguna escritura (FR-015). Stub en internal/service/calcular_metricas.go — confirmar que FALLA
+- [X] T022 [US1] COMMIT `RED: agregar tests del caso de uso CalcularMetricas (fallan)`
 - [ ] T023 [US1] GREEN: implementar `CalcularMetricas.Ejecutar` en internal/service/calcular_metricas.go — `go test ./internal/... ./cmd/...` en verde
 - [ ] T024 [US1] COMMIT `GREEN: implementar el caso de uso CalcularMetricas, tests en verde`
 - [ ] T025 [US1] RED: en internal/http/metricas_handler_test.go, `GET /projects/{id}/metricas`: 200 con los nombres exactos de contracts/openapi.yaml; `horas_estimadas`, `desviacion_horas` y `desviacion_porcentaje` en `null` sin parámetro; id inválido → 400; proyecto inexistente → 404 "proyecto no encontrado"; error del repositorio → 500 "error interno". Stubs en internal/http/metricas_handler.go e internal/http/metricas_dto.go — confirmar que FALLA
