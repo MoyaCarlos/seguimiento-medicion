@@ -34,11 +34,11 @@ func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historiaID, usuarioI
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
-	ronda, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)
+	revelada, err := s.votaciones.RondaActualRevelada(ctx, historia.ID)
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
-	if !ronda.Revelada() {
+	if !revelada {
 		return domain.BacklogItem{}, domain.ErrRondaNoRevelada
 	}
 	if err := validarEstimacionCongelada(ctx, s.sprints, historia, conEstimacion.EstimacionSP); err != nil {

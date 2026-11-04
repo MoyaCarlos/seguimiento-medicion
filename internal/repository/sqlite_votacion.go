@@ -46,6 +46,27 @@ func (r *SQLiteVotacionRepository) CrearRonda(ctx context.Context, ronda domain.
 // ObtenerRondaActual devuelve la ronda de mayor número de la historia con sus
 // votos ordenados por usuario.
 func (r *SQLiteVotacionRepository) ObtenerRondaActual(ctx context.Context, historiaID int64) (domain.RondaVotacion, error) {
+	ronda, err := r.rondaActualSinVotos(ctx, historiaID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	ronda.Votos, err = r.votosDe(ctx, ronda.ID)
+	if err != nil {
+		return domain.RondaVotacion{}, err
+	}
+	return ronda, nil
+}
+
+// RondaActualRevelada indica si la ronda actual está revelada, sin cargar sus votos.
+func (r *SQLiteVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error) {
+	ronda, err := r.rondaActualSinVotos(ctx, historiaID)
+	if err != nil {
+		return false, err
+	}
+	return ronda.Revelada(), nil
+}
+
+func (r *SQLiteVotacionRepository) rondaActualSinVotos(ctx context.Context, historiaID int64) (domain.RondaVotacion, error) {
 	var (
 		ronda    domain.RondaVotacion
 		revelada sql.NullString
@@ -65,17 +86,7 @@ func (r *SQLiteVotacionRepository) ObtenerRondaActual(ctx context.Context, histo
 		en := parsearTiempo(revelada.String)
 		ronda.ReveladaEn = &en
 	}
-
-	ronda.Votos, err = r.votosDe(ctx, ronda.ID)
-	if err != nil {
-		return domain.RondaVotacion{}, err
-	}
 	return ronda, nil
-}
-
-// RondaActualRevelada indica si la ronda actual está revelada, sin cargar sus votos.
-func (r *SQLiteVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error) {
-	return false, nil
 }
 
 func (r *SQLiteVotacionRepository) votosDe(ctx context.Context, rondaID int64) ([]domain.Voto, error) {
