@@ -933,7 +933,7 @@ issue y entra en los Sprints.
 
 | Issue | Mejora | Estado |
 |---|---|---|
-| #139 | Despliegue continuo en Render: un servicio con la imagen Docker, que se actualiza en cada merge a `main` | Abierto (Carlos) |
+| #139 | Despliegue continuo en Render: un servicio con la imagen Docker, que se actualiza en cada merge a `main` | Cerrado (PR #200, mergeado el 4-nov) |
 | #144 | Botón «Cargar datos de prueba» (endpoint de demo y pantalla), para el servicio de Render, que no conserva la base | Abierto (Carlos) |
 | #148 | Navegar entre proyectos desde la interfaz (lista y selector) | Abierto (Jimena) |
 | #147 | Mostrar con Markdown la descripción y los criterios de aceptación de las historias | Abierto, tarea libre (depende de #98) |
