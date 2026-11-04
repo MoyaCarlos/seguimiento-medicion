@@ -218,7 +218,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **Historias sin Story Points**: cuentan como comprometidas en el porcentaje y suman cero a los Story Points. Si llegan a un Sprint finalizado sin estimar, suman cero para siempre (FR-023). No se agrega un aviso específico; se trata en un issue aparte.
 - **Reproducibilidad (D2b)**: con un Sprint "Finalizado" no se cargan ni se cambian los Story Points de sus historias; con uno "Activo" solo se permite la primera carga. Una historia arrastrada que volvió al Product Backlog se puede estimar, porque el Sprint cerrado conserva los Story Points registrados al cerrarlo.
 - **Edición compatible**: el parámetro es opcional en la edición para que los clientes actuales sigan funcionando hasta que se entregue la sub-issue #53. En el contrato, "sin valor" es `null`; un texto vacío se rechaza como valor no numérico.
-- **Sin tope superior**: las horas por Story Point no tienen máximo, porque ni el backlog ni el modelo lo piden.
+- **Sin tope superior**: las horas por Story Point no tienen máximo, porque ni el backlog ni el modelo lo piden. Si un valor extremo vuelve incalculable una métrica, esa métrica se informa como "sin datos".
 - **Consulta única**: una sola consulta por proyecto devuelve el detalle por Sprint y los valores del proyecto. No hay filtros ni paginación (YAGNI).
 - **Sin control de acceso**: igual que en el resto del sistema, no hay autenticación ni permisos por rol.
 - **Fuera de alcance**: gráficos e indicadores (HU-09), reporte en PDF (HU-10) e historial de Sprints (HU-12). El parámetro no se pide al crear el proyecto, solo al editarlo (Escenario 3).

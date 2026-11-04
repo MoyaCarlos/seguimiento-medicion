@@ -116,8 +116,13 @@ func minutosAHoras(minutos int) float64 {
 	return float64(minutos) / 60
 }
 
+// valorRedondeado devuelve "sin datos" si el valor no es finito: unas horas por
+// Story Point extremas lo desbordan, y el JSON no puede escribirlo.
 func valorRedondeado(valor float64) *float64 {
 	redondeado := redondear(valor)
+	if math.IsInf(redondeado, 0) || math.IsNaN(redondeado) {
+		return nil
+	}
 	return &redondeado
 }
 
