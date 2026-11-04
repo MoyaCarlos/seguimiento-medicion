@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -33,5 +35,26 @@ func NewRegistrarUsuario(credenciales repository.RegistroCredenciales, hasheador
 }
 
 func (r *RegistrarUsuario) Ejecutar(ctx context.Context, nombre, contrasena string) (ResultadoSesion, error) {
-	return ResultadoSesion{}, nil
+	if err := domain.ValidarNombreUsuario(nombre); err != nil {
+		return ResultadoSesion{}, err
+	}
+	if err := domain.ValidarContrasena(contrasena); err != nil {
+		return ResultadoSesion{}, err
+	}
+	hash, err := r.hasheador.Hashear(contrasena)
+	if err != nil {
+		return ResultadoSesion{}, fmt.Errorf("hashear contraseña: %w", err)
+	}
+	usuario, err := r.credenciales.Registrar(ctx, domain.User{Nombre: nombre, NombreNormalizado: domain.NormalizarNombre(nombre)}, hash)
+	if errors.Is(err, repository.ErrUsuarioDuplicado) {
+		return ResultadoSesion{}, domain.ErrNombreUsuarioEnUso
+	}
+	if err != nil {
+		return ResultadoSesion{}, fmt.Errorf("registrar usuario: %w", err)
+	}
+	token, sesion, err := r.emisor.Emitir(ctx, usuario.ID)
+	if err != nil {
+		return ResultadoSesion{}, err
+	}
+	return ResultadoSesion{Usuario: usuario, Token: token, VenceEn: sesion.VenceEn}, nil
 }
