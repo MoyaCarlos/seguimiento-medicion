@@ -117,8 +117,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T040 [US3] COMMIT `RED: agregar tests de la edición de las horas por Story Point (fallan)`
 - [X] T041 [US3] GREEN: aplicar el parámetro después de `ConDatosEditados` en internal/service/editar_proyecto.go — `go test ./internal/... ./cmd/...` en verde
 - [X] T042 [US3] COMMIT `GREEN: editar las horas por Story Point, tests en verde`
-- [ ] T043 [US3] RED: en internal/http/project_handler_test.go, `PUT /projects/{id}`: sin el campo conserva y responde 200, aunque los otros cuatro siguen obligatorios; `null` borra; `4` y `2.5` guardan; `0`, `-1`, `"abc"` y `""` → 400 con `campo: horas_por_story_point`, nunca "JSON inválido"; con nombre vacío y horas inválidas el campo es `nombre`. `GET /projects/{id}`, `GET /projects` y `POST /projects` incluyen `horas_por_story_point` (`null` si no está definido) — confirmar que FALLA
-- [ ] T044 [US3] COMMIT `RED: agregar tests del parámetro en el PUT y la consulta del proyecto (fallan)`
+- [X] T043 [US3] RED: en internal/http/project_handler_test.go, `PUT /projects/{id}`: sin el campo conserva y responde 200, aunque los otros cuatro siguen obligatorios; `null` borra; `4` y `2.5` guardan; `0`, `-1`, `"abc"` y `""` → 400 con `campo: horas_por_story_point`, nunca "JSON inválido"; con nombre vacío y horas inválidas el campo es `nombre`. `GET /projects/{id}`, `GET /projects` y `POST /projects` incluyen `horas_por_story_point` (`null` si no está definido) — confirmar que FALLA
+- [X] T044 [US3] COMMIT `RED: agregar tests del parámetro en el PUT y la consulta del proyecto (fallan)`
 - [ ] T045 [US3] GREEN: en internal/http/project_handler.go, pasar el valor desde `claves` sin interpretarlo y sin agregarlo a los campos obligatorios; `null` llega como `nil`. En internal/http/project_dto.go, agregar el campo a `proyectoResponse` — `go test ./internal/... ./cmd/...` en verde
 - [ ] T046 [US3] COMMIT `GREEN: aceptar y devolver las horas por Story Point, tests en verde`
 - [ ] T047 [P] [US3] Actualizar specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml con el campo opcional de la edición y el de la respuesta
