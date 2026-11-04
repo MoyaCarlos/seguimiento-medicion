@@ -64,7 +64,7 @@ Los decimales se redondean a dos solo al final, y nunca se devuelve `-0` ([R4](.
 ### MetricasDeSprint y MetricasProyecto
 
 - **MetricasDeSprint**: `SprintID`, `Numero`, `Metricas`.
-- **MetricasProyecto**: `Proyecto Metricas`, `Sprints []MetricasDeSprint` (vacío, no `nil`, y ordenado por número).
+- **MetricasProyecto**: `HorasPorStoryPoint *float64`, `Proyecto Metricas`, `Sprints []MetricasDeSprint` (vacío, no `nil`, y ordenado por número).
 
 ## Función pura
 

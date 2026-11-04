@@ -37,10 +37,12 @@ type MetricasDeSprint struct {
 	Metricas Metricas
 }
 
-// MetricasProyecto son las métricas del proyecto y el detalle por Sprint.
+// MetricasProyecto son las métricas del proyecto, el detalle por Sprint y las
+// horas por Story Point con las que se calcularon.
 type MetricasProyecto struct {
-	Proyecto Metricas
-	Sprints  []MetricasDeSprint
+	HorasPorStoryPoint *float64
+	Proyecto           Metricas
+	Sprints            []MetricasDeSprint
 }
 
 // CalcularMetricas calcula las métricas de cada Sprint finalizado y del proyecto.
@@ -54,7 +56,7 @@ func CalcularMetricas(datos []DatosMetricasSprint, horasPorSP *float64) Metricas
 
 	proyecto := calcularDe(total, horasPorSP)
 	proyecto.Velocidad = redondear(float64(total.SPCompletados) / float64(len(datos)))
-	return MetricasProyecto{Proyecto: proyecto, Sprints: sprints}
+	return MetricasProyecto{HorasPorStoryPoint: horasPorSP, Proyecto: proyecto, Sprints: sprints}
 }
 
 func (d DatosMetricasSprint) sumar(otro DatosMetricasSprint) DatosMetricasSprint {

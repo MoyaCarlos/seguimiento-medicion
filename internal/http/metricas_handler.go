@@ -17,4 +17,15 @@ func NewMetricasHandler(calcular *service.CalcularMetricas) *MetricasHandler {
 
 // Consultar atiende GET /projects/{id}/metricas.
 func (h *MetricasHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	metricas, err := h.calcular.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aMetricasProyectoResponse(id, metricas))
 }

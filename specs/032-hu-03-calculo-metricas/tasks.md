@@ -79,8 +79,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T024 [US1] COMMIT `GREEN: implementar el caso de uso CalcularMetricas, tests en verde`
 - [X] T025 [US1] RED: en internal/http/metricas_handler_test.go, `GET /projects/{id}/metricas`: 200 con los nombres exactos de contracts/openapi.yaml; `horas_estimadas`, `desviacion_horas` y `desviacion_porcentaje` en `null` sin parámetro; id inválido → 400; proyecto inexistente → 404 "proyecto no encontrado"; error del repositorio → 500 "error interno". Stubs en internal/http/metricas_handler.go e internal/http/metricas_dto.go — confirmar que FALLA
 - [X] T026 [US1] COMMIT `RED: agregar tests del handler GET /projects/{id}/metricas (fallan)`
-- [ ] T027 [US1] GREEN: implementar `MetricasHandler.Consultar` y sus DTO en internal/http/metricas_handler.go e internal/http/metricas_dto.go — `go test ./internal/... ./cmd/...` en verde
-- [ ] T028 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/metricas, tests en verde`
+- [X] T027 [US1] GREEN: implementar `MetricasHandler.Consultar` y sus DTO en internal/http/metricas_handler.go e internal/http/metricas_dto.go — `go test ./internal/... ./cmd/...` en verde
+- [X] T028 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/metricas, tests en verde`
 - [ ] T029 [US1] Cablear el repositorio, el service, el handler y la ruta `GET /projects/{id}/metricas` en cmd/api/main.go
 - [ ] T030 [US1] COMMIT `Cablear GET /projects/{id}/metricas en cmd/api`
 
