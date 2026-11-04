@@ -449,3 +449,112 @@ func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado 
 	defer f.mu.Unlock()
 	return slices.Clone(f.llamadas)
 }
+
+type fakeCredenciales struct {
+	mu       sync.Mutex
+	usuarios map[string]domain.User
+	hashes   map[string]string
+	err      error
+}
+
+func (f *fakeCredenciales) Registrar(_ context.Context, u domain.User, hash string) (domain.User, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return domain.User{}, f.err
+	}
+	if f.usuarios == nil {
+		f.usuarios = map[string]domain.User{}
+		f.hashes = map[string]string{}
+	}
+	if _, ok := f.usuarios[u.NombreNormalizado]; ok {
+		return domain.User{}, repository.ErrUsuarioDuplicado
+	}
+	u.ID = int64(len(f.usuarios) + 1)
+	u.CreadoEn = time.Now().UTC()
+	f.usuarios[u.NombreNormalizado] = u
+	f.hashes[u.NombreNormalizado] = hash
+	return u, nil
+}
+
+func (f *fakeCredenciales) ObtenerPorNombreNormalizado(_ context.Context, normalizado string) (domain.User, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return domain.User{}, "", f.err
+	}
+	u, ok := f.usuarios[normalizado]
+	if !ok {
+		return domain.User{}, "", domain.ErrNoEncontrado
+	}
+	return u, f.hashes[normalizado], nil
+}
+
+type fakeSesiones struct {
+	sesiones map[string]domain.SesionConUsuario
+	usuarios map[int64]domain.User
+	creadas  int
+	cerradas []int64
+	err      error
+}
+
+func (f *fakeSesiones) Crear(_ context.Context, huella string, s domain.Sesion) (domain.Sesion, error) {
+	if f.err != nil {
+		return domain.Sesion{}, f.err
+	}
+	if f.sesiones == nil {
+		f.sesiones = map[string]domain.SesionConUsuario{}
+	}
+	f.creadas++
+	s.ID = int64(f.creadas)
+	f.sesiones[huella] = domain.SesionConUsuario{Sesion: s, Usuario: f.usuarios[s.UsuarioID]}
+	return s, nil
+}
+
+func (f *fakeSesiones) ObtenerPorHuella(_ context.Context, huella string) (domain.SesionConUsuario, error) {
+	if f.err != nil {
+		return domain.SesionConUsuario{}, f.err
+	}
+	s, ok := f.sesiones[huella]
+	if !ok {
+		return domain.SesionConUsuario{}, domain.ErrNoEncontrado
+	}
+	return s, nil
+}
+
+func (f *fakeSesiones) Cerrar(_ context.Context, sesionID int64, ahora time.Time) error {
+	if f.err != nil {
+		return f.err
+	}
+	for huella, s := range f.sesiones {
+		if s.ID == sesionID {
+			s.CerradaEn = &ahora
+			f.sesiones[huella] = s
+		}
+	}
+	f.cerradas = append(f.cerradas, sesionID)
+	return nil
+}
+
+// fakeContrasenas hashea con un prefijo fijo y cuenta las llamadas a Verificar.
+type fakeContrasenas struct {
+	mu          sync.Mutex
+	verificadas int
+}
+
+func (f *fakeContrasenas) Hashear(contrasena string) (string, error) {
+	return "hash:" + contrasena, nil
+}
+
+func (f *fakeContrasenas) Verificar(contrasena, hash string) bool {
+	f.mu.Lock()
+	f.verificadas++
+	f.mu.Unlock()
+	return hash == "hash:"+contrasena
+}
+
+func (f *fakeContrasenas) llamadasAVerificar() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.verificadas
+}
