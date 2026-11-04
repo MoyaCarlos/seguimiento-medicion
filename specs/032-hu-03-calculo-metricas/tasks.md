@@ -33,8 +33,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 **Purpose**: dejar los escenarios BDD escritos antes de implementar (flujo de AGENTS.md).
 
-- [ ] T001 Escribir features/calculo_metricas.feature en Gherkin español: tag `@HU-03`, Característica con el Como/Quiero/Para de la historia y un Escenario por cada criterio de aceptación de US1, US2, US3 y US5 de la spec. US4 se cubre con pruebas de componente
-- [ ] T002 COMMIT `RED: agregar escenarios BDD de cálculo de métricas (fallan)`
+- [X] T001 Escribir features/calculo_metricas.feature en Gherkin español: tag `@HU-03`, Característica con el Como/Quiero/Para de la historia y un Escenario por cada criterio de aceptación de US1, US2, US3 y US5 de la spec. US4 se cubre con pruebas de componente
+- [X] T002 COMMIT `RED: agregar escenarios BDD de cálculo de métricas (fallan)`
 
 ---
 
