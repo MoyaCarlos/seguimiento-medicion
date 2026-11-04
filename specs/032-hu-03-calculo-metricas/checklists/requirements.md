@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,6 +31,6 @@
 
 ## Notes
 
-- Quedan dos decisiones abiertas, marcadas en cuatro lugares de la spec: qué Story Points entran en las horas estimadas (User Story 1 y FR-006) y qué pasa con los Sprints cerrados al cambiar las horas por Story Point (User Story 3 y FR-021).
+- Las decisiones abiertas se resolvieron el 2026-11-03 y están en Clarifications.
 - Assumptions menciona tablas y columnas del modelo de datos solo para enlazar con `MODELO-DE-DATOS.md`, como en las specs anteriores; los requisitos no dependen de esos nombres.
 - Items marked incomplete require spec updates before `/speckit-clarify` or `/speckit-plan`
