@@ -19,5 +19,13 @@ func NewCalcularMetricas(proyectos repository.ProjectRepository, datos repositor
 }
 
 func (s *CalcularMetricas) Ejecutar(ctx context.Context, proyectoID int64) (domain.MetricasProyecto, error) {
-	return domain.MetricasProyecto{}, nil
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
+	if err != nil {
+		return domain.MetricasProyecto{}, err
+	}
+	datos, err := s.datos.ListarDatosSprintsFinalizados(ctx, proyectoID)
+	if err != nil {
+		return domain.MetricasProyecto{}, err
+	}
+	return domain.CalcularMetricas(datos, proyecto.HorasPorStoryPoint), nil
 }
