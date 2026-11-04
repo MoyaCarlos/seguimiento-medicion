@@ -154,8 +154,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 **Independent Test**: se abre la edición, se carga un valor, se guarda y al volver a abrir el valor sigue ahí; vaciar el campo lo deja sin definir; un valor inválido muestra el mensaje junto al campo.
 
-- [ ] T058 [US4] RED: en web/src/features/proyecto/validacion.test.ts, `validarEdicion` acepta vacío, `4` y `2.5`, y rechaza `0` y `-1`; agregar `horas_por_story_point` a los datos de ese test, para que el tipado siga pasando. En web/src/features/proyecto/Editar.test.tsx, con el escenario en el nombre de cada prueba: US4.1 muestra el valor actual; US4.2 guarda y envía el número; US4.3 muestra junto al campo el error `horas_por_story_point` del backend; US4.4 vacío envía `null` — `npm test` confirma que FALLA
-- [ ] T059 [US4] COMMIT `RED: agregar pruebas del campo de horas por Story Point (fallan)`
+- [X] T058 [US4] RED: en web/src/features/proyecto/validacion.test.ts, `validarEdicion` acepta vacío, `4` y `2.5`, y rechaza `0` y `-1`; agregar `horas_por_story_point` a los datos de ese test, para que el tipado siga pasando. En web/src/features/proyecto/Editar.test.tsx, con el escenario en el nombre de cada prueba: US4.1 muestra el valor actual; US4.2 guarda y envía el número; US4.3 muestra junto al campo el error `horas_por_story_point` del backend; US4.4 vacío envía `null` — `npm test` confirma que FALLA
+- [X] T059 [US4] COMMIT `RED: agregar pruebas del campo de horas por Story Point (fallan)`
 - [ ] T060 [US4] GREEN: según research.md R11, agregar el campo en web/src/features/proyecto/validacion.ts, web/src/features/proyecto/api.ts, web/src/features/proyecto/Editar.tsx y web/src/features/proyecto/crear.tsx (solo el valor inicial) — `npm test` en verde
 - [ ] T061 [US4] COMMIT `GREEN: editar las horas por Story Point desde la pantalla, pruebas en verde`
 

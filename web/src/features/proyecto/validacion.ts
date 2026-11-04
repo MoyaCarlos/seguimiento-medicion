@@ -4,6 +4,7 @@ export type DatosProyecto = {
   fecha_inicio: string
   fecha_fin: string
   creador: string
+  horas_por_story_point: string
 }
 
 export type ErroresProyecto = Partial<Record<keyof DatosProyecto, string>>

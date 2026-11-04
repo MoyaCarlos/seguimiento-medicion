@@ -17,6 +17,7 @@ const FORMULARIO_VACIO: DatosProyecto = {
   fecha_inicio: '',
   fecha_fin: '',
   creador: '',
+  horas_por_story_point: '',
 }
 
 function esCampoDeProyecto(campo: string): campo is keyof DatosProyecto {
@@ -46,6 +47,7 @@ export function Editar() {
           fecha_inicio: proyecto.fecha_inicio ?? '',
           fecha_fin: proyecto.fecha_fin ?? '',
           creador: '',
+          horas_por_story_point: '',
         })
       })
       .catch((causa: unknown) => {
