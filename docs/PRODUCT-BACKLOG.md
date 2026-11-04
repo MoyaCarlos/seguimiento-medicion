@@ -665,7 +665,7 @@ Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restric
 1. Escenario 4: elige de una lista a quien será el Scrum Master del proyecto, pero en HU-21 el Scrum Master es quien crea el proyecto (con la sesión iniciada).
 2. Escenario 3: asigna a un integrante cualquier rol, pero en HU-21 "configurar equipo" solo agrega usuarios ya registrados como Product Builder.
 3. Escenario 1: crea usuarios sin contraseña, pero con HU-20 cada persona se registra sola con la suya.
-4. Si el nombre de usuario de HU-20 es `usuarios.nombre`, renombrar un usuario (escenario 5) cambia su dato de ingreso.
+4. Resuelto (Scrum Master, 2026-11-04): el nombre de usuario de HU-20 es `usuarios.nombre` y renombrar queda fuera de HU-20. Si HU-17 renombra un usuario (escenario 5), cambia su dato de ingreso.
 HU-17 se redefine después de HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03); hasta entonces sus escenarios quedan como están. Sigue entrando solo si sobra tiempo, igual que HU-16 y HU-18.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
@@ -802,6 +802,7 @@ Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**,
 Cuentas y deploys: en Render (plan gratis) la base entera se vacía en cada deploy, así que no se pierden solo las sesiones: también los usuarios y sus contraseñas. Para la demo hay que recargar los datos de prueba después de cada deploy; el #235 (datos de prueba v2) recrea los usuarios con una contraseña conocida.
 Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
 Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Se deciden en la spec con el Scrum Master, no quien implementa: cómo viaja el token y su vencimiento, dónde viven las sesiones (en la base se vacían en cada deploy de Render), cómo se dan de alta las contraseñas de los usuarios que hoy no tienen y las reglas del nombre de usuario.
+Nombre de usuario (decidido por el Scrum Master, 2026-11-04): es `usuarios.nombre`; se ingresa por `nombre_normalizado`, que ya es único y no distingue mayúsculas. Renombrar queda fuera de HU-20. Regla: letras, números, punto, guion y guion bajo, de 3 a 30 caracteres. Los usuarios de la demo (#235) deben cumplirla (por ejemplo `beta.uno`, no `Beta Uno`).
 ### Prioridad
 S (Should have) - Hace que cada persona actúe a su nombre. El voto de Planning Poker realmente secreto se logra recién con HU-21, que quita el `usuario_id` del cuerpo y de la query; con HU-20 sola el servidor sigue aceptando el id que mande el cliente. Se planifica en el Sprint 4, antes de la entrega final, por decisión del Scrum Master (2026-11-03).
 ### Estado
@@ -943,5 +944,5 @@ issue y entra en los Sprints.
 | #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, Sprint 4 (solo los criterios de aceptación; notas y «depende de» quedan para después) |
 | #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, Sprint 5 por pantallas |
 | #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |
-| #235 | Datos de prueba v2: usuarios con contraseña, equipo, historias con criterios, Sprints, horas, votaciones y defectos | Abierto, Sprint 4 |
+| #235 | Datos de prueba v2: usuarios con contraseña (con nombres válidos, p. ej. `beta.uno`), equipo, historias con criterios, Sprints, horas, votaciones y defectos; tras cada deploy se recargan con `POST /demo/datos` (sin sesión) | Abierto, Sprint 4 |
 | #236 | Un único Scrum Master por proyecto (índice único parcial, cambio de esquema) | Abierto, Sprint 4 |
