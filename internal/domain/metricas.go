@@ -46,10 +46,26 @@ type MetricasProyecto struct {
 // CalcularMetricas calcula las métricas de cada Sprint finalizado y del proyecto.
 func CalcularMetricas(datos []DatosMetricasSprint, horasPorSP *float64) MetricasProyecto {
 	sprints := make([]MetricasDeSprint, 0, len(datos))
+	var total DatosMetricasSprint
 	for _, d := range datos {
 		sprints = append(sprints, MetricasDeSprint{SprintID: d.SprintID, Numero: d.Numero, Metricas: calcularDe(d, horasPorSP)})
+		total = total.sumar(d)
 	}
-	return MetricasProyecto{Sprints: sprints}
+
+	proyecto := calcularDe(total, horasPorSP)
+	proyecto.Velocidad = redondear(float64(total.SPCompletados) / float64(len(datos)))
+	return MetricasProyecto{Proyecto: proyecto, Sprints: sprints}
+}
+
+func (d DatosMetricasSprint) sumar(otro DatosMetricasSprint) DatosMetricasSprint {
+	d.HistoriasCompletadas += otro.HistoriasCompletadas
+	d.HistoriasArrastradas += otro.HistoriasArrastradas
+	d.SPCompletados += otro.SPCompletados
+	d.SPArrastrados += otro.SPArrastrados
+	d.MinutosReales += otro.MinutosReales
+	d.DefectosDetectados += otro.DefectosDetectados
+	d.DefectosResueltos += otro.DefectosResueltos
+	return d
 }
 
 // calcularDe suma en enteros y redondea solo el valor final, para no acumular
@@ -96,6 +112,11 @@ func valorRedondeado(valor float64) *float64 {
 	return &redondeado
 }
 
+// redondear devuelve 0 en lugar de -0, porque el JSON escribiría el signo.
 func redondear(valor float64) float64 {
-	return math.Round(valor*100) / 100
+	redondeado := math.Round(valor*100) / 100
+	if redondeado == 0 {
+		return 0
+	}
+	return redondeado
 }
