@@ -33,7 +33,7 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
 - **Product Backlog: 21 historias** (HU-16 a HU-19 son propuestas del beta testing; HU-20 y HU-21 salen de la decisión del Scrum Master del 2026-11-03) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se
-  actualiza en cada merge a `main`. Está en curso (issue #139). En el plan gratis el sistema de archivos es efímero: la base se vacía en cada deploy y, a confirmar, cada vez que el servicio se despierta tras 15 minutos de inactividad. Antes de la demo hay que despertar el servicio y recargar los datos de prueba.
+  actualiza en cada merge a `main`. La configuración ya está mergeada (PR #200, issue #139). En el plan gratis el sistema de archivos es efímero: la base se vacía en cada deploy y, a confirmar, cada vez que el servicio se despierta tras 15 minutos de inactividad. Antes de la demo hay que despertar el servicio y recargar los datos de prueba.
 
 ## Tu rol como Scrum Master / Agile Enabler
 
