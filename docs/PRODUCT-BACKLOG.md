@@ -70,7 +70,7 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 * **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto, de un Sprint o del proyecto completo, con historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado; el Sprint 4 pide el informe del proyecto).
 * **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado. Va al final porque su historial muestra métricas (HU-03), esfuerzo (HU-07) y defectos (HU-08), que tienen que existir antes.
 
-## ***Prioridad 5: Mejoras de calidad del beta testing (Could have / Should have)***
+## ***Prioridad 5: Mejoras de calidad (beta testing y decisión del Scrum Master) (Could have / Should have)***
 
 HU-16 a HU-19 surgieron al probar la aplicación desplegada en Render (2026-10-30); HU-20 y HU-21 salieron de la decisión del Scrum Master del 2026-11-03. No son requisitos del enunciado. HU-16, HU-17 y HU-18 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo.
 
@@ -612,6 +612,7 @@ Con un único Scrum Master por proyecto (#236), no hay ascenso a Scrum Master y 
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
 Los permisos por rol quedaron fuera del alcance de HU-04 y los cubre HU-21.
+El escenario 1 se superpone con el escenario 8 de HU-21: el alta como Product Builder de un usuario registrado la cubre HU-21, y HU-16 queda para quitar integrantes.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
@@ -743,7 +744,7 @@ Dado que no creé ni tengo asignado ningún proyecto,
 Cuando abro "Administrar proyectos",
 Entonces el sistema muestra un mensaje de que no hay proyectos y me permite crear uno.
 ### Depende de
-HU-04 (proyectos e integrantes), #148 (navegar entre proyectos desde la interfaz) y la decisión del cierre manual del proyecto (#173).
+HU-04 (proyectos e integrantes) y #148 (navegar entre proyectos desde la interfaz).
 ### Notas
 Decisión del Scrum Master (2026-11-03): esta historia queda absorbida por HU-20 y HU-21, porque la entrega final es el 16-nov y el login real entra antes de esa fecha.
 1. **Nivel 1:** lista de proyectos y selector para navegar entre ellos (#148, PR #231). Es lo que queda de esta historia.
