@@ -113,8 +113,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T036 [US3] COMMIT `RED: agregar tests de la validación de las horas por Story Point (fallan)`
 - [X] T037 [US3] GREEN: implementar `ConHorasPorStoryPoint` en internal/domain/project.go (research.md R7) — `go test ./internal/... ./cmd/...` en verde
 - [X] T038 [US3] COMMIT `GREEN: validar las horas por Story Point, tests en verde`
-- [ ] T039 [US3] RED: en internal/service/editar_proyecto_test.go, con `HorasPorSPEnviadas` y `HorasPorSP` en `EditarProyectoInput`: sin enviar conserva; enviado `nil` borra; enviado `4` guarda; un valor inválido no llama a `Actualizar`; con nombre e horas inválidos el error es el del nombre (edge case del orden). Agregar los campos en internal/service/editar_proyecto.go — confirmar que FALLA
-- [ ] T040 [US3] COMMIT `RED: agregar tests de la edición de las horas por Story Point (fallan)`
+- [X] T039 [US3] RED: en internal/service/editar_proyecto_test.go, con `HorasPorSPEnviadas` y `HorasPorSP` en `EditarProyectoInput`: sin enviar conserva; enviado `nil` borra; enviado `4` guarda; un valor inválido no llama a `Actualizar`; con nombre e horas inválidos el error es el del nombre (edge case del orden). Agregar los campos en internal/service/editar_proyecto.go — confirmar que FALLA
+- [X] T040 [US3] COMMIT `RED: agregar tests de la edición de las horas por Story Point (fallan)`
 - [ ] T041 [US3] GREEN: aplicar el parámetro después de `ConDatosEditados` en internal/service/editar_proyecto.go — `go test ./internal/... ./cmd/...` en verde
 - [ ] T042 [US3] COMMIT `GREEN: editar las horas por Story Point, tests en verde`
 - [ ] T043 [US3] RED: en internal/http/project_handler_test.go, `PUT /projects/{id}`: sin el campo conserva y responde 200, aunque los otros cuatro siguen obligatorios; `null` borra; `4` y `2.5` guardan; `0`, `-1`, `"abc"` y `""` → 400 con `campo: horas_por_story_point`, nunca "JSON inválido"; con nombre vacío y horas inválidas el campo es `nombre`. `GET /projects/{id}`, `GET /projects` y `POST /projects` incluyen `horas_por_story_point` (`null` si no está definido) — confirmar que FALLA

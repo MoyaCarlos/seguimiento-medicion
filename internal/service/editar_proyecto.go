@@ -15,6 +15,10 @@ type EditarProyectoInput struct {
 	Descripcion string
 	FechaInicio *time.Time
 	FechaFin    *time.Time
+	// HorasPorSPEnviadas distingue no mencionar el parámetro (lo conserva) de
+	// enviarlo sin valor (HorasPorSP nil, lo borra).
+	HorasPorSPEnviadas bool
+	HorasPorSP         *string
 }
 
 // EditarProyecto aplica una edición simple reutilizando las validaciones del alta.
