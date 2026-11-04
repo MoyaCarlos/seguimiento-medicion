@@ -565,3 +565,17 @@ describe('asignación de una historia a un Sprint (US3)', () => {
     expect(llamadasA(fetchSimulado, RUTA_ASIGNACION)).toHaveLength(0)
   })
 })
+
+describe('acceso a la votación de Planning Poker (HU-02, US4.1)', () => {
+  it('US4.1: Given historias en el backlog del proyecto 42, When se muestra, Then cada una tiene un enlace "Votar" a la votación de esa historia', async () => {
+    simularApi(conHistorias(MUST, SHOULD))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    const enlaceMust = within(articuloDe(MUST.titulo)).getByRole('link', { name: 'Votar' })
+    const enlaceShould = within(articuloDe(SHOULD.titulo)).getByRole('link', { name: 'Votar' })
+    expect(enlaceMust.getAttribute('href')).toBe('/projects/42/votacion/3')
+    expect(enlaceShould.getAttribute('href')).toBe('/projects/42/votacion/1')
+  })
+})

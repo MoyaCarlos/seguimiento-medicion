@@ -45,7 +45,6 @@ func TestRegistrarEstimacion_Acepta(t *testing.T) {
 		{"reemplaza una carga directa sin Sprint", escenarioEstimacion{sp: intPtr(3)}, 8},
 		{"reemplaza con un Sprint Pendiente", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintPendiente}, 8},
 		{"primera carga con un Sprint Activo", escenarioEstimacion{sprint: domain.SprintActivo}, 5},
-		{"primera carga con un Sprint Finalizado", escenarioEstimacion{sprint: domain.SprintFinalizado}, 5},
 		{"carta que nadie votó", escenarioEstimacion{}, 13},
 		{"historia Completada sin estimación", escenarioEstimacion{estado: domain.EstadoCompletada, sprint: domain.SprintActivo}, 5},
 	}
@@ -124,6 +123,8 @@ func TestRegistrarEstimacion_Rechaza(t *testing.T) {
 		{"ronda anterior revelada y actual abierta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionConRondaUnoReveladaYDosAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
 		{"valor distinto con Sprint Activo", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintActivo, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
 		{"valor distinto con Sprint Finalizado", escenarioEstimacion{sp: intPtr(3), sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrEstimacionCongelada},
+		{"primera carga con un Sprint Finalizado", escenarioEstimacion{sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrCargaEnSprintFinalizado},
+		{"primera carga en una historia Completada de un Sprint Finalizado", escenarioEstimacion{estado: domain.EstadoCompletada, sprint: domain.SprintFinalizado, votaciones: votacionReveladaConDiferencias()}, 3, carlos, 5, domain.ErrCargaEnSprintFinalizado},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

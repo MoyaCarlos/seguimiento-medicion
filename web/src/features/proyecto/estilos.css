@@ -47,10 +47,6 @@
   gap: 0.6rem;
 }
 
-.hu04-acciones .button {
-  text-decoration: none;
-}
-
 .hu04-intro {
   color: var(--muted);
   line-height: 1.6;
