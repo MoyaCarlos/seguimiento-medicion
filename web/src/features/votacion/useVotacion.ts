@@ -102,6 +102,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     try {
       setVotacion(await accion())
       setSinVotacion(false)
+      setErrorDeVotacion('')
     } catch (causa) {
       setErrorDeAccion(mensajeDeError(causa))
       reconsultar()
