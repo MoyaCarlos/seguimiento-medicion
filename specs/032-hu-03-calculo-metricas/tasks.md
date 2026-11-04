@@ -67,8 +67,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T012 [US1] COMMIT `RED: agregar tests de las métricas del proyecto (fallan)`
 - [X] T013 [US1] GREEN: implementar los valores del proyecto en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
 - [X] T014 [US1] COMMIT `GREEN: implementar las métricas del proyecto, tests en verde`
-- [ ] T015 [US1] Definir el puerto `DatosMetricasRepository` con `ListarDatosSprintsFinalizados(ctx, proyectoID) ([]domain.DatosMetricasSprint, error)` en internal/repository/metricas_repository.go
-- [ ] T016 [US1] COMMIT `Agregar el puerto de los datos de métricas`
+- [X] T015 [US1] Definir el puerto `DatosMetricasRepository` con `ListarDatosSprintsFinalizados(ctx, proyectoID) ([]domain.DatosMetricasSprint, error)` en internal/repository/metricas_repository.go
+- [X] T016 [US1] COMMIT `Agregar el puerto de los datos de métricas`
 - [ ] T017 [US1] RED: en internal/repository/sqlite_metricas_test.go, contra `:memory:`: solo aparecen los Sprints `Finalizado` del proyecto, y el `Activo` y el `Pendiente` no aportan horas ni defectos; las completadas suman su `estimacion_sp` y las arrastradas su foto, aunque después se edite la historia; `NULL` suma cero y cuenta como historia; las horas cuentan en el Sprint al que se imputaron aunque la historia ya no esté ahí; un defecto detectado en un Sprint y resuelto en otro cuenta en cada uno; un Sprint sin datos da ceros; `Numero` es la posición entre todos los Sprints del proyecto, con Sprints de otro proyecto intercalados y un Sprint no finalizado de `id` menor (research.md R3); proyecto sin Sprints finalizados → slice vacío no `nil`. Stub en internal/repository/sqlite_metricas.go — confirmar que FALLA
 - [ ] T018 [US1] COMMIT `RED: agregar tests de la lectura de los datos de métricas (fallan)`
 - [ ] T019 [US1] GREEN: implementar la consulta única con subconsultas correlacionadas en internal/repository/sqlite_metricas.go, ordenada por `sprints.id` (research.md R2 y R3) — `go test ./internal/... ./cmd/...` en verde
