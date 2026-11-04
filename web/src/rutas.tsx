@@ -16,6 +16,7 @@ export const rutas: RouteObject[] = [
           { path: 'proyecto/*', lazy: () => import('./features/proyecto') },
           { path: 'backlog/*', lazy: () => import('./features/backlog') },
           { path: 'sprints/*', lazy: () => import('./features/sprints') },
+          { path: 'defectos/*', lazy: () => import('./features/defectos') },
           { path: 'status/*', lazy: () => import('./features/estado') },
         ],
       },
