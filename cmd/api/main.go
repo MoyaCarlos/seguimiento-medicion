@@ -84,6 +84,12 @@ func main() {
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
+	authHandler := apihttp.NewAuthHandler(service.NewRegistrarUsuario(
+		repository.NewSQLiteCredencialRepository(db),
+		service.NewServicioContrasenasProduccion(),
+		service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(db), time.Now),
+	))
+
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },
 		demo.NewCargador(db, time.Now),
@@ -93,6 +99,7 @@ func main() {
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
+	mux.HandleFunc("POST /auth/registro", authHandler.Registro)
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
