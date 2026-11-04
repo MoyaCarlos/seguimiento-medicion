@@ -121,8 +121,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T044 [US3] COMMIT `RED: agregar tests del parámetro en el PUT y la consulta del proyecto (fallan)`
 - [X] T045 [US3] GREEN: en internal/http/project_handler.go, pasar el valor desde `claves` sin interpretarlo y sin agregarlo a los campos obligatorios; `null` llega como `nil`. En internal/http/project_dto.go, agregar el campo a `proyectoResponse` — `go test ./internal/... ./cmd/...` en verde
 - [X] T046 [US3] COMMIT `GREEN: aceptar y devolver las horas por Story Point, tests en verde`
-- [ ] T047 [P] [US3] Actualizar specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml con el campo opcional de la edición y el de la respuesta
-- [ ] T048 [US3] COMMIT `docs: agregar las horas por Story Point al contrato de HU-04`
+- [X] T047 [P] [US3] Actualizar specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml con el campo opcional de la edición y el de la respuesta
+- [X] T048 [US3] COMMIT `docs: agregar las horas por Story Point al contrato de HU-04`
 
 **Checkpoint**: el parámetro cambia las métricas, incluidos los Sprints cerrados (quickstart.md, pasos 2 a 4).
 
