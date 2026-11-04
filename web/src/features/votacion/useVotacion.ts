@@ -103,6 +103,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
       setVotacion(await accion())
       setSinVotacion(false)
       setErrorDeVotacion('')
+      if (errorDeIntegrantes) setActualizacion((actual) => actual + 1)
     } catch (causa) {
       setErrorDeAccion(mensajeDeError(causa))
       reconsultar()
