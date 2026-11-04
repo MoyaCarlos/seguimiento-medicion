@@ -1,5 +1,7 @@
 package domain
 
+import "math"
+
 // DatosMetricasSprint son los datos ya sumados de un Sprint finalizado.
 type DatosMetricasSprint struct {
 	SprintID             int64
@@ -43,5 +45,57 @@ type MetricasProyecto struct {
 
 // CalcularMetricas calcula las métricas de cada Sprint finalizado y del proyecto.
 func CalcularMetricas(datos []DatosMetricasSprint, horasPorSP *float64) MetricasProyecto {
-	return MetricasProyecto{}
+	sprints := make([]MetricasDeSprint, 0, len(datos))
+	for _, d := range datos {
+		sprints = append(sprints, MetricasDeSprint{SprintID: d.SprintID, Numero: d.Numero, Metricas: calcularDe(d, horasPorSP)})
+	}
+	return MetricasProyecto{Sprints: sprints}
+}
+
+// calcularDe suma en enteros y redondea solo el valor final, para no acumular
+// errores de redondeo (D8).
+func calcularDe(d DatosMetricasSprint, horasPorSP *float64) Metricas {
+	planificados := d.SPCompletados + d.SPArrastrados
+	m := Metricas{
+		SPPlanificados:        planificados,
+		SPCompletados:         d.SPCompletados,
+		Velocidad:             float64(d.SPCompletados),
+		PorcentajeCompletadas: porcentajeCompletadas(d),
+		HorasReales:           redondear(minutosAHoras(d.MinutosReales)),
+		DefectosDetectados:    d.DefectosDetectados,
+		DefectosResueltos:     d.DefectosResueltos,
+	}
+	if horasPorSP == nil {
+		return m
+	}
+
+	estimadas := float64(planificados) * *horasPorSP
+	desviacion := minutosAHoras(d.MinutosReales) - estimadas
+	m.HorasEstimadas = valorRedondeado(estimadas)
+	m.DesviacionHoras = valorRedondeado(desviacion)
+	if estimadas > 0 {
+		m.DesviacionPorcentaje = valorRedondeado(desviacion / estimadas * 100)
+	}
+	return m
+}
+
+func porcentajeCompletadas(d DatosMetricasSprint) float64 {
+	comprometidas := d.HistoriasCompletadas + d.HistoriasArrastradas
+	if comprometidas == 0 {
+		return 0
+	}
+	return redondear(float64(d.HistoriasCompletadas) / float64(comprometidas) * 100)
+}
+
+func minutosAHoras(minutos int) float64 {
+	return float64(minutos) / 60
+}
+
+func valorRedondeado(valor float64) *float64 {
+	redondeado := redondear(valor)
+	return &redondeado
+}
+
+func redondear(valor float64) float64 {
+	return math.Round(valor*100) / 100
 }

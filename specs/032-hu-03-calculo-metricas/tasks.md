@@ -61,8 +61,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 - [X] T007 [US1] RED: en internal/domain/metricas_test.go, tabla de `CalcularMetricas` para un Sprint: el caso del Independent Test; historias sin Story Points (cuentan en el porcentaje y suman cero); Sprint sin historias comprometidas (ceros y 0%); sin parámetro (`HorasEstimadas`, `DesviacionHoras` y `DesviacionPorcentaje` en `nil`, las demás con su valor); con parámetro y 0 SP planificados (estimadas 0, desviación igual a las reales y porcentaje `nil`); sin horas (reales 0). Agregar en internal/domain/metricas.go los tipos de data-model.md y la firma con cuerpo vacío — confirmar que FALLA
 - [X] T008 [US1] COMMIT `RED: agregar tests de las métricas de un Sprint (fallan)`
-- [ ] T009 [US1] GREEN: implementar el cálculo por Sprint en internal/domain/metricas.go, con la aritmética de research.md R4 — `go test ./internal/... ./cmd/...` en verde
-- [ ] T010 [US1] COMMIT `GREEN: implementar las métricas de un Sprint, tests en verde`
+- [X] T009 [US1] GREEN: implementar el cálculo por Sprint en internal/domain/metricas.go, con la aritmética de research.md R4 — `go test ./internal/... ./cmd/...` en verde
+- [X] T010 [US1] COMMIT `GREEN: implementar las métricas de un Sprint, tests en verde`
 - [ ] T011 [US1] RED: en internal/domain/metricas_test.go, valores del proyecto: dos Sprints con 5 y 8 SP completados → 13 y velocidad 6,5; porcentajes recalculados sobre los totales; historia de 3 SP arrastrada en un Sprint y completada en otro → 6 planificados, 3 completados, 24 horas y 50% (US1.9); `Sprints` conserva el orden recibido; redondeo a dos decimales calculado desde los totales enteros y no desde los valores redondeados de cada Sprint; una desviación de −0,001 horas se informa como `0` y no como `-0` — confirmar que FALLA
 - [ ] T012 [US1] COMMIT `RED: agregar tests de las métricas del proyecto (fallan)`
 - [ ] T013 [US1] GREEN: implementar los valores del proyecto en internal/domain/metricas.go — `go test ./internal/... ./cmd/...` en verde
