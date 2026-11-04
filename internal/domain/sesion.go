@@ -3,7 +3,7 @@ package domain
 import "time"
 
 // DuracionSesion es lo que dura una sesión desde que se emite (HU-20).
-const DuracionSesion = 0
+const DuracionSesion = 7 * 24 * time.Hour
 
 // Sesion es el ingreso de un usuario, identificado por la huella de su token.
 type Sesion struct {
@@ -20,7 +20,8 @@ type SesionConUsuario struct {
 	Usuario User
 }
 
-// Vigente indica si la sesión sirve para autenticar en el instante dado.
+// Vigente indica si la sesión sirve para autenticar en el instante dado: no
+// está cerrada y todavía no llegó su vencimiento.
 func (s Sesion) Vigente(ahora time.Time) bool {
-	return false
+	return s.CerradaEn == nil && ahora.Before(s.VenceEn)
 }

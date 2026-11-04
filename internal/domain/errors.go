@@ -68,3 +68,13 @@ var (
 	ErrRondaRevelada      = ValidationError{Campo: "estado", Mensaje: "la ronda ya fue revelada"}
 	ErrFaltanVotos        = ValidationError{Campo: "votos", Mensaje: "faltan votar integrantes del proyecto"}
 )
+
+// Errores de autenticación (HU-20).
+var (
+	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.
+	ErrCredencialesInvalidas = errors.New("Usuario o contraseña incorrectos")
+	// ErrNoAutenticado indica un pedido sin sesión vigente.
+	ErrNoAutenticado = errors.New("Tu sesión no es válida")
+	// ErrNombreUsuarioEnUso indica un registro con un nombre de usuario ya existente.
+	ErrNombreUsuarioEnUso = errors.New("Ese nombre de usuario ya existe")
+)
