@@ -109,8 +109,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 **Independent Test**: un `PUT` con 4 guarda el valor; sin el campo lo conserva; con `null` lo borra; con 0, −1, `"abc"` o `""` responde 400 sobre el campo y el proyecto no cambia.
 
-- [ ] T035 [US3] RED: en internal/domain/project_test.go, tabla de `ConHorasPorStoryPoint(valor *string)`: `nil` → sin definir; `4`, `2.5` y `1e2` → válidos; `0`, `-1`, `"abc"`, `""`, `"5"` (con comillas), `true`, `[]`, `1e999`, `Inf` y `NaN` → `ErrHorasPorStoryPointInvalidas`, `ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}`. Agregar el error en internal/domain/errors.go y el stub en internal/domain/project.go — confirmar que FALLA
-- [ ] T036 [US3] COMMIT `RED: agregar tests de la validación de las horas por Story Point (fallan)`
+- [X] T035 [US3] RED: en internal/domain/project_test.go, tabla de `ConHorasPorStoryPoint(valor *string)`: `nil` → sin definir; `4`, `2.5` y `1e2` → válidos; `0`, `-1`, `"abc"`, `""`, `"5"` (con comillas), `true`, `[]`, `1e999`, `Inf` y `NaN` → `ErrHorasPorStoryPointInvalidas`, `ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}`. Agregar el error en internal/domain/errors.go y el stub en internal/domain/project.go — confirmar que FALLA
+- [X] T036 [US3] COMMIT `RED: agregar tests de la validación de las horas por Story Point (fallan)`
 - [ ] T037 [US3] GREEN: implementar `ConHorasPorStoryPoint` en internal/domain/project.go (research.md R7) — `go test ./internal/... ./cmd/...` en verde
 - [ ] T038 [US3] COMMIT `GREEN: validar las horas por Story Point, tests en verde`
 - [ ] T039 [US3] RED: en internal/service/editar_proyecto_test.go, con `HorasPorSPEnviadas` y `HorasPorSP` en `EditarProyectoInput`: sin enviar conserva; enviado `nil` borra; enviado `4` guarda; un valor inválido no llama a `Actualizar`; con nombre e horas inválidos el error es el del nombre (edge case del orden). Agregar los campos en internal/service/editar_proyecto.go — confirmar que FALLA

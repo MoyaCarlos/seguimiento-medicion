@@ -73,3 +73,6 @@ var (
 
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
+
+// ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
+var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}

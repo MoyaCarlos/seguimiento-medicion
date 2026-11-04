@@ -66,3 +66,9 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 	}
 	return nombre, descripcion, nil
 }
+
+// ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
+// indicado. valor es el número en texto; nil lo deja sin definir.
+func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {
+	return p, nil
+}
