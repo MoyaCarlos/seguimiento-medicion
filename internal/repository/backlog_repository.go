@@ -31,7 +31,6 @@ type HistoriaRepository interface {
 // así no pisa una edición simultánea. GuardarEstimacion devuelve
 // domain.ErrHistoriaNoEncontrada si no afectó ninguna fila.
 type EstimacionHistoriaRepository interface {
-	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
 	GuardarEstimacion(ctx context.Context, id int64, sp int) error
 }
 

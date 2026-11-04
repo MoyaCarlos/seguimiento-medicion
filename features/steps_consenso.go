@@ -90,12 +90,20 @@ func (c *pasosConsenso) registraElValor(nombre string, valor int) error {
 	if err != nil {
 		return err
 	}
-	_, c.votacion.err = c.registrar.Ejecutar(context.Background(), c.votacion.historiaID, id, valor)
+	historia, err := c.historia()
+	if err != nil {
+		return err
+	}
+	_, c.votacion.err = c.registrar.Ejecutar(context.Background(), historia, id, valor)
 	return nil
 }
 
+func (c *pasosConsenso) historia() (domain.BacklogItem, error) {
+	return repository.NewSQLiteBacklogRepository(c.votacion.base.db).ObtenerPorID(context.Background(), c.votacion.historiaID)
+}
+
 func (c *pasosConsenso) storyPoints() (*int, error) {
-	historia, err := repository.NewSQLiteBacklogRepository(c.votacion.base.db).ObtenerPorID(context.Background(), c.votacion.historiaID)
+	historia, err := c.historia()
 	return historia.EstimacionSP, err
 }
 

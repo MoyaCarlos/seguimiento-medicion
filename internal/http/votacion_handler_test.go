@@ -490,6 +490,7 @@ func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 		"id no numérico":                        {"abc", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusBadRequest, "id", ""},
 		"historia inexistente con JSON roto":    {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"historia inexistente con pedido bueno": {"999", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
 		"sin usuario_id":                        {"3", `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
 		"carta fuera de la baraja":              {"3", `{"usuario_id":1,"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},

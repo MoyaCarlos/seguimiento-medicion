@@ -498,14 +498,6 @@ type fakeEstimacionRepository struct {
 	escrituras int
 }
 
-func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
-	h, ok := f.historias[id]
-	if !ok {
-		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
-	}
-	return h, nil
-}
-
 func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int) error {
 	h, ok := f.historias[id]
 	if !ok {

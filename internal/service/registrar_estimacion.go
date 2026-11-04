@@ -20,12 +20,10 @@ func NewRegistrarEstimacion(historias repository.EstimacionHistoriaRepository, p
 	return &RegistrarEstimacion{historias: historias, proyectos: proyectos, votaciones: votaciones, sprints: sprints}
 }
 
-// Ejecutar no escribe si el valor ya es el cargado.
-func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historiaID, usuarioID int64, valor int) (domain.BacklogItem, error) {
-	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
-	if err != nil {
-		return domain.BacklogItem{}, err
-	}
+// Ejecutar recibe la historia ya leída por quien la llama, que tiene que
+// comprobar que existe antes de validar el pedido (FR-011). No escribe si el
+// valor ya es el cargado.
+func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historia domain.BacklogItem, usuarioID int64, valor int) (domain.BacklogItem, error) {
 	if err := exigirScrumMaster(ctx, s.proyectos, historia.ProyectoID, usuarioID); err != nil {
 		return domain.BacklogItem{}, err
 	}
