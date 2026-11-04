@@ -42,6 +42,13 @@ func (s *EditarProyecto) Ejecutar(ctx context.Context, input EditarProyectoInput
 		return domain.Project{}, err
 	}
 
+	if input.HorasPorSPEnviadas {
+		editado, err = editado.ConHorasPorStoryPoint(input.HorasPorSP)
+		if err != nil {
+			return domain.Project{}, err
+		}
+	}
+
 	if err := s.proyectos.Actualizar(ctx, editado); err != nil {
 		return domain.Project{}, err
 	}
