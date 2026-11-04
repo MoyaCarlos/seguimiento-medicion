@@ -15,6 +15,8 @@ type Project struct {
 	FechaInicio *time.Time
 	FechaFin    *time.Time
 	CreadoEn    time.Time
+	// HorasPorStoryPoint es nil mientras no esté definido (HU-03).
+	HorasPorStoryPoint *float64
 }
 
 const (

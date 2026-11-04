@@ -44,8 +44,8 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 
 **⚠️ CRITICAL**: ninguna historia empieza hasta terminar esta fase.
 
-- [ ] T003 RED: en internal/repository/sqlite_project_test.go, con el valor sembrado por SQL: `ObtenerPorID` y `Listar` devuelven `HorasPorStoryPoint` 2.5, y `nil` si la columna es `NULL`; `Actualizar` guarda un valor y con `nil` lo borra; leer el proyecto, cambiar el nombre y actualizar conserva el valor (research.md R8). Agregar en internal/domain/project.go el campo `HorasPorStoryPoint *float64` — confirmar que FALLA
-- [ ] T004 COMMIT `RED: agregar tests de la persistencia de las horas por Story Point (fallan)`
+- [X] T003 RED: en internal/repository/sqlite_project_test.go, con el valor sembrado por SQL: `ObtenerPorID` y `Listar` devuelven `HorasPorStoryPoint` 2.5, y `nil` si la columna es `NULL`; `Actualizar` guarda un valor y con `nil` lo borra; leer el proyecto, cambiar el nombre y actualizar conserva el valor (research.md R8). Agregar en internal/domain/project.go el campo `HorasPorStoryPoint *float64` — confirmar que FALLA
+- [X] T004 COMMIT `RED: agregar tests de la persistencia de las horas por Story Point (fallan)`
 - [ ] T005 GREEN: en internal/repository/sqlite_project.go, agregar `horas_por_story_point` a los dos `SELECT`, a `escanearProyecto` (con `sql.NullFloat64`) y al `UPDATE` de `Actualizar`; el `INSERT` no cambia — `go test ./internal/... ./cmd/...` en verde
 - [ ] T006 COMMIT `GREEN: persistir las horas por Story Point, tests en verde`
 
