@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -70,5 +72,14 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 // ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
 // indicado. valor es el número en texto; nil lo deja sin definir.
 func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {
+	if valor == nil {
+		p.HorasPorStoryPoint = nil
+		return p, nil
+	}
+	horas, err := strconv.ParseFloat(*valor, 64)
+	if err != nil || !(horas > 0) || math.IsInf(horas, 1) {
+		return Project{}, ErrHorasPorStoryPointInvalidas
+	}
+	p.HorasPorStoryPoint = &horas
 	return p, nil
 }
