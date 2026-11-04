@@ -139,10 +139,10 @@ comprueban `go test ./internal/... ./cmd/...`, y `go test ./...` se exige desde 
 - [X] T051 [US5] COMMIT `RED: agregar tests del rechazo de la carga con Sprint Finalizado (fallan)`
 - [X] T052 [US5] GREEN: reordenar `validarEstimacionCongelada` en internal/service/estimacion_congelada.go según research.md R9 — `go test ./internal/... ./cmd/...` en verde
 - [X] T053 [US5] COMMIT `GREEN: rechazar la carga de Story Points con Sprint Finalizado, tests en verde`
-- [ ] T054 [P] [US5] Actualizar MODELO-DE-DATOS.md: §4.4, §4.6, §5 y D2b con la regla nueva y la fecha de la reunión, y §6 con que las horas estimadas salen de los SP planificados
-- [ ] T055 [P] [US5] Actualizar docs/PRODUCT-BACKLOG.md: decisiones transversales, HU-14 Escenario 4, HU-15 Escenario 3 y la nota de HU-03 (la regla nueva y la excepción por cambiar el parámetro)
-- [ ] T056 [P] [US5] Actualizar specs/009-hu-15-consulta-edicion-backlog/spec.md (Clarifications, escenario 6, edge case y FR) y specs/031-hu-14-consenso-estimacion/spec.md (FR-010)
-- [ ] T057 [US5] COMMIT `docs: registrar la regla de la carga de Story Points con Sprint Finalizado (D2b)`
+- [X] T054 [P] [US5] Actualizar MODELO-DE-DATOS.md: §4.4, §4.6, §5 y D2b con la regla nueva y la fecha de la reunión, y §6 con que las horas estimadas salen de los SP planificados
+- [X] T055 [P] [US5] Actualizar docs/PRODUCT-BACKLOG.md: decisiones transversales, HU-14 Escenario 4, HU-15 Escenario 3 y la nota de HU-03 (la regla nueva y la excepción por cambiar el parámetro)
+- [X] T056 [P] [US5] Actualizar specs/009-hu-15-consulta-edicion-backlog/spec.md (Clarifications, escenario 6, edge case y FR) y specs/031-hu-14-consenso-estimacion/spec.md (FR-010)
+- [X] T057 [US5] COMMIT `docs: registrar la regla de la carga de Story Points con Sprint Finalizado (D2b)`
 
 **Checkpoint**: los documentos y el código coinciden en la regla nueva.
 
