@@ -84,6 +84,27 @@ func TestRegistrarEstimacion_MismoValorConSprintActivo_NoEscribe(t *testing.T) {
 	}
 }
 
+type votacionQueNoDebeCargarVotos struct {
+	*fakeVotacionRepository
+	t *testing.T
+}
+
+func (v votacionQueNoDebeCargarVotos) ObtenerRondaActual(ctx context.Context, historiaID int64) (domain.RondaVotacion, error) {
+	v.t.Error("registrar la estimación no debía cargar los votos de la ronda")
+	return v.fakeVotacionRepository.ObtenerRondaActual(ctx, historiaID)
+}
+
+func TestRegistrarEstimacion_NoCargaLosVotos(t *testing.T) {
+	historia := historiaDelBacklog()
+	repo := &fakeEstimacionRepository{historias: map[int64]domain.BacklogItem{historia.ID: historia}}
+	votaciones := votacionQueNoDebeCargarVotos{votacionReveladaConDiferencias(), t}
+	servicio := NewRegistrarEstimacion(repo, equipoDelProyecto(), votaciones, repository.NewSprintRepositoryEnMemoria())
+
+	if _, err := servicio.Ejecutar(context.Background(), 3, carlos, 5); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+}
+
 func TestRegistrarEstimacion_Rechaza(t *testing.T) {
 	casos := []struct {
 		nombre     string
