@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Métrica · Remake</title>
+<style>
+  :root {
+    /* Paleta: azul marino + teal, con ámbar y verde solo para estados */
+    --bg: #f3f5f8; --surface: #ffffff; --ink: #0f1b2d; --muted: #64748b; --line: #e2e8f0; --line-2: #cbd5e1;
+    --nav: #0b1626; --nav-ink: #b8c4d6;
+    --brand: #0d9488; --brand-dark: #0b7a70; --brand-soft: #dcf3ef; --brand-ink: #0b5f58;
+    --amber: #b45309; --amber-soft: #fdf0d5; --ok: #15803d; --ok-soft: #dcf5e4; --slate-soft: #eef2f6; --danger: #e11d48;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgb(15 27 45 / 5%), 0 10px 28px rgb(15 27 45 / 6%);
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  h1, h2, h3, p { margin: 0; }
+  button { font: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+  svg { display: block; }
+
+  /* ===== Estructura ===== */
+  .shell { display: grid; grid-template-columns: 272px minmax(0, 1fr); min-height: 100vh; }
+  .main-col { min-width: 0; }
+  .scrim { display: none; }
+  .tabbar { display: none; }
+
+  /* ===== Barra lateral ===== */
+  .sidebar { background: var(--nav); color: var(--nav-ink); position: sticky; top: 0; height: 100vh; overflow-y: auto; overflow-x: hidden; padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; align-self: start; }
+  .brand-row { padding: 4px 8px 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+  .logo { width: 32px; height: 32px; border-radius: 9px; background: linear-gradient(135deg, #2dd4bf, #0d9488); display: grid; place-items: center; color: #fff; }
+  .logo svg { width: 18px; height: 18px; }
+  .nav-label { margin: 18px 12px 6px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #6f8099; }
+  .nav-item { position: relative; display: flex; align-items: center; gap: 11px; height: 40px; padding: 0 12px; border-radius: 10px; color: var(--nav-ink); font-weight: 600; font-size: 14px; transition: background .15s, color .15s; }
+  .nav-item svg { width: 18px; height: 18px; flex: none; opacity: .85; }
+  .nav-item:hover { background: rgb(255 255 255 / 6%); color: #fff; }
+  .nav-item.is-active { background: rgb(255 255 255 / 9%); color: #fff; }
+  .nav-item.is-active svg { color: #2dd4bf; opacity: 1; }
+  .nav-item.is-active::before { content: ""; position: absolute; left: -14px; top: 9px; bottom: 9px; width: 3px; border-radius: 0 3px 3px 0; background: #2dd4bf; }
+  .nav-item:focus-visible, .switcher-btn:focus-visible, .brand:focus-visible { outline: 2px solid #2dd4bf; outline-offset: 2px; }
+  .sidebar-foot { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 14px 8px 2px; border-top: 1px solid rgb(255 255 255 / 8%); }
+  .sidebar-foot strong { display: block; color: #fff; font-size: 13px; line-height: 1.2; }
+  .sidebar-foot small { color: #8da0b8; font-size: 12px; }
+
+  /* Selector de proyecto (desplegable) */
+  .switcher { position: relative; margin: 8px 0 2px; }
+  .switcher-btn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; border: 1px solid rgb(255 255 255 / 10%); background: rgb(255 255 255 / 5%); color: #fff; text-align: left; }
+  .switcher-btn:hover { background: rgb(255 255 255 / 9%); }
+  .sw-text { min-width: 0; flex: 1; }
+  .sw-text strong { display: block; font-size: 13px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sw-text small { color: #8da0b8; font-size: 12px; }
+  .switcher-btn > svg { width: 16px; height: 16px; flex: none; color: #8da0b8; transition: transform .2s; }
+  .switcher.is-open .switcher-btn > svg { transform: rotate(180deg); }
+  .switcher-menu { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 6px); background: var(--surface); color: var(--ink); border-radius: 12px; box-shadow: 0 18px 40px rgb(0 0 0 / 30%); padding: 6px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .sw-item { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+  .sw-item:hover { background: var(--slate-soft); }
+  .sw-item[aria-current] { background: var(--brand-soft); }
+  .sw-item .t { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sw-new { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 12px; border-radius: 0 0 8px 8px; color: var(--brand-dark); }
+  .sw-new svg { width: 16px; height: 16px; }
+
+  .avatar { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-weight: 800; font-size: 13px; flex: none; }
+  .avatar--sm { width: 26px; height: 26px; border-radius: 8px; font-size: 11px; }
+  .avatar--user { border-radius: 50%; background: #1d3557; color: #fff; }
+  .av-0 { background: #d3f0ec; color: #0b5f58; } .av-1 { background: #dbe7fb; color: #1e4ba5; } .av-2 { background: #fdecc8; color: #8a4b08; }
+  .av-3 { background: #fde0e6; color: #a31d44; } .av-4 { background: #e8e0fb; color: #5b3fb0; }
+
+  /* ===== Barra superior + contenido ===== */
+  .topbar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 28px; background: rgb(243 245 248 / 88%); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; color: var(--ink); flex: none; }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .icon-btn.menu-btn { display: none; }
+  .crumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); min-width: 0; }
+  .crumbs a:hover { color: var(--ink); }
+  .crumbs svg { width: 14px; height: 14px; flex: none; opacity: .6; }
+  .crumbs a, .crumbs .cur { max-width: 24ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crumbs .cur { color: var(--ink); font-weight: 600; }
+  .content { max-width: 1180px; width: 100%; margin: 0 auto; padding: 28px 28px 64px; display: grid; gap: 24px; align-content: start; }
+
+  .page-head { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; justify-content: space-between; }
+  .kicker { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--brand-dark); margin-bottom: 6px; }
+  .title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  h1 { font-size: clamp(24px, 3.2vw, 32px); line-height: 1.15; letter-spacing: -.025em; font-weight: 800; }
+  .sub { color: var(--muted); margin-top: 6px; font-size: 14.5px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+  /* ===== Botones ===== */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent; font-weight: 700; font-size: 14px; white-space: nowrap; transition: background .15s, border-color .15s; }
+  .btn svg { width: 16px; height: 16px; flex: none; }
+  .btn--primary { background: var(--brand); color: #fff; box-shadow: 0 1px 2px rgb(13 148 136 / 35%); }
+  .btn--primary:hover { background: var(--brand-dark); }
+  .btn--secondary { background: var(--surface); border-color: var(--line-2); color: var(--ink); }
+  .btn--secondary:hover { background: var(--slate-soft); }
+  .btn--ghost { background: transparent; color: var(--muted); }
+  .btn--ghost:hover { background: var(--slate-soft); color: var(--ink); }
+  .btn--outline { background: var(--surface); border-color: var(--brand); color: var(--brand-dark); }
+  .btn--outline:hover { background: var(--brand-soft); }
+  .btn--sm { height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; }
+  .btn--block { width: 100%; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn:focus-visible, .icon-btn:focus-visible, .tab:focus-visible, .link:focus-visible, .pcard:focus-visible, summary:focus-visible, .sw-item:focus-visible, .crumbs a:focus-visible { outline: 3px solid rgb(13 148 136 / 35%); outline-offset: 2px; }
+
+  /* ===== Chips y badges ===== */
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 7px; font-size: 12px; font-weight: 600; background: var(--slate-soft); color: #475569; }
+  .chip--must { background: var(--ink); color: #fff; }
+  .chip--should { background: var(--brand-soft); color: var(--brand-ink); }
+  .chip--could { background: var(--slate-soft); color: #64748b; }
+  .chip--sp { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); color: #475569; }
+  .chip--none { background: transparent; box-shadow: inset 0 0 0 1px var(--line-2); color: #94a3b8; font-style: italic; }
+  .chip--nueva { background: var(--slate-soft); color: #475569; }
+  .chip--progreso { background: var(--amber-soft); color: var(--amber); }
+  .chip--ok { background: var(--ok-soft); color: var(--ok); }
+  .chip--progreso::before, .chip--ok::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; background: var(--brand-soft); color: var(--brand-ink); white-space: nowrap; }
+  .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .badge--finalizado { background: var(--ok-soft); color: var(--ok); }
+  .badge--planificado { background: var(--slate-soft); color: #475569; }
+
+  /* ===== Tarjetas ===== */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 22px; }
+  .card-title { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .card h2.heading { font-size: 17px; letter-spacing: -.01em; margin-bottom: 14px; }
+  .divider { height: 1px; background: var(--line); margin: 22px 0; }
+  .link { color: var(--brand-dark); font-weight: 700; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+  .link svg { width: 15px; height: 15px; }
+  .link:hover { text-decoration: underline; }
+  .grid-2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .prose { color: #334155; line-height: 1.7; max-width: 68ch; }
+  .vacio, .lane-empty { border: 1px dashed var(--line-2); border-radius: 14px; padding: 28px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+  /* Cronograma */
+  .tl-dates { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+  .tl-dates small { display: block; color: var(--muted); font-size: 12px; font-weight: 600; }
+  .tl-dates strong { font-size: 17px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .tl-dates div:last-child { text-align: right; }
+  .track { position: relative; height: 8px; background: var(--slate-soft); border-radius: 999px; }
+  .track i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #2dd4bf, #0d9488); border-radius: 999px; }
+  .track b { position: absolute; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: #fff; border: 3px solid var(--brand); box-shadow: 0 1px 4px rgb(0 0 0 / 20%); }
+  .card-foot { margin-top: 22px; }
+
+  /* Equipo */
+  .team { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .team li { display: flex; align-items: center; gap: 12px; padding: 8px 4px; }
+  .team .t { min-width: 0; flex: 1; font-weight: 600; font-size: 14px; }
+  .team small { color: var(--muted); font-size: 12.5px; font-weight: 600; }
+  .hint { color: var(--muted); line-height: 1.6; font-size: 14px; }
+
+  /* ===== Formularios ===== */
+  .form-grid { display: grid; gap: 16px; }
+  .form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field label { font-size: 13px; font-weight: 700; }
+  .opt { font-weight: 500; color: var(--muted); }
+  .field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 14.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; padding: 10px 12px; min-height: 42px; }
+  .field textarea { min-height: 92px; resize: vertical; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgb(13 148 136 / 18%); outline: none; }
+  .error { display: none; font-size: 12.5px; color: var(--danger); }
+  .field.invalid .error { display: block; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
+  .form-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .form-card { max-width: 720px; }
+  fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+  /* ===== Inicio: proyectos ===== */
+  .list-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .search { width: 240px; max-width: 100%; font: inherit; font-size: 14px; padding: 0 12px; height: 40px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink); }
+  .search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgb(13 148 136 / 18%); outline: none; }
+  .count { display: inline-block; margin-left: 10px; padding: 1px 10px; border-radius: 999px; background: var(--slate-soft); color: #475569; font-size: 13px; font-weight: 700; vertical-align: middle; }
+  .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+  .pcard { display: flex; flex-direction: column; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 20px; transition: transform .15s, box-shadow .15s, border-color .15s; }
+  .pcard:hover { transform: translateY(-2px); border-color: #b9c6d6; box-shadow: 0 2px 4px rgb(15 27 45 / 6%), 0 16px 36px rgb(15 27 45 / 10%); }
+  .pcard-top { display: flex; justify-content: space-between; align-items: center; }
+  .pcard h3 { font-size: 17px; letter-spacing: -.01em; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pcard p { color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pcard-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pcard-meta svg { width: 15px; height: 15px; }
+  .pcard-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 12.5px; color: var(--muted); margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); }
+  .pcard.is-new { animation: pop .8s ease; }
+  .pcard--new { border: 2px dashed var(--line-2); background: transparent; box-shadow: none; align-items: center; justify-content: center; text-align: center; color: var(--muted); min-height: 220px; gap: 8px; font-weight: 700; }
+  .pcard--new svg { width: 26px; height: 26px; }
+  .pcard--new:hover { border-color: var(--brand); color: var(--brand-dark); background: var(--brand-soft); transform: none; box-shadow: none; }
+  @keyframes pop { 0% { box-shadow: 0 0 0 0 rgb(13 148 136 / 45%); } 100% { box-shadow: 0 0 0 14px rgb(13 148 136 / 0%); } }
+
+  /* ===== Backlog ===== */
+  .stack { display: grid; gap: 14px; list-style: none; margin: 0; padding: 0; }
+  .story { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line-2); border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px; display: grid; gap: 12px; }
+  .story--must { border-left-color: var(--ink); } .story--should { border-left-color: var(--brand); } .story--could { border-left-color: #94a3b8; }
+  .story-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .story-title { display: flex; gap: 10px; align-items: baseline; min-width: 0; }
+  .story-id { font-size: 12.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .story h2 { font-size: 17px; letter-spacing: -.01em; line-height: 1.35; overflow-wrap: anywhere; }
+  .story-desc { color: #334155; line-height: 1.6; }
+  .criteria { border-top: 1px dashed var(--line-2); padding-top: 12px; }
+  .criteria h3 { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .criteria .empty { color: #94a3b8; font-style: italic; font-size: 14px; }
+  .inline-panel { background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+  .inline-panel h3 { font-size: 15px; letter-spacing: -.01em; }
+  .panel-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ===== Sprints / Estado ===== */
+  .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .lane { background: rgb(15 27 45 / 3.5%); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: grid; gap: 12px; align-content: start; }
+  .lane-head { display: flex; align-items: center; gap: 8px; padding: 4px 6px; font-size: 12px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: #475569; }
+  .lane-head::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+  .lane--activo .lane-head { color: var(--brand-ink); } .lane--activo .lane-head::before { background: var(--brand); }
+  .lane--fin .lane-head { color: var(--ok); } .lane--fin .lane-head::before { background: var(--ok); }
+  .lane-head .chips { margin-left: auto; text-transform: none; letter-spacing: 0; }
+  .lane-empty { padding: 20px 14px; background: transparent; }
+  .scard { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; display: grid; gap: 14px; }
+  .scard h3 { font-size: 16px; letter-spacing: -.01em; }
+  .goal { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .dates { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 2px 9px; border-radius: 7px; background: var(--slate-soft); color: #475569; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .dates svg { width: 13px; height: 13px; }
+  .mini-list { display: grid; gap: 8px; list-style: none; margin: 0; padding: 0; }
+  .mini { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; background: #fbfcfd; }
+  .mini-title { font-weight: 700; font-size: 14px; line-height: 1.35; }
+  .mini-foot { display: flex; justify-content: flex-end; }
+  .mini-note { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .scard-foot { border-top: 1px solid var(--line); padding-top: 14px; display: flex; justify-content: flex-end; }
+  .history { display: grid; gap: 10px; }
+  details.sdone { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+  details.sdone summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 10px; align-items: start; }
+  details.sdone summary::-webkit-details-marker { display: none; }
+  details.sdone summary:hover { background: #fbfcfd; }
+  details.sdone h3 { font-size: 15.5px; letter-spacing: -.01em; }
+  details.sdone .goal { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sd-chips { grid-column: 1 / -1; }
+  .chev { width: 16px; height: 16px; color: var(--muted); transition: transform .2s; margin-top: 3px; }
+  details[open].sdone .chev { transform: rotate(180deg); }
+  details[open].sdone summary { border-bottom: 1px solid var(--line); }
+  .done-list { list-style: none; margin: 0; padding: 4px 16px 8px; }
+  .done-list > li { padding: 12px 0; display: grid; gap: 6px; }
+  .done-list > li + li { border-top: 1px solid var(--line); }
+  .done-title { font-weight: 700; font-size: 13.5px; line-height: 1.35; }
+
+  .summary { display: grid; grid-template-columns: auto 1fr; gap: 18px 40px; align-items: center; }
+  .totals { display: flex; gap: 40px; }
+  .totals > div { display: grid; gap: 4px; }
+  .big { font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .lbl { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .stack-bar { display: flex; gap: 3px; height: 12px; border-radius: 999px; overflow: hidden; background: var(--slate-soft); }
+  .stack-bar i { display: block; min-width: 8px; }
+  .stag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--brand-dark); }
+  .stag::before { content: ""; width: 9px; height: 9px; border-radius: 3px; background: var(--brand); }
+  .stag--backlog { color: var(--muted); font-weight: 600; } .stag--backlog::before { background: #cbd5e1; }
+
+  /* ===== Modal y panel lateral ===== */
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgb(11 22 38 / 55%); backdrop-filter: blur(3px); display: grid; place-items: center; padding: 16px; animation: fade .15s; }
+  .overlay--right { place-items: stretch end; padding: 0; }
+  .modal { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; background: var(--surface); border-radius: 18px; box-shadow: 0 30px 80px rgb(0 0 0 / 35%); padding: 26px; animation: rise .2s; }
+  .drawer { width: min(480px, 100%); height: 100%; overflow: auto; background: var(--surface); padding: 26px; box-shadow: -20px 0 60px rgb(0 0 0 / 25%); animation: slide .22s; }
+  .ov-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 22px; }
+  .ov-head h2 { font-size: 22px; letter-spacing: -.02em; }
+  @keyframes fade { from { opacity: 0; } } @keyframes rise { from { opacity: 0; transform: translateY(12px) scale(.98); } } @keyframes slide { from { transform: translateX(40px); opacity: 0; } }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 11px 18px; border-radius: 12px; font-size: 14px; font-weight: 600; max-width: calc(100vw - 32px); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 80; box-shadow: 0 10px 30px rgb(0 0 0 / 30%); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 1100px) { .board { grid-template-columns: 1fr; } .grid-2 { grid-template-columns: 1fr; } }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; z-index: 40; inset: 0 auto 0 0; width: min(300px, 86vw); transform: translateX(-102%); transition: transform .25s; }
+    .shell.drawer-open .sidebar { transform: none; box-shadow: 0 0 60px rgb(0 0 0 / 40%); }
+    .shell.drawer-open .scrim { display: block; position: fixed; inset: 0; z-index: 30; background: rgb(11 22 38 / 55%); }
+    .icon-btn.menu-btn { display: grid; }
+    .topbar { padding: 0 16px; }
+    .content { padding: 20px 16px 96px; }
+    .tabbar.show { display: grid; grid-template-columns: repeat(4, 1fr); position: fixed; z-index: 20; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); }
+    .tab { display: grid; justify-items: center; gap: 2px; padding: 6px 4px; font-size: 11px; font-weight: 700; color: var(--muted); border-radius: 10px; }
+    .tab svg { width: 20px; height: 20px; }
+    .tab.is-active { color: var(--brand-dark); background: var(--brand-soft); }
+    .toast { bottom: 84px; }
+  }
+  @media (max-width: 640px) {
+    .form-grid--2 { grid-template-columns: 1fr; }
+    .summary { grid-template-columns: 1fr; }
+    .story-top { flex-direction: column; }
+    .page-head > .actions, .list-tools { width: 100%; }
+    .list-tools .search { flex: 1; width: auto; }
+    .btn--lg-m { flex: 1; }
+    .overlay { place-items: end center; padding: 0; }
+    .modal { border-radius: 18px 18px 0 0; max-height: 92vh; padding: 20px; }
+    .story-action { width: 100%; height: 40px; }
+    .mini-foot { justify-content: stretch; }
+  }
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Navegación principal"></aside>
+  <div class="scrim" data-action="close-drawer"></div>
+  <div class="main-col">
+    <header class="topbar" id="topbar"></header>
+    <main class="content" id="view"></main>
+  </div>
+  <nav class="tabbar" id="tabbar" aria-label="Secciones del proyecto"></nav>
+</div>
+<div id="overlay-root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = (n) => String(n).padStart(2, '0');
+  const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const fmt = (iso) => { if (!iso) return 'Sin definir'; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+  const ROLES = { scrum_master: 'Scrum Master', product_builder: 'Product Builder' };
+  const LETRA = { 'Must have': 'M', 'Should have': 'S', 'Could have': 'C' };
+
+  // ---------- Iconos (trazos simples, 24x24) ----------
+  const P = {
+    logo: '<path d="M5 19v-7M12 19V5M19 19v-9" stroke-width="2.6"/>',
+    folder: '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+    dash: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>',
+    list: '<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    flag: '<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/>',
+    chart: '<path d="M3 3v18h18"/><path d="M8 16v-4M13 16V8M18 16v-7"/>',
+    users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    chevd: '<path d="m6 9 6 6 6-6"/>',
+    chevr: '<path d="m9 6 6 6-6 6"/>',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+    x: '<path d="M18 6 6 18M6 6l12 12"/>',
+    arr: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    back: '<path d="M19 12H5M11 18l-6-6 6-6"/>',
+    play: '<path d="M7 4.5v15l12-7.5z"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    cal: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>'
+  };
+  const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+  // ---------- Datos de ejemplo (los mismos del prototipo anterior) ----------
+  const DB = {
+    nextProject: 27, nextStory: 11,
+    projects: [
+      { id: 25, nombre: 'Licencia de conducir (datos de prueba)', descripcion: 'Trámite de licencia de conducir: turno, examen teórico, pago y emisión. Proyecto de demostración con datos de ejemplo.', inicio: '2026-10-19', fin: '2026-12-18', sm: 'Carlos' },
+      { id: 26, nombre: 'Sistema de turnos del hospital con un nombre bastante largo', descripcion: 'Gestión de turnos médicos con recordatorios y agenda por especialidad.', inicio: '2026-10-05', fin: '2027-02-28', sm: 'Carlos' }
+    ],
+    team: { 25: [{ nombre: 'Carlos', rol: 'scrum_master' }], 26: [{ nombre: 'Carlos', rol: 'scrum_master' }] },
+    stories: {
+      25: [
+        { id: 4, titulo: 'Pagar la tasa de la licencia en línea', descripcion: 'Como solicitante quiero pagar la tasa con tarjeta para no ir a una oficina de cobro.', criterios: '', prioridad: 'Must have', valor: 13, sp: 8 },
+        { id: 9, titulo: 'Avisar por correo el vencimiento', descripcion: 'Como conductor quiero recibir un correo antes de que venza mi licencia para renovarla a tiempo.', criterios: '', prioridad: 'Could have', valor: 5, sp: null }
+      ],
+      26: []
+    },
+    sprints: {
+      25: [
+        { numero: 3, goal: 'Demostración', inicio: '2026-11-04', fin: '2026-11-10', estado: 'activo', stories: [{ id: 7, titulo: 'Renovar la licencia vencida', prioridad: 'Should have', sp: 5, estado: 'Nueva' }] },
+        { numero: 2, goal: 'Examen teórico y comprobantes', inicio: '2026-10-27', fin: '2026-11-09', estado: 'finalizado', stories: [
+          { id: 5, titulo: 'Rendir el examen teórico en línea', prioridad: 'Must have', sp: 13, estado: 'Completada', fecha: '2026-11-03' },
+          { id: 6, titulo: 'Emitir el comprobante del turno', prioridad: 'Should have', sp: 3, estado: 'Completada', fecha: '2026-11-03' }] },
+        { numero: 1, goal: 'Gestión inicial del trámite', inicio: '2026-10-20', fin: '2026-10-26', estado: 'finalizado', stories: [
+          { id: 1, titulo: 'Solicitar turno para el examen teórico', prioridad: 'Must have', sp: 5, estado: 'Completada', fecha: '2026-10-24' },
+          { id: 2, titulo: 'Registrar datos personales del solicitante', prioridad: 'Must have', sp: 3, estado: 'Completada', fecha: '2026-10-23' },
+          { id: 3, titulo: 'Validar el certificado de aptitud psicofísica', prioridad: 'Should have', sp: 8, estado: 'Completada', fecha: '2026-10-25' }] }
+      ],
+      26: []
+    }
+  };
+  let ui = { panel: null, menu: false, drawer: false };
+  let nuevoId = null;
+
+  const proyecto = (id) => DB.projects.find((p) => p.id === id);
+  // Misma regla que CalcularEstadoProyecto (HU-13): los Sprints mandan sobre las fechas
+  const estadoProyecto = (p) => {
+    const sp = DB.sprints[p.id] || [];
+    if (sp.some((x) => x.estado === 'activo')) return 'En curso';
+    if (sp.length && sp.every((x) => x.estado === 'finalizado')) return 'Finalizado';
+    if (sp.some((x) => x.estado === 'finalizado')) return 'En curso';
+    const h = hoyISO();
+    if (!p.inicio || h < p.inicio) return 'Planificado';
+    if (p.fin && h > p.fin) return 'Finalizado';
+    return 'En curso';
+  };
+  const badgeCls = { 'Planificado': ' badge--planificado', 'En curso': '', 'Finalizado': ' badge--finalizado' };
+  const badge = (p) => { const e = estadoProyecto(p); return `<span class="badge${badgeCls[e]}">${e}</span>`; };
+  const progreso = (p) => {
+    const t = (s) => new Date(s + 'T00:00:00').getTime(), h = t(hoyISO());
+    if (h <= t(p.inicio)) return 0; if (h >= t(p.fin)) return 100;
+    return Math.round(((h - t(p.inicio)) / (t(p.fin) - t(p.inicio))) * 100);
+  };
+  const avatar = (nombre, k, sm) => `<span class="avatar av-${k % 5}${sm ? ' avatar--sm' : ''}">${esc((nombre || '?').trim().charAt(0).toUpperCase())}</span>`;
+
+  const priCls = { 'Must have': 'chip--must', 'Should have': 'chip--should', 'Could have': 'chip--could' };
+  const priChip = (p, letra) => `<li class="chip ${priCls[p]}">${esc(p)}${letra ? ` (${LETRA[p]})` : ''}</li>`;
+  const estChip = (e) => `<li class="chip ${e === 'Completada' ? 'chip--ok' : e === 'En progreso' ? 'chip--progreso' : 'chip--nueva'}">${esc(e)}</li>`;
+  const spChip = (sp, largo) => sp == null ? '<li class="chip chip--none">Sin estimar</li>' : `<li class="chip chip--sp">${sp} ${largo ? 'Story Points' : 'SP'}</li>`;
+
+  const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+  const setInvalid = (id, bad, msg) => { const f = $(id); if (!f) return; f.classList.toggle('invalid', bad); if (msg) f.querySelector('.error').textContent = msg; };
+  const val = (id) => ($(id) ? $(id).value.trim() : '');
+
+  // ---------- Router (en memoria; la URL es opcional) ----------
+  let route = location.hash || '#/projects';
+  function parse() {
+    const parts = route.replace(/^#\/?/, '').split('/').filter(Boolean);
+    if (parts[0] !== 'projects' || !parts[1]) return { name: 'home' };
+    if (parts[1] === 'new') return { name: 'home', modal: true };
+    const id = Number(parts[1]);
+    if (!proyecto(id)) return { name: 'home' };
+    return { name: 'project', id, sec: parts[2] || 'proyecto', sub: parts[3] };
+  }
+  function navigate(hash) {
+    route = hash; ui.panel = null; ui.menu = false; ui.drawer = false;
+    try { history.pushState(null, '', hash); } catch (_) { /* iframe: se ignora */ }
+    render(); window.scrollTo(0, 0);
+  }
+  const SEC = { proyecto: 'Panel', backlog: 'Historias', sprints: 'Sprints', status: 'Estado', settings: 'Equipo', edit: 'Editar proyecto' };
+
+  // ---------- Armazón: barra lateral, barra superior, tabs móviles ----------
+  function sidebar(r) {
+    const inProj = r.name === 'project', p = inProj ? proyecto(r.id) : null;
+    const active = inProj ? r.sec : 'home';
+    const item = (href, ic, label, key) => `<a class="nav-item${active === key ? ' is-active' : ''}" href="${href}"${active === key ? ' aria-current="page"' : ''}>${icon(ic)}<span>${label}</span></a>`;
+    const base = inProj ? `#/projects/${p.id}/` : '';
+    return `
+      <div class="brand-row"><a class="brand" href="#/projects"><span class="logo">${icon('logo')}</span>Métrica</a></div>
+      ${item('#/projects', 'folder', 'Proyectos', 'home')}
+      ${inProj ? `
+        <p class="nav-label">Proyecto actual</p>
+        <div class="switcher${ui.menu ? ' is-open' : ''}">
+          <button type="button" class="switcher-btn" data-action="toggle-menu" aria-expanded="${ui.menu}" aria-haspopup="true">
+            ${avatar(p.nombre, p.id)}
+            <span class="sw-text"><strong>${esc(p.nombre)}</strong><small>#${p.id} · ${estadoProyecto(p)}</small></span>
+            ${icon('chevd')}
+          </button>
+          <div class="switcher-menu" ${ui.menu ? '' : 'hidden'}>
+            ${DB.projects.map((x) => `<a class="sw-item" href="#/projects/${x.id}/${active === 'edit' || active === 'settings' ? 'proyecto' : active}"${x.id === p.id ? ' aria-current="true"' : ''}>${avatar(x.nombre, x.id, true)}<span class="t">${esc(x.nombre)}</span></a>`).join('')}
+            <a class="sw-item sw-new" href="#/projects/new">${icon('plus')}<span class="t">Nuevo proyecto</span></a>
+          </div>
+        </div>
+        <p class="nav-label">Seguimiento</p>
+        ${item(base + 'proyecto', 'dash', 'Panel', 'proyecto')}
+        ${item(base + 'backlog', 'list', 'Historias', 'backlog')}
+        ${item(base + 'sprints', 'flag', 'Sprints', 'sprints')}
+        ${item(base + 'status', 'chart', 'Estado', 'status')}
+        <p class="nav-label">Ajustes</p>
+        ${item(base + 'settings', 'users', 'Equipo', 'settings')}
+        ${item(base + 'edit', 'edit', 'Editar proyecto', 'edit')}` : ''}
+      <div class="sidebar-foot"><span class="avatar avatar--user">C</span><div><strong>Carlos</strong><small>Scrum Master</small></div></div>`;
+  }
+
+  function topbar(r) {
+    const chev = icon('chevr');
+    let crumbs = '<span class="cur">Proyectos</span>';
+    if (r.name === 'home' && r.modal) crumbs = `<a href="#/projects">Proyectos</a>${chev}<span class="cur">Nuevo proyecto</span>`;
+    if (r.name === 'project') {
+      const p = proyecto(r.id), sec = r.sub === 'nueva' ? 'Nueva historia' : SEC[r.sec] || 'Panel';
+      crumbs = `<a href="#/projects">Proyectos</a>${chev}<a href="#/projects/${p.id}/proyecto">${esc(p.nombre)}</a>${chev}<span class="cur">${sec}</span>`;
+    }
+    return `<button type="button" class="icon-btn menu-btn" data-action="toggle-drawer" aria-label="Abrir menú">${icon('menu')}</button><nav class="crumbs" aria-label="Ruta">${crumbs}</nav>`;
+  }
+
+  function tabbar(r) {
+    if (r.name !== 'project') return '';
+    const t = [['proyecto', 'dash', 'Panel'], ['backlog', 'list', 'Historias'], ['sprints', 'flag', 'Sprints'], ['status', 'chart', 'Estado']];
+    const act = r.sec === 'edit' || r.sec === 'settings' ? 'proyecto' : r.sec;
+    return t.map(([k, ic, l]) => `<a class="tab${act === k ? ' is-active' : ''}" href="#/projects/${r.id}/${k}">${icon(ic)}<span>${l}</span></a>`).join('');
+  }
+
+  const pageHead = ({ kicker, title, badgeHtml, sub, actions }) => `
+    <header class="page-head">
+      <div>${kicker ? `<p class="kicker">${kicker}</p>` : ''}<div class="title-row"><h1>${esc(title)}</h1>${badgeHtml || ''}</div>${sub ? `<p class="sub">${sub}</p>` : ''}</div>
+      ${actions ? `<div class="actions">${actions}</div>` : ''}
+    </header>`;
+
+  // ---------- Inicio: proyectos ----------
+  function viewHome() {
+    return pageHead({
+      title: 'Proyectos', sub: 'Elegí un proyecto para ver su seguimiento o creá uno nuevo.',
+      actions: `<div class="list-tools"><input class="search" id="buscar" type="search" placeholder="Buscar proyecto…" aria-label="Buscar proyecto"><a class="btn btn--primary" href="#/projects/new">${icon('plus')}Nuevo proyecto</a></div>`
+    }) + '<div class="pgrid" id="lista"></div>';
+  }
+  function renderLista() {
+    const q = val('buscar').toLowerCase();
+    const items = DB.projects.filter((p) => p.nombre.toLowerCase().includes(q)).slice().reverse();
+    $('lista').innerHTML = items.map((p) => `
+      <a class="pcard${p.id === nuevoId ? ' is-new' : ''}" href="#/projects/${p.id}/proyecto">
+        <div class="pcard-top">${avatar(p.nombre, p.id)}${badge(p)}</div>
+        <h3 title="${esc(p.nombre)}">${esc(p.nombre)}</h3>
+        <p>${esc(p.descripcion || 'Sin descripción')}</p>
+        <div class="pcard-meta">${icon('cal')}<span>${fmt(p.inicio)} → ${fmt(p.fin)}</span></div>
+        <div class="track" role="img" aria-label="Avance ${progreso(p)}%"><i style="width:${progreso(p)}%"></i></div>
+        <div class="pcard-foot"><span>Scrum Master: ${esc(p.sm)}</span><span>#${p.id}</span></div>
+      </a>`).join('') + (q ? (items.length ? '' : '<div class="vacio" style="grid-column:1/-1">No hay proyectos que coincidan con la búsqueda.</div>')
+        : `<a class="pcard pcard--new" href="#/projects/new">${icon('plus')}<span>Nuevo proyecto</span></a>`);
+  }
+
+  function overlayCrear() {
+    return `
+    <div class="overlay" data-overlay>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+        <div class="ov-head"><div><h2 id="m-title">Crear proyecto</h2><p class="sub">Definí los datos iniciales para comenzar a hacerle seguimiento.</p></div>
+          <button type="button" class="icon-btn" data-action="close-overlay" aria-label="Cerrar">${icon('x')}</button></div>
+        <form data-form="create-project" novalidate>
+          <div class="form-grid">
+            <div class="field" id="f-nombre"><label for="c-nombre">Nombre del proyecto</label><input id="c-nombre" maxlength="120" autocomplete="off"><p class="error">Ingresá un nombre para el proyecto.</p></div>
+            <div class="field"><label for="c-desc">Descripción <span class="opt">(opcional)</span></label><textarea id="c-desc" maxlength="400"></textarea></div>
+            <div class="form-grid form-grid--2">
+              <div class="field" id="f-inicio"><label for="c-inicio">Fecha de inicio</label><input id="c-inicio" type="date"><p class="error">Elegí la fecha de inicio.</p></div>
+              <div class="field" id="f-fin"><label for="c-fin">Fecha de fin</label><input id="c-fin" type="date"><p class="error">Elegí la fecha de fin.</p></div>
+            </div>
+            <div class="field" id="f-sm"><label for="c-sm">Tu nombre (Scrum Master)</label><input id="c-sm" maxlength="80" autocomplete="name"><p class="error">Ingresá tu nombre.</p></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary">Crear proyecto</button>
+              <button type="button" class="btn btn--secondary" data-action="demo-data">Cargar datos de prueba</button>
+              <button type="button" class="btn btn--ghost" data-action="close-overlay">Cancelar</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  // ---------- Panel del proyecto ----------
+  function viewPanel(r) {
+    const p = proyecto(r.id), eq = DB.team[p.id] || [], pr = progreso(p);
+    return pageHead({
+      kicker: `Panel del proyecto · #${p.id}`, title: p.nombre, badgeHtml: badge(p),
+      actions: `<a class="btn btn--secondary" href="#/projects/${p.id}/settings">${icon('users')}Configurar equipo</a><a class="btn btn--primary" href="#/projects/${p.id}/edit">${icon('edit')}Editar proyecto</a>`
+    }) + `
+    <div class="grid-2">
+      <article class="card">
+        <h2 class="card-title">Descripción</h2>
+        <p class="prose">${esc(p.descripcion || 'Sin descripción')}</p>
+        <div class="divider"></div>
+        <h2 class="card-title">Cronograma</h2>
+        <div class="tl-dates"><div><small>Inicio</small><strong>${fmt(p.inicio)}</strong></div><div><small>Fin</small><strong>${fmt(p.fin)}</strong></div></div>
+        <div class="track" role="img" aria-label="Avance ${pr}%"><i style="width:${pr}%"></i><b style="left:${pr}%"></b></div>
+        <div class="card-foot"><a class="link" href="#/projects/${p.id}/status">Ver estado del proyecto ${icon('arr')}</a></div>
+      </article>
+      <aside class="card">
+        <h2 class="card-title">Equipo</h2>
+        ${eq.length ? `<ul class="team">${eq.map((m, i) => `<li>${avatar(m.nombre, i + 1)}<span class="t">${esc(m.nombre)}<br><small>${ROLES[m.rol]}</small></span></li>`).join('')}</ul>` : '<p class="hint">Todavía no hay integrantes asignados.</p>'}
+        <div class="card-foot"><a class="link" href="#/projects/${p.id}/settings">Configurar equipo ${icon('arr')}</a></div>
+      </aside>
+    </div>`;
+  }
+
+  function viewEditar(r) {
+    const p = proyecto(r.id);
+    return pageHead({ kicker: `Proyecto #${p.id}`, title: 'Editar proyecto', actions: `<a class="btn btn--ghost" href="#/projects/${p.id}/proyecto">${icon('back')}Volver al panel</a>` }) + `
+    <form class="card form-card" data-form="edit-project" novalidate>
+      <div class="form-grid">
+        <div class="field" id="f-nombre"><label for="e-nombre">Nombre del proyecto</label><input id="e-nombre" maxlength="120" value="${esc(p.nombre)}"><p class="error">Ingresá un nombre para el proyecto.</p></div>
+        <div class="field"><label for="e-desc">Descripción <span class="opt">(opcional)</span></label><textarea id="e-desc" maxlength="400">${esc(p.descripcion)}</textarea></div>
+        <div class="form-grid form-grid--2">
+          <div class="field" id="f-inicio"><label for="e-inicio">Fecha de inicio</label><input id="e-inicio" type="date" value="${p.inicio}"><p class="error">Elegí la fecha de inicio.</p></div>
+          <div class="field" id="f-fin"><label for="e-fin">Fecha de fin</label><input id="e-fin" type="date" value="${p.fin}"><p class="error">Elegí la fecha de fin.</p></div>
+        </div>
+        <div class="form-actions"><button type="submit" class="btn btn--primary">Guardar cambios</button><a class="btn btn--ghost" href="#/projects/${p.id}/proyecto">Cancelar</a></div>
+      </div>
+    </form>`;
+  }
+
+  function viewEquipo(r) {
+    const p = proyecto(r.id), eq = DB.team[p.id] || [];
+    return pageHead({ kicker: `Proyecto #${p.id}`, title: 'Configurar equipo', actions: `<a class="btn btn--ghost" href="#/projects/${p.id}/proyecto">${icon('back')}Volver al panel</a>` }) + `
+    <div class="grid-2" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+      <article class="card"><h2 class="heading">Asignar integrante</h2>
+        <form data-form="team" novalidate class="form-grid">
+          <div class="field" id="f-miembro"><label for="m-nombre">Nombre del integrante</label><input id="m-nombre" maxlength="200" autocomplete="off"><p class="error">Ingresá el nombre del integrante.</p></div>
+          <div class="field" id="f-rol"><label for="m-rol">Rol</label>
+            <select id="m-rol"><option value="">Seleccioná un rol</option>${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select><p class="error">Seleccioná un rol.</p></div>
+          <div><button type="submit" class="btn btn--primary">Asignar</button></div>
+        </form></article>
+      <article class="card"><h2 class="heading">Equipo del proyecto</h2>
+        ${eq.length ? `<ul class="team">${eq.map((m, i) => `<li>${avatar(m.nombre, i + 1)}<span class="t">${esc(m.nombre)}<br><small>${ROLES[m.rol]}</small></span></li>`).join('')}</ul>` : '<p class="hint">Todavía no hay integrantes asignados.</p>'}</article>
+    </div>`;
+  }
+
+  // ---------- Historias ----------
+  function viewBacklog(r) {
+    const hist = DB.stories[r.id] || [];
+    const disp = (DB.sprints[r.id] || []).filter((s) => s.estado !== 'finalizado');
+    const panelEditar = (h) => `
+      <form class="inline-panel" data-form="edit-story" data-story="${h.id}" novalidate>
+        <h3>Editar historia</h3>
+        <div class="form-grid">
+          <div class="field" id="f-hist"><label for="x-t">Título</label><input id="x-t" value="${esc(h.titulo)}"><p class="error">El título es obligatorio.</p></div>
+          <div class="field"><label for="x-d">Descripción</label><textarea id="x-d">${esc(h.descripcion)}</textarea></div>
+          <div class="field"><label for="x-c">Criterios de aceptación</label><textarea id="x-c">${esc(h.criterios)}</textarea></div>
+          <div class="field" style="max-width:14rem"><label for="x-sp">Story Points</label>
+            <select id="x-sp"><option value="">Sin estimar</option>${[1, 2, 3, 5, 8, 13, 21].map((n) => `<option${h.sp === n ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
+        </div>
+        <div class="panel-actions"><button type="button" class="btn btn--ghost" data-action="close-panel">Cancelar</button><button type="submit" class="btn btn--primary">Guardar cambios</button></div>
+      </form>`;
+    const panelAsignar = (h) => `
+      <form class="inline-panel" data-form="assign" data-story="${h.id}" novalidate>
+        <h3>Asignar a Sprint</h3>
+        <div class="field"><label for="a-sprint">Sprint</label>
+          <select id="a-sprint"${disp.length ? '' : ' disabled'}>${disp.length ? '<option value="">Elegí un Sprint</option>' + disp.map((s) => `<option value="${s.numero}">Sprint ${s.numero} (${s.estado})</option>`).join('') : '<option>No hay Sprints disponibles</option>'}</select>
+          <p class="error">Elegí un Sprint.</p></div>
+        <div class="panel-actions"><button type="button" class="btn btn--ghost" data-action="close-panel">Cancelar</button><button type="submit" class="btn btn--primary"${disp.length ? '' : ' disabled'}>Confirmar asignación</button></div>
+      </form>`;
+    const tarjeta = (h) => `
+      <li class="story story--${h.prioridad.split(' ')[0].toLowerCase()}">
+        <div class="story-top">
+          <div class="story-title"><span class="story-id">#${h.id}</span><h2>${esc(h.titulo)}</h2></div>
+          <div class="actions">
+            <button type="button" class="btn btn--secondary btn--sm" data-action="open-edit" data-story="${h.id}">${icon('edit')}Editar</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-action="open-assign" data-story="${h.id}">Asignar a Sprint</button>
+          </div>
+        </div>
+        <ul class="chips">${priChip(h.prioridad)}${estChip('Nueva')}${spChip(h.sp, true)}${h.valor != null ? `<li class="chip chip--sp">Valor de negocio: ${h.valor}</li>` : ''}</ul>
+        <p class="story-desc">${esc(h.descripcion || 'Sin descripción')}</p>
+        <div class="criteria"><h3>Criterios de aceptación</h3>${h.criterios ? `<p>${esc(h.criterios)}</p>` : '<p class="empty">Sin criterios de aceptación</p>'}</div>
+        ${ui.panel && ui.panel.story === h.id ? (ui.panel.type === 'edit' ? panelEditar(h) : panelAsignar(h)) : ''}
+      </li>`;
+    return pageHead({ kicker: `Proyecto #${r.id}`, title: 'Product Backlog', sub: `${hist.length} ${hist.length === 1 ? 'historia' : 'historias'} sin Sprint`,
+      actions: `<a class="btn btn--primary" href="#/projects/${r.id}/backlog/nueva">${icon('plus')}Nueva historia</a>` }) +
+      (hist.length ? `<ul class="stack">${hist.map(tarjeta).join('')}</ul>` : '<div class="vacio">Todavía no hay historias en el backlog.</div>');
+  }
+
+  function overlayNuevaHistoria(r) {
+    return `
+    <div class="overlay overlay--right" data-overlay>
+      <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title">
+        <div class="ov-head"><div><h2 id="d-title">Nueva historia</h2><p class="sub">Se agrega al Product Backlog del proyecto #${r.id}.</p></div>
+          <button type="button" class="icon-btn" data-action="close-overlay" aria-label="Cerrar">${icon('x')}</button></div>
+        <form data-form="new-story" novalidate>
+          <fieldset class="form-grid">
+            <div class="field" id="f-hist"><label for="n-t">Título</label><input id="n-t" maxlength="200" autocomplete="off"><p class="error">Ingresá un título para la historia.</p></div>
+            <div class="field"><label for="n-d">Descripción</label><textarea id="n-d"></textarea></div>
+            <div class="form-grid form-grid--2">
+              <div class="field"><label for="n-p">Prioridad</label><select id="n-p"><option>Must have</option><option>Should have</option><option>Could have</option></select></div>
+              <div class="field"><label for="n-v">Valor de negocio</label><select id="n-v"><option value="">Sin valor</option>${[1, 2, 3, 5, 8, 13, 21].map((n) => `<option>${n}</option>`).join('')}</select></div>
+            </div>
+            <div class="form-actions"><button type="submit" class="btn btn--primary">Guardar</button><button type="button" class="btn btn--ghost" data-action="close-overlay">Cancelar</button></div>
+          </fieldset>
+        </form>
+      </div>
+    </div>`;
+  }
+
+  // ---------- Sprints ----------
+  const miniBase = (h, extra) => `<li class="mini"><p class="mini-title">${esc(h.titulo)}</p><ul class="chips">${priChip(h.prioridad, true)}${estChip(h.estado)}${spChip(h.sp)}</ul>${extra || ''}</li>`;
+  const rango = (s) => `<span class="dates">${icon('cal')}${fmt(s.inicio)} → ${fmt(s.fin)}</span>`;
+
+  function viewSprints(r) {
+    const lista = DB.sprints[r.id] || [];
+    const pend = lista.filter((s) => s.estado === 'pendiente').sort((a, b) => a.numero - b.numero);
+    const act = lista.filter((s) => s.estado === 'activo');
+    const fin = lista.filter((s) => s.estado === 'finalizado').sort((a, b) => b.numero - a.numero);
+    const vacio = '<div class="lane-empty">No hay Sprints</div>';
+
+    const cardPend = (s) => `
+      <article class="scard">
+        <h3>Sprint ${s.numero}</h3>
+        ${s.stories.length ? `<ul class="mini-list">${s.stories.map((h) => miniBase(h)).join('')}</ul>` : ''}
+        <form class="inline-panel" data-form="start-sprint" novalidate>
+          <h3>Iniciar Sprint</h3>
+          <div class="field"><label for="g-${s.numero}">Sprint Goal</label><input id="g-${s.numero}"></div>
+          <div class="form-grid">
+            <div class="field"><label for="i-${s.numero}">Fecha de inicio</label><input id="i-${s.numero}" type="date"></div>
+            <div class="field"><label for="f-${s.numero}">Fecha de fin</label><input id="f-${s.numero}" type="date"></div>
+          </div>
+          <button type="submit" class="btn btn--primary btn--block">Iniciar Sprint</button>
+        </form>
+      </article>`;
+
+    const cardAct = (s) => `
+      <article class="scard">
+        <div><h3>Sprint ${s.numero}</h3>${s.goal ? `<p class="goal">${esc(s.goal)}</p>` : ''}${rango(s)}</div>
+        ${s.stories.length ? `<ul class="mini-list">${s.stories.map((h) => {
+          const b = h.estado === 'Nueva' ? ['Iniciar', 'play'] : h.estado === 'En progreso' ? ['Completar', 'check'] : null;
+          return miniBase(h, b
+            ? `<div class="mini-foot"><button type="button" class="btn btn--outline btn--sm story-action" data-action="story-next" data-sprint="${s.numero}" data-story="${h.id}">${icon(b[1])}${b[0]}</button></div>`
+            : `<span class="mini-note">Completada el ${fmt(h.fecha)}</span>`);
+        }).join('')}</ul>` : '<p class="goal">Sin historias asignadas.</p>'}
+        <div class="scard-foot"><button type="button" class="btn btn--primary" data-action="close-sprint" data-sprint="${s.numero}">Cerrar Sprint</button></div>
+      </article>`;
+
+    const cardFin = (s) => {
+      const ok = s.stories.filter((h) => h.estado === 'Completada'), sp = ok.reduce((t, h) => t + (h.sp || 0), 0);
+      return `
+      <details class="sdone">
+        <summary>
+          <div><h3>Sprint ${s.numero}</h3>${s.goal ? `<p class="goal">${esc(s.goal)}</p>` : ''}${rango(s)}</div>
+          <span class="chev">${icon('chevd')}</span>
+          <ul class="chips sd-chips"><li class="chip ${ok.length ? 'chip--ok' : 'chip--nueva'}">${ok.length} completada${ok.length === 1 ? '' : 's'}</li><li class="chip chip--sp">${sp} SP</li></ul>
+        </summary>
+        <ul class="done-list">${s.stories.map((h) => `
+          <li><p class="done-title">${esc(h.titulo)}</p>
+            <ul class="chips">${priChip(h.prioridad, true)}${spChip(h.sp)}${h.estado !== 'Completada' ? estChip(h.estado) : ''}</ul>
+            ${h.estado === 'Completada' ? `<span class="mini-note">Completada el ${fmt(h.fecha)}</span>` : ''}</li>`).join('') || '<li><p class="mini-note">Sin historias.</p></li>'}</ul>
+      </details>`;
+    };
+
+    return pageHead({ kicker: `Proyecto #${r.id}`, title: 'Sprints', actions: `<button type="button" class="btn btn--primary" data-action="create-sprint">${icon('plus')}Crear Sprint</button>` }) + `
+    <div class="board">
+      <section class="lane"><h2 class="lane-head">Pendiente</h2>${pend.length ? pend.map(cardPend).join('') : vacio}</section>
+      <section class="lane lane--activo"><h2 class="lane-head">Activo</h2>${act.length ? act.map(cardAct).join('') : vacio}</section>
+      <section class="lane lane--fin"><h2 class="lane-head">Finalizado</h2>${fin.length ? `<div class="history">${fin.map(cardFin).join('')}</div>` : vacio}</section>
+    </div>`;
+  }
+
+  // ---------- Estado (HU-18) ----------
+  function viewEstado(r) {
+    const p = proyecto(r.id), items = [];
+    (DB.sprints[r.id] || []).slice().sort((x, y) => y.numero - x.numero).forEach((sp) =>
+      sp.stories.forEach((h) => items.push({ titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: h.estado, sprint: sp.numero })));
+    (DB.stories[r.id] || []).forEach((h) => items.push({ titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: 'Nueva', sprint: null }));
+    const color = { 'Nueva': '#cbd5e1', 'En progreso': '#0d9488', 'Completada': '#16a34a' };
+    const grupos = [['Nueva', ''], ['En progreso', ' lane--activo'], ['Completada', ' lane--fin']].map(([nombre, cls]) => {
+      const lista = items.filter((i) => i.estado === nombre);
+      return { nombre, cls, lista, sp: lista.reduce((t, i) => t + (i.sp || 0), 0) };
+    });
+    const total = items.length, totalSp = items.reduce((t, i) => t + (i.sp || 0), 0);
+    const n = (c, uno, varios) => `${c} ${c === 1 ? uno : varios}`;
+    const columna = (g) => `
+      <section class="lane${g.cls}">
+        <h2 class="lane-head">${g.nombre}<ul class="chips"><li class="chip chip--sp">${n(g.lista.length, 'historia', 'historias')}</li><li class="chip chip--sp">${g.sp} SP</li></ul></h2>
+        ${g.lista.length ? g.lista.map((i) => `
+          <div class="mini"><p class="mini-title">${esc(i.titulo)}</p>
+            <ul class="chips">${priChip(i.prioridad, true)}${spChip(i.sp)}</ul>
+            <span class="stag${i.sprint ? '' : ' stag--backlog'}">${i.sprint ? 'Sprint ' + i.sprint : 'Product Backlog'}</span></div>`).join('') : '<div class="lane-empty">Sin historias</div>'}
+      </section>`;
+    return pageHead({ kicker: `Proyecto #${r.id}`, title: 'Estado del proyecto', badgeHtml: badge(p) }) + `
+    <article class="card summary">
+      <div class="totals"><div><span class="big">${total}</span><span class="lbl">${total === 1 ? 'Historia' : 'Historias'}</span></div><div><span class="big">${totalSp}</span><span class="lbl">Story Points</span></div></div>
+      <div class="stack-bar" role="img" aria-label="${grupos.map((g) => `${g.nombre}: ${g.lista.length}`).join(', ')}">${grupos.map((g) => g.lista.length ? `<i style="flex:${g.lista.length};background:${color[g.nombre]}" title="${g.nombre}: ${g.lista.length}"></i>` : '').join('')}</div>
+    </article>` + (total ? `<div class="board">${grupos.map(columna).join('')}</div>` : '<div class="vacio">Este proyecto todavía no tiene historias.</div>');
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const r = parse();
+    $('shell').classList.toggle('drawer-open', ui.drawer);
+    $('sidebar').innerHTML = sidebar(r);
+    $('topbar').innerHTML = topbar(r);
+    const tb = $('tabbar'); tb.innerHTML = tabbar(r); tb.classList.toggle('show', r.name === 'project');
+    let v = '', ov = '';
+    if (r.name === 'home') { v = viewHome(); if (r.modal) ov = overlayCrear(); }
+    else if (r.sec === 'edit') v = viewEditar(r);
+    else if (r.sec === 'settings') v = viewEquipo(r);
+    else if (r.sec === 'backlog') { v = viewBacklog(r); if (r.sub === 'nueva') ov = overlayNuevaHistoria(r); }
+    else if (r.sec === 'sprints') v = viewSprints(r);
+    else if (r.sec === 'status') v = viewEstado(r);
+    else v = viewPanel(r);
+    $('view').innerHTML = v;
+    $('overlay-root').innerHTML = ov;
+    if (r.name === 'home') renderLista();
+    document.title = 'Métrica · ' + (r.name === 'project' ? proyecto(r.id).nombre : 'Proyectos');
+    if (ov) setTimeout(() => { const i = document.querySelector('[data-overlay] input'); if (i) i.focus(); }, 30);
+  }
+
+  const cerrarOverlay = () => { const r = parse(); navigate(r.name === 'project' ? `#/projects/${r.id}/backlog` : '#/projects'); };
+
+  // ---------- Acciones ----------
+  document.addEventListener('click', (e) => {
+    // cerrar el desplegable de proyectos al hacer clic afuera
+    if (ui.menu && !e.target.closest('.switcher')) { ui.menu = false; const sw = document.querySelector('.switcher'); if (sw) { sw.classList.remove('is-open'); sw.querySelector('.switcher-menu').hidden = true; } }
+    if (e.target.matches('[data-overlay]')) { cerrarOverlay(); return; }
+
+    const a0 = e.target.closest('a[href^="#/"]');
+    if (a0 && !e.defaultPrevented && !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0) { e.preventDefault(); navigate(a0.getAttribute('href')); return; }
+
+    const t = e.target.closest('[data-action]'); if (!t) return;
+    const r = parse(), pid = r.id, a = t.dataset.action;
+    if (a === 'toggle-menu') { ui.menu = !ui.menu; const sw = document.querySelector('.switcher'); sw.classList.toggle('is-open', ui.menu); sw.querySelector('.switcher-menu').hidden = !ui.menu; sw.querySelector('.switcher-btn').setAttribute('aria-expanded', ui.menu); }
+    else if (a === 'toggle-drawer') { ui.drawer = !ui.drawer; $('shell').classList.toggle('drawer-open', ui.drawer); }
+    else if (a === 'close-drawer') { ui.drawer = false; $('shell').classList.remove('drawer-open'); }
+    else if (a === 'close-overlay') cerrarOverlay();
+    else if (a === 'demo-data') {
+      $('c-nombre').value = 'Aplicación de gestión de gimnasio'; $('c-desc').value = 'Alta de socios, control de cuotas y reserva de clases.';
+      $('c-inicio').value = '2026-11-10'; $('c-fin').value = '2027-03-31'; $('c-sm').value = 'Carlos';
+      document.querySelectorAll('.field.invalid').forEach((f) => f.classList.remove('invalid'));
+    } else if (a === 'open-edit' || a === 'open-assign') { ui.panel = { type: a === 'open-edit' ? 'edit' : 'assign', story: Number(t.dataset.story) }; render();
+    } else if (a === 'close-panel') { ui.panel = null; render();
+    } else if (a === 'create-sprint') {
+      const l = DB.sprints[pid], n = Math.max(0, ...l.map((s) => s.numero)) + 1;
+      l.push({ numero: n, goal: '', inicio: '', fin: '', estado: 'pendiente', stories: [] }); render(); toast(`Sprint ${n} creado`);
+    } else if (a === 'story-next') {
+      const s = DB.sprints[pid].find((x) => x.numero === Number(t.dataset.sprint)), h = s.stories.find((x) => x.id === Number(t.dataset.story));
+      if (h.estado === 'Nueva') h.estado = 'En progreso'; else if (h.estado === 'En progreso') { h.estado = 'Completada'; h.fecha = hoyISO(); }
+      render();
+    } else if (a === 'close-sprint') { DB.sprints[pid].find((x) => x.numero === Number(t.dataset.sprint)).estado = 'finalizado'; render(); }
+  });
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (document.querySelector('[data-overlay]')) cerrarOverlay(); else if (ui.drawer) { ui.drawer = false; $('shell').classList.remove('drawer-open'); } } });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'buscar') renderLista();
+    const f = e.target.closest('.field.invalid'); if (f) f.classList.remove('invalid');
+  });
+
+  document.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target.closest('form[data-form]'); if (!f) return;
+    const r = parse(), pid = r.id, kind = f.dataset.form;
+    const fechas = (i, fi) => { const finMal = !fi || (i && fi < i); return [finMal, !fi ? 'Elegí la fecha de fin.' : 'La fecha de fin no puede ser anterior al inicio.']; };
+
+    if (kind === 'create-project') {
+      const v = { n: val('c-nombre'), i: $('c-inicio').value, f: $('c-fin').value, s: val('c-sm') };
+      setInvalid('f-nombre', !v.n); setInvalid('f-inicio', !v.i); setInvalid('f-sm', !v.s);
+      const [finMal, msg] = fechas(v.i, v.f); setInvalid('f-fin', finMal, msg);
+      if (!v.n || !v.i || !v.s || finMal) return;
+      const p = { id: DB.nextProject++, nombre: v.n, descripcion: val('c-desc'), inicio: v.i, fin: v.f, sm: v.s };
+      DB.projects.push(p); DB.team[p.id] = [{ nombre: v.s, rol: 'scrum_master' }]; DB.stories[p.id] = []; DB.sprints[p.id] = [];
+      navigate(`#/projects/${p.id}/proyecto`); toast(`Proyecto "${p.nombre}" creado (#${p.id})`);
+    } else if (kind === 'edit-project') {
+      const p = proyecto(pid), v = { n: val('e-nombre'), i: $('e-inicio').value, f: $('e-fin').value };
+      setInvalid('f-nombre', !v.n); setInvalid('f-inicio', !v.i);
+      const [finMal, msg] = fechas(v.i, v.f); setInvalid('f-fin', finMal, msg);
+      if (!v.n || !v.i || finMal) return;
+      Object.assign(p, { nombre: v.n, descripcion: val('e-desc'), inicio: v.i, fin: v.f });
+      navigate(`#/projects/${pid}/proyecto`); toast('Cambios guardados');
+    } else if (kind === 'team') {
+      const n = val('m-nombre'), rol = $('m-rol').value;
+      setInvalid('f-miembro', !n); setInvalid('f-rol', !rol); if (!n || !rol) return;
+      DB.team[pid].push({ nombre: n, rol }); render(); toast('Integrante asignado');
+    } else if (kind === 'new-story') {
+      const t = val('n-t'); setInvalid('f-hist', !t); if (!t) return;
+      DB.stories[pid].push({ id: DB.nextStory++, titulo: t, descripcion: val('n-d'), criterios: '', prioridad: $('n-p').value, valor: $('n-v').value ? Number($('n-v').value) : null, sp: null });
+      navigate(`#/projects/${pid}/backlog`); toast('Historia creada');
+    } else if (kind === 'edit-story') {
+      const h = DB.stories[pid].find((x) => x.id === Number(f.dataset.story)), t = val('x-t');
+      setInvalid('f-hist', !t); if (!t) return;
+      Object.assign(h, { titulo: t, descripcion: val('x-d'), criterios: val('x-c'), sp: $('x-sp').value ? Number($('x-sp').value) : null });
+      ui.panel = null; render(); toast('Historia actualizada');
+    } else if (kind === 'assign') {
+      const n = Number($('a-sprint').value);
+      if (!n) { $('a-sprint').closest('.field').classList.add('invalid'); return; }
+      const lista = DB.stories[pid], i = lista.findIndex((x) => x.id === Number(f.dataset.story)), h = lista.splice(i, 1)[0];
+      DB.sprints[pid].find((s) => s.numero === n).stories.push({ id: h.id, titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: 'Nueva' });
+      ui.panel = null; render(); toast(`Historia asignada al Sprint ${n}`);
+    } else if (kind === 'start-sprint') { toast('Iniciar Sprint no está simulado en este prototipo'); }
+  });
+
+  const desdeUrl = () => { route = location.hash || '#/projects'; ui.panel = null; ui.menu = false; ui.drawer = false; render(); window.scrollTo(0, 0); };
+  window.addEventListener('popstate', desdeUrl);
+  window.addEventListener('hashchange', desdeUrl);
+  render();
+})();
+</script>
+</body>
+</html>
