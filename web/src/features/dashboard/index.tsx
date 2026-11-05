@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarMetricas } from './api'
 import { GraficoVelocidad } from './GraficoVelocidad'
@@ -15,13 +16,18 @@ export function Component() {
 
 function PantallaDashboard({ id }: { id: string }) {
   const [metricas, setMetricas] = useState<MetricasProyecto>()
+  const [error, setError] = useState<string>()
 
   useEffect(() => {
     let vigente = true
 
-    consultarMetricas(id).then((obtenidas) => {
-      if (vigente) setMetricas(obtenidas)
-    })
+    consultarMetricas(id)
+      .then((obtenidas) => {
+        if (vigente) setMetricas(obtenidas)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setError(causa instanceof Error ? causa.message : 'Ocurrió un error inesperado')
+      })
 
     return () => {
       vigente = false
@@ -31,7 +37,8 @@ function PantallaDashboard({ id }: { id: string }) {
   return (
     <div className="dashboard-pantalla">
       <h1>Dashboard</h1>
-      {!metricas && <LoadingIndicator />}
+      {error && <ErrorMessage message={error} />}
+      {!metricas && !error && <LoadingIndicator />}
       {metricas && metricas.sprints.length === 0 && <EstadoVacio proyectoId={id} />}
       {metricas && metricas.sprints.length > 0 && (
         <>
