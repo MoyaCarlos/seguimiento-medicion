@@ -166,12 +166,15 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
+	horasEnviadas, horas := horasPorStoryPointEnviadas(claves)
 	proyecto, err := h.editar.Ejecutar(r.Context(), service.EditarProyectoInput{
-		ID:          id,
-		Nombre:      req.Nombre,
-		Descripcion: req.Descripcion,
-		FechaInicio: inicio,
-		FechaFin:    fin,
+		ID:                 id,
+		Nombre:             req.Nombre,
+		Descripcion:        req.Descripcion,
+		FechaInicio:        inicio,
+		FechaFin:           fin,
+		HorasPorSPEnviadas: horasEnviadas,
+		HorasPorSP:         horas,
 	})
 	if err != nil {
 		escribirError(w, err)

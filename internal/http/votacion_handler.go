@@ -67,7 +67,7 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: req.UsuarioID, Valor: req.Valor}); err != nil {
+	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: req.UsuarioID, Valor: req.valor()}); err != nil {
 		escribirError(w, err)
 		return
 	}

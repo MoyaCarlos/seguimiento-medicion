@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -24,6 +25,20 @@ type proyectoResponse struct {
 	FechaInicio *string `json:"fecha_inicio"`
 	FechaFin    *string `json:"fecha_fin"`
 	CreadoEn    string  `json:"creado_en"`
+
+	HorasPorStoryPoint *float64 `json:"horas_por_story_point"`
+}
+
+// horasPorStoryPointEnviadas distingue un campo ausente de uno en null. El valor
+// pasa sin interpretar al dominio, para que un texto se rechace sobre ese campo
+// y después de las demás validaciones, en lugar de romper el Unmarshal.
+func horasPorStoryPointEnviadas(claves map[string]json.RawMessage) (bool, *string) {
+	valor, enviadas := claves["horas_por_story_point"]
+	if !enviadas || string(valor) == "null" {
+		return enviadas, nil
+	}
+	texto := string(valor)
+	return true, &texto
 }
 
 type editarProyectoRequest struct {
@@ -77,6 +92,8 @@ func aProyectoResponse(p domain.Project) proyectoResponse {
 		FechaInicio: formatearFecha(p.FechaInicio),
 		FechaFin:    formatearFecha(p.FechaFin),
 		CreadoEn:    p.CreadoEn.Format(time.RFC3339),
+
+		HorasPorStoryPoint: p.HorasPorStoryPoint,
 	}
 }
 

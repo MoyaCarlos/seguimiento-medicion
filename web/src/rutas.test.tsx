@@ -36,6 +36,26 @@ describe('registro de rutas', () => {
     expect(screen.getByText('42')).toBeTruthy()
   })
 
+  it('/projects/:id/votacion/:historiaId muestra la votación de la historia', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            url.includes('/votacion')
+              ? JSON.stringify({ historia_id: 3, ronda: 1, revelada_en: null, integrantes: [], promedio: null })
+              : '[]',
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    abrir('/projects/42/votacion/3')
+
+    expect(await screen.findByRole('heading', { name: 'Votación de la historia #3' })).toBeTruthy()
+    expect(screen.getByText('42')).toBeTruthy()
+  })
+
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/settings')
 

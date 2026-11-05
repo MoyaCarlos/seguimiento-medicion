@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Métrica · Proyectos</title>
+<style>
+  :root {
+    --bg: #faf7fc;
+    --surface: #ffffff;
+    --ink: #2a2640;
+    --muted: #6b6880;
+    --border: #e4dff0;
+    --brand: #5b3f94;
+    --brand-btn: #7b5ea7;
+    --brand-btn-hover: #6b4e97;
+    --brand-soft: #ede5f7;
+    --brand-soft-hover: #e2d6f2;
+    --danger: #b3362f;
+    --ok: #2f7d57;
+    --radius: 16px;
+    --shadow: 0 10px 30px rgba(91, 63, 148, .08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  /* Header */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar-inner {
+    max-width: 1160px; margin: 0 auto; padding: 14px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .logo { font-weight: 800; font-size: 20px; color: var(--brand); letter-spacing: -.02em; }
+  .topbar span { font-size: 13px; color: var(--muted); }
+
+  /* Layout dos columnas */
+  .layout {
+    max-width: 1160px; margin: 0 auto; padding: 32px 24px 56px;
+    display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 32px;
+    align-items: start;
+  }
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+    .form-card { position: static !important; }
+  }
+
+  /* Formulario */
+  .form-card {
+    position: sticky; top: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px;
+  }
+  .eyebrow {
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 8px;
+  }
+  h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: -.03em; line-height: 1.1; }
+  .lead { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  label small { font-weight: 400; color: var(--muted); }
+  input, textarea {
+    width: 100%; padding: 10px 12px; font: inherit; font-size: 14px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  textarea { resize: vertical; min-height: 84px; }
+  input:focus, textarea:focus {
+    outline: none; border-color: var(--brand-btn);
+    box-shadow: 0 0 0 3px rgba(123, 94, 167, .18);
+  }
+  .field.invalid input { border-color: var(--danger); }
+  .error { display: none; font-size: 12px; color: var(--danger); margin-top: 4px; }
+  .field.invalid .error { display: block; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 420px) { .row { grid-template-columns: 1fr; } }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  button {
+    font: inherit; font-size: 14px; font-weight: 700; border: 0; cursor: pointer;
+    border-radius: 10px; padding: 10px 18px; transition: background .15s, transform .05s;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--brand-btn); color: #fff; }
+  .btn-primary:hover { background: var(--brand-btn-hover); }
+  .btn-soft { background: var(--brand-soft); color: var(--brand); }
+  .btn-soft:hover { background: var(--brand-soft-hover); }
+  button:focus-visible { outline: 3px solid rgba(123, 94, 167, .35); outline-offset: 2px; }
+
+  /* Lista */
+  .list-head {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 16px;
+  }
+  .list-head h2 { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+  .count {
+    display: inline-block; margin-left: 8px; padding: 2px 10px; font-size: 12px; font-weight: 700;
+    background: var(--brand-soft); color: var(--brand); border-radius: 999px; vertical-align: middle;
+  }
+  .search { max-width: 240px; }
+
+  .projects { display: grid; gap: 14px; }
+  .project {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; transition: box-shadow .15s, border-color .15s, transform .15s;
+  }
+  .project:hover { border-color: #cdbfe6; box-shadow: var(--shadow); transform: translateY(-1px); }
+  .project:focus-visible { outline: 3px solid rgba(123, 94, 167, .35); outline-offset: 2px; }
+  .project.is-new { animation: pop .6s ease; border-color: var(--brand-btn); }
+  @keyframes pop {
+    0% { box-shadow: 0 0 0 0 rgba(123, 94, 167, .5); transform: scale(.98); }
+    100% { box-shadow: 0 0 0 14px rgba(123, 94, 167, 0); transform: scale(1); }
+  }
+  .project-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .project h3 {
+    margin: 0; font-size: 16px; line-height: 1.3; color: var(--brand);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .pid { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .project p {
+    margin: 6px 0 0; font-size: 13px; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .badge {
+    padding: 2px 9px; border-radius: 999px; font-weight: 700; font-size: 11px;
+    background: var(--brand-soft); color: var(--brand);
+  }
+  .badge.ok { background: #e3f3ea; color: var(--ok); }
+  .badge.wait { background: #f1eef7; color: var(--muted); }
+  .bar { height: 6px; background: var(--brand-soft); border-radius: 999px; margin-top: 12px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--brand-btn); border-radius: 999px; }
+
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px;
+    background: var(--surface); border: 1px dashed var(--border); border-radius: 14px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px);
+    background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 10px;
+    font-size: 14px; opacity: 0; pointer-events: none; transition: all .25s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">Métrica</div>
+    <span>Seguimiento de proyectos</span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- Columna izquierda: formulario -->
+  <section class="form-card" aria-labelledby="titulo-form">
+    <p class="eyebrow">Métrica · Scrum Master</p>
+    <h1 id="titulo-form">Crear proyecto</h1>
+    <p class="lead">Definí los datos iniciales del proyecto para comenzar a hacerle seguimiento.</p>
+
+    <form id="form" novalidate>
+      <div class="field" id="f-nombre">
+        <label for="nombre">Nombre del proyecto</label>
+        <input id="nombre" name="nombre" maxlength="120" autocomplete="off">
+        <div class="error">Ingresá un nombre para el proyecto.</div>
+      </div>
+
+      <div class="field">
+        <label for="descripcion">Descripción <small>(opcional)</small></label>
+        <textarea id="descripcion" name="descripcion" maxlength="400"></textarea>
+      </div>
+
+      <div class="row">
+        <div class="field" id="f-inicio">
+          <label for="inicio">Fecha de inicio</label>
+          <input type="date" id="inicio" name="inicio">
+          <div class="error">Elegí la fecha de inicio.</div>
+        </div>
+        <div class="field" id="f-fin">
+          <label for="fin">Fecha de fin</label>
+          <input type="date" id="fin" name="fin">
+          <div class="error" id="fin-error">Elegí la fecha de fin.</div>
+        </div>
+      </div>
+
+      <div class="field" id="f-sm">
+        <label for="sm">Tu nombre (Scrum Master)</label>
+        <input id="sm" name="sm" maxlength="80" autocomplete="name">
+        <div class="error">Ingresá tu nombre.</div>
+      </div>
+
+      <div class="actions">
+        <button type="submit" class="btn-primary">Crear proyecto</button>
+        <button type="button" class="btn-soft" id="demo">Cargar datos de prueba</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Columna derecha: proyectos existentes -->
+  <section aria-labelledby="titulo-lista">
+    <div class="list-head">
+      <h2 id="titulo-lista">Proyectos existentes<span class="count" id="count">0</span></h2>
+      <input class="search" id="buscar" type="search" placeholder="Buscar proyecto…" aria-label="Buscar proyecto">
+    </div>
+    <div class="projects" id="lista"></div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+  // ---- Datos iniciales (los dos proyectos del original) ----
+  let proyectos = [
+    { id: 25, nombre: "Licencia de conducir (datos de prueba)",
+      descripcion: "Digitalización del trámite de renovación de licencia de conducir.",
+      inicio: "2026-09-01", fin: "2026-12-15", sm: "Carlos" },
+    { id: 26, nombre: "Sistema de turnos del hospital con un nombre bastante largo",
+      descripcion: "Gestión de turnos médicos con recordatorios y agenda por especialidad.",
+      inicio: "2026-10-05", fin: "2027-02-28", sm: "Carlos" }
+  ];
+  let siguienteId = 27;
+  let nuevoId = null;
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (iso) => new Date(iso + "T00:00:00").toLocaleDateString("es-AR");
+
+  function estado(p) {
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const ini = new Date(p.inicio + "T00:00:00"), fin = new Date(p.fin + "T00:00:00");
+    if (hoy < ini) return { txt: "Por comenzar", cls: "wait", pct: 0 };
+    if (hoy > fin) return { txt: "Finalizado", cls: "ok", pct: 100 };
+    const pct = Math.round(((hoy - ini) / (fin - ini)) * 100);
+    return { txt: "En curso", cls: "", pct };
+  }
+
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function render() {
+    const q = $("buscar").value.trim().toLowerCase();
+    const filtrados = proyectos.filter((p) => p.nombre.toLowerCase().includes(q));
+    $("count").textContent = proyectos.length;
+
+    if (!filtrados.length) {
+      $("lista").innerHTML = `<div class="empty">${
+        proyectos.length ? "No hay proyectos que coincidan con la búsqueda." : "Todavía no hay proyectos. ¡Creá el primero desde el formulario!"
+      }</div>`;
+      return;
+    }
+
+    $("lista").innerHTML = filtrados.slice().reverse().map((p) => {
+      const e = estado(p);
+      return `
+      <a class="project ${p.id === nuevoId ? "is-new" : ""}" href="#proyecto-${p.id}">
+        <div class="project-top">
+          <h3 title="${esc(p.nombre)}">${esc(p.nombre)}</h3>
+          <span class="pid">#${p.id}</span>
+        </div>
+        ${p.descripcion ? `<p>${esc(p.descripcion)}</p>` : ""}
+        <div class="meta">
+          <span class="badge ${e.cls}">${e.txt}</span>
+          <span>📅 ${fmt(p.inicio)} → ${fmt(p.fin)}</span>
+          <span>👤 ${esc(p.sm)}</span>
+        </div>
+        <div class="bar" aria-label="Avance ${e.pct}%"><i style="width:${e.pct}%"></i></div>
+      </a>`;
+    }).join("");
+  }
+
+  // ---- Validación ----
+  function marcar(idCampo, invalido, msg) {
+    const f = $(idCampo);
+    f.classList.toggle("invalid", invalido);
+    if (msg) f.querySelector(".error").textContent = msg;
+  }
+
+  function validar() {
+    const v = {
+      nombre: $("nombre").value.trim(), inicio: $("inicio").value,
+      fin: $("fin").value, sm: $("sm").value.trim()
+    };
+    marcar("f-nombre", !v.nombre);
+    marcar("f-inicio", !v.inicio);
+    marcar("f-sm", !v.sm);
+    let finMal = !v.fin, msgFin = "Elegí la fecha de fin.";
+    if (v.fin && v.inicio && v.fin < v.inicio) { finMal = true; msgFin = "La fecha de fin no puede ser anterior al inicio."; }
+    marcar("f-fin", finMal, msgFin);
+    return !(!v.nombre || !v.inicio || !v.sm || finMal);
+  }
+
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2400);
+  }
+
+  // ---- Eventos ----
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!validar()) return;
+    const p = {
+      id: siguienteId++,
+      nombre: $("nombre").value.trim(),
+      descripcion: $("descripcion").value.trim(),
+      inicio: $("inicio").value, fin: $("fin").value,
+      sm: $("sm").value.trim()
+    };
+    proyectos.push(p);
+    nuevoId = p.id;
+    $("buscar").value = "";
+    e.target.reset();
+    render();
+    toast(`Proyecto "${p.nombre}" creado (#${p.id})`);
+    setTimeout(() => { nuevoId = null; }, 800);
+  });
+
+  $("demo").addEventListener("click", () => {
+    $("nombre").value = "Aplicación de gestión de gimnasio";
+    $("descripcion").value = "Alta de socios, control de cuotas y reserva de clases.";
+    $("inicio").value = "2026-11-10";
+    $("fin").value = "2027-03-31";
+    $("sm").value = "Carlos";
+    document.querySelectorAll(".field.invalid").forEach((f) => f.classList.remove("invalid"));
+  });
+
+  ["nombre", "inicio", "fin", "sm"].forEach((id) =>
+    $(id).addEventListener("input", () => $(id).closest(".field").classList.remove("invalid")));
+  $("buscar").addEventListener("input", render);
+
+  render();
+</script>
+</body>
+</html>
