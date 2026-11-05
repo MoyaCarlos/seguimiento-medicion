@@ -105,6 +105,7 @@ func main() {
 	})
 	mux.HandleFunc("POST /auth/registro", authHandler.Registro)
 	mux.HandleFunc("POST /auth/ingreso", authHandler.Ingreso)
+	mux.HandleFunc("GET /auth/yo", authHandler.Yo)
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
