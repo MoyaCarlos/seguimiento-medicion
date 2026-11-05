@@ -10,6 +10,7 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/report"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -88,8 +89,13 @@ func main() {
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
+	metricasRepo := repository.NewSQLiteMetricasRepository(db)
 	metricasHandler := apihttp.NewMetricasHandler(
-		service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db)),
+		service.NewCalcularMetricas(proyectos, metricasRepo),
+	)
+	reporteHandler := apihttp.NewReporteHandler(
+		service.NewGenerarReporte(proyectos, sprintRepo, backlogRepo, backlogRepo, backlogRepo, metricasRepo, defectosRepo),
+		report.Generador{},
 	)
 
 	demoHandler := apihttp.NewDemoHandler(
@@ -120,6 +126,7 @@ func main() {
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
+	mux.HandleFunc("GET /sprints/{id}/reporte", reporteHandler.Sprint)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
