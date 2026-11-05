@@ -516,3 +516,26 @@ func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64
 	f.escrituras++
 	return nil
 }
+
+// fakeCalculadorMetricas simula el cálculo de métricas de HU-03 (HU-12).
+type fakeCalculadorMetricas struct {
+	resultado domain.MetricasProyecto
+	err       error
+}
+
+func (f *fakeCalculadorMetricas) Ejecutar(_ context.Context, _ int64) (domain.MetricasProyecto, error) {
+	return f.resultado, f.err
+}
+
+// fakeListadorSprints cuenta las llamadas para comprobar que no se lista
+// cuando el proyecto no existe (HU-12).
+type fakeListadorSprints struct {
+	sprints  []domain.Sprint
+	err      error
+	llamadas int
+}
+
+func (f *fakeListadorSprints) ListarPorProyecto(_ context.Context, _ int64) ([]domain.Sprint, error) {
+	f.llamadas++
+	return f.sprints, f.err
+}
