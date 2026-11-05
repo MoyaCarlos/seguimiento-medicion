@@ -1,7 +1,9 @@
 package http
 
 import (
+	"fmt"
 	nethttp "net/http"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -24,9 +26,33 @@ func NewReporteHandler(generar *service.GenerarReporte, pdf generadorReportes) *
 }
 
 // Sprint atiende GET /sprints/{id}/reporte.
-func (h *ReporteHandler) Sprint(_ nethttp.ResponseWriter, _ *nethttp.Request) {
+func (h *ReporteHandler) Sprint(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	reporte, err := h.generar.EjecutarSprint(r.Context(), id, time.Now())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	contenido, err := h.pdf.GenerarSprint(reporte)
+	if err != nil {
+		escribirError(w, domain.ErrReporteNoGenerado)
+		return
+	}
+	nombre := fmt.Sprintf("reporte-proyecto-%d-sprint-%d.pdf", reporte.Proyecto.ID, reporte.Sprint.Sprint.Numero)
+	escribirPDF(w, nombre, contenido)
 }
 
 // Proyecto atiende GET /projects/{id}/reporte.
 func (h *ReporteHandler) Proyecto(_ nethttp.ResponseWriter, _ *nethttp.Request) {
+}
+
+func escribirPDF(w nethttp.ResponseWriter, nombre string, contenido []byte) {
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", nombre))
+	w.WriteHeader(nethttp.StatusOK)
+	_, _ = w.Write(contenido)
 }

@@ -29,6 +29,18 @@ type columna struct {
 	alinear align.Type
 }
 
+// Generador implementa la generación de los dos reportes como un tipo que
+// puede inyectarse en el handler HTTP.
+type Generador struct{}
+
+func (Generador) GenerarSprint(reporte domain.ReporteSprint) ([]byte, error) {
+	return GenerarSprint(reporte)
+}
+
+func (Generador) GenerarProyecto(reporte domain.ReporteProyecto) ([]byte, error) {
+	return GenerarProyecto(reporte)
+}
+
 // GenerarSprint devuelve el PDF del reporte de un Sprint finalizado.
 func GenerarSprint(reporte domain.ReporteSprint) ([]byte, error) {
 	m := nuevaMaroto("Reporte de Sprint")
