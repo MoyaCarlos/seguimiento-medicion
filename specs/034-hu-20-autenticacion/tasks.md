@@ -127,12 +127,12 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [x] T056 [US2] COMMIT `RED: agregar tests de Ingresar (falla)` (incluye el stub, si lo hay)
 - [x] T057 [US2] GREEN: crear `internal/service/ingresar.go` (`NewIngresar(BuscadorCredenciales, hasheador, emisor)`; el hash señuelo se calcula al construir el servicio con los mismos parámetros); `go test ./internal/service/` en verde
 - [x] T058 [US2] COMMIT `GREEN: implementar Ingresar, test en verde`
-- [ ] T059 [US2] RED: agregar a `internal/http/auth_handler_test.go` `POST /auth/ingreso`: 200 con el mismo cuerpo que el registro; 401 con `{"mensaje":"Usuario o contraseña incorrectos"}` y cuerpo **idéntico byte a byte** para contraseña incorrecta, usuario inexistente y usuario sin contraseña; 400 `JSON inválido`; no valida formato de nombre ni largo de contraseña (un cuerpo vacío da el mismo 401). Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Ingreso` que no escribe nada.
-- [ ] T060 [US2] COMMIT `RED: agregar tests del handler POST /auth/ingreso (falla)` (incluye el stub, si lo hay)
-- [ ] T061 [US2] GREEN: agregar `AuthHandler.Ingreso` en `internal/http/auth_handler.go`; `go test ./internal/http/` en verde
-- [ ] T062 [US2] COMMIT `GREEN: implementar handler POST /auth/ingreso, test en verde`
-- [ ] T063 [US2] Cablear `Ingresar` y la ruta `POST /auth/ingreso` en `cmd/api/main.go`
-- [ ] T064 [US2] COMMIT `Cablear POST /auth/ingreso en cmd/api`
+- [x] T059 [US2] RED: agregar a `internal/http/auth_handler_test.go` `POST /auth/ingreso`: 200 con el mismo cuerpo que el registro; 401 con `{"mensaje":"Usuario o contraseña incorrectos"}` y cuerpo **idéntico byte a byte** para contraseña incorrecta, usuario inexistente y usuario sin contraseña; 400 `JSON inválido`; no valida formato de nombre ni largo de contraseña (un cuerpo vacío da el mismo 401). Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Ingreso` que no escribe nada.
+- [x] T060 [US2] COMMIT `RED: agregar tests del handler POST /auth/ingreso (falla)` (incluye el stub, si lo hay)
+- [x] T061 [US2] GREEN: agregar `AuthHandler.Ingreso` en `internal/http/auth_handler.go`; `go test ./internal/http/` en verde
+- [x] T062 [US2] COMMIT `GREEN: implementar handler POST /auth/ingreso, test en verde`
+- [x] T063 [US2] Cablear `Ingresar` y la ruta `POST /auth/ingreso` en `cmd/api/main.go`
+- [x] T064 [US2] COMMIT `Cablear POST /auth/ingreso en cmd/api`
 - [ ] T065 [US2] RED: agregar a `features/autenticacion.feature` los escenarios 4 (ingreso exitoso, también un usuario previo creado por HU-04 que no puede ingresar) y 5 (credenciales incorrectas: «Usuario o contraseña incorrectos» sin revelar cuál falló); `go test ./features/` debe FALLAR
 - [ ] T066 [US2] COMMIT `RED: agregar escenarios BDD de ingreso (fallan)` (incluye el stub, si lo hay)
 - [ ] T067 [US2] GREEN: agregar los pasos en `features/steps_autenticacion.go`; `go test ./features/` en verde
