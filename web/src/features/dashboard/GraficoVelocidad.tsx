@@ -2,14 +2,15 @@ import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAx
 import { datosDelGrafico, type MetricasDeSprint } from './metricas'
 
 const ALTO = 320
-const ANCHO_POR_SPRINT = 88
+const ANCHO_POR_SPRINT = 72
+const ANCHO_DEL_EJE_Y = 56
 const COLOR_COMPROMETIDOS = '#2a9d8f'
 const COLOR_COMPLETADOS = '#604493'
 const RAYADO = 'dashboard-comprometidos-rayado'
 
 export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
   const filas = datosDelGrafico(sprints)
-  const anchoMinimo = filas.length * ANCHO_POR_SPRINT
+  const anchoMinimo = ANCHO_DEL_EJE_Y + filas.length * ANCHO_POR_SPRINT
 
   return (
     <figure className="dashboard-tarjeta dashboard-grafico" aria-labelledby="dashboard-grafico-titulo">
@@ -36,8 +37,15 @@ export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
                 stroke="var(--muted)"
                 label={{ value: 'Story Points', angle: -90, position: 'insideLeft', fill: 'var(--muted)' }}
               />
-              <Tooltip cursor={{ fill: 'rgb(96 68 147 / 8%)' }} />
-              <Legend />
+              <Tooltip
+                itemSorter={(serie) => (serie.dataKey === 'comprometidos' ? 0 : 1)}
+                itemStyle={{ color: 'var(--ink)' }}
+                cursor={{ fill: 'rgb(96 68 147 / 8%)' }}
+              />
+              <Legend
+                itemSorter={null}
+                formatter={(serie) => <span className="dashboard-grafico__serie">{serie}</span>}
+              />
               <Bar
                 dataKey="comprometidos"
                 name="Comprometidos"

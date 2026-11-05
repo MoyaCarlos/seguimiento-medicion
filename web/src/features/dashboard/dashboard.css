@@ -1,6 +1,7 @@
 .dashboard-pantalla {
   display: grid;
   gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr);
   min-width: 0;
 }
 
@@ -22,10 +23,15 @@
 .dashboard-grafico {
   display: grid;
   gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .dashboard-grafico h2 {
   font-size: 1.05rem;
+}
+
+.dashboard-grafico__serie {
+  color: var(--ink);
 }
 
 .dashboard-grafico__desplazable {
@@ -66,7 +72,7 @@
 .dashboard-indicadores {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
 }
 
 .dashboard-indicador {
@@ -98,6 +104,11 @@
 .dashboard-indicador__nota {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.dashboard-indicador__nota a {
+  color: var(--lilac-dark);
+  font-weight: 700;
 }
 
 .dashboard-comparacion {
@@ -134,5 +145,14 @@
 @media (max-width: 600px) {
   .dashboard-tarjeta {
     padding: 1rem;
+  }
+
+  .dashboard-valores table {
+    font-size: 0.8rem;
+  }
+
+  .dashboard-valores th,
+  .dashboard-valores td {
+    padding: 0.5rem 0.3rem;
   }
 }
