@@ -16,7 +16,7 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 
 - **Decision**: `recharts` 3.x, importada solo desde la feature `dashboard`. La ruta diferida (`lazy`) que ya usan todas las features deja la librería fuera de la carga inicial.
 - **Rationale**: resuelve ejes, leyenda y adaptación al ancho, y es lo que supuso la estimación de 8 SP. La versión 3.10.1 declara compatibilidad con React 19 y pide `react-is` como peer.
-- **Carga diferida verificada** (T039): Recharts queda solo en el chunk `dashboard` (389,5 kB; 111,5 kB comprimido), y `index.html` no lo precarga.
+- **Carga diferida verificada** (T039): Recharts queda solo en el chunk `dashboard` (376,3 kB; 108,2 kB comprimido), y `index.html` no lo precarga.
 - **Alcance de la librería**: solo el gráfico de velocidad. Los indicadores son HTML y CSS (R5), sin depender de ella.
 - **Alternatives considered**: SVG propio: sin dependencias, pero hay que escribir y mantener ejes, escalas y adaptación al ancho. Queda como alternativa si Recharts no se puede integrar; solo cambiaría `GraficoVelocidad`.
 
@@ -29,7 +29,8 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 
 ## R4. Series distinguibles y valores como texto (FR-006)
 
-- **Decision**: "Comprometidos" con barra rayada y borde; "Completados" con barra sólida, más leyenda. Debajo, una tabla plegada "Ver valores por Sprint", con el mismo patrón que "Ver detalle" de HU-07. El ancho mínimo del gráfico crece con la cantidad de Sprints y, si no entra, se desplaza dentro de su propio contenedor, no la página (FR-018).
+- **Decision**: "Comprometidos" con barra rayada y borde; "Completados" con barra sólida, más una leyenda propia, fuera del área desplazable. La leyenda de Recharts se descartó porque se desplaza con el gráfico y a 320 px con 12 Sprints quedaba fuera de la vista. Debajo, una tabla plegada "Ver valores por Sprint", con el mismo patrón que "Ver detalle" de HU-07. El ancho mínimo del gráfico crece con la cantidad de Sprints y, si no entra, se desplaza dentro de su propio contenedor, no la página (FR-018).
+- **Límite conocido**: con muchos Sprints en pantalla angosta, el eje Y se desplaza con el gráfico. Los valores siguen disponibles en la tabla y en el tooltip. Fijar el eje exige un segundo gráfico sincronizado, que no se justifica (KISS).
 - **Rationale**: relleno y borde distinguen las series sin depender del color; la tabla da los valores sin puntero y a lectores de pantalla, y plegada no carga el panel con datos crudos.
 - **Colores**: `#2a9d8f` y `#604493` (`--lilac-dark`), validados con la skill `dataviz` sobre fondo blanco: todos los chequeos en PASS (daltonismo ΔE 20,7; visión normal ΔE 25,9). Los tokens `--lilac` y `--complement` no pasan: `--complement` queda por debajo del piso de croma y el par es indistinguible (ΔE 14,9 con piso de 15).
 - **Alternatives considered**: etiquetas de valor sobre cada barra, descartadas porque con muchos Sprints se superponen en 320 px.
@@ -43,7 +44,7 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 ## R6. Formato y errores
 
 - **Decision**: números con `toLocaleString('es-AR', { maximumFractionDigits: 2 })`, como en HU-07 y HU-02. `null` se muestra como "sin datos". Los errores muestran el `message` de `ApiError` o de `ConnectionError`.
-- **Rationale**: `aislamiento.test.ts` impide importar `clasificarError` de Sprints; además, sin campos de formulario alcanza con `error.message`. El 404 ya trae "proyecto no encontrado".
+- **Rationale**: `aislamiento.test.ts` impide importar `clasificarError` de Sprints; se muestra el mensaje solo de esos dos errores, igual que en `proyecto/errores.ts`, y cualquier otro da "Ocurrió un error inesperado" para no exponer textos técnicos. El 404 ya trae "proyecto no encontrado". Una respuesta 200 sin `sprints` se trata como error, para que la pantalla no quede cargando.
 - **Sin reintento**: ninguna pantalla actual ofrece un botón de reintento, así que no se agrega.
 
 ## R7. Enlaces

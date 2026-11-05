@@ -122,8 +122,20 @@ El equipo confirmó las decisiones en la reunión de definición, incluida la de
 - [X] T039 Verificar en `web/dist` tras `npm run build` que Recharts queda en un chunk aparte de la entrada, y anotar el tamaño en R2 de `specs/035-hu-09-dashboard-metricas/research.md`
 - [X] T040 COMMIT `docs: registrar la carga diferida de Recharts en HU-09` con `research.md`
 - [X] T041 `npm run lint`, `npm test` y `npm run build` desde `web/` sin errores
-- [ ] T042 Ejecutar la validación manual de `specs/035-hu-09-dashboard-metricas/quickstart.md`, incluida la de 320 px, y anotar el resultado en ese archivo. Pendiente: la fila 11 (SC-002) requiere a una persona del equipo; las filas 5 y 8 quedaron parciales
+- [ ] T042 Ejecutar la validación manual de `specs/035-hu-09-dashboard-metricas/quickstart.md`, incluida la de 320 px, y anotar el resultado en ese archivo. Pendiente: la fila 11 (SC-002) requiere a una persona del equipo
 - [X] T043 Actualizar el estado en `specs/035-hu-09-dashboard-metricas/spec.md` y hacer COMMIT `docs: registrar la validación de HU-09`
+
+---
+
+## Phase 8: Correcciones de la revisión
+
+**Goal**: resolver lo que encontró la revisión del código y de la app real, antes del PR.
+
+- [X] T044 [US1] RED + COMMIT y GREEN + COMMIT: leyenda propia, fuera del área desplazable (FR-006), en `web/src/features/dashboard/GraficoVelocidad.tsx`
+- [X] T045 [US2] RED + COMMIT y GREEN + COMMIT: sin barra de horas reales sin estimadas, y escala válida con valores en cero, en `web/src/features/dashboard/Indicadores.tsx`
+- [X] T046 [US4] RED + COMMIT y GREEN + COMMIT: errores ajenos a la API y respuestas sin métricas, en `web/src/features/dashboard/index.tsx` y `api.ts`
+- [X] T047 [US1] RED + COMMIT y GREEN + COMMIT: foco de teclado y nombre en el área desplazable, en `web/src/features/dashboard/GraficoVelocidad.tsx`
+- [X] T048 Repetir la validación en la app real y actualizar `quickstart.md`, `research.md` y `spec.md`; COMMIT `docs: registrar las correcciones de la revisión de HU-09`
 
 ---
 

@@ -45,19 +45,19 @@ No se agrega un archivo `.feature`: la historia no cambia la API, y Godog no eje
 
 ## Resultado de la validación (2026-11-05)
 
-Con la app real (backend Go con una base temporal y el build de producción), en Edge headless con emulación de 320 px. Filas de la tabla de abajo:
+Con la app real (backend Go con una base temporal y el build de producción), en Edge headless con emulación de 320 px. Las filas 1 a 8 se validaron antes de las correcciones de la revisión, que no cambian esos flujos; la 9 y el texto de horas de la 4 se repitieron después. Filas de la tabla de abajo:
 
 | Fila | Resultado |
 |---|---|
 | 1, 2 | OK: estado vacío, también a 320 px |
 | 3 | OK con Sprints cerrados cargados por la API; los valores coinciden con la consulta |
-| 4 | OK: "sin datos" y enlace a la edición |
-| 5 | **Parcial**: un proyecto con el parámetro definido muestra los valores. No se probó definirlo y volver; el recálculo lo cubre Godog ("Cambiar el parámetro recalcula los Sprints finalizados") |
+| 4 | OK: "sin datos", sin barras de horas, y enlace a la edición |
+| 5 | OK: tras definir 4 h por Story Point y volver, el panel muestra 116 h y -33,5 h, igual que la API |
 | 6 | OK en el proyecto de 12 Sprints: 4,75 / 60% / 324 h / 318 h / -6 h / -1,85% / 12 / 8 |
 | 7 | OK: "proyecto no encontrado" |
-| 8 | **Solo automática** (US4.3); no se probó con el backend detenido |
-| 9 | OK: la página no desborda, con la tabla abierta o cerrada; el gráfico se desplaza dentro de su contenedor. Con la barra de scroll clásica de escritorio aparecen 15 px de desplazamiento por el `min-width: 320px` de `web/src/App.css`, anterior a esta historia y ajeno al Dashboard |
-| 10 | OK por el build: Recharts está solo en el chunk `dashboard` (111,5 kB comprimido) y `index.html` no lo precarga. No se miró la pestaña de red |
+| 8 | OK: con el backend detenido y el código ya cargado, "No se pudo conectar con el servidor" |
+| 9 | OK: la página no desborda, con la tabla abierta o cerrada; el gráfico se desplaza dentro de su contenedor, también con las flechas del teclado, y la leyenda sigue a la vista. El eje Y se desplaza con el gráfico (research R4). Con la barra de scroll clásica de escritorio aparecen 15 px de desplazamiento por el `min-width: 320px` de `web/src/App.css`, anterior a esta historia y ajeno al Dashboard |
+| 10 | OK con la red real: el chunk `dashboard` (108,2 kB comprimido) se pide recién al entrar a la sección |
 | 11 | **Pendiente**: requiere a una persona del equipo (SC-002) |
 
 ## Validación manual

@@ -123,6 +123,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHILE** el proyecto tiene muchos Sprints finalizados, el sistema **shall** mantener legibles los rótulos y **shall** no desbordar el ancho de la página, incluso en un ancho de 320 px.
 - **IF** la consulta responde "proyecto no encontrado", **THEN** el sistema **shall** mostrar ese mensaje, y **shall** no mostrar el estado vacío.
 - **IF** la consulta falla por conexión o por error interno, **THEN** el sistema **shall** mostrar un mensaje de error y **shall** no mostrar el estado vacío ni valores anteriores.
+- **IF** la respuesta llega sin métricas o el error no proviene de la API, **THEN** el sistema **shall** mostrar "Ocurrió un error inesperado", y **shall** no quedar cargando ni mostrar textos técnicos.
 
 ## Requirements *(mandatory)*
 
@@ -138,13 +139,13 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
 - **FR-004**: El sistema MUST mostrar un gráfico de barras con un grupo por cada Sprint finalizado en el eje X, y dos valores en el eje Y: "Comprometidos" (Story Points planificados de HU-03) y "Completados".
 - **FR-005**: Los Sprints MUST aparecer ordenados por su número dentro del proyecto e identificados con ese número.
-- **FR-006**: El gráfico MUST distinguir las dos series sin depender solo del color, con una leyenda, y sus valores MUST poder leerse como texto, sin depender del puntero.
+- **FR-006**: El gráfico MUST distinguir las dos series sin depender solo del color, con una leyenda siempre a la vista, aunque el gráfico se desplace, y sus valores MUST poder leerse como texto, sin depender del puntero.
 
 **Indicadores**
 
 - **FR-007**: El sistema MUST mostrar, con los valores del proyecto en conjunto, al menos un indicador visual por cada métrica: velocidad, porcentaje de historias completadas, horas estimadas, horas reales, desviación, defectos detectados y defectos resueltos.
 - **FR-008**: El porcentaje de historias completadas MUST representarse gráficamente como una proporción de un total, además de su valor.
-- **FR-009**: Las horas estimadas y reales MUST compararse en una misma escala, igual que los defectos detectados y resueltos, además de mostrar sus valores.
+- **FR-009**: Las horas estimadas y reales MUST compararse en una misma escala, igual que los defectos detectados y resueltos, además de mostrar sus valores. Si falta uno de los dos términos, no se dibuja ninguna barra, porque no hay contra qué comparar.
 - **FR-010**: La desviación MUST mostrarse en horas y en porcentaje, con una aclaración en palabras de si se trabajó más, menos o lo mismo que lo estimado, que no dependa solo del color.
 - **FR-011**: Los valores decimales MUST mostrarse con coma decimal, igual que en el resto de la aplicación.
 
