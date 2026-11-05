@@ -1,6 +1,6 @@
 # language: es
 
-# Un escenario por Acceptance Scenario de la User Story 1 de
+# Un escenario por Acceptance Scenario de las User Stories 1 y 2 de
 # specs/034-hu-20-autenticacion/spec.md.
 # Cobertura por categoría:
 # - Normal: registro exitoso, la persona queda con la sesión iniciada (US1.1).
@@ -8,6 +8,9 @@
 # - Límite: el largo de la contraseña en 7, 8, 128 y 129 caracteres y el formato del
 #   nombre se prueban con tests unitarios del dominio.
 # - Error: nombre de usuario ya existente (US1.2) y contraseña de menos de 8 caracteres (US1.3).
+# - Ingreso: credenciales correctas con otras mayúsculas (US2.1), usuario previo de HU-04
+#   sin contraseña, que no puede ingresar, y credenciales incorrectas con el mismo mensaje
+#   en todos los casos, sin revelar cuál falló (US2.2).
 
 @HU-20
 Característica: Autenticación de usuarios
@@ -32,3 +35,25 @@ Característica: Autenticación de usuarios
     Cuando me registro con el nombre de usuario "ana.perez" y la contraseña "corta12"
     Entonces el registro de la cuenta se rechaza indicando el campo "contrasena"
     Y no se crea ninguna cuenta nueva
+
+  Escenario: Ingreso exitoso con otras mayúsculas en el nombre
+    Dado que ya existe la cuenta "ana.perez"
+    Cuando ingreso con el nombre de usuario "ANA.PEREZ" y la contraseña "clave-previa-1"
+    Entonces la persona queda con una sesión válida a nombre de "ana.perez"
+    Y la respuesta del ingreso no contiene la contraseña
+
+  Escenario: Un usuario previo creado solo con nombre no puede ingresar
+    Dado que existe el usuario previo "luis.gomez" creado solo con nombre
+    Cuando ingreso con el nombre de usuario "luis.gomez" y la contraseña "cualquier-clave-1"
+    Entonces el ingreso se rechaza con el mensaje "Usuario o contraseña incorrectos"
+
+  Esquema del escenario: Credenciales incorrectas no revelan cuál falló
+    Dado que ya existe la cuenta "ana.perez"
+    Cuando ingreso con el nombre de usuario "<nombre>" y la contraseña "<contraseña>"
+    Entonces el ingreso se rechaza con el mensaje "Usuario o contraseña incorrectos"
+    Y no hay ninguna sesión nueva
+
+    Ejemplos:
+      | nombre     | contraseña         |
+      | ana.perez  | otra-clave-larga   |
+      | fantasma   | clave-previa-1     |
