@@ -17,4 +17,15 @@ func NewHistorialHandler(listar *service.ConsultarHistorialSprints) *HistorialHa
 
 // Listar atiende GET /projects/{id}/historial.
 func (h *HistorialHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	historial, err := h.listar.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aHistorialResponse(historial))
 }
