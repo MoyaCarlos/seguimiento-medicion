@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Métrica · Propuesta visual</title>
+<style>
+  /* Tokens de web/src/App.css */
+  :root {
+    --ink: #29233a; --muted: #756e86; --line: #e7e0ef; --surface: #ffffff; --background: #faf8fd;
+    --lilac: #8067b7; --lilac-dark: #604493; --lilac-soft: #eee8f8; --lilac-soft-hover: #e4dbf3;
+    --panel: #fbf9fe; --ok: #2f7d57; --ok-soft: #e3f3ea; --danger: #b4235a;
+    --shadow: 0 18px 45px rgb(80 60 110 / 8%);
+    --gutter: 1.5rem; --maxw: 1080px;
+    font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; color: var(--ink); background: var(--background);
+    -webkit-font-smoothing: antialiased;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-width: 320px; }
+  a { color: inherit; }
+  .container { max-width: var(--maxw); margin: 0 auto; padding-inline: var(--gutter); }
+
+  
+
+  /* Shell */
+  .app-header { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .app-header .container { display: flex; justify-content: space-between; align-items: center; padding-block: 1.1rem; }
+  .brand { color: var(--lilac-dark); font-size: 1.25rem; font-weight: 800; letter-spacing: -.04em; text-decoration: none; }
+  .header-label { color: var(--muted); font-size: .85rem; }
+  main.container { padding-block: 2rem 4rem; display: grid; gap: 2rem; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
+  .project-switch { display: flex; gap: .6rem; align-items: center; min-width: 0; flex: 1 1 360px; }
+  .select-wrap { position: relative; flex: 0 1 380px; min-width: 0; }
+  .select-wrap select { appearance: none; width: 100%; height: 2.75rem; padding: 0 2.5rem 0 1rem; font: inherit; font-size: .875rem; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; text-overflow: ellipsis; cursor: pointer; }
+  .select-wrap::after { content: ""; position: absolute; right: 1.1rem; top: 50%; width: .5rem; height: .5rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: translateY(-70%) rotate(45deg); pointer-events: none; }
+  .tabs { display: flex; gap: .25rem; padding: .25rem; background: var(--surface); border: 1px solid var(--line); border-radius: .8rem; }
+  .tab { padding: .6rem .9rem; border-radius: .55rem; font-size: .8rem; font-weight: 700; color: var(--muted); text-decoration: none; }
+  .tab:hover { background: var(--lilac-soft); color: var(--lilac-dark); }
+  .tab[aria-current="page"] { background: var(--lilac-soft); color: var(--lilac-dark); box-shadow: inset 0 -2px 0 var(--lilac); }
+
+  /* Botones (mismo sistema en todas las pantallas) */
+  .button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; height: 2.5rem; padding: 0 1rem; border: 0; border-radius: .6rem; font: inherit; font-size: .875rem; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  .button--lg { height: 2.75rem; font-size: .9rem; padding: 0 1.2rem; }
+  .button--sm { height: 2.1rem; font-size: .8rem; padding: 0 .8rem; }
+  .button--block { width: 100%; }
+  .button--primary { background: var(--lilac); color: #fff; }
+  .button--primary:hover { background: var(--lilac-dark); }
+  .button--secondary { background: var(--lilac-soft); color: var(--lilac-dark); }
+  .button--secondary:hover { background: var(--lilac-soft-hover); }
+  .button--quiet { background: transparent; color: var(--lilac-dark); }
+  .button--quiet:hover { background: var(--lilac-soft); }
+  /* Foco unificado (hoy algunos botones muestran el anillo azul por defecto) */
+  .button:focus-visible, .tab:focus-visible, select:focus-visible { outline: 3px solid rgb(128 103 183 / 35%); outline-offset: 2px; }
+
+  /* Encabezado de pantalla: mismo patrón en todas */
+  .page-head { display: flex; flex-wrap: wrap; gap: 1.25rem; justify-content: space-between; align-items: flex-end; }
+  .eyebrow { margin: 0 0 .6rem; color: var(--lilac-dark); font-size: .75rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  h1 { margin: 0; font-size: clamp(1.75rem, 4vw, 2.5rem); letter-spacing: -.04em; line-height: 1.1; }
+  .actions { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+
+  /* Chips: un solo vocabulario para backlog y sprints */
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0; padding: 0; list-style: none; }
+  .chip { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .65rem; border-radius: 999px; font-size: .78rem; font-weight: 700; background: rgb(128 103 183 / 10%); color: var(--lilac-dark); }
+  .chip--must { background: var(--lilac-dark); color: #fff; }
+  .chip--could { background: #f1eef7; color: var(--muted); }
+  .chip--nueva { background: #f1eef7; color: var(--muted); }
+  .chip--progreso { background: var(--lilac-soft); color: var(--lilac-dark); }
+  .chip--progreso::before, .chip--ok::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+  .chip--ok { background: var(--ok-soft); color: var(--ok); }
+
+  /* Backlog */
+  .stack { display: grid; gap: 1rem; list-style: none; margin: 0; padding: 0; }
+  .story { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 1.5rem; display: grid; gap: 1rem; }
+  .story-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .story-meta { margin: 0 0 .25rem; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .story h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.02em; }
+  .story-desc { margin: 0; line-height: 1.6; }
+  .criteria { border-top: 1px solid var(--line); padding-top: .9rem; }
+  .criteria h3 { margin: 0 0 .35rem; color: var(--muted); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+  .criteria p { margin: 0; }
+  .empty { color: var(--muted); font-style: italic; }
+
+  /* Panel inline: lo comparten "Editar historia", "Asignar a Sprint" e "Iniciar Sprint" */
+  .inline-panel { background: var(--panel); border: 1px solid var(--line); border-radius: .85rem; padding: 1.25rem; display: grid; gap: 1rem; }
+  .inline-panel h3 { margin: 0; font-size: 1rem; letter-spacing: -.01em; }
+  .panel-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .25rem; }
+
+  /* Formularios */
+  .form-grid { display: grid; gap: 1.1rem; }
+  .form-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field { display: grid; gap: .4rem; min-width: 0; }
+  .field label { font-size: .875rem; font-weight: 700; }
+  .field input, .field textarea, .field select { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; padding: .7rem .85rem; }
+  .field textarea { min-height: 5.5rem; resize: vertical; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--lilac); box-shadow: 0 0 0 3px rgb(128 103 183 / 15%); outline: none; }
+  .form-card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 2rem; max-width: 720px; }
+  .form-card fieldset { border: 0; padding: 0; margin: 0; min-width: 0; } /* quita el borde gris por defecto */
+  .form-actions { display: flex; gap: .6rem; margin-top: .5rem; }
+
+  /* Sprints */
+  .columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+  .col-head { display: flex; align-items: center; gap: .55rem; margin: 0 0 .85rem; font-size: .8rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .col-head::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: var(--muted); }
+  .col--activo .col-head { color: var(--lilac-dark); } .col--activo .col-head::before { background: var(--lilac); }
+  .col--fin .col-head { color: var(--ok); } .col--fin .col-head::before { background: var(--ok); }
+  .sprint { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 1.25rem; display: grid; gap: 1rem; }
+  .sprint h3 { margin: 0; font-size: 1.1rem; letter-spacing: -.02em; }
+  .sprint-goal { margin: .25rem 0 0; color: var(--muted); line-height: 1.5; font-size: .92rem; }
+  .sprint-dates { margin: .5rem 0 0; font-size: .8rem; font-weight: 700; color: var(--lilac-dark); font-variant-numeric: tabular-nums; }
+  .mini-list { display: grid; gap: .6rem; list-style: none; margin: 0; padding: 0; }
+  .mini { border: 1px solid var(--line); border-radius: .7rem; padding: .75rem .85rem; display: grid; gap: .5rem; background: var(--surface); }
+  .mini-title { margin: 0; font-weight: 700; font-size: .9rem; line-height: 1.35; }
+  .mini-foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+  .mini-note { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sprint-foot { border-top: 1px solid var(--line); padding-top: 1rem; display: flex; justify-content: flex-end; }
+
+  
+  /* Columna vacía */
+  .col-empty { border: 1px dashed #d9cfe8; border-radius: 1rem; padding: 1.5rem; text-align: center; color: var(--muted); font-size: .9rem; }
+
+  /* Historial: sprints finalizados compactos y desplegables */
+  .history { display: grid; gap: .75rem; }
+  .sprint-done { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: 0 6px 18px rgb(80 60 110 / 6%); overflow: hidden; }
+  .sprint-done summary { list-style: none; cursor: pointer; padding: 1rem 1.25rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .6rem .75rem; align-items: start; transition: background .15s; }
+  .sprint-done summary::-webkit-details-marker { display: none; }
+  .sprint-done summary:hover { background: var(--panel); }
+  .sprint-done summary:focus-visible { outline: 3px solid rgb(128 103 183 / 35%); outline-offset: -3px; }
+  .sprint-done h3 { margin: 0; font-size: 1.05rem; letter-spacing: -.02em; }
+  .sprint-done .sprint-goal { margin: .2rem 0 0; font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sprint-done .sprint-dates { margin: .35rem 0 0; }
+  .sd-chips { grid-column: 1 / -1; }
+  .chevron { width: .6rem; height: .6rem; margin-top: .35rem; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .2s; }
+  .sprint-done[open] .chevron { transform: rotate(-135deg); margin-top: .6rem; }
+  .sprint-done[open] summary { border-bottom: 1px solid var(--line); }
+  .done-list { list-style: none; margin: 0; padding: .25rem 1.25rem .5rem; }
+  .done-list li { padding: .8rem 0; display: grid; gap: .4rem; }
+  .done-list li + li { border-top: 1px solid var(--line); }
+  .done-title { margin: 0; font-weight: 700; font-size: .88rem; line-height: 1.35; }
+  .done-note { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  
+  /* Fechas del formulario de sprint: una debajo de la otra (en columnas angostas se pisaban) */
+  .sprint .form-grid--2 { grid-template-columns: 1fr; }
+  .field input[type="date"] { min-width: 0; }
+
+  /* Acción de la historia: botón con borde para que no se confunda con un chip */
+  .button--outline { background: var(--surface); color: var(--lilac-dark); box-shadow: inset 0 0 0 1.5px var(--lilac); }
+  .button--outline:hover { background: var(--lilac-soft); }
+  [data-icon]::before { content: attr(data-icon); font-size: .7rem; }
+
+  @media (max-width: 900px) { .columns { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .form-grid--2 { grid-template-columns: 1fr; }
+    .tabs { overflow-x: auto; width: 100%; } .tab { flex: 0 0 auto; }
+    .story-top { flex-direction: column; }
+    .form-card { padding: 1.5rem; }
+  }
+  [hidden] { display: none !important; }
+
+  /* ===== Agregados para el archivo unificado ===== */
+  .lead { margin: 0 0 1.5rem; color: var(--muted); font-size: .92rem; line-height: 1.5; }
+  .form-card h1 { font-size: 2rem; margin-bottom: .5rem; }
+  .error { display: none; font-size: .78rem; color: var(--danger); margin: 0; }
+  .field.invalid .error { display: block; }
+  .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
+  .opt { font-weight: 400; color: var(--muted); }
+
+  /* Crear proyecto + existentes */
+  .create-layout { display: grid; grid-template-columns: minmax(340px, 440px) 1fr; gap: 2rem; align-items: start; }
+  .create-layout .form-card { max-width: none; position: sticky; top: 1.5rem; }
+  .list-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .list-head h2 { margin: 0; font-size: 1.35rem; letter-spacing: -.02em; }
+  .count { display: inline-block; margin-left: .5rem; padding: .1rem .6rem; font-size: .75rem; font-weight: 700; background: var(--lilac-soft); color: var(--lilac-dark); border-radius: 999px; vertical-align: middle; }
+  .search { width: 100%; max-width: 15rem; font: inherit; font-size: .875rem; padding: .6rem .85rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); color: var(--ink); }
+  .search:focus { border-color: var(--lilac); box-shadow: 0 0 0 3px rgb(128 103 183 / 15%); outline: none; }
+  .project { display: block; text-decoration: none; color: inherit; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; padding: 1.1rem 1.25rem; transition: box-shadow .15s, border-color .15s, transform .15s; }
+  .project:hover { border-color: #cdbfe6; box-shadow: var(--shadow); transform: translateY(-1px); }
+  .project:focus-visible { outline: 3px solid rgb(128 103 183 / 35%); outline-offset: 2px; }
+  .project.is-new { animation: pop .6s ease; border-color: var(--lilac); }
+  @keyframes pop { 0% { box-shadow: 0 0 0 0 rgb(128 103 183 / 50%); } 100% { box-shadow: 0 0 0 14px rgb(128 103 183 / 0%); } }
+  .project-top { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; }
+  .project h3 { margin: 0; font-size: 1rem; line-height: 1.3; color: var(--lilac-dark); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pid { font-size: .75rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .project p { margin: .4rem 0 0; font-size: .85rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin-top: .75rem; font-size: .78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; background: var(--lilac-soft); border-radius: 999px; margin-top: .75rem; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--lilac); border-radius: 999px; }
+
+  /* Panel del proyecto */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); overflow: hidden; }
+  .card-body { padding: 2rem; }
+  .card-body p { margin: 0; max-width: 68ch; color: var(--muted); line-height: 1.65; font-size: 1.02rem; }
+  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--line); }
+  .fact { padding: 1.25rem 2rem; display: grid; gap: .35rem; align-content: start; }
+  .fact + .fact { border-left: 1px solid var(--line); }
+  .fact dt { color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .fact dd { margin: 0; font-size: 1.05rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-flex; align-items: center; gap: .45rem; width: fit-content; padding: .2rem .7rem; border-radius: 999px; font-size: .85rem; font-weight: 700; background: var(--lilac-soft); color: var(--lilac-dark); }
+  .badge::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: currentColor; }
+  .badge--finalizado { background: var(--ok-soft); color: var(--ok); }
+  .badge--planificado { background: #f1eef7; color: var(--muted); }
+  .card-foot { display: flex; justify-content: flex-end; padding: .9rem 2rem; background: #fcfbfe; border-top: 1px solid var(--line); }
+  .card-link { color: var(--lilac-dark); font-weight: 700; font-size: .9rem; text-decoration: none; display: inline-flex; gap: .35rem; }
+  .card-link:hover { text-decoration: underline; }
+  .card-link:focus-visible { outline: 3px solid rgb(128 103 183 / 35%); outline-offset: 2px; }
+
+  /* Equipo */
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; align-items: start; }
+  .panel-card { background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 1.75rem; display: grid; gap: 1.1rem; }
+  .panel-card h2 { margin: 0; font-size: 1.1rem; letter-spacing: -.02em; }
+  .panel-card .hint { margin: 0; color: var(--muted); line-height: 1.6; }
+  .team { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+  .team li { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border: 1px solid var(--line); border-radius: .7rem; padding: .75rem .9rem; }
+  .team strong { color: var(--lilac-dark); font-size: .8rem; }
+
+  /* Placeholder (Estado) */
+  .placeholder-card { display: grid; grid-template-columns: auto 1fr; gap: 1rem 1.25rem; align-items: start; }
+  .placeholder-icon { width: 3rem; height: 3rem; display: grid; place-items: center; border-radius: .85rem; background: var(--lilac-soft); border: 1px solid #ded2f0; color: var(--lilac); font-size: 1.4rem; }
+  .placeholder-card h2 { margin: 0 0 .35rem; font-size: 1.35rem; letter-spacing: -.02em; }
+  .placeholder-card p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+  /* Vacío del backlog */
+  .vacio { border: 1px dashed #d9cfe8; border-radius: 1rem; padding: 2rem 1.5rem; text-align: center; color: var(--muted); }
+
+  /* Toast */
+  .toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: .65rem 1.1rem; border-radius: .7rem; font-size: .875rem; max-width: calc(100vw - 2rem); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; z-index: 10; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* Estado (HU-18) */
+  .status-summary { display: grid; grid-template-columns: auto 1fr; gap: 1.25rem 2.5rem; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 1rem; box-shadow: var(--shadow); padding: 1.5rem 2rem; }
+  .totals { display: flex; gap: 2.5rem; }
+  .totals > div { display: grid; gap: .25rem; }
+  .big { font-size: 2.25rem; font-weight: 800; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .lbl { color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .stack-bar { display: flex; gap: 2px; height: .75rem; border-radius: 999px; overflow: hidden; background: var(--lilac-soft); }
+  .stack-bar i { display: block; min-width: .5rem; }
+  .stat-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .85rem; }
+  .stat-head .col-head { margin: 0; }
+  .sprint-tag { display: inline-flex; align-items: center; gap: .4rem; font-size: .75rem; font-weight: 700; color: var(--lilac-dark); }
+  .sprint-tag::before { content: ""; width: .8rem; height: .8rem; border-radius: .25rem; background: var(--lilac-soft); box-shadow: inset 0 0 0 1.5px var(--lilac); }
+  .sprint-tag--backlog { color: var(--muted); font-weight: 600; }
+  .sprint-tag--backlog::before { background: #f6f3fa; box-shadow: inset 0 0 0 1.5px #cfc6e0; }
+  @media (max-width: 700px) { .status-summary { grid-template-columns: 1fr; padding: 1.25rem 1.5rem; } .totals { gap: 2rem; } }
+
+  @media (max-width: 900px) { .create-layout { grid-template-columns: 1fr; } .create-layout .form-card { position: static; } }
+  @media (max-width: 700px) {
+    .facts { grid-template-columns: 1fr; }
+    .fact + .fact { border-left: 0; border-top: 1px solid var(--line); }
+    .fact, .card-body, .card-foot { padding-inline: 1.5rem; }
+    .button--lg { height: 2.75rem; }
+    .story-action { width: 100%; height: 2.75rem; }
+    .project-switch { flex-wrap: wrap; flex-basis: 100%; }
+    .select-wrap { flex: 1 1 100%; }
+    .project-switch > .button { flex: 1 1 100%; }
+  }
+
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="container">
+    <a class="brand" href="#/projects">Métrica</a>
+    <span class="header-label">Seguimiento de proyectos</span>
+  </div>
+</header>
+<main class="container" id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = (n) => String(n).padStart(2, '0');
+  const hoyISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+  const fmt = (iso) => { if (!iso) return 'Sin definir'; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
+  const ROLES = { scrum_master: 'Scrum Master', product_builder: 'Product Builder' };
+  const LETRA = { 'Must have': 'M', 'Should have': 'S', 'Could have': 'C' };
+
+  // ---------- Datos de ejemplo ----------
+  const DB = {
+    nextProject: 27, nextStory: 11,
+    projects: [
+      { id: 25, nombre: 'Licencia de conducir (datos de prueba)',
+        descripcion: 'Trámite de licencia de conducir: turno, examen teórico, pago y emisión. Proyecto de demostración con datos de ejemplo.',
+        inicio: '2026-10-19', fin: '2026-12-18', sm: 'Carlos' },
+      { id: 26, nombre: 'Sistema de turnos del hospital con un nombre bastante largo',
+        descripcion: 'Gestión de turnos médicos con recordatorios y agenda por especialidad.',
+        inicio: '2026-10-05', fin: '2027-02-28', sm: 'Carlos' }
+    ],
+    team: { 25: [{ nombre: 'Carlos', rol: 'scrum_master' }], 26: [{ nombre: 'Carlos', rol: 'scrum_master' }] },
+    stories: {
+      25: [
+        { id: 4, titulo: 'Pagar la tasa de la licencia en línea', descripcion: 'Como solicitante quiero pagar la tasa con tarjeta para no ir a una oficina de cobro.', criterios: '', prioridad: 'Must have', valor: 13, sp: 8 },
+        { id: 9, titulo: 'Avisar por correo el vencimiento', descripcion: 'Como conductor quiero recibir un correo antes de que venza mi licencia para renovarla a tiempo.', criterios: '', prioridad: 'Could have', valor: 5, sp: null }
+      ],
+      26: []
+    },
+    sprints: {
+      25: [
+        { numero: 3, goal: 'Demostración', inicio: '2026-11-04', fin: '2026-11-10', estado: 'activo',
+          stories: [{ id: 7, titulo: 'Renovar la licencia vencida', prioridad: 'Should have', sp: 5, estado: 'Nueva' }] },
+        { numero: 2, goal: 'Examen teórico y comprobantes', inicio: '2026-10-27', fin: '2026-11-09', estado: 'finalizado',
+          stories: [
+            { id: 5, titulo: 'Rendir el examen teórico en línea', prioridad: 'Must have', sp: 13, estado: 'Completada', fecha: '2026-11-03' },
+            { id: 6, titulo: 'Emitir el comprobante del turno', prioridad: 'Should have', sp: 3, estado: 'Completada', fecha: '2026-11-03' }
+          ] },
+        { numero: 1, goal: 'Gestión inicial del trámite', inicio: '2026-10-20', fin: '2026-10-26', estado: 'finalizado',
+          stories: [
+            { id: 1, titulo: 'Solicitar turno para el examen teórico', prioridad: 'Must have', sp: 5, estado: 'Completada', fecha: '2026-10-24' },
+            { id: 2, titulo: 'Registrar datos personales del solicitante', prioridad: 'Must have', sp: 3, estado: 'Completada', fecha: '2026-10-23' },
+            { id: 3, titulo: 'Validar el certificado de aptitud psicofísica', prioridad: 'Should have', sp: 8, estado: 'Completada', fecha: '2026-10-25' }
+          ] }
+      ],
+      26: []
+    }
+  };
+  let ui = { panel: null };
+  let nuevoId = null;
+
+  const proyecto = (id) => DB.projects.find((p) => p.id === id);
+  // Misma regla que CalcularEstadoProyecto (HU-13): los Sprints mandan sobre las fechas
+  const estadoProyecto = (p) => {
+    const sp = DB.sprints[p.id] || [];
+    if (sp.some((x) => x.estado === 'activo')) return 'En curso';
+    if (sp.length && sp.every((x) => x.estado === 'finalizado')) return 'Finalizado';
+    if (sp.some((x) => x.estado === 'finalizado')) return 'En curso';
+    const h = hoyISO();
+    if (!p.inicio || h < p.inicio) return 'Planificado';
+    if (p.fin && h > p.fin) return 'Finalizado';
+    return 'En curso';
+  };
+  const badgeCls = { 'Planificado': ' badge--planificado', 'En curso': '', 'Finalizado': ' badge--finalizado' };
+  const progreso = (p) => {
+    const t = (s) => new Date(s + 'T00:00:00').getTime(), h = t(hoyISO());
+    if (h <= t(p.inicio)) return 0; if (h >= t(p.fin)) return 100;
+    return Math.round(((h - t(p.inicio)) / (t(p.fin) - t(p.inicio))) * 100);
+  };
+
+  // ---------- Piezas ----------
+  const priChip = (p, letra) => `<li class="chip${p === 'Must have' ? ' chip--must' : p === 'Could have' ? ' chip--could' : ''}">${esc(p)}${letra ? ` (${LETRA[p]})` : ''}</li>`;
+  const estChip = (e) => `<li class="chip ${e === 'Completada' ? 'chip--ok' : e === 'En progreso' ? 'chip--progreso' : 'chip--nueva'}">${esc(e)}</li>`;
+  const spChip = (sp, largo) => sp == null ? '<li class="chip chip--could">Sin estimar</li>' : `<li class="chip">${sp} ${largo ? 'Story Points' : 'SP'}</li>`;
+
+  const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+  const setInvalid = (id, bad, msg) => { const f = $(id); if (!f) return; f.classList.toggle('invalid', bad); if (msg) f.querySelector('.error').textContent = msg; };
+  const val = (id) => ($(id) ? $(id).value.trim() : '');
+
+  // ---------- Router ----------
+  function parse() {
+    const parts = route.replace(/^#\/?/, '').split('/').filter(Boolean);
+    if (parts[0] !== 'projects' || !parts[1]) return { name: 'home' };
+    const id = Number(parts[1]);
+    if (!proyecto(id)) return { name: 'home' };
+    return { name: 'project', id, sec: parts[2] || 'proyecto', sub: parts[3] };
+  }
+  // La ruta vive en memoria: en una vista previa (iframe about:srcdoc) el historial del navegador puede estar bloqueado.
+  let route = location.hash || '#/projects';
+  function navigate(hash) {
+    route = hash; ui.panel = null;
+    try { history.pushState(null, '', hash); } catch (_) { /* iframe sandbox: se ignora */ }
+    render(); window.scrollTo(0, 0);
+  }
+  const go = navigate;
+
+  // ---------- Barra de contexto ----------
+  function toolbar(r) {
+    const activa = r.sec === 'edit' || r.sec === 'settings' ? 'proyecto' : r.sec;
+    const tabs = [['proyecto', 'Proyecto'], ['backlog', 'Historias'], ['sprints', 'Sprints'], ['status', 'Estado']];
+    return `
+    <div class="toolbar">
+      <div class="project-switch">
+        <div class="select-wrap">
+          <select aria-label="Proyecto" data-change="switch" data-sec="${esc(activa)}">
+            ${DB.projects.map((p) => `<option value="${p.id}"${p.id === r.id ? ' selected' : ''}>${esc(p.nombre)} (#${p.id})</option>`).join('')}
+          </select>
+        </div>
+        <a class="button button--secondary button--lg" href="#/projects">+ Nuevo proyecto</a>
+      </div>
+      <nav class="tabs" aria-label="Secciones del proyecto">
+        ${tabs.map(([k, t]) => `<a class="tab" href="#/projects/${r.id}/${k}"${k === activa ? ' aria-current="page"' : ''}>${t}</a>`).join('')}
+      </nav>
+    </div>`;
+  }
+
+  const head = (eyebrow, titulo, acciones) => `
+    <header class="page-head">
+      <div><p class="eyebrow">${eyebrow}</p><h1>${esc(titulo)}</h1></div>
+      ${acciones ? `<div class="actions">${acciones}</div>` : ''}
+    </header>`;
+
+  // ---------- Home: crear proyecto + existentes ----------
+  function viewHome() {
+    return `
+    <div class="create-layout">
+      <section class="form-card" aria-labelledby="t-crear">
+        <p class="eyebrow">Métrica · Scrum Master</p>
+        <h1 id="t-crear">Crear proyecto</h1>
+        <p class="lead">Definí los datos iniciales del proyecto para comenzar a hacerle seguimiento.</p>
+        <form data-form="create-project" novalidate>
+          <div class="form-grid">
+            <div class="field" id="f-nombre"><label for="c-nombre">Nombre del proyecto</label><input id="c-nombre" maxlength="120" autocomplete="off"><p class="error">Ingresá un nombre para el proyecto.</p></div>
+            <div class="field"><label for="c-desc">Descripción <span class="opt">(opcional)</span></label><textarea id="c-desc" maxlength="400"></textarea></div>
+            <div class="form-grid form-grid--2">
+              <div class="field" id="f-inicio"><label for="c-inicio">Fecha de inicio</label><input id="c-inicio" type="date"><p class="error">Elegí la fecha de inicio.</p></div>
+              <div class="field" id="f-fin"><label for="c-fin">Fecha de fin</label><input id="c-fin" type="date"><p class="error">Elegí la fecha de fin.</p></div>
+            </div>
+            <div class="field" id="f-sm"><label for="c-sm">Tu nombre (Scrum Master)</label><input id="c-sm" maxlength="80" autocomplete="name"><p class="error">Ingresá tu nombre.</p></div>
+            <div class="form-actions">
+              <button type="submit" class="button button--primary button--lg">Crear proyecto</button>
+              <button type="button" class="button button--secondary button--lg" data-action="demo-data">Cargar datos de prueba</button>
+            </div>
+          </div>
+        </form>
+      </section>
+      <section aria-labelledby="t-lista">
+        <div class="list-head">
+          <h2 id="t-lista">Proyectos existentes<span class="count" id="count">0</span></h2>
+          <input class="search" id="buscar" type="search" placeholder="Buscar proyecto…" aria-label="Buscar proyecto">
+        </div>
+        <div class="stack" id="lista"></div>
+      </section>
+    </div>`;
+  }
+
+  function renderLista() {
+    const q = val('buscar').toLowerCase();
+    const items = DB.projects.filter((p) => p.nombre.toLowerCase().includes(q)).slice().reverse();
+    $('count').textContent = DB.projects.length;
+    $('lista').innerHTML = items.length ? items.map((p) => {
+      const e = estadoProyecto(p);
+      return `
+      <a class="project${p.id === nuevoId ? ' is-new' : ''}" href="#/projects/${p.id}/proyecto">
+        <div class="project-top"><h3 title="${esc(p.nombre)}">${esc(p.nombre)}</h3><span class="pid">#${p.id}</span></div>
+        ${p.descripcion ? `<p>${esc(p.descripcion)}</p>` : ''}
+        <div class="meta"><span class="badge${badgeCls[e]}">${e}</span><span>${fmt(p.inicio)} → ${fmt(p.fin)}</span><span>Scrum Master: ${esc(p.sm)}</span></div>
+        <div class="bar" role="img" aria-label="Avance ${progreso(p)}%"><i style="width:${progreso(p)}%"></i></div>
+      </a>`;
+    }).join('') : `<div class="vacio">${DB.projects.length ? 'No hay proyectos que coincidan con la búsqueda.' : 'Todavía no hay proyectos.'}</div>`;
+  }
+
+  // ---------- Panel del proyecto ----------
+  function viewPanel(r) {
+    const p = proyecto(r.id), e = estadoProyecto(p);
+    return head(`Panel del proyecto <span style="color:var(--muted)">· #${p.id}</span>`, p.nombre,
+      `<a class="button button--secondary button--lg" href="#/projects/${p.id}/settings">Configurar equipo</a>
+       <a class="button button--primary button--lg" href="#/projects/${p.id}/edit">Editar proyecto</a>`) + `
+    <article class="card">
+      <div class="card-body"><p>${p.descripcion ? esc(p.descripcion) : 'Sin descripción'}</p></div>
+      <dl class="facts">
+        <div class="fact"><dt>Inicio</dt><dd>${fmt(p.inicio)}</dd></div>
+        <div class="fact"><dt>Fin</dt><dd>${fmt(p.fin)}</dd></div>
+        <div class="fact"><dt>Estado</dt><dd><span class="badge${badgeCls[e]}">${e}</span></dd></div>
+      </dl>
+      <div class="card-foot"><a class="card-link" href="#/projects/${p.id}/status">Ver estado del proyecto <span aria-hidden="true">→</span></a></div>
+    </article>`;
+  }
+
+  function viewEditar(r) {
+    const p = proyecto(r.id);
+    return head(`Proyecto #${p.id}`, 'Editar proyecto', `<a class="button button--quiet button--lg" href="#/projects/${p.id}/proyecto">← Volver al panel</a>`) + `
+    <form class="form-card" data-form="edit-project" novalidate>
+      <div class="form-grid">
+        <div class="field" id="f-nombre"><label for="e-nombre">Nombre del proyecto</label><input id="e-nombre" maxlength="120" value="${esc(p.nombre)}"><p class="error">Ingresá un nombre para el proyecto.</p></div>
+        <div class="field"><label for="e-desc">Descripción <span class="opt">(opcional)</span></label><textarea id="e-desc" maxlength="400">${esc(p.descripcion)}</textarea></div>
+        <div class="form-grid form-grid--2">
+          <div class="field" id="f-inicio"><label for="e-inicio">Fecha de inicio</label><input id="e-inicio" type="date" value="${p.inicio}"><p class="error">Elegí la fecha de inicio.</p></div>
+          <div class="field" id="f-fin"><label for="e-fin">Fecha de fin</label><input id="e-fin" type="date" value="${p.fin}"><p class="error">Elegí la fecha de fin.</p></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="button button--primary button--lg">Guardar cambios</button>
+          <a class="button button--quiet button--lg" href="#/projects/${p.id}/proyecto">Cancelar</a>
+        </div>
+      </div>
+    </form>`;
+  }
+
+  function viewEquipo(r) {
+    const p = proyecto(r.id), eq = DB.team[p.id] || [];
+    return head(`Proyecto #${p.id}`, 'Configurar equipo', `<a class="button button--quiet button--lg" href="#/projects/${p.id}/proyecto">← Volver al panel</a>`) + `
+    <div class="two-col">
+      <article class="panel-card">
+        <h2>Asignar integrante</h2>
+        <form data-form="team" novalidate class="form-grid">
+          <div class="field" id="f-miembro"><label for="m-nombre">Nombre del integrante</label><input id="m-nombre" maxlength="200" autocomplete="off"><p class="error">Ingresá el nombre del integrante.</p></div>
+          <div class="field" id="f-rol"><label for="m-rol">Rol</label>
+            <select id="m-rol"><option value="">Seleccioná un rol</option>${Object.entries(ROLES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+            <p class="error">Seleccioná un rol.</p></div>
+          <div><button type="submit" class="button button--primary">Asignar</button></div>
+        </form>
+      </article>
+      <article class="panel-card">
+        <h2>Equipo del proyecto</h2>
+        ${eq.length ? `<ul class="team">${eq.map((m) => `<li><span>${esc(m.nombre)}</span><strong>${ROLES[m.rol]}</strong></li>`).join('')}</ul>` : '<p class="hint">Todavía no hay integrantes asignados.</p>'}
+      </article>
+    </div>`;
+  }
+
+  // HU-18: historias del proyecto agrupadas por estado (Nueva / En progreso / Completada),
+  // con cantidad e Story Points por grupo y el Sprint de cada historia (o Product Backlog).
+  function viewEstado(r) {
+    const p = proyecto(r.id), e = estadoProyecto(p);
+    const items = [];
+    (DB.sprints[r.id] || []).slice().sort((x, y) => y.numero - x.numero).forEach((sp) =>
+      sp.stories.forEach((h) => items.push({ titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: h.estado, sprint: sp.numero })));
+    (DB.stories[r.id] || []).forEach((h) => items.push({ titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: 'Nueva', sprint: null }));
+
+    const color = { 'Nueva': '#cfc6e0', 'En progreso': 'var(--lilac)', 'Completada': 'var(--ok)' };
+    const grupos = [['Nueva', ''], ['En progreso', ' col--activo'], ['Completada', ' col--fin']].map(([nombre, cls]) => {
+      const lista = items.filter((i) => i.estado === nombre);
+      return { nombre, cls, lista, sp: lista.reduce((t, i) => t + (i.sp || 0), 0) };
+    });
+    const total = items.length, totalSp = items.reduce((t, i) => t + (i.sp || 0), 0);
+    const n = (c, uno, varios) => `${c} ${c === 1 ? uno : varios}`;
+
+    const columna = (g) => `
+      <div class="col${g.cls}">
+        <div class="stat-head">
+          <h2 class="col-head">${g.nombre}</h2>
+          <ul class="chips"><li class="chip">${n(g.lista.length, 'historia', 'historias')}</li><li class="chip">${g.sp} SP</li></ul>
+        </div>
+        ${g.lista.length ? `<ul class="mini-list">${g.lista.map((i) => `
+          <li class="mini">
+            <p class="mini-title">${esc(i.titulo)}</p>
+            <ul class="chips">${priChip(i.prioridad, true)}${spChip(i.sp)}</ul>
+            <span class="sprint-tag${i.sprint ? '' : ' sprint-tag--backlog'}">${i.sprint ? 'Sprint ' + i.sprint : 'Product Backlog'}</span>
+          </li>`).join('')}</ul>` : '<div class="col-empty">Sin historias</div>'}
+      </div>`;
+
+    return head(`Proyecto #${r.id}`, 'Estado del proyecto', `<span class="badge${badgeCls[e]}" title="Estado general del proyecto">${e}</span>`) + `
+    <article class="status-summary">
+      <div class="totals">
+        <div><span class="big">${total}</span><span class="lbl">${total === 1 ? 'Historia' : 'Historias'}</span></div>
+        <div><span class="big">${totalSp}</span><span class="lbl">Story Points</span></div>
+      </div>
+      <div class="stack-bar" role="img" aria-label="${grupos.map((g) => `${g.nombre}: ${g.lista.length}`).join(', ')}">
+        ${grupos.map((g) => g.lista.length ? `<i style="flex:${g.lista.length};background:${color[g.nombre]}" title="${g.nombre}: ${g.lista.length}"></i>` : '').join('')}
+      </div>
+    </article>` + (total
+      ? `<div class="columns">${grupos.map(columna).join('')}</div>`
+      : '<div class="vacio">Este proyecto todavía no tiene historias.</div>');
+  }
+
+  // ---------- Backlog ----------
+  function viewBacklog(r) {
+    const hist = DB.stories[r.id] || [];
+    const sprintsDisp = (DB.sprints[r.id] || []).filter((s) => s.estado !== 'finalizado');
+    const panelEditar = (h) => `
+      <form class="inline-panel" data-form="edit-story" data-story="${h.id}" novalidate>
+        <h3>Editar historia</h3>
+        <div class="form-grid">
+          <div class="field" id="f-hist"><label for="x-t">Título</label><input id="x-t" value="${esc(h.titulo)}"><p class="error">El título es obligatorio.</p></div>
+          <div class="field"><label for="x-d">Descripción</label><textarea id="x-d">${esc(h.descripcion)}</textarea></div>
+          <div class="field"><label for="x-c">Criterios de aceptación</label><textarea id="x-c">${esc(h.criterios)}</textarea></div>
+          <div class="field" style="max-width:14rem"><label for="x-sp">Story Points</label>
+            <select id="x-sp"><option value="">Sin estimar</option>${[1, 2, 3, 5, 8, 13, 21].map((n) => `<option${h.sp === n ? ' selected' : ''}>${n}</option>`).join('')}</select></div>
+        </div>
+        <div class="panel-actions">
+          <button type="button" class="button button--quiet" data-action="close-panel">Cancelar</button>
+          <button type="submit" class="button button--primary">Guardar cambios</button>
+        </div>
+      </form>`;
+    const panelAsignar = (h) => `
+      <form class="inline-panel" data-form="assign" data-story="${h.id}" novalidate>
+        <h3>Asignar a Sprint</h3>
+        <div class="field"><label for="a-sprint">Sprint</label>
+          <select id="a-sprint"${sprintsDisp.length ? '' : ' disabled'}>
+            ${sprintsDisp.length ? '<option value="">Elegí un Sprint</option>' + sprintsDisp.map((s) => `<option value="${s.numero}">Sprint ${s.numero} (${s.estado})</option>`).join('') : '<option>No hay Sprints disponibles</option>'}
+          </select><p class="error">Elegí un Sprint.</p></div>
+        <div class="panel-actions">
+          <button type="button" class="button button--quiet" data-action="close-panel">Cancelar</button>
+          <button type="submit" class="button button--primary"${sprintsDisp.length ? '' : ' disabled'}>Confirmar asignación</button>
+        </div>
+      </form>`;
+    const tarjeta = (h) => `
+      <li class="story">
+        <div class="story-top">
+          <div><p class="story-meta">Historia #${h.id}</p><h2>${esc(h.titulo)}</h2></div>
+          <div class="actions">
+            <button type="button" class="button button--secondary" data-action="open-edit" data-story="${h.id}">Editar</button>
+            <button type="button" class="button button--secondary" data-action="open-assign" data-story="${h.id}">Asignar a Sprint</button>
+          </div>
+        </div>
+        <ul class="chips">${priChip(h.prioridad)}${estChip('Nueva')}${spChip(h.sp, true)}${h.valor != null ? `<li class="chip">Valor de negocio: ${h.valor}</li>` : ''}</ul>
+        <p class="story-desc">${esc(h.descripcion || 'Sin descripción')}</p>
+        <div class="criteria"><h3>Criterios de aceptación</h3>${h.criterios ? `<p>${esc(h.criterios)}</p>` : '<p class="empty">Sin criterios de aceptación</p>'}</div>
+        ${ui.panel && ui.panel.story === h.id ? (ui.panel.type === 'edit' ? panelEditar(h) : panelAsignar(h)) : ''}
+      </li>`;
+    return head(`Proyecto #${r.id}`, 'Product Backlog', `<a class="button button--primary button--lg" href="#/projects/${r.id}/backlog/nueva">Nueva historia</a>`) +
+      (hist.length ? `<ul class="stack">${hist.map(tarjeta).join('')}</ul>` : '<div class="vacio">Todavía no hay historias en el backlog.</div>');
+  }
+
+  function viewNuevaHistoria(r) {
+    return head(`Proyecto #${r.id}`, 'Nueva historia', `<a class="button button--quiet button--lg" href="#/projects/${r.id}/backlog">← Volver al backlog</a>`) + `
+    <form class="form-card" data-form="new-story" novalidate>
+      <fieldset class="form-grid">
+        <div class="field" id="f-hist"><label for="n-t">Título</label><input id="n-t" maxlength="200" autocomplete="off"><p class="error">Ingresá un título para la historia.</p></div>
+        <div class="field"><label for="n-d">Descripción</label><textarea id="n-d"></textarea></div>
+        <div class="form-grid form-grid--2">
+          <div class="field"><label for="n-p">Prioridad</label><select id="n-p"><option>Must have</option><option>Should have</option><option>Could have</option></select></div>
+          <div class="field"><label for="n-v">Valor de negocio</label><select id="n-v"><option value="">Sin valor</option>${[1, 2, 3, 5, 8, 13, 21].map((n) => `<option>${n}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="button button--primary button--lg">Guardar</button>
+          <a class="button button--quiet button--lg" href="#/projects/${r.id}/backlog">Cancelar</a>
+        </div>
+      </fieldset>
+    </form>`;
+  }
+
+  // ---------- Sprints ----------
+  const miniBase = (h, accion) => `
+    <li class="mini">
+      <p class="mini-title">${esc(h.titulo)}</p>
+      <ul class="chips">${priChip(h.prioridad, true)}${estChip(h.estado)}${spChip(h.sp)}</ul>
+      ${accion || ''}
+    </li>`;
+
+  function viewSprints(r) {
+    const lista = DB.sprints[r.id] || [];
+    const pend = lista.filter((s) => s.estado === 'pendiente').sort((a, b) => a.numero - b.numero);
+    const act = lista.filter((s) => s.estado === 'activo');
+    const fin = lista.filter((s) => s.estado === 'finalizado').sort((a, b) => b.numero - a.numero);
+    const vacio = '<div class="col-empty">No hay Sprints</div>';
+
+    const cardPend = (s) => `
+      <article class="sprint">
+        <h3>Sprint ${s.numero}</h3>
+        ${s.stories.length ? `<ul class="mini-list">${s.stories.map((h) => miniBase(h)).join('')}</ul>` : ''}
+        <form class="inline-panel" data-form="start-sprint" novalidate>
+          <h3>Iniciar Sprint</h3>
+          <div class="field"><label for="g-${s.numero}">Sprint Goal</label><input id="g-${s.numero}"></div>
+          <div class="form-grid form-grid--2">
+            <div class="field"><label for="i-${s.numero}">Fecha de inicio</label><input id="i-${s.numero}" type="date"></div>
+            <div class="field"><label for="f-${s.numero}">Fecha de fin</label><input id="f-${s.numero}" type="date"></div>
+          </div>
+          <button type="submit" class="button button--primary button--block">Iniciar Sprint</button>
+        </form>
+      </article>`;
+
+    const cardAct = (s) => `
+      <article class="sprint">
+        <div><h3>Sprint ${s.numero}</h3>${s.goal ? `<p class="sprint-goal">${esc(s.goal)}</p>` : ''}<p class="sprint-dates">${fmt(s.inicio)} → ${fmt(s.fin)}</p></div>
+        ${s.stories.length ? `<ul class="mini-list">${s.stories.map((h) => {
+          const b = h.estado === 'Nueva' ? ['Iniciar', '▶'] : h.estado === 'En progreso' ? ['Completar', '✓'] : null;
+          return miniBase(h, b
+            ? `<div class="mini-foot"><button type="button" class="button button--outline button--sm story-action" data-icon="${b[1]}" data-action="story-next" data-sprint="${s.numero}" data-story="${h.id}">${b[0]}</button></div>`
+            : `<span class="mini-note">Completada el ${fmt(h.fecha)}</span>`);
+        }).join('')}</ul>` : '<p class="sprint-goal">Sin historias asignadas.</p>'}
+        <div class="sprint-foot"><button type="button" class="button button--primary" data-action="close-sprint" data-sprint="${s.numero}">Cerrar Sprint</button></div>
+      </article>`;
+
+    const cardFin = (s) => {
+      const ok = s.stories.filter((h) => h.estado === 'Completada');
+      const sp = ok.reduce((t, h) => t + (h.sp || 0), 0);
+      return `
+      <details class="sprint-done">
+        <summary>
+          <div><h3>Sprint ${s.numero}</h3>${s.goal ? `<p class="sprint-goal">${esc(s.goal)}</p>` : ''}<p class="sprint-dates">${fmt(s.inicio)} → ${fmt(s.fin)}</p></div>
+          <span class="chevron" aria-hidden="true"></span>
+          <ul class="chips sd-chips"><li class="chip ${ok.length ? 'chip--ok' : 'chip--nueva'}">${ok.length} completada${ok.length === 1 ? '' : 's'}</li><li class="chip">${sp} SP</li></ul>
+        </summary>
+        <ul class="done-list">${s.stories.map((h) => `
+          <li><p class="done-title">${esc(h.titulo)}</p>
+            <ul class="chips">${priChip(h.prioridad, true)}${spChip(h.sp)}${h.estado !== 'Completada' ? estChip(h.estado) : ''}</ul>
+            ${h.estado === 'Completada' ? `<span class="done-note">Completada el ${fmt(h.fecha)}</span>` : ''}</li>`).join('') || '<li><p class="done-note">Sin historias.</p></li>'}</ul>
+      </details>`;
+    };
+
+    return head(`Proyecto #${r.id}`, 'Sprints', '<button type="button" class="button button--primary button--lg" data-action="create-sprint">Crear Sprint</button>') + `
+    <div class="columns">
+      <div class="col"><h2 class="col-head">Pendiente</h2>${pend.length ? `<div class="history">${pend.map(cardPend).join('')}</div>` : vacio}</div>
+      <div class="col col--activo"><h2 class="col-head">Activo</h2>${act.length ? act.map(cardAct).join('') : vacio}</div>
+      <div class="col col--fin"><h2 class="col-head">Finalizado</h2>${fin.length ? `<div class="history">${fin.map(cardFin).join('')}</div>` : vacio}</div>
+    </div>`;
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const r = parse(), app = $('app');
+    if (r.name === 'home') { app.innerHTML = viewHome(); renderLista(); document.title = 'Métrica · Crear proyecto'; return; }
+    let v;
+    if (r.sec === 'edit') v = viewEditar(r);
+    else if (r.sec === 'settings') v = viewEquipo(r);
+    else if (r.sec === 'backlog') v = r.sub === 'nueva' ? viewNuevaHistoria(r) : viewBacklog(r);
+    else if (r.sec === 'sprints') v = viewSprints(r);
+    else if (r.sec === 'status') v = viewEstado(r);
+    else v = viewPanel(r);
+    app.innerHTML = toolbar(r) + v;
+    document.title = 'Métrica · ' + proyecto(r.id).nombre;
+  }
+
+  // ---------- Acciones ----------
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-action]'); if (!t) return;
+    const r = parse(), pid = r.id, a = t.dataset.action;
+    if (a === 'demo-data') {
+      $('c-nombre').value = 'Aplicación de gestión de gimnasio';
+      $('c-desc').value = 'Alta de socios, control de cuotas y reserva de clases.';
+      $('c-inicio').value = '2026-11-10'; $('c-fin').value = '2027-03-31'; $('c-sm').value = 'Carlos';
+      document.querySelectorAll('.field.invalid').forEach((f) => f.classList.remove('invalid'));
+    } else if (a === 'open-edit' || a === 'open-assign') {
+      ui.panel = { type: a === 'open-edit' ? 'edit' : 'assign', story: Number(t.dataset.story) }; render();
+    } else if (a === 'close-panel') { ui.panel = null; render();
+    } else if (a === 'create-sprint') {
+      const l = DB.sprints[pid]; const n = Math.max(0, ...l.map((s) => s.numero)) + 1;
+      l.push({ numero: n, goal: '', inicio: '', fin: '', estado: 'pendiente', stories: [] }); render(); toast(`Sprint ${n} creado`);
+    } else if (a === 'story-next') {
+      const s = DB.sprints[pid].find((x) => x.numero === Number(t.dataset.sprint));
+      const h = s.stories.find((x) => x.id === Number(t.dataset.story));
+      if (h.estado === 'Nueva') h.estado = 'En progreso'; else if (h.estado === 'En progreso') { h.estado = 'Completada'; h.fecha = hoyISO(); }
+      render();
+    } else if (a === 'close-sprint') {
+      DB.sprints[pid].find((x) => x.numero === Number(t.dataset.sprint)).estado = 'finalizado'; render();
+    }
+  });
+
+  document.addEventListener('change', (e) => {
+    const s = e.target.closest('[data-change="switch"]'); if (!s) return;
+    go(`#/projects/${s.value}/${s.dataset.sec}`);
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'buscar') renderLista();
+    const f = e.target.closest('.field.invalid'); if (f) f.classList.remove('invalid');
+  });
+
+  document.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target.closest('form[data-form]'); if (!f) return;
+    const r = parse(), pid = r.id, kind = f.dataset.form;
+
+    if (kind === 'create-project') {
+      const v = { n: val('c-nombre'), i: $('c-inicio').value, f: $('c-fin').value, s: val('c-sm') };
+      setInvalid('f-nombre', !v.n); setInvalid('f-inicio', !v.i); setInvalid('f-sm', !v.s);
+      const finMal = !v.f || (v.i && v.f < v.i);
+      setInvalid('f-fin', finMal, !v.f ? 'Elegí la fecha de fin.' : 'La fecha de fin no puede ser anterior al inicio.');
+      if (!v.n || !v.i || !v.s || finMal) return;
+      const p = { id: DB.nextProject++, nombre: v.n, descripcion: val('c-desc'), inicio: v.i, fin: v.f, sm: v.s };
+      DB.projects.push(p); DB.team[p.id] = [{ nombre: v.s, rol: 'scrum_master' }]; DB.stories[p.id] = []; DB.sprints[p.id] = [];
+      nuevoId = p.id; f.reset(); $('buscar').value = ''; renderLista(); toast(`Proyecto "${p.nombre}" creado (#${p.id})`);
+      setTimeout(() => { nuevoId = null; }, 800);
+    } else if (kind === 'edit-project') {
+      const p = proyecto(pid), v = { n: val('e-nombre'), i: $('e-inicio').value, f: $('e-fin').value };
+      setInvalid('f-nombre', !v.n); setInvalid('f-inicio', !v.i);
+      const finMal = !v.f || (v.i && v.f < v.i);
+      setInvalid('f-fin', finMal, !v.f ? 'Elegí la fecha de fin.' : 'La fecha de fin no puede ser anterior al inicio.');
+      if (!v.n || !v.i || finMal) return;
+      Object.assign(p, { nombre: v.n, descripcion: val('e-desc'), inicio: v.i, fin: v.f });
+      go(`#/projects/${pid}/proyecto`); toast('Cambios guardados');
+    } else if (kind === 'team') {
+      const n = val('m-nombre'), rol = $('m-rol').value;
+      setInvalid('f-miembro', !n); setInvalid('f-rol', !rol); if (!n || !rol) return;
+      DB.team[pid].push({ nombre: n, rol }); render(); toast('Integrante asignado');
+    } else if (kind === 'new-story') {
+      const t = val('n-t'); setInvalid('f-hist', !t); if (!t) return;
+      DB.stories[pid].push({ id: DB.nextStory++, titulo: t, descripcion: val('n-d'), criterios: '', prioridad: $('n-p').value, valor: $('n-v').value ? Number($('n-v').value) : null, sp: null });
+      go(`#/projects/${pid}/backlog`); toast('Historia creada');
+    } else if (kind === 'edit-story') {
+      const h = DB.stories[pid].find((x) => x.id === Number(f.dataset.story)), t = val('x-t');
+      setInvalid('f-hist', !t); if (!t) return;
+      Object.assign(h, { titulo: t, descripcion: val('x-d'), criterios: val('x-c'), sp: $('x-sp').value ? Number($('x-sp').value) : null });
+      ui.panel = null; render(); toast('Historia actualizada');
+    } else if (kind === 'assign') {
+      const n = Number($('a-sprint').value);
+      if (!n) { $('a-sprint').closest('.field').classList.add('invalid'); return; }
+      const lista = DB.stories[pid], i = lista.findIndex((x) => x.id === Number(f.dataset.story)), h = lista.splice(i, 1)[0];
+      DB.sprints[pid].find((s) => s.numero === n).stories.push({ id: h.id, titulo: h.titulo, prioridad: h.prioridad, sp: h.sp, estado: 'Nueva' });
+      ui.panel = null; render(); toast(`Historia asignada al Sprint ${n}`);
+    } else if (kind === 'start-sprint') {
+      toast('Iniciar Sprint no está simulado en este prototipo');
+    }
+  });
+
+  // Enlaces internos (#/...): se resuelven acá, sin depender de la URL del documento
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href^="#/"]');
+    if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault(); navigate(a.getAttribute('href'));
+  });
+  // Botón "atrás" o cambio manual de la dirección (cuando se abre el archivo directamente)
+  const desdeUrl = () => { route = location.hash || '#/projects'; ui.panel = null; render(); window.scrollTo(0, 0); };
+  window.addEventListener('popstate', desdeUrl);
+  window.addEventListener('hashchange', desdeUrl);
+  render();
+})();
+</script>
+</body>
+</html>

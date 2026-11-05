@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -71,9 +72,12 @@ func main() {
 	votacionHandler := apihttp.NewVotacionHandler(
 		service.NewObtenerHistoria(backlogRepo),
 		service.NewVotar(backlogRepo, proyectos, votaciones),
-		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),
 		service.NewIniciarVotacion(backlogRepo, proyectos, votaciones),
+		service.NewRegistrarEstimacion(backlogRepo, proyectos, votaciones, sprintRepo),
+		service.NewAbrirNuevaRonda(backlogRepo, proyectos, votaciones),
+		service.NewConsultarHistorialRondas(backlogRepo, proyectos, votaciones),
 	)
 
 	defectosRepo := repository.NewSQLiteDefectoRepository(db)
@@ -82,6 +86,10 @@ func main() {
 		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
 		service.NewResolverDefecto(defectosRepo, sprintRepo),
 		service.NewListarDefectos(proyectos, defectosRepo),
+	)
+
+	metricasHandler := apihttp.NewMetricasHandler(
+		service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db)),
 	)
 
 	demoHandler := apihttp.NewDemoHandler(
@@ -98,10 +106,6 @@ func main() {
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
 	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
 	mux.HandleFunc("GET /backlog/{id}/horas", horasHandler.ConsultarEsfuerzo)
-	mux.HandleFunc("GET /backlog/{id}/votacion", votacionHandler.Consultar)
-	mux.HandleFunc("POST /backlog/{id}/votacion", votacionHandler.Iniciar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/votos", votacionHandler.Votar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", votacionHandler.Revelar)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
 	mux.HandleFunc("PUT /backlog/{id}/estado", backlogHandler.CambiarEstado)
 	mux.HandleFunc("GET /projects", projectHandler.Listar)
@@ -112,6 +116,7 @@ func main() {
 	mux.HandleFunc("POST /projects/{id}/members", projectHandler.AsignarIntegrante)
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
+	mux.HandleFunc("GET /projects/{id}/metricas", metricasHandler.Consultar)
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
@@ -120,6 +125,7 @@ func main() {
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
 	mux.HandleFunc("GET /sprints/{id}/backlog", sprintHandler.ConsultarBacklog)
 
+	votacionHandler.Registrar(mux)
 	demoHandler.Registrar(mux)
 
 	log.Printf("listening on :%s", cfg.Puerto)

@@ -177,6 +177,42 @@ func TestSQLiteVotacionRepository_ObtenerRondaActual_EsLaDeMayorNumero(t *testin
 	}
 }
 
+func TestSQLiteVotacionRepository_RondaActualRevelada_SinRondas(t *testing.T) {
+	e := nuevoEscenarioVotacion(t)
+
+	_, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
+
+	if !errors.Is(err, domain.ErrVotacionNoIniciada) {
+		t.Errorf("se esperaba ErrVotacionNoIniciada, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteVotacionRepository_RondaActualRevelada_MiraLaDeMayorNumero(t *testing.T) {
+	casos := map[string]struct {
+		reveladaRondaDos any
+		esperado         bool
+	}{
+		"ronda 2 revelada": {"2026-10-28T15:04:05Z", true},
+		"ronda 2 abierta":  {nil, false},
+	}
+	for nombre, c := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			e := nuevoEscenarioVotacion(t)
+			mustExec(t, e.db, "INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (10, ?, 1, '2026-10-27T15:04:05Z')", e.historiaID)
+			mustExec(t, e.db, "INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (11, ?, 2, ?)", e.historiaID, c.reveladaRondaDos)
+
+			revelada, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+
+			if revelada != c.esperado {
+				t.Errorf("se esperaba revelada = %v, se obtuvo %v", c.esperado, revelada)
+			}
+		})
+	}
+}
+
 func TestSQLiteVotacionRepository_GuardarVoto_AgregaYReemplaza(t *testing.T) {
 	e := nuevoEscenarioVotacion(t)
 	r := crearRonda(t, e)
@@ -246,5 +282,95 @@ func TestSQLiteVotacionRepository_GuardarVoto_UsuarioInexistente(t *testing.T) {
 
 	if !errors.Is(err, ErrIntegridadReferencial) {
 		t.Errorf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteVotacionRepository_SegundaRonda(t *testing.T) {
+	ctx := context.Background()
+	e := nuevoEscenarioVotacion(t)
+	primera := crearRonda(t, e)
+	if err := e.repo.GuardarVoto(ctx, primera.ID, domain.Voto{UsuarioID: e.carlos, Valor: 3}); err != nil {
+		t.Fatalf("no se esperaba error al votar: %v", err)
+	}
+	if err := e.repo.MarcarRevelada(ctx, primera.ID, time.Now()); err != nil {
+		t.Fatalf("no se esperaba error al revelar: %v", err)
+	}
+
+	segunda, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: 2})
+	if err != nil {
+		t.Fatalf("no se esperaba error al crear la ronda 2: %v", err)
+	}
+
+	actual, err := e.repo.ObtenerRondaActual(ctx, e.historiaID)
+	if err != nil {
+		t.Fatalf("no se esperaba error al leer la ronda actual: %v", err)
+	}
+	if actual.ID != segunda.ID || actual.Numero != 2 || len(actual.Votos) != 0 || actual.Revelada() {
+		t.Errorf("la ronda actual debía ser la 2, sin votos ni revelar, es %+v", actual)
+	}
+	if _, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: 2}); !errors.Is(err, domain.ErrVotacionYaIniciada) {
+		t.Errorf("repetir la ronda 2 debía dar ErrVotacionYaIniciada, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteVotacionRepository_ListarRondasReveladas(t *testing.T) {
+	ctx := context.Background()
+	e := nuevoEscenarioVotacion(t)
+	en := time.Date(2026, 11, 3, 15, 4, 5, 0, time.UTC)
+	for i, votos := range [][]domain.Voto{
+		{{UsuarioID: e.candela, Valor: 8}, {UsuarioID: e.carlos, Valor: 3}},
+		nil,
+	} {
+		ronda, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: i + 1})
+		if err != nil {
+			t.Fatalf("no se esperaba error al crear la ronda %d: %v", i+1, err)
+		}
+		for _, v := range votos {
+			if err := e.repo.GuardarVoto(ctx, ronda.ID, v); err != nil {
+				t.Fatalf("no se esperaba error al votar: %v", err)
+			}
+		}
+		if err := e.repo.MarcarRevelada(ctx, ronda.ID, en); err != nil {
+			t.Fatalf("no se esperaba error al revelar: %v", err)
+		}
+	}
+	abierta, err := e.repo.CrearRonda(ctx, domain.RondaVotacion{HistoriaID: e.historiaID, Numero: 3})
+	if err != nil {
+		t.Fatalf("no se esperaba error al crear la ronda 3: %v", err)
+	}
+	if err := e.repo.GuardarVoto(ctx, abierta.ID, domain.Voto{UsuarioID: e.carlos, Valor: 13}); err != nil {
+		t.Fatalf("no se esperaba error al votar: %v", err)
+	}
+
+	rondas, err := e.repo.ListarRondasReveladas(ctx, e.historiaID)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if len(rondas) != 2 || rondas[0].Numero != 1 || rondas[1].Numero != 2 {
+		t.Fatalf("se esperaban las rondas 1 y 2, se obtuvo %+v", rondas)
+	}
+	if rondas[0].ReveladaEn == nil || !rondas[0].ReveladaEn.Equal(en) {
+		t.Errorf("se esperaba el instante de revelación, se obtuvo %v", rondas[0].ReveladaEn)
+	}
+	esperados := []domain.Voto{{UsuarioID: e.carlos, Valor: 3}, {UsuarioID: e.candela, Valor: 8}}
+	if !slices.Equal(rondas[0].Votos, esperados) {
+		t.Errorf("se esperaban los votos %+v, se obtuvo %+v", esperados, rondas[0].Votos)
+	}
+	if len(rondas[1].Votos) != 0 {
+		t.Errorf("la ronda 2 no tiene votos, se obtuvo %+v", rondas[1].Votos)
+	}
+}
+
+func TestSQLiteVotacionRepository_ListarRondasReveladas_SinRondas(t *testing.T) {
+	e := nuevoEscenarioVotacion(t)
+
+	rondas, err := e.repo.ListarRondasReveladas(context.Background(), e.historiaID)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if rondas == nil || len(rondas) != 0 {
+		t.Errorf("se esperaba una lista vacía, se obtuvo %#v", rondas)
 	}
 }

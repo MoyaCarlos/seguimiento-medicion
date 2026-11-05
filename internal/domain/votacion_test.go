@@ -196,3 +196,95 @@ func TestRondaVotacion_Promedio_Revelada(t *testing.T) {
 		t.Errorf("se esperaba el promedio de 3, 5 y 8, se obtuvo %+v (%v)", p, ok)
 	}
 }
+
+func TestCoincidenciaExacta_HayDiferencias(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		valores  []int
+		esperado bool
+	}{
+		{"cartas distintas", []int{3, 5, 8}, true},
+		{"cartas vecinas", []int{3, 5}, true},
+		{"todas iguales", []int{5, 5, 5}, false},
+		{"un solo voto", []int{8}, false},
+		{"sin votos", []int{}, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			if got := (CoincidenciaExacta{}).HayDiferencias(c.valores); got != c.esperado {
+				t.Errorf("HayDiferencias(%v) = %v, se esperaba %v", c.valores, got, c.esperado)
+			}
+		})
+	}
+}
+
+// siempreDiferencias prueba que la regla de consenso es intercambiable.
+type siempreDiferencias struct{}
+
+func (siempreDiferencias) HayDiferencias([]int) bool { return true }
+
+func rondaConVotos(revelada bool, valores ...int) RondaVotacion {
+	r := RondaVotacion{ID: 1, HistoriaID: 100, Numero: 1}
+	for i, v := range valores {
+		r.Votos = append(r.Votos, Voto{UsuarioID: int64(i + 1), Valor: v})
+	}
+	if revelada {
+		en := momentoRevelacion
+		r.ReveladaEn = &en
+	}
+	return r
+}
+
+func TestRondaVotacion_Diferencias_SinRevelar(t *testing.T) {
+	if _, ok := rondaConVotos(false, 3, 8).Diferencias(CoincidenciaExacta{}); ok {
+		t.Error("una ronda sin revelar no debía informar diferencias")
+	}
+}
+
+func TestRondaVotacion_Diferencias_Revelada(t *testing.T) {
+	casos := []struct {
+		nombre   string
+		ronda    RondaVotacion
+		regla    ReglaConsenso
+		esperado Diferencias
+	}{
+		{"con diferencias", rondaConVotos(true, 3, 5, 8), CoincidenciaExacta{}, Diferencias{Hay: true, Minimo: 3, Maximo: 8}},
+		{"sin importar el orden", rondaConVotos(true, 8, 3, 5), CoincidenciaExacta{}, Diferencias{Hay: true, Minimo: 3, Maximo: 8}},
+		{"sin diferencias", rondaConVotos(true, 5, 5, 5), CoincidenciaExacta{}, Diferencias{Hay: false}},
+		{"otra regla cambia el resultado", rondaConVotos(true, 5, 5, 5), siempreDiferencias{}, Diferencias{Hay: true, Minimo: 5, Maximo: 5}},
+		{"sin votos no consulta la regla", rondaConVotos(true), siempreDiferencias{}, Diferencias{Hay: false}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			got, ok := c.ronda.Diferencias(c.regla)
+			if !ok {
+				t.Fatal("una ronda revelada debía informar diferencias")
+			}
+			if got != c.esperado {
+				t.Errorf("se esperaba %+v, se obtuvo %+v", c.esperado, got)
+			}
+		})
+	}
+}
+
+func TestRondaVotacion_Siguiente_Revelada(t *testing.T) {
+	r := rondaConVotos(true, 3, 8)
+
+	siguiente, err := r.Siguiente()
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if siguiente.HistoriaID != r.HistoriaID || siguiente.Numero != 2 || len(siguiente.Votos) != 0 || siguiente.Revelada() {
+		t.Errorf("se esperaba la ronda 2 de la misma historia, sin votos ni revelar, se obtuvo %+v", siguiente)
+	}
+	if r.Numero != 1 || len(r.Votos) != 2 || !r.Revelada() {
+		t.Errorf("la ronda original no debía cambiar, quedó %+v", r)
+	}
+}
+
+func TestRondaVotacion_Siguiente_SinRevelar(t *testing.T) {
+	if _, err := rondaConVotos(false, 3, 8).Siguiente(); !errors.Is(err, ErrRondaNoRevelada) {
+		t.Errorf("se esperaba ErrRondaNoRevelada, se obtuvo %v", err)
+	}
+}

@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Cálculo de Métricas (HU-03)
+  version: 0.1.0
+  description: >-
+    Consulta de las métricas de un proyecto y parámetro de horas por Story Point.
+    Los nombres de MetricasSprint son los que la spec 033 (HU-12) declaró como
+    provisorios. HU-09, HU-10 y HU-12 toman los valores de este cálculo.
+paths:
+  /projects/{id}/metricas:
+    get:
+      summary: Consulta las métricas de cada Sprint finalizado y del proyecto
+      description: >-
+        Se calculan al consultar y no se guardan. Solo aportan los Sprints
+        "Finalizado". No modifica ningún dato.
+      parameters:
+        - $ref: '#/components/parameters/ProyectoId'
+      responses:
+        '200':
+          description: >-
+            Métricas calculadas. Sin Sprints finalizados, sprints es una lista
+            vacía y los valores del proyecto están en cero, salvo los que
+            corresponden a "sin datos".
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricasProyecto'
+              examples:
+                conUnSprint:
+                  summary: Un Sprint con 8 SP planificados, 4 h por SP y 30 h imputadas
+                  value:
+                    proyecto_id: 1
+                    horas_por_story_point: 4
+                    proyecto:
+                      story_points_planificados: 8
+                      story_points_completados: 5
+                      velocidad: 5
+                      porcentaje_historias_completadas: 50
+                      horas_estimadas: 32
+                      horas_reales: 30
+                      desviacion_horas: -2
+                      desviacion_porcentaje: -6.25
+                      defectos_detectados: 2
+                      defectos_resueltos: 1
+                    sprints:
+                      - sprint_id: 7
+                        numero: 1
+                        metricas:
+                          story_points_planificados: 8
+                          story_points_completados: 5
+                          velocidad: 5
+                          porcentaje_historias_completadas: 50
+                          horas_estimadas: 32
+                          horas_reales: 30
+                          desviacion_horas: -2
+                          desviacion_porcentaje: -6.25
+                          defectos_detectados: 2
+                          defectos_resueltos: 1
+                sinSprintsFinalizados:
+                  summary: Proyecto sin Sprints finalizados y con el parámetro definido
+                  value:
+                    proyecto_id: 2
+                    horas_por_story_point: 4
+                    proyecto:
+                      story_points_planificados: 0
+                      story_points_completados: 0
+                      velocidad: 0
+                      porcentaje_historias_completadas: 0
+                      horas_estimadas: 0
+                      horas_reales: 0
+                      desviacion_horas: 0
+                      desviacion_porcentaje: null
+                      defectos_detectados: 0
+                      defectos_resueltos: 0
+                    sprints: []
+        '400':
+          $ref: '#/components/responses/IdInvalido'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /projects/{id}:
+    put:
+      summary: Edita un proyecto (cambio de HU-03 sobre el contrato de HU-04)
+      description: >-
+        nombre, descripcion, fecha_inicio y fecha_fin siguen siendo obligatorios.
+        horas_por_story_point es la excepción: si no se envía, se conserva; con
+        null, queda sin definir. Se valida después de los demás campos.
+      parameters:
+        - $ref: '#/components/parameters/ProyectoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarProyecto'
+      responses:
+        '200':
+          description: Proyecto editado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        '400':
+          description: >-
+            Datos inválidos. Un valor cero, negativo, no numérico o un texto
+            (incluido "") se rechaza con este error y el proyecto no cambia.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                campo: horas_por_story_point
+                mensaje: las horas por Story Point deben ser un número mayor que cero
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    get:
+      summary: Consulta un proyecto (agrega horas_por_story_point)
+      description: >-
+        El campo también aparece en el listado, en la creación (siempre null) y
+        en la edición.
+      parameters:
+        - $ref: '#/components/parameters/ProyectoId'
+      responses:
+        '200':
+          description: Proyecto
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Proyecto'
+        '404':
+          $ref: '#/components/responses/ProyectoNoEncontrado'
+  /backlog/{id}:
+    put:
+      summary: Edita una historia (cambio de HU-03 sobre la regla D2b de HU-15)
+      description: >-
+        Cargar Story Points en una historia sin estimar de un Sprint "Finalizado"
+        responde 400. Editar otros datos sin cargarlos sigue permitido. El registro
+        de la estimación acordada de HU-14 (contrato de la spec 031) responde lo
+        mismo.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '400':
+          description: Story Points rechazados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                campo: estimacion_sp
+                mensaje: no se pueden cargar Story Points en un Sprint Finalizado
+components:
+  parameters:
+    ProyectoId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    IdInvalido:
+      description: Identificador inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ProyectoNoEncontrado:
+      description: El proyecto no existe
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            mensaje: proyecto no encontrado
+    ErrorInterno:
+      description: Error interno
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            mensaje: error interno
+  schemas:
+    MetricasProyecto:
+      type: object
+      required: [proyecto_id, horas_por_story_point, proyecto, sprints]
+      properties:
+        proyecto_id:
+          type: integer
+          format: int64
+        horas_por_story_point:
+          type: number
+          nullable: true
+          description: El valor con el que se calcularon las horas estimadas. Null significa sin definir.
+        proyecto:
+          $ref: '#/components/schemas/MetricasSprint'
+        sprints:
+          type: array
+          description: Solo los Sprints finalizados, ordenados por número.
+          items:
+            $ref: '#/components/schemas/MetricasDeSprint'
+    MetricasDeSprint:
+      type: object
+      required: [sprint_id, numero, metricas]
+      properties:
+        sprint_id:
+          type: integer
+          format: int64
+        numero:
+          type: integer
+          description: Posición entre todos los Sprints del proyecto, igual que en el resto de la API.
+        metricas:
+          $ref: '#/components/schemas/MetricasSprint'
+    MetricasSprint:
+      type: object
+      description: >-
+        Misma forma para un Sprint y para el proyecto. Los decimales llevan dos
+        cifras. Null significa "sin datos", nunca cero. Un valor positivo de
+        desviación significa que se trabajó más de lo estimado.
+      required:
+        - story_points_planificados
+        - story_points_completados
+        - velocidad
+        - porcentaje_historias_completadas
+        - horas_estimadas
+        - horas_reales
+        - desviacion_horas
+        - desviacion_porcentaje
+        - defectos_detectados
+        - defectos_resueltos
+      properties:
+        story_points_planificados:
+          type: integer
+        story_points_completados:
+          type: integer
+        velocidad:
+          type: number
+          description: En un Sprint, sus Story Points completados. En el proyecto, el promedio por Sprint finalizado.
+        porcentaje_historias_completadas:
+          type: number
+          description: Por cantidad de historias, no por Story Points.
+        horas_estimadas:
+          type: number
+          nullable: true
+          description: Story Points planificados × horas por Story Point. Null si el parámetro no está definido.
+        horas_reales:
+          type: number
+        desviacion_horas:
+          type: number
+          nullable: true
+          description: Reales − estimadas. Null si el parámetro no está definido.
+        desviacion_porcentaje:
+          type: number
+          nullable: true
+          description: Sobre las estimadas. Null si el parámetro no está definido o si las estimadas son cero.
+        defectos_detectados:
+          type: integer
+        defectos_resueltos:
+          type: integer
+    EditarProyecto:
+      type: object
+      required: [nombre, descripcion, fecha_inicio, fecha_fin]
+      properties:
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+        horas_por_story_point:
+          type: number
+          nullable: true
+          exclusiveMinimum: true
+          minimum: 0
+          description: Admite decimales. Ausente conserva el valor; null lo deja sin definir.
+    Proyecto:
+      type: object
+      required: [id, nombre, descripcion, fecha_inicio, fecha_fin, horas_por_story_point, creado_en]
+      properties:
+        id:
+          type: integer
+          format: int64
+        nombre:
+          type: string
+        descripcion:
+          type: string
+        fecha_inicio:
+          type: string
+          format: date
+          nullable: true
+        fecha_fin:
+          type: string
+          format: date
+          nullable: true
+        horas_por_story_point:
+          type: number
+          nullable: true
+        creado_en:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string
