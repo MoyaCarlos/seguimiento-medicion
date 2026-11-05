@@ -40,6 +40,16 @@ func (h *AuthHandler) Yo(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Salir atiende POST /auth/salir.
 func (h *AuthHandler) Salir(w nethttp.ResponseWriter, r *nethttp.Request) {
+	token, ok := tokenBearer(r)
+	if !ok {
+		escribirError(w, domain.ErrNoAutenticado)
+		return
+	}
+	if err := h.cerrar.Ejecutar(r.Context(), token); err != nil {
+		escribirError(w, err)
+		return
+	}
+	w.WriteHeader(nethttp.StatusNoContent)
 }
 
 // tokenBearer lee el token de "Authorization: Bearer <token>". El esquema se
