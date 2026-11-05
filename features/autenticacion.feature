@@ -57,3 +57,27 @@ Característica: Autenticación de usuarios
       | nombre     | contraseña         |
       | ana.perez  | otra-clave-larga   |
       | fantasma   | clave-previa-1     |
+
+  Escenario: Con una sesión vigente el sistema sabe quién es la persona
+    Dado que "ana.perez" inició sesión
+    Cuando consulto quién soy con mi token
+    Entonces el sistema responde que soy "ana.perez"
+    Y la respuesta de quién soy no contiene la contraseña
+
+  Escenario: Una sesión vencida se rechaza
+    Dado que "ana.perez" inició sesión
+    Y pasan 7 días
+    Cuando consulto quién soy con mi token
+    Entonces la consulta de quién soy se rechaza con el mensaje "Tu sesión no es válida"
+
+  Escenario: Un token inventado se rechaza
+    Cuando consulto quién soy con el token "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    Entonces la consulta de quién soy se rechaza con el mensaje "Tu sesión no es válida"
+
+  Escenario: Una consulta sin token se rechaza
+    Cuando consulto quién soy sin token
+    Entonces la consulta de quién soy se rechaza con el mensaje "Tu sesión no es válida"
+
+  Escenario: Las rutas existentes siguen respondiendo sin token
+    Cuando consulto la lista de proyectos sin token
+    Entonces la lista de proyectos responde con éxito
