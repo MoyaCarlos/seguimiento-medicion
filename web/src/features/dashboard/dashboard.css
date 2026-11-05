@@ -57,6 +57,74 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-indicadores {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.dashboard-indicador {
+  align-content: start;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.dashboard-indicador h2 {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.dashboard-indicador__valor {
+  color: var(--ink);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dashboard-indicador__secundario {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.dashboard-indicador__nota {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.dashboard-comparacion {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.dashboard-comparacion__rotulo {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  gap: 0.25rem 0.75rem;
+  justify-content: space-between;
+}
+
+.dashboard-comparacion__rotulo strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-barra {
+  background: var(--line);
+  border-radius: 4px;
+  height: 0.5rem;
+  overflow: hidden;
+}
+
+.dashboard-barra span {
+  background: var(--lilac-dark);
+  border-radius: 4px;
+  display: block;
+  height: 100%;
+}
+
 @media (max-width: 600px) {
   .dashboard-tarjeta {
     padding: 1rem;
