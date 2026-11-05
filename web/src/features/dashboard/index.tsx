@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarMetricas } from './api'
@@ -14,6 +15,11 @@ export function Component() {
   return <PantallaDashboard key={id} id={id ?? ''} />
 }
 
+function mensajeDeError(causa: unknown): string {
+  if (causa instanceof ApiError || causa instanceof ConnectionError) return causa.message
+  return 'Ocurrió un error inesperado'
+}
+
 function PantallaDashboard({ id }: { id: string }) {
   const [metricas, setMetricas] = useState<MetricasProyecto>()
   const [error, setError] = useState<string>()
@@ -26,7 +32,7 @@ function PantallaDashboard({ id }: { id: string }) {
         if (vigente) setMetricas(obtenidas)
       })
       .catch((causa: unknown) => {
-        if (vigente) setError(causa instanceof Error ? causa.message : 'Ocurrió un error inesperado')
+        if (vigente) setError(mensajeDeError(causa))
       })
 
     return () => {
