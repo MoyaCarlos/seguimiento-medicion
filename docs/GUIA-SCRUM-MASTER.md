@@ -5,30 +5,35 @@ proyecto sin depender de tener un agente de IA disponible todo el tiempo.
 Todo lo que menciona acá está versionado en el repo — si dudás de algo,
 la fuente completa está en los links de la sección [Dónde está todo](#dónde-está-todo).
 
-## Dónde estamos (al 30/10/2026)
+## Dónde estamos (al 4/11/2026)
 
 - **Sprint 0 (Preparación) y Sprint 1 (MVP): cerrados.** El Sprint 1 terminó el
   5-oct (`v0.1.0`).
 - **Sprint 2 (La interfaz): cerrado** el 26-oct (`v0.2.0`). Los fixes que se
   mergean después reciben `v0.2.P`.
-- **Sprint 3 (Funcionalidad y calidad): en curso**, del 27-oct al 2-nov (se acortó
-  de 14 a 7 días). El tag `v0.3.0` va el 3-nov. Compromiso firme de 16 SP: HU-02,
-  HU-06 y HU-11. HU-02 ya está entregada, así que en los 7 días restan HU-06 y
-  HU-11; lo demás es stretch.
-- **Sprint 4 (Métricas y defectos)**: del 3 al 9-nov (el 9 es feriado, así que se
-  trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10. Para
+- **Sprint 3 (Funcionalidad y calidad): cerrado** (27-oct al 2-nov, se acortó
+  de 14 a 7 días) con el tag `v0.3.0`.
+- **Sprint 4 (Métricas y defectos): en curso**, del 3 al 9-nov (el 9 es feriado, así que se
+  trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10. Suman 24 SP con HU-20
+  (8 + 8 + 8); el backend de HU-14 ya está mergeado y no suma. Para
   llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
-  como stretch. El tag `v0.4.0` va el 10-nov.
+  como stretch. También figuran en el plan de este Sprint HU-20 (autenticación) y
+  las mejoras #235 (datos de prueba v2), #236 (un único Scrum Master por
+  proyecto), #174 (solo los criterios de aceptación al crear una historia) y la
+  base del rediseño visual #230. El tag `v0.4.0` va el 10-nov.
 - **Sprint 5 (Cierre y entrega final)**: del 10 al 16-nov, día de la entrega del
-  código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP en cinco
-  días hábiles y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
+  código y la presentación. HU-09, HU-10 y el pulido final: son 16 SP, que con HU-21 (8) y HU-12 (3) suman 27 SP en cinco
+  días hábiles (más el frontend de HU-14), y HU-10 depende de HU-03 y HU-08, que cierran el 8-nov. Si no
   alcanza, HU-10 sale en una versión mínima (el reporte de un Sprint) antes que
   correr la fecha. El tag `v1.0.0` va el 16-nov; este Sprint no crea `v0.5.0`.
-  HU-12, HU-14 y las mejoras nuevas (HU-16 a HU-19) entran solo si sobra tiempo.
-- **Product Backlog: 19 historias** (HU-16 a HU-19 son propuestas del beta testing) en `docs/PRODUCT-BACKLOG.md`, cada una como
+  HU-21 (permisos por rol), HU-12 (después de HU-03, su dependencia) y el
+  frontend de HU-14 (#93) figuran en el plan de este Sprint y no dependen de que
+  sobre tiempo. También las pantallas del rediseño visual #230 y, como propuesta, eliminar un proyecto (#232, solo el Scrum Master, con triple confirmación).
+  Solo HU-16, HU-17 y HU-18 entran si sobra tiempo.
+- **Product Backlog: 21 historias** (HU-16 a HU-19 son propuestas del beta testing; HU-20 y HU-21 salen de la decisión del Scrum Master del 2026-11-03) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se
-  actualiza en cada merge a `main`. Está en curso (issue #139).
+  actualiza en cada merge a `main`. La configuración ya está mergeada (PR #200, issue #139). En el plan gratis el sistema de archivos es efímero: la base se vacía en cada deploy y, a confirmar, cada vez que el servicio se despierta tras 15 minutos de inactividad. Antes de la demo hay que despertar el servicio y recargar los datos de prueba.
 
 ## Tu rol como Scrum Master / Agile Enabler
 
@@ -151,7 +156,7 @@ de test → archivo de implementación.
 
 - [`AGENTS.md`](../AGENTS.md) — metodología completa, arquitectura,
   principios, stack, convenciones de Git/TDD.
-- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 19 historias con
+- [`docs/PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) — las 21 historias (HU-19 absorbida por HU-20 y HU-21) con
   todos sus campos.
 - [`docs/GUIA-IA-TERMINAL.md`](GUIA-IA-TERMINAL.md) — cómo usar Claude Code /
   OpenCode, Spec Kit, buenas prácticas, ahorro de tokens.
