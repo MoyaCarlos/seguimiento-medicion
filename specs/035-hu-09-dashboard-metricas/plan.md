@@ -44,6 +44,7 @@ Agregar la sección "Dashboard" a cada proyecto: un gráfico de barras con los S
 | VI. Stack | Cumple. La constitución pide que el equipo decida explícitamente toda dependencia nueva, y Recharts se confirmó en la reunión de definición. |
 
 Resultado: sin violaciones, antes y después del diseño.
+
 ## Project Structure
 
 ### Documentation (this feature)

@@ -24,7 +24,7 @@
 El equipo confirmó las decisiones en la reunión de definición, incluida la dependencia nueva que exige decidir el Principio VI.
 
 - [X] T001 COMMIT de `specs/035-hu-09-dashboard-metricas/`: `docs: agregar la especificación de HU-09 (Issue #69)`
-- [ ] T002 Confirmar en la reunión de definición las decisiones de `specs/035-hu-09-dashboard-metricas/spec.md` (sin backend nuevo, Recharts, alcance del panel) y actualizar Clarifications. y resolver el punto abierto de horas y defectos por Sprint. Si el equipo rechaza Recharts, cambiar T003 a T005 y T016 por la alternativa SVG (research R2). COMMIT `docs: registrar las decisiones de la reunión de HU-09`
+- [X] T002 Registrar en `specs/035-hu-09-dashboard-metricas/spec.md` las decisiones confirmadas en la reunión de definición (sin backend nuevo, Recharts, alcance del panel) y el punto abierto de horas y defectos por Sprint, que no se trató. COMMIT `docs: registrar las decisiones de la reunión de HU-09`
 - [ ] T003 Instalar `recharts` y `react-is` con `npm install` en `web/`; se modifican `web/package.json` y `web/package-lock.json`
 - [ ] T004 Verificar Recharts en jsdom con una prueba mínima, temporal, en `web/src/features/dashboard/GraficoVelocidad.test.tsx`: montar un gráfico de barras, resolver lo que haga falta (`ResizeObserver` o dimensiones fijas) y anotar el resultado en R3 de `specs/035-hu-09-dashboard-metricas/research.md`
 - [ ] T005 COMMIT de `web/package.json`, `web/package-lock.json` y `research.md`, sin la prueba temporal: `build: agregar Recharts para el Dashboard (HU-09)`
