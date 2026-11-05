@@ -35,3 +35,52 @@ func aHistorialResponse(historial []domain.SprintHistorial) []sprintHistorialRes
 	}
 	return respuesta
 }
+
+type historiaComprometidaResponse struct {
+	ID           int64   `json:"id"`
+	Titulo       string  `json:"titulo"`
+	EstimacionSP *int    `json:"estimacion_sp"`
+	Completada   bool    `json:"completada"`
+	Minutos      int     `json:"minutos"`
+	Horas        float64 `json:"horas"`
+}
+
+type defectoDeSprintResponse struct {
+	ID                int64  `json:"id"`
+	HistoriaID        int64  `json:"historia_id"`
+	Historia          string `json:"historia"`
+	Descripcion       string `json:"descripcion"`
+	Severidad         string `json:"severidad"`
+	Estado            string `json:"estado"`
+	DetectadoEnSprint bool   `json:"detectado_en_sprint"`
+	ResueltoEnSprint  bool   `json:"resuelto_en_sprint"`
+}
+
+type detalleSprintResponse struct {
+	sprintHistorialResponse
+	Historias []historiaComprometidaResponse `json:"historias"`
+	Defectos  []defectoDeSprintResponse      `json:"defectos"`
+}
+
+// Las horas ya vienen redondeadas del dominio: el DTO no las recalcula.
+func aDetalleSprintResponse(d domain.DetalleSprint) detalleSprintResponse {
+	historias := make([]historiaComprometidaResponse, 0, len(d.Historias))
+	for _, h := range d.Historias {
+		historias = append(historias, historiaComprometidaResponse{
+			ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Completada: h.Completada, Minutos: h.Minutos, Horas: h.Horas,
+		})
+	}
+	defectos := make([]defectoDeSprintResponse, 0, len(d.Defectos))
+	for _, def := range d.Defectos {
+		defectos = append(defectos, defectoDeSprintResponse{
+			ID: def.ID, HistoriaID: def.HistoriaID, Historia: def.TituloHistoria, Descripcion: def.Descripcion,
+			Severidad: string(def.Severidad), Estado: string(def.Estado),
+			DetectadoEnSprint: def.DetectadoEnSprint, ResueltoEnSprint: def.ResueltoEnSprint,
+		})
+	}
+	return detalleSprintResponse{
+		sprintHistorialResponse: aSprintHistorialResponse(d.SprintHistorial),
+		Historias:               historias,
+		Defectos:                defectos,
+	}
+}
