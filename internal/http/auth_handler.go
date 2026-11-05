@@ -13,11 +13,15 @@ import (
 type AuthHandler struct {
 	registrar *service.RegistrarUsuario
 	ingresar  *service.Ingresar
+	obtener   *service.ObtenerSesion
 }
 
-func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar) *AuthHandler {
-	return &AuthHandler{registrar: registrar, ingresar: ingresar}
+func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar, obtener *service.ObtenerSesion) *AuthHandler {
+	return &AuthHandler{registrar: registrar, ingresar: ingresar, obtener: obtener}
 }
+
+// Yo atiende GET /auth/yo.
+func (h *AuthHandler) Yo(_ nethttp.ResponseWriter, _ *nethttp.Request) {}
 
 // Registro atiende POST /auth/registro.
 func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {

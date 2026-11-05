@@ -51,8 +51,33 @@ func (c *credencialesEnMemoriaHTTP) ObtenerPorNombreNormalizado(_ context.Contex
 }
 
 type sesionesEnMemoriaHTTP struct {
-	mu       sync.Mutex
-	sesiones map[string]domain.Sesion
+	mu           sync.Mutex
+	sesiones     map[string]domain.Sesion
+	credenciales *credencialesEnMemoriaHTTP
+}
+
+func (s *sesionesEnMemoriaHTTP) ObtenerPorHuella(_ context.Context, huella string) (domain.SesionConUsuario, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sesion, ok := s.sesiones[huella]
+	if !ok {
+		return domain.SesionConUsuario{}, domain.ErrNoEncontrado
+	}
+	resultado := domain.SesionConUsuario{Sesion: sesion}
+	for _, u := range s.credenciales.usuarios {
+		if u.ID == sesion.UsuarioID {
+			resultado.Usuario = u
+		}
+	}
+	return resultado, nil
+}
+
+func (s *sesionesEnMemoriaHTTP) cerrar(huella string, en time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	sesion := s.sesiones[huella]
+	sesion.CerradaEn = &en
+	s.sesiones[huella] = sesion
 }
 
 func (s *sesionesEnMemoriaHTTP) Crear(_ context.Context, huella string, sesion domain.Sesion) (domain.Sesion, error) {
@@ -69,12 +94,23 @@ func (s *sesionesEnMemoriaHTTP) Crear(_ context.Context, huella string, sesion d
 var relojAuthHTTP = func() time.Time { return time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC) }
 
 func nuevoAuthHandlerDePrueba() (*AuthHandler, *credencialesEnMemoriaHTTP) {
+	h, credenciales, _, _ := nuevoAuthHandlerConSesiones()
+	return h, credenciales
+}
+
+// nuevoAuthHandlerConSesiones también devuelve las sesiones y el reloj, que el
+// test puede adelantar para vencer una sesión.
+func nuevoAuthHandlerConSesiones() (*AuthHandler, *credencialesEnMemoriaHTTP, *sesionesEnMemoriaHTTP, *time.Time) {
 	credenciales := &credencialesEnMemoriaHTTP{}
-	emisor := service.NewEmisorSesiones(&sesionesEnMemoriaHTTP{}, relojAuthHTTP)
+	sesiones := &sesionesEnMemoriaHTTP{credenciales: credenciales}
+	ahora := relojAuthHTTP()
+	reloj := func() time.Time { return ahora }
+	emisor := service.NewEmisorSesiones(sesiones, reloj)
 	hasheador := service.NewServicioContrasenas(iteracionesDePruebaAuth)
 	registrar := service.NewRegistrarUsuario(credenciales, hasheador, emisor)
 	ingresar := service.NewIngresar(credenciales, hasheador, emisor)
-	return NewAuthHandler(registrar, ingresar), credenciales
+	obtener := service.NewObtenerSesion(sesiones, reloj)
+	return NewAuthHandler(registrar, ingresar, obtener), credenciales, sesiones, &ahora
 }
 
 func postRegistro(h *AuthHandler, cuerpo string) *httptest.ResponseRecorder {
@@ -326,5 +362,96 @@ func TestAuthHandler_Ingreso_Devuelve400ConJSONInvalido(t *testing.T) {
 	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
 	if resp.Mensaje != "JSON inválido" || resp.Campo != "" {
 		t.Errorf("respuesta = %+v, se esperaba solo el mensaje JSON inválido", resp)
+	}
+}
+
+func getYo(h *AuthHandler, autorizacion string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodGet, "/auth/yo", nil)
+	if autorizacion != "" {
+		req.Header.Set("Authorization", autorizacion)
+	}
+	rec := httptest.NewRecorder()
+	h.Yo(rec, req)
+	return rec
+}
+
+func registrarYObtenerToken(t *testing.T, h *AuthHandler) string {
+	t.Helper()
+	rec := postRegistro(h, `{"nombre":"Ana.Perez","contrasena":"una-clave-larga"}`)
+	var resp struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil || resp.Token == "" {
+		t.Fatalf("preparar sesión: %v (cuerpo: %s)", err, rec.Body.String())
+	}
+	return resp.Token
+}
+
+func TestAuthHandler_Yo_Devuelve200SoloConIdYNombre(t *testing.T) {
+	h, credenciales := nuevoAuthHandlerDePrueba()
+	token := registrarYObtenerToken(t, h)
+
+	rec := getYo(h, "Bearer "+token)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d, se esperaba 200 (cuerpo: %s)", rec.Code, rec.Body.String())
+	}
+	var campos map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &campos); err != nil {
+		t.Fatalf("respuesta no es JSON: %v", err)
+	}
+	if len(campos) != 2 || campos["id"] == nil || campos["nombre"] != "Ana.Perez" {
+		t.Errorf("campos = %v, se esperaba solo id y nombre %q", campos, "Ana.Perez")
+	}
+	cuerpo := rec.Body.String()
+	if strings.Contains(cuerpo, "una-clave-larga") {
+		t.Errorf("la respuesta contiene la contraseña")
+	}
+	if hash := credenciales.hashes["ana.perez"]; hash == "" || strings.Contains(cuerpo, hash) {
+		t.Errorf("la respuesta contiene el hash o no se guardó uno")
+	}
+	if strings.Contains(cuerpo, token) {
+		t.Errorf("la respuesta repite el token")
+	}
+}
+
+func TestAuthHandler_Yo_Los401TienenElMismoCuerpoByteAByte(t *testing.T) {
+	casos := []struct {
+		nombre       string
+		autorizacion func(token string, sesiones *sesionesEnMemoriaHTTP, ahora *time.Time) string
+	}{
+		{"sin cabecera", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "" }},
+		{"esquema Basic", func(token string, _ *sesionesEnMemoriaHTTP, _ *time.Time) string { return "Basic " + token }},
+		{"Bearer sin valor", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "Bearer " }},
+		{"Bearer sin espacio ni valor", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "Bearer" }},
+		{"token mal formado", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "Bearer no-es-un-token" }},
+		{"token inexistente", func(string, *sesionesEnMemoriaHTTP, *time.Time) string {
+			return "Bearer " + strings.Repeat("A", 43)
+		}},
+		{"sesión vencida", func(token string, _ *sesionesEnMemoriaHTTP, ahora *time.Time) string {
+			*ahora = ahora.Add(domain.DuracionSesion)
+			return "Bearer " + token
+		}},
+		{"sesión cerrada", func(token string, sesiones *sesionesEnMemoriaHTTP, ahora *time.Time) string {
+			sesiones.cerrar(service.HuellaDeToken(token), *ahora)
+			return "Bearer " + token
+		}},
+	}
+	const esperado = "{\"mensaje\":\"Tu sesión no es válida\"}\n"
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			h, _, sesiones, ahora := nuevoAuthHandlerConSesiones()
+			token := registrarYObtenerToken(t, h)
+
+			rec := getYo(h, c.autorizacion(token, sesiones, ahora))
+
+			if rec.Code != nethttp.StatusUnauthorized {
+				t.Fatalf("status = %d, se esperaba 401", rec.Code)
+			}
+			if rec.Body.String() != esperado {
+				t.Errorf("cuerpo = %q, se esperaba %q", rec.Body.String(), esperado)
+			}
+		})
 	}
 }

@@ -63,6 +63,7 @@ func (p *pasosAutenticacion) preparar() error {
 	p.handler = apihttp.NewAuthHandler(
 		service.NewRegistrarUsuario(credenciales, hasheador, emisor),
 		service.NewIngresar(credenciales, hasheador, emisor),
+		service.NewObtenerSesion(p.sesiones, func() time.Time { return p.ahora }),
 	)
 	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
 	p.respuestaSesion.Token = ""
