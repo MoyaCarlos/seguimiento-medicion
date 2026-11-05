@@ -28,9 +28,9 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 
 ## R4. Series distinguibles y valores como texto (FR-006)
 
-- **Decision**: "Comprometidos" con barra clara y borde; "Completados" con barra sólida, más leyenda. Debajo, una tabla plegada "Ver valores por Sprint", con el mismo patrón que "Ver detalle" de HU-07. El ancho mínimo del gráfico crece con la cantidad de Sprints y, si no entra, se desplaza dentro de su propio contenedor, no la página (FR-018).
+- **Decision**: "Comprometidos" con barra rayada y borde; "Completados" con barra sólida, más leyenda. Debajo, una tabla plegada "Ver valores por Sprint", con el mismo patrón que "Ver detalle" de HU-07. El ancho mínimo del gráfico crece con la cantidad de Sprints y, si no entra, se desplaza dentro de su propio contenedor, no la página (FR-018).
 - **Rationale**: relleno y borde distinguen las series sin depender del color; la tabla da los valores sin puntero y a lectores de pantalla, y plegada no carga el panel con datos crudos.
-- **Colores**: se definen con la skill `dataviz` al implementar, a partir de los tokens de `App.css` (`--lilac`, `--complement`).
+- **Colores**: `#2a9d8f` y `#604493` (`--lilac-dark`), validados con la skill `dataviz` sobre fondo blanco: todos los chequeos en PASS (daltonismo ΔE 20,7; visión normal ΔE 25,9). Los tokens `--lilac` y `--complement` no pasan: `--complement` queda por debajo del piso de croma y el par es indistinguible (ΔE 14,9 con piso de 15).
 - **Alternatives considered**: etiquetas de valor sobre cada barra, descartadas porque con muchos Sprints se superponen en 320 px.
 
 ## R5. Indicadores en HTML y CSS
