@@ -35,7 +35,19 @@ func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // Ingreso atiende POST /auth/ingreso.
-func (h *AuthHandler) Ingreso(w nethttp.ResponseWriter, r *nethttp.Request) {}
+func (h *AuthHandler) Ingreso(w nethttp.ResponseWriter, r *nethttp.Request) {
+	var req registroRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	resultado, err := h.ingresar.Ejecutar(r.Context(), req.Nombre, req.Contrasena)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuestaSesion(resultado))
+}
 
 func aRespuestaSesion(r service.ResultadoSesion) sesionResponse {
 	return sesionResponse{
