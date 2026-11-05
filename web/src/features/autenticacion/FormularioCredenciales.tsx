@@ -5,6 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import './estilos.css'
 
 type Campo = 'nombre' | 'contrasena'
 
@@ -59,9 +60,9 @@ export function FormularioCredenciales({
   }
 
   return (
-    <section aria-labelledby="credenciales-title">
+    <section className="auth-pantalla" aria-labelledby="credenciales-title">
       <h1 id="credenciales-title">{titulo}</h1>
-      {aviso && <p className="message" role="status">{aviso}</p>}
+      {aviso && <p className="message auth-aviso" role="status">{aviso}</p>}
 
       <form onSubmit={alEnviar} noValidate aria-label={titulo}>
         {errorGeneral && <ErrorMessage message={errorGeneral} />}
