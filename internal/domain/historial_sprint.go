@@ -2,6 +2,40 @@ package domain
 
 import "sort"
 
+// HistoriaComprometida es una historia completada en un Sprint o arrastrada al
+// cerrarlo (D2c). En una arrastrada, EstimacionSP es la foto que se guardó al
+// cerrar; nil significa "sin estimar". Minutos y Horas son los imputados en ese
+// Sprint.
+type HistoriaComprometida struct {
+	ID           int64
+	Titulo       string
+	EstimacionSP *int
+	Completada   bool
+	Minutos      int
+	Horas        float64
+}
+
+// DefectoDeSprint es un defecto detectado o resuelto en el Sprint consultado.
+type DefectoDeSprint struct {
+	DefectoDetalle
+	DetectadoEnSprint bool
+	ResueltoEnSprint  bool
+}
+
+// SprintHistorial es un Sprint finalizado con sus métricas de HU-03.
+type SprintHistorial struct {
+	Sprint   Sprint
+	Metricas Metricas
+}
+
+// DetalleSprint es un Sprint finalizado con sus historias comprometidas y sus
+// defectos.
+type DetalleSprint struct {
+	SprintHistorial
+	Historias []HistoriaComprometida
+	Defectos  []DefectoDeSprint
+}
+
 // SprintsFinalizados devuelve los Sprints Finalizado ordenados por número.
 func SprintsFinalizados(sprints []Sprint) []Sprint {
 	finalizados := make([]Sprint, 0, len(sprints))
