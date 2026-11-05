@@ -148,20 +148,20 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 
 **Independent Test**: `GET /auth/yo` da 200 con sesión vigente y el mismo 401 para token ausente, mal formado, inexistente, vencido o cerrado; escenario 6 (API).
 
-- [ ] T069 [US3] RED: crear `internal/service/obtener_sesion_test.go`: token vigente → `domain.SesionConUsuario` (ID de la sesión y usuario con id y nombre); vencida (reloj en `VenceEn` y después) → `ErrNoAutenticado`; cerrada → `ErrNoAutenticado`; inexistente → `ErrNoAutenticado`; vacío, de longitud distinta de 43 o con caracteres fuera de base64url → `ErrNoAutenticado` **sin consultar el repositorio**. Confirmar que FALLA **Stub (mismo commit RED):** crear `internal/service/obtener_sesion.go` con `ObtenerSesion`, `NewObtenerSesion` y `Ejecutar(ctx, token)` devolviendo `domain.SesionConUsuario{}` y `nil`.
-- [ ] T070 [US3] COMMIT `RED: agregar tests de ObtenerSesion (falla)` (incluye el stub, si lo hay)
-- [ ] T071 [US3] GREEN: crear `internal/service/obtener_sesion.go` (`NewObtenerSesion(BuscadorSesiones, reloj)`; usa la huella del emisor y `Sesion.Vigente`; `domain.ErrNoEncontrado` del repositorio se convierte en `ErrNoAutenticado`); `go test ./internal/service/` en verde
-- [ ] T072 [US3] COMMIT `GREEN: implementar ObtenerSesion, test en verde`
-- [ ] T073 [US3] RED: agregar a `internal/http/auth_handler_test.go` `GET /auth/yo`: 200 `{"id","nombre"}`; 401 con `{"mensaje":"Tu sesión no es válida"}` e idéntico en: sin cabecera, esquema `Basic`, `Bearer` sin valor, token mal formado, token inexistente, sesión vencida, sesión cerrada. Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Yo` que no escribe nada.
-- [ ] T074 [US3] COMMIT `RED: agregar tests del handler GET /auth/yo (falla)` (incluye el stub, si lo hay)
-- [ ] T075 [US3] GREEN: agregar `AuthHandler.Yo` y la lectura de `Authorization: Bearer <token>` en `internal/http/auth_handler.go`; `go test ./internal/http/` en verde
-- [ ] T076 [US3] COMMIT `GREEN: implementar handler GET /auth/yo, test en verde`
-- [ ] T077 [US3] Cablear `ObtenerSesion` y la ruta `GET /auth/yo` en `cmd/api/main.go`
-- [ ] T078 [US3] COMMIT `Cablear GET /auth/yo en cmd/api`
-- [ ] T079 [US3] RED: agregar a `features/autenticacion.feature` el escenario 6 (sesión vencida o inválida se rechaza, con sesión vigente se sabe quién es) y un escenario de que las rutas existentes siguen respondiendo sin token; `go test ./features/` debe FALLAR
-- [ ] T080 [US3] COMMIT `RED: agregar escenarios BDD de sesión vencida o inválida (fallan)` (incluye el stub, si lo hay)
-- [ ] T081 [US3] GREEN: agregar los pasos (avance del reloj de los pasos a 7 días); `go test ./features/` en verde
-- [ ] T082 [US3] COMMIT `GREEN: agregar pasos BDD de sesión vencida o inválida, escenarios en verde`
+- [X] T069 [US3] RED: crear `internal/service/obtener_sesion_test.go`: token vigente → `domain.SesionConUsuario` (ID de la sesión y usuario con id y nombre); vencida (reloj en `VenceEn` y después) → `ErrNoAutenticado`; cerrada → `ErrNoAutenticado`; inexistente → `ErrNoAutenticado`; vacío, de longitud distinta de 43 o con caracteres fuera de base64url → `ErrNoAutenticado` **sin consultar el repositorio**. Confirmar que FALLA **Stub (mismo commit RED):** crear `internal/service/obtener_sesion.go` con `ObtenerSesion`, `NewObtenerSesion` y `Ejecutar(ctx, token)` devolviendo `domain.SesionConUsuario{}` y `nil`.
+- [X] T070 [US3] COMMIT `RED: agregar tests de ObtenerSesion (falla)` (incluye el stub, si lo hay)
+- [X] T071 [US3] GREEN: crear `internal/service/obtener_sesion.go` (`NewObtenerSesion(BuscadorSesiones, reloj)`; usa la huella del emisor y `Sesion.Vigente`; `domain.ErrNoEncontrado` del repositorio se convierte en `ErrNoAutenticado`); `go test ./internal/service/` en verde
+- [X] T072 [US3] COMMIT `GREEN: implementar ObtenerSesion, test en verde`
+- [X] T073 [US3] RED: agregar a `internal/http/auth_handler_test.go` `GET /auth/yo`: 200 `{"id","nombre"}`; 401 con `{"mensaje":"Tu sesión no es válida"}` e idéntico en: sin cabecera, esquema `Basic`, `Bearer` sin valor, token mal formado, token inexistente, sesión vencida, sesión cerrada. Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Yo` que no escribe nada.
+- [X] T074 [US3] COMMIT `RED: agregar tests del handler GET /auth/yo (falla)` (incluye el stub, si lo hay)
+- [X] T075 [US3] GREEN: agregar `AuthHandler.Yo` y la lectura de `Authorization: Bearer <token>` en `internal/http/auth_handler.go`; `go test ./internal/http/` en verde
+- [X] T076 [US3] COMMIT `GREEN: implementar handler GET /auth/yo, test en verde`
+- [X] T077 [US3] Cablear `ObtenerSesion` y la ruta `GET /auth/yo` en `cmd/api/main.go`
+- [X] T078 [US3] COMMIT `Cablear GET /auth/yo en cmd/api`
+- [X] T079 [US3] RED: agregar a `features/autenticacion.feature` el escenario 6 (sesión vencida o inválida se rechaza, con sesión vigente se sabe quién es) y un escenario de que las rutas existentes siguen respondiendo sin token; `go test ./features/` debe FALLAR
+- [X] T080 [US3] COMMIT `RED: agregar escenarios BDD de sesión vencida o inválida (fallan)` (incluye el stub, si lo hay)
+- [X] T081 [US3] GREEN: agregar los pasos (avance del reloj de los pasos a 7 días); `go test ./features/` en verde
+- [X] T082 [US3] COMMIT `GREEN: agregar pasos BDD de sesión vencida o inválida, escenarios en verde`
 
 ---
 
