@@ -57,6 +57,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-vacio {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: start;
+}
+
 .dashboard-indicadores {
   display: grid;
   gap: 1rem;

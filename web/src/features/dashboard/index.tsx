@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarMetricas } from './api'
 import { GraficoVelocidad } from './GraficoVelocidad'
@@ -32,7 +32,8 @@ function PantallaDashboard({ id }: { id: string }) {
     <div className="dashboard-pantalla">
       <h1>Dashboard</h1>
       {!metricas && <LoadingIndicator />}
-      {metricas && (
+      {metricas && metricas.sprints.length === 0 && <EstadoVacio proyectoId={id} />}
+      {metricas && metricas.sprints.length > 0 && (
         <>
           <GraficoVelocidad sprints={metricas.sprints} />
           <Indicadores
@@ -43,5 +44,17 @@ function PantallaDashboard({ id }: { id: string }) {
         </>
       )}
     </div>
+  )
+}
+
+function EstadoVacio({ proyectoId }: { proyectoId: string }) {
+  return (
+    <section className="dashboard-tarjeta dashboard-vacio">
+      <h2>Todavía no hay métricas</h2>
+      <p>Las métricas aparecen cuando se cierra el primer Sprint del proyecto.</p>
+      <Link className="button button--secondary" to={`/projects/${proyectoId}/sprints`}>
+        Ir a Sprints
+      </Link>
+    </section>
   )
 }
