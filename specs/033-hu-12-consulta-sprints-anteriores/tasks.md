@@ -35,8 +35,8 @@ de la historia.
 
 **Purpose**: dejar los escenarios BDD escritos antes de implementar (flujo de AGENTS.md, sub-issue #85).
 
-- [ ] T001 Escribir features/historial_sprints.feature en Gherkin español: tag `@HU-12`, Característica con el Como/Quiero/Para de la historia, Antecedentes si hay una precondición común y un Escenario por cada criterio de aceptación de US1, US2 y US3 de la spec. Comentario inicial con la cobertura por categoría (normal, alternativo, límite, error), como en features/calculo_metricas.feature. US4 se cubre con pruebas de componente
-- [ ] T002 COMMIT `RED: agregar escenarios BDD del historial de Sprints (fallan)`
+- [X] T001 Escribir features/historial_sprints.feature en Gherkin español: tag `@HU-12`, Característica con el Como/Quiero/Para de la historia, Antecedentes si hay una precondición común y un Escenario por cada criterio de aceptación de US1, US2 y US3 de la spec. Comentario inicial con la cobertura por categoría (normal, alternativo, límite, error), como en features/calculo_metricas.feature. US4 se cubre con pruebas de componente
+- [X] T002 COMMIT `RED: agregar escenarios BDD del historial de Sprints (fallan)`
 
 ---
 
