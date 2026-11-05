@@ -181,10 +181,10 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [x] T090 [US4] COMMIT `GREEN: implementar handler POST /auth/salir, test en verde`
 - [x] T091 [US4] Cablear `CerrarSesion` y la ruta `POST /auth/salir` en `cmd/api/main.go`
 - [x] T092 [US4] COMMIT `Cablear POST /auth/salir en cmd/api`
-- [ ] T093 [US4] RED: agregar a `features/autenticacion.feature` el escenario 7 (cierre de sesión: el token deja de ser válido; con dos sesiones, cerrar una no cierra la otra); `go test ./features/` debe FALLAR
-- [ ] T094 [US4] COMMIT `RED: agregar escenario BDD de cierre de sesión (falla)` (incluye el stub, si lo hay)
-- [ ] T095 [US4] GREEN: agregar los pasos; `go test ./features/` en verde
-- [ ] T096 [US4] COMMIT `GREEN: agregar pasos BDD de cierre de sesión, escenario en verde`
+- [x] T093 [US4] RED: agregar a `features/autenticacion.feature` el escenario 7 (cierre de sesión: el token deja de ser válido; con dos sesiones, cerrar una no cierra la otra); `go test ./features/` debe FALLAR
+- [x] T094 [US4] COMMIT `RED: agregar escenario BDD de cierre de sesión (falla)` (incluye el stub, si lo hay)
+- [x] T095 [US4] GREEN: agregar los pasos; `go test ./features/` en verde
+- [x] T096 [US4] COMMIT `GREEN: agregar pasos BDD de cierre de sesión, escenario en verde`
 
 **Checkpoint**: backend completo (escenarios 1 a 7 en Godog). Desde acá empieza el frontend.
 
