@@ -88,10 +88,12 @@ func main() {
 	hasheador := service.NewServicioContrasenasProduccion()
 	sesionesRepo := repository.NewSQLiteSesionRepository(db)
 	emisorSesiones := service.NewEmisorSesiones(sesionesRepo, time.Now)
+	obtenerSesion := service.NewObtenerSesion(sesionesRepo, time.Now)
 	authHandler := apihttp.NewAuthHandler(
 		service.NewRegistrarUsuario(credenciales, hasheador, emisorSesiones),
 		service.NewIngresar(credenciales, hasheador, emisorSesiones),
-		service.NewObtenerSesion(sesionesRepo, time.Now),
+		obtenerSesion,
+		service.NewCerrarSesion(obtenerSesion, sesionesRepo, time.Now),
 	)
 
 	demoHandler := apihttp.NewDemoHandler(

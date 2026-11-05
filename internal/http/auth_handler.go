@@ -16,10 +16,11 @@ type AuthHandler struct {
 	registrar *service.RegistrarUsuario
 	ingresar  *service.Ingresar
 	obtener   *service.ObtenerSesion
+	cerrar    *service.CerrarSesion
 }
 
-func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar, obtener *service.ObtenerSesion) *AuthHandler {
-	return &AuthHandler{registrar: registrar, ingresar: ingresar, obtener: obtener}
+func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar, obtener *service.ObtenerSesion, cerrar *service.CerrarSesion) *AuthHandler {
+	return &AuthHandler{registrar: registrar, ingresar: ingresar, obtener: obtener, cerrar: cerrar}
 }
 
 // Yo atiende GET /auth/yo.
@@ -35,6 +36,10 @@ func (h *AuthHandler) Yo(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, usuarioSesionResponse{ID: sesion.Usuario.ID, Nombre: sesion.Usuario.Nombre})
+}
+
+// Salir atiende POST /auth/salir.
+func (h *AuthHandler) Salir(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // tokenBearer lee el token de "Authorization: Bearer <token>". El esquema se

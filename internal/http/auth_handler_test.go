@@ -54,6 +54,7 @@ type sesionesEnMemoriaHTTP struct {
 	mu           sync.Mutex
 	sesiones     map[string]domain.Sesion
 	credenciales *credencialesEnMemoriaHTTP
+	cierres      int
 }
 
 func (s *sesionesEnMemoriaHTTP) ObtenerPorHuella(_ context.Context, huella string) (domain.SesionConUsuario, error) {
@@ -78,6 +79,20 @@ func (s *sesionesEnMemoriaHTTP) cerrar(huella string, en time.Time) {
 	sesion := s.sesiones[huella]
 	sesion.CerradaEn = &en
 	s.sesiones[huella] = sesion
+}
+
+// Cerrar marca como cerrada la sesión con ese ID y cuenta la llamada.
+func (s *sesionesEnMemoriaHTTP) Cerrar(_ context.Context, sesionID int64, ahora time.Time) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.cierres++
+	for huella, sesion := range s.sesiones {
+		if sesion.ID == sesionID {
+			sesion.CerradaEn = &ahora
+			s.sesiones[huella] = sesion
+		}
+	}
+	return nil
 }
 
 func (s *sesionesEnMemoriaHTTP) Crear(_ context.Context, huella string, sesion domain.Sesion) (domain.Sesion, error) {
@@ -110,7 +125,8 @@ func nuevoAuthHandlerConSesiones() (*AuthHandler, *credencialesEnMemoriaHTTP, *s
 	registrar := service.NewRegistrarUsuario(credenciales, hasheador, emisor)
 	ingresar := service.NewIngresar(credenciales, hasheador, emisor)
 	obtener := service.NewObtenerSesion(sesiones, reloj)
-	return NewAuthHandler(registrar, ingresar, obtener), credenciales, sesiones, &ahora
+	cerrar := service.NewCerrarSesion(obtener, sesiones, reloj)
+	return NewAuthHandler(registrar, ingresar, obtener, cerrar), credenciales, sesiones, &ahora
 }
 
 func postRegistro(h *AuthHandler, cuerpo string) *httptest.ResponseRecorder {
@@ -453,5 +469,94 @@ func TestAuthHandler_Yo_Los401TienenElMismoCuerpoByteAByte(t *testing.T) {
 				t.Errorf("cuerpo = %q, se esperaba %q", rec.Body.String(), esperado)
 			}
 		})
+	}
+}
+
+func postSalir(h *AuthHandler, autorizacion string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodPost, "/auth/salir", nil)
+	if autorizacion != "" {
+		req.Header.Set("Authorization", autorizacion)
+	}
+	rec := httptest.NewRecorder()
+	h.Salir(rec, req)
+	return rec
+}
+
+func TestAuthHandler_Salir_Devuelve204SinCuerpoYElTokenDejaDeServir(t *testing.T) {
+	h, _ := nuevoAuthHandlerDePrueba()
+	token := registrarYObtenerToken(t, h)
+
+	rec := postSalir(h, "Bearer "+token)
+
+	if rec.Code != nethttp.StatusNoContent {
+		t.Fatalf("status = %d, se esperaba 204", rec.Code)
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("cuerpo = %q, se esperaba vacío", rec.Body.String())
+	}
+	if yo := getYo(h, "Bearer "+token); yo.Code != nethttp.StatusUnauthorized {
+		t.Errorf("GET /auth/yo tras salir: status = %d, se esperaba 401", yo.Code)
+	}
+}
+
+func TestAuthHandler_Salir_Los401TienenElMismoCuerpoYNoTienenEfectos(t *testing.T) {
+	casos := []struct {
+		nombre       string
+		autorizacion func(token string, sesiones *sesionesEnMemoriaHTTP, ahora *time.Time) string
+	}{
+		{"sin cabecera", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "" }},
+		{"esquema Basic", func(token string, _ *sesionesEnMemoriaHTTP, _ *time.Time) string { return "Basic " + token }},
+		{"token mal formado", func(string, *sesionesEnMemoriaHTTP, *time.Time) string { return "Bearer no-es-un-token" }},
+		{"token inexistente", func(string, *sesionesEnMemoriaHTTP, *time.Time) string {
+			return "Bearer " + strings.Repeat("A", 43)
+		}},
+		{"sesión vencida", func(token string, _ *sesionesEnMemoriaHTTP, ahora *time.Time) string {
+			*ahora = ahora.Add(domain.DuracionSesion)
+			return "Bearer " + token
+		}},
+		{"sesión ya cerrada", func(token string, sesiones *sesionesEnMemoriaHTTP, ahora *time.Time) string {
+			sesiones.cerrar(service.HuellaDeToken(token), *ahora)
+			return "Bearer " + token
+		}},
+	}
+	const esperado = "{\"mensaje\":\"Tu sesión no es válida\"}\n"
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			h, _, sesiones, ahora := nuevoAuthHandlerConSesiones()
+			token := registrarYObtenerToken(t, h)
+
+			rec := postSalir(h, c.autorizacion(token, sesiones, ahora))
+
+			if rec.Code != nethttp.StatusUnauthorized {
+				t.Fatalf("status = %d, se esperaba 401", rec.Code)
+			}
+			if rec.Body.String() != esperado {
+				t.Errorf("cuerpo = %q, se esperaba %q", rec.Body.String(), esperado)
+			}
+			if sesiones.cierres != 0 {
+				t.Errorf("cierres = %d, se esperaba 0 (sin efectos)", sesiones.cierres)
+			}
+		})
+	}
+}
+
+func TestAuthHandler_Salir_OtraSesionDelMismoUsuarioSigueValida(t *testing.T) {
+	h, _ := nuevoAuthHandlerDePrueba()
+	primero := registrarYObtenerToken(t, h)
+	rec := postIngreso(h, `{"nombre":"Ana.Perez","contrasena":"una-clave-larga"}`)
+	var resp struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil || resp.Token == "" || resp.Token == primero {
+		t.Fatalf("preparar segunda sesión: %v (cuerpo: %s)", err, rec.Body.String())
+	}
+
+	if salir := postSalir(h, "Bearer "+primero); salir.Code != nethttp.StatusNoContent {
+		t.Fatalf("status = %d, se esperaba 204", salir.Code)
+	}
+
+	if yo := getYo(h, "Bearer "+resp.Token); yo.Code != nethttp.StatusOK {
+		t.Errorf("la otra sesión: status = %d, se esperaba 200", yo.Code)
 	}
 }

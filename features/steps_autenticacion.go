@@ -65,10 +65,13 @@ func (p *pasosAutenticacion) preparar() error {
 	emisor := service.NewEmisorSesiones(p.sesiones, func() time.Time { return p.ahora })
 	credenciales := repository.NewSQLiteCredencialRepository(db)
 	hasheador := service.NewServicioContrasenas(iteracionesDePruebaAutenticacion)
+	reloj := func() time.Time { return p.ahora }
+	obtener := service.NewObtenerSesion(p.sesiones, reloj)
 	p.handler = apihttp.NewAuthHandler(
 		service.NewRegistrarUsuario(credenciales, hasheador, emisor),
 		service.NewIngresar(credenciales, hasheador, emisor),
-		service.NewObtenerSesion(p.sesiones, func() time.Time { return p.ahora }),
+		obtener,
+		service.NewCerrarSesion(obtener, p.sesiones, reloj),
 	)
 	p.proyectos = apihttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repository.NewSQLiteProjectRepository(db)), nil, nil, nil, nil)
 	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
