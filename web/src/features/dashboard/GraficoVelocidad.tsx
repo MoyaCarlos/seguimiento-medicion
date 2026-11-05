@@ -1,5 +1,4 @@
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import './dashboard.css'
 import { datosDelGrafico, type MetricasDeSprint } from './metricas'
 
 const ALTO = 320

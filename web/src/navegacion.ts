@@ -3,4 +3,5 @@ export const navegacion = [
   { ruta: 'backlog', texto: 'Historias' },
   { ruta: 'sprints', texto: 'Sprints' },
   { ruta: 'status', texto: 'Estado' },
+  { ruta: 'dashboard', texto: 'Dashboard' },
 ]

@@ -18,6 +18,7 @@ export const rutas: RouteObject[] = [
           { path: 'votacion/:historiaId', lazy: () => import('./features/votacion') },
           { path: 'sprints/*', lazy: () => import('./features/sprints') },
           { path: 'status/*', lazy: () => import('./features/estado') },
+          { path: 'dashboard/*', lazy: () => import('./features/dashboard') },
         ],
       },
       { path: '*', element: <NoEncontrada /> },
