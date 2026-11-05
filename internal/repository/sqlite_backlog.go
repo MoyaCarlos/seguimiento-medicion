@@ -74,6 +74,12 @@ func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoI
 	return historias, nil
 }
 
+// ListarArrastradasPorSprint devuelve las historias que se arrastraron al
+// cerrar el Sprint, con la foto de sus Story Points (HU-10).
+func (r *SQLiteBacklogRepository) ListarArrastradasPorSprint(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
+	return nil, nil
+}
+
 // ObtenerPorID devuelve la historia con el identificador indicado.
 func (r *SQLiteBacklogRepository) ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error) {
 	return escanearHistoria(r.db.QueryRowContext(ctx,
