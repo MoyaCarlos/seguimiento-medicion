@@ -81,3 +81,18 @@ Característica: Autenticación de usuarios
   Escenario: Las rutas existentes siguen respondiendo sin token
     Cuando consulto la lista de proyectos sin token
     Entonces la lista de proyectos responde con éxito
+
+  Escenario: Al cerrar la sesión el token deja de ser válido
+    Dado que "ana.perez" inició sesión
+    Cuando cierro mi sesión
+    Entonces el cierre de sesión responde sin contenido
+    Y consulto quién soy con mi token
+    Y la consulta de quién soy se rechaza con el mensaje "Tu sesión no es válida"
+
+  Escenario: Cerrar una sesión no cierra la otra sesión de la misma persona
+    Dado que "ana.perez" inició sesión
+    Y "ana.perez" abre una segunda sesión
+    Cuando cierro mi sesión
+    Entonces el cierre de sesión responde sin contenido
+    Y consulto quién soy con el token de mi segunda sesión
+    Y el sistema responde que soy "ana.perez"
