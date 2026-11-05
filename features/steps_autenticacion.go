@@ -12,6 +12,7 @@ import (
 
 	"github.com/cucumber/godog"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -28,6 +29,7 @@ type pasosAutenticacion struct {
 	ahora           time.Time
 	contrasena      string
 	cuentasAntes    int
+	sesionesAntes   int
 	respuesta       *httptest.ResponseRecorder
 	respuestaSesion struct {
 		Usuario struct {
@@ -62,7 +64,7 @@ func (p *pasosAutenticacion) preparar() error {
 		service.NewRegistrarUsuario(credenciales, hasheador, emisor),
 		service.NewIngresar(credenciales, hasheador, emisor),
 	)
-	p.contrasena, p.cuentasAntes, p.respuesta = "", 0, nil
+	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
 	p.respuestaSesion.Token = ""
 	p.respuestaError.Campo, p.respuestaError.Mensaje = "", ""
 	return nil
@@ -184,6 +186,58 @@ func (p *pasosAutenticacion) sinCuentaNueva() error {
 	return nil
 }
 
+func (p *pasosAutenticacion) sesionesAbiertas() (int, error) {
+	var total int
+	err := p.db.QueryRow(`SELECT COUNT(*) FROM sesiones`).Scan(&total)
+	return total, err
+}
+
+// existeUsuarioPrevio crea un usuario por el camino de HU-04: solo con nombre, sin credenciales.
+func (p *pasosAutenticacion) existeUsuarioPrevio(nombre string) error {
+	_, err := repository.NewSQLiteUserRepository(p.db).Guardar(context.Background(), domain.User{
+		Nombre:            nombre,
+		NombreNormalizado: domain.NormalizarNombre(nombre),
+	})
+	return err
+}
+
+func (p *pasosAutenticacion) ingreso(nombre, contrasena string) error {
+	var err error
+	if p.sesionesAntes, err = p.sesionesAbiertas(); err != nil {
+		return err
+	}
+	p.contrasena = contrasena
+	cuerpo, err := json.Marshal(map[string]string{"nombre": nombre, "contrasena": contrasena})
+	if err != nil {
+		return err
+	}
+	req := httptest.NewRequest(http.MethodPost, "/auth/ingreso", strings.NewReader(string(cuerpo)))
+	p.respuesta = httptest.NewRecorder()
+	p.handler.Ingreso(p.respuesta, req)
+	if p.respuesta.Code == http.StatusOK {
+		return json.Unmarshal(p.respuesta.Body.Bytes(), &p.respuestaSesion)
+	}
+	return json.Unmarshal(p.respuesta.Body.Bytes(), &p.respuestaError)
+}
+
+func (p *pasosAutenticacion) ingresoRechazado(mensaje string) error {
+	if p.respuesta.Code != http.StatusUnauthorized || p.respuestaError.Mensaje != mensaje {
+		return fmt.Errorf("se esperaba 401 con %q, se obtuvo %d con %q", mensaje, p.respuesta.Code, p.respuestaError.Mensaje)
+	}
+	return nil
+}
+
+func (p *pasosAutenticacion) sinSesionNueva() error {
+	ahora, err := p.sesionesAbiertas()
+	if err != nil {
+		return err
+	}
+	if ahora != p.sesionesAntes {
+		return fmt.Errorf("había %d sesiones y ahora hay %d", p.sesionesAntes, ahora)
+	}
+	return nil
+}
+
 func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	p := &pasosAutenticacion{}
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
@@ -202,4 +256,9 @@ func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el registro de la cuenta se rechaza con el mensaje "([^"]*)"$`, p.rechazadoConMensaje)
 	ctx.Step(`^el registro de la cuenta se rechaza indicando el campo "([^"]*)"$`, p.rechazadoEnElCampo)
 	ctx.Step(`^no se crea ninguna cuenta nueva$`, p.sinCuentaNueva)
+	ctx.Step(`^que existe el usuario previo "([^"]*)" creado solo con nombre$`, p.existeUsuarioPrevio)
+	ctx.Step(`^ingreso con el nombre de usuario "([^"]*)" y la contraseña "([^"]*)"$`, p.ingreso)
+	ctx.Step(`^la respuesta del ingreso no contiene la contraseña$`, p.respuestaSinContrasena)
+	ctx.Step(`^el ingreso se rechaza con el mensaje "([^"]*)"$`, p.ingresoRechazado)
+	ctx.Step(`^no hay ninguna sesión nueva$`, p.sinSesionNueva)
 }
