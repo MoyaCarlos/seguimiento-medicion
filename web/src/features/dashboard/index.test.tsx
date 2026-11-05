@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -100,5 +100,20 @@ describe('sección Dashboard', () => {
 
     expect(await screen.findByRole('cell', { name: '7', hidden: true })).toBeTruthy()
     expect(api).toHaveBeenCalledTimes(2)
+  })
+
+  it('US2.1: Given valores por Sprint y del proyecto, When ingreso al Dashboard, Then los indicadores usan los del proyecto', async () => {
+    simularApi(() =>
+      respuesta(200, {
+        ...conSprints(),
+        sprints: [{ sprint_id: 70, numero: 1, metricas: { ...metricas, velocidad: 99 } }],
+      }),
+    )
+
+    abrir()
+
+    const velocidad = await screen.findByRole('region', { name: 'Velocidad' })
+    expect(within(velocidad).getByText('5')).toBeTruthy()
+    expect(within(velocidad).queryByText('99')).toBeNull()
   })
 })
