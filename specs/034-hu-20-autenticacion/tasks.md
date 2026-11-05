@@ -133,10 +133,10 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [x] T062 [US2] COMMIT `GREEN: implementar handler POST /auth/ingreso, test en verde`
 - [x] T063 [US2] Cablear `Ingresar` y la ruta `POST /auth/ingreso` en `cmd/api/main.go`
 - [x] T064 [US2] COMMIT `Cablear POST /auth/ingreso en cmd/api`
-- [ ] T065 [US2] RED: agregar a `features/autenticacion.feature` los escenarios 4 (ingreso exitoso, también un usuario previo creado por HU-04 que no puede ingresar) y 5 (credenciales incorrectas: «Usuario o contraseña incorrectos» sin revelar cuál falló); `go test ./features/` debe FALLAR
-- [ ] T066 [US2] COMMIT `RED: agregar escenarios BDD de ingreso (fallan)` (incluye el stub, si lo hay)
-- [ ] T067 [US2] GREEN: agregar los pasos en `features/steps_autenticacion.go`; `go test ./features/` en verde
-- [ ] T068 [US2] COMMIT `GREEN: agregar pasos BDD de ingreso, escenarios en verde`
+- [x] T065 [US2] RED: agregar a `features/autenticacion.feature` los escenarios 4 (ingreso exitoso, también un usuario previo creado por HU-04 que no puede ingresar) y 5 (credenciales incorrectas: «Usuario o contraseña incorrectos» sin revelar cuál falló); `go test ./features/` debe FALLAR
+- [x] T066 [US2] COMMIT `RED: agregar escenarios BDD de ingreso (fallan)` (incluye el stub, si lo hay)
+- [x] T067 [US2] GREEN: agregar los pasos en `features/steps_autenticacion.go`; `go test ./features/` en verde
+- [x] T068 [US2] COMMIT `GREEN: agregar pasos BDD de ingreso, escenarios en verde`
 
 **Checkpoint**: US1 y US2 funcionan juntas e independientes.
 
