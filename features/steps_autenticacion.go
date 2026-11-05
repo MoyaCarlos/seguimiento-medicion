@@ -28,6 +28,7 @@ type pasosAutenticacion struct {
 	handler         *apihttp.AuthHandler
 	proyectos       *apihttp.ProjectHandler
 	ahora           time.Time
+	tokenSegunda    string
 	contrasena      string
 	cuentasAntes    int
 	sesionesAntes   int
@@ -75,7 +76,7 @@ func (p *pasosAutenticacion) preparar() error {
 	)
 	p.proyectos = apihttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repository.NewSQLiteProjectRepository(db)), nil, nil, nil, nil)
 	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
-	p.respuestaSesion.Token = ""
+	p.respuestaSesion.Token, p.tokenSegunda = "", ""
 	p.respuestaYo.ID, p.respuestaYo.Nombre = 0, ""
 	p.respuestaError.Campo, p.respuestaError.Mensaje = "", ""
 	return nil
@@ -307,6 +308,48 @@ func (p *pasosAutenticacion) quienSoyRechazado(mensaje string) error {
 	return nil
 }
 
+// abreUnaSegundaSesion ingresa de nuevo con la misma cuenta y guarda ese token
+// aparte, sin pisar el de la primera sesión.
+func (p *pasosAutenticacion) abreUnaSegundaSesion(nombre string) error {
+	cuerpo, err := json.Marshal(map[string]string{"nombre": nombre, "contrasena": p.contrasena})
+	if err != nil {
+		return err
+	}
+	req := httptest.NewRequest(http.MethodPost, "/auth/ingreso", strings.NewReader(string(cuerpo)))
+	rec := httptest.NewRecorder()
+	p.handler.Ingreso(rec, req)
+	if rec.Code != http.StatusOK {
+		return fmt.Errorf("no se pudo abrir la segunda sesión: status %d", rec.Code)
+	}
+	var segunda struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &segunda); err != nil {
+		return err
+	}
+	p.tokenSegunda = segunda.Token
+	return nil
+}
+
+func (p *pasosAutenticacion) cierroMiSesion() error {
+	req := httptest.NewRequest(http.MethodPost, "/auth/salir", nil)
+	req.Header.Set("Authorization", "Bearer "+p.respuestaSesion.Token)
+	p.respuesta = httptest.NewRecorder()
+	p.handler.Salir(p.respuesta, req)
+	return nil
+}
+
+func (p *pasosAutenticacion) cierreSinContenido() error {
+	if p.respuesta.Code != http.StatusNoContent || p.respuesta.Body.Len() != 0 {
+		return fmt.Errorf("se esperaba 204 sin cuerpo, se obtuvo %d con %q", p.respuesta.Code, p.respuesta.Body.String())
+	}
+	return nil
+}
+
+func (p *pasosAutenticacion) consultoQuienSoyConElTokenDeMiSegundaSesion() error {
+	return p.consultarQuienSoy("Bearer " + p.tokenSegunda)
+}
+
 func (p *pasosAutenticacion) consultoLaListaDeProyectosSinToken() error {
 	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
 	p.respuesta = httptest.NewRecorder()
@@ -352,6 +395,10 @@ func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el sistema responde que soy "([^"]*)"$`, p.respondeQueSoy)
 	ctx.Step(`^la respuesta de quién soy no contiene la contraseña$`, p.respuestaSinContrasena)
 	ctx.Step(`^la consulta de quién soy se rechaza con el mensaje "([^"]*)"$`, p.quienSoyRechazado)
+	ctx.Step(`^"([^"]*)" abre una segunda sesión$`, p.abreUnaSegundaSesion)
+	ctx.Step(`^cierro mi sesión$`, p.cierroMiSesion)
+	ctx.Step(`^el cierre de sesión responde sin contenido$`, p.cierreSinContenido)
+	ctx.Step(`^consulto quién soy con el token de mi segunda sesión$`, p.consultoQuienSoyConElTokenDeMiSegundaSesion)
 	ctx.Step(`^consulto la lista de proyectos sin token$`, p.consultoLaListaDeProyectosSinToken)
 	ctx.Step(`^la lista de proyectos responde con éxito$`, p.listaDeProyectosConExito)
 }
