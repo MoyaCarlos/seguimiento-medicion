@@ -15,6 +15,7 @@ Todas son valores calculados al consultar. No tienen tabla propia.
 | `EstimacionSP` | `*int` | Completada: `historias.estimacion_sp`. Arrastrada: `historias_arrastradas.estimacion_sp` (foto). `nil` = "sin estimar" |
 | `Completada` | `bool` | `true` si viene de `historias`; `false` si viene de `historias_arrastradas` |
 | `Minutos` | `int` | Minutos imputados en este Sprint; `0` si no tiene |
+| `Horas` | `float64` | `Minutos` en horas, con dos decimales; lo calcula `ArmarDetalleSprint` con el mismo redondeo que HU-03 (`redondear(minutosAHoras(...))` de `metricas.go`) |
 
 ### DefectoDeSprint
 
@@ -40,7 +41,7 @@ El tipo de las métricas es el de HU-03 (ver R2).
 |---|---|
 | `SprintsFinalizados(sprints)` | Devuelve solo los `Finalizado`, ordenados por `Numero` ascendente; nunca `nil` |
 | `ValidarSprintFinalizado(sprint)` | Devuelve `ErrSprintNoFinalizado` si no está `Finalizado` |
-| `ArmarDetalleSprint(...)` | Une las horas con las historias (cero si no tiene) y marca los defectos |
+| `ArmarDetalleSprint(...)` | Une los minutos con las historias (cero si no tiene), calcula sus horas con dos decimales y marca los defectos |
 
 ## Puerto (`internal/repository`)
 

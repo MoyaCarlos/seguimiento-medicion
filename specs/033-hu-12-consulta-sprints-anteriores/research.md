@@ -41,7 +41,7 @@ Decisiones técnicas de la Fase 0. No quedan `NEEDS CLARIFICATION`.
 
 ## R7. Horas
 
-- **Decision**: la respuesta incluye `minutos` y `horas` con dos decimales por historia, calculadas por separado a partir de los minutos. El total del Sprint es el `horas_reales` de HU-03, no la suma de valores redondeados. Se reutiliza el redondeo de HU-03 (su FR-011).
+- **Decision**: la respuesta incluye `minutos` y `horas` con dos decimales por historia, calculadas por separado a partir de los minutos. El total del Sprint es el `horas_reales` de HU-03, no la suma de valores redondeados. Se reutiliza el redondeo de HU-03 (su FR-011): como `redondear` y `minutosAHoras` son privadas de `internal/domain`, las horas por historia se calculan en el dominio (`ArmarDetalleSprint`) y el DTO solo copia el valor (DRY, constitución V).
 - **Rationale**: D8 evita errores acumulados. Con dos decimales, las horas por historia pueden diferir en centésimas de su suma; los minutos sí suman exacto y permiten verificar FR-010.
 - **Alternatives considered**: sumar horas redondeadas (podría no coincidir con HU-03).
 

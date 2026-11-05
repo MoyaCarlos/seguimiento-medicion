@@ -3,8 +3,6 @@
 Guía para validar la historia de punta a punta. Contrato: [contracts/openapi.yaml](./contracts/openapi.yaml).
 Modelo: [data-model.md](./data-model.md).
 
-**Prerrequisito**: el cálculo de métricas de HU-03 mergeado en `main` y el contrato revisado (research.md R2).
-
 ## Tests automáticos
 
 ```bash
