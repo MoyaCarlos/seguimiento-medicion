@@ -90,8 +90,9 @@ Registrar la estimación no cambia ninguna ronda.
 ## Puertos (`internal/repository/`)
 
 ```go
-// votacion_repository.go: se agrega un método a VotacionRepository.
+// votacion_repository.go: se agregan dos métodos a VotacionRepository.
 ListarRondasReveladas(ctx context.Context, historiaID int64) ([]domain.RondaVotacion, error)
+RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error)
 
 // backlog_repository.go: puerto nuevo, separado de HistoriaRepository (ISP).
 type EstimacionHistoriaRepository interface {
@@ -103,6 +104,7 @@ type EstimacionHistoriaRepository interface {
 | Método | SQLite | Errores |
 |---|---|---|
 | `ListarRondasReveladas` | una consulta `rondas_votacion LEFT JOIN votos`, `WHERE revelada_en IS NOT NULL`, por `numero` y `usuario_id` (R9) | sin filas → lista vacía |
+| `RondaActualRevelada` | la ronda de mayor `numero`, sin leer `votos` | sin filas → `ErrVotacionNoIniciada` |
 | `GuardarEstimacion` | `UPDATE historias SET estimacion_sp = ? WHERE id = ?` (R7) | 0 filas → `ErrHistoriaNoEncontrada` |
 
 **Fake de los tests**: `fakeVotacionRepository` guarda hoy una ronda por historia. Debe conservar las

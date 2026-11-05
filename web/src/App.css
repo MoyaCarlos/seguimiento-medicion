@@ -606,11 +606,7 @@ h1 {
   }
 
   .feature-navigation {
-    overflow-x: auto;
-  }
-
-  .feature-navigation__item {
-    flex: 0 0 auto;
+    flex-wrap: wrap;
   }
 
   .placeholder {

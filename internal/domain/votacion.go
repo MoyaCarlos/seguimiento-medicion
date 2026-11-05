@@ -90,11 +90,15 @@ func (r RondaVotacion) Promedio() (Promedio, bool) {
 	if !r.Revelada() {
 		return Promedio{}, false
 	}
+	return CalcularPromedio(r.valores()), true
+}
+
+func (r RondaVotacion) valores() []int {
 	valores := make([]int, len(r.Votos))
 	for i, v := range r.Votos {
 		valores[i] = v.Valor
 	}
-	return CalcularPromedio(valores), true
+	return valores
 }
 
 // CalcularPromedio redondea la media a 2 decimales y sugiere la carta más
@@ -143,10 +147,7 @@ func (r RondaVotacion) Diferencias(regla ReglaConsenso) (Diferencias, bool) {
 	if len(r.Votos) == 0 {
 		return Diferencias{}, true
 	}
-	valores := make([]int, len(r.Votos))
-	for i, v := range r.Votos {
-		valores[i] = v.Valor
-	}
+	valores := r.valores()
 	if !regla.HayDiferencias(valores) {
 		return Diferencias{}, true
 	}

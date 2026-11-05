@@ -19,6 +19,7 @@ const FORMULARIO_INICIAL: DatosProyecto = {
   fecha_inicio: '',
   fecha_fin: '',
   creador: '',
+  horas_por_story_point: '',
 }
 
 export function Component() {
