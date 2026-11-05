@@ -1,17 +1,21 @@
+import { get, post } from '../../compartido/api/client'
+
 export type Usuario = { id: number; nombre: string }
 
 export type RespuestaSesion = { usuario: Usuario; token: string; vence_en: string }
 
-export async function registrar(_nombre: string, _contrasena: string): Promise<RespuestaSesion> {
-  return undefined as never
+export function registrar(nombre: string, contrasena: string): Promise<RespuestaSesion> {
+  return post<RespuestaSesion>('/auth/registro', { nombre, contrasena })
 }
 
-export async function ingresar(_nombre: string, _contrasena: string): Promise<RespuestaSesion> {
-  return undefined as never
+export function ingresar(nombre: string, contrasena: string): Promise<RespuestaSesion> {
+  return post<RespuestaSesion>('/auth/ingreso', { nombre, contrasena })
 }
 
-export async function yo(): Promise<Usuario> {
-  return undefined as never
+export function yo(): Promise<Usuario> {
+  return get<Usuario>('/auth/yo')
 }
 
-export async function salir(): Promise<void> {}
+export function salir(): Promise<void> {
+  return post<void>('/auth/salir', undefined)
+}
