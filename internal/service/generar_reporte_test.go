@@ -288,3 +288,193 @@ func TestGenerarReporte_EjecutarSprint_PropagaErrores(t *testing.T) {
 		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)
 	}
 }
+
+
+func TestGenerarReporte_EjecutarProyecto_DevuelveTodasLasSecciones(t *testing.T) {
+	ctx := context.Background()
+	horas := punteroADecimal(4)
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto", HorasPorStoryPoint: horas}
+	proyectos := &fakeProjectRepository{
+		proyectos:     map[int64]domain.Project{1: proyecto},
+		listaMiembros: []domain.Member{{UserID: 2, ProjectID: 1, Nombre: "Ana", Role: domain.RolProductBuilder}},
+	}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	primero := sprintDeReporte(t, sprints, 1, "Cerrar el carrito", domain.SprintFinalizado)
+	segundo := sprintDeReporte(t, sprints, 1, "Terminar el pago", domain.SprintFinalizado)
+	activo := sprintDeReporte(t, sprints, 1, "Pulir la entrega", domain.SprintActivo)
+
+	historias := &fakeHistoriasDeSprintRepository{porSprint: map[int64][]domain.BacklogItem{
+		primero.ID: {historiaDeReporte(10, 1, &primero.ID, "Carrito de compras", domain.PrioridadMust, domain.EstadoCompletada, 5)},
+		segundo.ID: {historiaDeReporte(11, 1, &segundo.ID, "Pago", domain.PrioridadMust, domain.EstadoCompletada, 3)},
+		activo.ID:  {historiaDeReporte(12, 1, &activo.ID, "Ajustes finales", domain.PrioridadMust, domain.EstadoEnProgreso, 2)},
+	}}
+	arrastradas := &fakeArrastradasRepository{porSprint: map[int64][]domain.BacklogItem{
+		primero.ID: {historiaDeReporte(13, 1, nil, "Pago", domain.PrioridadCould, domain.EstadoNueva, 3)},
+	}}
+	datos := &fakeDatosMetricasRepository{datos: []domain.DatosMetricasSprint{
+		{SprintID: primero.ID, Numero: primero.Numero, HistoriasCompletadas: 1, HistoriasArrastradas: 1, SPCompletados: 5, SPArrastrados: 3, MinutosReales: 360, DefectosDetectados: 1},
+		{SprintID: segundo.ID, Numero: segundo.Numero, HistoriasCompletadas: 1, SPCompletados: 3, MinutosReales: 180, DefectosResueltos: 1},
+	}}
+	idSegundo := segundo.ID
+	defectos := &fakeDefectoRepository{
+		defectos: []domain.Defecto{defectoDeReporte(1, 1, 10, primero.ID, &idSegundo, "El total no se actualiza")},
+		titulos:  map[int64]string{10: "Carrito de compras"},
+	}
+	backlog := &fakeProductBacklogRepository{historias: []domain.BacklogItem{
+		historiaDeReporte(20, 1, nil, "Mejoras futuras", domain.PrioridadShould, domain.EstadoNueva, 8),
+	}}
+
+	sut := nuevoGenerarReporteDePrueba(proyectos, sprints, backlog, historias, arrastradas, datos, defectos)
+	reporte, err := sut.EjecutarProyecto(ctx, 1, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	if reporte.Proyecto.ID != 1 || reporte.Estado != domain.ProyectoEnCurso {
+		t.Errorf("datos del proyecto inesperados: %+v, estado %q", reporte.Proyecto, reporte.Estado)
+	}
+	if len(reporte.Integrantes) != 1 || reporte.Integrantes[0].Nombre != "Ana" {
+		t.Errorf("integrantes inesperados: %+v", reporte.Integrantes)
+	}
+	if len(reporte.ProductBacklog) != 1 || reporte.ProductBacklog[0].Titulo != "Mejoras futuras" {
+		t.Errorf("Product Backlog inesperado: %+v", reporte.ProductBacklog)
+	}
+	if len(reporte.Sprints) != 2 {
+		t.Fatalf("se esperaban 2 Sprints finalizados, se obtuvieron %d", len(reporte.Sprints))
+	}
+	if reporte.Sprints[0].Sprint.ID != primero.ID || reporte.Sprints[1].Sprint.ID != segundo.ID {
+		t.Errorf("los Sprints no están en orden: %+v", reporte.Sprints)
+	}
+	if len(reporte.Sprints[0].Planificadas) != 2 {
+		t.Errorf("el primer Sprint debía tener 2 historias planificadas, tiene %d", len(reporte.Sprints[0].Planificadas))
+	}
+	if len(reporte.Sprints[0].DefectosDetectados) != 1 || len(reporte.Sprints[0].DefectosResueltos) != 0 {
+		t.Errorf("defectos del primer Sprint inesperados: %d detectados, %d resueltos",
+			len(reporte.Sprints[0].DefectosDetectados), len(reporte.Sprints[0].DefectosResueltos))
+	}
+	if len(reporte.Sprints[1].DefectosDetectados) != 0 || len(reporte.Sprints[1].DefectosResueltos) != 1 {
+		t.Errorf("defectos del segundo Sprint inesperados: %d detectados, %d resueltos",
+			len(reporte.Sprints[1].DefectosDetectados), len(reporte.Sprints[1].DefectosResueltos))
+	}
+	if reporte.SprintActivo == nil || reporte.SprintActivo.Sprint.ID != activo.ID || len(reporte.SprintActivo.Historias) != 1 {
+		t.Errorf("Sprint Activo inesperado: %+v", reporte.SprintActivo)
+	}
+	if reporte.Metricas.HorasReales != 9 {
+		t.Errorf("se esperaban 9 horas reales de los Sprints finalizados, se obtuvieron %v", reporte.Metricas.HorasReales)
+	}
+	if reporte.Metricas.SPPlanificados != 11 || reporte.Metricas.SPCompletados != 8 {
+		t.Errorf("métricas del proyecto inesperadas: %+v", reporte.Metricas)
+	}
+	if reporte.SinSprintsFinalizados {
+		t.Error("no debía marcar el proyecto sin Sprints finalizados")
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_SinSprintActivo(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	sprint := sprintDeReporte(t, sprints, 1, "Objetivo", domain.SprintFinalizado)
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, sprints, &fakeProductBacklogRepository{},
+		&fakeHistoriasDeSprintRepository{}, &fakeArrastradasRepository{},
+		&fakeDatosMetricasRepository{datos: []domain.DatosMetricasSprint{{SprintID: sprint.ID, Numero: 1}}},
+		&fakeDefectoRepository{},
+	)
+
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if reporte.SprintActivo != nil {
+		t.Errorf("no se esperaba Sprint Activo, se obtuvo %+v", reporte.SprintActivo)
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_SinHistoriasEnElBacklog(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	sprint := sprintDeReporte(t, sprints, 1, "Objetivo", domain.SprintFinalizado)
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, sprints, &fakeProductBacklogRepository{},
+		&fakeHistoriasDeSprintRepository{}, &fakeArrastradasRepository{},
+		&fakeDatosMetricasRepository{datos: []domain.DatosMetricasSprint{{SprintID: sprint.ID, Numero: 1}}},
+		&fakeDefectoRepository{},
+	)
+
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if reporte.ProductBacklog == nil || len(reporte.ProductBacklog) != 0 {
+		t.Errorf("se esperaba un Product Backlog vacío no nil, se obtuvo %#v", reporte.ProductBacklog)
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_SinSprintsFinalizados(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	activo := sprintDeReporte(t, sprints, 1, "Primer Sprint", domain.SprintActivo)
+
+	historias := &fakeHistoriasDeSprintRepository{porSprint: map[int64][]domain.BacklogItem{
+		activo.ID: {historiaDeReporte(10, 1, &activo.ID, "Ajustes finales", domain.PrioridadMust, domain.EstadoEnProgreso, 2)},
+	}}
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, sprints, &fakeProductBacklogRepository{},
+		historias, &fakeArrastradasRepository{},
+		&fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
+	)
+
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if !reporte.SinSprintsFinalizados {
+		t.Error("se esperaba SinSprintsFinalizados=true")
+	}
+	if len(reporte.Sprints) != 0 || reporte.Sprints == nil {
+		t.Errorf("se esperaba un slice vacío no nil de Sprints, se obtuvo %#v", reporte.Sprints)
+	}
+	if reporte.Metricas.SPPlanificados != 0 || reporte.Metricas.HorasReales != 0 {
+		t.Errorf("se esperaban métricas en cero, se obtuvo %+v", reporte.Metricas)
+	}
+	if reporte.SprintActivo == nil || len(reporte.SprintActivo.Historias) != 1 {
+		t.Errorf("se esperaba el Sprint Activo con su historia, se obtuvo %+v", reporte.SprintActivo)
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_Inexistente(t *testing.T) {
+	sut := nuevoGenerarReporteDePrueba(
+		&fakeProjectRepository{}, repository.NewSprintRepositoryEnMemoria(),
+		&fakeProductBacklogRepository{}, &fakeHistoriasDeSprintRepository{},
+		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
+	)
+
+	_, err := sut.EjecutarProyecto(context.Background(), 999, fechaDeReporte(20))
+
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_PropagaErrores(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	falla := errors.New("falla del backlog")
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, repository.NewSprintRepositoryEnMemoria(),
+		&fakeProductBacklogRepository{err: falla}, &fakeHistoriasDeSprintRepository{},
+		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
+	)
+
+	_, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	if !errors.Is(err, falla) {
+		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)
+	}
+}
