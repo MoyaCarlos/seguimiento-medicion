@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-04
 
-**Status**: Draft
+**Status**: Implementada, pendiente de revisión por PR y de la validación de SC-002 con una persona del equipo.
 
 **Input**: User description: "HU-09: Dashboard de Métricas (issue #9, sub-issue #69). Como Scrum Master quiero visualizar en un panel las métricas calculadas del proyecto (HU-03) con representaciones gráficas para poder evaluar de un vistazo el estado del proyecto sin tener que leer datos crudos. Escenario 1: dado que el proyecto tiene al menos un Sprint finalizado y sus métricas calculadas, cuando ingreso a la sección 'Dashboard', el sistema renderiza un gráfico de barras de velocidad (Sprints en eje X, Puntos Comprometidos vs. Completados en eje Y) y al menos un indicador visual por cada métrica restante del punto 7 del enunciado. Escenario 2: dado que un proyecto todavía no tiene Sprints finalizados, cuando ingreso al Dashboard, el sistema muestra un estado vacío informativo, no un gráfico roto ni un error. Fuentes: docs/PRODUCT-BACKLOG.md (HU-03 y HU-09) y specs/032-hu-03-calculo-metricas."
 

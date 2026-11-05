@@ -43,6 +43,23 @@ No se agrega un archivo `.feature`: la historia no cambia la API, y Godog no eje
 | "Sin datos" | Métricas de un Sprint finalizado sin horas por Story Point |
 | Error | Consultar las métricas de un proyecto inexistente |
 
+## Resultado de la validación (2026-11-05)
+
+Con la app real (backend Go con una base temporal y el build de producción), en Edge headless con emulación de 320 px. Filas de la tabla de abajo:
+
+| Fila | Resultado |
+|---|---|
+| 1, 2 | OK: estado vacío, también a 320 px |
+| 3 | OK con Sprints cerrados cargados por la API; los valores coinciden con la consulta |
+| 4 | OK: "sin datos" y enlace a la edición |
+| 5 | **Parcial**: un proyecto con el parámetro definido muestra los valores. No se probó definirlo y volver; el recálculo lo cubre Godog ("Cambiar el parámetro recalcula los Sprints finalizados") |
+| 6 | OK en el proyecto de 12 Sprints: 4,75 / 60% / 324 h / 318 h / -6 h / -1,85% / 12 / 8 |
+| 7 | OK: "proyecto no encontrado" |
+| 8 | **Solo automática** (US4.3); no se probó con el backend detenido |
+| 9 | OK: la página no desborda, con la tabla abierta o cerrada; el gráfico se desplaza dentro de su contenedor. Con la barra de scroll clásica de escritorio aparecen 15 px de desplazamiento por el `min-width: 320px` de `web/src/App.css`, anterior a esta historia y ajeno al Dashboard |
+| 10 | OK por el build: Recharts está solo en el chunk `dashboard` (111,5 kB comprimido) y `index.html` no lo precarga. No se miró la pestaña de red |
+| 11 | **Pendiente**: requiere a una persona del equipo (SC-002) |
+
 ## Validación manual
 
 Con el backend y el frontend levantados (ver `README.md`):

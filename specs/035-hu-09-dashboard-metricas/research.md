@@ -16,6 +16,7 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 
 - **Decision**: `recharts` 3.x, importada solo desde la feature `dashboard`. La ruta diferida (`lazy`) que ya usan todas las features deja la librería fuera de la carga inicial.
 - **Rationale**: resuelve ejes, leyenda y adaptación al ancho, y es lo que supuso la estimación de 8 SP. La versión 3.10.1 declara compatibilidad con React 19 y pide `react-is` como peer.
+- **Carga diferida verificada** (T039): Recharts queda solo en el chunk `dashboard` (389,5 kB; 111,5 kB comprimido), y `index.html` no lo precarga.
 - **Alcance de la librería**: solo el gráfico de velocidad. Los indicadores son HTML y CSS (R5), sin depender de ella.
 - **Alternatives considered**: SVG propio: sin dependencias, pero hay que escribir y mantener ejes, escalas y adaptación al ancho. Queda como alternativa si Recharts no se puede integrar; solo cambiaría `GraficoVelocidad`.
 
