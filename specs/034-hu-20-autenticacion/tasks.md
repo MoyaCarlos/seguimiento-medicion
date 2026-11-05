@@ -171,10 +171,10 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 
 **Independent Test**: tras `POST /auth/salir`, `GET /auth/yo` con ese token da 401; escenario 7.
 
-- [ ] T083 [US4] RED: crear `internal/service/cerrar_sesion_test.go`: cierra una sesión vigente y `ObtenerSesion` con ese token pasa a `ErrNoAutenticado`; otra sesión del mismo usuario sigue vigente; token inválido, vencido o ya cerrado → `ErrNoAutenticado` sin llamar a `Cerrar`; cerrar dos veces da error la segunda; el token se valida con el `ObtenerSesion` real (sobre los fakes), sin repetir en `CerrarSesion` la validación de formato ni de vigencia. Confirmar que FALLA **Stub (mismo commit RED):** crear `internal/service/cerrar_sesion.go` con `CerrarSesion`, `NewCerrarSesion` y `Ejecutar(ctx, token)` devolviendo `nil`.
-- [ ] T084 [US4] COMMIT `RED: agregar tests de CerrarSesion (falla)` (incluye el stub, si lo hay)
-- [ ] T085 [US4] GREEN: crear `internal/service/cerrar_sesion.go` (`NewCerrarSesion(obtener *ObtenerSesion, CerradorSesiones, reloj)`; solo llama a `ObtenerSesion` y luego a `Cerrar` con el ID de la sesión, sin repetir la validación del token ni la vigencia); `go test ./internal/service/` en verde
-- [ ] T086 [US4] COMMIT `GREEN: implementar CerrarSesion, test en verde`
+- [x] T083 [US4] RED: crear `internal/service/cerrar_sesion_test.go`: cierra una sesión vigente y `ObtenerSesion` con ese token pasa a `ErrNoAutenticado`; otra sesión del mismo usuario sigue vigente; token inválido, vencido o ya cerrado → `ErrNoAutenticado` sin llamar a `Cerrar`; cerrar dos veces da error la segunda; el token se valida con el `ObtenerSesion` real (sobre los fakes), sin repetir en `CerrarSesion` la validación de formato ni de vigencia. Confirmar que FALLA **Stub (mismo commit RED):** crear `internal/service/cerrar_sesion.go` con `CerrarSesion`, `NewCerrarSesion` y `Ejecutar(ctx, token)` devolviendo `nil`.
+- [x] T084 [US4] COMMIT `RED: agregar tests de CerrarSesion (falla)` (incluye el stub, si lo hay)
+- [x] T085 [US4] GREEN: crear `internal/service/cerrar_sesion.go` (`NewCerrarSesion(obtener *ObtenerSesion, CerradorSesiones, reloj)`; solo llama a `ObtenerSesion` y luego a `Cerrar` con el ID de la sesión, sin repetir la validación del token ni la vigencia); `go test ./internal/service/` en verde
+- [x] T086 [US4] COMMIT `GREEN: implementar CerrarSesion, test en verde`
 - [ ] T087 [US4] RED: agregar a `internal/http/auth_handler_test.go` `POST /auth/salir`: 204 sin cuerpo y el mismo token da 401 en `GET /auth/yo`; 401 `Tu sesión no es válida` sin efectos con token no vigente; otra sesión del usuario sigue válida. Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Salir` que no escribe nada.
 - [ ] T088 [US4] COMMIT `RED: agregar tests del handler POST /auth/salir (falla)` (incluye el stub, si lo hay)
 - [ ] T089 [US4] GREEN: agregar `AuthHandler.Salir`; `go test ./internal/http/` en verde
