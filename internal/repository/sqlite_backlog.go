@@ -76,8 +76,19 @@ func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoI
 
 // ListarArrastradasPorSprint devuelve las historias que se arrastraron al
 // cerrar el Sprint, con la foto de sus Story Points (HU-10).
-func (r *SQLiteBacklogRepository) ListarArrastradasPorSprint(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
-	return nil, nil
+func (r *SQLiteBacklogRepository) ListarArrastradasPorSprint(ctx context.Context, sprintID int64) ([]domain.BacklogItem, error) {
+	historias, err := r.listarHistorias(ctx,
+		`SELECT h.id, h.proyecto_id, h.titulo, h.descripcion, h.criterios_aceptacion, h.prioridad, h.estado,
+		        h.valor_negocio, a.estimacion_sp, h.sprint_id, h.fecha_finalizacion
+		   FROM historias_arrastradas a
+		   JOIN historias h ON h.id = a.historia_id
+		  WHERE a.sprint_id = ?
+		  ORDER BY CASE h.prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, h.id`,
+		sprintID)
+	if err != nil {
+		return nil, fmt.Errorf("listar historias arrastradas del sprint %d: %w", sprintID, err)
+	}
+	return historias, nil
 }
 
 // ObtenerPorID devuelve la historia con el identificador indicado.
