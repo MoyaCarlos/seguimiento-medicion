@@ -8,11 +8,12 @@ import (
 
 // HistorialHandler es el adaptador de entrada del historial de Sprints (HU-12).
 type HistorialHandler struct {
-	listar *service.ConsultarHistorialSprints
+	listar  *service.ConsultarHistorialSprints
+	detalle *service.ConsultarDetalleSprint
 }
 
-func NewHistorialHandler(listar *service.ConsultarHistorialSprints) *HistorialHandler {
-	return &HistorialHandler{listar: listar}
+func NewHistorialHandler(listar *service.ConsultarHistorialSprints, detalle *service.ConsultarDetalleSprint) *HistorialHandler {
+	return &HistorialHandler{listar: listar, detalle: detalle}
 }
 
 // Listar atiende GET /projects/{id}/historial.
@@ -28,4 +29,8 @@ func (h *HistorialHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) 
 		return
 	}
 	escribirJSON(w, nethttp.StatusOK, aHistorialResponse(historial))
+}
+
+// Detalle atiende GET /projects/{id}/historial/{sprintId}.
+func (h *HistorialHandler) Detalle(w nethttp.ResponseWriter, r *nethttp.Request) {
 }

@@ -92,6 +92,7 @@ func main() {
 	metricasHandler := apihttp.NewMetricasHandler(calcularMetricas)
 	historialHandler := apihttp.NewHistorialHandler(
 		service.NewConsultarHistorialSprints(calcularMetricas, sprintRepo),
+		service.NewConsultarDetalleSprint(proyectos, sprintRepo, calcularMetricas, repository.NewSQLiteHistorialSprintRepository(db)),
 	)
 
 	demoHandler := apihttp.NewDemoHandler(

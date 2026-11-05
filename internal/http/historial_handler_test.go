@@ -53,7 +53,7 @@ func consultarHistorial(t *testing.T, f fuentesDelHistorial, id string) *httptes
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/historial", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	NewHistorialHandler(service.NewConsultarHistorialSprints(metricas, f.sprints)).Listar(rec, req)
+	NewHistorialHandler(service.NewConsultarHistorialSprints(metricas, f.sprints), nil).Listar(rec, req)
 	return rec
 }
 
