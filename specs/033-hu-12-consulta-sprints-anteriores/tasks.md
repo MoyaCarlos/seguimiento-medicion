@@ -100,9 +100,9 @@ de la historia.
 - [X] T032 [US2] COMMIT `RED: agregar tests del handler GET /projects/{id}/historial/{sprintId} (fallan)`
 - [X] T033 [US2] GREEN: implementar `HistorialHandler.Detalle` y su DTO en internal/http/historial_handler.go e internal/http/historial_dto.go; el DTO copia `Horas` del dominio sin recalcularlo — `go test ./internal/... ./cmd/...` en verde
 - [X] T034 [US2] COMMIT `GREEN: implementar el handler GET /projects/{id}/historial/{sprintId}, tests en verde`
-- [ ] T035 [US2] (solo si hay algo que limpiar) REFACTOR de lo repetido entre la lista y el detalle (por ejemplo, la búsqueda de las métricas de un Sprint en `MetricasProyecto.Sprints`) + COMMIT `REFACTOR: <qué se limpió>`
-- [ ] T036 [US2] Cablear `SQLiteHistorialSprintRepository`, `ConsultarDetalleSprint` y `GET /projects/{id}/historial/{sprintId}` en cmd/api/main.go
-- [ ] T037 [US2] COMMIT `Cablear GET /projects/{id}/historial/{sprintId} en cmd/api`
+- [X] T035 [US2] (sin cambios: `metricasDelSprint` ya es compartida y los defectos reutilizan la lectura de HU-08) (solo si hay algo que limpiar) REFACTOR de lo repetido entre la lista y el detalle (por ejemplo, la búsqueda de las métricas de un Sprint en `MetricasProyecto.Sprints`) + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T036 [US2] Cablear `SQLiteHistorialSprintRepository`, `ConsultarDetalleSprint` y `GET /projects/{id}/historial/{sprintId}` en cmd/api/main.go
+- [X] T037 [US2] COMMIT `Cablear GET /projects/{id}/historial/{sprintId} en cmd/api`
 
 **Checkpoint**: lista y detalle funcionan; el backend de la historia está completo.
 
