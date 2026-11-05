@@ -23,7 +23,8 @@ Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de 
 
 - **Decision**: las pruebas verifican los valores en la tabla de valores por Sprint (R4), que son el mismo dato que recibe el gráfico, y que el gráfico se monte sin fallar. No se verifican coordenadas ni detalles internos del SVG de la librería.
 - **Rationale**: jsdom no calcula dimensiones, y probar el SVG de Recharts probaría la librería.
-- **A verificar**: la primera tarea comprueba, con una prueba mínima, cómo se monta el gráfico en jsdom (simular `ResizeObserver` o fijar dimensiones) antes de escribir el resto.
+- **Verificado con Recharts 3.10.1** (T004): jsdom no trae `ResizeObserver`, y aun así `ResponsiveContainer` no falla. Sin dimensiones no dibuja nada; con `initialDimension` dibuja el gráfico y la leyenda, sin simular nada. El componente usa `initialDimension`.
+- **Barras en cero**: Recharts no dibuja rectángulos de altura cero, así que US1.4 se verifica en la tabla, no contando barras.
 
 ## R4. Series distinguibles y valores como texto (FR-006)
 
