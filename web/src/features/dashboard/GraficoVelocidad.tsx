@@ -27,7 +27,12 @@ export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
           Completados
         </li>
       </ul>
-      <div className="dashboard-grafico__desplazable">
+      <div
+        className="dashboard-grafico__desplazable"
+        role="region"
+        aria-label="Gráfico por Sprint, desplazable"
+        tabIndex={0}
+      >
         <div style={{ minWidth: anchoMinimo }}>
           <ResponsiveContainer width="100%" height={ALTO} initialDimension={{ width: anchoMinimo, height: ALTO }}>
             <BarChart data={filas} barGap={2} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
