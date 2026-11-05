@@ -3,8 +3,10 @@ package http
 import (
 	"encoding/json"
 	nethttp "net/http"
+	"strings"
 	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
@@ -21,7 +23,30 @@ func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingre
 }
 
 // Yo atiende GET /auth/yo.
-func (h *AuthHandler) Yo(_ nethttp.ResponseWriter, _ *nethttp.Request) {}
+func (h *AuthHandler) Yo(w nethttp.ResponseWriter, r *nethttp.Request) {
+	token, ok := tokenBearer(r)
+	if !ok {
+		escribirError(w, domain.ErrNoAutenticado)
+		return
+	}
+	sesion, err := h.obtener.Ejecutar(r.Context(), token)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, usuarioSesionResponse{ID: sesion.Usuario.ID, Nombre: sesion.Usuario.Nombre})
+}
+
+// tokenBearer lee el token de "Authorization: Bearer <token>". El esquema se
+// compara sin distinguir mayúsculas; sin cabecera, con otro esquema o sin valor
+// devuelve false.
+func tokenBearer(r *nethttp.Request) (string, bool) {
+	esquema, token, ok := strings.Cut(r.Header.Get("Authorization"), " ")
+	if !ok || !strings.EqualFold(esquema, "Bearer") || token == "" {
+		return "", false
+	}
+	return token, true
+}
 
 // Registro atiende POST /auth/registro.
 func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {
