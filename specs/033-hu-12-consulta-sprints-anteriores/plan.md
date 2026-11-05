@@ -14,9 +14,9 @@ tablas ni migraciones: un adaptador SQLite nuevo lee `historias`, `historias_arr
 `registros_horas` y `defectos`. El frontend agrega la sección "Historial de Sprints" (sub-issue
 #88).
 
-**Bloqueo de implementación**: HU-12 necesita el cálculo de métricas de HU-03, que todavía no está
-en `main` (spec 032 en borrador, sin plan). Este plan se puede completar ahora, pero
-`/speckit-implement` tiene que esperar el merge de HU-03 y una revisión del contrato (R2).
+**Dependencia de HU-03 (resuelta)**: HU-12 necesita el cálculo de métricas de HU-03, que ya está
+en `main` (`service.CalcularMetricas`). El contrato de `metricas` se revisó contra el real y
+coincide (R2).
 
 ## Technical Context
 

@@ -8,10 +8,10 @@ Decisiones técnicas de la Fase 0. No quedan `NEEDS CLARIFICATION`.
 - **Rationale**: FR-012 y SC-003 exigen los mismos valores que HU-03, y la constitución pide que el cálculo viva en un único lugar. La interfaz permite probar con un fake.
 - **Alternatives considered**: calcular las métricas también en HU-12 (duplica la regla y puede divergir); guardarlas al cerrar el Sprint (contradice `MODELO-DE-DATOS.md` §6).
 
-## R2. Dependencia de un HU-03 sin plan
+## R2. Dependencia de HU-03
 
-- **Decision**: `/speckit-implement` espera el merge de HU-03. Los nombres de la interfaz de métricas y del objeto `metricas` en [openapi.yaml](./contracts/openapi.yaml) son **provisorios**, derivados de la spec 032, y se ajustan al contrato real de HU-03 antes de implementar.
-- **Rationale**: el plan de HU-03 todavía no existe. Implementar antes obligaría a duplicar el cálculo o a inventar un contrato que HU-03 no asumió.
+- **Decision**: `/speckit-implement` esperaba el merge de HU-03. **Resuelto (2026-11-05)**: HU-03 ya está en `main`. Los services de HU-12 dependen de una interfaz angosta con la firma de `service.CalcularMetricas.Ejecutar(ctx, proyectoID) (domain.MetricasProyecto, error)` y toman las métricas de cada Sprint de `MetricasProyecto.Sprints` por `SprintID`. El objeto `metricas` de [openapi.yaml](./contracts/openapi.yaml) coincide campo por campo con `metricasResponse` de HU-03 (`internal/http/metricas_dto.go`) y se arma con su mismo mapeo (`aMetricasResponse`).
+- **Rationale**: implementar antes del merge obligaba a duplicar el cálculo o a inventar un contrato que HU-03 no asumió.
 - **Alternatives considered**: implementar primero con métricas simuladas (el producto no funcionaría hasta HU-03); limitar HU-12 a los datos sin métricas (incumple el Escenario 1).
 
 ## R3. Rutas

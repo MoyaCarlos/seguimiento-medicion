@@ -165,7 +165,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 
 ## Assumptions
 
-- **Dependencia de HU-03**: HU-12 muestra métricas de HU-03, cuya spec (032) sigue en borrador y sin mergear. Su implementación tiene que esperar el cálculo de HU-03. Las dos decisiones abiertas de esa spec cambian los valores de horas estimadas y desviación, pero no esta historia.
+- **Dependencia de HU-03**: HU-12 muestra las métricas de HU-03 (spec 032), ya mergeada en `main`.
 - **Sin cambios de esquema**: la historia es de solo lectura y no agrega tablas ni migraciones (`MODELO-DE-DATOS.md` §8). Las fuentes son `sprints`, `historias`, `historias_arrastradas`, `registros_horas` y `defectos` (§4.5, §4.6, §4.8 y §4.9).
 - **Fechas del Sprint**: se muestran la fecha de inicio y la de fin definidas al iniciarlo. El modelo no guarda la fecha real de cierre.
 - **Orden de la lista**: ascendente por número, igual que el detalle por Sprint de HU-03 y más natural para ver la evolución del equipo.
@@ -176,4 +176,4 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **Sin filtros ni paginación**: un proyecto académico tiene pocos Sprints (YAGNI).
 - **Sin control de acceso**: igual que en el resto del sistema, no hay autenticación ni permisos por rol.
 - **Fuera de alcance**: gráficos y comparaciones visuales (HU-09), reporte en PDF (HU-10), edición de datos de un Sprint cerrado y cada registro de horas por separado, que sigue disponible por historia en HU-07.
-- **Dependencias**: HU-05, HU-07, HU-08 y HU-11, con el backend ya mergeado en `main`, y HU-03, todavía pendiente.
+- **Dependencias**: HU-03, HU-05, HU-07, HU-08 y HU-11, con el backend ya mergeado en `main`.

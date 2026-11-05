@@ -4,9 +4,8 @@ info:
   version: 1.0.0
   description: >-
     Consultas de solo lectura del historial de Sprints finalizados de un
-    proyecto y del detalle de cada uno. Las métricas provienen de HU-03; los
-    nombres de MetricasSprint son provisorios hasta que exista su contrato
-    (research.md R2).
+    proyecto y del detalle de cada uno. Las métricas provienen de HU-03 y
+    MetricasSprint coincide con su objeto metricas (research.md R2).
 paths:
   /projects/{id}/historial:
     get:
