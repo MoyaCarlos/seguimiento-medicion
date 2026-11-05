@@ -465,6 +465,7 @@ h1 {
   cursor: pointer;
   font-weight: 700;
   padding: 0.75rem 1rem;
+  text-decoration: none;
 }
 
 .button--primary {
@@ -605,11 +606,7 @@ h1 {
   }
 
   .feature-navigation {
-    overflow-x: auto;
-  }
-
-  .feature-navigation__item {
-    flex: 0 0 auto;
+    flex-wrap: wrap;
   }
 
   .placeholder {

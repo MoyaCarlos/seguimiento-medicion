@@ -308,6 +308,12 @@ components:
           format: date
           nullable: true
           description: Fecha de fin; `null` explícito la deja sin fecha.
+        horas_por_story_point:
+          type: number
+          nullable: true
+          exclusiveMinimum: true
+          minimum: 0
+          description: Opcional (HU-03). Ausente conserva el valor; `null` lo deja sin definir.
     AsignarIntegranteRequest:
       type: object
       required:
@@ -341,6 +347,10 @@ components:
         creado_en:
           type: string
           format: date-time
+        horas_por_story_point:
+          type: number
+          nullable: true
+          description: HU-03. `null` significa sin definir.
     Integrante:
       type: object
       properties:

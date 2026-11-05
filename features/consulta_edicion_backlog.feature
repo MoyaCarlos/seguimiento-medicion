@@ -2,7 +2,7 @@
 
 # Cobertura por categoría:
 # - Normal: listado del Product Backlog; edición válida.
-# - Alternativo: backlog vacío; carga inicial de Story Points en un Sprint "Activo" o "Finalizado".
+# - Alternativo: backlog vacío; carga inicial de Story Points en un Sprint "Activo" (con Sprint "Finalizado" se rechaza, ver calculo_metricas.feature).
 # - Límite: Story Points fuera de la escala Fibonacci; Story Points ya cargados en un Sprint "Activo" o "Finalizado".
 # - Error: proyecto inexistente; título en blanco; historia inexistente (el 404 domina sobre la validación).
 
@@ -84,4 +84,3 @@ Característica: Consulta y edición del Product Backlog
     Ejemplos:
       | estado     |
       | Activo     |
-      | Finalizado |

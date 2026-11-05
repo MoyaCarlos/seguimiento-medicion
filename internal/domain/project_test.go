@@ -140,3 +140,47 @@ func TestConDatosEditados_ReutilizaValidacionesDelAlta(t *testing.T) {
 		})
 	}
 }
+
+func TestProject_ConHorasPorStoryPoint_Validas(t *testing.T) {
+	casos := map[string]float64{"4": 4, "2.5": 2.5, "1e2": 100}
+	for texto, esperado := range casos {
+		t.Run(texto, func(t *testing.T) {
+			proyecto, err := Project{ID: 1}.ConHorasPorStoryPoint(&texto)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if proyecto.HorasPorStoryPoint == nil || *proyecto.HorasPorStoryPoint != esperado {
+				t.Errorf("se esperaba %v, se obtuvo %v", esperado, proyecto.HorasPorStoryPoint)
+			}
+		})
+	}
+}
+
+func TestProject_ConHorasPorStoryPoint_SinValorLoDejaSinDefinir(t *testing.T) {
+	cuatro := 4.0
+
+	proyecto, err := Project{HorasPorStoryPoint: &cuatro}.ConHorasPorStoryPoint(nil)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if proyecto.HorasPorStoryPoint != nil {
+		t.Errorf("se esperaba sin definir, se obtuvo %v", *proyecto.HorasPorStoryPoint)
+	}
+}
+
+func TestProject_ConHorasPorStoryPoint_Invalidas(t *testing.T) {
+	cuatro := 4.0
+	base := Project{HorasPorStoryPoint: &cuatro}
+	casos := []string{"0", "-1", `"abc"`, `""`, `"5"`, "true", "[]", "1e999", "Inf", "NaN"}
+
+	for _, texto := range casos {
+		t.Run(texto, func(t *testing.T) {
+			_, err := base.ConHorasPorStoryPoint(&texto)
+
+			if err != ErrHorasPorStoryPointInvalidas {
+				t.Fatalf("se esperaba ErrHorasPorStoryPointInvalidas, se obtuvo %v", err)
+			}
+		})
+	}
+}

@@ -4,6 +4,7 @@ export type DatosProyecto = {
   fecha_inicio: string
   fecha_fin: string
   creador: string
+  horas_por_story_point: string
 }
 
 export type ErroresProyecto = Partial<Record<keyof DatosProyecto, string>>
@@ -25,7 +26,24 @@ export function validarCreacion(datos: DatosProyecto): ErroresProyecto {
 }
 
 export function validarEdicion(datos: DatosProyecto): ErroresProyecto {
-  return validarDatos(datos)
+  const errores = validarDatos(datos)
+  if (!horasPorStoryPointValidas(datos.horas_por_story_point)) {
+    errores.horas_por_story_point = 'Las horas por Story Point deben ser un número mayor que cero'
+  }
+  return errores
+}
+
+const FORMATO_HORAS = /^\d*[.,]?\d+$/
+
+function horasPorStoryPointValidas(texto: string): boolean {
+  if (!texto.trim()) return true
+  const horas = aHorasPorStoryPoint(texto)
+  return FORMATO_HORAS.test(texto.trim()) && horas !== null && horas > 0 && Number.isFinite(horas)
+}
+
+export function aHorasPorStoryPoint(texto: string): number | null {
+  const valor = texto.trim()
+  return valor ? Number(valor.replace(',', '.')) : null
 }
 
 function validarDatos(datos: DatosProyecto): ErroresProyecto {
