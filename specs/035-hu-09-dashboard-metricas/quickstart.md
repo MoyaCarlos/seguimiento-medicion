@@ -14,6 +14,35 @@ Resultado esperado: todo en verde. Las pruebas de la feature están en `src/feat
 
 Los comportamientos de la API se validan con `go test ./...` (`features/calculo_metricas.feature`).
 
+## Escenarios BDD (#70)
+
+No se agrega un archivo `.feature`: la historia no cambia la API, y Godog no ejercita la interfaz. Los escenarios de la spec se automatizan como pruebas de componente con el escenario en su nombre (Principio III), y los de la API ya existen.
+
+**Pruebas de componente** (`web/src/features/dashboard/`, salvo la navegación):
+
+| Categoría | Escenarios | Archivo de prueba |
+|---|---|---|
+| Normal | US1.1, US1.2, US1.3 | `GraficoVelocidad.test.tsx` |
+| Normal | Navegación y ruta de US1.1 | `web/src/rutas.test.tsx` |
+| Normal | US2.1 a US2.5 | `Indicadores.test.tsx` |
+| Alternativo | US2.6 (sin horas por Story Point) | `Indicadores.test.tsx` |
+| Alternativo | US3.1, US3.2, US3.3 (estado vacío) | `index.test.tsx` |
+| Límite | US1.4, US1.5 | `GraficoVelocidad.test.tsx` |
+| Límite | Desviación porcentual sin datos; horas y defectos en cero | `Indicadores.test.tsx` |
+| Límite | Consulta única; volver y ver valores nuevos | `index.test.tsx` |
+| Error | US4.1 (carga), US4.2, US4.3 y error interno | `index.test.tsx` |
+
+**API, ya cubierta con Godog** (`features/calculo_metricas.feature`):
+
+| Comportamiento que usa el Dashboard | Escenario |
+|---|---|
+| Valores por Sprint | Story Points, velocidad y porcentaje de un Sprint finalizado; Horas y desviación de un Sprint finalizado; Defectos detectados y resueltos en un Sprint |
+| Valores del proyecto | Valores del proyecto con dos Sprints finalizados |
+| Solo Sprints finalizados | Un Sprint activo no aporta a las métricas |
+| Estado vacío | Proyecto sin Sprints finalizados y con horas por Story Point; Proyecto sin Sprints finalizados y sin horas por Story Point |
+| "Sin datos" | Métricas de un Sprint finalizado sin horas por Story Point |
+| Error | Consultar las métricas de un proyecto inexistente |
+
 ## Validación manual
 
 Con el backend y el frontend levantados (ver `README.md`):

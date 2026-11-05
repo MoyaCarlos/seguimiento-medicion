@@ -21,9 +21,9 @@
 
 ## Phase 1: Setup
 
-**⚠️ T002 bloquea el resto**: la constitución (Principio VI) exige que el equipo decida la dependencia nueva, y las decisiones de Clarifications son propuestas.
+El equipo confirmó las decisiones en la reunión de definición, incluida la dependencia nueva que exige decidir el Principio VI.
 
-- [ ] T001 COMMIT de `specs/035-hu-09-dashboard-metricas/`: `docs: agregar la especificación de HU-09 (Issue #69)`
+- [X] T001 COMMIT de `specs/035-hu-09-dashboard-metricas/`: `docs: agregar la especificación de HU-09 (Issue #69)`
 - [ ] T002 Confirmar en la reunión de definición las decisiones de `specs/035-hu-09-dashboard-metricas/spec.md` (sin backend nuevo, Recharts, alcance del panel) y actualizar Clarifications. y resolver el punto abierto de horas y defectos por Sprint. Si el equipo rechaza Recharts, cambiar T003 a T005 y T016 por la alternativa SVG (research R2). COMMIT `docs: registrar las decisiones de la reunión de HU-09`
 - [ ] T003 Instalar `recharts` y `react-is` con `npm install` en `web/`; se modifican `web/package.json` y `web/package-lock.json`
 - [ ] T004 Verificar Recharts en jsdom con una prueba mínima, temporal, en `web/src/features/dashboard/GraficoVelocidad.test.tsx`: montar un gráfico de barras, resolver lo que haga falta (`ResizeObserver` o dimensiones fijas) y anotar el resultado en R3 de `specs/035-hu-09-dashboard-metricas/research.md`
@@ -130,7 +130,6 @@
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **US1** → **US2** → **US3** → **US4** → **Polish**.
-- T002 bloquea T003 en adelante.
 - US1 crea `index.tsx`, la ruta y la navegación. US2, US3 y US4 agregan estados a ese archivo, así que van de a una.
 - `GraficoVelocidad.tsx` (T014 a T017) e `Indicadores.tsx` (T023 a T026) son independientes entre sí.
 - Dentro de cada comportamiento: RED → COMMIT → GREEN → COMMIT → (REFACTOR → COMMIT). Nunca saltear el COMMIT de RED.
@@ -142,7 +141,7 @@
 
 ## Implementation Strategy
 
-1. Setup + Foundational → decisión confirmada y base lista.
+1. Setup + Foundational → Recharts verificada y base lista.
 2. US1 → el gráfico se puede mostrar (MVP).
 3. US2 + US3 → los dos escenarios de la historia completos; desde acá se puede entregar.
 4. US4 y Polish → errores y validación final.
@@ -151,5 +150,5 @@
 
 - Un commit por fase del ciclo TDD: el historial `RED:` / `GREEN:` / `REFACTOR:` es evidencia evaluada por la cátedra.
 - Nunca `git push` ni squash desde las tareas.
-- Las sub-issues #70, #71 y #72 se actualizan después de T002 (research R1), fuera de esta lista.
+- Las sub-issues #70, #71 y #72 quedaron ajustadas a la decisión de research R1. Los escenarios de #70 están mapeados en `quickstart.md`.
 - `web/src/compartido/router/LayoutProyecto.tsx` no cambia: la navegación sale de `navegacion.ts`. Si #231 se mergea antes, actualizar la rama antes de T018.

@@ -1,12 +1,12 @@
 # Research: Dashboard de Métricas (HU-09)
 
-Las decisiones R1 a R3 dependen de las propuestas de Clarifications, que falta confirmar en la reunión de definición.
+Las decisiones R1 y R2 son las de Clarifications, confirmadas en la reunión de definición.
 
 ## R1. Sin endpoint nuevo
 
 - **Decision**: la pantalla consume `GET /projects/{id}/metricas` tal como está.
 - **Rationale**: la respuesta ya trae cada Sprint con su número, planificados y completados, y los valores del proyecto. Un endpoint "listo para graficar" duplicaría esa respuesta (Principio V). El contrato de HU-03 ya prevé este consumo. Godog ya cubre la consulta en `features/calculo_metricas.feature`.
-- **Consecuencias en las sub-issues** (se actualizan después de la reunión):
+- **Consecuencias en las sub-issues**:
   - #71 (Backend): se cierra sin código, con una nota que enlaza esta decisión.
   - #72 (Tests TDD): el TDD pasa a las funciones puras de `metricas.ts`; los casos de handler ya están en HU-03.
   - #70 (BDD): los escenarios se automatizan como pruebas de componente; no hace falta `dashboard_metricas.feature`.
@@ -17,7 +17,7 @@ Las decisiones R1 a R3 dependen de las propuestas de Clarifications, que falta c
 - **Decision**: `recharts` 3.x, importada solo desde la feature `dashboard`. La ruta diferida (`lazy`) que ya usan todas las features deja la librería fuera de la carga inicial.
 - **Rationale**: resuelve ejes, leyenda y adaptación al ancho, y es lo que supuso la estimación de 8 SP. La versión 3.10.1 declara compatibilidad con React 19 y pide `react-is` como peer.
 - **Alcance de la librería**: solo el gráfico de velocidad. Los indicadores son HTML y CSS (R5), sin depender de ella.
-- **Alternatives considered**: SVG propio: sin dependencias, pero hay que escribir y mantener ejes, escalas y adaptación al ancho. Es la alternativa si el equipo rechaza la dependencia; solo cambia `GraficoVelocidad`.
+- **Alternatives considered**: SVG propio: sin dependencias, pero hay que escribir y mantener ejes, escalas y adaptación al ancho. Queda como alternativa si Recharts no se puede integrar; solo cambiaría `GraficoVelocidad`.
 
 ## R3. Pruebas del gráfico
 

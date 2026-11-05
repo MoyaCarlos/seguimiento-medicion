@@ -32,5 +32,5 @@
 ## Notes
 
 - Los supuestos de alcance se revisan en `/speckit-clarify`, antes del plan.
-- Clarifications nombra Recharts porque registra una decisión que el equipo tiene que tomar (#230 y Principio VI); los requisitos y los criterios de éxito no dependen de esa librería.
+- Clarifications nombra Recharts porque registra una decisión que tomó el equipo (#230 y Principio VI); los requisitos y los criterios de éxito no dependen de esa librería.
 - Se agregan a lo que pide la plantilla las secciones que exige `AGENTS.md`: objetivo, entradas y salidas; los casos límite y los errores en formato EARS.

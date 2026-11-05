@@ -14,7 +14,7 @@ Agregar la sección "Dashboard" a cada proyecto: un gráfico de barras con los S
 
 **Language/Version**: TypeScript 6, React 19, react-router 8 (Vite 8).
 
-**Primary Dependencies**: `recharts` 3.x y su peer `react-is` (nuevas, **sujetas a la decisión del equipo**, ver Constitution Check). Se reutilizan `get` del cliente compartido y los componentes `ErrorMessage` y `LoadingIndicator`.
+**Primary Dependencies**: `recharts` 3.x y su peer `react-is` (nuevas, decididas por el equipo en la reunión de definición). Se reutilizan `get` del cliente compartido y los componentes `ErrorMessage` y `LoadingIndicator`.
 
 **Storage**: N/A. Las métricas se calculan al consultar y no se guardan (`MODELO-DE-DATOS.md` §6).
 
@@ -41,12 +41,9 @@ Agregar la sección "Dashboard" a cada proyecto: un gráfico de barras con los S
 | III. BDD | Cumple por la vía de frontend: pruebas de componente con el escenario en el nombre. Los comportamientos de la API ya están en `features/calculo_metricas.feature` (incluye proyecto sin Sprints finalizados, sin parámetro e inexistente). |
 | IV. Clean/Hexagonal | No aplica al dominio: no se toca `internal/`. |
 | V. Clean Code, KISS, YAGNI, DRY | Cumple. El cálculo sigue en un único lugar (HU-03); la pantalla solo da formato y escala. Sin endpoint nuevo. |
-| VI. Stack | **Condicionado.** "No se introduce una dependencia nueva fuera de este stack sin que el equipo lo decida explícitamente." Recharts está propuesta, no decidida: la reunión de definición todavía no se hizo. |
+| VI. Stack | Cumple. La constitución pide que el equipo decida explícitamente toda dependencia nueva, y Recharts se confirmó en la reunión de definición. |
 
-Resultado: **sin violaciones en el diseño, con una condición antes de implementar**. La fase de instalación de `tasks.md` no empieza hasta que el equipo confirme Recharts en la reunión. Si la rechaza, se usa la alternativa de [research.md](./research.md) (R2) y solo cambia `GraficoVelocidad`.
-
-Re-chequeo después del diseño: mismo resultado.
-
+Resultado: sin violaciones, antes y después del diseño.
 ## Project Structure
 
 ### Documentation (this feature)
@@ -86,7 +83,7 @@ web/
 
 - **PR #231 abierto** (HU-19) cambia `rutas.tsx`, `rutas.test.tsx`, `LayoutProyecto.tsx` y `App.css`. Si se mergea antes, hay que actualizar la rama y resolver el conflicto en las rutas. Por eso los estilos del Dashboard van en `dashboard.css`, no en `App.css`.
 - **Recharts en jsdom**: no se verificó todavía. jsdom no mide el ancho, así que es probable que haya que simular `ResizeObserver` o fijar las dimensiones del gráfico. La primera tarea lo comprueba antes de seguir (R3).
-- **Sub-issues**: #70, #71 y #72 describen trabajo que esta decisión cambia. Se actualizan después de la reunión (R1).
+- **Punto abierto**: los gráficos de horas y defectos por Sprint no se trataron en la reunión (ver Clarifications). Si se suman, son componentes nuevos en la misma feature.
 
 ## Complexity Tracking
 

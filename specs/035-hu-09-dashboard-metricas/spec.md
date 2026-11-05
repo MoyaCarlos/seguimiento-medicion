@@ -16,13 +16,13 @@
 
 ### Session 2026-11-04
 
-Decisiones propuestas por Candela Vulcano, **a confirmar en la reunión de definición de la historia** (todavía no se hizo):
+Decisiones propuestas por Candela Vulcano y confirmadas en la reunión de definición de la historia:
 
-- Q: ¿Hace falta backend nuevo? La sub-issue #71 pide un endpoint "listo para graficar", pero la consulta de métricas de HU-03 ya entrega lo necesario. → A: No. La pantalla consume la consulta de HU-03, sin cambios de backend ni de esquema (DRY, YAGNI). #71 y #72 se ajustan a esta decisión; afecta a esas sub-issues.
-- Q: ¿Con qué se dibujan los gráficos? La estimación habla de una librería, y #230 pide no agregar librerías salvo que el equipo lo decida. → A: Con la librería Recharts, cargada solo al entrar al Dashboard. Es la decisión de equipo que pide #230 y hay que confirmarla; afecta a #230.
+- Q: ¿Hace falta backend nuevo? La sub-issue #71 pide un endpoint "listo para graficar", pero la consulta de métricas de HU-03 ya entrega lo necesario. → A: No. La pantalla consume la consulta de HU-03, sin cambios de backend ni de esquema (DRY, YAGNI). #70, #71 y #72 se ajustan a esta decisión.
+- Q: ¿Con qué se dibujan los gráficos? La estimación habla de una librería, y #230 pide no agregar librerías salvo que el equipo lo decida. → A: Con la librería Recharts, cargada solo al entrar al Dashboard. Es la decisión de equipo que piden #230 y el Principio VI de la constitución.
 - Q: ¿Qué alcance tiene el panel además del gráfico de velocidad? → A: Indicadores con los valores del proyecto en conjunto, con elementos gráficos (proporción para el porcentaje, barras comparadas para horas y defectos). Sin más gráficos por Sprint ni selector de Sprint; el detalle por Sprint es de HU-12.
 
-**Punto abierto para la reunión**: la spec de HU-12 (033, en su propia rama) deja los "gráficos y comparaciones visuales" a HU-09, pero con este alcance solo se grafican los Story Points por Sprint. Las horas y los defectos por Sprint quedan en el resumen de HU-12, sin gráfico en ninguna historia. Hay que confirmar si eso alcanza o si se suman esos gráficos.
+**Punto abierto (no se trató en la reunión; no bloquea esta historia)**: la spec de HU-12 (033, en su propia rama) deja los "gráficos y comparaciones visuales" a HU-09, pero con este alcance solo se grafican los Story Points por Sprint. Las horas y los defectos por Sprint quedan en el resumen de HU-12, sin gráfico en ninguna historia. Falta confirmar si eso alcanza o si se suman esos gráficos; se implementa el alcance de arriba, y sumarlos después no obliga a rehacerlo.
 
 ## Objetivo
 
