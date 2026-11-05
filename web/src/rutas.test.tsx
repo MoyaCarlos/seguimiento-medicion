@@ -55,6 +55,36 @@ describe('registro de rutas', () => {
     expect(screen.getByText('42')).toBeTruthy()
   })
 
+  it('/projects/:id/dashboard muestra el Dashboard y la navegación lo ofrece como activo', async () => {
+    const metricas = {
+      story_points_planificados: 0,
+      story_points_completados: 0,
+      velocidad: 0,
+      porcentaje_historias_completadas: 0,
+      horas_estimadas: null,
+      horas_reales: 0,
+      desviacion_horas: null,
+      desviacion_porcentaje: null,
+      defectos_detectados: 0,
+      defectos_resueltos: 0,
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ proyecto_id: 42, horas_por_story_point: null, proyecto: metricas, sprints: [] }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    abrir('/projects/42/dashboard')
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe('page')
+  })
+
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/settings')
 
