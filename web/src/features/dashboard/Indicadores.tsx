@@ -12,7 +12,8 @@ const conUnidad = (valor: number | null, unidad: string) =>
   valor === null ? formatoNumero(valor) : `${formatoNumero(valor)}${unidad}`
 
 export function Indicadores({ metricas, horasPorStoryPoint, proyectoId }: IndicadoresProps) {
-  const maximoHoras = Math.max(metricas.horas_estimadas ?? 0, metricas.horas_reales)
+  const maximoHoras =
+    metricas.horas_estimadas === null ? null : Math.max(metricas.horas_estimadas, metricas.horas_reales)
   const maximoDefectos = Math.max(metricas.defectos_detectados, metricas.defectos_resueltos)
   const aclaracion = textoDesviacion(metricas.desviacion_horas)
 
@@ -65,7 +66,7 @@ function Indicador({ titulo, children }: { titulo: string; children: ReactNode }
 type ComparacionProps = {
   nombre: string
   valor: number | null
-  maximo: number
+  maximo: number | null
   unidad?: string
 }
 
@@ -76,7 +77,7 @@ function Comparacion({ nombre, valor, maximo, unidad = '' }: ComparacionProps) {
         <span>{nombre}</span>
         <strong>{conUnidad(valor, unidad)}</strong>
       </div>
-      {valor !== null && <Barra nombre={nombre} valor={valor} maximo={maximo} />}
+      {valor !== null && maximo !== null && <Barra nombre={nombre} valor={valor} maximo={maximo} />}
     </div>
   )
 }
@@ -88,7 +89,7 @@ function Barra({ nombre, valor, maximo }: { nombre: string; valor: number; maxim
       role="meter"
       aria-label={nombre}
       aria-valuemin={0}
-      aria-valuemax={maximo}
+      aria-valuemax={maximo > 0 ? maximo : 1}
       aria-valuenow={valor}
     >
       <span style={{ width: `${proporcion(valor, maximo)}%` }} />
