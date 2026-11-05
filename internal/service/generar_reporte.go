@@ -159,6 +159,81 @@ func aDefectoReporte(defecto domain.DefectoDetalle, numeros map[int64]int) domai
 }
 
 // EjecutarProyecto arma el reporte completo de un proyecto.
-func (s *GenerarReporte) EjecutarProyecto(_ context.Context, _ int64, _ time.Time) (domain.ReporteProyecto, error) {
-	return domain.ReporteProyecto{}, nil
+func (s *GenerarReporte) EjecutarProyecto(ctx context.Context, proyectoID int64, ahora time.Time) (domain.ReporteProyecto, error) {
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	integrantes, err := s.proyectos.ListarIntegrantes(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	backlog, err := s.backlog.ListarSinSprint(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	datos, err := s.datos.ListarDatosSprintsFinalizados(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	defectos, err := s.defectos.ListarPorProyecto(ctx, proyectoID)
+	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+
+	metricas := domain.CalcularMetricas(datos, proyecto.HorasPorStoryPoint)
+	metricasDeCadaSprint := indexarMetricas(metricas)
+	numeros := numerosDeSprint(sprints)
+	sprintsFinalizados := make([]domain.SprintReporte, 0, len(sprints))
+	for _, sprint := range sprints {
+		if sprint.Estado != domain.SprintFinalizado {
+			continue
+		}
+		reporte, err := s.armarSprint(ctx, sprint, numeros, metricasDeCadaSprint[sprint.ID], defectos)
+		if err != nil {
+			return domain.ReporteProyecto{}, err
+		}
+		sprintsFinalizados = append(sprintsFinalizados, reporte)
+	}
+
+	var activo *domain.SprintActivoReporte
+	if sprintActivo, hay := domain.SprintActivoDe(sprints); hay {
+		historias, err := s.historias.ListarPorSprint(ctx, sprintActivo.ID)
+		if err != nil {
+			return domain.ReporteProyecto{}, err
+		}
+		activo = &domain.SprintActivoReporte{Sprint: sprintActivo, Historias: aHistoriasReporte(historias, false)}
+	}
+
+	return domain.ReporteProyecto{
+		Proyecto:              proyecto,
+		Estado:                domain.CalcularEstadoProyecto(proyecto, sprints, ahora),
+		Integrantes:           integrantes,
+		ProductBacklog:        aHistoriasReporte(backlog, false),
+		Sprints:               sprintsFinalizados,
+		SprintActivo:          activo,
+		Metricas:              metricas.Proyecto,
+		HorasPorStoryPoint:    proyecto.HorasPorStoryPoint,
+		SinSprintsFinalizados: len(sprintsFinalizados) == 0,
+	}, nil
+}
+
+func indexarMetricas(metricas domain.MetricasProyecto) map[int64]domain.Metricas {
+	porSprint := make(map[int64]domain.Metricas, len(metricas.Sprints))
+	for _, sprint := range metricas.Sprints {
+		porSprint[sprint.SprintID] = sprint.Metricas
+	}
+	return porSprint
+}
+
+func aHistoriasReporte(historias []domain.BacklogItem, completadas bool) []domain.HistoriaReporte {
+	resultado := make([]domain.HistoriaReporte, 0, len(historias))
+	for _, historia := range historias {
+		resultado = append(resultado, aHistoriaReporte(historia, completadas && historia.Estado == domain.EstadoCompletada))
+	}
+	return resultado
 }

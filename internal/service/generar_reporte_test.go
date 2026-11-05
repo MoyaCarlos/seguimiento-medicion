@@ -19,9 +19,9 @@ func fechaDeReporte(dia int) time.Time {
 }
 
 type fakeDatosMetricasRepository struct {
-	datos     []domain.DatosMetricasSprint
-	err       error
-	llamadas  int
+	datos    []domain.DatosMetricasSprint
+	err      error
+	llamadas int
 }
 
 func (f *fakeDatosMetricasRepository) ListarDatosSprintsFinalizados(_ context.Context, _ int64) ([]domain.DatosMetricasSprint, error) {
@@ -288,7 +288,6 @@ func TestGenerarReporte_EjecutarSprint_PropagaErrores(t *testing.T) {
 		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)
 	}
 }
-
 
 func TestGenerarReporte_EjecutarProyecto_DevuelveTodasLasSecciones(t *testing.T) {
 	ctx := context.Background()
