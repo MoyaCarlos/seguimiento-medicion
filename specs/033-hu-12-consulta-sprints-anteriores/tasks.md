@@ -71,8 +71,8 @@ de la historia.
 - [X] T014 [US1] COMMIT `RED: agregar tests del handler GET /projects/{id}/historial (fallan)`
 - [X] T015 [US1] GREEN: implementar `HistorialHandler.Listar` y el DTO en internal/http/historial_handler.go e internal/http/historial_dto.go — `go test ./internal/... ./cmd/...` en verde
 - [X] T016 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/historial, tests en verde`
-- [ ] T017 [US1] Cablear `ConsultarHistorialSprints` (con el `CalcularMetricas` ya construido) y `GET /projects/{id}/historial` en cmd/api/main.go
-- [ ] T018 [US1] COMMIT `Cablear GET /projects/{id}/historial en cmd/api`
+- [X] T017 [US1] Cablear `ConsultarHistorialSprints` (con el `CalcularMetricas` ya construido) y `GET /projects/{id}/historial` en cmd/api/main.go
+- [X] T018 [US1] COMMIT `Cablear GET /projects/{id}/historial en cmd/api`
 
 **Checkpoint**: la lista del historial funciona por sí sola.
 
