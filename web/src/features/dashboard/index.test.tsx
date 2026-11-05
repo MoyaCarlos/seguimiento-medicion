@@ -116,4 +116,46 @@ describe('sección Dashboard', () => {
     expect(within(velocidad).getByText('5')).toBeTruthy()
     expect(within(velocidad).queryByText('99')).toBeNull()
   })
+
+  it('US3.1: Given un proyecto sin Sprints finalizados, When ingreso al Dashboard, Then veo el mensaje, sin gráfico ni indicadores', async () => {
+    simularApi(() => respuesta(200, { ...conSprints(), sprints: [] }))
+
+    abrir()
+
+    expect(await screen.findByText(/aparecen cuando se cierra el primer Sprint/)).toBeTruthy()
+    expect(grafico()).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Velocidad' })).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('US3.2: Given un único Sprint activo, When la consulta informa cero Sprints finalizados y valores en cero, Then veo el mismo estado vacío', async () => {
+    const enCero: Metricas = {
+      ...metricas,
+      story_points_planificados: 0,
+      story_points_completados: 0,
+      velocidad: 0,
+      porcentaje_historias_completadas: 0,
+      horas_estimadas: 0,
+      horas_reales: 0,
+      desviacion_horas: 0,
+      desviacion_porcentaje: null,
+      defectos_detectados: 0,
+      defectos_resueltos: 0,
+    }
+    simularApi(() => respuesta(200, { proyecto_id: 7, horas_por_story_point: 4, proyecto: enCero, sprints: [] }))
+
+    abrir()
+
+    expect(await screen.findByText(/aparecen cuando se cierra el primer Sprint/)).toBeTruthy()
+    expect(screen.queryByRole('region', { name: 'Velocidad' })).toBeNull()
+  })
+
+  it('US3.3: Given el estado vacío, When lo leo, Then tengo un acceso a los Sprints del proyecto', async () => {
+    simularApi(() => respuesta(200, { ...conSprints(), sprints: [] }))
+
+    abrir()
+
+    const enlace = await screen.findByRole('link', { name: /Sprints/ })
+    expect(enlace.getAttribute('href')).toBe('/projects/7/sprints')
+  })
 })
