@@ -41,17 +41,25 @@ describe('GraficoVelocidad', () => {
 
     expect(screen.getByRole('figure', { name: /Story Points comprometidos y completados/ })).toBeTruthy()
     expect(container.querySelector('.recharts-surface')).not.toBeNull()
-    const leyenda = container.querySelector<HTMLElement>('.recharts-legend-wrapper')
-    expect(leyenda).not.toBeNull()
-    expect(within(leyenda!).getByText('Comprometidos')).toBeTruthy()
-    expect(within(leyenda!).getByText('Completados')).toBeTruthy()
+    expect(screen.getByRole('list', { name: 'Series del gráfico' })).toBeTruthy()
   })
 
   it('US1.1: Given las dos series, When leo la leyenda, Then aparecen en el mismo orden que las barras', () => {
-    const { container } = render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
+    render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
 
-    const rotulos = [...container.querySelectorAll('.recharts-legend-item-text')].map((rotulo) => rotulo.textContent)
-    expect(rotulos).toEqual(['Comprometidos', 'Completados'])
+    const leyenda = screen.getByRole('list', { name: 'Series del gráfico' })
+    expect(within(leyenda).getAllByRole('listitem').map((serie) => serie.textContent)).toEqual([
+      'Comprometidos',
+      'Completados',
+    ])
+  })
+
+  it('FR-006: Given muchos Sprints, When el gráfico se desplaza, Then la leyenda queda fuera del área desplazable y siempre a la vista', () => {
+    const { container } = render(<GraficoVelocidad sprints={[sprint(1, 8, 5), sprint(2, 3, 3)]} />)
+
+    const leyenda = screen.getByRole('list', { name: 'Series del gráfico' })
+    expect(leyenda.closest('.dashboard-grafico__desplazable')).toBeNull()
+    expect(container.querySelector('.recharts-legend-wrapper')).toBeNull()
   })
 
   it('US1.2: Given un Sprint con 8 comprometidos y 5 completados, When leo sus valores, Then veo 8 y 5', () => {
