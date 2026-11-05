@@ -21,6 +21,7 @@
 }
 
 .dashboard-grafico {
+  --dashboard-comprometidos: #2a9d8f;
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(0, 1fr);
@@ -30,8 +31,40 @@
   font-size: 1.05rem;
 }
 
-.dashboard-grafico__serie {
-  color: var(--ink);
+.dashboard-leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  gap: 0.25rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboard-leyenda li {
+  align-items: center;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.dashboard-leyenda__marca {
+  border-radius: 2px;
+  display: inline-block;
+  height: 0.8rem;
+  width: 0.8rem;
+}
+
+.dashboard-leyenda__marca--comprometidos {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--dashboard-comprometidos) 0 2px,
+    var(--surface) 2px 4px
+  );
+  border: 1px solid var(--dashboard-comprometidos);
+}
+
+.dashboard-leyenda__marca--completados {
+  background: var(--lilac-dark);
 }
 
 .dashboard-grafico__desplazable {
