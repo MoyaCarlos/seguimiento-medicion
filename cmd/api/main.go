@@ -102,6 +102,7 @@ func main() {
 		_, _ = w.Write([]byte("ok"))
 	})
 	mux.HandleFunc("POST /auth/registro", authHandler.Registro)
+	mux.HandleFunc("POST /auth/ingreso", authHandler.Ingreso)
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
