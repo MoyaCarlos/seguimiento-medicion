@@ -114,7 +114,7 @@ de la historia.
 
 **Independent Test**: un proyecto recién creado y otro con un único Sprint `Activo` responden `200` con `[]`; un Sprint finalizado sin historias, horas ni defectos responde `200` con listas vacías y las métricas de HU-03 para ese caso.
 
-- [ ] T038 [US3] Verificar que los casos de US3 están cubiertos sin tests nuevos: US3.1 en T009 y T013, US3.2 en T019, T023 y T031, y ambos en features/historial_sprints.feature. Si falta alguno, agregarlo con su ciclo RED → COMMIT → GREEN → COMMIT; si no falta nada, esta tarea no lleva commit
+- [X] T038 [US3] Verificar que los casos de US3 están cubiertos sin tests nuevos: US3.1 en T009 y T013, US3.2 en T019, T023 y T031, y ambos en features/historial_sprints.feature. Si falta alguno, agregarlo con su ciclo RED → COMMIT → GREEN → COMMIT; si no falta nada, esta tarea no lleva commit
 
 **Checkpoint**: el estado inicial del proyecto está cubierto.
 
@@ -122,8 +122,8 @@ de la historia.
 
 ## Phase 6: Polish (backend)
 
-- [ ] T039 Step definitions de Godog en features/steps_historial_sprints.go (sembrar con los services reales sobre SQLite `:memory:`, como features/steps_metricas.go) y registrar `InitializeScenarioHistorial(ctx)` en features/features_test.go. Incluir un paso que compare las métricas del historial con las de `CalcularMetricas` (US1.4, FR-010) y otro que compruebe que el Sprint `Activo` no cambió (US2.7)
-- [ ] T040 COMMIT `Agregar pasos BDD del historial de Sprints`
+- [X] T039 Step definitions de Godog en features/steps_historial_sprints.go (sembrar con los services reales sobre SQLite `:memory:`, como features/steps_metricas.go) y registrar `InitializeScenarioHistorial(ctx)` en features/features_test.go. Incluir un paso que compare las métricas del historial con las de `CalcularMetricas` (US1.4, FR-010) y otro que compruebe que el Sprint `Activo` no cambió (US2.7)
+- [X] T040 COMMIT `Agregar pasos BDD del historial de Sprints`
 - [ ] T041 `go build ./...`, `go vet ./...`, `gofmt -l .` sin salida y `go test ./...` en verde
 - [ ] T042 Prueba manual de la API según quickstart.md (pasos 1 a 8)
 
