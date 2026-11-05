@@ -58,6 +58,8 @@ var (
 	ErrVotacionNoIniciada = errors.New("la historia no tiene votación iniciada")
 	// ErrVotacionYaIniciada indica que la historia ya tiene una ronda de votación.
 	ErrVotacionYaIniciada = errors.New("la historia ya tiene una votación")
+	// ErrRondaYaAbierta indica que otra petición abrió esa misma ronda mientras tanto.
+	ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")
 	// ErrNoEsIntegrante indica que quien actúa no integra el proyecto de la historia.
 	ErrNoEsIntegrante = errors.New("el usuario no es integrante del proyecto")
 	// ErrNoEsScrumMaster indica que la acción es exclusiva del Scrum Master del proyecto.
@@ -67,8 +69,12 @@ var (
 	ErrHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede votar una historia completada"}
 	ErrRondaRevelada      = ValidationError{Campo: "estado", Mensaje: "la ronda ya fue revelada"}
 	ErrFaltanVotos        = ValidationError{Campo: "votos", Mensaje: "faltan votar integrantes del proyecto"}
+	ErrRondaNoRevelada    = ValidationError{Campo: "estado", Mensaje: "la ronda actual todavía no fue revelada"}
+
+	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
 
+// Errores de autenticación (HU-20).
 // Errores de autenticación (HU-20).
 var (
 	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.
@@ -78,3 +84,10 @@ var (
 	// ErrNombreUsuarioEnUso indica un registro con un nombre de usuario ya existente.
 	ErrNombreUsuarioEnUso = errors.New("Ese nombre de usuario ya existe")
 )
+
+// ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
+var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}
+
+// ErrCargaEnSprintFinalizado indica una carga de Story Points en una historia
+// sin estimar de un Sprint Finalizado (decisión D2b, reabierta en HU-03).
+var ErrCargaEnSprintFinalizado = ValidationError{Campo: "estimacion_sp", Mensaje: "no se pueden cargar Story Points en un Sprint Finalizado"}

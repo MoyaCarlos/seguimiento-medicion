@@ -16,10 +16,24 @@ type VotacionHandler struct {
 	consultar       *service.ConsultarVotacion
 	revelar         *service.RevelarVotacion
 	iniciar         *service.IniciarVotacion
+	registrar       *service.RegistrarEstimacion
+	abrir           *service.AbrirNuevaRonda
+	historial       *service.ConsultarHistorialRondas
 }
 
-func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion) *VotacionHandler {
-	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar}
+func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service.Votar, consultar *service.ConsultarVotacion, revelar *service.RevelarVotacion, iniciar *service.IniciarVotacion, registrar *service.RegistrarEstimacion, abrir *service.AbrirNuevaRonda, historial *service.ConsultarHistorialRondas) *VotacionHandler {
+	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar, abrir: abrir, historial: historial}
+}
+
+// Registrar agrega las rutas de la votación al mux.
+func (h *VotacionHandler) Registrar(mux *nethttp.ServeMux) {
+	mux.HandleFunc("GET /backlog/{id}/votacion", h.Consultar)
+	mux.HandleFunc("POST /backlog/{id}/votacion", h.Iniciar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/votos", h.Votar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", h.Revelar)
+	mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", h.RegistrarEstimacion)
+	mux.HandleFunc("POST /backlog/{id}/votacion/rondas", h.AbrirRonda)
+	mux.HandleFunc("GET /backlog/{id}/votacion/rondas", h.Historial)
 }
 
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
@@ -53,7 +67,7 @@ func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		return
 	}
 
-	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: req.UsuarioID, Valor: req.Valor}); err != nil {
+	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: req.UsuarioID, Valor: req.valor()}); err != nil {
 		escribirError(w, err)
 		return
 	}
@@ -95,6 +109,59 @@ func (h *VotacionHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request
 		consultanteID = n
 	}
 	h.responderVista(w, r, nethttp.StatusOK, id, consultanteID)
+}
+
+// RegistrarEstimacion atiende POST /backlog/{id}/votacion/estimacion. Responde
+// con la historia.
+func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req estimacionRequest
+	if !leerPedido(w, r, &req) {
+		return
+	}
+
+	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.valor())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(historia))
+}
+
+// AbrirRonda atiende POST /backlog/{id}/votacion/rondas. Responde con la ronda
+// nueva tal como la ve quien la abrió.
+func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	var req actorRequest
+	if !leerPedido(w, r, &req) {
+		return
+	}
+
+	if _, err := h.abrir.Ejecutar(r.Context(), id, req.UsuarioID); err != nil {
+		escribirError(w, err)
+		return
+	}
+	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
+}
+
+// Historial atiende GET /backlog/{id}/votacion/rondas.
+func (h *VotacionHandler) Historial(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := h.historiaDeRuta(w, r)
+	if !ok {
+		return
+	}
+	historial, err := h.historial.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuestaHistorial(historial))
 }
 
 // historiaDeRuta valida el id de la ruta y que la historia exista: la historia

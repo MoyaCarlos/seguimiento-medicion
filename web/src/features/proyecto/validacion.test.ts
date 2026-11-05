@@ -10,6 +10,7 @@ describe('validarCreacion', () => {
         fecha_inicio: '',
         fecha_fin: '',
         creador: '  ',
+        horas_por_story_point: '',
       }),
     ).toEqual({
       nombre: 'El nombre es obligatorio',
@@ -25,6 +26,7 @@ describe('validarCreacion', () => {
         fecha_inicio: '',
         fecha_fin: '',
         creador: 'Ana',
+        horas_por_story_point: '',
       }),
     ).toEqual({})
   })
@@ -37,6 +39,7 @@ describe('validarCreacion', () => {
         fecha_inicio: '2026-10-15',
         fecha_fin: '2026-10-15',
         creador: 'Ana',
+        horas_por_story_point: '',
       }),
     ).toEqual({ fecha_fin: 'La fecha de fin debe ser posterior a la fecha de inicio' })
   })
@@ -49,6 +52,7 @@ describe('validarCreacion', () => {
         fecha_inicio: '',
         fecha_fin: '',
         creador: 'Ana',
+        horas_por_story_point: '',
       }),
     ).toEqual({
       nombre: 'El nombre no puede superar los 100 caracteres',
@@ -62,6 +66,7 @@ describe('validarCreacion', () => {
       descripcion: '',
       fecha_inicio: '',
       fecha_fin: '',
+      horas_por_story_point: '',
     }
 
     expect(validarCreacion({ ...datosBase, creador: '😀'.repeat(200) })).toEqual({})
@@ -80,6 +85,7 @@ describe('validarEdicion', () => {
         fecha_inicio: '2026-10-15',
         fecha_fin: '2026-11-15',
         creador: '',
+        horas_por_story_point: '',
       }),
     ).toEqual({})
   })
@@ -92,6 +98,7 @@ describe('validarEdicion', () => {
         fecha_inicio: '2026-10-15',
         fecha_fin: '2026-10-14',
         creador: '',
+        horas_por_story_point: '',
       }),
     ).toEqual({ fecha_fin: 'La fecha de fin debe ser posterior a la fecha de inicio' })
   })
@@ -108,5 +115,26 @@ describe('validarIntegrante', () => {
   it('acepta los roles de la historia', () => {
     expect(validarIntegrante({ nombre: 'Jimena', rol: 'product_builder' })).toEqual({})
     expect(validarIntegrante({ nombre: 'Ana', rol: 'scrum_master' })).toEqual({})
+  })
+})
+
+describe('validarEdicion de las horas por Story Point', () => {
+  const edicion = (horas: string) => ({
+    nombre: 'Proyecto Alfa',
+    descripcion: '',
+    fecha_inicio: '',
+    fecha_fin: '',
+    creador: '',
+    horas_por_story_point: horas,
+  })
+
+  it.each(['', '   ', '4', '2.5', '2,5', '.5'])('acepta %j', (horas) => {
+    expect(validarEdicion(edicion(horas))).toEqual({})
+  })
+
+  it.each(['0', '0,0', '-1', 'abc', '1e2', 'Infinity', '1.2.3'])('rechaza %j', (horas) => {
+    expect(validarEdicion(edicion(horas))).toEqual({
+      horas_por_story_point: 'Las horas por Story Point deben ser un número mayor que cero',
+    })
   })
 })

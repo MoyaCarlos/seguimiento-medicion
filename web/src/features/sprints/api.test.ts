@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../compartido/api/client'
-import { cambiarEstadoHistoria, consultarSprintBacklog } from './api'
+import {
+  cambiarEstadoHistoria,
+  consultarEsfuerzo,
+  consultarSprintBacklog,
+  imputarHoras,
+  listarIntegrantes,
+} from './api'
 import type { HistoriaDeSprint } from './sprint'
 
 function respondWithJson(body: unknown, status: number) {
@@ -116,6 +122,52 @@ describe('cliente de cambio de estado de una historia', () => {
 
     await expect(cambiarEstadoHistoria(12, 'En progreso')).rejects.toEqual(
       new ApiError(409, mensaje),
+    )
+  })
+})
+
+describe('cliente de horas', () => {
+  it('US3.1: consultarEsfuerzo hace GET /backlog/{id}/horas', async () => {
+    const esfuerzo = { total_horas: 1.5, registros: [] }
+    const fetchMock = respondWithJson(esfuerzo, 200)
+
+    await expect(consultarEsfuerzo(12)).resolves.toEqual(esfuerzo)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/backlog/12/horas',
+      expect.objectContaining({ method: 'GET' }),
+    )
+  })
+
+  it('US1.2: imputarHoras hace POST /backlog/{id}/horas con los datos de la carga', async () => {
+    const fetchMock = respondWithJson({ id: 1 }, 201)
+    const datos = { integrante_id: 2, fecha: '2026-11-02', actividad: 'Revisión', horas: '1.5' }
+
+    await imputarHoras(12, datos)
+
+    const [ruta, init] = fetchMock.mock.calls[0]
+    expect(ruta).toBe('/backlog/12/horas')
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(init.body)).toEqual(datos)
+  })
+
+  it('US2.2: imputarHoras rechaza con el campo y el mensaje de la API', async () => {
+    respondWithJson({ campo: 'horas', mensaje: 'las horas deben ser un número' }, 400)
+
+    await expect(
+      imputarHoras(12, { integrante_id: 2, fecha: '2026-11-02', actividad: 'Revisión', horas: 'abc' }),
+    ).rejects.toEqual(new ApiError(400, 'las horas deben ser un número', 'horas'))
+  })
+
+  it('US1.1: listarIntegrantes hace GET /projects/{id}/members', async () => {
+    const integrantes = [{ id: 2, nombre: 'Ana' }]
+    const fetchMock = respondWithJson(integrantes, 200)
+
+    await expect(listarIntegrantes(42)).resolves.toEqual(integrantes)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/42/members',
+      expect.objectContaining({ method: 'GET' }),
     )
   })
 })

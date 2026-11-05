@@ -18,7 +18,7 @@
 
 ### Session 2026-10-25
 
-- Q: ¿Se pueden cambiar los Story Points de una historia asignada a un Sprint `Activo` o `Finalizado`? → A: No, si ya estaban cargados. Es la decisión D2b del equipo (aprobada el 2026-10-13, aclarada el 2026-10-14), registrada en `MODELO-DE-DATOS.md` (§4.4, §5 y D2b) y en las decisiones transversales y el Escenario 3 de HU-15 de `docs/PRODUCT-BACKLOG.md`: "No se modifican los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`, para que las métricas históricas se puedan reproducir. Cargarlos por primera vez (la historia estaba sin estimar) sí se permite." Es una regla de servicio, compartida con HU-14.
+- Q: ¿Se pueden cambiar los Story Points de una historia asignada a un Sprint `Activo` o `Finalizado`? → A: No, si ya estaban cargados. Es la decisión D2b del equipo (aprobada el 2026-10-13, aclarada el 2026-10-14), registrada en `MODELO-DE-DATOS.md` (§4.4, §5 y D2b) y en las decisiones transversales y el Escenario 3 de HU-15 de `docs/PRODUCT-BACKLOG.md`: "No se modifican los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`, para que las métricas históricas se puedan reproducir. Cargarlos por primera vez (la historia estaba sin estimar) sí se permite." Es una regla de servicio, compartida con HU-14. **Actualizado por la spec 032 (HU-03, 2026-11-03):** con un Sprint `Finalizado` tampoco se permite la primera carga.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -53,7 +53,7 @@ Como Product Builder, modifico el título, la descripción, los criterios de ace
 3. **Given** que estoy editando una historia, **When** ingreso unos Story Points que no pertenecen a la escala Fibonacci, **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 4. **Given** que intento editar una historia que no existe, **When** envío la edición (aunque sus datos también sean inválidos), **Then** el sistema responde "no encontrado".
 5. **Given** que una historia con Story Points ya cargados está asignada a un Sprint "Activo" o "Finalizado", **When** intento cambiar sus Story Points, **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
-6. **Given** que una historia sin estimar está asignada a un Sprint "Activo" o "Finalizado", **When** cargo sus Story Points con un valor de la escala Fibonacci, **Then** el sistema persiste la estimación.
+6. **Given** que una historia sin estimar está asignada a un Sprint "Activo", **When** cargo sus Story Points con un valor de la escala Fibonacci, **Then** el sistema persiste la estimación.
 
 ---
 
@@ -73,7 +73,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHERE** los criterios de aceptación se envían vacíos, compuestos solo por espacios o sin informar, el sistema **shall** dejar la historia sin criterios de aceptación.
 - **IF** una edición tiene varios campos inválidos, **THEN** el sistema **shall** rechazarla entera, sin guardar parcialmente los campos válidos.
 - **WHILE** una historia está asignada a un Sprint `Activo` o `Finalizado` y tiene Story Points cargados, **IF** la edición informa Story Points distintos de los cargados (incluido dejarlos vacíos), **THEN** el sistema **shall** rechazar la edición con una advertencia sobre los Story Points y no modificar la historia (D2b).
-- **WHILE** una historia está asignada a un Sprint `Activo` o `Finalizado` y no tiene Story Points cargados, **WHEN** la edición informa Story Points válidos, **THEN** el sistema **shall** guardarlos (D2b: cargarlos por primera vez se permite).
+- **WHILE** una historia está asignada a un Sprint `Activo` y no tiene Story Points cargados, **WHEN** la edición informa Story Points válidos, **THEN** el sistema **shall** guardarlos (D2b: cargarlos por primera vez se permite).
+- **WHILE** una historia está asignada a un Sprint `Finalizado` y no tiene Story Points cargados, **IF** la edición informa Story Points, **THEN** el sistema **shall** rechazarla con una advertencia sobre los Story Points (D2b, spec 032).
 - **WHILE** una historia está asignada a un Sprint `Pendiente`, el sistema **shall** permitir cambiar sus Story Points como si estuviera en el Product Backlog.
 - **WHEN** se edita una historia, **THEN** el sistema **shall** conservar su identificador, proyecto, estado y Sprint asignado.
 - **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial, mismo criterio que HU-04).
@@ -96,7 +97,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-012**: El sistema MUST responder "no encontrado" cuando el proyecto consultado o la historia editada no existen, antes de validar cualquier dato de la petición.
 - **FR-013**: Los cambios de una edición válida MUST persistir y seguir disponibles después de cerrar y volver a abrir la aplicación.
 - **FR-014**: Las historias creadas antes de esta funcionalidad MUST aparecer en el listado con los criterios de aceptación vacíos.
-- **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse (decisión D2b del equipo).
+- **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse, salvo con un Sprint `Finalizado`, donde MUST rechazarse (decisión D2b del equipo, spec 032).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -112,7 +113,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **SC-001**: Un Product Builder puede ver el Product Backlog completo de un proyecto en un solo paso, sin filtrar ni ordenar a mano.
 - **SC-002**: El 100% de las historias con Sprint asignado quedan fuera del listado y el 100% de las historias sin Sprint aparecen, en el orden de prioridad y creación definido.
 - **SC-003**: Un Product Builder puede corregir el título, la descripción, los criterios o los Story Points de una historia en menos de 1 minuto.
-- **SC-004**: El 100% de las ediciones con título vacío, Story Points fuera de la escala o que cambian los Story Points ya cargados de una historia de un Sprint `Activo` o `Finalizado` se rechazan con una advertencia y dejan la historia exactamente como estaba.
+- **SC-004**: El 100% de las ediciones con título vacío, Story Points fuera de la escala, que cambian los Story Points ya cargados de una historia de un Sprint `Activo` o `Finalizado`, o que los cargan en una historia de un Sprint `Finalizado`, se rechazan con una advertencia y dejan la historia exactamente como estaba.
 - **SC-005**: El 100% de las ediciones válidas conservan el identificador y el estado de la historia, y siguen disponibles después de recargar la aplicación.
 
 ## Assumptions
