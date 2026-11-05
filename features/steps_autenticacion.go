@@ -26,6 +26,7 @@ type pasosAutenticacion struct {
 	db              *sql.DB
 	sesiones        *repository.SQLiteSesionRepository
 	handler         *apihttp.AuthHandler
+	proyectos       *apihttp.ProjectHandler
 	ahora           time.Time
 	contrasena      string
 	cuentasAntes    int
@@ -38,6 +39,10 @@ type pasosAutenticacion struct {
 		} `json:"usuario"`
 		Token   string `json:"token"`
 		VenceEn string `json:"vence_en"`
+	}
+	respuestaYo struct {
+		ID     int64  `json:"id"`
+		Nombre string `json:"nombre"`
 	}
 	respuestaError struct {
 		Campo   string `json:"campo"`
@@ -65,8 +70,10 @@ func (p *pasosAutenticacion) preparar() error {
 		service.NewIngresar(credenciales, hasheador, emisor),
 		service.NewObtenerSesion(p.sesiones, func() time.Time { return p.ahora }),
 	)
+	p.proyectos = apihttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repository.NewSQLiteProjectRepository(db)), nil, nil, nil, nil)
 	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
 	p.respuestaSesion.Token = ""
+	p.respuestaYo.ID, p.respuestaYo.Nombre = 0, ""
 	p.respuestaError.Campo, p.respuestaError.Mensaje = "", ""
 	return nil
 }
@@ -239,6 +246,78 @@ func (p *pasosAutenticacion) sinSesionNueva() error {
 	return nil
 }
 
+// inicioSesion registra la cuenta y se queda con el token de la sesión que abre.
+func (p *pasosAutenticacion) inicioSesion(nombre string) error {
+	p.contrasena = "clave-previa-1"
+	rec, err := p.registrar(nombre, p.contrasena)
+	if err != nil {
+		return err
+	}
+	if rec.Code != http.StatusCreated {
+		return fmt.Errorf("no se pudo iniciar la sesión: status %d", rec.Code)
+	}
+	return json.Unmarshal(rec.Body.Bytes(), &p.respuestaSesion)
+}
+
+// pasanDias adelanta el reloj de los pasos; 7 días es lo que dura una sesión.
+func (p *pasosAutenticacion) pasanDias(dias int) error {
+	p.ahora = p.ahora.Add(time.Duration(dias) * 24 * time.Hour)
+	return nil
+}
+
+func (p *pasosAutenticacion) consultarQuienSoy(autorizacion string) error {
+	req := httptest.NewRequest(http.MethodGet, "/auth/yo", nil)
+	if autorizacion != "" {
+		req.Header.Set("Authorization", autorizacion)
+	}
+	p.respuesta = httptest.NewRecorder()
+	p.handler.Yo(p.respuesta, req)
+	if p.respuesta.Code == http.StatusOK {
+		return json.Unmarshal(p.respuesta.Body.Bytes(), &p.respuestaYo)
+	}
+	return json.Unmarshal(p.respuesta.Body.Bytes(), &p.respuestaError)
+}
+
+func (p *pasosAutenticacion) consultoQuienSoyConMiToken() error {
+	return p.consultarQuienSoy("Bearer " + p.respuestaSesion.Token)
+}
+
+func (p *pasosAutenticacion) consultoQuienSoyConElToken(token string) error {
+	return p.consultarQuienSoy("Bearer " + token)
+}
+
+func (p *pasosAutenticacion) consultoQuienSoySinToken() error {
+	return p.consultarQuienSoy("")
+}
+
+func (p *pasosAutenticacion) respondeQueSoy(nombre string) error {
+	if p.respuesta.Code != http.StatusOK || p.respuestaYo.Nombre != nombre || p.respuestaYo.ID == 0 {
+		return fmt.Errorf("se esperaba 200 con %q, se obtuvo %d: %s", nombre, p.respuesta.Code, p.respuesta.Body.String())
+	}
+	return nil
+}
+
+func (p *pasosAutenticacion) quienSoyRechazado(mensaje string) error {
+	if p.respuesta.Code != http.StatusUnauthorized || p.respuestaError.Mensaje != mensaje {
+		return fmt.Errorf("se esperaba 401 con %q, se obtuvo %d con %q", mensaje, p.respuesta.Code, p.respuestaError.Mensaje)
+	}
+	return nil
+}
+
+func (p *pasosAutenticacion) consultoLaListaDeProyectosSinToken() error {
+	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
+	p.respuesta = httptest.NewRecorder()
+	p.proyectos.Listar(p.respuesta, req)
+	return nil
+}
+
+func (p *pasosAutenticacion) listaDeProyectosConExito() error {
+	if p.respuesta.Code != http.StatusOK {
+		return fmt.Errorf("se esperaba 200, se obtuvo %d: %s", p.respuesta.Code, p.respuesta.Body.String())
+	}
+	return nil
+}
+
 func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	p := &pasosAutenticacion{}
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
@@ -262,4 +341,14 @@ func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	ctx.Step(`^la respuesta del ingreso no contiene la contraseña$`, p.respuestaSinContrasena)
 	ctx.Step(`^el ingreso se rechaza con el mensaje "([^"]*)"$`, p.ingresoRechazado)
 	ctx.Step(`^no hay ninguna sesión nueva$`, p.sinSesionNueva)
+	ctx.Step(`^que "([^"]*)" inició sesión$`, p.inicioSesion)
+	ctx.Step(`^pasan (\d+) días$`, p.pasanDias)
+	ctx.Step(`^consulto quién soy con mi token$`, p.consultoQuienSoyConMiToken)
+	ctx.Step(`^consulto quién soy con el token "([^"]*)"$`, p.consultoQuienSoyConElToken)
+	ctx.Step(`^consulto quién soy sin token$`, p.consultoQuienSoySinToken)
+	ctx.Step(`^el sistema responde que soy "([^"]*)"$`, p.respondeQueSoy)
+	ctx.Step(`^la respuesta de quién soy no contiene la contraseña$`, p.respuestaSinContrasena)
+	ctx.Step(`^la consulta de quién soy se rechaza con el mensaje "([^"]*)"$`, p.quienSoyRechazado)
+	ctx.Step(`^consulto la lista de proyectos sin token$`, p.consultoLaListaDeProyectosSinToken)
+	ctx.Step(`^la lista de proyectos responde con éxito$`, p.listaDeProyectosConExito)
 }
