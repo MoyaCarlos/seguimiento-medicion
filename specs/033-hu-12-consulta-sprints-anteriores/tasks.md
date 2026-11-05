@@ -124,8 +124,8 @@ de la historia.
 
 - [X] T039 Step definitions de Godog en features/steps_historial_sprints.go (sembrar con los services reales sobre SQLite `:memory:`, como features/steps_metricas.go) y registrar `InitializeScenarioHistorial(ctx)` en features/features_test.go. Incluir un paso que compare las métricas del historial con las de `CalcularMetricas` (US1.4, FR-010) y otro que compruebe que el Sprint `Activo` no cambió (US2.7)
 - [X] T040 COMMIT `Agregar pasos BDD del historial de Sprints`
-- [ ] T041 `go build ./...`, `go vet ./...`, `gofmt -l .` sin salida y `go test ./...` en verde
-- [ ] T042 Prueba manual de la API según quickstart.md (pasos 1 a 8)
+- [X] T041 `go build ./...`, `go vet ./...`, `gofmt -l .` sin salida y `go test ./...` en verde
+- [X] T042 Prueba manual de la API según quickstart.md (pasos 1 a 8)
 
 **Checkpoint**: sub-issues #84, #85, #86 y #87 cerradas; la historia se puede cerrar por la Definition of Done.
 
