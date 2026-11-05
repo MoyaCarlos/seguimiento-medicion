@@ -47,6 +47,13 @@ describe('GraficoVelocidad', () => {
     expect(within(leyenda!).getByText('Completados')).toBeTruthy()
   })
 
+  it('US1.1: Given las dos series, When leo la leyenda, Then aparecen en el mismo orden que las barras', () => {
+    const { container } = render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
+
+    const rotulos = [...container.querySelectorAll('.recharts-legend-item-text')].map((rotulo) => rotulo.textContent)
+    expect(rotulos).toEqual(['Comprometidos', 'Completados'])
+  })
+
   it('US1.2: Given un Sprint con 8 comprometidos y 5 completados, When leo sus valores, Then veo 8 y 5', () => {
     render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
 
