@@ -59,5 +59,23 @@ func ValidarSprintFinalizado(sprint Sprint) error {
 // ArmarDetalleSprint une a cada historia comprometida sus minutos y horas en el
 // Sprint, y marca si cada defecto se detectó o se resolvió en él.
 func ArmarDetalleSprint(base SprintHistorial, historias []HistoriaComprometida, minutos map[int64]int, defectos []DefectoDetalle) DetalleSprint {
-	return DetalleSprint{}
+	detalle := DetalleSprint{
+		SprintHistorial: base,
+		Historias:       make([]HistoriaComprometida, 0, len(historias)),
+		Defectos:        make([]DefectoDeSprint, 0, len(defectos)),
+	}
+	for _, h := range historias {
+		h.Minutos = minutos[h.ID]
+		h.Horas = redondear(minutosAHoras(h.Minutos))
+		detalle.Historias = append(detalle.Historias, h)
+	}
+	sprintID := base.Sprint.ID
+	for _, d := range defectos {
+		detalle.Defectos = append(detalle.Defectos, DefectoDeSprint{
+			DefectoDetalle:    d,
+			DetectadoEnSprint: d.SprintDeteccionID == sprintID,
+			ResueltoEnSprint:  d.SprintResolucionID != nil && *d.SprintResolucionID == sprintID,
+		})
+	}
+	return detalle
 }
