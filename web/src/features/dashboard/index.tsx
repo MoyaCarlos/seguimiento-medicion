@@ -3,6 +3,7 @@ import { useParams } from 'react-router'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarMetricas } from './api'
 import { GraficoVelocidad } from './GraficoVelocidad'
+import { Indicadores } from './Indicadores'
 import type { MetricasProyecto } from './metricas'
 import './dashboard.css'
 
@@ -31,7 +32,16 @@ function PantallaDashboard({ id }: { id: string }) {
     <div className="dashboard-pantalla">
       <h1>Dashboard</h1>
       {!metricas && <LoadingIndicator />}
-      {metricas && <GraficoVelocidad sprints={metricas.sprints} />}
+      {metricas && (
+        <>
+          <GraficoVelocidad sprints={metricas.sprints} />
+          <Indicadores
+            metricas={metricas.proyecto}
+            horasPorStoryPoint={metricas.horas_por_story_point}
+            proyectoId={id}
+          />
+        </>
+      )}
     </div>
   )
 }
