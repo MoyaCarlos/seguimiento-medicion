@@ -539,3 +539,47 @@ func (f *fakeListadorSprints) ListarPorProyecto(_ context.Context, _ int64) ([]d
 	f.llamadas++
 	return f.sprints, f.err
 }
+
+// fakeObtenedorSprint devuelve los Sprints sembrados por id (HU-12).
+type fakeObtenedorSprint struct {
+	sprints map[int64]domain.Sprint
+	err     error
+}
+
+func (f *fakeObtenedorSprint) ObtenerPorID(_ context.Context, id int64) (domain.Sprint, error) {
+	if f.err != nil {
+		return domain.Sprint{}, f.err
+	}
+	s, ok := f.sprints[id]
+	if !ok {
+		return domain.Sprint{}, domain.ErrSprintNoEncontrado
+	}
+	return s, nil
+}
+
+// fakeHistorialSprintRepository simula la lectura del detalle de un Sprint y
+// cuenta las lecturas (HU-12).
+type fakeHistorialSprintRepository struct {
+	historias   []domain.HistoriaComprometida
+	minutos     map[int64]int
+	defectos    []domain.DefectoDetalle
+	errHistoria error
+	errMinutos  error
+	errDefectos error
+	lecturas    int
+}
+
+func (f *fakeHistorialSprintRepository) HistoriasComprometidas(_ context.Context, _ int64) ([]domain.HistoriaComprometida, error) {
+	f.lecturas++
+	return f.historias, f.errHistoria
+}
+
+func (f *fakeHistorialSprintRepository) MinutosPorHistoria(_ context.Context, _ int64) (map[int64]int, error) {
+	f.lecturas++
+	return f.minutos, f.errMinutos
+}
+
+func (f *fakeHistorialSprintRepository) DefectosDeSprint(_ context.Context, _ int64) ([]domain.DefectoDetalle, error) {
+	f.lecturas++
+	return f.defectos, f.errDefectos
+}
