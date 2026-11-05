@@ -192,4 +192,27 @@ describe('sección Dashboard', () => {
     expect((await screen.findByRole('alert')).textContent).toBe('error interno')
     sinContenido()
   })
+
+  it('FR-016: Given un error que no es de la API, When ingreso al Dashboard, Then no muestro su texto técnico', async () => {
+    const cuerpoCortado = new Response('{}', { status: 200 })
+    vi.spyOn(cuerpoCortado, 'text').mockRejectedValue(new TypeError('network error'))
+    simularApi(() => cuerpoCortado)
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Ocurrió un error inesperado')
+    sinContenido()
+  })
+
+  it.each([
+    ['sin cuerpo', ''],
+    ['sin Sprints en la respuesta', '{}'],
+  ])('FR-016: Given una respuesta 200 %s, When ingreso al Dashboard, Then veo un error y no queda cargando', async (_caso, cuerpo) => {
+    simularApi(() => new Response(cuerpo, { status: 200 }))
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Ocurrió un error inesperado')
+    sinContenido()
+  })
 })
