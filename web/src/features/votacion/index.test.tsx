@@ -79,6 +79,14 @@ async function elegirActor(nombre: string) {
   await userEvent.selectOptions(selector, opcion)
 }
 
+async function actualizarSinServidor() {
+  integrantesMock.mockRejectedValueOnce(new ConnectionError())
+  historiaMock.mockRejectedValueOnce(new ConnectionError())
+  consultarMock.mockRejectedValueOnce(new ConnectionError())
+  await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
+  await waitFor(() => expect(screen.getAllByText('No se pudo conectar con el servidor')).toHaveLength(2))
+}
+
 beforeEach(() => {
   servidor = { votos: {}, revelada: false }
   integrantesMock.mockResolvedValue(INTEGRANTES)
@@ -349,6 +357,55 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
     expect(screen.getByText('la ronda ya fue revelada')).toBeTruthy()
   })
 
+  it('Given que Actualizar falló sin servidor, When voto y el servidor responde bien, Then desaparecen los avisos de conexión y queda el voto registrado', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    await screen.findByRole('button', { name: '8' })
+    await actualizarSinServidor()
+
+    await userEvent.click(screen.getByRole('button', { name: '8' }))
+
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  })
+
+  it('Given que Actualizar falló sin servidor, When revelo y el servidor responde bien, Then desaparecen los avisos de conexión y se ve el resultado', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByRole('button', { name: 'Revelar' })
+    await actualizarSinServidor()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Revelar' }))
+
+    expect(await screen.findByText('Promedio exacto')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+  })
+
+  it('Given que Actualizar falló sin servidor, When voto bien y los integrantes vuelven a fallar, Then queda el voto registrado y el aviso sigue visible', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+    await screen.findByRole('button', { name: '8' })
+    await actualizarSinServidor()
+    integrantesMock.mockRejectedValueOnce(new ConnectionError())
+
+    await userEvent.click(screen.getByRole('button', { name: '8' }))
+
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+    await waitFor(() => expect(integrantesMock).toHaveBeenCalledTimes(3))
+    expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+  })
+
+  it('Given que los integrantes cargaron bien, When voto, Then no se vuelven a pedir', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    await userEvent.click(await screen.findByRole('button', { name: '8' }))
+
+    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
+    expect(integrantesMock).toHaveBeenCalledTimes(1)
+  })
+
   it('Given un id de historia inválido en la ruta, When se abre la pantalla, Then se avisa y no se consulta al servidor', async () => {
     render(
       <MemoryRouter initialEntries={['/projects/25/votacion/abc']}>
@@ -506,6 +563,18 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
 
     expect((await screen.findByRole('alert')).textContent).toBe('la historia ya tiene una votación')
+  })
+
+  it('Given que Actualizar falló sin servidor, When inicio la votación y el servidor responde bien, Then desaparecen los avisos de conexión y aparece la ronda 1', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByRole('button', { name: 'Iniciar votación' })
+    await actualizarSinServidor()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar votación' }))
+
+    expect(await screen.findByText('Ronda 1')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
   })
 
   it('Given una historia inexistente, When se abre la pantalla, Then se muestra "historia no encontrada" y no se ofrece iniciar', async () => {
