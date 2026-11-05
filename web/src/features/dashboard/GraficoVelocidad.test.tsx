@@ -62,6 +62,14 @@ describe('GraficoVelocidad', () => {
     expect(container.querySelector('.recharts-legend-wrapper')).toBeNull()
   })
 
+  it('FR-018: Given un gráfico que se desplaza, When uso solo el teclado, Then su área desplazable recibe el foco y tiene nombre', () => {
+    render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
+
+    const area = screen.getByRole('region', { name: 'Gráfico por Sprint, desplazable' })
+    expect(area.getAttribute('tabindex')).toBe('0')
+    expect(area.querySelector('.recharts-responsive-container')).not.toBeNull()
+  })
+
   it('US1.2: Given un Sprint con 8 comprometidos y 5 completados, When leo sus valores, Then veo 8 y 5', () => {
     render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
 
