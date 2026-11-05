@@ -158,4 +158,38 @@ describe('sección Dashboard', () => {
     const enlace = await screen.findByRole('link', { name: /Sprints/ })
     expect(enlace.getAttribute('href')).toBe('/projects/7/sprints')
   })
+
+  function sinContenido() {
+    expect(grafico()).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Velocidad' })).toBeNull()
+    expect(screen.queryByText(/aparecen cuando se cierra el primer Sprint/)).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  }
+
+  it('US4.2: Given un proyecto que no existe, When ingreso a su Dashboard, Then veo "proyecto no encontrado"', async () => {
+    simularApi(() => respuesta(404, { mensaje: 'proyecto no encontrado' }))
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('proyecto no encontrado')
+    sinContenido()
+  })
+
+  it('US4.3: Given un servidor que no responde, When ingreso al Dashboard, Then veo el error de conexión', async () => {
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))))
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+    sinContenido()
+  })
+
+  it('FR-016: Given un error interno, When ingreso al Dashboard, Then veo su mensaje, sin valores ni estado vacío', async () => {
+    simularApi(() => respuesta(500, { mensaje: 'error interno' }))
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('error interno')
+    sinContenido()
+  })
 })
