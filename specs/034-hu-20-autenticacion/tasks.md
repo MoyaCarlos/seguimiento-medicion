@@ -175,12 +175,12 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [x] T084 [US4] COMMIT `RED: agregar tests de CerrarSesion (falla)` (incluye el stub, si lo hay)
 - [x] T085 [US4] GREEN: crear `internal/service/cerrar_sesion.go` (`NewCerrarSesion(obtener *ObtenerSesion, CerradorSesiones, reloj)`; solo llama a `ObtenerSesion` y luego a `Cerrar` con el ID de la sesión, sin repetir la validación del token ni la vigencia); `go test ./internal/service/` en verde
 - [x] T086 [US4] COMMIT `GREEN: implementar CerrarSesion, test en verde`
-- [ ] T087 [US4] RED: agregar a `internal/http/auth_handler_test.go` `POST /auth/salir`: 204 sin cuerpo y el mismo token da 401 en `GET /auth/yo`; 401 `Tu sesión no es válida` sin efectos con token no vigente; otra sesión del usuario sigue válida. Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Salir` que no escribe nada.
-- [ ] T088 [US4] COMMIT `RED: agregar tests del handler POST /auth/salir (falla)` (incluye el stub, si lo hay)
-- [ ] T089 [US4] GREEN: agregar `AuthHandler.Salir`; `go test ./internal/http/` en verde
-- [ ] T090 [US4] COMMIT `GREEN: implementar handler POST /auth/salir, test en verde`
-- [ ] T091 [US4] Cablear `CerrarSesion` y la ruta `POST /auth/salir` en `cmd/api/main.go`
-- [ ] T092 [US4] COMMIT `Cablear POST /auth/salir en cmd/api`
+- [x] T087 [US4] RED: agregar a `internal/http/auth_handler_test.go` `POST /auth/salir`: 204 sin cuerpo y el mismo token da 401 en `GET /auth/yo`; 401 `Tu sesión no es válida` sin efectos con token no vigente; otra sesión del usuario sigue válida. Confirmar que FALLA **Stub (mismo commit RED):** ampliar `NewAuthHandler` con el caso de uso y agregar un `Salir` que no escribe nada.
+- [x] T088 [US4] COMMIT `RED: agregar tests del handler POST /auth/salir (falla)` (incluye el stub, si lo hay)
+- [x] T089 [US4] GREEN: agregar `AuthHandler.Salir`; `go test ./internal/http/` en verde
+- [x] T090 [US4] COMMIT `GREEN: implementar handler POST /auth/salir, test en verde`
+- [x] T091 [US4] Cablear `CerrarSesion` y la ruta `POST /auth/salir` en `cmd/api/main.go`
+- [x] T092 [US4] COMMIT `Cablear POST /auth/salir en cmd/api`
 - [ ] T093 [US4] RED: agregar a `features/autenticacion.feature` el escenario 7 (cierre de sesión: el token deja de ser válido; con dos sesiones, cerrar una no cierra la otra); `go test ./features/` debe FALLAR
 - [ ] T094 [US4] COMMIT `RED: agregar escenario BDD de cierre de sesión (falla)` (incluye el stub, si lo hay)
 - [ ] T095 [US4] GREEN: agregar los pasos; `go test ./features/` en verde
