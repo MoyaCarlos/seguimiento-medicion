@@ -12,10 +12,11 @@ import (
 // registra cuerpos ni cabeceras: llevan contraseñas y tokens.
 type AuthHandler struct {
 	registrar *service.RegistrarUsuario
+	ingresar  *service.Ingresar
 }
 
-func NewAuthHandler(registrar *service.RegistrarUsuario) *AuthHandler {
-	return &AuthHandler{registrar: registrar}
+func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar) *AuthHandler {
+	return &AuthHandler{registrar: registrar, ingresar: ingresar}
 }
 
 // Registro atiende POST /auth/registro.
@@ -32,6 +33,9 @@ func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 	escribirJSON(w, nethttp.StatusCreated, aRespuestaSesion(resultado))
 }
+
+// Ingreso atiende POST /auth/ingreso.
+func (h *AuthHandler) Ingreso(w nethttp.ResponseWriter, r *nethttp.Request) {}
 
 func aRespuestaSesion(r service.ResultadoSesion) sesionResponse {
 	return sesionResponse{

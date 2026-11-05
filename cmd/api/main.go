@@ -84,11 +84,13 @@ func main() {
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
-	authHandler := apihttp.NewAuthHandler(service.NewRegistrarUsuario(
-		repository.NewSQLiteCredencialRepository(db),
-		service.NewServicioContrasenasProduccion(),
-		service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(db), time.Now),
-	))
+	credenciales := repository.NewSQLiteCredencialRepository(db)
+	hasheador := service.NewServicioContrasenasProduccion()
+	emisorSesiones := service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(db), time.Now)
+	authHandler := apihttp.NewAuthHandler(
+		service.NewRegistrarUsuario(credenciales, hasheador, emisorSesiones),
+		service.NewIngresar(credenciales, hasheador, emisorSesiones),
+	)
 
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },

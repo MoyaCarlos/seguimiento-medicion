@@ -56,11 +56,12 @@ func (p *pasosAutenticacion) preparar() error {
 	p.ahora = time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
 	p.sesiones = repository.NewSQLiteSesionRepository(db)
 	emisor := service.NewEmisorSesiones(p.sesiones, func() time.Time { return p.ahora })
-	p.handler = apihttp.NewAuthHandler(service.NewRegistrarUsuario(
-		repository.NewSQLiteCredencialRepository(db),
-		service.NewServicioContrasenas(iteracionesDePruebaAutenticacion),
-		emisor,
-	))
+	credenciales := repository.NewSQLiteCredencialRepository(db)
+	hasheador := service.NewServicioContrasenas(iteracionesDePruebaAutenticacion)
+	p.handler = apihttp.NewAuthHandler(
+		service.NewRegistrarUsuario(credenciales, hasheador, emisor),
+		service.NewIngresar(credenciales, hasheador, emisor),
+	)
 	p.contrasena, p.cuentasAntes, p.respuesta = "", 0, nil
 	p.respuestaSesion.Token = ""
 	p.respuestaError.Campo, p.respuestaError.Mensaje = "", ""
