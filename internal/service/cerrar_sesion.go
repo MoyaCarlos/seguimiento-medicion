@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -20,5 +21,12 @@ func NewCerrarSesion(obtener *ObtenerSesion, cerrador repository.CerradorSesione
 
 // Ejecutar cierra la sesión vigente del token o devuelve domain.ErrNoAutenticado.
 func (c *CerrarSesion) Ejecutar(ctx context.Context, token string) error {
+	sesion, err := c.obtener.Ejecutar(ctx, token)
+	if err != nil {
+		return err
+	}
+	if err := c.cerrador.Cerrar(ctx, sesion.ID, c.ahora()); err != nil {
+		return fmt.Errorf("cerrar sesión: %w", err)
+	}
 	return nil
 }
