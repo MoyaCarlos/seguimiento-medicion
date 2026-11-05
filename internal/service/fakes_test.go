@@ -284,6 +284,14 @@ func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaI
 	return copiaDeRonda(r), nil
 }
 
+func (f *fakeVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error) {
+	r, err := f.ObtenerRondaActual(ctx, historiaID)
+	if err != nil {
+		return false, err
+	}
+	return r.Revelada(), nil
+}
+
 func (f *fakeVotacionRepository) GuardarVoto(_ context.Context, rondaID int64, v domain.Voto) error {
 	if f.err != nil {
 		return f.err

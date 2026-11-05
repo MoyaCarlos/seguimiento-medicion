@@ -85,7 +85,7 @@ func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (do
 // ObtenerPorID devuelve el proyecto con el identificador indicado.
 func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Project, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en FROM proyectos WHERE id = ?`,
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos WHERE id = ?`,
 		id,
 	)
 	return escanearProyecto(row)
@@ -94,7 +94,7 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 // Listar devuelve todos los proyectos ordenados por id.
 func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en FROM proyectos ORDER BY id`)
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos ORDER BY id`)
 	if err != nil {
 		return nil, fmt.Errorf("listar proyectos: %w", err)
 	}
@@ -117,10 +117,10 @@ func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project,
 // Actualizar reemplaza los datos editables del proyecto.
 func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Project) error {
 	resultado, err := r.db.ExecContext(ctx,
-		`UPDATE proyectos SET nombre = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ? WHERE id = ?`,
+		`UPDATE proyectos SET nombre = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, horas_por_story_point = ? WHERE id = ?`,
 		p.Nombre, p.Descripcion,
 		tiempoOpcionalAValor(p.FechaInicio), tiempoOpcionalAValor(p.FechaFin),
-		p.ID,
+		p.HorasPorStoryPoint, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("actualizar proyecto: %w", err)
@@ -193,8 +193,9 @@ func escanearProyecto(fila escaneable) (domain.Project, error) {
 	var (
 		p                      domain.Project
 		inicio, fin, createdAt sql.NullString
+		horas                  sql.NullFloat64
 	)
-	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt); err != nil {
+	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt, &horas); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Project{}, domain.ErrProyectoNoEncontrado
 		}
@@ -203,6 +204,9 @@ func escanearProyecto(fila escaneable) (domain.Project, error) {
 	p.FechaInicio = valorATiempoOpcional(inicio)
 	p.FechaFin = valorATiempoOpcional(fin)
 	p.CreadoEn = parsearTiempo(createdAt.String)
+	if horas.Valid {
+		p.HorasPorStoryPoint = &horas.Float64
+	}
 	return p, nil
 }
 

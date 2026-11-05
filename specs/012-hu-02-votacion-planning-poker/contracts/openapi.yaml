@@ -145,13 +145,14 @@ paths:
         '400':
           description: >-
             Identificador o JSON inválido, `usuario_id` faltante, carta fuera de
-            la baraja (campo `valor`) o ronda ya revelada (campo `estado`).
+            la baraja o valor que no es un entero (campo `valor`), o ronda ya
+            revelada (campo `estado`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '403':
-          description: Quien vota no es integrante del proyecto.
+          description: Quien vota no es integrante del proyecto, sea cual sea el valor enviado.
           content:
             application/json:
               schema:

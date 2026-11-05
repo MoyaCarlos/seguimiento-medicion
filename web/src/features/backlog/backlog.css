@@ -27,10 +27,6 @@
   justify-content: space-between;
 }
 
-.backlog-encabezado .button {
-  text-decoration: none;
-}
-
 .backlog-aviso {
   background: rgb(84 160 110 / 12%);
   border: 1px solid rgb(84 160 110 / 35%);
