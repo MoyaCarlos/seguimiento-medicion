@@ -47,7 +47,24 @@ func (h *ReporteHandler) Sprint(w nethttp.ResponseWriter, r *nethttp.Request) {
 }
 
 // Proyecto atiende GET /projects/{id}/reporte.
-func (h *ReporteHandler) Proyecto(_ nethttp.ResponseWriter, _ *nethttp.Request) {
+func (h *ReporteHandler) Proyecto(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	reporte, err := h.generar.EjecutarProyecto(r.Context(), id, time.Now())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	contenido, err := h.pdf.GenerarProyecto(reporte)
+	if err != nil {
+		escribirError(w, domain.ErrReporteNoGenerado)
+		return
+	}
+	nombre := fmt.Sprintf("reporte-proyecto-%d.pdf", reporte.Proyecto.ID)
+	escribirPDF(w, nombre, contenido)
 }
 
 func escribirPDF(w nethttp.ResponseWriter, nombre string, contenido []byte) {
