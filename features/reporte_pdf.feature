@@ -20,7 +20,7 @@ Característica: Generación de reporte en PDF
   Para poder compartir el estado del proyecto fuera del sistema
 
   Antecedentes:
-    Dado que existe un proyecto con identificador 1
+    Dado un proyecto de reporte con identificador 1
     Y el proyecto de reporte tiene 4 horas por Story Point
     Y el proyecto de reporte tiene al integrante "Ana" con rol "product_builder"
 
