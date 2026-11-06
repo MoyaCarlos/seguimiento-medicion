@@ -98,6 +98,14 @@ func (e escenarioReporteHTTP) pedirSprint(id string) *httptest.ResponseRecorder 
 	return rec
 }
 
+func (e escenarioReporteHTTP) pedirProyecto(id string) *httptest.ResponseRecorder {
+	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/reporte", nil)
+	req.SetPathValue("id", id)
+	rec := httptest.NewRecorder()
+	e.handler.Proyecto(rec, req)
+	return rec
+}
+
 func TestReporteHandler_Sprint_DescargaElPDF(t *testing.T) {
 	e := nuevoEscenarioReporteHTTP()
 	sprint := e.sprint(t, domain.SprintFinalizado)
@@ -186,6 +194,82 @@ func TestReporteHandler_Sprint_ErrorDeGeneracion(t *testing.T) {
 	e.sprint(t, domain.SprintFinalizado)
 
 	rec := e.pedirSprint("1")
+
+	if rec.Code != nethttp.StatusInternalServerError {
+		t.Fatalf("se esperaba 500, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("Content-Type"); got == "application/pdf" {
+		t.Errorf("no se debía responder como PDF")
+	}
+	if cuerpoJSON(t, rec)["mensaje"] != "no se pudo generar el reporte" {
+		t.Errorf("mensaje inesperado: %s", rec.Body.String())
+	}
+	if rec.Body.Len() == 0 || (len(rec.Body.Bytes()) >= 4 && string(rec.Body.Bytes()[:4]) == "%PDF") {
+		t.Errorf("no se debía entregar un archivo: %q", rec.Body.String())
+	}
+}
+
+func TestReporteHandler_Proyecto_DescargaElPDF(t *testing.T) {
+	e := nuevoEscenarioReporteHTTP()
+
+	rec := e.pedirProyecto("1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get("Content-Type"); got != "application/pdf" {
+		t.Errorf("Content-Type: se esperaba application/pdf, se obtuvo %q", got)
+	}
+	esperado := `attachment; filename="reporte-proyecto-1.pdf"`
+	if got := rec.Header().Get("Content-Disposition"); got != esperado {
+		t.Errorf("Content-Disposition: se esperaba %q, se obtuvo %q", esperado, got)
+	}
+	if got := rec.Body.String(); got != string(e.pdf.contenidoProyecto) {
+		t.Errorf("cuerpo inesperado: %q", got)
+	}
+	if e.pdf.llamadasProyecto != 1 {
+		t.Errorf("se esperaba una generación, se hicieron %d", e.pdf.llamadasProyecto)
+	}
+}
+
+func TestReporteHandler_Proyecto_Inexistente(t *testing.T) {
+	e := nuevoEscenarioReporteHTTP()
+
+	rec := e.pedirProyecto("999")
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if cuerpo := cuerpoJSON(t, rec); cuerpo["mensaje"] != "proyecto no encontrado" {
+		t.Errorf("mensaje inesperado: %v", cuerpo)
+	}
+	if e.pdf.llamadasProyecto != 0 {
+		t.Errorf("no se debía generar el PDF")
+	}
+}
+
+func TestReporteHandler_Proyecto_IdInvalido(t *testing.T) {
+	for _, id := range []string{"abc", "0"} {
+		t.Run(id, func(t *testing.T) {
+			e := nuevoEscenarioReporteHTTP()
+
+			rec := e.pedirProyecto(id)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if cuerpo := cuerpoJSON(t, rec); cuerpo["campo"] != "id" {
+				t.Errorf("se esperaba el campo id, se obtuvo %v", cuerpo)
+			}
+		})
+	}
+}
+
+func TestReporteHandler_Proyecto_ErrorDeGeneracion(t *testing.T) {
+	e := nuevoEscenarioReporteHTTP()
+	e.pdf.err = errors.New("falla de Maroto")
+
+	rec := e.pedirProyecto("1")
 
 	if rec.Code != nethttp.StatusInternalServerError {
 		t.Fatalf("se esperaba 500, se obtuvo %d (%s)", rec.Code, rec.Body.String())
