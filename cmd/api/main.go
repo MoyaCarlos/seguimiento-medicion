@@ -127,6 +127,7 @@ func main() {
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
 	mux.HandleFunc("GET /sprints/{id}/reporte", reporteHandler.Sprint)
+	mux.HandleFunc("GET /projects/{id}/reporte", reporteHandler.Proyecto)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
