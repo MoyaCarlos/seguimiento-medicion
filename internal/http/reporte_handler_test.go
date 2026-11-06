@@ -265,6 +265,48 @@ func TestReporteHandler_Proyecto_IdInvalido(t *testing.T) {
 	}
 }
 
+func TestReporteHandler_ErrorDeLecturaNoEscribeRespuesta(t *testing.T) {
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}}
+	backlog := &stubReporteBacklog{}
+	falla := errors.New("falla de la base")
+	pdf := &generadorReporteStub{contenidoSprint: []byte("%PDF-1.4"), contenidoProyecto: []byte("%PDF-1.4")}
+	generar := service.NewGenerarReporte(proyectos, sprints, backlog, backlog, backlog, stubDatosMetricas{err: falla}, &stubDefectoRepository{})
+	handler := NewReporteHandler(generar, pdf)
+
+	finalizado, err := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: domain.SprintFinalizado})
+	if err != nil {
+		t.Fatalf("no se pudo sembrar el Sprint: %v", err)
+	}
+	reqSprint := httptest.NewRequest(nethttp.MethodGet, "/sprints/1/reporte", nil)
+	reqSprint.SetPathValue("id", "1")
+	recSprint := httptest.NewRecorder()
+	handler.Sprint(recSprint, reqSprint)
+
+	reqProyecto := httptest.NewRequest(nethttp.MethodGet, "/projects/1/reporte", nil)
+	reqProyecto.SetPathValue("id", "1")
+	recProyecto := httptest.NewRecorder()
+	handler.Proyecto(recProyecto, reqProyecto)
+
+	if finalizado.ID == 0 {
+		t.Fatal("el Sprint debía tener ID")
+	}
+	for nombre, rec := range map[string]*httptest.ResponseRecorder{"sprint": recSprint, "proyecto": recProyecto} {
+		if rec.Code != nethttp.StatusInternalServerError {
+			t.Errorf("%s: se esperaba 500, se obtuvo %d", nombre, rec.Code)
+		}
+		if got := rec.Header().Get("Content-Type"); got == "application/pdf" {
+			t.Errorf("%s: no se debía responder como PDF", nombre)
+		}
+		if rec.Body.Len() > 0 && string(rec.Body.Bytes()[:4]) == "%PDF" {
+			t.Errorf("%s: no se debía entregar un archivo", nombre)
+		}
+	}
+	if pdf.llamadasSprint != 0 || pdf.llamadasProyecto != 0 {
+		t.Errorf("no se debía generar el PDF: sprint=%d proyecto=%d", pdf.llamadasSprint, pdf.llamadasProyecto)
+	}
+}
+
 func TestReporteHandler_Proyecto_ErrorDeGeneracion(t *testing.T) {
 	e := nuevoEscenarioReporteHTTP()
 	e.pdf.err = errors.New("falla de Maroto")
