@@ -67,8 +67,8 @@ func reporteDeProyectoDePrueba(sinSprintsFinalizados bool) domain.ReporteProyect
 				ID: 30, Titulo: "Ajustes finales", Prioridad: domain.PrioridadMust, EstimacionSP: entero(2), Estado: domain.EstadoEnProgreso,
 			}},
 		},
-		Metricas:            sprint.Sprint.Metricas,
-		HorasPorStoryPoint:  decimal(4),
+		Metricas:              sprint.Sprint.Metricas,
+		HorasPorStoryPoint:    decimal(4),
 		SinSprintsFinalizados: sinSprintsFinalizados,
 	}
 	if sinSprintsFinalizados {
