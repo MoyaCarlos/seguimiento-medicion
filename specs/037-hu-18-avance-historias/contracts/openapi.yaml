@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Avance de las Historias (HU-18)
+  version: 1.0.0
+  description: >-
+    Consulta de solo lectura de las historias de un proyecto agrupadas por
+    estado. La agrupación y las sumas se calculan en el dominio.
+paths:
+  /projects/{id}/avance:
+    get:
+      summary: Consultar el avance de las historias de un proyecto
+      description: >-
+        Siempre devuelve los tres grupos (Nueva, En progreso, Completada), en
+        ese orden, aunque estén vacíos. Orden de evaluación de los errores:
+        id inválido (400, campo id), proyecto inexistente (404).
+      operationId: consultarAvanceHistorias
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Avance; un proyecto sin historias responde con totales y grupos en cero.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Avance'
+        '400':
+          description: El identificador no es un entero positivo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example: {campo: id, mensaje: el identificador debe ser un entero positivo}
+        '404':
+          description: Proyecto inexistente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Error interno; sin datos parciales.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Avance:
+      type: object
+      required: [total, grupos]
+      properties:
+        total:
+          $ref: '#/components/schemas/Totales'
+        grupos:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items:
+            $ref: '#/components/schemas/Grupo'
+    Totales:
+      type: object
+      required: [historias, story_points]
+      properties:
+        historias: {type: integer, minimum: 0}
+        story_points: {type: integer, minimum: 0}
+    Grupo:
+      type: object
+      required: [estado, cantidad, story_points, historias]
+      properties:
+        estado:
+          type: string
+          enum: [Nueva, En progreso, Completada]
+        cantidad: {type: integer, minimum: 0}
+        story_points:
+          type: integer
+          minimum: 0
+          description: Suma de las estimaciones; las historias sin estimar suman 0.
+        historias:
+          type: array
+          description: En orden de creación; nunca null.
+          items:
+            $ref: '#/components/schemas/Historia'
+    Historia:
+      type: object
+      required: [id, titulo, estimacion_sp, estado, sprint]
+      properties:
+        id: {type: integer, format: int64}
+        titulo: {type: string}
+        estimacion_sp:
+          type: integer
+          nullable: true
+          description: null = sin estimar.
+        estado:
+          type: string
+          enum: [Nueva, En progreso, Completada]
+        sprint:
+          nullable: true
+          description: null = está en el Product Backlog.
+          allOf:
+            - $ref: '#/components/schemas/SprintRef'
+    SprintRef:
+      type: object
+      required: [id, numero]
+      properties:
+        id: {type: integer, format: int64}
+        numero: {type: integer, minimum: 1}
+    Error:
+      type: object
+      properties:
+        mensaje: {type: string}
+        campo: {type: string}
