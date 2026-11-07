@@ -30,22 +30,17 @@
   max-width: 40rem;
 }
 
-.field textarea,
-.field select {
+.field textarea {
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   color: var(--ink);
   font: inherit;
-  padding: 0.75rem 0.85rem;
-}
-
-.field textarea {
   min-height: 6rem;
+  padding: 0.75rem 0.85rem;
   resize: vertical;
 }
 
-.field textarea:focus,
-.field select:focus {
+.field textarea:focus {
   border-color: var(--lilac);
   box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
   outline: none;
@@ -84,6 +79,7 @@
   color: var(--muted);
   font-size: 0.8rem;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .defecto__descripcion {
