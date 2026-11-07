@@ -39,3 +39,10 @@ type AvanceHistorias struct {
 	Grupos []GrupoAvance
 	Total  TotalesAvance
 }
+
+// AgruparAvance agrupa las historias por estado, en el orden Nueva, En
+// progreso, Completada, y suma cantidad y Story Points de cada grupo y del
+// proyecto. Conserva el orden recibido dentro de cada grupo.
+func AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, error) {
+	return AvanceHistorias{}, nil
+}
