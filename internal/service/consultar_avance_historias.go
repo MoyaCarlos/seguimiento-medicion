@@ -20,7 +20,8 @@ func NewConsultarAvanceHistorias(proyectos buscadorProyectos, historias reposito
 }
 
 // Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe, sin
-// leer historias ni Sprints.
+// leer historias ni Sprints. Una historia que apunta a un Sprint ausente del
+// listado es un error interno, no un 404.
 func (s *ConsultarAvanceHistorias) Ejecutar(ctx context.Context, proyectoID int64) (domain.AvanceHistorias, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
 		return domain.AvanceHistorias{}, err
@@ -29,5 +30,9 @@ func (s *ConsultarAvanceHistorias) Ejecutar(ctx context.Context, proyectoID int6
 	if err != nil {
 		return domain.AvanceHistorias{}, err
 	}
-	return domain.AgruparAvance(historias, nil)
+	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)
+	if err != nil {
+		return domain.AvanceHistorias{}, err
+	}
+	return domain.AgruparAvance(historias, sprints)
 }

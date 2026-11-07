@@ -39,7 +39,7 @@ func aAvanceResponse(avance domain.AvanceHistorias) avanceResponse {
 		historias := make([]historiaAvanceResponse, 0, len(g.Historias))
 		for _, h := range g.Historias {
 			historias = append(historias, historiaAvanceResponse{
-				ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Estado: string(h.Estado),
+				ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Estado: string(h.Estado), Sprint: aSprintRefResponse(h.Sprint),
 			})
 		}
 		grupos = append(grupos, grupoAvanceResponse{
@@ -50,4 +50,11 @@ func aAvanceResponse(avance domain.AvanceHistorias) avanceResponse {
 		Total:  totalesAvanceResponse{Historias: avance.Total.Historias, StoryPoints: avance.Total.StoryPoints},
 		Grupos: grupos,
 	}
+}
+
+func aSprintRefResponse(sprint *domain.SprintRef) *sprintRefResponse {
+	if sprint == nil {
+		return nil
+	}
+	return &sprintRefResponse{ID: sprint.ID, Numero: sprint.Numero}
 }
