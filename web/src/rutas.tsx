@@ -1,10 +1,11 @@
 import { Navigate, type RouteObject } from 'react-router'
 import App from './App'
+import { ComposicionInicio } from './compartido/proyectos/ComposicionInicio'
+import { LayoutProyecto } from './compartido/router/LayoutProyecto'
+import { NoEncontrada } from './compartido/router/NoEncontrada'
 import { Ingresar } from './features/autenticacion/Ingresar'
 import { Registro } from './features/autenticacion/Registro'
 import { RutaProtegida } from './features/autenticacion/RutaProtegida'
-import { LayoutProyecto } from './compartido/router/LayoutProyecto'
-import { NoEncontrada } from './compartido/router/NoEncontrada'
 
 export const rutas: RouteObject[] = [
   {
@@ -15,7 +16,10 @@ export const rutas: RouteObject[] = [
       {
         element: <RutaProtegida />,
         children: [
-          { index: true, lazy: () => import('./features/proyecto/crear') },
+          {
+            element: <ComposicionInicio />,
+            children: [{ index: true, lazy: () => import('./features/proyecto/crear') }],
+          },
           {
             path: 'projects/:id',
             element: <LayoutProyecto />,
@@ -26,6 +30,7 @@ export const rutas: RouteObject[] = [
               { path: 'votacion/:historiaId', lazy: () => import('./features/votacion') },
               { path: 'sprints/*', lazy: () => import('./features/sprints') },
               { path: 'status/*', lazy: () => import('./features/estado') },
+              { path: 'dashboard/*', lazy: () => import('./features/dashboard') },
             ],
           },
           { path: '*', element: <NoEncontrada /> },
