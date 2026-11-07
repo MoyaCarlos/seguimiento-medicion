@@ -47,8 +47,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T004 COMMIT `Agregar los tipos del avance de historias y su puerto`
 - [X] T005 RED: en internal/repository/sqlite_backlog_test.go, `ListarPorProyecto` contra SQLite `:memory:`: devuelve todas las historias del proyecto (Nueva con y sin Sprint, En progreso, Completada) ordenadas por `id`; excluye las de otros proyectos; conserva `EstimacionSP` en `nil` cuando no está estimada y `SprintID`; proyecto sin historias → slice vacío, nunca `nil`. Stub en internal/repository/sqlite_backlog.go — confirmar que FALLA
 - [X] T006 COMMIT `RED: agregar tests de ListarPorProyecto de historias (fallan)`
-- [ ] T007 GREEN: implementar `SQLiteBacklogRepository.ListarPorProyecto` en internal/repository/sqlite_backlog.go con `listarHistorias` y `columnasHistoria`: `WHERE proyecto_id = ? ORDER BY id` — `go test ./internal/... ./cmd/...` en verde
-- [ ] T008 COMMIT `GREEN: implementar ListarPorProyecto de historias, test en verde`
+- [X] T007 GREEN: implementar `SQLiteBacklogRepository.ListarPorProyecto` en internal/repository/sqlite_backlog.go con `listarHistorias` y `columnasHistoria`: `WHERE proyecto_id = ? ORDER BY id` — `go test ./internal/... ./cmd/...` en verde
+- [X] T008 COMMIT `GREEN: implementar ListarPorProyecto de historias, test en verde`
 
 **Checkpoint**: las historias pueden empezar.
 
