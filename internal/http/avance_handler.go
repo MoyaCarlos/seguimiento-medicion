@@ -17,4 +17,15 @@ func NewAvanceHandler(consultar *service.ConsultarAvanceHistorias) *AvanceHandle
 
 // Consultar atiende GET /projects/{id}/avance.
 func (h *AvanceHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	avance, err := h.consultar.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aAvanceResponse(avance))
 }

@@ -71,8 +71,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T017 [US1] COMMIT `GREEN: implementar el caso de uso ConsultarAvanceHistorias, test en verde`
 - [X] T018 [US1] RED: en internal/http/avance_handler_test.go, `GET /projects/{id}/avance`: 200 con los nombres exactos de contracts/openapi.yaml (`total{historias,story_points}`, `grupos[{estado,cantidad,story_points,historias[]}]`, cada historia con `id`, `titulo`, `estimacion_sp` en `null` si no está estimada, `estado`, `sprint` en `null`); los tres grupos presentes y `historias` como `[]`, nunca `null`; id inválido (`abc`, `0`, `-1`) → 400 con `campo: id` y el mensaje de `parsearID`, sin consultar al repositorio; proyecto inexistente → 404 "proyecto no encontrado"; error de lectura → 500 "error interno" sin cuerpo parcial. Stubs con cuerpo vacío en internal/http/avance_handler.go e internal/http/avance_dto.go — confirmar que FALLA (todos los casos, por aserción)
 - [X] T019 [US1] COMMIT `RED: agregar tests del handler GET /projects/{id}/avance (fallan)`
-- [ ] T020 [US1] GREEN: implementar `AvanceHandler.Consultar` con el orden de evaluación id inválido (`parsearID`, 400) → proyecto inexistente (404) → lectura, y el DTO que solo copia, en internal/http/avance_handler.go e internal/http/avance_dto.go — `go test ./internal/... ./cmd/...` en verde
-- [ ] T021 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/avance, test en verde`
+- [X] T020 [US1] GREEN: implementar `AvanceHandler.Consultar` con el orden de evaluación id inválido (`parsearID`, 400) → proyecto inexistente (404) → lectura, y el DTO que solo copia, en internal/http/avance_handler.go e internal/http/avance_dto.go — `go test ./internal/... ./cmd/...` en verde
+- [X] T021 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/avance, test en verde`
 - [ ] T022 [US1] Cablear `ConsultarAvanceHistorias` (con `proyectos`, `backlogRepo` y `sprintRepo` ya construidos), `AvanceHandler` y `GET /projects/{id}/avance` en cmd/api/main.go
 - [ ] T023 [US1] COMMIT `Cablear GET /projects/{id}/avance en cmd/api`
 
@@ -94,7 +94,7 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [ ] T029 [US2] COMMIT `RED: agregar tests del listado de Sprints en ConsultarAvanceHistorias (fallan)`
 - [ ] T030 [US2] RED: en internal/http/avance_handler_test.go, con el service real y fakes: `sprint` serializado como `{id, numero}` para una historia con Sprint y como `null` para una sin Sprint (contracts/openapi.yaml) — confirmar que FALLA (el service todavía no entrega el Sprint)
 - [ ] T031 [US2] COMMIT `RED: agregar tests del Sprint de cada historia en el handler de avance (fallan)`
-- [ ] T032 [US2] GREEN: en `ConsultarAvanceHistorias` (internal/service/consultar_avance_historias.go) listar los Sprints con `listadorSprints.ListarPorProyecto` y pasarlos a `AgruparAvance`, propagando los errores sin envolverlos como 404; el DTO ya copia `HistoriaAvance.Sprint` — `go test ./internal/... ./cmd/...` en verde
+- [ ] T032 [US2] GREEN: en `ConsultarAvanceHistorias` (internal/service/consultar_avance_historias.go) listar los Sprints con `listadorSprints.ListarPorProyecto` y pasarlos a `AgruparAvance`, propagando los errores sin envolverlos como 404, y mapear `HistoriaAvance.Sprint` a `sprint` en internal/http/avance_dto.go (en US1 el DTO emite siempre `null`) — `go test ./internal/... ./cmd/...` en verde
 - [ ] T033 [US2] COMMIT `GREEN: informar el Sprint de cada historia en service y handler, test en verde`
 
 **Checkpoint**: la vista dice en qué Sprint está cada historia.
