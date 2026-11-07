@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PantallaDefectos } from './PantallaDefectos'
@@ -55,6 +55,7 @@ type Opciones = {
   errorDefectos?: { status: number; cuerpo: unknown }
   errorRegistro?: { status: number; cuerpo: unknown }
   errorResolucion?: { status: number; cuerpo: unknown }
+  demoraRegistro?: Promise<void>
 }
 
 function respuesta(valor: unknown, status = 200) {
@@ -72,6 +73,7 @@ function montarFetch({
   errorDefectos,
   errorRegistro,
   errorResolucion,
+  demoraRegistro,
 }: Opciones = {}) {
   const estado = {
     defectos: defectos.map((defecto) => ({ ...defecto })),
@@ -106,7 +108,8 @@ function montarFetch({
         sprint_resolucion_id: null,
       }
       estado.defectos.push(nuevo)
-      return Promise.resolve(respuesta(nuevo, 201))
+      const responder = () => respuesta(nuevo, 201)
+      return demoraRegistro ? demoraRegistro.then(responder) : Promise.resolve(responder())
     }
     if (url.startsWith('/defectos/') && url.endsWith('/resolver') && metodo === 'POST') {
       if (errorResolucion) return Promise.resolve(respuesta(errorResolucion.cuerpo, errorResolucion.status))
@@ -130,12 +133,27 @@ function abrir(opciones: Opciones = {}) {
   return api
 }
 
+function diferido() {
+  let resolver!: () => void
+  const promesa = new Promise<void>((resolve) => {
+    resolver = resolve
+  })
+  return { promesa, resolver }
+}
+
+async function completarFormulario(usuario: ReturnType<typeof userEvent.setup>) {
+  await screen.findByRole('heading', { name: 'Registrar defecto' })
+  await usuario.type(screen.getByLabelText('Descripción'), 'El total no se actualiza')
+  await usuario.selectOptions(screen.getByLabelText('Severidad'), 'Alta')
+  await usuario.selectOptions(screen.getByLabelText('Historia relacionada'), '3')
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
 })
 
 describe('pantalla de defectos', () => {
-  it('Escenario 1: con Sprint activo e historias, registrar un defecto lo muestra en el listado', async () => {
+  it('US1.1 — Dado un Sprint activo y una historia, cuando registro un defecto, entonces queda registrado y aparece en el listado', async () => {
     const usuario = userEvent.setup()
     const { fetchMock } = abrir({ defectos: [] })
 
@@ -158,7 +176,7 @@ describe('pantalla de defectos', () => {
     })
   })
 
-  it('Escenario 2: el listado muestra descripción, severidad, estado, historia y Sprints', async () => {
+  it('US3.1 — Dado un proyecto con defectos pendientes y resueltos, cuando consulto el listado, entonces muestra cada defecto con su descripción, severidad, estado, historia, Sprints y fecha de registro', async () => {
     abrir({
       defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO],
       sprints: [SPRINT_ACTIVO, SPRINT_FINALIZADO],
@@ -172,10 +190,10 @@ describe('pantalla de defectos', () => {
     expect(screen.getAllByText('Resuelto').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Carrito de compras/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Sprint 1/).length).toBeGreaterThan(0)
-    expect(screen.getByText(/Registrado: 2026-11-04/)).toBeTruthy()
+    expect(screen.getByText('Registrado: 04/11/2026')).toBeTruthy()
   })
 
-  it('Escenario 3: resolver un defecto pendiente lo pasa a Resuelto', async () => {
+  it('US2.1 — Dado un defecto pendiente y un Sprint activo, cuando lo marco como resuelto, entonces pasa a Resuelto', async () => {
     const usuario = userEvent.setup()
     const { fetchMock } = abrir({ defectos: [DEFECTO_PENDIENTE] })
 
@@ -189,7 +207,7 @@ describe('pantalla de defectos', () => {
     ).toBe(true)
   })
 
-  it('Escenario 4: sin Sprint activo muestra el mensaje y no permite registrar ni resolver', async () => {
+  it('US1.3 y US2.3 — Dado un proyecto sin Sprint activo, cuando abro la pantalla, entonces avisa y no permite registrar ni resolver', async () => {
     abrir({ defectos: [DEFECTO_PENDIENTE], sprints: [SPRINT_FINALIZADO], sprintsBacklog: { 4: [] } })
 
     expect(await screen.findByText(/No hay un Sprint activo/)).toBeTruthy()
@@ -198,14 +216,14 @@ describe('pantalla de defectos', () => {
     expect(screen.getByText('El total no se actualiza')).toBeTruthy()
   })
 
-  it('Escenario alternativo: sin historias no se muestra el formulario', async () => {
+  it('US1.1 — Dado un proyecto sin historias, cuando abro la pantalla, entonces no muestra el formulario de registro', async () => {
     abrir({ defectos: [], sprints: [SPRINT_ACTIVO], backlog: [], sprintsBacklog: { 2: [] } })
 
     expect(await screen.findByText(/No hay historias en el proyecto/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Registrar defecto' })).toBeNull()
   })
 
-  it('Escenario de error: el backend rechaza el registro y muestra el campo', async () => {
+  it('US1.4 — Dado que el backend rechaza el registro con un campo inválido, cuando guardo, entonces muestra el error en ese campo', async () => {
     const usuario = userEvent.setup()
     abrir({
       defectos: [],
@@ -225,7 +243,7 @@ describe('pantalla de defectos', () => {
     expect(screen.getByLabelText('Descripción').getAttribute('aria-invalid')).toBe('true')
   })
 
-  it('Escenario de error: si falla el listado, muestra el mensaje y el formulario sigue disponible', async () => {
+  it('Dado que falla la consulta del listado, cuando abro la pantalla, entonces muestra el mensaje y el formulario sigue disponible', async () => {
     abrir({
       errorDefectos: { status: 500, cuerpo: { mensaje: 'Falló el listado' } },
     })
@@ -234,13 +252,13 @@ describe('pantalla de defectos', () => {
     expect(await screen.findByRole('heading', { name: 'Registrar defecto' })).toBeTruthy()
   })
 
-  it('Escenario alternativo: sin defectos muestra el estado vacío', async () => {
+  it('US3.2 — Dado un proyecto sin defectos, cuando consulto el listado, entonces muestra el estado vacío', async () => {
     abrir({ defectos: [] })
 
     expect(await screen.findByText('Todavía no hay defectos registrados.')).toBeTruthy()
   })
 
-  it('Escenario límite: el selector incluye historias del Product Backlog y de Sprints finalizados', async () => {
+  it('US1.2 — Dado un proyecto con historias en el Product Backlog y en Sprints finalizados, cuando abro el formulario, entonces el selector las incluye a todas', async () => {
     abrir({
       defectos: [],
       sprints: [SPRINT_FINALIZADO, SPRINT_ACTIVO],
@@ -260,7 +278,7 @@ describe('pantalla de defectos', () => {
     expect(screen.getByRole('group', { name: 'Sprint 1' })).toBeTruthy()
   })
 
-  it('Escenario de error: sin los campos obligatorios no envía el registro', async () => {
+  it('US1.4 — Dado un formulario sin los campos obligatorios, cuando intento guardar, entonces no envía el registro y muestra los errores', async () => {
     const usuario = userEvent.setup()
     const { fetchMock } = abrir({ defectos: [] })
 
@@ -273,7 +291,7 @@ describe('pantalla de defectos', () => {
     expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
   })
 
-  it('Escenario de error: si el backend rechaza la resolución, muestra el mensaje', async () => {
+  it('US2.3 — Dado que el backend rechaza la resolución por falta de Sprint activo, cuando marco el defecto como resuelto, entonces muestra el mensaje', async () => {
     const usuario = userEvent.setup()
     abrir({
       defectos: [DEFECTO_PENDIENTE],
@@ -287,5 +305,109 @@ describe('pantalla de defectos', () => {
     await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
 
     expect(await screen.findByText('el proyecto no tiene un Sprint activo')).toBeTruthy()
+  })
+
+  it('US1.1 — Dado un envío en curso, cuando envío dos veces seguidas, entonces registra un solo defecto', async () => {
+    const usuario = userEvent.setup()
+    const demora = diferido()
+    const { fetchMock } = abrir({ defectos: [], demoraRegistro: demora.promesa })
+
+    await completarFormulario(usuario)
+
+    const formulario = screen.getByRole('form', { name: 'Registrar defecto' })
+    fireEvent.submit(formulario)
+    await waitFor(() => {
+      const boton = screen.getByRole('button', { name: 'Registrar defecto' }) as HTMLButtonElement
+      expect(boton.disabled).toBe(true)
+    })
+    fireEvent.submit(formulario)
+
+    const envios = fetchMock.mock.calls.filter(
+      ([url, init]) => url === '/projects/1/defectos' && init?.method === 'POST',
+    )
+    expect(envios).toHaveLength(1)
+
+    demora.resolver()
+    expect(await screen.findByText('Defecto registrado')).toBeTruthy()
+  })
+
+  it('US1.4 — Dado una descripción con espacios al principio y al final, cuando registro el defecto, entonces se guarda sin esos espacios', async () => {
+    const usuario = userEvent.setup()
+    const { fetchMock } = abrir({ defectos: [] })
+
+    await screen.findByRole('heading', { name: 'Registrar defecto' })
+    await usuario.type(screen.getByLabelText('Descripción'), '  El total no se actualiza  ')
+    await usuario.selectOptions(screen.getByLabelText('Severidad'), 'Alta')
+    await usuario.selectOptions(screen.getByLabelText('Historia relacionada'), '3')
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('Defecto registrado')).toBeTruthy()
+    const envio = fetchMock.mock.calls.find(
+      ([url, init]) => url === '/projects/1/defectos' && init?.method === 'POST',
+    )
+    expect(JSON.parse(String(envio?.[1]?.body))).toMatchObject({
+      descripcion: 'El total no se actualiza',
+    })
+  })
+
+  it('US1.3 — Dado un Sprint que se cierra entre la carga y el envío, cuando registro el defecto, entonces muestra el rechazo por falta de Sprint activo', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [],
+      errorRegistro: {
+        status: 400,
+        cuerpo: {
+          mensaje: 'el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de detección',
+        },
+      },
+    })
+
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(
+      await screen.findByText(
+        'el proyecto no tiene un Sprint activo al que asociar el defecto como Sprint de detección',
+      ),
+    ).toBeTruthy()
+  })
+
+  it('US1.6 — Dado que el proyecto dejó de existir, cuando registro el defecto, entonces muestra "proyecto no encontrado"', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [],
+      errorRegistro: { status: 404, cuerpo: { mensaje: 'proyecto no encontrado' } },
+    })
+
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('proyecto no encontrado')).toBeTruthy()
+  })
+
+  it('US2.5 — Dado que el defecto no existe, cuando intento resolverlo, entonces muestra "defecto no encontrado"', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [DEFECTO_PENDIENTE],
+      errorResolucion: { status: 404, cuerpo: { mensaje: 'defecto no encontrado' } },
+    })
+
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
+
+    expect(await screen.findByText('defecto no encontrado')).toBeTruthy()
+  })
+
+  it('Dado un conflicto de integridad al registrar (409), cuando guardo, entonces muestra el mensaje del servidor', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [],
+      errorRegistro: { status: 409, cuerpo: { mensaje: 'violación de integridad referencial' } },
+    })
+
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('violación de integridad referencial')).toBeTruthy()
   })
 })
