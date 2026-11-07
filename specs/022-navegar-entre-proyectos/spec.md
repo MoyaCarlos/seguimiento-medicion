@@ -336,6 +336,9 @@ funcionando.
   identificador que ya existe MUST conservarse.
 - **FR-014**: El listado de proyectos MUST mostrarse en el orden devuelto por la API, sin
   reordenarlo ni paginarlo en esta historia.
+- **FR-030**: **WHEN** se guarda con éxito la edición de un proyecto, el selector MUST volver a
+  pedir `GET /projects` para mostrar los datos guardados sin recargar la página. **IF** se cancela
+  la edición o el guardado falla, MUST NOT volver a pedirlo (issue #260).
 
 **Limpieza y alcance**
 
@@ -461,6 +464,7 @@ funcionando.
 | US3 escenario 4 (falla del listado en `/`) | Se verifica en las tareas de la lista de US4 (T035-T038), no en las tareas de US3 |
 | FR-013 | Prueba de navegación entre dos `:id` distintos, sin datos del anterior (incluye la prueba existente de reinicio) |
 | FR-014 | Prueba de componente que conserva el orden devuelto por la API |
+| FR-030 | Pruebas de `web/src/rutas.test.tsx`: guardar un nombre nuevo actualiza el selector; cancelar o un guardado fallido no vuelven a pedir el listado |
 | FR-015 | Prueba de componente: `navigation` con nombre "Secciones del proyecto" y ya no "Historias del Sprint 2" |
 | FR-016, FR-017, FR-020 | Revisión del diff, suite existente y ausencia de dependencias nuevas |
 | FR-021, FR-022, FR-029 | Pruebas de componente de `ListaProyectos`: tarjeta con sus datos, `title`, "Sin descripción", "Sin definir", sin estado ni Scrum Master |
