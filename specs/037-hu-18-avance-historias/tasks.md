@@ -73,8 +73,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T019 [US1] COMMIT `RED: agregar tests del handler GET /projects/{id}/avance (fallan)`
 - [X] T020 [US1] GREEN: implementar `AvanceHandler.Consultar` con el orden de evaluación id inválido (`parsearID`, 400) → proyecto inexistente (404) → lectura, y el DTO que solo copia, en internal/http/avance_handler.go e internal/http/avance_dto.go — `go test ./internal/... ./cmd/...` en verde
 - [X] T021 [US1] COMMIT `GREEN: implementar el handler GET /projects/{id}/avance, test en verde`
-- [ ] T022 [US1] Cablear `ConsultarAvanceHistorias` (con `proyectos`, `backlogRepo` y `sprintRepo` ya construidos), `AvanceHandler` y `GET /projects/{id}/avance` en cmd/api/main.go
-- [ ] T023 [US1] COMMIT `Cablear GET /projects/{id}/avance en cmd/api`
+- [X] T022 [US1] Cablear `ConsultarAvanceHistorias` (con `proyectos`, `backlogRepo` y `sprintRepo` ya construidos), `AvanceHandler` y `GET /projects/{id}/avance` en cmd/api/main.go
+- [X] T023 [US1] COMMIT `Cablear GET /projects/{id}/avance en cmd/api`
 
 **Checkpoint**: los grupos, los totales y los errores 400 y 404 funcionan por sí solos (con `sprint: null` hasta US2).
 
