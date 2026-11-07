@@ -19,6 +19,15 @@ func NewConsultarAvanceHistorias(proyectos buscadorProyectos, historias reposito
 	return &ConsultarAvanceHistorias{proyectos: proyectos, historias: historias, sprints: sprints}
 }
 
+// Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe, sin
+// leer historias ni Sprints.
 func (s *ConsultarAvanceHistorias) Ejecutar(ctx context.Context, proyectoID int64) (domain.AvanceHistorias, error) {
-	return domain.AvanceHistorias{}, nil
+	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return domain.AvanceHistorias{}, err
+	}
+	historias, err := s.historias.ListarPorProyecto(ctx, proyectoID)
+	if err != nil {
+		return domain.AvanceHistorias{}, err
+	}
+	return domain.AgruparAvance(historias, nil)
 }
