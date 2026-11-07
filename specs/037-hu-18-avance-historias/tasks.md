@@ -134,7 +134,7 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T044 Step definitions de Godog para features/avance_historias.feature en features/steps_avance_historias.go y registro (`InitializeScenarioAvance(ctx)`) en features/features_test.go — `go test ./features/` en verde
 - [X] T045 COMMIT `Agregar pasos BDD del avance de las historias`
 - [X] T046 Verificación final: `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores; `cd web && npm run lint && npm test && npm run build`. Comprobar **FR-007** (solo lectura): `AvanceHistoriasRepository` expone únicamente `ListarPorProyecto`, la única ruta nueva es `GET /projects/{id}/avance`, `git diff origin/main --stat` no toca `MODELO-DE-DATOS.md` ni `internal/repository/migraciones/`, y `GET /projects/{id}/backlog` (HU-15) sigue devolviendo solo las historias sin Sprint (sus pruebas en verde). Comprobar **FR-008**: `git diff origin/main --stat` no toca el estado Planificado / En curso / Finalizado del panel (`features/estado_proyecto.feature`, `features/steps_estado_proyecto.go`, `web/src/features/proyecto/`) y esas pruebas siguen en verde
-- [ ] T047 Recorrer quickstart.md (API y pantalla) y corregirlo si algo no coincide; COMMIT `Ajustar el quickstart de la spec 037` solo si hubo cambios
+- [X] T047 Recorrer quickstart.md (API y pantalla) y corregirlo si algo no coincide; COMMIT `Ajustar el quickstart de la spec 037` solo si hubo cambios — recorrido el 2026-11-07; el paso UI 4 (servidor detenido con la pantalla ya cargada) queda **pendiente de verificación manual**
 
 ---
 
