@@ -171,3 +171,24 @@ func TestConsultarAvanceHistorias_SprintAusenteDelListadoEsErrorInternoYNoNoEnco
 		t.Errorf("se esperaba un solo listado de Sprints, hubo %d", sprints.llamadas)
 	}
 }
+
+func TestConsultarAvanceHistorias_ProyectoSinHistoriasTieneLosTresGruposYLosTotalesEnCero(t *testing.T) {
+	servicio := NewConsultarAvanceHistorias(proyectosConUno(), &fakeAvanceHistoriasRepository{}, &fakeListadorSprints{})
+
+	avance, err := servicio.Ejecutar(context.Background(), 1)
+
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if len(avance.Grupos) != 3 {
+		t.Fatalf("se esperaban 3 grupos, se obtuvieron %d", len(avance.Grupos))
+	}
+	for _, g := range avance.Grupos {
+		if g.Cantidad != 0 || g.StoryPoints != 0 || g.Historias == nil || len(g.Historias) != 0 {
+			t.Errorf("grupo %q: se esperaba vacío con Historias no nil, se obtuvo %+v", g.Estado, g)
+		}
+	}
+	if avance.Total != (domain.TotalesAvance{}) {
+		t.Errorf("se esperaban totales en cero, se obtuvo %+v", avance.Total)
+	}
+}

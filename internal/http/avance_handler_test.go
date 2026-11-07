@@ -181,3 +181,21 @@ func TestAvanceHandler_Consultar_InformaElSprintDeCadaHistoriaONullSiEstaEnElPro
 		t.Errorf("se esperaba sprint %v, se obtuvo %v", esperado, enProgreso["sprint"])
 	}
 }
+
+func TestAvanceHandler_Consultar_ProyectoSinHistoriasResponde200ConTotalesEnCero(t *testing.T) {
+	rec := consultarAvance(t, &stubAvanceHistorias{}, "1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	cuerpo := cuerpoJSON(t, rec)
+	if esperado := map[string]any{"historias": 0.0, "story_points": 0.0}; !reflect.DeepEqual(cuerpo["total"], esperado) {
+		t.Errorf("se esperaba total %v, se obtuvo %v", esperado, cuerpo["total"])
+	}
+	for i, estado := range []string{"Nueva", "En progreso", "Completada"} {
+		esperado := map[string]any{"estado": estado, "cantidad": 0.0, "story_points": 0.0, "historias": []any{}}
+		if got := cuerpo["grupos"].([]any)[i]; !reflect.DeepEqual(got, esperado) {
+			t.Errorf("grupo %d: se esperaba %v, se obtuvo %v", i, esperado, got)
+		}
+	}
+}

@@ -107,8 +107,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 
 **Independent Test**: se consulta un proyecto recién creado: 200, tres grupos con `cantidad: 0`, `story_points: 0` y `historias: []`, y `total` en cero.
 
-- [ ] T034 [US3] Tests de caracterización (no son RED: pasan de entrada porque US1.4 y T009 ya cubren los grupos vacíos): en internal/service/consultar_avance_historias_test.go y internal/http/avance_handler_test.go, proyecto existente sin historias → avance con los tres grupos y `total` en cero (service) y 200 con ese cuerpo y `historias: []` (handler). Si alguno falla, es un defecto de US1: se corrige con el ciclo RED/GREEN completo en su propio commit
-- [ ] T035 [US3] COMMIT `Agregar tests de proyecto sin historias en el avance (caracterización)`
+- [X] T034 [US3] Tests de caracterización (no son RED: pasan de entrada porque US1.4 y T009 ya cubren los grupos vacíos): en internal/service/consultar_avance_historias_test.go y internal/http/avance_handler_test.go, proyecto existente sin historias → avance con los tres grupos y `total` en cero (service) y 200 con ese cuerpo y `historias: []` (handler). Si alguno falla, es un defecto de US1: se corrige con el ciclo RED/GREEN completo en su propio commit
+- [X] T035 [US3] COMMIT `Agregar tests de proyecto sin historias en el avance (caracterización)`
 
 **Checkpoint**: el backend cubre los cuatro escenarios del backlog.
 
