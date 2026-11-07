@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-03
 
-**Status**: Draft
+**Status**: Implementada (pendiente de review)
 
 **Dependencia**: usa la tabla `usuarios` ya existente (HU-04). No depende de ninguna
 otra historia abierta. La migración 007 está reservada para #236 y no se usa aquí.

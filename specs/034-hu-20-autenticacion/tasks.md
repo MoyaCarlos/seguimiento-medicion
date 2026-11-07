@@ -81,12 +81,12 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 
 ### Infraestructura HTTP
 
-- [ ] T035 [P] RED: crear `internal/http/auth_errores_test.go`: `escribirError` responde 401 `{"mensaje":"Usuario o contraseña incorrectos"}` para `ErrCredencialesInvalidas`, 401 `{"mensaje":"Tu sesión no es válida"}` para `ErrNoAutenticado` y 409 `{"mensaje":"Ese nombre de usuario ya existe"}` para `ErrNombreUsuarioEnUso`; los errores previos mantienen su código. Confirmar que FALLA Compila (usa `escribirError` y los errores de T013) y falla por aserción: hoy responde 500.
-- [ ] T036 COMMIT `RED: agregar tests de traducción de errores de autenticación (falla)` (incluye el stub, si lo hay)
-- [ ] T037 GREEN: agregar los tres casos a `escribirError` en `internal/http/sprint_handler.go`; `go test ./internal/http/` en verde
-- [ ] T038 COMMIT `GREEN: traducir errores de autenticación a 401 y 409, test en verde`
-- [ ] T039 Agregar `"/auth"` a `PrefijosAPI` en `internal/http/spa.go` y `'/auth': apiProxy` en `web/vite.config.ts`; correr `go test ./internal/http/` (`TestPrefijosAPI_IncluyenLosQueProxeaVite` en verde)
-- [ ] T040 COMMIT `Registrar el prefijo /auth en la SPA y el proxy de Vite`
+- [X] T035 [P] RED: crear `internal/http/auth_errores_test.go`: `escribirError` responde 401 `{"mensaje":"Usuario o contraseña incorrectos"}` para `ErrCredencialesInvalidas`, 401 `{"mensaje":"Tu sesión no es válida"}` para `ErrNoAutenticado` y 409 `{"mensaje":"Ese nombre de usuario ya existe"}` para `ErrNombreUsuarioEnUso`; los errores previos mantienen su código. Confirmar que FALLA Compila (usa `escribirError` y los errores de T013) y falla por aserción: hoy responde 500.
+- [X] T036 COMMIT `RED: agregar tests de traducción de errores de autenticación (falla)` (incluye el stub, si lo hay)
+- [X] T037 GREEN: agregar los tres casos a `escribirError` en `internal/http/sprint_handler.go`; `go test ./internal/http/` en verde
+- [X] T038 COMMIT `GREEN: traducir errores de autenticación a 401 y 409, test en verde`
+- [X] T039 Agregar `"/auth"` a `PrefijosAPI` en `internal/http/spa.go` y `'/auth': apiProxy` en `web/vite.config.ts`; correr `go test ./internal/http/` (`TestPrefijosAPI_IncluyenLosQueProxeaVite` en verde)
+- [X] T040 COMMIT `Registrar el prefijo /auth en la SPA y el proxy de Vite`
 
 **Checkpoint**: la base está lista; las historias de usuario pueden avanzar.
 
@@ -244,13 +244,13 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
-- [ ] T123 [P] Crear `internal/http/auth_logs_test.go` (iteraciones de PBKDF2 bajas inyectadas): capturar la salida de `log` durante registro, ingreso, «quién soy» y cierre de sesión, y comprobar que no aparecen la contraseña, el hash ni el token (SC-006); y que ninguna respuesta de error los contiene
-- [ ] T124 COMMIT `Agregar test de que contraseñas y tokens no se filtran a logs ni a errores`
-- [ ] T125 Confirmar que no se editó ningún `.feature` ni paso previo (`git diff main -- features/*.feature` solo muestra `autenticacion.feature`) y que no existe ninguna migración 007 en `internal/repository/migraciones/`
-- [ ] T126 `go build ./...`, `go vet ./...` y `go test ./...` sin errores (incluye Godog, `internal/demo` y la migración sobre una base con usuarios previos)
-- [ ] T127 En `web/`: `npm test`, `npm run lint` y `npm run build` sin errores
+- [X] T123 [P] Crear `internal/http/auth_logs_test.go` (iteraciones de PBKDF2 bajas inyectadas): capturar la salida de `log` durante registro, ingreso, «quién soy» y cierre de sesión, y comprobar que no aparecen la contraseña, el hash ni el token (SC-006); y que ninguna respuesta de error los contiene
+- [X] T124 COMMIT `Agregar test de que contraseñas y tokens no se filtran a logs ni a errores`
+- [X] T125 Confirmar que no se editó ningún `.feature` ni paso previo (`git diff main -- features/*.feature` solo muestra `autenticacion.feature`) y que no existe ninguna migración 007 en `internal/repository/migraciones/`
+- [X] T126 `go build ./...`, `go vet ./...` y `go test ./...` sin errores (incluye Godog, `internal/demo` y la migración sobre una base con usuarios previos)
+- [X] T127 En `web/`: `npm test`, `npm run lint` y `npm run build` sin errores
 - [ ] T128 Recorrer la verificación manual de [quickstart.md](quickstart.md) (API e interfaz) y comprobar a mano que cada ruta protegida (incluida la raíz y una inexistente) lleva a `/ingresar` sin sesión y vuelve a la ruta pedida tras ingresar (D12)
-- [ ] T129 Actualizar el `Status` de `spec.md` a «Implementada (pendiente de review)» y marcar estas tareas
+- [X] T129 Actualizar el `Status` de `spec.md` a «Implementada (pendiente de review)» y marcar estas tareas
 - [ ] T130 COMMIT `Cerrar HU-20: spec actualizada y verificación completa`
 
 ---
