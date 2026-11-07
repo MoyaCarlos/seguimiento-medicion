@@ -32,8 +32,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 
 **Purpose**: dejar los escenarios BDD escritos antes de implementar (flujo de AGENTS.md).
 
-- [ ] T001 Escribir features/avance_historias.feature en Gherkin español: tag `@HU-18`, Característica con el Como/Quiero/Para de la historia, Antecedentes si hay una precondición común y un Escenario por cada criterio de aceptación de US1, US2 y US3 de la spec (incluido el 400 con campo `id` por identificador inválido). Comentario inicial con la cobertura por categoría (normal, alternativo, límite, error), como en features/historial_sprints.feature. La pantalla (frontend) se cubre con pruebas de componente
-- [ ] T002 COMMIT `RED: agregar escenarios BDD del avance de las historias (fallan)`
+- [X] T001 Escribir features/avance_historias.feature en Gherkin español: tag `@HU-18`, Característica con el Como/Quiero/Para de la historia, Antecedentes si hay una precondición común y un Escenario por cada criterio de aceptación de US1, US2 y US3 de la spec (incluido el 400 con campo `id` por identificador inválido). Comentario inicial con la cobertura por categoría (normal, alternativo, límite, error), como en features/historial_sprints.feature. La pantalla (frontend) se cubre con pruebas de componente
+- [X] T002 COMMIT `RED: agregar escenarios BDD del avance de las historias (fallan)`
 
 ---
 
