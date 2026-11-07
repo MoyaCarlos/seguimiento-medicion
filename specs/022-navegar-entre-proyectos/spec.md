@@ -1,0 +1,470 @@
+# Feature Specification: Navegar entre proyectos desde la interfaz
+
+**Feature Branch**: `feature/148-navegacion-proyectos`
+
+**Issue**: #148
+
+**Created**: 2026-10-27
+
+**Status**: Implementada (Issue #148), pendiente de revisión por PR.
+
+**Input**: User description: "Issue #148: Navegar entre proyectos desde la interfaz (lista y selector). Solo frontend; no cambia la API ni el esquema. Esta historia modifica archivos de la base (compartido/router/LayoutProyecto.tsx y web/src/rutas.test.tsx) porque el issue lo asigna expresamente.
+
+Alcance:
+- Selector de proyecto en el encabezado de LayoutProyecto: lista los proyectos con GET /projects, marca el actual (el del :id de la URL) y, al elegir otro, navega a la misma sección del nuevo proyecto (/projects/:id/<seccion>, con la sección tomada del primer tramo después del id).
+- Enlace a "Nuevo proyecto" (la pantalla de /) en ese mismo encabezado.
+- En la pantalla de inicio (/), junto al formulario de crear proyecto, la lista de proyectos existentes con un enlace a cada uno.
+- Estados de la lista: cargando (LoadingIndicator), vacía (invita a crear un proyecto) y error de la API (ErrorMessage) sin romper la pantalla: el encabezado y la navegación de secciones siguen funcionando.
+- Al cambiar de proyecto, el estado de las pantallas se reinicia por el :id (ya existe el reinicio por key; no romperlo).
+- El nombre accesible del `<nav>` de secciones deja de decir "Historias del Sprint 2" y pasa a "Secciones del proyecto".
+
+(Actualización 2026-11-02: `Inicio.tsx` ya fue eliminado por el PR #208 y el issue #141 está cerrado; esta historia no lo toca. Cambio de sección desconocida decidido por el Scrum Master: ver FR-003 y FR-004.)
+
+Restricciones: sin dependencias nuevas; reutilizar LoadingIndicator, ErrorMessage y el cliente de compartido/api; Button no aplica porque esta historia solo navega con enlaces y un <select>; la lógica pura (por ejemplo, armar la ruta del nuevo proyecto a partir de la ruta actual) en funciones con pruebas de Vitest, y las pantallas con pruebas de componente con Testing Library y fetch simulado. Las pruebas existentes de rutas.test.tsx deben seguir pasando (con un fetch simulado de GET /projects)."
+
+## Contexto
+
+Hoy todas las pantallas de un proyecto viven bajo `/projects/:id/<sección>` y comparten un
+encabezado con los enlaces a Proyecto, Historias, Sprints y Estado. Ya existe la creación de
+proyectos en `/` y la API devuelve el listado completo con `GET /projects` (#109), pero la
+interfaz no lo usa: para pasar de un proyecto a otro hay que editar la dirección a mano, y la
+pantalla de inicio solo muestra el formulario. Esta historia conecta ese listado con la
+navegación, sin tocar el contrato de la API ni el esquema de la base.
+
+## Objetivo
+
+Permitir que una persona cambie de proyecto sin editar la URL y sin perder la sección en la que
+estaba, que pueda ir a crear otro proyecto desde cualquier pantalla de proyecto, y que desde el
+inicio pueda ver y abrir los proyectos existentes, con estados de carga, lista vacía y error que
+no bloqueen el resto de la pantalla.
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 - Cambiar de proyecto conservando la sección (Priority: P1)
+
+Como integrante del equipo, estando en una sección de un proyecto, quiero elegir otro proyecto
+desde el encabezado y seguir en la misma sección del proyecto elegido, para comparar o trabajar
+en varios proyectos sin editar la dirección ni volver a navegar desde el principio.
+
+**Why this priority**: Es el objetivo central del issue. Sin el selector, la interfaz sigue
+obligando a escribir la URL para cambiar de proyecto.
+
+**Independent Test**: Abrir `/projects/1/backlog` con dos proyectos cargados, elegir el proyecto
+2 en el selector y comprobar que la dirección pasa a `/projects/2/backlog`, que se ve el backlog
+del proyecto 2 y que el selector marca el 2 como actual.
+
+**Acceptance Scenarios**:
+
+1. **Given** el encabezado con la lista de proyectos y el proyecto 1 como actual, **When** se
+   elige el proyecto 2, **Then** la aplicación navega a `/projects/2/<sección actual>` y el
+   selector marca el proyecto 2 como actual.
+2. **Given** la pantalla en `/projects/1/proyecto/edit`, **When** se elige el proyecto 2,
+   **Then** la aplicación navega a `/projects/2/proyecto` (solo se conserva el primer tramo
+   después del id, no la sub-ruta de edición).
+3. **Given** la pantalla abierta en cualquier sección de un proyecto, **When** se despliega el
+   selector, **Then** el proyecto de la URL aparece marcado como actual y los demás se listan
+   como `<nombre> (#<id>)`.
+4. **Given** una pantalla con estado propio del proyecto 1, **When** se elige el proyecto 2,
+   **Then** las pantallas del proyecto 2 arrancan sin datos ni estado del proyecto 1.
+5. **Given** una ruta cuyo primer tramo no es una sección del menú (por ejemplo
+   `/projects/1/votacion/3`, una pantalla con identificador de historia, o `/projects/1/otra`),
+   **When** se elige el proyecto 2, **Then** la aplicación navega a `/projects/2/proyecto` y no
+   traslada ni el tramo desconocido ni el identificador de la historia.
+
+---
+
+### User Story 2 - Ir a crear un proyecto desde cualquier proyecto (Priority: P1)
+
+Como integrante del equipo, desde cualquier sección de un proyecto quiero un enlace visible a
+"Nuevo proyecto" que me lleve a la pantalla de creación, para dar de alta otro proyecto sin
+editar la dirección ni volver al inicio a mano.
+
+**Why this priority**: Es un acceso directo pedido por el issue y se apoya en la pantalla de
+creación que ya existe; sin él, el selector resuelve solo la mitad de la navegación.
+
+**Independent Test**: Abrir cualquier sección de un proyecto y pulsar "Nuevo proyecto";
+comprobar que se llega a `/` y que el formulario de creación está disponible.
+
+**Acceptance Scenarios**:
+
+1. **Given** una pantalla de proyecto, **When** se pulsa el enlace "Nuevo proyecto" del
+   encabezado, **Then** se abre la pantalla de creación en `/`.
+2. **Given** que la lista de proyectos está cargando, vacía o falló, **When** se mira el
+   encabezado, **Then** el enlace "Nuevo proyecto" sigue visible y funciona.
+
+---
+
+### User Story 3 - Ver y abrir los proyectos desde el inicio (Priority: P1)
+
+Como integrante del equipo, en la pantalla de inicio quiero ver, junto al formulario de creación,
+la lista de proyectos existentes y abrir cualquiera de ellos, para elegir un proyecto sin
+recordar ni escribir su identificador.
+
+**Why this priority**: Es la otra mitad de la navegación pedida: el inicio deja de ser solo un
+formulario y pasa a ser el punto de entrada a los proyectos existentes.
+
+**Independent Test**: Abrir `/` con proyectos cargados, comprobar que se listan junto al
+formulario y que el enlace de uno de ellos abre su panel.
+
+**Acceptance Scenarios**:
+
+1. **Given** que existen proyectos, **When** se abre `/`, **Then** se ve la lista de proyectos
+   junto al formulario de creación, cada uno como `<nombre> (#<id>)` y con un enlace para
+   abrirlo.
+2. **Given** la lista de proyectos en `/`, **When** se activa el enlace de un proyecto,
+   **Then** se abre el panel de ese proyecto en `/projects/<id>/proyecto`.
+3. **Given** que no existe ningún proyecto, **When** se abre `/`, **Then** se muestra un mensaje
+   que invita a crear el primero, junto al formulario.
+4. **Given** que la lista de proyectos falla, **When** se abre `/`, **Then** el formulario de
+   creación sigue disponible y usable.
+5. **Given** un proyecto con descripción y fechas, **When** se abre `/`, **Then** su tarjeta
+   muestra el nombre, `#<id>`, la descripción y las fechas de inicio y de fin, y la tarjeta
+   entera es el enlace a su panel.
+6. **Given** un proyecto sin descripción y sin fechas, **When** se abre `/`, **Then** su tarjeta
+   muestra "Sin descripción" y "Sin definir" en lugar de la descripción y de cada fecha.
+7. **Given** un proyecto con un nombre largo, **When** se abre `/`, **Then** la tarjeta ofrece el
+   nombre completo en su atributo `title` (el corte a dos líneas es visual y se verifica en el
+   navegador, no en las pruebas).
+8. **Given** `N` proyectos, **When** se abre `/`, **Then** el encabezado "Proyectos existentes"
+   muestra un contador con `N`.
+
+**Nota de trazabilidad**: el escenario 4 se verifica en las tareas de la lista de US4
+(T035-T038), junto con los demás estados de error de la lista; no se duplica en las tareas de
+US3. Los escenarios 5 a 8 se verifican en las tareas de US5.
+
+---
+
+### User Story 5 - Buscar proyectos por nombre en el inicio (Priority: P2)
+
+Como integrante del equipo, en la lista de proyectos del inicio quiero buscar por nombre, para
+encontrar rápido un proyecto cuando hay varios.
+
+**Why this priority**: Mejora la lista del inicio con muchos proyectos; no bloquea la navegación
+principal.
+
+**Independent Test**: Abrir `/` con varios proyectos, escribir parte de un nombre en "Buscar
+proyecto" y comprobar que solo quedan las tarjetas que coinciden y el contador "N de M".
+
+**Acceptance Scenarios**:
+
+1. **Given** una lista con `M` proyectos, **When** se escribe un texto en el campo "Buscar
+   proyecto", **Then** se ven solo los proyectos cuyo nombre contiene ese texto y el contador
+   muestra "N de M" (con `N` los que se ven).
+2. **Given** un proyecto llamado "Gestión de Turnos", **When** se busca "gestion", "TURNOS" o
+   "gestión", **Then** el proyecto aparece (la búsqueda ignora mayúsculas y acentos).
+3. **Given** una búsqueda con espacios al inicio o al final, **When** se escribe, **Then** los
+   espacios se recortan antes de comparar.
+4. **Given** una búsqueda vacía o solo de espacios, **When** se borra el texto, **Then** se ven
+   todos los proyectos y el contador muestra solo "M".
+5. **Given** varios proyectos que coinciden, **When** se filtra, **Then** se ven en el orden en
+   que los devuelve la API.
+6. **Given** un texto que está en la descripción o en el identificador de un proyecto pero no en
+   su nombre, **When** se busca, **Then** ese proyecto no aparece (se filtra solo por nombre).
+7. **Given** un texto que no coincide con ningún nombre, **When** se busca, **Then** se muestra
+   "Ningún proyecto coincide con la búsqueda" y el contador "0 de M"; este mensaje es distinto
+   del de lista vacía.
+8. **Given** que no existe ningún proyecto, **When** se abre `/`, **Then** no se muestra el
+   campo de búsqueda y sí el mensaje "Todavía no hay proyectos".
+9. **Given** que el listado está cargando o falló, **When** se abre `/`, **Then** no se muestra
+   el campo de búsqueda.
+10. **Given** una búsqueda escrita, **When** se filtra o se borra el texto, **Then** no se hacen
+    nuevas llamadas a `GET /projects` (el filtro es del cliente y no se guarda al recargar).
+
+---
+
+### User Story 4 - Estados de la lista que no rompen la pantalla (Priority: P2)
+
+Como integrante del equipo, quiero que la lista de proyectos muestre claramente si está
+cargando, vacía o con error, sin que ese estado impida navegar entre secciones ni crear un
+proyecto.
+
+**Why this priority**: Da confianza sobre lo que se ve y evita que una falla del listado deje la
+interfaz bloqueada; se apoya en las piezas compartidas que ya existen.
+
+**Independent Test**: Simular las respuestas de `GET /projects` (demora, arreglo vacío y error) y
+comprobar que cada estado se ve y que la navegación de secciones y el formulario siguen
+funcionando.
+
+**Acceptance Scenarios**:
+
+1. **Given** que el listado todavía no respondió, **When** se abre una pantalla de proyecto,
+   **Then** se ve el indicador de carga, el selector deshabilitado con la única opción
+   "Proyecto <id>" del proyecto actual y los enlaces de sección del encabezado siguen
+   funcionando.
+2. **Given** que `GET /projects` responde con un error, **When** se abre una pantalla de
+   proyecto, **Then** se ve el mensaje de error de la API, el selector deshabilitado con la
+   única opción "Proyecto <id>" del proyecto actual y los enlaces de sección y "Nuevo
+   proyecto" siguen funcionando.
+3. **Given** que `GET /projects` devuelve una lista vacía, **When** se abre el inicio,
+   **Then** se ve la invitación a crear un proyecto y no un mensaje de error.
+4. **Given** que el listado falla en el inicio, **When** se completa y envía el formulario,
+   **Then** la creación se comporta igual que antes de esta historia.
+
+---
+
+### Edge Cases
+
+- **IF** `GET /projects` falla o devuelve una respuesta no interpretable, **THEN** la interfaz
+  **shall** mostrar un mensaje de error de la API sin romper la pantalla, **shall** mantener el
+  selector deshabilitado con la única opción "Proyecto `<id>`" del proyecto actual y **shall**
+  mantener operativos los enlaces de sección y el enlace "Nuevo proyecto" (o el formulario, en
+  el inicio).
+- **IF** la lista de proyectos está vacía, **THEN** la interfaz **shall** mostrar una invitación a
+  crear un proyecto, no un error.
+- **WHILE** la lista de proyectos se está cargando, **THEN** la interfaz **shall** mostrar el
+  indicador de carga, **shall** mostrar el selector deshabilitado con la única opción
+  "Proyecto `<id>`" del proyecto actual y **shall** permitir seguir usando la navegación
+  existente.
+- **WHEN** la carga del listado se resuelve con éxito, **THEN** el selector **shall** habilitarse
+  con la lista completa de proyectos.
+- **IF** el `:id` de la URL no aparece en el listado (por ejemplo, un proyecto borrado o una
+  lista incompleta), **THEN** el encabezado **shall** seguir mostrando el proyecto actual como
+  "Proyecto `<id>`", **shall not** marcar otro proyecto como actual y **shall** permitir cambiar
+  a cualquiera de los proyectos listados.
+- **IF** la dirección es `/projects/<id>` sin sección, **THEN** la sección usada al cambiar de
+  proyecto **shall** ser `proyecto`.
+- **IF** el primer tramo de la ruta actual no es una sección del menú de `navegacion.ts`
+  (`proyecto`, `backlog`, `sprints`, `status`), por ejemplo `/projects/1/otra` o
+  `/projects/1/votacion/3`, **THEN** al cambiar de proyecto **shall** navegarse a
+  `/projects/2/proyecto`. Esto reemplaza la regla anterior de conservar el tramo desconocido:
+  evita caer en "Página no encontrada" y evita trasladar identificadores propios de otro proyecto
+  (como el de una historia). La regla no depende de que exista la ruta de votación en `main`
+  (PR #229 pendiente): se verifica con la función pura y con un selector montado en una ruta
+  `/projects/:id/*` de prueba. En la app real, `/projects/<id>/otra` no está bajo el encabezado del
+  proyecto (muestra "Página no encontrada" sin selector), así que el caso aplica a las rutas que
+  sí lo están y no son del menú, como `votacion/:historiaId` cuando llegue a `main`.
+- **WHEN** se elige el mismo proyecto que ya está abierto, **THEN** la aplicación **shall not**
+  navegar ni reiniciar el estado de la pantalla.
+- **IF** dos proyectos tienen el mismo nombre, **THEN** el selector y la lista **shall**
+  mostrarlos como `<nombre> (#<id>)`, con identificadores distintos, y **shall** abrir el
+  proyecto cuyo enlace o ítem se eligió.
+- **IF** se cambia de proyecto mientras una pantalla tiene datos o estado local, **THEN** la
+  pantalla del proyecto nuevo **shall** arrancar limpia, sin mezclar datos del anterior.
+- **IF** el listado tarda o falla, **THEN** el enlace "Nuevo proyecto" del encabezado **shall**
+  estar disponible igual.
+- **IF** un proyecto no tiene descripción o fecha, **THEN** su tarjeta **shall** mostrar "Sin
+  descripción" o "Sin definir".
+- **WHILE** hay un texto de búsqueda no vacío (después de recortar espacios), **THEN** el
+  contador **shall** mostrar "N de M"; **WHILE** no lo hay, **shall** mostrar solo "M".
+- **IF** ningún nombre coincide con la búsqueda, **THEN** la lista **shall** mostrar "Ningún
+  proyecto coincide con la búsqueda" y **shall** conservar el campo de búsqueda para poder
+  corregirla.
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Selector del encabezado**
+
+- **FR-001**: Toda pantalla de proyecto (`/projects/:id/...`) MUST mostrar en su encabezado un
+  control de selección de un solo proyecto que liste todos los proyectos obtenidos con
+  `GET /projects`, mostrando cada uno como `<nombre> (#<id>)`.
+- **FR-002**: El control MUST marcar como actual el proyecto cuyo identificador coincide con el
+  `:id` de la URL, de forma visible y accesible.
+- **FR-003**: **WHEN** se elige un proyecto distinto del actual, la aplicación MUST navegar a
+  `/projects/<id elegido>/<sección>`, donde `<sección>` es el primer tramo de la ruta actual
+  después del `:id` **solo si** es una sección del menú de `web/src/navegacion.ts`; si no hay
+  ningún tramo o no es una sección del menú, MUST usar `proyecto`.
+- **FR-004**: Al cambiar de proyecto MUST conservarse únicamente el primer tramo de la sección
+  actual; los tramos posteriores (sub-rutas) MUST NOT trasladarse al proyecto nuevo.
+- **FR-005**: **WHEN** se elige el proyecto que ya está abierto, la aplicación MUST NOT navegar
+  ni reiniciar el estado de la pantalla.
+- **FR-006**: El encabezado de toda pantalla de proyecto MUST incluir un enlace visible
+  "Nuevo proyecto" que lleve a la pantalla de creación en `/`.
+
+**Listado en el inicio**
+
+- **FR-007**: La pantalla de inicio (`/`) MUST mostrar, junto al formulario de creación, la
+  lista de proyectos existentes obtenida con `GET /projects`.
+- **FR-008**: Cada proyecto de la lista del inicio MUST mostrarse como una tarjeta que es un
+  único enlace a `/projects/<id>/proyecto`, cuyo nombre accesible es `<nombre> (#<id>)`.
+- **FR-009**: **WHEN** no hay proyectos, el inicio MUST mostrar una invitación a crear el
+  primero, sin tratarlo como error.
+
+**Tarjetas y buscador del inicio**
+
+- **FR-021**: La tarjeta de cada proyecto MUST mostrar el nombre (con el texto completo en su
+  atributo `title`), el `#<id>`, la descripción y las fechas de inicio y de fin, con los datos que
+  ya trae `GET /projects` (`id`, `nombre`, `descripcion`, `fecha_inicio`, `fecha_fin`).
+- **FR-022**: **IF** falta la descripción o una fecha, la tarjeta MUST mostrar "Sin descripción" o
+  "Sin definir", como el panel del proyecto; las fechas se muestran con el mismo formato que el
+  panel.
+- **FR-023**: El encabezado "Proyectos existentes" MUST mostrar un contador con la cantidad de
+  proyectos que se ven: "N" sin filtro y "N de M" con un filtro activo (texto no vacío después de
+  recortar); con la lista vacía muestra "0". El encabezado "Proyectos existentes" se muestra
+  siempre; el contador solo cuando la lista está lista (no durante la carga ni el error).
+- **FR-024**: **WHEN** la lista está lista y tiene al menos un proyecto, MUST mostrarse un campo
+  de búsqueda (`type="search"`) con nombre accesible "Buscar proyecto"; **IF** la lista está
+  vacía, cargando o con error, MUST NOT mostrarse.
+- **FR-025**: El filtro MUST compararse solo contra el nombre, sin distinguir mayúsculas ni
+  acentos (normalización NFD sin marcas diacríticas) y recortando espacios al inicio y al final;
+  una búsqueda vacía MUST mostrar todos los proyectos.
+- **FR-026**: **IF** ningún nombre coincide, MUST mostrarse "Ningún proyecto coincide con la
+  búsqueda", distinto del mensaje de lista vacía ("Todavía no hay proyectos").
+- **FR-027**: El filtro MUST conservar el orden de la API (FR-014), vivir en el estado de la
+  pantalla (sin persistencia ni debounce) y MUST NOT hacer consultas nuevas a la API.
+- **FR-028**: (Estilo y composición) En pantallas anchas la lista MUST ir a la derecha del
+  formulario de creación; en celular (390 px) MUST apilarse debajo, sin scroll horizontal; la
+  tarjeta MUST tener resaltado al pasar el mouse y foco visible con teclado; el nombre y la descripción largos se
+  cortan en dos líneas, aun sin espacios. Solo el inicio `/` se ensancha (hasta 1320 px) y el encabezado superior se
+  alinea con ese ancho; el selector del encabezado es una píldora a la izquierda del menú de
+  secciones, con "+ Nuevo proyecto" a su lado, deshabilitado en carga y error, y a todo el ancho en
+  celular. El aviso de "Cargar datos de prueba" ocupa su propia línea debajo de los botones y estos
+  no se estiran. No cambia ningún comportamiento ni escenario; se verifica en el navegador (detalle
+  y atajos en `research.md`, D13).
+- **FR-029**: La tarjeta MUST NOT mostrar el estado del proyecto, el Scrum Master ni una barra de
+  avance: el estado lo calcula el backend, el Scrum Master no viene en la lista y el avance sería
+  una métrica inventada.
+
+**Estados de la lista**
+
+- **FR-010**: **WHILE** la lista de proyectos se está obteniendo, la interfaz MUST mostrar el
+  indicador de carga compartido y el selector MUST mostrarse deshabilitado con una única opción
+  "Proyecto `<id>`", correspondiente al proyecto actual. **WHEN** la carga se resuelve con
+  éxito, el selector MUST habilitarse con la lista completa de proyectos.
+- **FR-011**: **IF** la obtención de la lista falla, la interfaz MUST mostrar el mensaje de error
+  de la API mediante el componente compartido de errores, sin romper la pantalla, y el selector
+  MUST permanecer visible y deshabilitado con la única opción "Proyecto `<id>`" del proyecto
+  actual.
+- **FR-012**: Los estados de carga, vacío y error de la lista MUST NOT impedir la navegación de
+  secciones del encabezado, el enlace "Nuevo proyecto" ni el uso del formulario de creación.
+
+**Cambio de proyecto y estado**
+
+- **FR-013**: **WHEN** cambia el `:id` de la URL, las pantallas del proyecto MUST reiniciarse y
+  MUST NOT mostrar datos ni estado del proyecto anterior; el mecanismo de reinicio por
+  identificador que ya existe MUST conservarse.
+- **FR-014**: El listado de proyectos MUST mostrarse en el orden devuelto por la API, sin
+  reordenarlo ni paginarlo en esta historia.
+
+**Limpieza y alcance**
+
+- **FR-015**: El `<nav>` de secciones de `LayoutProyecto` MUST tener el nombre accesible
+  "Secciones del proyecto" (hoy dice "Historias del Sprint 2", que ya no describe la navegación).
+  Los enlaces y su comportamiento no cambian.
+- **FR-016**: La historia MUST NOT modificar la API, el esquema de la base ni el contrato de
+  `GET /projects`; solo consume el listado existente.
+- **FR-017**: La interfaz MUST reutilizar `LoadingIndicator`, `ErrorMessage` y el cliente de
+  `compartido/api`, y MUST NOT agregar dependencias nuevas. `Button` no aplica porque esta
+  historia solo navega con enlaces y un `<select>`; MUST NOT agregar acciones de botón.
+- **FR-018**: La lógica pura de navegación (por ejemplo, construir la ruta del proyecto elegido a
+  partir de la ruta actual) MUST implementarse en funciones separadas y probarse con Vitest.
+- **FR-019**: Las pantallas MUST probarse con pruebas de componente con Testing Library y
+  `fetch` simulado, cubriendo los escenarios de aceptación de esta spec.
+- **FR-020**: Las pruebas existentes de `web/src/rutas.test.tsx` MUST seguir pasando, con un
+  `fetch` simulado que responda a `GET /projects`.
+
+### Key Entities
+
+- **Proyecto**: proyecto existente que se lista y se elige. El selector usa su nombre e
+  identificador (`<nombre> (#<id>)`); la tarjeta del inicio usa además la descripción y las
+  fechas de inicio y fin; no se crea, edita ni borra desde la navegación.
+- **Sección del proyecto**: primer tramo de la ruta después del identificador (`proyecto`,
+  `backlog`, `sprints`, `status`, o el que exista). Determina a dónde se navega al cambiar de
+  proyecto.
+- **Pantalla de inicio**: punto de entrada en `/` que contiene el formulario de creación y, a
+  partir de esta historia, la lista de proyectos existentes.
+
+## Success Criteria *(mandatory)*
+
+### Measurable Outcomes
+
+- **SC-001**: Una persona puede cambiar de un proyecto a otro desde cualquier sección en dos
+  interacciones o menos (abrir el selector y elegir), y el 100% de las veces termina en la misma
+  sección del proyecto elegido.
+- **SC-002**: El 100% de las pantallas de proyecto muestran el proyecto actual y permiten
+  cambiarlo, sin editar la dirección ni recargar la página.
+- **SC-003**: El 100% de las pantallas de proyecto ofrecen el acceso "Nuevo proyecto" a un clic,
+  incluso cuando la lista está cargando, vacía o con error.
+- **SC-004**: El inicio muestra los N proyectos existentes y cada uno abre su panel; con cero
+  proyectos muestra la invitación a crear el primero.
+- **SC-005**: Ante una falla del listado, el 100% de las pantallas conserva operativas la
+  navegación de secciones y la creación de proyectos, y muestra un mensaje de error visible.
+- **SC-006**: Al cambiar de proyecto, el 100% de las pantallas arranca sin datos del proyecto
+  anterior (cero mezcla de estado entre proyectos).
+- **SC-007**: La suite existente de rutas y las nuevas pruebas de lógica pura y de componente
+  pasan en verde, sin dependencias nuevas.
+
+## Assumptions
+
+- `GET /projects` ya existe y devuelve todos los proyectos ordenados por identificador (#109);
+  esta historia no agrega endpoints ni campos. El selector muestra nombre e identificador con el
+  formato `<nombre> (#<id>)`; la tarjeta del inicio suma descripción y fechas, que el listado ya
+  devuelve.
+- La pantalla de creación sigue siendo la de `/`; el enlace "Nuevo proyecto" navega a ella y no
+  abre un diálogo ni una pantalla nueva.
+- El enlace de un proyecto desde el inicio abre su panel en `/projects/<id>/proyecto`, porque es
+  la sección por defecto del proyecto.
+- Las secciones del menú hoy son `proyecto`, `backlog`, `sprints` y `status` (`web/src/navegacion.ts`).
+  Si la ruta trae otro primer tramo (incluidas rutas con identificador de historia como
+  `votacion/:historiaId`), se cae en `proyecto`. Sin tabla de rutas ni mapeo a secciones padre.
+- `Inicio.tsx` ya no existe en `main` (PR #208, issue #141 cerrado); esta historia solo cierra #148.
+- La pantalla `/` queda como formulario de creación seguido de la lista de proyectos; el acceso a
+  "Nuevo proyecto" vive en el encabezado de las pantallas de proyecto.
+- Si el proyecto actual no está en el listado, se muestra como "Proyecto `<id>`" para no perder
+  el contexto ni marcar otro proyecto por error. No se inventa un nombre.
+- La lista se obtiene al abrir cada pantalla. No se exige actualización en vivo después de crear
+  un proyecto: al crearlo se navega a su panel y la lista se vuelve a leer cuando corresponda.
+- Los nombres repetidos se distinguen por el identificador visible en la etiqueta
+  `<nombre> (#<id>)`; la marca de actual se basa en el `:id`, no en el nombre.
+- BDD (Principio III de la constitución) cumple por equivalencia: los escenarios de aceptación
+  Given-When-Then de esta spec se automatizan como pruebas de componente (Vitest + Testing
+  Library), con `fetch` simulado.
+- El ciclo RED/GREEN/REFACTOR aplica a la lógica pura y también a cada comportamiento de las
+  pantallas (navegación, carga, vacío y error).
+- El control de selección es de un solo proyecto, con etiqueta accesible y operable por teclado;
+  no se especifica si es una lista desplegable nativa u otro control equivalente.
+
+## Restricciones de entrega
+
+- El trabajo es exclusivamente de frontend. No se modifican handlers, servicios, repositorios,
+  migraciones ni el esquema de la base.
+- Archivos permitidos: `web/src/compartido/router/LayoutProyecto.tsx`, `web/src/rutas.tsx` (para
+  componer el inicio con el formulario de creación más la lista de proyectos),
+  `web/src/rutas.test.tsx`, `web/src/App.css` (estilo del selector y del inicio), archivos nuevos en `web/src/compartido/proyectos/` (API, hook,
+  selector, lista, composición del inicio y la función pura de ruta) y `web/src/navegacion.ts` solo para leerlo (no se
+  modifica).
+- `web/src/features/proyecto/crear.tsx` y `web/src/features/proyecto/crear.test.tsx` NO se
+  modifican: sus pruebas afirman cuántas veces se llama a `fetch` y agregar allí el
+  `GET /projects` las rompería.
+- Sin dependencias nuevas. Se reutilizan `LoadingIndicator`, `ErrorMessage` y el cliente de la
+  API; no hay acciones de botón (solo enlaces y un `<select>`).
+- Las pruebas de `web/src/rutas.test.tsx` deben simular `GET /projects` para que el encabezado
+  pueda renderizarse en todas las rutas existentes.
+
+## Fuera de alcance
+
+- Cambios en `GET /projects` o en cualquier otro endpoint; paginación, búsqueda en el servidor,
+  filtros distintos del buscador por nombre del inicio u ordenamiento distinto al de la API.
+- Crear, editar o borrar proyectos desde el selector o desde la lista del inicio.
+- Mostrar métricas, estado, Scrum Master o avance del proyecto en el selector o en la lista (la
+  tarjeta del inicio muestra solo nombre, id, descripción y fechas).
+- Una página de inicio que muestre primero la lista de proyectos y deje el formulario como acción
+  secundaria.
+- Autenticación, autorización por rol o selección de integrante.
+- Persistencia de la última sección o del último proyecto visitado.
+- Rediseño general del encabezado, de la navegación de secciones o del formulario de creación.
+- Actualización automática de la lista después de crear un proyecto.
+- Una página de inicio que muestre primero la lista de proyectos (con el formulario de creación
+  como acción secundaria): queda para una mejora posterior. En esta historia `/` mantiene el
+  formulario de creación seguido de la lista.
+
+## Trazabilidad
+
+| Requisito | Verificación prevista |
+|---|---|
+| FR-001, FR-002 | Prueba de componente del encabezado con listado simulado, etiqueta `<nombre> (#<id>)` y `:id` actual |
+| FR-003, FR-004, FR-005 | Pruebas de Vitest de la función pura que arma la ruta (incluye `/projects/1/votacion/3` y `/projects/1/otra` → `proyecto`) + prueba de navegación del selector |
+| FR-006, FR-012 | Prueba de componente: enlace "Nuevo proyecto" visible y operativo en cada estado |
+| FR-007, FR-008, FR-009 | Pruebas de componente del inicio con lista con datos (etiqueta `<nombre> (#<id>)`) y lista vacía |
+| FR-010, FR-011, FR-012 | Pruebas de componente con `fetch` demorado, fallido y exitoso; selector deshabilitado con la única opción "Proyecto `<id>`" |
+| US3 escenario 4 (falla del listado en `/`) | Se verifica en las tareas de la lista de US4 (T035-T038), no en las tareas de US3 |
+| FR-013 | Prueba de navegación entre dos `:id` distintos, sin datos del anterior (incluye la prueba existente de reinicio) |
+| FR-014 | Prueba de componente que conserva el orden devuelto por la API |
+| FR-015 | Prueba de componente: `navigation` con nombre "Secciones del proyecto" y ya no "Historias del Sprint 2" |
+| FR-016, FR-017, FR-020 | Revisión del diff, suite existente y ausencia de dependencias nuevas |
+| FR-021, FR-022, FR-029 | Pruebas de componente de `ListaProyectos`: tarjeta con sus datos, `title`, "Sin descripción", "Sin definir", sin estado ni Scrum Master |
+| FR-023, FR-024, FR-026 | Pruebas de componente del contador, del campo de búsqueda y de los mensajes de sin coincidencias y lista vacía |
+| FR-025, FR-027 | Pruebas de Vitest de la función pura de filtrado + pruebas de componente (acentos, mayúsculas, espacios, orden, sin nuevas llamadas) |
+| FR-028 | Revisión en el navegador en escritorio y 390 px (estilo; sin prueba automatizada) |
+| FR-018, FR-019 | Pruebas de Vitest de funciones puras y pruebas de componente con Testing Library |
