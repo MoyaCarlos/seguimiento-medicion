@@ -92,8 +92,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T027 [US2] COMMIT `GREEN: informar el Sprint de cada historia en el dominio, test en verde`
 - [X] T028 [US2] RED: en internal/service/consultar_avance_historias_test.go, con un fake de Sprints con número: el service lista los Sprints del proyecto y los pasa al dominio, de modo que cada historia trae su Sprint o `nil`; un error del listado de Sprints se propaga; una historia que apunta a un Sprint ausente del listado devuelve error interno (no `ErrSprintNoEncontrado`, que respondería 404) — confirmar que FALLA (el service de US1 pasa `nil`)
 - [X] T029 [US2] COMMIT `RED: agregar tests del listado de Sprints en ConsultarAvanceHistorias (fallan)`
-- [ ] T030 [US2] RED: en internal/http/avance_handler_test.go, con el service real y fakes: `sprint` serializado como `{id, numero}` para una historia con Sprint y como `null` para una sin Sprint (contracts/openapi.yaml) — confirmar que FALLA (el service todavía no entrega el Sprint)
-- [ ] T031 [US2] COMMIT `RED: agregar tests del Sprint de cada historia en el handler de avance (fallan)`
+- [X] T030 [US2] RED: en internal/http/avance_handler_test.go, con el service real y fakes: `sprint` serializado como `{id, numero}` para una historia con Sprint y como `null` para una sin Sprint (contracts/openapi.yaml) — confirmar que FALLA (el service todavía no entrega el Sprint)
+- [X] T031 [US2] COMMIT `RED: agregar tests del Sprint de cada historia en el handler de avance (fallan)`
 - [ ] T032 [US2] GREEN: en `ConsultarAvanceHistorias` (internal/service/consultar_avance_historias.go) listar los Sprints con `listadorSprints.ListarPorProyecto` y pasarlos a `AgruparAvance`, propagando los errores sin envolverlos como 404, y mapear `HistoriaAvance.Sprint` a `sprint` en internal/http/avance_dto.go (en US1 el DTO emite siempre `null`) — `go test ./internal/... ./cmd/...` en verde
 - [ ] T033 [US2] COMMIT `GREEN: informar el Sprint de cada historia en service y handler, test en verde`
 

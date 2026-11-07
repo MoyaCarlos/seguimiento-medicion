@@ -26,6 +26,11 @@ func (s *stubAvanceHistorias) ListarPorProyecto(context.Context, int64) ([]domai
 
 func consultarAvance(t *testing.T, historias *stubAvanceHistorias, id string) *httptest.ResponseRecorder {
 	t.Helper()
+	return consultarAvanceConSprints(t, historias, stubSprintsDelHistorial{}, id)
+}
+
+func consultarAvanceConSprints(t *testing.T, historias *stubAvanceHistorias, sprints stubSprintsDelHistorial, id string) *httptest.ResponseRecorder {
+	t.Helper()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Proyecto"})
 	if err != nil {
@@ -38,7 +43,7 @@ func consultarAvance(t *testing.T, historias *stubAvanceHistorias, id string) *h
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/avance", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, historias, stubSprintsDelHistorial{})).Consultar(rec, req)
+	NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, historias, sprints)).Consultar(rec, req)
 	return rec
 }
 
@@ -148,5 +153,31 @@ func TestAvanceHandler_Consultar_ErrorDeLecturaEs500SinDatosParciales(t *testing
 	}
 	if _, hay := cuerpo["grupos"]; hay {
 		t.Errorf("no se esperaban datos parciales, se obtuvo %v", cuerpo)
+	}
+}
+
+func TestAvanceHandler_Consultar_InformaElSprintDeCadaHistoriaONullSiEstaEnElProductBacklog(t *testing.T) {
+	sprintID := int64(20)
+	conSprint := historiaDelAvance(2, "H2", domain.EstadoEnProgreso, nil)
+	conSprint.SprintID = &sprintID
+	repo := &stubAvanceHistorias{historias: []domain.BacklogItem{
+		historiaDelAvance(1, "H1", domain.EstadoNueva, nil),
+		conSprint,
+	}}
+	sprints := stubSprintsDelHistorial{sprints: []domain.Sprint{{ID: 20, ProyectoID: 1, Numero: 2, Estado: domain.SprintActivo}}}
+
+	rec := consultarAvanceConSprints(t, repo, sprints, "1")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	grupos := cuerpoJSON(t, rec)["grupos"].([]any)
+	nueva := grupos[0].(map[string]any)["historias"].([]any)[0].(map[string]any)
+	enProgreso := grupos[1].(map[string]any)["historias"].([]any)[0].(map[string]any)
+	if nueva["sprint"] != nil {
+		t.Errorf("la historia sin Sprint debe tener sprint null, se obtuvo %v", nueva["sprint"])
+	}
+	if esperado := map[string]any{"id": 20.0, "numero": 2.0}; !reflect.DeepEqual(enProgreso["sprint"], esperado) {
+		t.Errorf("se esperaba sprint %v, se obtuvo %v", esperado, enProgreso["sprint"])
 	}
 }
