@@ -1,6 +1,9 @@
 package domain
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func historiaDeAvance(id int64, titulo string, estado Estado, sp *int) BacklogItem {
 	return BacklogItem{ID: id, ProyectoID: 1, Titulo: titulo, Estado: estado, EstimacionSP: sp}
@@ -180,5 +183,70 @@ func TestAgruparAvance_EstadoDesconocidoEsError(t *testing.T) {
 
 	if _, err := AgruparAvance(historias, []Sprint{}); err == nil {
 		t.Fatal("se esperaba un error por el estado desconocido")
+	}
+}
+
+func historiaConSprint(id int64, estado Estado, sprintID int64) BacklogItem {
+	h := historiaDeAvance(id, fmt.Sprintf("H%d", id), estado, intPtr(3))
+	h.SprintID = &sprintID
+	return h
+}
+
+func sprintDeAvance(id int64, numero int, estado EstadoSprint) Sprint {
+	return Sprint{ID: id, ProyectoID: 1, Numero: numero, Estado: estado}
+}
+
+func TestAgruparAvance_ResuelveElSprintDeCadaHistoria(t *testing.T) {
+	sprints := []Sprint{
+		sprintDeAvance(10, 1, SprintFinalizado),
+		sprintDeAvance(20, 2, SprintActivo),
+		sprintDeAvance(30, 3, SprintPendiente),
+	}
+	casos := []struct {
+		nombre   string
+		historia BacklogItem
+		grupo    int
+		sprint   *SprintRef
+	}{
+		{"Nueva sin Sprint queda en el Product Backlog", historiaDeAvance(1, "H1", EstadoNueva, intPtr(3)), 0, nil},
+		{"En progreso en un Sprint Activo", historiaConSprint(2, EstadoEnProgreso, 20), 1, &SprintRef{ID: 20, Numero: 2}},
+		{"Completada en un Sprint Finalizado", historiaConSprint(3, EstadoCompletada, 10), 2, &SprintRef{ID: 10, Numero: 1}},
+		{"Nueva asignada a un Sprint Pendiente conserva ese Sprint", historiaConSprint(4, EstadoNueva, 30), 0, &SprintRef{ID: 30, Numero: 3}},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			avance, err := AgruparAvance([]BacklogItem{c.historia}, sprints)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+
+			if len(avance.Grupos) != 3 || len(avance.Grupos[c.grupo].Historias) != 1 {
+				t.Fatalf("se esperaba la historia en el grupo %d, se obtuvo %+v", c.grupo, avance.Grupos)
+			}
+			got := avance.Grupos[c.grupo].Historias[0].Sprint
+			switch {
+			case c.sprint == nil && got != nil:
+				t.Errorf("se esperaba Sprint nil (Product Backlog), se obtuvo %+v", *got)
+			case c.sprint != nil && (got == nil || *got != *c.sprint):
+				t.Errorf("se esperaba el Sprint %+v, se obtuvo %v", *c.sprint, got)
+			}
+		})
+	}
+}
+
+func TestAgruparAvance_HistoriaConSprintAusenteDeLaListaEsErrorSinDatosParciales(t *testing.T) {
+	historias := []BacklogItem{
+		historiaDeAvance(1, "H1", EstadoNueva, intPtr(3)),
+		historiaConSprint(2, EstadoEnProgreso, 99),
+	}
+	sprints := []Sprint{sprintDeAvance(10, 1, SprintActivo)}
+
+	avance, err := AgruparAvance(historias, sprints)
+
+	if err == nil {
+		t.Fatal("se esperaba un error por el Sprint ausente de la lista")
+	}
+	if len(avance.Grupos) != 0 || avance.Total != (TotalesAvance{}) {
+		t.Errorf("no se esperaban datos parciales, se obtuvo %+v", avance)
 	}
 }
