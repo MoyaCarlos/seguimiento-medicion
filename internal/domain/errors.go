@@ -74,6 +74,13 @@ var (
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
 
+// ErrSprintNoFinalizado indica que se pidió el reporte de un Sprint que no está
+// Finalizado (HU-10).
+var ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el reporte de un Sprint finalizado"}
+
+// ErrReporteNoGenerado indica un fallo real al armar o escribir el PDF (HU-10).
+var ErrReporteNoGenerado = errors.New("no se pudo generar el reporte")
+
 // ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
 var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}
 

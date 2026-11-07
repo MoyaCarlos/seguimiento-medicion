@@ -88,6 +88,18 @@ func TestServirSPA_ReglaDeEnrutado(t *testing.T) {
 	}
 }
 
+func TestServirSPA_ReportesLleganALaAPIaunqueAceptenHTML(t *testing.T) {
+	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
+
+	for _, ruta := range []string{"/projects/1/reporte", "/sprints/1/reporte"} {
+		rec := pedir(handler, http.MethodGet, ruta, "text/html")
+
+		if rec.Body.String() != cuerpoAPI {
+			t.Errorf("%s: se esperaba la API, se obtuvo %q", ruta, rec.Body.String())
+		}
+	}
+}
+
 func TestServirSPA_AssetInexistenteSinHTMLNoEsLaAPI(t *testing.T) {
 	handler := ServirSPA(apiFalsa(), dirWebDePrueba(t))
 

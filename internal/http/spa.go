@@ -11,9 +11,9 @@ const rutaSalud = "/health"
 
 // PrefijosAPI documenta las rutas que atiende la API. No decide el enrutado:
 // ServirSPA responde index.html a todo GET con text/html salvo /health. Un test
-// verifica que incluya los prefijos que proxea web/vite.config.ts. Si hace falta
-// que otra ruta (por ejemplo, una descarga de PDF) llegue a la API aun con
-// text/html, agregala como excepción junto a /health.
+// verifica que incluya los prefijos que proxea web/vite.config.ts. Las descargas
+// que terminan en /reporte (PDF de HU-10) también llegan a la API aunque acepten
+// text/html; cualquier otra excepción se agrega junto a /health.
 var PrefijosAPI = []string{"/backlog", "/defectos", "/projects", "/sprints", "/demo", rutaSalud}
 
 func ServirSPA(api http.Handler, dirWeb string) http.Handler {
@@ -56,5 +56,8 @@ func esPedidoDePagina(r *http.Request) bool {
 	if r.Method != http.MethodGet || !strings.Contains(r.Header.Get("Accept"), "text/html") {
 		return false
 	}
-	return r.URL.Path != rutaSalud
+	if r.URL.Path == rutaSalud || strings.HasSuffix(r.URL.Path, "/reporte") {
+		return false
+	}
+	return true
 }
