@@ -68,7 +68,7 @@ export function ListadoDefectos({
               {defecto.sprint_resolucion_id !== null && (
                 <span>Resuelto en {etiquetaSprint(defecto.sprint_resolucion_id, sprints)}</span>
               )}
-              <span>Registrado: {defecto.creado_en.slice(0, 10)}</span>
+              <span>Registrado: {formatearFecha(defecto.creado_en)}</span>
             </p>
             {defecto.estado === 'Pendiente' && haySprintActivo && (
               <Button
@@ -90,4 +90,9 @@ export function ListadoDefectos({
 function etiquetaSprint(id: number, sprints: SprintResumen[]): string {
   const sprint = sprints.find((actual) => actual.id === id)
   return sprint ? `Sprint ${sprint.numero}` : `Sprint ${id}`
+}
+
+function formatearFecha(iso: string): string {
+  const [anio, mes, dia] = iso.slice(0, 10).split('-')
+  return `${dia}/${mes}/${anio}`
 }
