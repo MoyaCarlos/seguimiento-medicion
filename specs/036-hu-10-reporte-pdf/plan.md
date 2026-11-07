@@ -2,7 +2,7 @@
 
 **Branch**: `feature/HU-10-reporte-pdf` | **Date**: 2026-11-05 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/034-hu-10-reporte-pdf/spec.md`
+**Input**: Feature specification from `/specs/036-hu-10-reporte-pdf/spec.md`
 
 ## Summary
 
@@ -57,7 +57,7 @@ Constitución v1.1.0 (`.specify/memory/constitution.md`). Re-evaluada después d
 ### Documentation (this feature)
 
 ```text
-specs/034-hu-10-reporte-pdf/
+specs/036-hu-10-reporte-pdf/
 ├── plan.md              # Este archivo
 ├── research.md          # Fase 0
 ├── data-model.md        # Fase 1

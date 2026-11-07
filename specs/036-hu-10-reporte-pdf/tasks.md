@@ -4,7 +4,7 @@ description: "Tareas de HU-10: Generación de Reporte en PDF (TDD con commits po
 
 # Tasks: Generación de Reporte en PDF (HU-10)
 
-**Input**: Design documents from `/specs/034-hu-10-reporte-pdf/`
+**Input**: Design documents from `/specs/036-hu-10-reporte-pdf/`
 
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/openapi.yaml, quickstart.md
 
@@ -212,7 +212,7 @@ Sprints finalizados, métricas/esfuerzo/defectos dicen "sin datos".
 - [X] T040 COMMIT `GREEN: implementar los pasos BDD de reporte en PDF, escenarios en verde`
 - [X] T041 Correr `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...`,
   y en web/ `npm run lint` y `npm test`, sin errores (los checks `backend` y `frontend` del CI)
-- [X] T042 Validar a mano con specs/034-hu-10-reporte-pdf/quickstart.md (pasos 1 a 9) y anotar
+- [X] T042 Validar a mano con specs/036-hu-10-reporte-pdf/quickstart.md (pasos 1 a 9) y anotar
   el resultado al final de ese archivo
 - [X] T043 Marcar como `[X]` en este tasks.md las tareas terminadas y actualizar las casillas de
   las sub-issues #74, #75, #76 y #77 + COMMIT `docs: actualizar el avance de tasks de HU-10`
