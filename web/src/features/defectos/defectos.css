@@ -1,0 +1,150 @@
+.defectos {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.defectos-aviso {
+  background: #fff8e6;
+  border: 1px solid #f0d58a;
+  border-radius: 0.6rem;
+  color: #6b4e00;
+  margin: 0;
+  padding: 0.75rem 1rem;
+}
+
+.defectos-registro,
+.defectos-listado {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.defectos-registro h2,
+.defectos-listado h2 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.defectos-registro form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 40rem;
+}
+
+.field textarea,
+.field select {
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  padding: 0.75rem 0.85rem;
+}
+
+.field textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.field textarea:focus,
+.field select:focus {
+  border-color: var(--lilac);
+  box-shadow: 0 0 0 3px rgb(128 103 183 / 15%);
+  outline: none;
+}
+
+.defectos-resultado {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.defectos-lista {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.defecto {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.1rem;
+}
+
+.defecto__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.defecto__meta {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.defecto__descripcion {
+  margin: 0.25rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.defecto__etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.defecto__severidad,
+.defecto__estado {
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+}
+
+.defecto__severidad--alta {
+  background: #fde2e7;
+  color: #9b1c3b;
+}
+
+.defecto__severidad--media {
+  background: #fff0d6;
+  color: #7a4b00;
+}
+
+.defecto__severidad--baja {
+  background: #e3f4ea;
+  color: #1e6b3a;
+}
+
+.defecto__estado--pendiente {
+  background: #eee8f8;
+  color: var(--lilac-dark);
+}
+
+.defecto__estado--resuelto {
+  background: #e3f4ea;
+  color: #1e6b3a;
+}
+
+.defecto__datos {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.defectos-vacio {
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: 0.8rem;
+  color: var(--muted);
+  margin: 0;
+  padding: 1.5rem;
+  text-align: center;
+}

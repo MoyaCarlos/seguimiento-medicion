@@ -21,6 +21,7 @@ export const rutas: RouteObject[] = [
           { path: 'backlog/*', lazy: () => import('./features/backlog') },
           { path: 'votacion/:historiaId', lazy: () => import('./features/votacion') },
           { path: 'sprints/*', lazy: () => import('./features/sprints') },
+          { path: 'defectos/*', lazy: () => import('./features/defectos') },
           { path: 'status/*', lazy: () => import('./features/estado') },
           { path: 'dashboard/*', lazy: () => import('./features/dashboard') },
         ],
