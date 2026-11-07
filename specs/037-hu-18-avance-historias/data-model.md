@@ -31,7 +31,7 @@
 
 ### AvanceHistorias
 
-`Grupos` con exactamente tres elementos, siempre en el orden Nueva, En progreso, Completada, más `Total` (`Cantidad` y `StoryPoints` de todo el proyecto). Se construye con `AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, error)`; devuelve error si una historia referencia un Sprint ausente de `sprints` o tiene un estado desconocido.
+`Grupos` con exactamente tres elementos, siempre en el orden Nueva, En progreso, Completada, más `Total` (`Cantidad` y `StoryPoints` de todo el proyecto). Se construye con `AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, error)`; devuelve error si una historia referencia un Sprint ausente de `sprints` o tiene un estado desconocido. Esa es la firma desde la primera tarea de implementación (`tasks.md`, US1): con `sprints` vacío o `nil` ninguna historia con Sprint se puede resolver, y la resolución del Sprint se agrega en US2.
 
 ## Puerto (`internal/repository`)
 
@@ -51,5 +51,6 @@ AvanceHistoriasRepository
 | Tres grupos siempre (FR-002) | `AgruparAvance` |
 | Sin estimar cuenta y suma 0 (FR-004) | `AgruparAvance` |
 | Sprint o Product Backlog (FR-003) | `AgruparAvance` |
-| 404 / 400 (FR-006) | service / `parsearID` |
+| 404 (FR-006) | service (`ErrProyectoNoEncontrado`), mapeado por `escribirError` |
+| 400 con campo `id` (FR-006) | `parsearID` en el handler, antes de llamar al service |
 | Sin escritura (FR-007) | el puerto solo expone lectura |
