@@ -25,14 +25,14 @@ export type Avance = {
   grupos: GrupoAvance[]
 }
 
-export function textoDeSprint(_sprint: SprintRef | null): string {
-  return ''
+export function textoDeSprint(sprint: SprintRef | null): string {
+  return sprint ? `Sprint ${sprint.numero}` : 'Product Backlog'
 }
 
-export function textoDeEstimacion(_storyPoints: number | null): string {
-  return ''
+export function textoDeEstimacion(storyPoints: number | null): string {
+  return storyPoints === null ? 'sin estimar' : String(storyPoints)
 }
 
-export function esIdValido(_id: string): boolean {
-  return false
+export function esIdValido(id: string): boolean {
+  return /^[1-9]\d*$/.test(id)
 }
