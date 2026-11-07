@@ -46,8 +46,10 @@ var estadosDelAvance = []Estado{EstadoNueva, EstadoEnProgreso, EstadoCompletada}
 
 // AgruparAvance agrupa las historias por estado, en el orden Nueva, En
 // progreso, Completada, y suma cantidad y Story Points de cada grupo y del
-// proyecto. Conserva el orden recibido dentro de cada grupo. Devuelve error si
-// una historia tiene un estado desconocido.
+// proyecto. Conserva el orden recibido dentro de cada grupo. Resuelve el Sprint
+// de cada historia con la lista de Sprints del proyecto; sin SprintID queda en
+// nil (Product Backlog). Devuelve error, sin datos parciales, si una historia
+// tiene un estado desconocido o apunta a un Sprint ausente de la lista.
 func AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, error) {
 	grupos := make([]GrupoAvance, len(estadosDelAvance))
 	posicion := make(map[Estado]int, len(estadosDelAvance))
@@ -56,18 +58,31 @@ func AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, 
 		posicion[estado] = i
 	}
 
+	sprintPorID := make(map[int64]SprintRef, len(sprints))
+	for _, sprint := range sprints {
+		sprintPorID[sprint.ID] = SprintRef{ID: sprint.ID, Numero: sprint.Numero}
+	}
+
 	var total TotalesAvance
 	for _, h := range historias {
 		i, ok := posicion[h.Estado]
 		if !ok {
 			return AvanceHistorias{}, fmt.Errorf("la historia %d tiene un estado desconocido: %q", h.ID, h.Estado)
 		}
+		var sprint *SprintRef
+		if h.SprintID != nil {
+			ref, ok := sprintPorID[*h.SprintID]
+			if !ok {
+				return AvanceHistorias{}, fmt.Errorf("la historia %d apunta al Sprint %d, que no está en la lista del proyecto", h.ID, *h.SprintID)
+			}
+			sprint = &ref
+		}
 		puntos := 0
 		if h.EstimacionSP != nil {
 			puntos = *h.EstimacionSP
 		}
 		grupos[i].Historias = append(grupos[i].Historias, HistoriaAvance{
-			ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Estado: h.Estado,
+			ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Estado: h.Estado, Sprint: sprint,
 		})
 		grupos[i].Cantidad++
 		grupos[i].StoryPoints += puntos

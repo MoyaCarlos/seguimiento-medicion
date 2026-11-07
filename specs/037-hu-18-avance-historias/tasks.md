@@ -88,8 +88,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 
 - [X] T024 [US2] RED: en internal/domain/avance_historias_test.go, resolución del Sprint en `AgruparAvance` con una lista de Sprints: la historia con `SprintID` recibe `Sprint` = `{ID, Numero}` del Sprint de la lista (US2.1); sin `SprintID` queda `Sprint` en `nil` (US2.2); una historia Nueva asignada a un Sprint no iniciado conserva ese Sprint (Clarification 2); una historia que referencia un Sprint ausente de la lista → error (fuentes inconsistentes, research.md R3) — confirmar que FALLA
 - [X] T025 [US2] COMMIT `RED: agregar tests del Sprint de cada historia en el dominio (fallan)`
-- [ ] T026 [US2] GREEN: resolver `SprintID → SprintRef` en `AgruparAvance` (internal/domain/avance_historias.go) — `go test ./internal/... ./cmd/...` en verde (los tests de service y handler de US2 todavía no existen)
-- [ ] T027 [US2] COMMIT `GREEN: informar el Sprint de cada historia en el dominio, test en verde`
+- [X] T026 [US2] GREEN: resolver `SprintID → SprintRef` en `AgruparAvance` (internal/domain/avance_historias.go) — `go test ./internal/... ./cmd/...` en verde (los tests de service y handler de US2 todavía no existen)
+- [X] T027 [US2] COMMIT `GREEN: informar el Sprint de cada historia en el dominio, test en verde`
 - [ ] T028 [US2] RED: en internal/service/consultar_avance_historias_test.go, con un fake de Sprints con número: el service lista los Sprints del proyecto y los pasa al dominio, de modo que cada historia trae su Sprint o `nil`; un error del listado de Sprints se propaga; una historia que apunta a un Sprint ausente del listado devuelve error interno (no `ErrSprintNoEncontrado`, que respondería 404) — confirmar que FALLA (el service de US1 pasa `nil`)
 - [ ] T029 [US2] COMMIT `RED: agregar tests del listado de Sprints en ConsultarAvanceHistorias (fallan)`
 - [ ] T030 [US2] RED: en internal/http/avance_handler_test.go, con el service real y fakes: `sprint` serializado como `{id, numero}` para una historia con Sprint y como `null` para una sin Sprint (contracts/openapi.yaml) — confirmar que FALLA (el service todavía no entrega el Sprint)
