@@ -70,13 +70,13 @@ Estas funcionalidades son el corazón del valor para el cliente final, pero tien
 * **HU-10: Generación de Reporte en PDF (Must have).** Exportación a PDF con Maroto, de un Sprint o del proyecto completo, con historias, estimaciones, esfuerzo, métricas y defectos (punto 9 del enunciado; el Sprint 4 pide el informe del proyecto).
 * **HU-12: Consulta de Sprints Anteriores (Should have).** Requisito explícito del punto 3 del enunciado. Va al final porque su historial muestra métricas (HU-03), esfuerzo (HU-07) y defectos (HU-08), que tienen que existir antes.
 
-## ***Prioridad 5: Mejoras de calidad (beta testing y decisión del Scrum Master) (Could have / Should have)***
+## ***Prioridad 5: Mejoras de calidad (beta testing y decisión del Scrum Master) (Could have / Should have / Must have)***
 
-HU-16 a HU-19 surgieron al probar la aplicación desplegada en Render (2026-10-30); HU-20 y HU-21 salieron de la decisión del Scrum Master del 2026-11-03. No son requisitos del enunciado. HU-16, HU-17 y HU-18 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo.
+HU-16 a HU-19 surgieron al probar la aplicación desplegada en Render (2026-10-30); HU-20 y HU-21 salieron de la decisión del Scrum Master del 2026-11-03. No son requisitos del enunciado. HU-16 y HU-17 se estiman con el equipo y entran solo si sobra tiempo, siempre después de las historias de las prioridades anteriores. HU-20 (Sprint 4) y HU-21 (Sprint 5), junto con las mejoras #235 y #236 (Sprint 4), figuran en el plan de cada Sprint por decisión del Scrum Master (2026-11-03): no dependen de que sobre tiempo. HU-18 (Sprint 4) también deja de depender de que sobre tiempo: pasa a obligatoria por decisión del Scrum Master (2026-11-07), porque la pantalla Estado no puede quedar vacía en la entrega. HU-19 quedó absorbida por HU-20 y HU-21. Prioridad, valor y estimación de estas seis historias son una propuesta del Scrum Master, a confirmar con el equipo; la excepción es la prioridad de HU-18, que ya es una decisión.
 
 * **HU-16: Gestión del Equipo del Proyecto (Could have).** Agregar a un usuario ya registrado como Product Builder y quitar integrantes sin perder lo que aportaron; el único Scrum Master no se quita ni cambia de rol. Extiende HU-04.
 * **HU-17: Gestión de Usuarios (Could have).** Crear y editar usuarios y elegir a los integrantes de una lista, en vez de escribir nombres a mano; incluye los usuarios predeterminados de la demo. A redefinir después de HU-20 y HU-21. Extiende HU-04.
-* **HU-18: Avance de las Historias del Proyecto (Should have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Extiende HU-15 y HU-11.
+* **HU-18: Avance de las Historias del Proyecto (Must have).** Ver todas las historias agrupadas por estado y por Sprint, para saber qué se terminó y qué falta. Obligatoria por decisión del Scrum Master (2026-11-07): la pantalla Estado no puede quedar vacía en la entrega. Extiende HU-15 y HU-11.
 * **HU-19: Administración de Mis Proyectos (Could have).** Absorbida por HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03). Su nivel 1, la lista y el selector de proyectos, es #148; los niveles 2 y 3 (mis proyectos, permisos por rol y autenticación) pasan a HU-20 y HU-21. Se descarta la transferencia de la propiedad: el dueño del proyecto es su Scrum Master. Extiende HU-04.
 * **HU-20: Autenticación de usuarios (Should have).** Registrarse e iniciar sesión con un nombre de usuario y una contraseña, para que el sistema sepa quién usa la aplicación. Extiende HU-04.
 * **HU-21: Permisos por rol (Should have).** Que las acciones de gestión del proyecto (Sprints, votación, edición y equipo) solo las pueda hacer el Scrum Master, con la identidad tomada de la sesión, y que cada persona vea solo sus proyectos. Depende de HU-20.
@@ -667,7 +667,7 @@ Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restric
 2. Escenario 3: asigna a un integrante cualquier rol, pero en HU-21 "configurar equipo" solo agrega usuarios ya registrados como Product Builder.
 3. Escenario 1: crea usuarios sin contraseña, pero con HU-20 cada persona se registra sola con la suya.
 4. Resuelto (Scrum Master, 2026-11-04): el nombre de usuario de HU-20 es `usuarios.nombre` y renombrar queda fuera de HU-20. Si HU-17 renombra un usuario (escenario 5), cambia su dato de ingreso.
-HU-17 se redefine después de HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03); hasta entonces sus escenarios quedan como están. Sigue entrando solo si sobra tiempo, igual que HU-16 y HU-18.
+HU-17 se redefine después de HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03); hasta entonces sus escenarios quedan como están. Sigue entrando solo si sobra tiempo, igual que HU-16.
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
@@ -705,9 +705,9 @@ HU-01 (historias), HU-05 y HU-06 (Sprints y su backlog), HU-11 (estado de la his
 Es una vista de solo lectura: no recalcula métricas (eso es HU-03) ni cambia el Product Backlog de HU-15, que sigue mostrando solo las historias sin Sprint.
 Reemplaza el texto "esta pantalla será implementada" de la pestaña Estado (`/projects/{id}/status`). El panel del proyecto conserva el estado Planificado / En curso / Finalizado de HU-13.
 ### Prioridad
-S (Should have) - Responde a la pregunta básica de seguimiento ("¿qué está terminado y qué no?") que hoy no se puede contestar desde la pantalla.
+M (Must have) - Responde a la pregunta básica de seguimiento ("¿qué está terminado y qué no?") que hoy no se puede contestar desde la pantalla. Decisión del Scrum Master (2026-11-07): la pantalla Estado no puede quedar vacía en la entrega.
 ### Estado
-Nueva
+Implementada (backend y frontend, issue #177; pendiente de revisión por PR)
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
