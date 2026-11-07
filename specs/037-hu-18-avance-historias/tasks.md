@@ -124,8 +124,8 @@ description: "Tareas de HU-18: Avance de las Historias del Proyecto (TDD con com
 - [X] T039 [US1] [US2] COMMIT `GREEN: implementar la API y las funciones del avance, test en verde`
 - [X] T040 [US1] [US2] [US3] RED: en web/src/features/estado/index.test.tsx y GrupoHistorias.test.tsx, pruebas de componente con el escenario en el nombre: tres grupos con cantidad y Story Points (US1.1-US1.2) e historia "sin estimar" (US1.3); Sprint de cada historia o "Product Backlog" (US2.1-US2.2); proyecto sin historias → mensaje y totales en cero (US3.1); id de la ruta inválido → mensaje de error sin pedir al servidor; carga, error de API y error de conexión como estados distintos, sin datos parciales — confirmar que FALLA
 - [X] T041 [US1] [US2] [US3] COMMIT `RED: agregar pruebas de componente de la pantalla Estado (fallan)`
-- [ ] T042 [US1] [US2] [US3] GREEN: reemplazar web/src/features/estado/index.tsx (validar el id con `/^[1-9]\d*$/` antes de pedir, `LoadingIndicator`, `ErrorMessage`), crear web/src/features/estado/GrupoHistorias.tsx y web/src/features/estado/estado.css con el diseño actual y los componentes de web/src/compartido/componentes, sin librerías nuevas, sin desborde en 320 px — `npm run lint && npm test && npm run build` en verde
-- [ ] T043 [US1] [US2] [US3] COMMIT `GREEN: implementar la pantalla Estado, test en verde`
+- [X] T042 [US1] [US2] [US3] GREEN: reemplazar web/src/features/estado/index.tsx (validar el id con `/^[1-9]\d*$/` antes de pedir, `LoadingIndicator`, `ErrorMessage`), crear web/src/features/estado/GrupoHistorias.tsx y web/src/features/estado/estado.css con el diseño actual y los componentes de web/src/compartido/componentes, sin librerías nuevas, sin desborde en 320 px — `npm run lint && npm test && npm run build` en verde
+- [X] T043 [US1] [US2] [US3] COMMIT `GREEN: implementar la pantalla Estado, test en verde`
 
 ---
 
