@@ -47,6 +47,24 @@ describe('cliente del avance', () => {
     await expect(consultarAvance('7')).rejects.toThrow('La respuesta no trae el avance')
   })
 
+  it.each([
+    ['sin total', { grupos: AVANCE.grupos }],
+    ['con total nulo', { total: null, grupos: AVANCE.grupos }],
+    ['con total que no es un objeto', { total: 8, grupos: AVANCE.grupos }],
+    ['con total sin historias ni story_points', { total: {}, grupos: AVANCE.grupos }],
+    ['con total sin story_points', { total: { historias: 2 }, grupos: AVANCE.grupos }],
+    ['con total sin historias', { total: { story_points: 8 }, grupos: AVANCE.grupos }],
+    ['con historias que no es un número', { total: { historias: '2', story_points: 8 }, grupos: AVANCE.grupos }],
+    ['con story_points nulo', { total: { historias: 2, story_points: null }, grupos: AVANCE.grupos }],
+  ])(
+    'Dado una respuesta %s, cuando se consulta el avance, entonces rechaza en vez de dejar la pantalla sin datos',
+    async (_caso, cuerpo) => {
+      responder(cuerpo)
+
+      await expect(consultarAvance('7')).rejects.toThrow('La respuesta no trae el avance')
+    },
+  )
+
   it('Dado una respuesta vacía, cuando se consulta el avance, entonces rechaza', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })))
 
