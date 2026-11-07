@@ -1,5 +1,7 @@
 package domain
 
+import "fmt"
+
 // SprintRef identifica el Sprint de una historia en el avance (HU-18).
 type SprintRef struct {
 	ID     int64
@@ -40,9 +42,37 @@ type AvanceHistorias struct {
 	Total  TotalesAvance
 }
 
+var estadosDelAvance = []Estado{EstadoNueva, EstadoEnProgreso, EstadoCompletada}
+
 // AgruparAvance agrupa las historias por estado, en el orden Nueva, En
 // progreso, Completada, y suma cantidad y Story Points de cada grupo y del
-// proyecto. Conserva el orden recibido dentro de cada grupo.
+// proyecto. Conserva el orden recibido dentro de cada grupo. Devuelve error si
+// una historia tiene un estado desconocido.
 func AgruparAvance(historias []BacklogItem, sprints []Sprint) (AvanceHistorias, error) {
-	return AvanceHistorias{}, nil
+	grupos := make([]GrupoAvance, len(estadosDelAvance))
+	posicion := make(map[Estado]int, len(estadosDelAvance))
+	for i, estado := range estadosDelAvance {
+		grupos[i] = GrupoAvance{Estado: estado, Historias: []HistoriaAvance{}}
+		posicion[estado] = i
+	}
+
+	var total TotalesAvance
+	for _, h := range historias {
+		i, ok := posicion[h.Estado]
+		if !ok {
+			return AvanceHistorias{}, fmt.Errorf("la historia %d tiene un estado desconocido: %q", h.ID, h.Estado)
+		}
+		puntos := 0
+		if h.EstimacionSP != nil {
+			puntos = *h.EstimacionSP
+		}
+		grupos[i].Historias = append(grupos[i].Historias, HistoriaAvance{
+			ID: h.ID, Titulo: h.Titulo, EstimacionSP: h.EstimacionSP, Estado: h.Estado,
+		})
+		grupos[i].Cantidad++
+		grupos[i].StoryPoints += puntos
+		total.Historias++
+		total.StoryPoints += puntos
+	}
+	return AvanceHistorias{Grupos: grupos, Total: total}, nil
 }
