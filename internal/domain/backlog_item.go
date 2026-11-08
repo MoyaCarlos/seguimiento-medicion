@@ -77,14 +77,9 @@ func (b BacklogItem) ConDatosEditados(titulo, descripcion string, criterios *str
 		return BacklogItem{}, err
 	}
 
-	var criteriosNormalizados *string
-	if criterios != nil {
-		if texto := strings.TrimSpace(*criterios); texto != "" {
-			if len([]rune(texto)) > longitudMaximaCriterios {
-				return BacklogItem{}, ValidationError{Campo: "criterios_aceptacion", Mensaje: "los criterios de aceptación no pueden superar los 2000 caracteres"}
-			}
-			criteriosNormalizados = &texto
-		}
+	criteriosNormalizados, err := normalizarCriterios(criterios)
+	if err != nil {
+		return BacklogItem{}, err
 	}
 
 	if estimacionSP != nil && !EsEstimacionValida(*estimacionSP) {
@@ -120,7 +115,26 @@ func validarDescripcion(descripcion string) (string, error) {
 
 // ConCriteriosAceptacion devuelve una copia de la historia con esos criterios.
 func (b BacklogItem) ConCriteriosAceptacion(criterios *string) (BacklogItem, error) {
+	normalizados, err := normalizarCriterios(criterios)
+	if err != nil {
+		return BacklogItem{}, err
+	}
+	b.CriteriosAceptacion = normalizados
 	return b, nil
+}
+
+func normalizarCriterios(criterios *string) (*string, error) {
+	if criterios == nil {
+		return nil, nil
+	}
+	texto := strings.TrimSpace(*criterios)
+	if texto == "" {
+		return nil, nil
+	}
+	if len([]rune(texto)) > longitudMaximaCriterios {
+		return nil, ValidationError{Campo: "criterios_aceptacion", Mensaje: "los criterios de aceptación no pueden superar los 2000 caracteres"}
+	}
+	return &texto, nil
 }
 
 // ConEstimacion devuelve una copia de la historia con esos Story Points.
