@@ -28,12 +28,12 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: base migrada hasta la 005 y sembrada; al aplicar la 007 queda a lo sumo un Scrum Master por proyecto y el índice rechaza un segundo.
 
-- [ ] T001 [US4] RED: test de la corrección en `internal/repository/migrate_test.go` (o `migracion_007_test.go`): armar un `fstest.MapFS` con las migraciones embebidas menos la 007, aplicarlo, sembrar proyectos con 0, 1, 2 y 3 Scrum Master y un empate de `creado_en`, aplicar `AplicarMigraciones` y verificar quién queda, que nadie se borra y que los demás pasan a `product_builder` — confirmar que FALLA
-- [ ] T002 [US3] RED: test de esquema en `internal/repository/esquema_test.go`: agregar a `esquemaEsperado["integrantes"]` el índice `integrantes_un_scrum_master` (columna `proyecto_id`, `WHERE rol = 'scrum_master'`) y las filas del FR-014 (segundo `scrum_master` por `INSERT` y por `UPDATE` rechazados con `UNIQUE`; varios `product_builder` y un `scrum_master` por proyecto distinto aceptados) — confirmar que FALLA
-- [ ] T003 COMMIT `RED: agregar tests de la migración 007 y del índice de Scrum Master único (falla)`
-- [ ] T004 [US3][US4] GREEN: `internal/repository/migraciones/007_scrum_master_unico.sql`: comentario inicial con el criterio (de `creado_en` más antiguo; empate, menor `usuario_id`; por qué: la base de Render se vacía en cada deploy y los datos v2 crean un SM por proyecto), `UPDATE` de corrección y después `CREATE UNIQUE INDEX integrantes_un_scrum_master ON integrantes (proyecto_id) WHERE rol = 'scrum_master'`. `go test ./internal/repository/` en verde
-- [ ] T005 COMMIT `GREEN: implementar la migración 007 (Scrum Master único), test en verde`
-- [ ] T006 (solo si hay algo que limpiar) REFACTOR de los tests de la fase 1 + COMMIT `REFACTOR: <qué se limpió>`
+- [x] T001 [US4] RED: test de la corrección en `internal/repository/migrate_test.go` (o `migracion_007_test.go`): armar un `fstest.MapFS` con las migraciones embebidas menos la 007, aplicarlo, sembrar proyectos con 0, 1, 2 y 3 Scrum Master y un empate de `creado_en`, aplicar `AplicarMigraciones` y verificar quién queda, que nadie se borra y que los demás pasan a `product_builder` — confirmar que FALLA
+- [x] T002 [US3] RED: test de esquema en `internal/repository/esquema_test.go`: agregar a `esquemaEsperado["integrantes"]` el índice `integrantes_un_scrum_master` (columna `proyecto_id`, `WHERE rol = 'scrum_master'`) y las filas del FR-014 (segundo `scrum_master` por `INSERT` y por `UPDATE` rechazados con `UNIQUE`; varios `product_builder` y un `scrum_master` por proyecto distinto aceptados) — confirmar que FALLA
+- [x] T003 COMMIT `RED: agregar tests de la migración 007 y del índice de Scrum Master único (falla)`
+- [x] T004 [US3][US4] GREEN: `internal/repository/migraciones/007_scrum_master_unico.sql`: comentario inicial con el criterio (de `creado_en` más antiguo; empate, menor `usuario_id`; por qué: la base de Render se vacía en cada deploy y los datos v2 crean un SM por proyecto), `UPDATE` de corrección y después `CREATE UNIQUE INDEX integrantes_un_scrum_master ON integrantes (proyecto_id) WHERE rol = 'scrum_master'`. `go test ./internal/repository/` en verde
+- [x] T005 COMMIT `GREEN: implementar la migración 007 (Scrum Master único), test en verde`
+- [x] T006 (sin cambios: no había nada que limpiar) (solo si hay algo que limpiar) REFACTOR de los tests de la fase 1 + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: `go test ./...` en verde con la 007 aplicada.
 
