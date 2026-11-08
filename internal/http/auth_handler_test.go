@@ -560,3 +560,47 @@ func TestAuthHandler_Salir_OtraSesionDelMismoUsuarioSigueValida(t *testing.T) {
 		t.Errorf("la otra sesión: status = %d, se esperaba 200", yo.Code)
 	}
 }
+
+// cuerpoGrande devuelve un JSON válido de ~70 KB (más que el límite de 64 KB):
+// el relleno va antes del objeto, así el decodificador tiene que leerlo entero.
+func cuerpoGrande(nombre, contrasena string) string {
+	return strings.Repeat(" ", 70*1024) + `{"nombre":"` + nombre + `","contrasena":"` + contrasena + `"}`
+}
+
+func TestAuthHandler_Registro_Devuelve400ConCuerpoMayorA64KBSinRegistrar(t *testing.T) {
+	h, credenciales := nuevoAuthHandlerDePrueba()
+
+	rec := postRegistro(h, cuerpoGrande("Ana.Perez", "una-clave-larga"))
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("status = %d, se esperaba 400 (cuerpo: %s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Mensaje != "JSON inválido" || resp.Campo != "" {
+		t.Errorf("respuesta = %+v, se esperaba solo el mensaje JSON inválido", resp)
+	}
+	if len(credenciales.usuarios) != 0 {
+		t.Errorf("se registraron %d usuarios, se esperaba ninguno", len(credenciales.usuarios))
+	}
+}
+
+func TestAuthHandler_Ingreso_Devuelve400ConCuerpoMayorA64KBSinIngresar(t *testing.T) {
+	h, _, sesiones, _ := nuevoAuthHandlerConSesiones()
+	postRegistro(h, `{"nombre":"Ana.Perez","contrasena":"una-clave-larga"}`)
+	antes := len(sesiones.sesiones)
+
+	rec := postIngreso(h, cuerpoGrande("Ana.Perez", "una-clave-larga"))
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("status = %d, se esperaba 400 (cuerpo: %s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Mensaje != "JSON inválido" || resp.Campo != "" {
+		t.Errorf("respuesta = %+v, se esperaba solo el mensaje JSON inválido", resp)
+	}
+	if despues := len(sesiones.sesiones); despues != antes {
+		t.Errorf("sesiones = %d, se esperaban %d (no debía abrirse sesión)", despues, antes)
+	}
+}
