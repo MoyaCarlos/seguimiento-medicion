@@ -72,7 +72,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           />
           {estaRevelada(votacion) && (
             <>
-              <Resultado promedio={votacion.promedio} />
+              <Resultado promedio={votacion.promedio} diferencias={votacion.diferencias} />
               <p>Registrar la estimación acordada se hace en otra historia (HU-14).</p>
             </>
           )}

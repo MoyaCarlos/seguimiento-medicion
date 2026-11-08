@@ -60,7 +60,11 @@ export function textoDeVoto(voto: VotoDeIntegrante): string {
   return voto.valor === null ? 'Oculto' : String(voto.valor)
 }
 
-export const textoDeDiferencias = (_diferencias: Diferencias | null): string => ''
+export function textoDeDiferencias(diferencias: Diferencias | null): string {
+  if (diferencias === null) return ''
+  if (!diferencias.hay_diferencias) return 'No hay diferencias: todos votaron lo mismo'
+  return `Hay diferencias: mínimo ${diferencias.minimo}, máximo ${diferencias.maximo}`
+}
 
 export const sinValores = (votacion: Votacion): Votacion => ({
   ...votacion,
