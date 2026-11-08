@@ -119,4 +119,4 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 ## Notes
 
 - Un commit por fase del ciclo TDD: el historial `RED:` / `GREEN:` / `REFACTOR:` es evidencia evaluada por la cátedra. Merge con "Create a merge commit".
-- Si #236 se mergea antes que HU-20, no hay que renumerar (la 006 queda libre); si después, tampoco (research.md §3).
+- Si #236 se mergea antes que HU-20, no hay que renumerar (el runner tolera el hueco de la 006, `MODELO-DE-DATOS.md` §9); si después, tampoco (research.md §3).

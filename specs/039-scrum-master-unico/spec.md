@@ -14,7 +14,7 @@
 
 - Q: ¿Qué hace la migración 007 con proyectos que ya tienen más de un Scrum Master? → A: Opción B. Conserva como Scrum Master al de `creado_en` más antiguo de cada proyecto (si empatan, el de menor `usuario_id`) y pasa a `product_builder` a los demás, dentro de la misma migración y antes de crear el índice único parcial. Motivo: la base de Render se vacía en cada deploy y los datos de prueba v2 crean un solo Scrum Master por proyecto, así que la migración tiene que arrancar sola, sin depender de un arreglo manual. La migración 007 explica este criterio en un comentario.
 - Q: Si la persona que se agrega como `scrum_master` ya es integrante del proyecto, ¿qué error prevalece? → A: El de integrante duplicado actual (400) prevalece sobre el 409. Confirma el supuesto de FR-006.
-- Sin cambios: la migración se llama 007 y se renumera si #236 se mergea antes que HU-20; traspasar el rol y quitar integrantes siguen fuera de alcance (HU-16, #175).
+- Sin cambios: la migración se llama 007 y no se renumera nunca: si #236 se mergea antes que HU-20, el runner tolera el hueco de la 006 (`MODELO-DE-DATOS.md` §9); traspasar el rol y quitar integrantes siguen fuera de alcance (HU-16, #175).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -172,7 +172,7 @@ Redactados en formato EARS.
 
 - **Decisión de producto**: tomada por el Scrum Master el 2026-11-03; es del equipo y no se consulta a la cátedra.
 - **Dependencia con HU-20/HU-21**: esta historia no exige login; la regla vale con o sin él. Los permisos por rol (HU-20, HU-21) se apoyan en ella.
-- **Numeración de la migración**: 007. Si #236 se mergea antes que HU-20, hay que renumerar (la 006 queda libre para HU-20 o se reasigna): anotarlo en la tabla de §9 en el PR que se mergee segundo. La spec 039 no se renumera.
+- **Numeración de la migración**: 007, siempre. No hace falta renumerar: el runner aplica las migraciones que faltan aunque haya huecos (`MODELO-DE-DATOS.md` §9), así que si #236 se mergea antes que HU-20, la 006 queda libre para HU-20 y se aplica después sin problema.
 - **Quién es el dueño**: el Scrum Master del proyecto. No se guarda una referencia aparte al dueño (D14 deja de hacer falta).
 - **Cómo se crea hoy el proyecto**: `POST /projects` con `creador`, que inserta el proyecto y la membresía de Scrum Master en una sola transacción. Ese camino ya cumple la regla y no cambia.
 - **Cómo se cambia el rol hoy**: no existe. No hay endpoint ni operación para cambiar el rol ni reactivar a un integrante; la clave primaria impide repetir a una persona. Por eso el único camino a cubrir además de la creación es `POST /projects/{id}/members`.
