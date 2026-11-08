@@ -23,6 +23,7 @@ export const rutas: RouteObject[] = [
           { path: 'sprints/*', lazy: () => import('./features/sprints') },
           { path: 'status/*', lazy: () => import('./features/estado') },
           { path: 'dashboard/*', lazy: () => import('./features/dashboard') },
+          { path: 'historial/*', lazy: () => import('./features/historial') },
         ],
       },
       { path: '*', element: <NoEncontrada /> },
