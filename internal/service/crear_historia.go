@@ -35,6 +35,10 @@ func (s *CrearHistoriaBacklog) Ejecutar(ctx context.Context, input CrearHistoria
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
+	item, err = item.ConCriteriosAceptacion(input.CriteriosAceptacion)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
 	if _, err := s.proyectos.ObtenerPorID(ctx, input.ProyectoID); err != nil {
 		return domain.BacklogItem{}, err
 	}
