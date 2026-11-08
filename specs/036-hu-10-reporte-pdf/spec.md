@@ -18,6 +18,11 @@
 - Q: ¿El reporte del proyecto incluye el esfuerzo y los defectos del Sprint Activo? → A: No. El Sprint Activo se lista con sus historias (título, estado y estimación); su esfuerzo, sus métricas y sus defectos no se incluyen ni suman a los totales. Ya está definido en el issue #10 y en las notas del backlog.
 - Q: ¿Qué datos de cada defecto incluye el reporte? → A: Descripción, severidad, estado e historia relacionada, más los Sprints de detección y resolución. Se toma la definición de la spec 023 de HU-08.
 
+### Session 2026-11-07
+
+- Q: ¿El esfuerzo se informa por historia o agregado? → A: Agregado por Sprint, con horas reales, horas estimadas y desviación. El reporte no muestra horas por historia.
+- Q: ¿El reporte incluye las historias de un Sprint "Pendiente"? → A: No. El reporte del proyecto lista solo los Sprints finalizados y, si existe, el Sprint Activo; un Sprint "Pendiente" no aporta historias, métricas, esfuerzo ni defectos.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Exportar el reporte de un Sprint finalizado (Priority: P1)
@@ -118,11 +123,13 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - El sistema **shall** generar el reporte sin modificar ningún dato del proyecto, Sprint, historia, hora o defecto.
 - El sistema **shall** tomar las métricas de HU-03 tal como esa historia las define; el reporte no **shall** recalcularlas con reglas propias.
 - **WHILE** un Sprint está "Pendiente" o "Activo", el sistema **shall** excluirlo de las métricas, el esfuerzo y los defectos del reporte del proyecto; el Sprint Activo solo **shall** listarse con sus historias.
+- **WHEN** un Sprint está "Pendiente", **THEN** el sistema **shall** no incluir sus historias en el reporte del proyecto.
 - **WHEN** se solicita el reporte de un Sprint que no está "Finalizado", **THEN** el sistema **shall** rechazar la operación con un mensaje claro y **shall** no generar archivo.
 - **WHEN** se solicita el reporte de un proyecto sin Sprints finalizados, **THEN** el sistema **shall** generarlo con los datos del proyecto, el Product Backlog y el Sprint Activo si existe, y **shall** informar métricas, esfuerzo y defectos como "sin datos".
 - **WHEN** se solicita el reporte de un proyecto o Sprint inexistente, **THEN** el sistema **shall** responder "proyecto no encontrado" o "Sprint no encontrado" antes de generar el archivo.
 - **IF** un Sprint finalizado no tiene historias comprometidas, **THEN** el reporte **shall** mostrar la sección vacía o con cero Story Points, sin fallar.
 - **IF** un Sprint finalizado no tiene horas imputadas, **THEN** el reporte **shall** informar cero horas reales; el resto de las métricas **shall** seguir las reglas de HU-03.
+- **WHEN** el reporte informa el esfuerzo, **THEN** el sistema **shall** mostrarlo agregado por Sprint (horas reales, estimadas y desviación) y **shall** no listar horas por historia.
 - **IF** un Sprint finalizado no tiene defectos detectados ni resueltos, **THEN** el reporte **shall** mostrar la sección vacía o "sin defectos", sin fallar.
 - **IF** una historia no tiene estimación, **THEN** el reporte **shall** mostrarla como "sin estimar" y **shall** sumar cero a los totales de Story Points, igual que HU-03.
 - **WHEN** una historia fue arrastrada desde un Sprint anterior, **THEN** el reporte del Sprint anterior **shall** mostrarla como planificada y no completada, con los Story Points que tenía al cerrar; si se completó después, **shall** aparecer como completada en el Sprint donde se completó.
