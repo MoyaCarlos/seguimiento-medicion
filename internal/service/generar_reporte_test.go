@@ -165,6 +165,39 @@ func TestGenerarReporte_EjecutarSprint_DevuelveTodasLasSecciones(t *testing.T) {
 	}
 }
 
+func TestGenerarReporte_EjecutarSprint_MarcaCompletadaSoloSiElEstadoEsCompletada(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	finalizado := sprintDeReporte(t, sprints, 1, "Cerrar el carrito", domain.SprintFinalizado)
+
+	historias := &fakeHistoriasDeSprintRepository{porSprint: map[int64][]domain.BacklogItem{
+		finalizado.ID: {
+			historiaDeReporte(10, 1, &finalizado.ID, "Completada", domain.PrioridadMust, domain.EstadoCompletada, 5),
+			historiaDeReporte(11, 1, &finalizado.ID, "En progreso", domain.PrioridadMust, domain.EstadoEnProgreso, 3),
+		},
+	}}
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, sprints, &fakeProductBacklogRepository{}, historias,
+		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
+	)
+	reporte, err := sut.EjecutarSprint(context.Background(), finalizado.ID, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	if len(reporte.Sprint.Planificadas) != 2 {
+		t.Fatalf("se esperaban 2 historias planificadas, se obtuvieron %d", len(reporte.Sprint.Planificadas))
+	}
+	if !reporte.Sprint.Planificadas[0].Completada {
+		t.Errorf("la historia Completada debía marcarse como completada: %+v", reporte.Sprint.Planificadas[0])
+	}
+	if reporte.Sprint.Planificadas[1].Completada {
+		t.Errorf("una historia En progreso no debía marcarse como completada: %+v", reporte.Sprint.Planificadas[1])
+	}
+}
+
 func TestGenerarReporte_EjecutarSprint_Inexistente(t *testing.T) {
 	sut := nuevoGenerarReporteDePrueba(
 		&fakeProjectRepository{},
@@ -366,6 +399,39 @@ func TestGenerarReporte_EjecutarProyecto_DevuelveTodasLasSecciones(t *testing.T)
 	}
 	if reporte.SinSprintsFinalizados {
 		t.Error("no debía marcar el proyecto sin Sprints finalizados")
+	}
+}
+
+func TestGenerarReporte_EjecutarProyecto_NoMarcaCompletadasEnBacklogNiSprintActivo(t *testing.T) {
+	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
+	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	sprints := repository.NewSprintRepositoryEnMemoria()
+	activo := sprintDeReporte(t, sprints, 1, "Pulir la entrega", domain.SprintActivo)
+
+	historias := &fakeHistoriasDeSprintRepository{porSprint: map[int64][]domain.BacklogItem{
+		activo.ID: {historiaDeReporte(12, 1, &activo.ID, "Ajustes finales", domain.PrioridadMust, domain.EstadoCompletada, 2)},
+	}}
+	backlog := &fakeProductBacklogRepository{historias: []domain.BacklogItem{
+		historiaDeReporte(20, 1, nil, "Mejoras futuras", domain.PrioridadShould, domain.EstadoCompletada, 8),
+	}}
+
+	sut := nuevoGenerarReporteDePrueba(
+		proyectos, sprints, backlog, historias, &fakeArrastradasRepository{},
+		&fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
+	)
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	if len(reporte.ProductBacklog) != 1 || reporte.ProductBacklog[0].Completada {
+		t.Errorf("el Product Backlog no debía marcar historias como completadas: %+v", reporte.ProductBacklog)
+	}
+	if reporte.SprintActivo == nil || len(reporte.SprintActivo.Historias) != 1 {
+		t.Fatalf("se esperaba el Sprint Activo con su historia, se obtuvo %+v", reporte.SprintActivo)
+	}
+	if reporte.SprintActivo.Historias[0].Completada {
+		t.Errorf("el Sprint Activo no debía marcar historias como completadas: %+v", reporte.SprintActivo.Historias[0])
 	}
 }
 
