@@ -26,9 +26,9 @@ description: "Tareas de la spec 039: criterios de aceptación al crear una histo
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 COMMIT `Agregar spec 039 de criterios de aceptación en la creación` — incluye `specs/039-criterios-aceptacion-creacion/spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/api-backlog.md`, `quickstart.md`, `checklists/requirements.md` y este `tasks.md`
-- [ ] T002 Crear `features/criterios_aceptacion_creacion.feature` (tag `@HU-01`) con escenarios: alta con criterios, alta sin criterios (omitido/vacío), criterios con espacios externos, límite de 2000 y error por 2001. No escribir los pasos todavía
-- [ ] T003 COMMIT `Agregar escenarios BDD de criterios de aceptación en la creación`
+- [X] T001 COMMIT `Agregar spec 039 de criterios de aceptación en la creación` — incluye `specs/039-criterios-aceptacion-creacion/spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/api-backlog.md`, `quickstart.md`, `checklists/requirements.md` y este `tasks.md`
+- [X] T002 Crear `features/criterios_aceptacion_creacion.feature` (tag `@HU-01`) con escenarios: alta con criterios, alta sin criterios (omitido/vacío), criterios con espacios externos, límite de 2000 y error por 2001. No escribir los pasos todavía
+- [X] T003 COMMIT `Agregar escenarios BDD de criterios de aceptación en la creación`
 
 ---
 
@@ -36,10 +36,10 @@ description: "Tareas de la spec 039: criterios de aceptación al crear una histo
 
 **⚠️ CRITICAL**: sin la validación del dominio no se puede implementar el alta ni el handler.
 
-- [ ] T004 RED: agregar en `internal/domain/backlog_item_test.go` los tests de `ConCriteriosAceptacion(criterios *string) (BacklogItem, error)`: `nil` → `nil`; `""` y `"   "` → `nil`; texto con espacios externos → recortado; 2000 runas → válido; 2001 runas → `ValidationError` con `Campo: "criterios_aceptacion"` y mensaje "los criterios de aceptación no pueden superar los 2000 caracteres"; conserva los demás campos. Incluir solo la firma stub (sin lógica) en `internal/domain/backlog_item.go` para compilar. Confirmar que FALLA
-- [ ] T005 COMMIT `RED: agregar tests de ConCriteriosAceptacion (fallan)`
-- [ ] T006 GREEN: implementar `ConCriteriosAceptacion` y el helper `normalizarCriterios` compartido con `ConDatosEditados` en `internal/domain/backlog_item.go`. `go test ./internal/domain` en verde
-- [ ] T007 COMMIT `GREEN: implementar ConCriteriosAceptacion, test en verde`
+- [X] T004 RED: agregar en `internal/domain/backlog_item_test.go` los tests de `ConCriteriosAceptacion(criterios *string) (BacklogItem, error)`: `nil` → `nil`; `""` y `"   "` → `nil`; texto con espacios externos → recortado; 2000 runas → válido; 2001 runas → `ValidationError` con `Campo: "criterios_aceptacion"` y mensaje "los criterios de aceptación no pueden superar los 2000 caracteres"; conserva los demás campos. Incluir solo la firma stub (sin lógica) en `internal/domain/backlog_item.go` para compilar. Confirmar que FALLA
+- [X] T005 COMMIT `RED: agregar tests de ConCriteriosAceptacion (fallan)`
+- [X] T006 GREEN: implementar `ConCriteriosAceptacion` y el helper `normalizarCriterios` compartido con `ConDatosEditados` en `internal/domain/backlog_item.go`. `go test ./internal/domain` en verde
+- [X] T007 COMMIT `GREEN: implementar ConCriteriosAceptacion, test en verde`
 
 **Checkpoint**: el dominio acepta, recorta y rechaza criterios con las mismas reglas que la edición.
 
@@ -51,14 +51,14 @@ description: "Tareas de la spec 039: criterios de aceptación al crear una histo
 
 **Independent Test**: crear por API una historia con criterios y otra sin criterios; la respuesta y la base reflejan el valor normalizado; 2001 caracteres responde 400 sin crear.
 
-- [ ] T008 [US1] RED: agregar en `internal/service/crear_historia_test.go` los tests de `CrearHistoriaBacklog.Ejecutar` con `CrearHistoriaInput.CriteriosAceptacion`: con criterios → se persisten y se devuelven; sin criterios (`nil`) → `nil`; solo espacios → `nil`; 2001 → `ValidationError` con campo `criterios_aceptacion` y sin persistir; proyecto inexistente con criterios → `ErrProyectoNoEncontrado` y sin persistir. Incluir solo el campo stub en `internal/service/crear_historia.go` (sin pasarlo todavía) para compilar. Confirmar que FALLA
-- [ ] T009 [US1] COMMIT `RED: agregar tests de criterios de aceptación en CrearHistoriaBacklog (fallan)`
-- [ ] T010 [US1] GREEN: agregar `CriteriosAceptacion *string` a `CrearHistoriaInput` y encadenar `NewBacklogItem` → `ConCriteriosAceptacion` antes de validar el proyecto y guardar, en `internal/service/crear_historia.go`. `go test ./internal/service` en verde
-- [ ] T011 [US1] COMMIT `GREEN: aceptar criterios de aceptación en CrearHistoriaBacklog, test en verde`
-- [ ] T012 [US1] RED: agregar en `internal/http/backlog_handler_test.go` los tests de `POST /backlog`: 201 con criterios en la respuesta y en el repositorio; 201 con `criterios_aceptacion: null` cuando se omite o se envía `null`; 201 con `null` cuando se envía solo espacios; 400 con `campo: "criterios_aceptacion"` y sin persistir cuando tiene 2001 caracteres. Confirmar que FALLA
-- [ ] T013 [US1] COMMIT `RED: agregar tests del alta con criterios de aceptación (fallan)`
-- [ ] T014 [US1] GREEN: agregar `CriteriosAceptacion *string` a `crearHistoriaRequest` en `internal/http/backlog_dto.go` y pasarlo desde `BacklogHandler.Crear` en `internal/http/backlog_handler.go`. `go test ./internal/http` en verde
-- [ ] T015 [US1] COMMIT `GREEN: aceptar criterios de aceptación en POST /backlog, test en verde`
+- [X] T008 [US1] RED: agregar en `internal/service/crear_historia_test.go` los tests de `CrearHistoriaBacklog.Ejecutar` con `CrearHistoriaInput.CriteriosAceptacion`: con criterios → se persisten y se devuelven; sin criterios (`nil`) → `nil`; solo espacios → `nil`; 2001 → `ValidationError` con campo `criterios_aceptacion` y sin persistir; proyecto inexistente con criterios → `ErrProyectoNoEncontrado` y sin persistir. Incluir solo el campo stub en `internal/service/crear_historia.go` (sin pasarlo todavía) para compilar. Confirmar que FALLA
+- [X] T009 [US1] COMMIT `RED: agregar tests de criterios de aceptación en CrearHistoriaBacklog (fallan)`
+- [X] T010 [US1] GREEN: agregar `CriteriosAceptacion *string` a `CrearHistoriaInput` y encadenar `NewBacklogItem` → `ConCriteriosAceptacion` antes de validar el proyecto y guardar, en `internal/service/crear_historia.go`. `go test ./internal/service` en verde
+- [X] T011 [US1] COMMIT `GREEN: aceptar criterios de aceptación en CrearHistoriaBacklog, test en verde`
+- [X] T012 [US1] RED: agregar en `internal/http/backlog_handler_test.go` los tests de `POST /backlog`: 201 con criterios en la respuesta y en el repositorio; 201 con `criterios_aceptacion: null` cuando se omite o se envía `null`; 201 con `null` cuando se envía solo espacios; 400 con `campo: "criterios_aceptacion"` y sin persistir cuando tiene 2001 caracteres. Confirmar que FALLA
+- [X] T013 [US1] COMMIT `RED: agregar tests del alta con criterios de aceptación (fallan)`
+- [X] T014 [US1] GREEN: agregar `CriteriosAceptacion *string` a `crearHistoriaRequest` en `internal/http/backlog_dto.go` y pasarlo desde `BacklogHandler.Crear` en `internal/http/backlog_handler.go`. `go test ./internal/http` en verde
+- [X] T015 [US1] COMMIT `GREEN: aceptar criterios de aceptación en POST /backlog, test en verde`
 
 **Checkpoint**: la API crea historias con o sin criterios y responde 400 ante el exceso de longitud.
 
@@ -70,14 +70,14 @@ description: "Tareas de la spec 039: criterios de aceptación al crear una histo
 
 **Independent Test**: crear desde la pantalla con y sin criterios y ver el resultado; el listado sigue mostrando los criterios de cada historia.
 
-- [ ] T016 [US2] RED: agregar a `web/src/features/backlog/historia.test.ts` los casos de `FormularioHistoria.criterios`: `ESTADO_INICIAL` arranca con `''`; `armarCuerpo` recorta e incluye `criterios_aceptacion` cuando hay texto y lo omite cuando queda vacío; `validarHistoria` acepta 2000 caracteres, rechaza 2001 con el mensaje y acepta vacío/solo espacios. Confirmar que FALLA
-- [ ] T017 [US2] COMMIT `RED: agregar tests de criterios en el formulario de creación (fallan)`
-- [ ] T018 [US2] GREEN: actualizar `FormularioHistoria`, `CuerpoCrearHistoria`, `HistoriaCreada`, `ESTADO_INICIAL`, `armarCuerpo`, `validarHistoria`, `ErrorDeCampo` y `mapearError` en `web/src/features/backlog/historia.ts` (el error de API `criterios_aceptacion` se muestra en el campo `criterios`). `npm test -- historia` en verde
-- [ ] T019 [US2] COMMIT `GREEN: aceptar criterios en el modelo del formulario, test en verde`
-- [ ] T020 [US2] RED: agregar a `web/src/features/backlog/crear.test.tsx` los casos de componente: el formulario muestra el campo opcional "Criterios de aceptación"; al enviar con criterios el cuerpo los incluye; la confirmación los muestra con Markdown; sin criterios muestra "Sin criterios de aceptación"; 2001 caracteres muestra el error bajo el campo y no llama a la API; un 400 de API con `criterios_aceptacion` se muestra bajo el campo. Confirmar que FALLA
-- [ ] T021 [US2] COMMIT `RED: agregar pruebas del campo y la confirmación de criterios (fallan)`
-- [ ] T022 [US2] GREEN: agregar el `<textarea>` opcional, el manejo del error y la sección de criterios en la confirmación con `Markdown` en `web/src/features/backlog/crear.tsx`. Ajustar `web/src/features/backlog/api.test.ts` solo si el fixture de `HistoriaCreada` lo requiere. `npm test -- crear` en verde
-- [ ] T023 [US2] COMMIT `GREEN: implementar criterios de aceptación en la pantalla de creación, test en verde`
+- [X] T016 [US2] RED: agregar a `web/src/features/backlog/historia.test.ts` los casos de `FormularioHistoria.criterios`: `ESTADO_INICIAL` arranca con `''`; `armarCuerpo` recorta e incluye `criterios_aceptacion` cuando hay texto y lo omite cuando queda vacío; `validarHistoria` acepta 2000 caracteres, rechaza 2001 con el mensaje y acepta vacío/solo espacios. Confirmar que FALLA
+- [X] T017 [US2] COMMIT `RED: agregar tests de criterios en el formulario de creación (fallan)`
+- [X] T018 [US2] GREEN: actualizar `FormularioHistoria`, `CuerpoCrearHistoria`, `HistoriaCreada`, `ESTADO_INICIAL`, `armarCuerpo`, `validarHistoria`, `ErrorDeCampo` y `mapearError` en `web/src/features/backlog/historia.ts` (el error de API `criterios_aceptacion` se muestra en el campo `criterios`). `npm test -- historia` en verde
+- [X] T019 [US2] COMMIT `GREEN: aceptar criterios en el modelo del formulario, test en verde`
+- [X] T020 [US2] RED: agregar a `web/src/features/backlog/crear.test.tsx` los casos de componente: el formulario muestra el campo opcional "Criterios de aceptación"; al enviar con criterios el cuerpo los incluye; la confirmación los muestra con Markdown; sin criterios muestra "Sin criterios de aceptación"; 2001 caracteres muestra el error bajo el campo y no llama a la API; un 400 de API con `criterios_aceptacion` se muestra bajo el campo. Confirmar que FALLA
+- [X] T021 [US2] COMMIT `RED: agregar pruebas del campo y la confirmación de criterios (fallan)`
+- [X] T022 [US2] GREEN: agregar el `<textarea>` opcional, el manejo del error y la sección de criterios en la confirmación con `Markdown` en `web/src/features/backlog/crear.tsx`. Ajustar `web/src/features/backlog/api.test.ts` solo si el fixture de `HistoriaCreada` lo requiere. `npm test -- crear` en verde
+- [X] T023 [US2] COMMIT `GREEN: implementar criterios de aceptación en la pantalla de creación, test en verde`
 
 **Checkpoint**: la pantalla crea historias con criterios y los muestra en la confirmación; el listado no cambia su comportamiento.
 
@@ -85,12 +85,12 @@ description: "Tareas de la spec 039: criterios de aceptación al crear una histo
 
 ## Phase 5: Polish & Cross-Cutting Concerns
 
-- [ ] T024 Agregar los pasos de `features/criterios_aceptacion_creacion.feature` en `features/steps_creacion.go`, reutilizando `scenarioContext` y el service real. `go test ./features` en verde
-- [ ] T025 COMMIT `Agregar pasos BDD de criterios de aceptación en la creación`
-- [ ] T026 Documentar en `docs/PRODUCT-BACKLOG.md` (sección HU-01 y, si corresponde, nota en HU-15) que los criterios se pueden cargar al crear (issue #174). Sin cambios en `MODELO-DE-DATOS.md`
-- [ ] T027 COMMIT `Documentar criterios de aceptación en la creación (issue #174)`
-- [ ] T028 Correr la verificación completa: `go build ./...`, `go vet ./...`, `gofmt -l .`, `go test ./...`; en `web/`, `npm run lint`, `npm test` y `npm run build`. Todo en verde
-- [ ] T029 Recorrer `specs/039-criterios-aceptacion-creacion/quickstart.md` contra la API real y `npm run dev` (o el build servido por el backend) y registrar el resultado
+- [X] T024 Agregar los pasos de `features/criterios_aceptacion_creacion.feature` en `features/steps_creacion.go`, reutilizando `scenarioContext` y el service real. `go test ./features` en verde
+- [X] T025 COMMIT `Agregar pasos BDD de criterios de aceptación en la creación`
+- [X] T026 Documentar en `docs/PRODUCT-BACKLOG.md` (sección HU-01 y, si corresponde, nota en HU-15) que los criterios se pueden cargar al crear (issue #174). Sin cambios en `MODELO-DE-DATOS.md`
+- [X] T027 COMMIT `Documentar criterios de aceptación en la creación (issue #174)`
+- [X] T028 Correr la verificación completa: `go build ./...`, `go vet ./...`, `gofmt -l .`, `go test ./...`; en `web/`, `npm run lint`, `npm test` y `npm run build`. Todo en verde
+- [X] T029 Recorrer `specs/039-criterios-aceptacion-creacion/quickstart.md` contra la API real y `npm run dev` (o el build servido por el backend) y registrar el resultado
 
 ---
 

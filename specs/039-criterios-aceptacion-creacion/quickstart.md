@@ -69,6 +69,20 @@ Con `npm run dev` (o el build servido por el backend):
 6. Pegar más de 2000 caracteres: el formulario muestra el error bajo el campo y no envía.
 7. Forzar un error 400 de `criterios_aceptacion` desde la API (por ejemplo, con un cliente que omita la validación del navegador): el mensaje aparece bajo el campo.
 
+## Resultado de la validación (2026-11-08)
+
+Contra un servidor real con una base temporal (`DB_PATH` en el directorio temporal, `PORT=18080`):
+
+| Caso | Resultado |
+|---|---|
+| Alta con criterios | 201; la respuesta devolvió `**Dado** un usuario, cuando ingresa, entonces accede.` con los espacios externos recortados |
+| Alta sin `criterios_aceptacion` | 201; el campo quedó `null` |
+| Alta con solo espacios | 201; el campo quedó `null` |
+| Criterios de 2001 caracteres | 400 (el handler devuelve `campo: "criterios_aceptacion"`; cubierto también por `backlog_handler_test.go`) |
+| Listado del proyecto | 3 historias; la primera conservó los criterios persistidos |
+
+La validación visual de la pantalla y la confirmación se cubrió con las pruebas de componente de `web/src/features/backlog/crear.test.tsx` (campo, cuerpo enviado, Markdown en la confirmación, texto sin criterios y error de campo); no se recorrió con un navegador manual en este entorno.
+
 ## Fuera de alcance
 
 Notas y depende_de (D17) no se prueban en este incremento. No hay migración ni cambio en `MODELO-DE-DATOS.md`.
