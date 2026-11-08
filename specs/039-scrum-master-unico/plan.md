@@ -10,7 +10,7 @@ Garantizar a lo sumo un Scrum Master por proyecto con **doble protección**: el 
 
 ## Technical Context
 
-**Language/Version**: Go 1.27 (backend). Sin cambios en el frontend.
+**Language/Version**: Go 1.26 (`go.mod`: 1.26.5) en el backend. Sin cambios en el frontend.
 
 **Primary Dependencies**: la biblioteca estándar y `modernc.org/sqlite`, ya en el proyecto. No se agrega ninguna dependencia.
 
@@ -68,9 +68,9 @@ internal/repository/migraciones/007_scrum_master_unico.sql  # UPDATE de correcci
 internal/http/sprint_handler.go                             # escribirError: ErrScrumMasterYaExiste → 409
 MODELO-DE-DATOS.md                                          # D4, D14, §4.3, §9 (mismo PR)
 specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml # + respuesta 409 en POST /projects/{id}/members
-features/creacion_proyecto_equipo.feature (+ steps)         # escenarios BDD nuevos
+features/scrum_master_unico.feature (+ steps_scrum_master_unico.go, features_test.go)  # escenarios BDD nuevos
 internal/repository/esquema_test.go, migrate_test.go        # esquema + corrección de la 007
-internal/service/asignar_integrante_test.go y fakes_test.go # service y fake con el mismo orden de errores
+internal/service/asignar_integrante_test.go y fakes_test.go # service: orden de errores y paso del error de la carrera
 ```
 
 **Structure Decision**: sin carpetas nuevas; todo entra en los paquetes existentes de la arquitectura hexagonal. Sin cambios en `web/`.

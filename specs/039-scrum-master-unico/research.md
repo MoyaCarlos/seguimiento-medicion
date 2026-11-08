@@ -1,6 +1,6 @@
 # Research: Un único Scrum Master por proyecto (#236)
 
-Evidencia obtenida sobre el código real de la rama (base `origin/main` bca73c6) y con experimentos contra `modernc.org/sqlite` (SQLite 3.53.x, Go 1.27.1), ejecutados con tests temporales que se descartaron.
+Evidencia obtenida sobre el código real de la rama (base `origin/main` bca73c6) y con experimentos contra `modernc.org/sqlite` (SQLite 3.53.x, Go 1.27.1 local; `go.mod` declara 1.26.5), ejecutados con tests temporales que se descartaron.
 
 ## 1. Cómo distinguir la violación del índice de la de la clave primaria
 

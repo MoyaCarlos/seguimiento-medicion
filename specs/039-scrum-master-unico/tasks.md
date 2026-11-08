@@ -45,7 +45,7 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: con un proyecto que ya tiene Scrum Master, `AsignarIntegrante` con rol `scrum_master` devuelve `ErrScrumMasterYaExiste` y no agrega a nadie.
 
-- [ ] T007 [US2] RED: tests en `internal/service/asignar_integrante_test.go`: invertir `TestAsignarIntegrante_VariosScrumMaster` (el segundo se rechaza con `domain.ErrScrumMasterYaExiste` y la lista no cambia); agregar Product Builder con Scrum Master presente (éxito); persona que ya es integrante pedida como `scrum_master`, incluida la que ya es el Scrum Master, devuelve el duplicado y no el nuevo error (FR-006); cambiar a `product_builder` el rol de Jimena en `TestAsignarIntegrante_ReutilizaUsuario` — confirmar que FALLA
+- [ ] T007 [US2] RED: tests en `internal/service/asignar_integrante_test.go`: invertir `TestAsignarIntegrante_VariosScrumMaster` (el segundo se rechaza con `domain.ErrScrumMasterYaExiste` y la lista no cambia); agregar Product Builder con Scrum Master presente (éxito); persona que ya es integrante pedida como `scrum_master`, incluida la que ya es el Scrum Master, devuelve el duplicado y no el nuevo error (FR-006); cambiar a `product_builder` el rol de Jimena en `TestAsignarIntegrante_ReutilizaUsuario`; carrera (FR-008, US3 esc. 5): con un fake cuyo `AgregarIntegrante` devuelve `ErrScrumMasterYaExiste` aunque el chequeo previo no vio Scrum Master (`fakes_test.go`), el service devuelve ese mismo error y no un 500 — confirmar que FALLA
 - [ ] T008 COMMIT `RED: agregar tests del rechazo del segundo Scrum Master en AsignarIntegrante (falla)`
 - [ ] T009 [US2] GREEN: `ErrScrumMasterYaExiste` en `internal/domain/errors.go` (mensaje "el proyecto ya tiene un Scrum Master") y chequeo previo en `internal/service/asignar_integrante.go`: con `ListarIntegrantes`, primero duplicado (400), después Scrum Master repetido. `go test ./...` en verde
 - [ ] T010 COMMIT `GREEN: rechazar un segundo Scrum Master en AsignarIntegrante, test en verde`
@@ -59,7 +59,7 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: con SQLite migrado, `AgregarIntegrante` de un segundo `scrum_master` devuelve `domain.ErrScrumMasterYaExiste`; repetir a la misma persona devuelve `ErrMiembroDuplicado`.
 
-- [ ] T012 [US3] RED: tests en `internal/repository/sqlite_project_test.go` (segundo SM → `ErrScrumMasterYaExiste` y no `ErrMiembroDuplicado`; mismo usuario y proyecto → `ErrMiembroDuplicado`; builders y SM en otro proyecto aceptados) y en `project_repository_en_memoria_test.go` (segundo SM → `ErrScrumMasterYaExiste`) — confirmar que FALLAN
+- [ ] T012 [US3] RED: tests en `internal/repository/sqlite_project_test.go` (segundo SM → `ErrScrumMasterYaExiste` y no `ErrMiembroDuplicado`; mismo usuario y proyecto → `ErrMiembroDuplicado`; builders y SM en otro proyecto aceptados; dos altas simultáneas de un `scrum_master` al mismo proyecto desde goroutines: exactamente una se acepta y la otra recibe `ErrScrumMasterYaExiste`, SC-003) y en `project_repository_en_memoria_test.go` (segundo SM → `ErrScrumMasterYaExiste`) — confirmar que FALLAN
 - [ ] T013 COMMIT `RED: agregar tests de la traducción del índice de Scrum Master único (falla)`
 - [ ] T014 [US3] GREEN: en `internal/repository/sqlite_project.go` distinguir por código extendido (`SQLITE_CONSTRAINT_PRIMARYKEY` → `ErrMiembroDuplicado`; `SQLITE_CONSTRAINT_UNIQUE` → `domain.ErrScrumMasterYaExiste`) y en `project_repository_en_memoria.go` rechazar el segundo SM. `go test ./...` en verde
 - [ ] T015 COMMIT `GREEN: separar el duplicado del segundo Scrum Master en el repositorio, test en verde`
@@ -86,7 +86,7 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Goal**: los 4 escenarios Godog, escritos al final para no romper `TestFeatures`.
 
-- [ ] T023 [US1][US2][US3] `features/scrum_master_unico.feature` (Gherkin en español, tag `@HU-04` y `@236`, Característica con el Como/Quiero/Para de la spec) con 4 escenarios: crear un proyecto deja un único Scrum Master; agregar un segundo Scrum Master (409 y lista sin cambios); agregar un Product Builder (éxito); el índice rechaza un segundo Scrum Master insertado por fuera del dominio. Pasos en `features/steps_scrum_master_unico.go` (siguiendo el patrón de `steps_creacion.go`) y registro en `features/features_test.go`. `go test ./features/` en verde
+- [ ] T023 [US1][US2][US3] `features/scrum_master_unico.feature` (Gherkin en español, tag `@HU-04`, Característica con el Como/Quiero/Para de la spec) con 4 escenarios: crear un proyecto deja un único Scrum Master; agregar un segundo Scrum Master (409 y lista sin cambios); agregar un Product Builder (éxito); el índice rechaza un segundo Scrum Master insertado por fuera del dominio. Pasos en `features/steps_scrum_master_unico.go` (siguiendo el patrón de `steps_creacion.go`) y registro en `features/features_test.go`. `go test ./features/` en verde
 - [ ] T024 COMMIT `Agregar escenarios BDD del Scrum Master único`
 
 ---

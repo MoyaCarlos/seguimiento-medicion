@@ -115,7 +115,7 @@ Redactados en formato EARS.
 - **IF** la persona ya es integrante del proyecto, **THEN** el sistema **shall** responder con el error de integrante duplicado existente, y no con el de Scrum Master repetido.
 - **IF** dos pedidos agregan un Scrum Master al mismo proyecto a la vez, **THEN** el sistema **shall** aceptar uno solo y responder 409 al otro.
 - **WHEN** se crea un proyecto, **THEN** el sistema **shall** registrar al creador como único Scrum Master en la misma operación que crea el proyecto, de modo que nunca quede un proyecto sin Scrum Master ni con dos.
-- **IF** la escritura en la base viola el índice único por fuera del flujo normal, **THEN** el sistema **shall** traducir la violación al mismo conflicto 409, y no a un error interno ni a "integrante duplicado".
+- **IF** la escritura en la base viola el índice único porque dos pedidos simultáneos pasaron el chequeo previo, **THEN** el sistema **shall** traducir la violación al mismo conflicto 409, y no a un error interno ni a "integrante duplicado".
 - **WHEN** la migración corre sobre un proyecto con dos o más Scrum Master, **THEN** el sistema **shall** conservar como Scrum Master al de `creado_en` más antiguo, **shall** pasar a `product_builder` a los demás y **shall** hacerlo antes de crear el índice, en la misma migración.
 - **IF** dos Scrum Master de un proyecto tienen el mismo `creado_en`, **THEN** la migración **shall** conservar al de menor `usuario_id`.
 - **IF** un proyecto no tiene Scrum Master, **THEN** la migración **shall** dejarlo como está y **shall** no asignarle uno.
@@ -147,7 +147,7 @@ Redactados en formato EARS.
 
 **Documentación y pruebas**
 
-- **FR-013**: `MODELO-DE-DATOS.md` MUST actualizarse en el mismo PR que la migración: D4 cerrada ("un solo Scrum Master por proyecto"), D14 marcada "no necesaria" porque el dueño es el Scrum Master, nota de §4.3 reemplazada por la regla, y la 007 agregada a la tabla de §9 con una línea que describe el criterio de desempate de FR-012.
+- **FR-013**: `MODELO-DE-DATOS.md` MUST actualizarse en el mismo PR que la migración: D4 cerrada ("un solo Scrum Master por proyecto"), D14 marcada "no necesaria" porque el dueño es el Scrum Master, nota de §4.3 reemplazada por la regla, el encabezado de §7 sin D4 ni D14 como pendientes, una fila de §5 con la regla, y la 007 agregada a la tabla de §9 con una línea que describe el criterio de desempate de FR-012.
 - **FR-014**: El test de esquema (§9, punto 6) MUST incluir los casos de esta regla: segundo `scrum_master` por `INSERT` y por `UPDATE` (rechazados), varios `product_builder` y un `scrum_master` por proyecto distinto (aceptados). Además MUST cubrir la corrección de la 007 sobre una base sembrada antes de migrar: proyecto con 2 o más Scrum Master, empate de `creado_en`, proyecto sin Scrum Master y proyecto con uno solo.
 - **FR-015**: Los escenarios BDD (Godog) MUST cubrir: crear un proyecto deja un único Scrum Master; agregar un segundo Scrum Master da 409; agregar un Product Builder tiene éxito; el índice rechaza un segundo Scrum Master insertado por fuera del dominio. La corrección de la 007 sobre proyectos con varios Scrum Master se cubre con el test de migración (en `internal/repository`, junto al de esquema), porque Godog arranca sobre el esquema ya migrado.
 
@@ -178,6 +178,6 @@ Redactados en formato EARS.
 - **Cómo se cambia el rol hoy**: no existe. No hay endpoint ni operación para cambiar el rol ni reactivar a un integrante; la clave primaria impide repetir a una persona. Por eso el único camino a cubrir además de la creación es `POST /projects/{id}/members`.
 - **Criterio de la migración**: el de `creado_en` más antiguo es una heurística aprobada por el Scrum Master (2026-11-08). Si el creador no fuera el más antiguo, la migración podría dejar a otra persona; se acepta porque la base de Render se vacía en cada deploy y los datos de prueba v2 crean un solo Scrum Master por proyecto.
 - **Datos de demostración**: el bloque de datos de prueba carga un solo Scrum Master por proyecto, así que no se ve afectado.
-- **Pista para el plan, no decisión**: hoy el repositorio traduce a "integrante duplicado" cualquier violación `UNIQUE` o de clave primaria; el nuevo índice puede caer en ese caso, por lo que el plan debe separarlos (FR-011).
+- **Traducción de errores**: hoy el repositorio traduce a "integrante duplicado" cualquier violación `UNIQUE` o de clave primaria; el nuevo índice no puede caer en ese caso (FR-011). El plan los separa por código extendido (research.md §1).
 - **Fuera de alcance**: traspasar el rol de Scrum Master y quitar integrantes (HU-16, #175). Mientras no exista el traspaso, el único Scrum Master de un proyecto es siempre su creador. Es un límite declarado, no un defecto de esta historia.
 - **Frontend**: sin pantallas nuevas. Si la pantalla de configurar equipo ofrece el rol `scrum_master`, mostrará el mensaje del 409; ajustar la pantalla queda fuera de esta historia.
