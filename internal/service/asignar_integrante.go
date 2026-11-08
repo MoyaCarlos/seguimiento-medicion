@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"slices"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -41,6 +42,11 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 	if err != nil {
 		return domain.Member{}, err
 	}
+	if input.Rol == domain.RolScrumMaster {
+		if err := s.verificarScrumMasterLibre(ctx, proyecto.ID, candidato); err != nil {
+			return domain.Member{}, err
+		}
+	}
 	usuario, err := resolverUsuario(ctx, s.usuarios, candidato)
 	if err != nil {
 		return domain.Member{}, err
@@ -65,4 +71,29 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 		Role:      input.Rol,
 		CreadoEn:  guardada.CreadoEn,
 	}, nil
+}
+
+// verificarScrumMasterLibre devuelve ErrScrumMasterYaExiste si el proyecto ya
+// tiene Scrum Master. Si el candidato ya es integrante no se rechaza acá: el
+// alta falla después como duplicado, que tiene prioridad. No crea usuarios.
+func (s *AsignarIntegrante) verificarScrumMasterLibre(ctx context.Context, proyectoID int64, candidato domain.User) error {
+	integrantes, err := s.proyectos.ListarIntegrantes(ctx, proyectoID)
+	if err != nil {
+		return err
+	}
+	if !slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.Role == domain.RolScrumMaster }) {
+		return nil
+	}
+	existente, err := s.usuarios.ObtenerPorNombreNormalizado(ctx, candidato.NombreNormalizado)
+	if errors.Is(err, domain.ErrNoEncontrado) {
+		return domain.ErrScrumMasterYaExiste
+	}
+	if err != nil {
+		return err
+	}
+	yaIntegrante := slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.UserID == existente.ID })
+	if yaIntegrante {
+		return nil
+	}
+	return domain.ErrScrumMasterYaExiste
 }
