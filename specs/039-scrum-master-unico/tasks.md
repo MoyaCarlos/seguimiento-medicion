@@ -45,11 +45,11 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: con un proyecto que ya tiene Scrum Master, `AsignarIntegrante` con rol `scrum_master` devuelve `ErrScrumMasterYaExiste` y no agrega a nadie.
 
-- [ ] T007 [US2] RED: tests en `internal/service/asignar_integrante_test.go`: invertir `TestAsignarIntegrante_VariosScrumMaster` (el segundo se rechaza con `domain.ErrScrumMasterYaExiste` y la lista no cambia); agregar Product Builder con Scrum Master presente (éxito); persona que ya es integrante pedida como `scrum_master`, incluida la que ya es el Scrum Master, devuelve el duplicado y no el nuevo error (FR-006); cambiar a `product_builder` el rol de Jimena en `TestAsignarIntegrante_ReutilizaUsuario`; carrera (FR-008, US3 esc. 5): con un fake cuyo `AgregarIntegrante` devuelve `ErrScrumMasterYaExiste` aunque el chequeo previo no vio Scrum Master (`fakes_test.go`), el service devuelve ese mismo error y no un 500 — confirmar que FALLA
-- [ ] T008 COMMIT `RED: agregar tests del rechazo del segundo Scrum Master en AsignarIntegrante (falla)`
-- [ ] T009 [US2] GREEN: `ErrScrumMasterYaExiste` en `internal/domain/errors.go` (mensaje "el proyecto ya tiene un Scrum Master") y chequeo previo en `internal/service/asignar_integrante.go`: con `ListarIntegrantes`, primero duplicado (400), después Scrum Master repetido. `go test ./...` en verde
-- [ ] T010 COMMIT `GREEN: rechazar un segundo Scrum Master en AsignarIntegrante, test en verde`
-- [ ] T011 (solo si hay algo que limpiar, p. ej. reutilizar `rolEnProyecto`) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [x] T007 [US2] RED: tests en `internal/service/asignar_integrante_test.go`: invertir `TestAsignarIntegrante_VariosScrumMaster` (el segundo se rechaza con `domain.ErrScrumMasterYaExiste` y la lista no cambia); agregar Product Builder con Scrum Master presente (éxito); persona que ya es integrante pedida como `scrum_master`, incluida la que ya es el Scrum Master, devuelve el duplicado y no el nuevo error (FR-006); cambiar a `product_builder` el rol de Jimena en `TestAsignarIntegrante_ReutilizaUsuario`; carrera (FR-008, US3 esc. 5): con un fake cuyo `AgregarIntegrante` devuelve `ErrScrumMasterYaExiste` aunque el chequeo previo no vio Scrum Master (`fakes_test.go`), el service devuelve ese mismo error y no un 500 — confirmar que FALLA
+- [x] T008 COMMIT `RED: agregar tests del rechazo del segundo Scrum Master en AsignarIntegrante (falla)`
+- [x] T009 [US2] GREEN: `ErrScrumMasterYaExiste` en `internal/domain/errors.go` (mensaje "el proyecto ya tiene un Scrum Master") y chequeo previo en `internal/service/asignar_integrante.go`: con `ListarIntegrantes`, primero duplicado (400), después Scrum Master repetido. `go test ./...` en verde
+- [x] T010 COMMIT `GREEN: rechazar un segundo Scrum Master en AsignarIntegrante, test en verde`
+- [x] T011 (sin cambios: no había nada que limpiar) (solo si hay algo que limpiar, p. ej. reutilizar `rolEnProyecto`) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 ---
 
@@ -59,11 +59,11 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: con SQLite migrado, `AgregarIntegrante` de un segundo `scrum_master` devuelve `domain.ErrScrumMasterYaExiste`; repetir a la misma persona devuelve `ErrMiembroDuplicado`.
 
-- [ ] T012 [US3] RED: tests en `internal/repository/sqlite_project_test.go` (segundo SM → `ErrScrumMasterYaExiste` y no `ErrMiembroDuplicado`; mismo usuario y proyecto → `ErrMiembroDuplicado`; builders y SM en otro proyecto aceptados; dos altas simultáneas de un `scrum_master` al mismo proyecto desde goroutines: exactamente una se acepta y la otra recibe `ErrScrumMasterYaExiste`, SC-003) y en `project_repository_en_memoria_test.go` (segundo SM → `ErrScrumMasterYaExiste`) — confirmar que FALLAN
-- [ ] T013 COMMIT `RED: agregar tests de la traducción del índice de Scrum Master único (falla)`
-- [ ] T014 [US3] GREEN: en `internal/repository/sqlite_project.go` distinguir por código extendido (`SQLITE_CONSTRAINT_PRIMARYKEY` → `ErrMiembroDuplicado`; `SQLITE_CONSTRAINT_UNIQUE` → `domain.ErrScrumMasterYaExiste`) y en `project_repository_en_memoria.go` rechazar el segundo SM. `go test ./...` en verde
-- [ ] T015 COMMIT `GREEN: separar el duplicado del segundo Scrum Master en el repositorio, test en verde`
-- [ ] T016 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [x] T012 [US3] RED: tests en `internal/repository/sqlite_project_test.go` (segundo SM → `ErrScrumMasterYaExiste` y no `ErrMiembroDuplicado`; mismo usuario y proyecto → `ErrMiembroDuplicado`; builders y SM en otro proyecto aceptados; dos altas simultáneas de un `scrum_master` al mismo proyecto desde goroutines: exactamente una se acepta y la otra recibe `ErrScrumMasterYaExiste`, SC-003) y en `project_repository_en_memoria_test.go` (segundo SM → `ErrScrumMasterYaExiste`) — confirmar que FALLAN
+- [x] T013 COMMIT `RED: agregar tests de la traducción del índice de Scrum Master único (falla)`
+- [x] T014 [US3] GREEN: en `internal/repository/sqlite_project.go` distinguir por código extendido (`SQLITE_CONSTRAINT_PRIMARYKEY` → `ErrMiembroDuplicado`; `SQLITE_CONSTRAINT_UNIQUE` → `domain.ErrScrumMasterYaExiste`) y en `project_repository_en_memoria.go` rechazar el segundo SM. `go test ./...` en verde
+- [x] T015 COMMIT `GREEN: separar el duplicado del segundo Scrum Master en el repositorio, test en verde`
+- [x] T016 (sin cambios: no había nada que limpiar) (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 ---
 
