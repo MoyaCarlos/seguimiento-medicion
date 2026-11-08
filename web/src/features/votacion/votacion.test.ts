@@ -28,6 +28,7 @@ const votacion = (integrantes: VotoDeIntegrante[], revelada_en: string | null = 
   revelada_en,
   integrantes,
   promedio: null,
+  diferencias: null,
 })
 
 describe('CARTAS', () => {

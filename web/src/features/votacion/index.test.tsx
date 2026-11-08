@@ -57,6 +57,7 @@ function vista(consultante?: number): Votacion {
       }
     }),
     promedio: servidor.revelada ? { exacto: 5.33, carta_sugerida: 5 } : null,
+    diferencias: null,
   }
 }
 

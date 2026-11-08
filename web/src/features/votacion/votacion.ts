@@ -29,12 +29,19 @@ export type VotoDeIntegrante = {
   valor: number | null
 }
 
+export type Diferencias = {
+  hay_diferencias: boolean
+  minimo: number | null
+  maximo: number | null
+}
+
 export type Votacion = {
   historia_id: number
   ronda: number
   revelada_en: string | null
   integrantes: VotoDeIntegrante[]
   promedio: { exacto: number; carta_sugerida: number } | null
+  diferencias: Diferencias | null
 }
 
 export const esScrumMaster = (integrante: Integrante | undefined): boolean =>

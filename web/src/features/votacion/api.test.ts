@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  abrirNuevaRonda,
   consultarVotacion,
   iniciarVotacion,
   listarIntegrantes,
   obtenerHistoria,
+  registrarEstimacion,
   revelarVotacion,
   votar,
 } from './api'
@@ -21,6 +23,7 @@ const VOTACION: Votacion = {
   revelada_en: null,
   integrantes: [{ usuario_id: 1, nombre: 'Beta Uno', rol: 'scrum_master', ya_voto: false, valor: null }],
   promedio: null,
+  diferencias: null,
 }
 
 afterEach(() => {
@@ -81,6 +84,37 @@ describe('cliente de la votación', () => {
       '/backlog/3/votacion/revelar',
       expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1 }) }),
     )
+  })
+
+  it('abrirNuevaRonda hace POST /backlog/{id}/votacion/rondas con usuario_id y devuelve la nueva ronda', async () => {
+    const nuevaRonda: Votacion = { ...VOTACION, ronda: 2 }
+    const fetchMock = responder(nuevaRonda, 201)
+
+    await expect(abrirNuevaRonda(3, 1)).resolves.toEqual(nuevaRonda)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/backlog/3/votacion/rondas',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1 }) }),
+    )
+  })
+
+  it('registrarEstimacion hace POST /backlog/{id}/votacion/estimacion con usuario_id y estimacion_sp y devuelve la historia', async () => {
+    const historia = { id: 3, titulo: 'Pagar la tasa', descripcion: 'x', prioridad: 'M', estimacion_sp: 5 }
+    const fetchMock = responder(historia)
+
+    await expect(registrarEstimacion(3, 1, 5)).resolves.toMatchObject(historia)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/backlog/3/votacion/estimacion',
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1, estimacion_sp: 5 }) }),
+    )
+  })
+
+  it('registrarEstimacion rechaza con el mensaje del servidor cuando los Story Points están congelados', async () => {
+    const mensaje = 'los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado'
+    responder({ campo: 'estimacion_sp', mensaje }, 400)
+
+    await expect(registrarEstimacion(3, 1, 8)).rejects.toMatchObject({ status: 400, message: mensaje })
   })
 
   it('listarIntegrantes hace GET /projects/{id}/members y devuelve id, nombre y rol', async () => {
