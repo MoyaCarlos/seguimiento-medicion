@@ -21,7 +21,7 @@ curl -s -i -XPOST localhost:8080/projects/1/members -d '{"nombre":"Cami","rol":"
 curl -s -i -XPOST localhost:8080/projects/1/members -d '{"nombre":"Ana","rol":"scrum_master"}'   # 400 integrante duplicado
 ```
 
-Contrato: [contracts/members-409.yaml](./contracts/members-409.yaml). Puerto y rutas según `cmd/api/main.go`.
+Contrato: [contracts/members-409.yaml](./contracts/members-409.yaml). El puerto sale de la variable `PORT` y por defecto es 8080 (`cmd/api/config.go`); si usás otro, cambialo en los comandos (`PORT=9090 go run ./cmd/api`).
 
 ## 3. Migración sobre una base con duplicados
 
