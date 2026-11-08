@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { Link, useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
@@ -8,7 +9,8 @@ import { useConsulta } from './useConsulta'
 
 export function Lista() {
   const proyectoId = useParams().id ?? ''
-  const { datos: sprints, error } = useConsulta(() => listarHistorial(proyectoId), proyectoId)
+  const consultar = useCallback(() => listarHistorial(proyectoId), [proyectoId])
+  const { datos: sprints, error } = useConsulta(consultar)
 
   return (
     <div className="historial-pantalla">

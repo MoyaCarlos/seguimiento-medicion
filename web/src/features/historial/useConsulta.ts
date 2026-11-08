@@ -8,24 +8,24 @@ function mensajeDeError(causa: unknown): string {
   return 'Ocurrió un error inesperado'
 }
 
-export function useConsulta<T>(consultar: () => Promise<T>, clave: string): Consulta<T> {
-  const [consulta, setConsulta] = useState<Consulta<T> & { clave?: string }>({})
+export function useConsulta<T>(consultar: () => Promise<T>): Consulta<T> {
+  const [consulta, setConsulta] = useState<Consulta<T> & { origen?: () => Promise<T> }>({})
 
   useEffect(() => {
     let vigente = true
 
     consultar()
       .then((datos) => {
-        if (vigente) setConsulta({ datos, clave })
+        if (vigente) setConsulta({ datos, origen: consultar })
       })
       .catch((causa: unknown) => {
-        if (vigente) setConsulta({ error: mensajeDeError(causa), clave })
+        if (vigente) setConsulta({ error: mensajeDeError(causa), origen: consultar })
       })
 
     return () => {
       vigente = false
     }
-  }, [clave])
+  }, [consultar])
 
-  return consulta.clave === clave ? consulta : {}
+  return consulta.origen === consultar ? consulta : {}
 }
