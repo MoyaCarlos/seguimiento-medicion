@@ -63,10 +63,13 @@ func tokenBearer(r *nethttp.Request) (string, bool) {
 	return token, true
 }
 
+// maxCuerpoAuth es el tamaño máximo del cuerpo de /auth/registro e /ingreso.
+const maxCuerpoAuth = 64 * 1024
+
 // Registro atiende POST /auth/registro.
 func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {
 	var req registroRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(nethttp.MaxBytesReader(w, r.Body, maxCuerpoAuth)).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return
 	}
@@ -81,7 +84,7 @@ func (h *AuthHandler) Registro(w nethttp.ResponseWriter, r *nethttp.Request) {
 // Ingreso atiende POST /auth/ingreso.
 func (h *AuthHandler) Ingreso(w nethttp.ResponseWriter, r *nethttp.Request) {
 	var req registroRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(nethttp.MaxBytesReader(w, r.Body, maxCuerpoAuth)).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return
 	}
