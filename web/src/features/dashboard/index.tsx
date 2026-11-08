@@ -54,6 +54,9 @@ function PantallaDashboard({ id }: { id: string }) {
             horasPorStoryPoint={metricas.horas_por_story_point}
             proyectoId={id}
           />
+          <Link className="dashboard-enlace-historial" to={`/projects/${id}/historial`}>
+            Ver el detalle de cada Sprint en el historial <span aria-hidden="true">→</span>
+          </Link>
         </>
       )}
     </div>

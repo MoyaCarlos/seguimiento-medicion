@@ -150,6 +150,24 @@ describe('sección Dashboard', () => {
     expect(screen.queryByRole('region', { name: 'Velocidad' })).toBeNull()
   })
 
+  it('Given Sprints finalizados, When veo el Dashboard, Then tengo un acceso al historial de Sprints (HU-12)', async () => {
+    simularApi(() => respuesta(200, conSprints()))
+
+    abrir()
+
+    const enlace = await screen.findByRole('link', { name: /historial/ })
+    expect(enlace.getAttribute('href')).toBe('/projects/7/historial')
+  })
+
+  it('Given un proyecto sin Sprints finalizados, When veo el Dashboard, Then no ofrece el historial vacío', async () => {
+    simularApi(() => respuesta(200, { ...conSprints(), sprints: [] }))
+
+    abrir()
+
+    await screen.findByText(/aparecen cuando se cierra el primer Sprint/)
+    expect(screen.queryByRole('link', { name: /historial/ })).toBeNull()
+  })
+
   it('US3.3: Given el estado vacío, When lo leo, Then tengo un acceso a los Sprints del proyecto', async () => {
     simularApi(() => respuesta(200, { ...conSprints(), sprints: [] }))
 

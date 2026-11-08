@@ -189,3 +189,15 @@
     padding: 0.5rem 0.3rem;
   }
 }
+
+.dashboard-enlace-historial {
+  color: var(--lilac-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+  justify-self: end;
+  text-decoration: none;
+}
+
+.dashboard-enlace-historial:hover {
+  text-decoration: underline;
+}
