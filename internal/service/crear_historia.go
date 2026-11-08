@@ -9,11 +9,12 @@ import (
 
 // CrearHistoriaInput son los datos de entrada del caso de uso.
 type CrearHistoriaInput struct {
-	ProyectoID   int64
-	Titulo       string
-	Descripcion  string
-	Prioridad    domain.Prioridad
-	ValorNegocio *int
+	ProyectoID          int64
+	Titulo              string
+	Descripcion         string
+	Prioridad           domain.Prioridad
+	ValorNegocio        *int
+	CriteriosAceptacion *string
 }
 
 // CrearHistoriaBacklog crea y persiste una historia del Product Backlog.
