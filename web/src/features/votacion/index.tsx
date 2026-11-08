@@ -2,6 +2,7 @@ import { useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { AccionesScrumMaster } from './AccionesScrumMaster'
+import { Consenso } from './Consenso'
 import { Encabezado } from './Encabezado'
 import { Resultado } from './Resultado'
 import { ResumenHistoria } from './ResumenHistoria'
@@ -73,7 +74,21 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           {estaRevelada(votacion) && (
             <>
               <Resultado promedio={votacion.promedio} diferencias={votacion.diferencias} />
-              <p>Registrar la estimación acordada se hace en otra historia (HU-14).</p>
+              {scrumMaster ? (
+                <Consenso
+                  key={votacion.ronda}
+                  votacion={votacion}
+                  deshabilitado={enviando}
+                  alRegistrar={estado.registrarEstimacion}
+                />
+              ) : (
+                <p className="votacion-nota">El Scrum Master registra la estimación acordada o abre una nueva ronda.</p>
+              )}
+              {estado.aviso && (
+                <p className="message votacion-aviso" role="status">
+                  {estado.aviso}
+                </p>
+              )}
             </>
           )}
           {scrumMaster && !estaRevelada(votacion) && (

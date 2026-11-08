@@ -823,7 +823,7 @@ describe('Pantalla de votación - contexto de la historia', () => {
     servidor.revelada = true
     abrir()
 
-    await screen.findByText(/registrar la estimación acordada/i)
+    await screen.findByText(/Scrum Master registra la estimación acordada/)
 
     expect(screen.queryByText(/Elegí una carta/)).toBeNull()
   })
