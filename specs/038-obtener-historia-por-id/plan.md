@@ -76,7 +76,7 @@ docs/curl-frontend-sprint-2.md           # + sección en versión bash y en vers
 
 ### Handler
 
-`Obtener` en `BacklogHandler`:
+`Obtener` en `BacklogHandler` (diseño final; por el ciclo TDD el GREEN de US1 arranca con `ParseInt` y el de US3 lo reemplaza por `idDeRuta`, ver "Pruebas del handler"):
 
 1. `id, ok := idDeRuta(w, r)`; si `!ok`, ya respondió 400 (campo `id`, `identificador inválido`) y retorna. Cubre `abc`, `0`, `-3`, `1.5` y un número que desborda `int64` (`ParseInt` devuelve error), y `007` se parsea como 7.
 2. `h.obtenerHistoria.Ejecutar(ctx, id)`; ante error, `escribirError(w, err)`. `ErrHistoriaNoEncontrada` ya mapea a 404 con `historia no encontrada` (sin `case` nuevos).
@@ -90,10 +90,13 @@ La validación del id va antes de consultar (FR-007). `idDeRuta` está en el mis
 
 ### Pruebas del handler (RED/GREEN)
 
-- **RED**: método `Obtener` vacío (compila, responde 200 con cuerpo vacío por defecto) → los tests fallan por aserción.
-- Casos: 200 sin `sprint_id` (`null`); 200 con `sprint_id`; 200 completada con `fecha_finalizacion`; 404 con `historia no encontrada`; 400 con campo `id` y `identificador inválido` para `abc`, `0`, `-3`, `1.5` y un número fuera de rango (p. ej. `99999999999999999999`); `007` se interpreta como 7.
-- **GREEN**: implementación mínima de arriba.
-- Un test adicional verifica que el 400 no consulta el repositorio (FR-007).
+- **RED** (US1): método `Obtener` vacío (compila, responde 200 con cuerpo vacío por defecto) → el test de la historia sin Sprint falla por aserción.
+- **GREEN** (US1): lo mínimo para responder 200: `strconv.ParseInt` del id, `obtenerHistoria.Ejecutar` y `escribirJSON(200, aRespuesta(item))`.
+- US2: tests de caracterización (con `sprint_id`, completada con `fecha_finalizacion` `AAAA-MM-DD`, y completada de otro proyecto, que responde 200 porque no se filtra por proyecto); pasan de entrada porque `aRespuesta` ya los cubre, por eso su commit no lleva prefijo `RED:`.
+- **RED** (US3): 404 con `historia no encontrada`; 400 con campo `id` y `identificador inválido` para `abc`, `0`, `-3`, `1.5` y `99999999999999999999` (mayor que el máximo de `int64`, 9223372036854775807); `007` se interpreta como 7.
+- **GREEN** (US3): `ParseInt` pasa a `idDeRuta` y el error del caso de uso va por `escribirError`. El diseño final es el descrito en "Handler".
+- FR-007: el stub cuenta las llamadas a `ObtenerPorID` (`llamadasObtenerPorID`); con un id inválido debe quedar en 0.
+- FR-003 / SC-001: en cada caso 200 el cuerpo se compara con `json.Marshal(aRespuesta(historia))`, la misma forma que devuelven el listado del backlog y el backlog del Sprint.
 
 ### BDD (Godog)
 
