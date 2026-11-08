@@ -17,14 +17,14 @@ export const votar = (historiaId: number, usuarioId: number, valor: number) =>
 export const revelarVotacion = (historiaId: number, usuarioId: number) =>
   post<Votacion>(`/backlog/${historiaId}/votacion/revelar`, { usuario_id: usuarioId })
 
-export const abrirNuevaRonda = (_historiaId: number, _usuarioId: number): Promise<Votacion> =>
-  Promise.reject(new Error('sin implementar'))
+export const abrirNuevaRonda = (historiaId: number, usuarioId: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/rondas`, { usuario_id: usuarioId })
 
-export const registrarEstimacion = (
-  _historiaId: number,
-  _usuarioId: number,
-  _estimacionSp: number,
-): Promise<HistoriaResumen> => Promise.reject(new Error('sin implementar'))
+export const registrarEstimacion = (historiaId: number, usuarioId: number, estimacionSp: number) =>
+  post<HistoriaResumen>(`/backlog/${historiaId}/votacion/estimacion`, {
+    usuario_id: usuarioId,
+    estimacion_sp: estimacionSp,
+  })
 
 export async function listarIntegrantes(proyectoId: string): Promise<Integrante[]> {
   const integrantes = await get<IntegranteDeApi[]>(`/projects/${proyectoId}/members`)
