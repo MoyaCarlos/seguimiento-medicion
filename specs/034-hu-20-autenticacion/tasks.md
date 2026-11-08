@@ -249,9 +249,9 @@ rama y el mismo PR. La numeración de la migración es 006; la 007 es de #236 y 
 - [X] T125 Confirmar que no se editó ningún `.feature` ni paso previo (`git diff main -- features/*.feature` solo muestra `autenticacion.feature`) y que no existe ninguna migración 007 en `internal/repository/migraciones/`
 - [X] T126 `go build ./...`, `go vet ./...` y `go test ./...` sin errores (incluye Godog, `internal/demo` y la migración sobre una base con usuarios previos)
 - [X] T127 En `web/`: `npm test`, `npm run lint` y `npm run build` sin errores
-- [ ] T128 Recorrer la verificación manual de [quickstart.md](quickstart.md) (API e interfaz) y comprobar a mano que cada ruta protegida (incluida la raíz y una inexistente) lleva a `/ingresar` sin sesión y vuelve a la ruta pedida tras ingresar (D12)
+- [X] T128 Recorrer la verificación manual de [quickstart.md](quickstart.md) (API e interfaz) y comprobar a mano que cada ruta protegida (incluida la raíz y una inexistente) lleva a `/ingresar` sin sesión y vuelve a la ruta pedida tras ingresar (D12). Validado a mano con la API real y npm run dev: sin sesión la raíz, /projects/1/sprints, /projects/1/dashboard y una ruta inexistente llevan a /ingresar; registrarse deja la sesión iniciada; el nombre repetido y la contraseña corta se muestran junto a su campo; cerrar sesión lleva a /ingresar; las credenciales incorrectas muestran 'Usuario o contraseña incorrectos' sin borrar lo escrito; al ingresar se vuelve a la pantalla pedida; con un token inválido en localStorage aparece 'Tu sesión venció'. El nombre de usuario no distingue mayúsculas (decisión 4)
 - [X] T129 Actualizar el `Status` de `spec.md` a «Implementada (pendiente de review)» y marcar estas tareas
-- [ ] T130 COMMIT `Cerrar HU-20: spec actualizada y verificación completa`
+- [X] T130 COMMIT `Cerrar HU-20: spec actualizada y verificación completa`
 
 ---
 
