@@ -46,11 +46,12 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	item, err := h.crearHistoria.Ejecutar(r.Context(), service.CrearHistoriaInput{
-		ProyectoID:   req.ProyectoID,
-		Titulo:       req.Titulo,
-		Descripcion:  req.Descripcion,
-		Prioridad:    domain.Prioridad(req.Prioridad),
-		ValorNegocio: req.ValorNegocio,
+		ProyectoID:          req.ProyectoID,
+		Titulo:              req.Titulo,
+		Descripcion:         req.Descripcion,
+		Prioridad:           domain.Prioridad(req.Prioridad),
+		ValorNegocio:        req.ValorNegocio,
+		CriteriosAceptacion: req.CriteriosAceptacion,
 	})
 	if err != nil {
 		escribirError(w, err)
