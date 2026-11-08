@@ -57,8 +57,15 @@ function vista(consultante?: number): Votacion {
       }
     }),
     promedio: servidor.revelada ? { exacto: 5.33, carta_sugerida: 5 } : null,
-    diferencias: null,
+    diferencias: servidor.revelada ? diferenciasDe(Object.values(servidor.votos)) : null,
   }
+}
+
+function diferenciasDe(votos: number[]) {
+  const minimo = Math.min(...votos)
+  const maximo = Math.max(...votos)
+  if (minimo === maximo) return { hay_diferencias: false, minimo: null, maximo: null }
+  return { hay_diferencias: true, minimo, maximo }
 }
 
 function abrir() {
@@ -495,6 +502,46 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
 
     expect(await screen.findByText(/registrar la estimación acordada/i)).toBeTruthy()
     expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+  })
+})
+
+describe('Pantalla de votación - diferencias entre los votos (HU-14 US1)', () => {
+  it('US1.1: Given se revelaron los votos 3, 5 y 8, When se consulta la votación, Then se indica que hay diferencias, con mínimo 3 y máximo 8', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    abrir()
+
+    expect(await screen.findByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
+  })
+
+  it('US1.2: Given se revelaron los votos 5, 5 y 5, When se consulta la votación, Then se indica que no hay diferencias', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    abrir()
+
+    expect(await screen.findByText('No hay diferencias: todos votaron lo mismo')).toBeTruthy()
+    expect(screen.queryByText(/Hay diferencias/)).toBeNull()
+  })
+
+  it('US1.3: Given una ronda todavía no revelada, When se consulta la votación, Then no se informan diferencias, mínimo ni máximo', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await screen.findByRole('button', { name: 'Revelar' })
+
+    expect(screen.queryByText(/diferencias/i)).toBeNull()
+    expect(screen.queryByText(/mínimo|máximo/)).toBeNull()
+  })
+
+  it('Given que todos votaron y soy Scrum Master, When pulso Revelar, Then aparecen las diferencias de esa ronda', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
+
+    expect(await screen.findByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
   })
 })
 

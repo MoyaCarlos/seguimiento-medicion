@@ -60,6 +60,8 @@ export function textoDeVoto(voto: VotoDeIntegrante): string {
   return voto.valor === null ? 'Oculto' : String(voto.valor)
 }
 
+export const textoDeDiferencias = (_diferencias: Diferencias | null): string => ''
+
 export const sinValores = (votacion: Votacion): Votacion => ({
   ...votacion,
   integrantes: votacion.integrantes.map((integrante) => ({ ...integrante, valor: null })),
