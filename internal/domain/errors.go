@@ -15,6 +15,10 @@ func (e ValidationError) Error() string {
 	return e.Campo + ": " + e.Mensaje
 }
 
+// ErrScrumMasterYaExiste indica que el proyecto ya tiene un Scrum Master y se
+// quiso agregar otro (spec 039, #236).
+var ErrScrumMasterYaExiste = errors.New("")
+
 // ErrNoEncontrado indica que la entidad solicitada no existe.
 var ErrNoEncontrado = errors.New("registro no encontrado")
 
