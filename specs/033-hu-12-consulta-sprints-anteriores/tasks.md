@@ -151,7 +151,7 @@ de la historia.
 - [X] T054 [US4] COMMIT `GREEN: implementar el detalle del historial, tests en verde`
 - [X] T055 [US4] Agregar web/src/features/historial/index.tsx (rutas internas: lista en `historial` y detalle en `historial/:sprintId`, recargable con F5), el estilo en web/src/features/historial/historial.css, la ruta `historial/*` en web/src/rutas.tsx y `{ ruta: 'historial', texto: 'Historial de Sprints' }` en web/src/navegacion.ts; ajustar web/src/rutas.test.tsx si enumera las secciones. La feature no importa de otras (web/src/features/aislamiento.test.ts)
 - [X] T056 [US4] COMMIT `Agregar la sección Historial de Sprints a la navegación`
-- [ ] T057 [US4] `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual de la interfaz según quickstart.md
+- [X] T057 [US4] `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual de la interfaz según quickstart.md
 
 ---
 
