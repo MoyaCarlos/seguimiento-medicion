@@ -25,6 +25,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioDefectos(ctx, sc)             // HU-08
 			InitializeScenarioMetricas(ctx)                 // HU-03
 			InitializeScenarioAutenticacion(ctx)            // HU-20
+			InitializeScenarioHistorial(ctx)                // HU-12
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

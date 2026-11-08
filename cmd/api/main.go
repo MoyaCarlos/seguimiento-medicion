@@ -100,8 +100,11 @@ func main() {
 		service.NewCerrarSesion(obtenerSesion, sesionesRepo, time.Now),
 	)
 
-	metricasHandler := apihttp.NewMetricasHandler(
-		service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db)),
+	calcularMetricas := service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db))
+	metricasHandler := apihttp.NewMetricasHandler(calcularMetricas)
+	historialHandler := apihttp.NewHistorialHandler(
+		service.NewConsultarHistorialSprints(calcularMetricas, sprintRepo),
+		service.NewConsultarDetalleSprint(proyectos, sprintRepo, calcularMetricas, repository.NewSQLiteHistorialSprintRepository(db)),
 	)
 
 	demoHandler := apihttp.NewDemoHandler(
@@ -133,6 +136,8 @@ func main() {
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
 	mux.HandleFunc("GET /projects/{id}/metricas", metricasHandler.Consultar)
+	mux.HandleFunc("GET /projects/{id}/historial", historialHandler.Listar)
+	mux.HandleFunc("GET /projects/{id}/historial/{sprintId}", historialHandler.Detalle)
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)

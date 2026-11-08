@@ -314,6 +314,63 @@ describe('registro de rutas', () => {
       expect(llamadasAlListado()).toBe(1)
     })
 
+    describe('renombrar el proyecto abierto', () => {
+      async function abrirEdicionDeBeta(usuario: ReturnType<typeof userEvent.setup>) {
+        proyectosSimulados = [{ id: 27, nombre: 'Beta' }]
+        const router = abrir('/projects/27/proyecto/edit')
+        await screen.findByRole('option', { name: 'Beta (#27)' })
+        const nombre = await screen.findByLabelText('Nombre del proyecto')
+        await usuario.clear(nombre)
+        await usuario.type(nombre, 'Beta Renombrado')
+        return router
+      }
+
+      it('al guardar el nombre nuevo, el selector lo muestra sin recargar la página', async () => {
+        const usuario = userEvent.setup()
+        const router = await abrirEdicionDeBeta(usuario)
+        proyectosSimulados = [{ id: 27, nombre: 'Beta Renombrado' }]
+
+        await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+        expect(await screen.findByRole('option', { name: 'Beta Renombrado (#27)' })).toBeTruthy()
+        expect(screen.queryByRole('option', { name: 'Beta (#27)' })).toBeNull()
+        expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('27')
+        expect(router.state.location.pathname).toBe('/projects/27/proyecto')
+      })
+
+      it('al cancelar la edición no se vuelve a pedir el listado', async () => {
+        const usuario = userEvent.setup()
+        const router = await abrirEdicionDeBeta(usuario)
+
+        await usuario.click(screen.getByRole('link', { name: 'Cancelar' }))
+
+        expect(router.state.location.pathname).toBe('/projects/27/proyecto')
+        expect(await screen.findByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
+        expect(llamadasAlListado()).toBe(1)
+      })
+
+      it('si el guardado falla no se vuelve a pedir el listado', async () => {
+        const usuario = userEvent.setup()
+        await abrirEdicionDeBeta(usuario)
+        const respuestaBase = vi.mocked(fetch).getMockImplementation()!
+        const llamadasPrevias = llamadasAlListado()
+        vi.stubGlobal(
+          'fetch',
+          vi.fn((url: string, init?: RequestInit) =>
+            init?.method === 'PUT'
+              ? Promise.resolve(new Response(JSON.stringify({ mensaje: 'No se pudo guardar' }), { status: 500 }))
+              : respuestaBase(url, init)),
+        )
+
+        await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+        expect(await screen.findByText('No se pudo guardar')).toBeTruthy()
+        expect(screen.getByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
+        expect(llamadasPrevias).toBe(1)
+        expect(llamadasAlListado()).toBe(0)
+      })
+    })
+
     it('US1.4: al cambiar de proyecto la pantalla no muestra datos del proyecto anterior', async () => {
       proyectosSimulados = DOS_PROYECTOS
       const historia = {
