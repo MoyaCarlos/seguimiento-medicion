@@ -229,7 +229,7 @@ una se prueba sola.
 - [X] T119 [US3] COMMIT `RED: agregar pruebas de la nueva ronda (fallan)`
 - [X] T120 [US3] GREEN: botón "Nueva ronda" en web/src/features/votacion/Consenso.tsx y acción en web/src/features/votacion/useVotacion.ts — `npm test` en verde
 - [X] T121 [US3] COMMIT `GREEN: abrir una nueva ronda desde la votación, tests en verde`
-- [ ] T122 Estilos en web/src/features/votacion/votacion.css con los tokens de web/src/App.css; `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual con la aplicación levantada
+- [X] T122 Estilos en web/src/features/votacion/votacion.css con los tokens de web/src/App.css; `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual con la aplicación levantada
 - [X] T123 COMMIT `Ajustar el estilo del consenso en la votación`
 
 ---
