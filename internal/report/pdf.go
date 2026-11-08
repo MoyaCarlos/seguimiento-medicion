@@ -55,7 +55,7 @@ func GenerarProyecto(reporte domain.ReporteProyecto) ([]byte, error) {
 	agregarSeccion(m, "Datos del proyecto")
 	agregarDato(m, "Nombre", reporte.Proyecto.Nombre)
 	if reporte.Proyecto.Descripcion != "" {
-		agregarDatoAuto(m, "Descripción", reporte.Proyecto.Descripcion)
+		agregarDato(m, "Descripción", reporte.Proyecto.Descripcion)
 	}
 	agregarDato(m, "Fecha de inicio", fechaDe(reporte.Proyecto.FechaInicio))
 	agregarDato(m, "Fecha de fin", fechaDe(reporte.Proyecto.FechaFin))
@@ -101,8 +101,8 @@ func agregarEncabezadoSprint(m core.Maroto, reporte domain.ReporteSprint) {
 	m.AddRow(12, text.NewCol(12, "Reporte de Sprint", props.Text{
 		Size: 17, Style: fontstyle.Bold, Align: align.Center,
 	}))
-	m.AddRow(7, text.NewCol(12, reporte.Proyecto.Nombre, props.Text{
-		Size: 11, Align: align.Center,
+	m.AddAutoRow(text.NewCol(12, reporte.Proyecto.Nombre, props.Text{
+		Size: 11, Align: align.Center, Top: 1, Bottom: 1,
 	}))
 }
 
@@ -154,7 +154,7 @@ func agregarTitulo(m core.Maroto, texto string) {
 }
 
 func agregarSeccion(m core.Maroto, texto string) {
-	m.AddRow(9, text.NewCol(12, texto, props.Text{Size: 12, Style: fontstyle.Bold, Top: 2}))
+	m.AddAutoRow(text.NewCol(12, texto, props.Text{Size: 12, Style: fontstyle.Bold, Top: 2}))
 }
 
 func agregarSubtitulo(m core.Maroto, texto string) {
@@ -166,13 +166,6 @@ func agregarSalto(m core.Maroto) {
 }
 
 func agregarDato(m core.Maroto, etiqueta, valor string) {
-	m.AddRow(5.5,
-		text.NewCol(4, etiqueta, props.Text{Size: 8.5, Style: fontstyle.Bold}),
-		text.NewCol(8, valor, props.Text{Size: 8.5}),
-	)
-}
-
-func agregarDatoAuto(m core.Maroto, etiqueta, valor string) {
 	m.AddAutoRow(
 		text.NewCol(4, etiqueta, props.Text{Size: 8.5, Style: fontstyle.Bold, Top: 1.2}),
 		text.NewCol(8, valor, props.Text{Size: 8.5, Top: 1.2, Bottom: 1.2}),
