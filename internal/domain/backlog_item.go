@@ -118,6 +118,11 @@ func validarDescripcion(descripcion string) (string, error) {
 	return descripcion, nil
 }
 
+// ConCriteriosAceptacion devuelve una copia de la historia con esos criterios.
+func (b BacklogItem) ConCriteriosAceptacion(criterios *string) (BacklogItem, error) {
+	return b, nil
+}
+
 // ConEstimacion devuelve una copia de la historia con esos Story Points.
 func (b BacklogItem) ConEstimacion(sp int) (BacklogItem, error) {
 	if !EsEstimacionValida(sp) {
