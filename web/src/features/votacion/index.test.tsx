@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import {
+  abrirNuevaRonda,
   consultarVotacion,
   iniciarVotacion,
   listarIntegrantes,
@@ -29,6 +30,7 @@ const revelarMock = vi.mocked(revelarVotacion)
 const iniciarMock = vi.mocked(iniciarVotacion)
 const historiaMock = vi.mocked(obtenerHistoria)
 const registrarMock = vi.mocked(registrarEstimacion)
+const nuevaRondaMock = vi.mocked(abrirNuevaRonda)
 
 const HISTORIA: HistoriaResumen = {
   id: 3,
@@ -39,13 +41,13 @@ const HISTORIA: HistoriaResumen = {
 }
 const integrantesMock = vi.mocked(listarIntegrantes)
 
-type Servidor = { votos: Record<number, number>; revelada: boolean }
+type Servidor = { votos: Record<number, number>; revelada: boolean; ronda: number }
 let servidor: Servidor
 
 function vista(consultante?: number): Votacion {
   return {
     historia_id: 3,
-    ronda: 1,
+    ronda: servidor.ronda,
     revelada_en: servidor.revelada ? '2026-11-02T10:00:00Z' : null,
     integrantes: INTEGRANTES.map((integrante) => {
       const voto = servidor.votos[integrante.id]
@@ -98,7 +100,7 @@ async function actualizarSinServidor() {
 }
 
 beforeEach(() => {
-  servidor = { votos: {}, revelada: false }
+  servidor = { votos: {}, revelada: false, ronda: 1 }
   integrantesMock.mockResolvedValue(INTEGRANTES)
   historiaMock.mockResolvedValue(HISTORIA)
   consultarMock.mockImplementation(async (_historia, consultante) => vista(consultante))
@@ -653,6 +655,88 @@ describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)'
 
     expect(registrarMock).toHaveBeenCalledTimes(1)
     expect((screen.getByRole('button', { name: 'Registrar estimación' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
+  const YA_ABIERTA = 'otra persona abrió esta ronda mientras tanto: recargá la votación'
+
+  beforeEach(() => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    nuevaRondaMock.mockImplementation(async (_historia, usuario) => {
+      servidor = { votos: {}, revelada: false, ronda: servidor.ronda + 1 }
+      return vista(usuario)
+    })
+  })
+
+  it('US3.1: Given la ronda 1 revelada con diferencias, When el Scrum Master inicia una nueva ronda, Then la ronda actual es la 2, abierta, sin votos y con las cartas', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(await screen.findByText('Ronda 2')).toBeTruthy()
+    expect(nuevaRondaMock).toHaveBeenCalledWith(3, 1)
+    expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '8' })).toBeTruthy()
+    expect(screen.queryByText(/Hay diferencias/)).toBeNull()
+    expect(screen.queryByText('Promedio exacto')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Registrar estimación' })).toBeNull()
+  })
+
+  it('US3.7: Given una ronda revelada sin diferencias, When el Scrum Master inicia una nueva ronda, Then la nueva ronda queda abierta y sin votos', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('No hay diferencias: todos votaron lo mismo')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(await screen.findByText('Ronda 2')).toBeTruthy()
+    expect(within(fila('Beta Tres')).getByText('Falta')).toBeTruthy()
+  })
+
+  it('US3.3: Given la ronda actual todavía no fue revelada, When actúa el Scrum Master, Then no se ofrece iniciar una nueva ronda', async () => {
+    servidor.revelada = false
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await screen.findByRole('button', { name: 'Revelar' })
+
+    expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
+  })
+
+  it('US3.4: Given una ronda revelada con diferencias, When actúa un Product Builder, Then no se ofrece iniciar una nueva ronda', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
+
+    expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
+  })
+
+  it('Given que otra persona ya abrió la ronda, When el Scrum Master inicia una nueva ronda, Then se muestra el mensaje del servidor', async () => {
+    nuevaRondaMock.mockRejectedValue(new ApiError(409, YA_ABIERTA))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(YA_ABIERTA)
+  })
+
+  it('Given una apertura en curso, When pulso Nueva ronda otra vez, Then se abre una sola ronda', async () => {
+    nuevaRondaMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(nuevaRondaMock).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Nueva ronda' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
 
