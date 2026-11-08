@@ -139,9 +139,11 @@ describe('contexto de sesión', () => {
     montar('/backlog')
 
     expect(estado()).toBe('cargando')
-    await waitFor(() => expect(estado()).toBe('autenticado'))
+    await waitFor(() => {
+      expect(sesion.estado).toBe('autenticado')
+      expect(sesion.usuario).toEqual(USUARIO)
+    })
 
-    expect(sesion.usuario).toEqual(USUARIO)
     expect(fetchMock).toHaveBeenCalledWith(
       '/auth/yo',
       expect.objectContaining({
