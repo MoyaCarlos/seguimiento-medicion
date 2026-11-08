@@ -213,24 +213,24 @@ una se prueba sola.
 
 **Independent Test**: con pruebas de componente (Vitest y Testing Library, con el escenario de la spec en el nombre de cada prueba) y con la aplicación levantada: se revela una ronda con votos 3, 5 y 8, se ve "Hay diferencias" con mínimo 3 y máximo 8, se registra el valor 5 y la historia queda con 5 SP; se abre una nueva ronda y se vuelve a votar.
 
-- [ ] T106 [US1] [US2] [US3] RED: en web/src/features/votacion/api.test.ts, `abrirNuevaRonda(historiaId, usuarioId)` hace `POST /backlog/{id}/votacion/rondas` con `usuario_id` y devuelve la `Votacion`; `registrarEstimacion(historiaId, usuarioId, valor)` hace `POST /backlog/{id}/votacion/estimacion` con `usuario_id` y `estimacion_sp` y devuelve la historia. Sumar `diferencias` al tipo `Votacion` (web/src/features/votacion/votacion.ts) y stubs en web/src/features/votacion/api.ts — confirmar que FALLA
-- [ ] T107 COMMIT `RED: agregar tests del cliente de consenso y estimación acordada (fallan)`
-- [ ] T108 GREEN: implementar las dos funciones en web/src/features/votacion/api.ts — `npm test` en verde
-- [ ] T109 COMMIT `GREEN: implementar el cliente de consenso y estimación acordada, tests en verde`
-- [ ] T110 [US1] RED: en web/src/features/votacion/votacion.test.ts, `textoDeDiferencias` ("Hay diferencias: mínimo 3, máximo 8" / "No hay diferencias: todos votaron lo mismo" / vacío si es null), y en web/src/features/votacion/index.test.tsx, escenarios US1.1 a US1.3 de la spec. Stub de la función — confirmar que FALLA
-- [ ] T111 [US1] COMMIT `RED: agregar pruebas de las diferencias entre los votos (fallan)`
-- [ ] T112 [US1] GREEN: mostrar las diferencias en web/src/features/votacion/Resultado.tsx — `npm test` en verde
-- [ ] T113 [US1] COMMIT `GREEN: mostrar las diferencias entre los votos, tests en verde`
-- [ ] T114 [US2] RED: en web/src/features/votacion/index.test.tsx, escenarios US2.1, US2.2, US2.4 a US2.8: con la ronda revelada el Scrum Master elige una carta de la baraja (por defecto la sugerida, aunque nadie la haya votado) y registra; la historia muestra los nuevos SP y un aviso; un rechazo del servidor muestra su mensaje y la historia mantiene su estimación; un Product Builder no ve el formulario; un doble envío registra una sola vez. Reemplaza la aclaración "se hace en otra historia" — confirmar que FALLA
-- [ ] T115 [US2] COMMIT `RED: agregar pruebas del registro de la estimación acordada (fallan)`
-- [ ] T116 [US2] GREEN: formulario en web/src/features/votacion/Consenso.tsx y acción en web/src/features/votacion/useVotacion.ts — `npm test` en verde
-- [ ] T117 [US2] COMMIT `GREEN: registrar la estimación acordada desde la votación, tests en verde`
-- [ ] T118 [US3] RED: en web/src/features/votacion/index.test.tsx, escenarios US3.1, US3.3, US3.4 y US3.7: con la ronda revelada, haya o no diferencias, el Scrum Master pulsa "Nueva ronda" y se ve la ronda 2 sin votos y con las cartas; sin revelar o siendo Product Builder no hay botón; un rechazo del servidor muestra su mensaje — confirmar que FALLA
-- [ ] T119 [US3] COMMIT `RED: agregar pruebas de la nueva ronda (fallan)`
-- [ ] T120 [US3] GREEN: botón "Nueva ronda" en web/src/features/votacion/Consenso.tsx y acción en web/src/features/votacion/useVotacion.ts — `npm test` en verde
-- [ ] T121 [US3] COMMIT `GREEN: abrir una nueva ronda desde la votación, tests en verde`
+- [X] T106 [US1] [US2] [US3] RED: en web/src/features/votacion/api.test.ts, `abrirNuevaRonda(historiaId, usuarioId)` hace `POST /backlog/{id}/votacion/rondas` con `usuario_id` y devuelve la `Votacion`; `registrarEstimacion(historiaId, usuarioId, valor)` hace `POST /backlog/{id}/votacion/estimacion` con `usuario_id` y `estimacion_sp` y devuelve la historia. Sumar `diferencias` al tipo `Votacion` (web/src/features/votacion/votacion.ts) y stubs en web/src/features/votacion/api.ts — confirmar que FALLA
+- [X] T107 COMMIT `RED: agregar tests del cliente de consenso y estimación acordada (fallan)`
+- [X] T108 GREEN: implementar las dos funciones en web/src/features/votacion/api.ts — `npm test` en verde
+- [X] T109 COMMIT `GREEN: implementar el cliente de consenso y estimación acordada, tests en verde`
+- [X] T110 [US1] RED: en web/src/features/votacion/votacion.test.ts, `textoDeDiferencias` ("Hay diferencias: mínimo 3, máximo 8" / "No hay diferencias: todos votaron lo mismo" / vacío si es null), y en web/src/features/votacion/index.test.tsx, escenarios US1.1 a US1.3 de la spec. Stub de la función — confirmar que FALLA
+- [X] T111 [US1] COMMIT `RED: agregar pruebas de las diferencias entre los votos (fallan)`
+- [X] T112 [US1] GREEN: mostrar las diferencias en web/src/features/votacion/Resultado.tsx — `npm test` en verde
+- [X] T113 [US1] COMMIT `GREEN: mostrar las diferencias entre los votos, tests en verde`
+- [X] T114 [US2] RED: en web/src/features/votacion/index.test.tsx, escenarios US2.1, US2.2, US2.4 a US2.8: con la ronda revelada el Scrum Master elige una carta de la baraja (por defecto la sugerida, aunque nadie la haya votado) y registra; la historia muestra los nuevos SP y un aviso; un rechazo del servidor muestra su mensaje y la historia mantiene su estimación; un Product Builder no ve el formulario; un doble envío registra una sola vez. Reemplaza la aclaración "se hace en otra historia" — confirmar que FALLA
+- [X] T115 [US2] COMMIT `RED: agregar pruebas del registro de la estimación acordada (fallan)`
+- [X] T116 [US2] GREEN: formulario en web/src/features/votacion/Consenso.tsx y acción en web/src/features/votacion/useVotacion.ts — `npm test` en verde
+- [X] T117 [US2] COMMIT `GREEN: registrar la estimación acordada desde la votación, tests en verde`
+- [X] T118 [US3] RED: en web/src/features/votacion/index.test.tsx, escenarios US3.1, US3.3, US3.4 y US3.7: con la ronda revelada, haya o no diferencias, el Scrum Master pulsa "Nueva ronda" y se ve la ronda 2 sin votos y con las cartas; sin revelar o siendo Product Builder no hay botón; un rechazo del servidor muestra su mensaje — confirmar que FALLA
+- [X] T119 [US3] COMMIT `RED: agregar pruebas de la nueva ronda (fallan)`
+- [X] T120 [US3] GREEN: botón "Nueva ronda" en web/src/features/votacion/Consenso.tsx y acción en web/src/features/votacion/useVotacion.ts — `npm test` en verde
+- [X] T121 [US3] COMMIT `GREEN: abrir una nueva ronda desde la votación, tests en verde`
 - [ ] T122 Estilos en web/src/features/votacion/votacion.css con los tokens de web/src/App.css; `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual con la aplicación levantada
-- [ ] T123 COMMIT `Ajustar el estilo del consenso en la votación`
+- [X] T123 COMMIT `Ajustar el estilo del consenso en la votación`
 
 ---
 
