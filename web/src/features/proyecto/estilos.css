@@ -20,6 +20,7 @@
   font-size: 1.2rem;
   letter-spacing: -0.02em;
   margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
 }
 
 .hu04-tarjeta p {
@@ -46,10 +47,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
-}
-
-.hu04-acciones .button {
-  text-decoration: none;
 }
 
 .hu04-intro {

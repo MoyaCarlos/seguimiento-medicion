@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -15,6 +17,8 @@ type Project struct {
 	FechaInicio *time.Time
 	FechaFin    *time.Time
 	CreadoEn    time.Time
+	// HorasPorStoryPoint es nil mientras no esté definido (HU-03).
+	HorasPorStoryPoint *float64
 }
 
 const (
@@ -63,4 +67,19 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 		return "", "", ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin debe ser posterior a la de inicio"}
 	}
 	return nombre, descripcion, nil
+}
+
+// ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
+// indicado. valor es el número en texto; nil lo deja sin definir.
+func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {
+	if valor == nil {
+		p.HorasPorStoryPoint = nil
+		return p, nil
+	}
+	horas, err := strconv.ParseFloat(*valor, 64)
+	if err != nil || !(horas > 0) || math.IsInf(horas, 1) {
+		return Project{}, ErrHorasPorStoryPointInvalidas
+	}
+	p.HorasPorStoryPoint = &horas
+	return p, nil
 }

@@ -102,7 +102,7 @@ spec). Este documento registra las decisiones técnicas del diseño.
 | `ErrNoEsIntegrante` | sentinel | 403 | vota quien no es integrante del proyecto |
 | `ErrNoEsScrumMaster` | sentinel | 403 | inicia o revela quien no es `scrum_master` |
 | `ErrVotacionYaIniciada` | sentinel | 409 | la historia ya tiene ronda (servicio o `UNIQUE`) |
-| `ErrVotoInvalido` | `ValidationError{valor}` | 400 | carta fuera de la baraja |
+| `ErrVotoInvalido` | `ValidationError{valor}` | 400 | carta fuera de la baraja o valor que no es un entero (decimal, entre comillas, `null`, ausente) |
 | `ErrHistoriaCompletada` | `ValidationError{estado}` | 400 | iniciar sobre historia `Completada` |
 | `ErrRondaRevelada` | `ValidationError{estado}` | 400 | votar o revelar una ronda revelada |
 | `ErrFaltanVotos` | `ValidationError{votos}` | 400 | revelar sin que voten todos |
@@ -116,7 +116,9 @@ spec). Este documento registra las decisiones técnicas del diseño.
   revela, no se revela hasta que votaron todos y se adopta el 403 para los permisos.
 - **Orden de validación**: id de ruta → historia existe (404) → JSON → `usuario_id` →
   permiso (403) → reglas de estado y de valor. Así la historia inexistente domina (FR-011),
-  con el mismo patrón que `SprintHandler.Iniciar`.
+  con el mismo patrón que `SprintHandler.Iniciar`. `valor` se lee como `json.RawMessage`:
+  lo que no es un entero llega al service como 0, así quien no integra el proyecto recibe
+  403 también con un valor mal formado.
 
 ## R9. Migración 003 y su orden respecto de la 002
 

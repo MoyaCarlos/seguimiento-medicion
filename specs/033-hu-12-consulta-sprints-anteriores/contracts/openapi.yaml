@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Consulta de Sprints Anteriores (HU-12)
+  version: 1.0.0
+  description: >-
+    Consultas de solo lectura del historial de Sprints finalizados de un
+    proyecto y del detalle de cada uno. Las métricas provienen de HU-03 y
+    MetricasSprint coincide con su objeto metricas (research.md R2).
+paths:
+  /projects/{id}/historial:
+    get:
+      summary: Listar los Sprints finalizados de un proyecto
+      description: >-
+        Solo Sprints Finalizado, ordenados por numero ascendente. Orden de
+        evaluación de los errores: id inválido (400), proyecto inexistente (404).
+      operationId: consultarHistorialSprints
+      parameters:
+        - $ref: '#/components/parameters/ProyectoID'
+      responses:
+        '200':
+          description: Historial; arreglo vacío (nunca null) si no hay Sprints finalizados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SprintHistorial'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /projects/{id}/historial/{sprintId}:
+    get:
+      summary: Consultar el detalle de un Sprint finalizado
+      description: >-
+        Orden de evaluación de los errores: id inválido (campo id) o sprintId
+        inválido (campo sprint_id) (400), proyecto inexistente (404), Sprint
+        inexistente o de otro proyecto (404), Sprint no finalizado (400, campo
+        estado).
+      operationId: consultarDetalleSprint
+      parameters:
+        - $ref: '#/components/parameters/ProyectoID'
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        '200':
+          description: Detalle del Sprint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetalleSprint'
+        '400':
+          $ref: '#/components/responses/Invalido'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+components:
+  parameters:
+    ProyectoID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+  responses:
+    Invalido:
+      description: Identificador inválido o Sprint todavía no finalizado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            campo: estado
+            mensaje: el Sprint todavía no está finalizado
+    NoEncontrado:
+      description: Proyecto o Sprint inexistente, o Sprint de otro proyecto.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            mensaje: sprint no encontrado
+    ErrorInterno:
+      description: Falló la lectura; no se devuelven datos parciales.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            mensaje: error interno
+  schemas:
+    SprintHistorial:
+      type: object
+      required: [id, proyecto_id, numero, sprint_goal, fecha_inicio, fecha_fin, metricas]
+      properties:
+        id:
+          type: integer
+          format: int64
+        proyecto_id:
+          type: integer
+          format: int64
+        numero:
+          type: integer
+        sprint_goal:
+          type: string
+        fecha_inicio:
+          type: string
+          format: date
+        fecha_fin:
+          type: string
+          format: date
+        metricas:
+          $ref: '#/components/schemas/MetricasSprint'
+    DetalleSprint:
+      allOf:
+        - $ref: '#/components/schemas/SprintHistorial'
+        - type: object
+          required: [historias, defectos]
+          properties:
+            historias:
+              type: array
+              items:
+                $ref: '#/components/schemas/HistoriaComprometida'
+            defectos:
+              type: array
+              items:
+                $ref: '#/components/schemas/DefectoDeSprint'
+    MetricasSprint:
+      type: object
+      description: >-
+        Definidas por HU-03 (spec 032). Horas estimadas y desviación en null
+        significan "sin datos", nunca cero.
+      required:
+        - story_points_planificados
+        - story_points_completados
+        - velocidad
+        - porcentaje_historias_completadas
+        - horas_estimadas
+        - horas_reales
+        - desviacion_horas
+        - desviacion_porcentaje
+        - defectos_detectados
+        - defectos_resueltos
+      properties:
+        story_points_planificados:
+          type: integer
+        story_points_completados:
+          type: integer
+        velocidad:
+          type: number
+        porcentaje_historias_completadas:
+          type: number
+        horas_estimadas:
+          type: number
+          nullable: true
+        horas_reales:
+          type: number
+        desviacion_horas:
+          type: number
+          nullable: true
+        desviacion_porcentaje:
+          type: number
+          nullable: true
+        defectos_detectados:
+          type: integer
+        defectos_resueltos:
+          type: integer
+    HistoriaComprometida:
+      type: object
+      required: [id, titulo, estimacion_sp, completada, minutos, horas]
+      properties:
+        id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        estimacion_sp:
+          type: integer
+          nullable: true
+          description: En una historia arrastrada, los Story Points que tenía al cerrar. Null significa "sin estimar".
+        completada:
+          type: boolean
+        minutos:
+          type: integer
+          description: Minutos imputados en este Sprint; 0 si no tiene.
+        horas:
+          type: number
+          description: Horas imputadas en este Sprint, con dos decimales.
+    DefectoDeSprint:
+      type: object
+      required: [id, historia_id, historia, descripcion, severidad, estado, detectado_en_sprint, resuelto_en_sprint]
+      properties:
+        id:
+          type: integer
+          format: int64
+        historia_id:
+          type: integer
+          format: int64
+        historia:
+          type: string
+        descripcion:
+          type: string
+        severidad:
+          type: string
+          enum: [Alta, Media, Baja]
+        estado:
+          type: string
+          enum: [Pendiente, Resuelto]
+          description: Estado actual del defecto.
+        detectado_en_sprint:
+          type: boolean
+        resuelto_en_sprint:
+          type: boolean
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

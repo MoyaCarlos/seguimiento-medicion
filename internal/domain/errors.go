@@ -24,6 +24,10 @@ var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
 var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
 
+// ErrSprintNoFinalizado indica que se pidió en el historial un Sprint que
+// todavía está Pendiente o Activo (HU-12).
+var ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "el Sprint todavía no está finalizado"}
+
 // ErrEstimacionCongelada indica un cambio de los Story Points ya cargados de una
 // historia de un Sprint Activo o Finalizado (decisión D2b).
 var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}
@@ -73,3 +77,10 @@ var (
 
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
+
+// ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
+var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}
+
+// ErrCargaEnSprintFinalizado indica una carga de Story Points en una historia
+// sin estimar de un Sprint Finalizado (decisión D2b, reabierta en HU-03).
+var ErrCargaEnSprintFinalizado = ValidationError{Campo: "estimacion_sp", Mensaje: "no se pueden cargar Story Points en un Sprint Finalizado"}
