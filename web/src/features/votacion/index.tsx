@@ -80,6 +80,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
                   votacion={votacion}
                   deshabilitado={enviando}
                   alRegistrar={estado.registrarEstimacion}
+                  alAbrirRonda={estado.abrirNuevaRonda}
                 />
               ) : (
                 <p className="votacion-nota">El Scrum Master registra la estimación acordada o abre una nueva ronda.</p>

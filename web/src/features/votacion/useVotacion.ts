@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  abrirNuevaRonda,
   consultarVotacion,
   iniciarVotacion,
   listarIntegrantes,
@@ -161,6 +162,8 @@ export function useVotacion(proyectoId: string, historiaId: number) {
       scrumMaster ? ejecutar(() => revelarVotacion(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
     votar: (valor: number) =>
       actor ? ejecutar(() => votar(historiaId, actor.id, valor), mostrarVotacion) : undefined,
+    abrirNuevaRonda: () =>
+      scrumMaster ? ejecutar(() => abrirNuevaRonda(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
     registrarEstimacion: (valor: number) =>
       scrumMaster
         ? ejecutar(() => registrarEstimacion(historiaId, scrumMaster.id, valor), mostrarEstimacion)

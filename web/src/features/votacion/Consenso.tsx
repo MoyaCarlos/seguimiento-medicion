@@ -6,9 +6,10 @@ type Props = {
   votacion: Votacion
   deshabilitado: boolean
   alRegistrar: (valor: number) => void
+  alAbrirRonda: () => void
 }
 
-export function Consenso({ votacion, deshabilitado, alRegistrar }: Props) {
+export function Consenso({ votacion, deshabilitado, alRegistrar, alAbrirRonda }: Props) {
   const [valor, setValor] = useState<number>(votacion.promedio?.carta_sugerida ?? CARTAS[0])
 
   function registrar(evento: FormEvent<HTMLFormElement>) {
@@ -40,6 +41,12 @@ export function Consenso({ votacion, deshabilitado, alRegistrar }: Props) {
         </div>
         <Button type="submit" disabled={deshabilitado}>
           Registrar estimación
+        </Button>
+      </div>
+      <div className="votacion-consenso__ronda">
+        <p>¿Hace falta seguir conversando? Abrí otra ronda: los votos actuales quedan en el historial.</p>
+        <Button type="button" variant="secondary" disabled={deshabilitado} onClick={alAbrirRonda}>
+          Nueva ronda
         </Button>
       </div>
     </form>
