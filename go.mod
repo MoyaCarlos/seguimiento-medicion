@@ -4,6 +4,7 @@ go 1.26.5
 
 require (
 	github.com/cucumber/godog v0.16.0
+	github.com/johnfercher/maroto/v2 v2.4.4
 	modernc.org/sqlite v1.60.1
 )
 
@@ -19,7 +20,6 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hhrutter/tiff v1.0.7 // indirect
 	github.com/johnfercher/go-tree v1.1.0 // indirect
-	github.com/johnfercher/maroto/v2 v2.4.4 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
