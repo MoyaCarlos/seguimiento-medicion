@@ -33,6 +33,10 @@ func hashDePrueba(t *testing.T) string {
 
 var ahoraFijo = time.Date(2026, 10, 30, 15, 0, 0, 0, time.UTC)
 
+// ahoraOtroDia solo lo usa la prueba de fechas relativas: ahoraFijo sigue
+// siendo la fecha de las demás pruebas.
+var ahoraOtroDia = time.Date(2026, 11, 9, 18, 30, 0, 0, time.UTC)
+
 func baseMigrada(t *testing.T) *sql.DB {
 	t.Helper()
 	db, err := repository.AbrirSQLite(":memory:")

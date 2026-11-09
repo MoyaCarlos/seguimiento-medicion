@@ -46,3 +46,17 @@ func TestBloqueProyecto_CarlosEsElUnicoScrumMasterYLosOtrosTresProductBuilders(t
 		t.Errorf("resumen: %+v, se esperaban 4 integrantes", c.resumen)
 	}
 }
+
+func TestBloqueProyecto_ComienzaTreintaDiasAntesDeLaCargaYTerminaCuarentaYCincoDespues(t *testing.T) {
+	db := baseMigrada(t)
+
+	ejecutar(t, db, bloqueUsuarios, bloqueProyecto)
+
+	var inicio, fin string
+	if err := db.QueryRow(`SELECT fecha_inicio, fecha_fin FROM proyectos WHERE id = 25`).Scan(&inicio, &fin); err != nil {
+		t.Fatal(err)
+	}
+	if inicio != "2026-09-30" || fin != "2026-12-14" {
+		t.Errorf("fechas: %s a %s, se esperaba 2026-09-30 a 2026-12-14 (hoy-30 a hoy+45)", inicio, fin)
+	}
+}
