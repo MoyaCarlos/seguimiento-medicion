@@ -81,6 +81,9 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
+// Obtener atiende GET /backlog/{id}.
+func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {}
+
 // Editar atiende PUT /backlog/{id}.
 func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	id, err := parsearID(r.PathValue("id"))
