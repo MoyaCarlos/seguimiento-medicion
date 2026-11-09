@@ -1,6 +1,6 @@
 # Quickstart: validar el Scrum Master único (#236)
 
-Prerrequisitos: Go 1.27, el repositorio en la rama `feature/236-scrum-master-unico`.
+Prerrequisitos: Go 1.26.5 o posterior (el `go.mod` declara 1.26.5), el repositorio en la rama `feature/236-scrum-master-unico`.
 
 ## 1. Pruebas automáticas
 
@@ -13,15 +13,25 @@ Esperado: todo en verde. Deben fallar antes de implementar (RED): el test de ser
 
 ## 2. Prueba manual con la API
 
+Con una base temporal y un puerto libre (el puerto sale de `PORT`, por defecto 8080, y la base de `DB_PATH`; ver `cmd/api/config.go`):
+
 ```sh
-go run ./cmd/api &
-curl -s -XPOST localhost:8080/projects -d '{"nombre":"P","creador":"Ana"}'      # 201, Ana es Scrum Master
-curl -s -XPOST localhost:8080/projects/1/members -d '{"nombre":"Beto","rol":"product_builder"}'  # 201
-curl -s -i -XPOST localhost:8080/projects/1/members -d '{"nombre":"Cami","rol":"scrum_master"}'  # 409 + mensaje
-curl -s -i -XPOST localhost:8080/projects/1/members -d '{"nombre":"Ana","rol":"scrum_master"}'   # 400 integrante duplicado
+DB_PATH=/tmp/qs.db PORT=9090 go run ./cmd/api &
+B=localhost:9090
+curl -s -i -XPOST $B/projects -d '{"nombre":"P","creador":"Ana"}'                                # 201, Ana es Scrum Master
+curl -s -i -XPOST $B/projects/1/members -d '{"nombre":"Beto","rol":"product_builder"}'           # 201
+curl -s -i -XPOST $B/projects/1/members -d '{"nombre":"Cami","rol":"scrum_master"}'              # 409
+curl -s -i -XPOST $B/projects/1/members -d '{"nombre":"Ana","rol":"scrum_master"}'               # 400 integrante
+curl -s $B/projects/1/members                                                                    # Ana (scrum_master) y Beto (product_builder)
+kill %1; rm -f /tmp/qs.db*
 ```
 
-Contrato: [contracts/members-409.yaml](./contracts/members-409.yaml). El puerto sale de la variable `PORT` y por defecto es 8080 (`cmd/api/config.go`); si usás otro, cambialo en los comandos (`PORT=9090 go run ./cmd/api`).
+Cuerpos esperados:
+
+- 409: `{"mensaje":"el proyecto ya tiene un Scrum Master"}` (sin `campo`).
+- 400: `{"campo":"integrante","mensaje":"el integrante ya pertenece al proyecto"}`; es el mismo para quien ya es Scrum Master y para un Product Builder repetido.
+
+Contrato: [contracts/members-409.yaml](./contracts/members-409.yaml).
 
 ## 3. Migración sobre una base con duplicados
 
