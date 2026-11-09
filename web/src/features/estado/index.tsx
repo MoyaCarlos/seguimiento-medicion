@@ -58,11 +58,8 @@ function AvanceDelProyecto({ id }: { id: string }) {
 
   return (
     <>
-      {avance.total.historias === 0 ? (
-        <p className="estado-vacio">El proyecto todavía no tiene historias.</p>
-      ) : (
-        avance.grupos.map((grupo) => <GrupoHistorias key={grupo.estado} grupo={grupo} />)
-      )}
+      {avance.total.historias === 0 && <p className="estado-vacio">El proyecto todavía no tiene historias.</p>}
+      {avance.grupos.map((grupo) => <GrupoHistorias key={grupo.estado} grupo={grupo} />)}
       <section className="estado-tarjeta" aria-labelledby="estado-total">
         <h2 id="estado-total">Total del proyecto</h2>
         <Cifras historias={avance.total.historias} storyPoints={avance.total.story_points} />
