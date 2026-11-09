@@ -5,6 +5,7 @@ import {
   estaRevelada,
   faltanPorVotar,
   puedeRevelar,
+  textoDeDiferencias,
   textoDeVoto,
   type Integrante,
   type Votacion,
@@ -28,6 +29,7 @@ const votacion = (integrantes: VotoDeIntegrante[], revelada_en: string | null = 
   revelada_en,
   integrantes,
   promedio: null,
+  diferencias: null,
 })
 
 describe('CARTAS', () => {
@@ -93,5 +95,23 @@ describe('textoDeVoto', () => {
 
   it('Given quien votó y el valor está disponible (propio o revelado), Then el valor', () => {
     expect(textoDeVoto(voto(1, true, 8))).toBe('8')
+  })
+})
+
+describe('textoDeDiferencias', () => {
+  it('Given votos 3, 5 y 8 revelados, Then indica que hay diferencias con el mínimo y el máximo', () => {
+    expect(textoDeDiferencias({ hay_diferencias: true, minimo: 3, maximo: 8 })).toBe(
+      'Hay diferencias: mínimo 3, máximo 8',
+    )
+  })
+
+  it('Given votos que coinciden, Then indica que no hay diferencias', () => {
+    expect(textoDeDiferencias({ hay_diferencias: false, minimo: null, maximo: null })).toBe(
+      'No hay diferencias: todos votaron lo mismo',
+    )
+  })
+
+  it('Given una ronda sin revelar (null), Then no dice nada', () => {
+    expect(textoDeDiferencias(null)).toBe('')
   })
 })

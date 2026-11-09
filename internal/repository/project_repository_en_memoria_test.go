@@ -78,3 +78,36 @@ func TestProjectRepositoryEnMemoria_ListarIntegrantesDevuelveNombre(t *testing.T
 		t.Fatalf("se esperaba el integrante con su nombre, se obtuvo %+v", miembros)
 	}
 }
+
+func TestProjectRepositoryEnMemoria_AgregarIntegrante_SegundoScrumMasterEsErrorDeDominio(t *testing.T) {
+	repo := NewProjectRepositoryEnMemoria()
+	guardado, _ := repo.Guardar(context.Background(), domain.Project{Nombre: "Proyecto"})
+	ana, _ := repo.GuardarUsuario(context.Background(), domain.User{Nombre: "Ana", NombreNormalizado: "ana"})
+	beto, _ := repo.GuardarUsuario(context.Background(), domain.User{Nombre: "Beto", NombreNormalizado: "beto"})
+	if _, err := repo.AgregarIntegrante(context.Background(), domain.Membership{ProjectID: guardado.ID, UserID: ana.ID, Role: domain.RolScrumMaster}); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	_, err := repo.AgregarIntegrante(context.Background(), domain.Membership{ProjectID: guardado.ID, UserID: beto.ID, Role: domain.RolScrumMaster})
+
+	if !errors.Is(err, domain.ErrScrumMasterYaExiste) {
+		t.Fatalf("se esperaba domain.ErrScrumMasterYaExiste, se obtuvo %v", err)
+	}
+}
+
+func TestProjectRepositoryEnMemoria_AgregarIntegrante_ProductBuildersYScrumMasterEnOtroProyecto(t *testing.T) {
+	repo := NewProjectRepositoryEnMemoria()
+	uno, _ := repo.Guardar(context.Background(), domain.Project{Nombre: "Uno"})
+	dos, _ := repo.Guardar(context.Background(), domain.Project{Nombre: "Dos"})
+	altas := []domain.Membership{
+		{ProjectID: uno.ID, UserID: 1, Role: domain.RolScrumMaster},
+		{ProjectID: uno.ID, UserID: 2, Role: domain.RolProductBuilder},
+		{ProjectID: uno.ID, UserID: 3, Role: domain.RolProductBuilder},
+		{ProjectID: dos.ID, UserID: 1, Role: domain.RolScrumMaster},
+	}
+	for _, m := range altas {
+		if _, err := repo.AgregarIntegrante(context.Background(), m); err != nil {
+			t.Fatalf("no se esperaba error para %+v: %v", m, err)
+		}
+	}
+}

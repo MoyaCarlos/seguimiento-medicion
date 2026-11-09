@@ -116,6 +116,9 @@ func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (dom
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
 			return domain.Membership{}, ErrMiembroDuplicado
 		}
+		if m.Role == domain.RolScrumMaster && existente.ProjectID == m.ProjectID && existente.Role == domain.RolScrumMaster {
+			return domain.Membership{}, domain.ErrScrumMasterYaExiste
+		}
 	}
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
