@@ -8,7 +8,10 @@ import { PROYECTO_DE_PRUEBA, cargarDatosDePrueba, datosDePruebaHabilitados } fro
 
 type Resultado = { tipo: 'aviso'; mensaje: string } | { tipo: 'error'; mensaje: string }
 
-export function BotonDatosDePrueba() {
+type Props = { alUsar?: (nombre: string, contrasena: string) => void }
+
+// eslint-disable-next-line no-unused-vars
+export function BotonDatosDePrueba(_props: Props) {
   const [habilitado, setHabilitado] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<Resultado>()
