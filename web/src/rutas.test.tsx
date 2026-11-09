@@ -123,6 +123,49 @@ describe('registro de rutas', () => {
     expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe('page')
   })
 
+  it('/projects/:id/historial muestra el Historial de Sprints y la navegación lo ofrece como activo', async () => {
+    abrir('/projects/42/historial')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Historial de Sprints' })).toBeTruthy()
+    expect(await screen.findByText('Todavía no hay Sprints cerrados')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Historial de Sprints' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('/projects/:id/historial/:sprintId abre el detalle del Sprint al entrar directo por la URL', async () => {
+    const detalle = {
+      id: 5,
+      proyecto_id: 42,
+      numero: 3,
+      sprint_goal: 'Cerrar el trámite',
+      fecha_inicio: '2026-11-03',
+      fecha_fin: '2026-11-09',
+      metricas: {
+        story_points_planificados: 0,
+        story_points_completados: 0,
+        velocidad: 0,
+        porcentaje_historias_completadas: 0,
+        horas_estimadas: null,
+        horas_reales: 0,
+        desviacion_horas: null,
+        desviacion_porcentaje: null,
+        defectos_detectados: 0,
+        defectos_resueltos: 0,
+      },
+      historias: [],
+      defectos: [],
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(new Response(url === '/projects/42/historial/5' ? JSON.stringify(detalle) : '[]', { status: 200 })),
+      ),
+    )
+    abrir('/projects/42/historial/5')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sprint 3' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Historial de Sprints' }).getAttribute('aria-current')).toBe('page')
+  })
+
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/settings')
 
