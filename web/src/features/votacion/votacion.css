@@ -170,14 +170,34 @@
   border: 1px solid var(--line);
   border-radius: 1rem;
   box-shadow: 0 18px 45px rgb(80 60 110 / 8%);
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.votacion-diferencias {
+  background: rgb(79 142 145 / 10%);
+  border-left: 4px solid var(--complement);
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font-weight: 700;
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+}
+
+.votacion-diferencias--hay {
+  background: rgb(180 35 90 / 8%);
+  border-left-color: var(--danger);
+}
+
+.votacion-resultado__datos {
   display: flex;
   flex-wrap: wrap;
   gap: 1rem 2.5rem;
   margin: 0;
-  padding: 1.25rem 1.5rem;
 }
 
-.votacion-resultado div {
+.votacion-resultado__datos div {
   display: grid;
   gap: 0.2rem;
 }
@@ -194,6 +214,66 @@
   color: var(--lilac-dark);
   font-size: 2rem;
   font-weight: 800;
+  margin: 0;
+}
+
+.votacion-consenso {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  box-shadow: 0 18px 45px rgb(80 60 110 / 8%);
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.votacion-consenso h2 {
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.votacion-consenso p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.votacion-consenso__fila {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.votacion-consenso__fila .field {
+  margin: 0;
+}
+
+.votacion-consenso__fila select {
+  min-width: 10rem;
+}
+
+.votacion-consenso__ronda {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  justify-content: space-between;
+  padding-top: 0.9rem;
+}
+
+.votacion-aviso {
+  background: rgb(84 160 110 / 12%);
+  border: 1px solid rgb(84 160 110 / 35%);
+  border-radius: 0.6rem;
+  color: var(--ink);
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+}
+
+.votacion-nota {
+  color: var(--muted);
   margin: 0;
 }
 
@@ -218,5 +298,11 @@
 
   .votacion-cartas {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  .votacion-consenso__fila,
+  .votacion-consenso__ronda {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
