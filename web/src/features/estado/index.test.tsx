@@ -281,6 +281,18 @@ describe('pantalla Estado', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
+  it('Respuesta incompleta: Given un grupo sin su lista de historias, When ingreso a Estado, Then veo un mensaje de error y no una excepción', async () => {
+    simularApi(() =>
+      respuesta(200, { total: avance.total, grupos: [avance.grupos[0], { estado: 'En progreso', cantidad: 1, story_points: 5 }] }),
+    )
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('Ocurrió un error inesperado')
+    expect(screen.getByRole('heading', { level: 1, name: 'Estado del proyecto' })).toBeTruthy()
+    expect(screen.queryByRole('region')).toBeNull()
+  })
+
   it('Doble carga: Given que cambio de proyecto con la pantalla montada, When llega tarde la respuesta del anterior, Then solo veo los datos del proyecto actual', async () => {
     let responderAnterior: (r: Response) => void = () => {}
     const delProyecto8: Avance = {

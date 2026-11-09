@@ -65,6 +65,19 @@ describe('cliente del avance', () => {
     },
   )
 
+  it.each([
+    ['sin la lista historias', { estado: 'Nueva', cantidad: 1, story_points: 3 }],
+    ['con historias nulo', { estado: 'Nueva', cantidad: 1, story_points: 3, historias: null }],
+    ['con historias que no es una lista', { estado: 'Nueva', cantidad: 1, story_points: 3, historias: 'H1' }],
+  ])(
+    'Dado un grupo %s, cuando se consulta el avance, entonces rechaza en vez de romper la pantalla',
+    async (_caso, grupo) => {
+      responder({ total: AVANCE.total, grupos: [AVANCE.grupos[0], grupo] })
+
+      await expect(consultarAvance('7')).rejects.toThrow('La respuesta no trae el avance')
+    },
+  )
+
   it('Dado una respuesta vacía, cuando se consulta el avance, entonces rechaza', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 200 })))
 
