@@ -46,13 +46,13 @@ description: "Tareas de la spec 041 (datos de prueba v2): TDD con commits por fa
 
 **Independent Test**: tras la carga, los conteos y el reparto de [data-model.md](data-model.md).
 
-- [ ] T012 [US3] RED: `internal/demo/bloque_sprints_test.go` — 4 Sprints (Finalizado −28/−15, Finalizado −14/−8, Activo −7/+6, Pendiente sin goal ni fechas) y proyecto con inicio hoy−30 en `bloque_proyecto_test.go` — confirmar que FALLAN
-- [ ] T013 [US3] RED: `internal/demo/bloque_historias_test.go` — 12 historias con el reparto 3/2/3/1/3, velocidades 13 y 8, fechas de finalización dentro de su Sprint, arrastrada `tasa` en el Sprint 2 con 8 SP y en estado Nueva, al menos una sin estimar en el backlog — confirmar que FALLAN
-- [ ] T014 [US3] RED: `bloque_horas_test.go` (20 registros en los Sprints 1 a 3, fechas dentro del Sprint y ≤ hoy, los cuatro integrantes con horas, Completadas entre el 50 % y el 150 % de SP × 4 h) y `bloque_votacion_test.go` (ronda revelada con 4 votos en `aviso`, ronda abierta con 2 votos y `revelada_en NULL` en `digital`; resumen 2 rondas y 6 votos) — confirmar que FALLAN
-- [ ] T015 COMMIT `RED: agregar tests de cuatro Sprints, historias, horas y votaciones (falla)`
-- [ ] T016 [US3] GREEN: `bloque_proyecto.go` (inicio `c.dia(-30)`), `bloque_sprints.go` (lista de 4 definiciones con el mismo bucle y funciones de la v1), `bloque_historias.go` (12 filas, `sprint` 0 a 4, arrastrada en `c.sprints[1]`), `bloque_horas.go` (20 filas, tres Sprints con sus fechas), `bloque_votacion.go` (dos rondas) — adaptar `carga_test.go` y `concurrencia_test.go` (sprints 4, historias 12, horas 20, rondas 2, votos 6) — `go test ./internal/demo/...` en verde
-- [ ] T017 COMMIT `GREEN: cuatro Sprints, historias reubicadas, horas y rondas de votación, test en verde`
-- [ ] T018 REFACTOR (solo si hay algo que limpiar, p. ej. duplicación entre las dos rondas) + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T012 [US3] RED: `internal/demo/bloque_sprints_test.go` — 4 Sprints (Finalizado −28/−15, Finalizado −14/−8, Activo −7/+6, Pendiente sin goal ni fechas) y proyecto con inicio hoy−30 en `bloque_proyecto_test.go` — confirmar que FALLAN
+- [X] T013 [US3] RED: `internal/demo/bloque_historias_test.go` — 12 historias con el reparto 3/2/3/1/3, velocidades 13 y 8, fechas de finalización dentro de su Sprint, arrastrada `tasa` en el Sprint 2 con 8 SP y en estado Nueva, al menos una sin estimar en el backlog — confirmar que FALLAN
+- [X] T014 [US3] RED: `bloque_horas_test.go` (20 registros en los Sprints 1 a 3, fechas dentro del Sprint y ≤ hoy, los cuatro integrantes con horas, Completadas entre el 50 % y el 150 % de SP × 4 h) y `bloque_votacion_test.go` (ronda revelada con 4 votos en `aviso`, ronda abierta con 2 votos y `revelada_en NULL` en `digital`; resumen 2 rondas y 6 votos) — confirmar que FALLAN
+- [X] T015 COMMIT `RED: agregar tests de cuatro Sprints, historias, horas y votaciones (falla)`
+- [X] T016 [US3] GREEN: `bloque_proyecto.go` (inicio `c.dia(-30)`), `bloque_sprints.go` (lista de 4 definiciones con el mismo bucle y funciones de la v1), `bloque_historias.go` (12 filas, `sprint` 0 a 4, arrastrada en `c.sprints[1]`), `bloque_horas.go` (20 filas, tres Sprints con sus fechas), `bloque_votacion.go` (dos rondas) — adaptar `carga_test.go` y `concurrencia_test.go` (sprints 4, historias 12, horas 20, rondas 2, votos 6) — `go test ./internal/demo/...` en verde
+- [X] T017 COMMIT `GREEN: cuatro Sprints, historias reubicadas, horas y rondas de votación, test en verde`
+- [X] T018 REFACTOR (solo si hay algo que limpiar, p. ej. duplicación entre las dos rondas) + COMMIT `REFACTOR: <qué se limpió>` (sin cambios: no había nada que limpiar)
 
 **Checkpoint**: historial con dos Sprints comparables; `go test ./...` en verde.
 
