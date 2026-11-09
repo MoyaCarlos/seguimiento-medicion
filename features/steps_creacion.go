@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 
@@ -110,6 +111,86 @@ func (s *scenarioContext) prioridadInvalida() error {
 	return nil
 }
 
+func (s *scenarioContext) ingresoConCriterios(criterios string) error {
+	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+		ProyectoID:          s.proyectoID,
+		Titulo:              "Como usuario quiero iniciar sesión",
+		Descripcion:         "Autenticación con email y contraseña",
+		Prioridad:           domain.PrioridadMust,
+		CriteriosAceptacion: &criterios,
+	})
+	return nil
+}
+
+func (s *scenarioContext) ingresoSinCriterios() error {
+	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+		ProyectoID:  s.proyectoID,
+		Titulo:      "Como usuario quiero iniciar sesión",
+		Descripcion: "Autenticación con email y contraseña",
+		Prioridad:   domain.PrioridadMust,
+	})
+	return nil
+}
+
+func (s *scenarioContext) ingresoConCriteriosDeLongitud(cantidad int) error {
+	criterios := strings.Repeat("a", cantidad)
+	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+		ProyectoID:          s.proyectoID,
+		Titulo:              "Como usuario quiero iniciar sesión",
+		Descripcion:         "Autenticación con email y contraseña",
+		Prioridad:           domain.PrioridadMust,
+		CriteriosAceptacion: &criterios,
+	})
+	return nil
+}
+
+func (s *scenarioContext) criteriosSon(esperado string) error {
+	if s.err != nil {
+		return fmt.Errorf("se esperaba creación exitosa, se obtuvo: %w", s.err)
+	}
+	if s.creada.CriteriosAceptacion == nil || *s.creada.CriteriosAceptacion != esperado {
+		return fmt.Errorf("se esperaban los criterios %q, se obtuvo %v", esperado, s.creada.CriteriosAceptacion)
+	}
+	return nil
+}
+
+func (s *scenarioContext) sinCriterios() error {
+	if s.err != nil {
+		return fmt.Errorf("se esperaba creación exitosa, se obtuvo: %w", s.err)
+	}
+	if s.creada.CriteriosAceptacion != nil {
+		return fmt.Errorf("se esperaban criterios ausentes, se obtuvo %q", *s.creada.CriteriosAceptacion)
+	}
+	return nil
+}
+
+func (s *scenarioContext) criteriosTienenLongitud(cantidad int) error {
+	if s.err != nil {
+		return fmt.Errorf("se esperaba creación exitosa, se obtuvo: %w", s.err)
+	}
+	if s.creada.CriteriosAceptacion == nil {
+		return errors.New("se esperaban criterios cargados")
+	}
+	if largo := len([]rune(*s.creada.CriteriosAceptacion)); largo != cantidad {
+		return fmt.Errorf("se esperaban %d caracteres, se obtuvieron %d", cantidad, largo)
+	}
+	return nil
+}
+
+func (s *scenarioContext) errorDeValidacionSobreCampo(campo string) error {
+	var verr domain.ValidationError
+	if !errors.As(s.err, &verr) {
+		return fmt.Errorf("se esperaba ValidationError, se obtuvo %T (%v)", s.err, s.err)
+	}
+	if verr.Campo != campo {
+		return fmt.Errorf("se esperaba el campo %q, se obtuvo %q", campo, verr.Campo)
+	}
+	if verr.Mensaje == "" {
+		return errors.New("el mensaje de validación no debe estar vacío")
+	}
+	return nil
+}
+
 func (s *scenarioContext) seGuardaEnSQLite() error {
 	if s.err != nil {
 		return fmt.Errorf("se esperaba creación exitosa, se obtuvo: %w", s.err)
@@ -204,6 +285,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) *scenarioContext {
 	ctx.Step(`^que intento crear una historia$`, sc.intentoCrea)
 	ctx.Step(`^que intento crear una historia para el proyecto con identificador (\d+), que no existe$`, sc.intentoCreaParaProyectoInexistente)
 	ctx.Step(`^ingreso un título, una descripción y una prioridad "M" válidos y presiono "Guardar"$`, sc.ingresoValido)
+	ctx.Step(`^ingreso un título, una descripción, una prioridad "M" y los criterios de aceptación "([^"]*)" y presiono "Guardar"$`, sc.ingresoConCriterios)
+	ctx.Step(`^ingreso un título, una descripción y una prioridad "M" sin criterios de aceptación y presiono "Guardar"$`, sc.ingresoSinCriterios)
+	ctx.Step(`^ingreso un título, una descripción, una prioridad "M" y criterios de aceptación de (\d+) caracteres y presiono "Guardar"$`, sc.ingresoConCriteriosDeLongitud)
 	ctx.Step(`^dejo el campo "Título" en blanco y presiono "Guardar"$`, sc.tituloEnBlanco)
 	ctx.Step(`^ingreso la prioridad "Urgente", que no pertenece al enum MoSCoW \(Must have / Should have / Could have / Won't have\), y presiono "Guardar"$`, sc.prioridadInvalida)
 	ctx.Step(`^la historia se guarda de forma persistente en SQLite$`, sc.seGuardaEnSQLite)
@@ -212,6 +296,10 @@ func InitializeScenario(ctx *godog.ScenarioContext) *scenarioContext {
 	ctx.Step(`^no tiene estimación en Story Points asignada$`, sc.sinEstimacion)
 	ctx.Step(`^el sistema muestra una advertencia de validación$`, sc.muestraAdvertenciaDeValidacion)
 	ctx.Step(`^el sistema muestra un error de validación$`, sc.muestraErrorDeValidacion)
+	ctx.Step(`^el sistema muestra un error de validación sobre el campo "([^"]*)"$`, sc.errorDeValidacionSobreCampo)
+	ctx.Step(`^los criterios de aceptación de la historia son "([^"]*)"$`, sc.criteriosSon)
+	ctx.Step(`^la historia no tiene criterios de aceptación$`, sc.sinCriterios)
+	ctx.Step(`^los criterios de aceptación tienen (\d+) caracteres$`, sc.criteriosTienenLongitud)
 	ctx.Step(`^no registra la historia en el Product Backlog$`, sc.noRegistraHistoria)
 	ctx.Step(`^la creación se rechaza con error "proyecto no encontrado"$`, sc.sistemaRespondeProyectoNoEncontrado)
 
