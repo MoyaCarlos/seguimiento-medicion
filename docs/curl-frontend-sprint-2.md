@@ -100,6 +100,17 @@ Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]
 no tiene historias. Si el Sprint no existe, responde 404 con
 `{"mensaje":"sprint no encontrado"}`.
 
+### Consultar una historia
+
+```bash
+curl http://localhost:8080/backlog/1
+```
+
+Responde 200 con la historia. `sprint_id` es `null` mientras la historia está en el
+Product Backlog y `fecha_finalizacion` solo tiene valor si está `Completada`. Si la
+historia no existe, responde 404 con `{"mensaje":"historia no encontrada"}`; si el
+identificador no es válido, 400 con `{"campo":"id","mensaje":"identificador inválido"}`.
+
 ### Cambiar el estado de una historia
 
 La historia debe estar asignada a un Sprint activo. Primero se pasa a
@@ -220,6 +231,17 @@ curl http://localhost:8080/sprints/1/backlog
 Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
 no tiene historias. Si el Sprint no existe, responde 404 con
 `{"mensaje":"sprint no encontrado"}`.
+
+### Consultar una historia
+
+```bat
+curl http://localhost:8080/backlog/1
+```
+
+Responde 200 con la historia. `sprint_id` es `null` mientras la historia está en el
+Product Backlog y `fecha_finalizacion` solo tiene valor si está `Completada`. Si la
+historia no existe, responde 404 con `{"mensaje":"historia no encontrada"}`; si el
+identificador no es válido, 400 con `{"campo":"id","mensaje":"identificador inválido"}`.
 
 ### Cambiar el estado de una historia
 

@@ -7,7 +7,9 @@ import (
 	"errors"
 	nethttp "net/http"
 	"net/http/httptest"
+	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -24,6 +26,8 @@ type stubBacklogRepository struct {
 	actualizaciones  []domain.BacklogItem
 	sprints          *repository.SprintRepositoryEnMemoria
 	errCambiarEstado error
+
+	llamadasObtenerPorID int
 }
 
 func (s *stubBacklogRepository) Guardar(_ context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
@@ -37,6 +41,7 @@ func (s *stubBacklogRepository) ListarSinSprint(_ context.Context, _ int64) ([]d
 }
 
 func (s *stubBacklogRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	s.llamadasObtenerPorID++
 	h, ok := s.historias[id]
 	if !ok {
 		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
@@ -129,6 +134,94 @@ func TestBacklogHandler_Crear_Exitosa(t *testing.T) {
 	}
 }
 
+func TestBacklogHandler_Crear_ConCriteriosAceptacion(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M","criterios_aceptacion":"  Dado, cuando, entonces  "}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion == nil || *resp.CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("se esperaban los criterios normalizados en la respuesta, se obtuvo %v", resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 {
+		t.Fatalf("se esperaba 1 historia persistida, se guardaron %d", len(repo.guardados))
+	}
+	if repo.guardados[0].CriteriosAceptacion == nil || *repo.guardados[0].CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("se esperaban los criterios persistidos, se obtuvo %v", repo.guardados[0].CriteriosAceptacion)
+	}
+}
+
+func TestBacklogHandler_Crear_SinCriteriosAceptacion(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M"}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos, se obtuvo %q", *resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 || repo.guardados[0].CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos persistidos, se obtuvo %v", repo.guardados)
+	}
+}
+
+func TestBacklogHandler_Crear_CriteriosSoloEspacios(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M","criterios_aceptacion":"   "}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos, se obtuvo %q", *resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 || repo.guardados[0].CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos persistidos, se obtuvo %v", repo.guardados)
+	}
+}
+
+func TestBacklogHandler_Crear_CriteriosDemasiadoLargos(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	cuerpo := `{"proyecto_id":1,"titulo":"Título","descripcion":"Descripción","prioridad":"M","criterios_aceptacion":"` + strings.Repeat("a", 2001) + `"}`
+
+	handler.Crear(rec, construirPeticion(cuerpo))
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Campo != "criterios_aceptacion" {
+		t.Errorf("se esperaba campo criterios_aceptacion, se obtuvo %q", resp.Campo)
+	}
+	if len(repo.guardados) != 0 {
+		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
+	}
+}
+
 func TestBacklogHandler_Crear_TituloVacio(t *testing.T) {
 	handler, repo := nuevoHandlerDePrueba()
 	rec := httptest.NewRecorder()
@@ -185,6 +278,219 @@ func consultarBacklog(handler *BacklogHandler, id string) *httptest.ResponseReco
 	req.SetPathValue("id", id)
 	handler.ConsultarBacklog(rec, req)
 	return rec
+}
+
+func consultarHistoria(handler *BacklogHandler, id string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id, nil)
+	req.SetPathValue("id", id)
+	handler.Obtener(rec, req)
+	return rec
+}
+
+func TestBacklogHandler_Obtener_SinSprint(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	criterios, sp, valor := "Dado, cuando, entonces", 5, 13
+	historia := domain.BacklogItem{
+		ID: 7, ProyectoID: 1, Titulo: "Iniciar sesión", Descripcion: "Con email",
+		CriteriosAceptacion: &criterios, Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva,
+		ValorNegocio: &valor, EstimacionSP: &sp,
+	}
+	repo.historias[7] = historia
+	repo.backlog = []domain.BacklogItem{historia}
+
+	rec := consultarHistoria(handler, "7")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if ct := rec.Header().Get("Content-Type"); ct != "application/json" {
+		t.Errorf("se esperaba Content-Type application/json, se obtuvo %q", ct)
+	}
+	var crudo map[string]json.RawMessage
+	if err := json.Unmarshal(rec.Body.Bytes(), &crudo); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v (%q)", err, rec.Body.String())
+	}
+	esperado := map[string]string{
+		"id": "7", "proyecto_id": "1", "titulo": `"Iniciar sesión"`, "descripcion": `"Con email"`,
+		"criterios_aceptacion": `"Dado, cuando, entonces"`, "prioridad": string(mustJSON(t, string(domain.PrioridadMust))),
+		"estado": string(mustJSON(t, string(domain.EstadoNueva))), "valor_negocio": "13", "estimacion_sp": "5",
+		"sprint_id": "null", "fecha_finalizacion": "null",
+	}
+	if len(crudo) != len(esperado) {
+		t.Errorf("se esperaban %d campos, se obtuvieron %d: %s", len(esperado), len(crudo), rec.Body.String())
+	}
+	for campo, valor := range esperado {
+		if got, ok := crudo[campo]; !ok || string(got) != valor {
+			t.Errorf("campo %q: se esperaba %s, se obtuvo %q (presente: %v)", campo, valor, got, ok)
+		}
+	}
+
+	// FR-003 / SC-001: mismo cuerpo que el elemento del listado del backlog y que aRespuesta.
+	listado := consultarBacklog(handler, "1")
+	var elementos []json.RawMessage
+	if err := json.Unmarshal(listado.Body.Bytes(), &elementos); err != nil || len(elementos) != 1 {
+		t.Fatalf("listado inesperado: %v (%s)", err, listado.Body.String())
+	}
+	var delListado map[string]any
+	var delDetalle map[string]any
+	_ = json.Unmarshal(elementos[0], &delListado)
+	_ = json.Unmarshal(rec.Body.Bytes(), &delDetalle)
+	if !reflect.DeepEqual(delDetalle, delListado) {
+		t.Errorf("el detalle difiere del elemento del listado:\n%v\n%v", delDetalle, delListado)
+	}
+	canonico, err := json.Marshal(aRespuesta(historia))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.TrimSpace(rec.Body.Bytes()); !bytes.Equal(got, canonico) {
+		t.Errorf("el cuerpo difiere de aRespuesta:\n%s\n%s", got, canonico)
+	}
+	if !bytes.Equal(bytes.TrimSpace(elementos[0]), canonico) {
+		t.Errorf("el listado difiere de aRespuesta:\n%s\n%s", elementos[0], canonico)
+	}
+}
+
+// exigirCuerpoCanonico comprueba que la respuesta sea 200 y que su cuerpo sea idéntico a json.Marshal(aRespuesta(historia)).
+func exigirCuerpoCanonico(t *testing.T, rec *httptest.ResponseRecorder, historia domain.BacklogItem) {
+	t.Helper()
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	canonico, err := json.Marshal(aRespuesta(historia))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.TrimSpace(rec.Body.Bytes()); !bytes.Equal(got, canonico) {
+		t.Errorf("el cuerpo difiere de aRespuesta:\n%s\n%s", got, canonico)
+	}
+}
+
+func TestBacklogHandler_Obtener_ConSprint(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint := sembrarSprint(t, repo, 1, domain.SprintActivo)
+	historia := domain.BacklogItem{
+		ID: 4, ProyectoID: 1, Titulo: "Planificada", Descripcion: "En un Sprint",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoEnProgreso, SprintID: &sprint.ID,
+	}
+	repo.historias[4] = historia
+
+	rec := consultarHistoria(handler, "4")
+
+	exigirCuerpoCanonico(t, rec, historia)
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.SprintID == nil || *resp.SprintID != sprint.ID {
+		t.Errorf("sprint_id = %v, se esperaba %d", resp.SprintID, sprint.ID)
+	}
+}
+
+func TestBacklogHandler_Obtener_Completada(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint := sembrarSprint(t, repo, 1, domain.SprintActivo)
+	fecha := time.Date(2026, 10, 29, 15, 30, 0, 0, time.UTC)
+	historia := domain.BacklogItem{
+		ID: 5, ProyectoID: 1, Titulo: "Terminada", Descripcion: "Completada",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoCompletada, SprintID: &sprint.ID, FechaFinalizacion: &fecha,
+	}
+	repo.historias[5] = historia
+
+	rec := consultarHistoria(handler, "5")
+
+	exigirCuerpoCanonico(t, rec, historia)
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Estado != string(domain.EstadoCompletada) {
+		t.Errorf("estado = %q, se esperaba %q", resp.Estado, domain.EstadoCompletada)
+	}
+	if resp.FechaFinalizacion == nil || *resp.FechaFinalizacion != fecha.Format(time.DateOnly) {
+		t.Errorf("fecha_finalizacion = %v, se esperaba %s", resp.FechaFinalizacion, fecha.Format(time.DateOnly))
+	}
+}
+
+func TestBacklogHandler_Obtener_CompletadaDeOtroProyecto(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprintID := int64(9)
+	fecha := time.Date(2026, 10, 29, 15, 30, 0, 0, time.UTC)
+	historia := domain.BacklogItem{
+		ID: 6, ProyectoID: 2, Titulo: "De otro proyecto", Descripcion: "Completada",
+		Prioridad: domain.PrioridadShould, Estado: domain.EstadoCompletada, SprintID: &sprintID, FechaFinalizacion: &fecha,
+	}
+	repo.historias[6] = historia
+
+	rec := consultarHistoria(handler, "6")
+
+	exigirCuerpoCanonico(t, rec, historia)
+}
+
+func TestBacklogHandler_Obtener_NoExiste(t *testing.T) {
+	handler, _ := nuevoHandlerDePrueba()
+
+	rec := consultarHistoria(handler, "999")
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if got := bytes.TrimSpace(rec.Body.Bytes()); string(got) != `{"mensaje":"historia no encontrada"}` {
+		t.Errorf("cuerpo inesperado: %s", got)
+	}
+}
+
+func TestBacklogHandler_Obtener_IDInvalido(t *testing.T) {
+	for _, id := range []string{"abc", "0", "-3", "1.5", "99999999999999999999"} {
+		t.Run(id, func(t *testing.T) {
+			handler, repo := nuevoHandlerDePrueba()
+
+			rec := consultarHistoria(handler, id)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Campo != "id" || resp.Mensaje != "identificador inválido" {
+				t.Errorf("error inesperado: %+v", resp)
+			}
+			if repo.llamadasObtenerPorID != 0 {
+				t.Errorf("no se debía consultar el repositorio, llamadas: %d", repo.llamadasObtenerPorID)
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_Obtener_CerosAIzquierda(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	repo.historias[7] = domain.BacklogItem{
+		ID: 7, ProyectoID: 1, Titulo: "Con ceros", Descripcion: "Id con ceros a la izquierda",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva,
+	}
+
+	rec := consultarHistoria(handler, "007")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.ID != 7 {
+		t.Errorf("id = %d, se esperaba 7", resp.ID)
+	}
+	if repo.llamadasObtenerPorID != 1 {
+		t.Errorf("llamadas a ObtenerPorID = %d, se esperaba 1", repo.llamadasObtenerPorID)
+	}
+}
+
+func mustJSON(t *testing.T, v any) []byte {
+	t.Helper()
+	b, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return b
 }
 
 func TestBacklogHandler_ConsultarBacklog_DevuelveLasHistorias(t *testing.T) {

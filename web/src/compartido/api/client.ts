@@ -1,3 +1,5 @@
+import { avisarNoAutenticado, tokenActual } from './sesionHttp'
+
 export class ApiError extends Error {
   readonly status: number
   readonly field?: string
@@ -36,18 +38,28 @@ export function put<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
-  const response = await send(method, path, body)
+  const token = tokenActual()
+  const response = await send(method, path, body, token)
   if (gatewayStatuses.includes(response.status)) throw new ConnectionError()
   const text = await response.text()
   const data = parseJson(text)
 
+  if (response.status === 401 && token && !rutasDeAutenticacion.includes(path)) {
+    avisarNoAutenticado()
+  }
   if (!response.ok) throw errorFrom(response.status, data)
   if (data === invalid) throw genericError(response.status)
   return data as T
 }
 
-async function send(method: Method, path: string, body?: unknown): Promise<Response> {
+async function send(
+  method: Method,
+  path: string,
+  body: unknown,
+  token: string | null,
+): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
   try {
@@ -62,6 +74,8 @@ async function send(method: Method, path: string, body?: unknown): Promise<Respo
 }
 
 const gatewayStatuses = [502, 503, 504]
+
+const rutasDeAutenticacion = ['/auth/ingreso', '/auth/registro']
 
 const invalid = Symbol('cuerpo no interpretable')
 

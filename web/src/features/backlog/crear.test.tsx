@@ -11,6 +11,7 @@ const HISTORIA: HistoriaCreada = {
   proyecto_id: 42,
   titulo: 'Como usuario quiero iniciar sesión',
   descripcion: 'Autenticación con email y contraseña',
+  criterios_aceptacion: null,
   prioridad: 'M',
   estado: 'Nueva',
   valor_negocio: null,
@@ -51,15 +52,20 @@ function abrir(url = '/projects/42/backlog') {
 async function completarFormulario({
   titulo = 'Como usuario quiero iniciar sesión',
   descripcion = 'Autenticación con email y contraseña',
+  criterios,
   prioridad,
 }: {
   titulo?: string
   descripcion?: string
+  criterios?: string
   prioridad?: string
 } = {}) {
   const user = userEvent.setup()
   await user.type(screen.getByLabelText('Título'), titulo)
   await user.type(screen.getByLabelText('Descripción'), descripcion)
+  if (criterios !== undefined) {
+    await user.type(screen.getByLabelText('Criterios de aceptación'), criterios)
+  }
   if (prioridad) {
     await user.selectOptions(screen.getByLabelText('Prioridad'), prioridad)
   }
@@ -482,6 +488,71 @@ describe('valor de negocio de US4', () => {
     expect(cuerpoEnviado(fetchMock).valor_negocio).toBe(13)
     expect(within(confirmacion).getByText('13')).toBeTruthy()
     expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
+  })
+})
+
+describe('criterios de aceptación de #174', () => {
+  it('muestra el campo opcional "Criterios de aceptación"', () => {
+    abrir()
+
+    expect(screen.getByLabelText('Criterios de aceptación')).toBeTruthy()
+  })
+
+  it('envía los criterios recortados y los muestra en la confirmación con Markdown', async () => {
+    const criterios = '**Dado** un usuario, cuando ingresa, entonces accede.'
+    const fetchMock = responderCreada({ criterios_aceptacion: criterios })
+    abrir()
+    const user = await completarFormulario({ criterios: `  ${criterios}  ` })
+
+    await user.click(botonGuardar())
+
+    const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(cuerpoEnviado(fetchMock).criterios_aceptacion).toBe(criterios)
+    expect(within(confirmacion).getByRole('heading', { name: 'Criterios de aceptación' })).toBeTruthy()
+    expect(within(confirmacion).getByText('Dado')).toBeTruthy()
+  })
+
+  it('sin criterios muestra el texto "Sin criterios de aceptación"', async () => {
+    responderCreada({ criterios_aceptacion: null })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(within(confirmacion).getByText('Sin criterios de aceptación')).toBeTruthy()
+  })
+
+  it('rechaza criterios de 2001 caracteres sin llamar a la API', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+    const user = await completarFormulario()
+
+    fireEvent.change(screen.getByLabelText('Criterios de aceptación'), {
+      target: { value: 'a'.repeat(2001) },
+    })
+    await user.click(botonGuardar())
+
+    const criterios = screen.getByLabelText('Criterios de aceptación')
+    expect(criterios.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(criterios)).toBeTruthy()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('ubica el error criterios_aceptacion de la API junto al campo', async () => {
+    responderConError(400, {
+      campo: 'criterios_aceptacion',
+      mensaje: 'los criterios de aceptación no pueden superar los 2000 caracteres',
+    })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const criterios = screen.getByLabelText('Criterios de aceptación')
+    expect(criterios.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(criterios)).toBe('los criterios de aceptación no pueden superar los 2000 caracteres')
   })
 })
 
