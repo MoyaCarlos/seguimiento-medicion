@@ -10,21 +10,22 @@ func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name: "BDD",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
-			sc := InitializeScenario(ctx)                   // HU-01 (+ HU-05)
-			InitializeScenarioProyecto(ctx)                 // HU-04
-			InitializeScenarioListado(ctx)                  // HU-04 (listado)
-			InitializeScenarioEstado(ctx, sc)               // HU-13
-			InitializeScenarioBacklog(ctx, sc)              // HU-15
-			InitializeScenarioConsultarSprints(ctx)         // HU-05 (consulta)
-			InitializeScenarioAsignacion(ctx, sc)           // HU-06
-			votacion := InitializeScenarioVotacion(ctx, sc) // HU-02
-			InitializeScenarioConsenso(ctx, votacion)       // HU-14
-			InitializeScenarioHoras(ctx, sc)                // HU-07
-			InitializeScenarioDatosPrueba(ctx)              // Issue #144
-			InitializeScenarioEstadoHistoria(ctx, sc)       // HU-11
-			InitializeScenarioDefectos(ctx, sc)             // HU-08
-			InitializeScenarioMetricas(ctx)                 // HU-03
-			InitializeScenarioHistorial(ctx)                // HU-12
+			sc := InitializeScenario(ctx)                     // HU-01 (+ HU-05)
+			proyecto := InitializeScenarioProyecto(ctx)       // HU-04
+			InitializeScenarioScrumMasterUnico(ctx, proyecto) // #236
+			InitializeScenarioListado(ctx)                    // HU-04 (listado)
+			InitializeScenarioEstado(ctx, sc)                 // HU-13
+			InitializeScenarioBacklog(ctx, sc)                // HU-15
+			InitializeScenarioConsultarSprints(ctx)           // HU-05 (consulta)
+			InitializeScenarioAsignacion(ctx, sc)             // HU-06
+			votacion := InitializeScenarioVotacion(ctx, sc)   // HU-02
+			InitializeScenarioConsenso(ctx, votacion)         // HU-14
+			InitializeScenarioHoras(ctx, sc)                  // HU-07
+			InitializeScenarioDatosPrueba(ctx)                // Issue #144
+			InitializeScenarioEstadoHistoria(ctx, sc)         // HU-11
+			InitializeScenarioDefectos(ctx, sc)               // HU-08
+			InitializeScenarioMetricas(ctx)                   // HU-03
+			InitializeScenarioHistorial(ctx)                  // HU-12
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
