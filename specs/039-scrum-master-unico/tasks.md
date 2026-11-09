@@ -73,12 +73,12 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Independent Test**: segundo Scrum Master → 409 con `mensaje` y sin `campo`; duplicado → 400 sin cambios.
 
-- [ ] T017 [US2] RED: tests en `internal/http/project_handler_test.go`: segundo `scrum_master` → 409 con el mensaje; persona ya integrante → 400 `integrante`; Product Builder → 201 — confirmar que FALLA
-- [ ] T018 COMMIT `RED: agregar tests del 409 de POST /projects/{id}/members (falla)`
-- [ ] T019 [US2] GREEN: `internal/http/sprint_handler.go` (`escribirError`): sumar `domain.ErrScrumMasterYaExiste` al grupo de los 409. `go test ./...` en verde
-- [ ] T020 COMMIT `GREEN: responder 409 ante un segundo Scrum Master, test en verde`
-- [ ] T021 [US2] Agregar la respuesta 409 de `contracts/members-409.yaml` a `specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml`
-- [ ] T022 COMMIT `Agregar el 409 al contrato de POST /projects/{id}/members`
+- [x] T017 [US2] RED: tests en `internal/http/project_handler_test.go`: segundo `scrum_master` → 409 con el mensaje; persona ya integrante → 400 `integrante`; Product Builder → 201 — confirmar que FALLA
+- [x] T018 COMMIT `RED: agregar tests del 409 de POST /projects/{id}/members (falla)`
+- [x] T019 [US2] GREEN: `internal/http/sprint_handler.go` (`escribirError`): sumar `domain.ErrScrumMasterYaExiste` al grupo de los 409. `go test ./...` en verde
+- [x] T020 COMMIT `GREEN: responder 409 ante un segundo Scrum Master, test en verde`
+- [x] T021 [US2] Agregar la respuesta 409 de `contracts/members-409.yaml` a `specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml`
+- [x] T022 COMMIT `Agregar el 409 al contrato de POST /projects/{id}/members`
 
 ---
 
