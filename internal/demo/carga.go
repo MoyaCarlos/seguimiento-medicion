@@ -101,8 +101,8 @@ func ejecutarBloques(ctx context.Context, db *sql.DB, ahora time.Time, hashContr
 	return c, nil
 }
 
-// bloquesV1 es el orden de la carga. Una historia futura agrega su bloque acá.
-var bloquesV1 = []bloque{
+// bloquesDemo es el orden de la carga. Una historia futura agrega su bloque acá.
+var bloquesDemo = []bloque{
 	bloqueUsuarios,
 	bloqueProyecto,
 	bloqueSprints,
@@ -120,7 +120,7 @@ type Cargador struct {
 }
 
 func NewCargador(db *sql.DB, ahora func() time.Time, hasheador Hasheador) *Cargador {
-	return &Cargador{db: db, ahora: ahora, hasheador: hasheador, bloques: bloquesV1}
+	return &Cargador{db: db, ahora: ahora, hasheador: hasheador, bloques: bloquesDemo}
 }
 
 // Cargar crea todos los datos o ninguno.

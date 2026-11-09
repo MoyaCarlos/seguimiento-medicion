@@ -16,7 +16,7 @@ func TestCargar_UnBloqueQueFallaAlFinalNoDejaNingunDato(t *testing.T) {
 		db:        db,
 		ahora:     func() time.Time { return ahoraFijo },
 		hasheador: hasheadorBarato,
-		bloques:   append(append([]bloque{}, bloquesV1...), fallaAlFinal),
+		bloques:   append(append([]bloque{}, bloquesDemo...), fallaAlFinal),
 	}
 
 	_, err := cargador.Cargar(context.Background())
