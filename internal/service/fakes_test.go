@@ -16,6 +16,7 @@ type fakeProjectRepository struct {
 	miembros      []domain.Membership
 	listaMiembros []domain.Member
 	err           error
+	errAgregar    error
 	creates       int
 	updates       int
 }
@@ -86,6 +87,9 @@ func (f *fakeProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	if f.err != nil {
 		return domain.Membership{}, f.err
 	}
+	if f.errAgregar != nil {
+		return domain.Membership{}, f.errAgregar
+	}
 	for _, existente := range f.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
 			return domain.Membership{}, repository.ErrMiembroDuplicado
@@ -98,11 +102,22 @@ func (f *fakeProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
-func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {
+// ListarIntegrantes devuelve listaMiembros si el test la fijó; si no, deriva la
+// lista de las membresías guardadas (sin nombre: el fake no conoce a los usuarios).
+func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	return f.listaMiembros, nil
+	if f.listaMiembros != nil {
+		return f.listaMiembros, nil
+	}
+	var derivados []domain.Member
+	for _, m := range f.miembros {
+		if m.ProjectID == proyectoID {
+			derivados = append(derivados, domain.Member{UserID: m.UserID, ProjectID: m.ProjectID, Role: m.Role, CreadoEn: m.CreadoEn})
+		}
+	}
+	return derivados, nil
 }
 
 type fakeUserRepository struct {

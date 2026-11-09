@@ -137,21 +137,21 @@ de la historia.
 
 **Independent Test**: con pruebas de componente (Vitest y Testing Library, con el escenario en el nombre de cada prueba) y con la aplicación levantada: se abre la sección, se ve la lista, se selecciona un Sprint y se ve su detalle; sin Sprints cerrados se ve un estado vacío informativo.
 
-- [ ] T043 [P] [US4] RED: en web/src/features/historial/api.test.ts, `listarHistorial(proyectoId)` y `obtenerDetalleSprint(proyectoId, sprintId)` piden `GET /projects/{id}/historial` y `GET /projects/{id}/historial/{sprintId}` y devuelven los tipos de contracts/openapi.yaml; una respuesta de error lanza con el mensaje del backend. Tipos en web/src/features/historial/tipos.ts y stubs en web/src/features/historial/api.ts — confirmar que FALLA
-- [ ] T044 [US4] COMMIT `RED: agregar tests del cliente del historial de Sprints (fallan)`
-- [ ] T045 [US4] GREEN: implementar web/src/features/historial/api.ts — `npm test` en verde
-- [ ] T046 [US4] COMMIT `GREEN: implementar el cliente del historial de Sprints, tests en verde`
-- [ ] T047 [US4] RED: en web/src/features/historial/Lista.test.tsx, escenarios US4.1, US4.3, US4.4 y US4.5: cada Sprint como "Sprint <número>" con su Sprint Goal, fechas y las métricas de FR-003; sin Sprints → mensaje de que todavía no hay Sprints cerrados; `null` → "sin datos", nunca cero; error → mensaje sin datos parciales. Stub en web/src/features/historial/Lista.tsx — confirmar que FALLA
-- [ ] T048 [US4] COMMIT `RED: agregar pruebas de la lista del historial (fallan)`
-- [ ] T049 [US4] GREEN: implementar web/src/features/historial/Lista.tsx — `npm test` en verde
-- [ ] T050 [US4] COMMIT `GREEN: implementar la lista del historial, tests en verde`
-- [ ] T051 [US4] RED: en web/src/features/historial/Detalle.test.tsx, escenarios US4.2, US4.4 y US4.5: muestra todas las métricas, las historias (completada o no, "sin estimar" si no tiene Story Points, horas por historia), los defectos (detectado / resuelto en el Sprint, estado actual) y un enlace para volver a la lista; error → mensaje sin datos parciales. Stub en web/src/features/historial/Detalle.tsx — confirmar que FALLA
-- [ ] T052 [US4] COMMIT `RED: agregar pruebas del detalle del historial (fallan)`
-- [ ] T053 [US4] GREEN: implementar web/src/features/historial/Detalle.tsx — `npm test` en verde
-- [ ] T054 [US4] COMMIT `GREEN: implementar el detalle del historial, tests en verde`
-- [ ] T055 [US4] Agregar web/src/features/historial/index.tsx (rutas internas: lista en `historial` y detalle en `historial/:sprintId`, recargable con F5), el estilo en web/src/features/historial/historial.css, la ruta `historial/*` en web/src/rutas.tsx y `{ ruta: 'historial', texto: 'Historial de Sprints' }` en web/src/navegacion.ts; ajustar web/src/rutas.test.tsx si enumera las secciones. La feature no importa de otras (web/src/features/aislamiento.test.ts)
-- [ ] T056 [US4] COMMIT `Agregar la sección Historial de Sprints a la navegación`
-- [ ] T057 [US4] `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual de la interfaz según quickstart.md
+- [X] T043 [P] [US4] RED: en web/src/features/historial/api.test.ts, `listarHistorial(proyectoId)` y `obtenerDetalleSprint(proyectoId, sprintId)` piden `GET /projects/{id}/historial` y `GET /projects/{id}/historial/{sprintId}` y devuelven los tipos de contracts/openapi.yaml; una respuesta de error lanza con el mensaje del backend. Tipos en web/src/features/historial/tipos.ts y stubs en web/src/features/historial/api.ts — confirmar que FALLA
+- [X] T044 [US4] COMMIT `RED: agregar tests del cliente del historial de Sprints (fallan)`
+- [X] T045 [US4] GREEN: implementar web/src/features/historial/api.ts — `npm test` en verde
+- [X] T046 [US4] COMMIT `GREEN: implementar el cliente del historial de Sprints, tests en verde`
+- [X] T047 [US4] RED: en web/src/features/historial/Lista.test.tsx, escenarios US4.1, US4.3, US4.4 y US4.5: cada Sprint como "Sprint <número>" con su Sprint Goal, fechas y las métricas de FR-003; sin Sprints → mensaje de que todavía no hay Sprints cerrados; `null` → "sin datos", nunca cero; error → mensaje sin datos parciales. Stub en web/src/features/historial/Lista.tsx — confirmar que FALLA
+- [X] T048 [US4] COMMIT `RED: agregar pruebas de la lista del historial (fallan)`
+- [X] T049 [US4] GREEN: implementar web/src/features/historial/Lista.tsx — `npm test` en verde
+- [X] T050 [US4] COMMIT `GREEN: implementar la lista del historial, tests en verde`
+- [X] T051 [US4] RED: en web/src/features/historial/Detalle.test.tsx, escenarios US4.2, US4.4 y US4.5: muestra todas las métricas, las historias (completada o no, "sin estimar" si no tiene Story Points, horas por historia), los defectos (detectado / resuelto en el Sprint, estado actual) y un enlace para volver a la lista; error → mensaje sin datos parciales. Stub en web/src/features/historial/Detalle.tsx — confirmar que FALLA
+- [X] T052 [US4] COMMIT `RED: agregar pruebas del detalle del historial (fallan)`
+- [X] T053 [US4] GREEN: implementar web/src/features/historial/Detalle.tsx — `npm test` en verde
+- [X] T054 [US4] COMMIT `GREEN: implementar el detalle del historial, tests en verde`
+- [X] T055 [US4] Agregar web/src/features/historial/index.tsx (rutas internas: lista en `historial` y detalle en `historial/:sprintId`, recargable con F5), el estilo en web/src/features/historial/historial.css, la ruta `historial/*` en web/src/rutas.tsx y `{ ruta: 'historial', texto: 'Historial de Sprints' }` en web/src/navegacion.ts; ajustar web/src/rutas.test.tsx si enumera las secciones. La feature no importa de otras (web/src/features/aislamiento.test.ts)
+- [X] T056 [US4] COMMIT `Agregar la sección Historial de Sprints a la navegación`
+- [X] T057 [US4] `npm run lint`, `npm test` y `npm run build` en web/ sin errores; prueba manual de la interfaz según quickstart.md
 
 ---
 

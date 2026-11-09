@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { consultarVotacion, iniciarVotacion, listarIntegrantes, obtenerHistoria, revelarVotacion, votar } from './api'
+import {
+  abrirNuevaRonda,
+  consultarVotacion,
+  iniciarVotacion,
+  listarIntegrantes,
+  obtenerHistoria,
+  registrarEstimacion,
+  revelarVotacion,
+  votar,
+} from './api'
 import { esVotacionNoIniciada, mensajeDeError } from './errores'
 import { esScrumMaster, estaRevelada, sinValores, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
 
@@ -14,6 +23,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const [errorDeIntegrantes, setErrorDeIntegrantes] = useState('')
   const [errorDeVotacion, setErrorDeVotacion] = useState('')
   const [errorDeAccion, setErrorDeAccion] = useState('')
+  const [aviso, setAviso] = useState('')
   const [recarga, setRecarga] = useState(0)
   const [actualizacion, setActualizacion] = useState(0)
   const envioEnCurso = useRef(false)
@@ -26,6 +36,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const reconsultar = useCallback(() => setRecarga((actual) => actual + 1), [])
   const recargar = useCallback(() => {
     setErrorDeAccion('')
+    setAviso('')
     setActualizacion((actual) => actual + 1)
     reconsultar()
   }, [reconsultar])
@@ -93,16 +104,26 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     }
   }, [historiaId, actorId, consulta])
 
-  async function ejecutar(accion: () => Promise<Votacion>) {
+  function mostrarVotacion(datos: Votacion) {
+    setVotacion(datos)
+    setSinVotacion(false)
+    setErrorDeVotacion('')
+  }
+
+  function mostrarEstimacion(datos: HistoriaResumen) {
+    setHistoria(datos)
+    setAviso(`Se registraron ${datos.estimacion_sp} Story Points en la historia`)
+  }
+
+  async function ejecutar<T>(accion: () => Promise<T>, alResolver: (resultado: T) => void) {
     if (envioEnCurso.current) return
     envioEnCurso.current = true
     accionesIniciadas.current += 1
     setErrorDeAccion('')
+    setAviso('')
     setEnviando(true)
     try {
-      setVotacion(await accion())
-      setSinVotacion(false)
-      setErrorDeVotacion('')
+      alResolver(await accion())
       if (errorDeIntegrantes) setActualizacion((actual) => actual + 1)
     } catch (causa) {
       setErrorDeAccion(mensajeDeError(causa))
@@ -115,6 +136,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
 
   function elegirActor(id: number | undefined) {
     setErrorDeAccion('')
+    setAviso('')
     setVotacion((actual) => (actual && !estaRevelada(actual) ? sinValores(actual) : actual))
     setActorId(id)
   }
@@ -131,10 +153,20 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     errorDeIntegrantes,
     errorDeVotacion,
     errorDeAccion,
+    aviso,
     recargar,
     elegirActor,
-    iniciar: () => (scrumMaster ? ejecutar(() => iniciarVotacion(historiaId, scrumMaster.id)) : undefined),
-    revelar: () => (scrumMaster ? ejecutar(() => revelarVotacion(historiaId, scrumMaster.id)) : undefined),
-    votar: (valor: number) => (actor ? ejecutar(() => votar(historiaId, actor.id, valor)) : undefined),
+    iniciar: () =>
+      scrumMaster ? ejecutar(() => iniciarVotacion(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
+    revelar: () =>
+      scrumMaster ? ejecutar(() => revelarVotacion(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
+    votar: (valor: number) =>
+      actor ? ejecutar(() => votar(historiaId, actor.id, valor), mostrarVotacion) : undefined,
+    abrirNuevaRonda: () =>
+      scrumMaster ? ejecutar(() => abrirNuevaRonda(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
+    registrarEstimacion: (valor: number) =>
+      scrumMaster
+        ? ejecutar(() => registrarEstimacion(historiaId, scrumMaster.id, valor), mostrarEstimacion)
+        : undefined,
   }
 }

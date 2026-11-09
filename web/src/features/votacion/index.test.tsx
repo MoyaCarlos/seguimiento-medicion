@@ -4,10 +4,12 @@ import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import {
+  abrirNuevaRonda,
   consultarVotacion,
   iniciarVotacion,
   listarIntegrantes,
   obtenerHistoria,
+  registrarEstimacion,
   revelarVotacion,
   votar,
 } from './api'
@@ -27,6 +29,8 @@ const votarMock = vi.mocked(votar)
 const revelarMock = vi.mocked(revelarVotacion)
 const iniciarMock = vi.mocked(iniciarVotacion)
 const historiaMock = vi.mocked(obtenerHistoria)
+const registrarMock = vi.mocked(registrarEstimacion)
+const nuevaRondaMock = vi.mocked(abrirNuevaRonda)
 
 const HISTORIA: HistoriaResumen = {
   id: 3,
@@ -37,13 +41,13 @@ const HISTORIA: HistoriaResumen = {
 }
 const integrantesMock = vi.mocked(listarIntegrantes)
 
-type Servidor = { votos: Record<number, number>; revelada: boolean }
+type Servidor = { votos: Record<number, number>; revelada: boolean; ronda: number }
 let servidor: Servidor
 
 function vista(consultante?: number): Votacion {
   return {
     historia_id: 3,
-    ronda: 1,
+    ronda: servidor.ronda,
     revelada_en: servidor.revelada ? '2026-11-02T10:00:00Z' : null,
     integrantes: INTEGRANTES.map((integrante) => {
       const voto = servidor.votos[integrante.id]
@@ -57,7 +61,15 @@ function vista(consultante?: number): Votacion {
       }
     }),
     promedio: servidor.revelada ? { exacto: 5.33, carta_sugerida: 5 } : null,
+    diferencias: servidor.revelada ? diferenciasDe(Object.values(servidor.votos)) : null,
   }
+}
+
+function diferenciasDe(votos: number[]) {
+  const minimo = Math.min(...votos)
+  const maximo = Math.max(...votos)
+  if (minimo === maximo) return { hay_diferencias: false, minimo: null, maximo: null }
+  return { hay_diferencias: true, minimo, maximo }
 }
 
 function abrir() {
@@ -88,7 +100,7 @@ async function actualizarSinServidor() {
 }
 
 beforeEach(() => {
-  servidor = { votos: {}, revelada: false }
+  servidor = { votos: {}, revelada: false, ronda: 1 }
   integrantesMock.mockResolvedValue(INTEGRANTES)
   historiaMock.mockResolvedValue(HISTORIA)
   consultarMock.mockImplementation(async (_historia, consultante) => vista(consultante))
@@ -487,13 +499,244 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
     expect(fila('Beta Uno')).toBeTruthy()
   })
 
-  it('Given una ronda revelada, When se muestra la pantalla, Then se aclara que registrar la estimación acordada se hace en otra historia', async () => {
+  it('Given una ronda revelada y nadie elegido, When se muestra la pantalla, Then se aclara que el Scrum Master registra la estimación acordada', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     servidor.revelada = true
     abrir()
 
-    expect(await screen.findByText(/registrar la estimación acordada/i)).toBeTruthy()
+    expect(await screen.findByText(/Scrum Master registra la estimación acordada/)).toBeTruthy()
     expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+  })
+})
+
+describe('Pantalla de votación - diferencias entre los votos (HU-14 US1)', () => {
+  it('US1.1: Given se revelaron los votos 3, 5 y 8, When se consulta la votación, Then se indica que hay diferencias, con mínimo 3 y máximo 8', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    abrir()
+
+    expect(await screen.findByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
+  })
+
+  it('US1.2: Given se revelaron los votos 5, 5 y 5, When se consulta la votación, Then se indica que no hay diferencias', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    abrir()
+
+    expect(await screen.findByText('No hay diferencias: todos votaron lo mismo')).toBeTruthy()
+    expect(screen.queryByText(/Hay diferencias/)).toBeNull()
+  })
+
+  it('US1.3: Given una ronda todavía no revelada, When se consulta la votación, Then no se informan diferencias, mínimo ni máximo', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await screen.findByRole('button', { name: 'Revelar' })
+
+    expect(screen.queryByText(/diferencias/i)).toBeNull()
+    expect(screen.queryByText(/mínimo|máximo/)).toBeNull()
+  })
+
+  it('Given que todos votaron y soy Scrum Master, When pulso Revelar, Then aparecen las diferencias de esa ronda', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
+
+    expect(await screen.findByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
+  })
+})
+
+describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)', () => {
+  const CONGELADA = 'los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado'
+
+  beforeEach(() => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    registrarMock.mockImplementation(async (_historia, _usuario, valor) => ({ ...HISTORIA, estimacion_sp: valor }))
+  })
+
+  const selectorEstimacion = async () =>
+    (await screen.findByLabelText('Estimación acordada (Story Points)')) as HTMLSelectElement
+
+  it('US2.1: Given una historia sin estimación y su ronda revelada, When el Scrum Master registra el valor acordado 5, Then la historia queda con 5 Story Points', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await userEvent.selectOptions(await selectorEstimacion(), '5')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+
+    expect((await screen.findByRole('status')).textContent).toBe('Se registraron 5 Story Points en la historia')
+    expect(registrarMock).toHaveBeenCalledWith(3, 1, 5)
+    expect(screen.getByText('5 SP')).toBeTruthy()
+  })
+
+  it('Given una ronda revelada con carta sugerida 5, When el Scrum Master ve el formulario, Then la carta sugerida viene elegida y se ofrece toda la baraja', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const selector = await selectorEstimacion()
+
+    expect(selector.value).toBe('5')
+    expect(within(selector).getAllByRole('option').map((opcion) => opcion.textContent)).toEqual([
+      '1', '2', '3', '5', '8', '13', '21',
+    ])
+  })
+
+  it('US2.2: Given una historia con 3 Story Points cargados de forma directa, When el Scrum Master registra el valor acordado 8, Then la historia queda con 8 Story Points', async () => {
+    historiaMock.mockResolvedValue({ ...HISTORIA, estimacion_sp: 3 })
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('3 SP')
+    await userEvent.selectOptions(await selectorEstimacion(), '8')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+
+    await screen.findByText('8 SP')
+    expect(registrarMock).toHaveBeenCalledWith(3, 1, 8)
+    expect(screen.queryByText('3 SP')).toBeNull()
+  })
+
+  it('US2.8: Given una ronda revelada con votos 3, 5 y 8, When el Scrum Master registra 13, Then se registra aunque nadie haya votado esa carta', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await userEvent.selectOptions(await selectorEstimacion(), '13')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+
+    await screen.findByText('13 SP')
+    expect(registrarMock).toHaveBeenCalledWith(3, 1, 13)
+  })
+
+  it('US2.6: Given una historia con 3 SP en un Sprint Activo, When el Scrum Master registra 8 y el servidor lo rechaza, Then se muestra el mensaje y la historia mantiene su estimación anterior', async () => {
+    historiaMock.mockResolvedValue({ ...HISTORIA, estimacion_sp: 3 })
+    registrarMock.mockRejectedValue(new ApiError(400, CONGELADA, 'estimacion_sp'))
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('3 SP')
+    await userEvent.selectOptions(await selectorEstimacion(), '8')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(CONGELADA)
+    expect(screen.getByText('3 SP')).toBeTruthy()
+    expect(screen.queryByText('Se registraron 8 Story Points en la historia')).toBeNull()
+  })
+
+  it('US2.5: Given la ronda actual no fue revelada, When el Scrum Master mira la pantalla, Then no se ofrece registrar la estimación', async () => {
+    servidor.revelada = false
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await screen.findByRole('button', { name: 'Revelar' })
+
+    expect(screen.queryByRole('button', { name: 'Registrar estimación' })).toBeNull()
+    expect(screen.queryByLabelText('Estimación acordada (Story Points)')).toBeNull()
+  })
+
+  it('US2.7: Given una ronda revelada, When actúa un Product Builder, Then no puede registrar la estimación y se le indica que lo hace el Scrum Master', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    expect(await screen.findByText(/Scrum Master registra la estimación acordada/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Registrar estimación' })).toBeNull()
+  })
+
+  it('Given un registro en curso, When pulso Registrar estimación otra vez, Then se registra una sola vez', async () => {
+    registrarMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Uno')
+    await selectorEstimacion()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
+
+    expect(registrarMock).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Registrar estimación' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+})
+
+describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
+  const YA_ABIERTA = 'otra persona abrió esta ronda mientras tanto: recargá la votación'
+
+  beforeEach(() => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    nuevaRondaMock.mockImplementation(async (_historia, usuario) => {
+      servidor = { votos: {}, revelada: false, ronda: servidor.ronda + 1 }
+      return vista(usuario)
+    })
+  })
+
+  it('US3.1: Given la ronda 1 revelada con diferencias, When el Scrum Master inicia una nueva ronda, Then la ronda actual es la 2, abierta, sin votos y con las cartas', async () => {
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(await screen.findByText('Ronda 2')).toBeTruthy()
+    expect(nuevaRondaMock).toHaveBeenCalledWith(3, 1)
+    expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy()
+    expect(screen.getByRole('button', { name: '8' })).toBeTruthy()
+    expect(screen.queryByText(/Hay diferencias/)).toBeNull()
+    expect(screen.queryByText('Promedio exacto')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Registrar estimación' })).toBeNull()
+  })
+
+  it('US3.7: Given una ronda revelada sin diferencias, When el Scrum Master inicia una nueva ronda, Then la nueva ronda queda abierta y sin votos', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+    await elegirActor('Beta Uno')
+    await screen.findByText('No hay diferencias: todos votaron lo mismo')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(await screen.findByText('Ronda 2')).toBeTruthy()
+    expect(within(fila('Beta Tres')).getByText('Falta')).toBeTruthy()
+  })
+
+  it('US3.3: Given la ronda actual todavía no fue revelada, When actúa el Scrum Master, Then no se ofrece iniciar una nueva ronda', async () => {
+    servidor.revelada = false
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await screen.findByRole('button', { name: 'Revelar' })
+
+    expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
+  })
+
+  it('US3.4: Given una ronda revelada con diferencias, When actúa un Product Builder, Then no se ofrece iniciar una nueva ronda', async () => {
+    abrir()
+    await elegirActor('Beta Dos')
+
+    await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
+
+    expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
+  })
+
+  it('Given que otra persona ya abrió la ronda, When el Scrum Master inicia una nueva ronda, Then se muestra el mensaje del servidor', async () => {
+    nuevaRondaMock.mockRejectedValue(new ApiError(409, YA_ABIERTA))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(YA_ABIERTA)
+  })
+
+  it('Given una apertura en curso, When pulso Nueva ronda otra vez, Then se abre una sola ronda', async () => {
+    nuevaRondaMock.mockReturnValue(new Promise(() => {}))
+    abrir()
+    await elegirActor('Beta Uno')
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
+
+    expect(nuevaRondaMock).toHaveBeenCalledTimes(1)
+    expect((screen.getByRole('button', { name: 'Nueva ronda' }) as HTMLButtonElement).disabled).toBe(true)
   })
 })
 
@@ -664,7 +907,7 @@ describe('Pantalla de votación - contexto de la historia', () => {
     servidor.revelada = true
     abrir()
 
-    await screen.findByText(/registrar la estimación acordada/i)
+    await screen.findByText(/Scrum Master registra la estimación acordada/)
 
     expect(screen.queryByText(/Elegí una carta/)).toBeNull()
   })

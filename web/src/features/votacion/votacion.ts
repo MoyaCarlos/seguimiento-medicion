@@ -29,12 +29,19 @@ export type VotoDeIntegrante = {
   valor: number | null
 }
 
+export type Diferencias = {
+  hay_diferencias: boolean
+  minimo: number | null
+  maximo: number | null
+}
+
 export type Votacion = {
   historia_id: number
   ronda: number
   revelada_en: string | null
   integrantes: VotoDeIntegrante[]
   promedio: { exacto: number; carta_sugerida: number } | null
+  diferencias: Diferencias | null
 }
 
 export const esScrumMaster = (integrante: Integrante | undefined): boolean =>
@@ -51,6 +58,12 @@ export const puedeRevelar = (votacion: Votacion, actor: Integrante | undefined):
 export function textoDeVoto(voto: VotoDeIntegrante): string {
   if (!voto.ya_voto) return 'Falta'
   return voto.valor === null ? 'Oculto' : String(voto.valor)
+}
+
+export function textoDeDiferencias(diferencias: Diferencias | null): string {
+  if (diferencias === null) return ''
+  if (!diferencias.hay_diferencias) return 'No hay diferencias: todos votaron lo mismo'
+  return `Hay diferencias: mínimo ${diferencias.minimo}, máximo ${diferencias.maximo}`
 }
 
 export const sinValores = (votacion: Votacion): Votacion => ({

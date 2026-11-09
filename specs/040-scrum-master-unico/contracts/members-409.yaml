@@ -1,0 +1,23 @@
+# Cambio de contrato de la spec 040: POST /projects/{id}/members suma la respuesta 409.
+# Se aplica sobre specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml
+# (responses de asignarIntegrante, entre el 404 y el 500). Nada más cambia.
+paths:
+  /projects/{id}/members:
+    post:
+      responses:
+        '409':
+          description: >-
+            El proyecto ya tiene un Scrum Master y se pidió agregar otro
+            integrante con rol scrum_master. Si la persona ya es integrante, la
+            respuesta es el 400 de integrante ya vinculado, no esta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+              examples:
+                scrumMasterRepetido:
+                  value:
+                    mensaje: el proyecto ya tiene un Scrum Master
+# El orden de errores no cambia: 404 proyecto inexistente, 400 datos inválidos o
+# integrante duplicado, 409 segundo Scrum Master, 201 éxito.
+# El cuerpo del 409 trae solo `mensaje` (sin `campo`), igual que los demás 409 de la API.

@@ -32,6 +32,7 @@ export const rutas: RouteObject[] = [
               { path: 'defectos/*', lazy: () => import('./features/defectos') },
               { path: 'status/*', lazy: () => import('./features/estado') },
               { path: 'dashboard/*', lazy: () => import('./features/dashboard') },
+              { path: 'historial/*', lazy: () => import('./features/historial') },
             ],
           },
           { path: '*', element: <NoEncontrada /> },

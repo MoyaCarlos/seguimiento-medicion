@@ -599,3 +599,60 @@ func TestProjectHandler_ObtenerEstado_IDInvalido(t *testing.T) {
 		})
 	}
 }
+
+func asignarViaHTTP(handler *ProjectHandler, idStr, cuerpo string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
+	req.SetPathValue("id", idStr)
+	handler.AsignarIntegrante(rec, req)
+	return rec
+}
+
+func TestProjectHandler_AsignarIntegrante_SegundoScrumMasterEs409(t *testing.T) {
+	handler, proyectos := nuevoProjectHandlerDePrueba()
+	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
+	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+
+	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"scrum_master"}`)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Mensaje != "el proyecto ya tiene un Scrum Master" || resp.Campo != "" {
+		t.Errorf("cuerpo inesperado: %+v", resp)
+	}
+}
+
+func TestProjectHandler_AsignarIntegrante_ScrumMasterQueYaEsIntegranteSigueSiendo400(t *testing.T) {
+	handler, proyectos := nuevoProjectHandlerDePrueba()
+	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
+	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+
+	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Ana","rol":"scrum_master"}`)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Campo != "integrante" {
+		t.Errorf("se esperaba campo integrante, se obtuvo %q", resp.Campo)
+	}
+}
+
+func TestProjectHandler_AsignarIntegrante_ProductBuilderConScrumMasterEs201(t *testing.T) {
+	handler, proyectos := nuevoProjectHandlerDePrueba()
+	id := crearProyectoViaHTTP(t, handler, "Proyecto")
+	idStr := strconv.FormatInt(id, 10)
+	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+
+	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"product_builder"}`)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+}

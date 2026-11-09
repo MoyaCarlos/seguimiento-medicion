@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -30,11 +31,16 @@ func (c *contadorDeRegistros) registros() int {
 }
 
 type hasheadorQueCuenta struct {
-	llamadas int
+	llamadas atomic.Int64
+}
+
+// cantidad devuelve cuántas veces se llamó a Hashear, seguro entre goroutines.
+func (h *hasheadorQueCuenta) cantidad() int64 {
+	return h.llamadas.Load()
 }
 
 func (h *hasheadorQueCuenta) Hashear(contrasena string) (string, error) {
-	h.llamadas++
+	h.llamadas.Add(1)
 	return "hash:" + contrasena, nil
 }
 
@@ -110,7 +116,7 @@ func TestRegistrarUsuario_NombreInvalidoNoLlamaAlRegistroNiAlHash(t *testing.T) 
 	if credenciales.registros() != 0 {
 		t.Errorf("no se esperaba llamar al registro")
 	}
-	if hasheador.llamadas != 0 {
+	if hasheador.cantidad() != 0 {
 		t.Errorf("no se esperaba hashear")
 	}
 }

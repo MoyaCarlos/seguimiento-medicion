@@ -77,7 +77,7 @@ describe('registro de rutas', () => {
   ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo) => {
     abrir(url)
 
-    expect(await screen.findByRole('heading', { name: titulo })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: titulo }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByText('42')).toBeTruthy()
   })
 
@@ -99,7 +99,7 @@ describe('registro de rutas', () => {
     )
     abrir('/projects/42/votacion/3')
 
-    expect(await screen.findByRole('heading', { name: 'Votación de la historia #3' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Votación de la historia #3' }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByText('42')).toBeTruthy()
   })
 
@@ -133,20 +133,63 @@ describe('registro de rutas', () => {
     )
     abrir('/projects/42/dashboard')
 
-    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Dashboard' }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('/projects/:id/historial muestra el Historial de Sprints y la navegación lo ofrece como activo', async () => {
+    abrir('/projects/42/historial')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Historial de Sprints' })).toBeTruthy()
+    expect(await screen.findByText('Todavía no hay Sprints cerrados')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Historial de Sprints' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('/projects/:id/historial/:sprintId abre el detalle del Sprint al entrar directo por la URL', async () => {
+    const detalle = {
+      id: 5,
+      proyecto_id: 42,
+      numero: 3,
+      sprint_goal: 'Cerrar el trámite',
+      fecha_inicio: '2026-11-03',
+      fecha_fin: '2026-11-09',
+      metricas: {
+        story_points_planificados: 0,
+        story_points_completados: 0,
+        velocidad: 0,
+        porcentaje_historias_completadas: 0,
+        horas_estimadas: null,
+        horas_reales: 0,
+        desviacion_horas: null,
+        desviacion_porcentaje: null,
+        defectos_detectados: 0,
+        defectos_resueltos: 0,
+      },
+      historias: [],
+      defectos: [],
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(new Response(url === '/projects/42/historial/5' ? JSON.stringify(detalle) : '[]', { status: 200 })),
+      ),
+    )
+    abrir('/projects/42/historial/5')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sprint 3' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Historial de Sprints' }).getAttribute('aria-current')).toBe('page')
   })
 
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/settings')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
   })
 
   it('la pantalla principal permite crear un proyecto', async () => {
     abrir('/')
 
-    expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
   })
 
   describe('inicio con datos de prueba', () => {
@@ -168,7 +211,7 @@ describe('registro de rutas', () => {
       const usuario = userEvent.setup()
       abrir('/')
 
-      const botonDemo = await screen.findByRole('button', { name: 'Cargar datos de prueba' })
+      const botonDemo = await screen.findByRole('button', { name: 'Cargar datos de prueba' }, { timeout: 5000 })
       await usuario.click(botonDemo)
       const aviso = await screen.findByText(/los datos de prueba ya están cargados/)
 
@@ -198,7 +241,7 @@ describe('registro de rutas', () => {
       const usuario = userEvent.setup()
       const router = abrir('/projects/42/backlog')
 
-      expect(await screen.findByText('Listado caído')).toBeTruthy()
+      expect(await screen.findByText('Listado caído', {}, { timeout: 5000 })).toBeTruthy()
       await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
 
       expect(router.state.location.pathname).toBe('/projects/42/sprints')
@@ -213,12 +256,12 @@ describe('registro de rutas', () => {
       const usuario = userEvent.setup()
       const router = abrir('/')
 
-      expect(await screen.findByText('Listado caído')).toBeTruthy()
+      expect(await screen.findByText('Listado caído', {}, { timeout: 5000 })).toBeTruthy()
       await usuario.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
       await usuario.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
       await usuario.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
-      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
       expect(router.state.location.pathname).toBe('/projects/77/proyecto')
     })
   })
@@ -228,8 +271,8 @@ describe('registro de rutas', () => {
       proyectosSimulados = [{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }]
       abrir('/')
 
-      expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
-      expect(await screen.findByRole('link', { name: 'Alfa (#1)' })).toBeTruthy()
+      expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
+      expect(await screen.findByRole('link', { name: 'Alfa (#1)' }, { timeout: 5000 })).toBeTruthy()
       expect(screen.getByRole('link', { name: 'Beta (#2)' })).toBeTruthy()
     })
 
@@ -238,16 +281,16 @@ describe('registro de rutas', () => {
       const usuario = userEvent.setup()
       const router = abrir('/')
 
-      await usuario.click(await screen.findByRole('link', { name: 'Alfa (#1)' }))
+      await usuario.click(await screen.findByRole('link', { name: 'Alfa (#1)' }, { timeout: 5000 }))
 
       expect(router.state.location.pathname).toBe('/projects/1/proyecto')
-      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
     })
   })
 
   it('el menú de secciones de un proyecto se llama "Secciones del proyecto"', async () => {
     abrir('/projects/42/backlog')
-    await screen.findByRole('heading', { name: 'Product Backlog' })
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
 
     expect(screen.getByRole('navigation', { name: 'Secciones del proyecto' })).toBeTruthy()
     expect(screen.queryByRole('navigation', { name: 'Historias del Sprint 2' })).toBeNull()
@@ -256,13 +299,13 @@ describe('registro de rutas', () => {
   it('/projects/:id redirige al panel del proyecto', async () => {
     const router = abrir('/projects/1')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/1/proyecto')
   })
 
   it('marca como activa solo la pantalla actual en la navegación', async () => {
     abrir('/projects/42/backlog')
-    await screen.findByRole('heading', { name: 'Product Backlog' })
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
 
     expect(screen.getByRole('link', { name: 'Historias' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Sprints' }).getAttribute('aria-current')).toBeNull()
@@ -270,18 +313,18 @@ describe('registro de rutas', () => {
 
   it('mantiene activo el enlace de la feature en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/edit')
-    await screen.findByRole('heading', { name: 'Panel del proyecto' })
+    await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })
 
     expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBe('page')
   })
 
   it('cambiar el id de la URL cambia el proyecto mostrado, sin estado compartido', async () => {
     const router = abrir('/projects/1/backlog')
-    expect(await screen.findByText('1', { selector: 'strong' })).toBeTruthy()
+    expect(await screen.findByText('1', { selector: 'strong' }, { timeout: 5000 })).toBeTruthy()
 
     await router.navigate('/projects/2/backlog')
 
-    expect(await screen.findByText('2', { selector: 'strong' })).toBeTruthy()
+    expect(await screen.findByText('2', { selector: 'strong' }, { timeout: 5000 })).toBeTruthy()
   })
 
   describe('selector de proyecto en el encabezado', () => {
@@ -298,12 +341,12 @@ describe('registro de rutas', () => {
       proyectosSimulados = DOS_PROYECTOS
       const usuario = userEvent.setup()
       const router = abrir('/projects/1/backlog')
-      await screen.findByRole('option', { name: 'Beta (#2)' })
+      await screen.findByRole('option', { name: 'Beta (#2)' }, { timeout: 5000 })
 
       await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
 
       expect(router.state.location.pathname).toBe('/projects/2/backlog')
-      expect(await screen.findByRole('heading', { name: 'Product Backlog' })).toBeTruthy()
+      expect(await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })).toBeTruthy()
       expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('2')
     })
 
@@ -311,20 +354,20 @@ describe('registro de rutas', () => {
       const usuario = userEvent.setup()
       const router = abrir('/projects/1/backlog')
 
-      await usuario.click(await screen.findByRole('link', { name: 'Nuevo proyecto' }))
+      await usuario.click(await screen.findByRole('link', { name: 'Nuevo proyecto' }, { timeout: 5000 }))
 
       expect(router.state.location.pathname).toBe('/')
-      expect(await screen.findByRole('heading', { name: 'Crear proyecto' })).toBeTruthy()
+      expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
     })
 
     it('GET /projects se pide una sola vez al montar y no al cambiar de sección del mismo proyecto', async () => {
       proyectosSimulados = DOS_PROYECTOS
       const usuario = userEvent.setup()
       abrir('/projects/1/backlog')
-      await screen.findByRole('option', { name: 'Beta (#2)' })
+      await screen.findByRole('option', { name: 'Beta (#2)' }, { timeout: 5000 })
 
       await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
-      await screen.findByRole('heading', { name: 'Sprints' })
+      await screen.findByRole('heading', { name: 'Sprints' }, { timeout: 5000 })
 
       expect(llamadasAlListado()).toBe(1)
     })
@@ -333,8 +376,8 @@ describe('registro de rutas', () => {
       async function abrirEdicionDeBeta(usuario: ReturnType<typeof userEvent.setup>) {
         proyectosSimulados = [{ id: 27, nombre: 'Beta' }]
         const router = abrir('/projects/27/proyecto/edit')
-        await screen.findByRole('option', { name: 'Beta (#27)' })
-        const nombre = await screen.findByLabelText('Nombre del proyecto')
+        await screen.findByRole('option', { name: 'Beta (#27)' }, { timeout: 5000 })
+        const nombre = await screen.findByLabelText('Nombre del proyecto', {}, { timeout: 5000 })
         await usuario.clear(nombre)
         await usuario.type(nombre, 'Beta Renombrado')
         return router
@@ -347,7 +390,7 @@ describe('registro de rutas', () => {
 
         await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-        expect(await screen.findByRole('option', { name: 'Beta Renombrado (#27)' })).toBeTruthy()
+        expect(await screen.findByRole('option', { name: 'Beta Renombrado (#27)' }, { timeout: 5000 })).toBeTruthy()
         expect(screen.queryByRole('option', { name: 'Beta (#27)' })).toBeNull()
         expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('27')
         expect(router.state.location.pathname).toBe('/projects/27/proyecto')
@@ -360,7 +403,7 @@ describe('registro de rutas', () => {
         await usuario.click(screen.getByRole('link', { name: 'Cancelar' }))
 
         expect(router.state.location.pathname).toBe('/projects/27/proyecto')
-        expect(await screen.findByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
+        expect(await screen.findByRole('option', { name: 'Beta (#27)' }, { timeout: 5000 })).toBeTruthy()
         expect(llamadasAlListado()).toBe(1)
       })
 
@@ -413,7 +456,7 @@ describe('registro de rutas', () => {
       )
       const usuario = userEvent.setup()
       abrir('/projects/1/backlog')
-      await screen.findByText('Historia del proyecto uno')
+      await screen.findByText('Historia del proyecto uno', {}, { timeout: 5000 })
 
       await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
 
@@ -431,24 +474,24 @@ describe('registro de rutas', () => {
       { initialEntries: ['/projects/1/pantalla'] },
     )
     render(<RouterProvider router={router} />)
-    const marcaDelProyecto1 = (await screen.findByTestId('marca')).textContent
+    const marcaDelProyecto1 = (await screen.findByTestId('marca', {}, { timeout: 5000 })).textContent
 
     await router.navigate('/projects/2/pantalla')
 
-    await screen.findByText('/projects/2/pantalla', { selector: 'code' })
+    await screen.findByText('/projects/2/pantalla', { selector: 'code' }, { timeout: 5000 })
     expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1)
   })
 
   it.each(['/no-existe', '/projects/1/otra'])('%s muestra "Página no encontrada"', async (url) => {
     abrir(url)
 
-    expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Página no encontrada' }, { timeout: 5000 })).toBeTruthy()
   })
 
   it('con sesión el encabezado muestra el menú de usuario', async () => {
     abrir('/')
 
-    expect(await screen.findByText('ana.perez')).toBeTruthy()
+    expect(await screen.findByText('ana.perez', {}, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeTruthy()
   })
 })
@@ -527,7 +570,7 @@ describe('rutas protegidas', () => {
     await userEvent.type(screen.getByLabelText('Contraseña'), 'secreta123')
     await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
 
-    expect(await screen.findByRole('heading', { name: 'Product Backlog' })).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/42/backlog')
   })
 

@@ -294,7 +294,7 @@ func (c *proyectoContext) permaneceSinModificaciones() error {
 }
 
 // InitializeScenarioProyecto registra los pasos de los escenarios de HU-04.
-func InitializeScenarioProyecto(ctx *godog.ScenarioContext) {
+func InitializeScenarioProyecto(ctx *godog.ScenarioContext) *proyectoContext {
 	pc := &proyectoContext{}
 
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
@@ -336,4 +336,5 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext) {
 	ctx.Step(`^ingreso una fecha de fin (anterior a|igual a) la fecha de inicio y guardo$`, pc.editarFechaInvalida)
 	ctx.Step(`^decido no aplicar cambios y cancelo$`, pc.cancelaEdicion)
 	ctx.Step(`^el proyecto permanece sin modificaciones$`, pc.permaneceSinModificaciones)
+	return pc
 }
