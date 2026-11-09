@@ -90,8 +90,23 @@ func main() {
 	)
 
 	metricasRepo := repository.NewSQLiteMetricasRepository(db)
-	metricasHandler := apihttp.NewMetricasHandler(
-		service.NewCalcularMetricas(proyectos, metricasRepo),
+	credenciales := repository.NewSQLiteCredencialRepository(db)
+	hasheador := service.NewServicioContrasenasProduccion()
+	sesionesRepo := repository.NewSQLiteSesionRepository(db)
+	emisorSesiones := service.NewEmisorSesiones(sesionesRepo, time.Now)
+	obtenerSesion := service.NewObtenerSesion(sesionesRepo, time.Now)
+	authHandler := apihttp.NewAuthHandler(
+		service.NewRegistrarUsuario(credenciales, hasheador, emisorSesiones),
+		service.NewIngresar(credenciales, hasheador, emisorSesiones),
+		obtenerSesion,
+		service.NewCerrarSesion(obtenerSesion, sesionesRepo, time.Now),
+	)
+
+	calcularMetricas := service.NewCalcularMetricas(proyectos, metricasRepo)
+	metricasHandler := apihttp.NewMetricasHandler(calcularMetricas)
+	historialHandler := apihttp.NewHistorialHandler(
+		service.NewConsultarHistorialSprints(calcularMetricas, sprintRepo),
+		service.NewConsultarDetalleSprint(proyectos, sprintRepo, calcularMetricas, repository.NewSQLiteHistorialSprintRepository(db)),
 	)
 	reporteHandler := apihttp.NewReporteHandler(
 		service.NewGenerarReporte(proyectos, sprintRepo, backlogRepo, backlogRepo, backlogRepo, metricasRepo, defectosRepo),
@@ -107,9 +122,14 @@ func main() {
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("ok"))
 	})
+	mux.HandleFunc("POST /auth/registro", authHandler.Registro)
+	mux.HandleFunc("POST /auth/ingreso", authHandler.Ingreso)
+	mux.HandleFunc("GET /auth/yo", authHandler.Yo)
+	mux.HandleFunc("POST /auth/salir", authHandler.Salir)
 	mux.HandleFunc("POST /backlog", backlogHandler.Crear)
 	mux.HandleFunc("GET /projects/{id}/backlog", backlogHandler.ConsultarBacklog)
 	mux.HandleFunc("PUT /backlog/{id}", backlogHandler.Editar)
+	mux.HandleFunc("GET /backlog/{id}", backlogHandler.Obtener)
 	mux.HandleFunc("POST /backlog/{id}/horas", horasHandler.Imputar)
 	mux.HandleFunc("GET /backlog/{id}/horas", horasHandler.ConsultarEsfuerzo)
 	mux.HandleFunc("PUT /backlog/{id}/sprint", backlogHandler.AsignarSprint)
@@ -123,6 +143,8 @@ func main() {
 	mux.HandleFunc("GET /projects/{id}/members", projectHandler.ListarIntegrantes)
 	mux.HandleFunc("GET /projects/{id}/sprints", sprintHandler.Listar)
 	mux.HandleFunc("GET /projects/{id}/metricas", metricasHandler.Consultar)
+	mux.HandleFunc("GET /projects/{id}/historial", historialHandler.Listar)
+	mux.HandleFunc("GET /projects/{id}/historial/{sprintId}", historialHandler.Detalle)
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)

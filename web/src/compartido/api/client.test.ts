@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError, get, post, put } from './client'
+import { configurarSesionHttp } from './sesionHttp'
 
 function respondWith(body: BodyInit | null, status: number) {
   const fetchMock = vi.fn().mockResolvedValue(new Response(body, { status }))
@@ -13,6 +14,7 @@ function respondWithJson(body: unknown, status: number) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  configurarSesionHttp(null)
 })
 
 describe('cliente de la API', () => {
@@ -175,5 +177,74 @@ describe('cliente de la API', () => {
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       }),
     )
+  })
+})
+
+describe('sesión en el cliente de la API', () => {
+  function configurar(token: string | null) {
+    const alNoAutenticado = vi.fn()
+    configurarSesionHttp({ obtenerToken: () => token, alNoAutenticado })
+    return alNoAutenticado
+  }
+
+  it('con token envía Authorization: Bearer <token>', async () => {
+    configurar('abc123')
+    const fetchMock = respondWithJson({}, 200)
+
+    await get('/projects/1')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/1',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: 'Bearer abc123' }),
+      }),
+    )
+  })
+
+  it('sin token no envía la cabecera Authorization', async () => {
+    configurar(null)
+    const fetchMock = respondWithJson({}, 200)
+
+    await get('/projects/1')
+
+    const { headers } = fetchMock.mock.calls[0][1] as { headers: Record<string, string> }
+    expect(headers).not.toHaveProperty('Authorization')
+  })
+
+  it('un 401 de una petición con token llama a alNoAutenticado y relanza el ApiError', async () => {
+    const alNoAutenticado = configurar('abc123')
+    respondWithJson({ mensaje: 'sesión vencida' }, 401)
+
+    await expect(get('/projects/1')).rejects.toEqual(new ApiError(401, 'sesión vencida'))
+    expect(alNoAutenticado).toHaveBeenCalledTimes(1)
+  })
+
+  it('un 401 sin token no llama a alNoAutenticado', async () => {
+    const alNoAutenticado = configurar(null)
+    respondWithJson({ mensaje: 'no autenticado' }, 401)
+
+    await expect(get('/projects/1')).rejects.toMatchObject({ status: 401 })
+    expect(alNoAutenticado).not.toHaveBeenCalled()
+  })
+
+  it.each(['/auth/ingreso', '/auth/registro'])(
+    'un 401 de %s aunque haya token no llama a alNoAutenticado y llega como ApiError 401',
+    async (ruta) => {
+      const alNoAutenticado = configurar('abc123')
+      respondWithJson({ mensaje: 'credenciales inválidas' }, 401)
+
+      await expect(post(ruta, {})).rejects.toEqual(new ApiError(401, 'credenciales inválidas'))
+      expect(alNoAutenticado).not.toHaveBeenCalled()
+    },
+  )
+
+  it('sin enganche configurado se comporta como antes', async () => {
+    configurarSesionHttp(null)
+    const fetchMock = respondWithJson({ mensaje: 'no autenticado' }, 401)
+
+    await expect(get('/projects/1')).rejects.toEqual(new ApiError(401, 'no autenticado'))
+
+    const { headers } = fetchMock.mock.calls[0][1] as { headers: Record<string, string> }
+    expect(headers).not.toHaveProperty('Authorization')
   })
 })

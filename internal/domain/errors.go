@@ -24,6 +24,10 @@ var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
 var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
 
+// ErrSprintNoFinalizado indica que se pidió en el historial un Sprint que
+// todavía está Pendiente o Activo (HU-12).
+var ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "el Sprint todavía no está finalizado"}
+
 // ErrEstimacionCongelada indica un cambio de los Story Points ya cargados de una
 // historia de un Sprint Activo o Finalizado (decisión D2b).
 var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}
@@ -74,12 +78,23 @@ var (
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
 
-// ErrSprintNoFinalizado indica que se pidió el reporte de un Sprint que no está
-// Finalizado (HU-10).
-var ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el reporte de un Sprint finalizado"}
+// ErrSprintNoFinalizadoParaReporte indica que se pidió el reporte de un Sprint
+// que no está Finalizado (HU-10).
+var ErrSprintNoFinalizadoParaReporte = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el reporte de un Sprint finalizado"}
 
 // ErrReporteNoGenerado indica un fallo real al armar o escribir el PDF (HU-10).
 var ErrReporteNoGenerado = errors.New("no se pudo generar el reporte")
+
+// Errores de autenticación (HU-20).
+// Errores de autenticación (HU-20).
+var (
+	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.
+	ErrCredencialesInvalidas = errors.New("Usuario o contraseña incorrectos")
+	// ErrNoAutenticado indica un pedido sin sesión vigente.
+	ErrNoAutenticado = errors.New("Tu sesión no es válida")
+	// ErrNombreUsuarioEnUso indica un registro con un nombre de usuario ya existente.
+	ErrNombreUsuarioEnUso = errors.New("Ese nombre de usuario ya existe")
+)
 
 // ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
 var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}

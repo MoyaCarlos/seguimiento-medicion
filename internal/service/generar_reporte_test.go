@@ -230,8 +230,8 @@ func TestGenerarReporte_EjecutarSprint_NoFinalizado(t *testing.T) {
 			sut := nuevoGenerarReporteDePrueba(proyectos, sprints, &fakeProductBacklogRepository{}, historias, arrastradas, datos, &fakeDefectoRepository{})
 			_, err := sut.EjecutarSprint(context.Background(), sprint.ID, fechaDeReporte(20))
 
-			if !errors.Is(err, domain.ErrSprintNoFinalizado) {
-				t.Fatalf("se esperaba ErrSprintNoFinalizado, se obtuvo %v", err)
+			if !errors.Is(err, domain.ErrSprintNoFinalizadoParaReporte) {
+				t.Fatalf("se esperaba ErrSprintNoFinalizadoParaReporte, se obtuvo %v", err)
 			}
 			if historias.llamadas != 0 || arrastradas.llamadas != 0 || datos.llamadas != 0 {
 				t.Errorf("no se debía leer nada más: historias=%d arrastradas=%d datos=%d",

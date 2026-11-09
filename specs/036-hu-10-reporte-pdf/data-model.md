@@ -75,7 +75,7 @@ las entidades y tablas ya definidas en [`MODELO-DE-DATOS.md`](../../MODELO-DE-DA
 ## Reglas de armado
 
 1. El reporte de Sprint solo se arma si el Sprint existe y está `Finalizado`; si no existe,
-   `ErrSprintNoEncontrado`; si no está finalizado, `ErrSprintNoFinalizado`.
+   `ErrSprintNoEncontrado`; si no está finalizado, `ErrSprintNoFinalizadoParaReporte`.
 2. El reporte de proyecto solo se arma si el proyecto existe; si no,
    `ErrProyectoNoEncontrado`.
 3. `Planificadas` = historias completadas del Sprint (`historias.sprint_id = sprint_id` y

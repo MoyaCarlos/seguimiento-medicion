@@ -75,7 +75,7 @@ specs/036-hu-10-reporte-pdf/
 internal/domain/
 ├── reporte.go                      # Agregado del reporte (no persistido)
 ├── reporte_test.go                 # Reglas de armado puras (si las hay)
-└── errors.go                       # ErrSprintNoFinalizado y ErrReporteNoGenerado
+└── errors.go                       # ErrSprintNoFinalizadoParaReporte y ErrReporteNoGenerado
 
 internal/repository/
 ├── reporte_repository.go           # Puerto HistoriasArrastradasRepository

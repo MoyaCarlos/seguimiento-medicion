@@ -63,7 +63,7 @@
 - **Decision**: el service valida existencia y estado antes de generar. El generador produce
   `[]byte` en memoria; el handler recién escribe cabeceras y cuerpo cuando la generación
   terminó bien. Un Sprint no finalizado responde `400` con
-  `ErrSprintNoFinalizado`; un Sprint o proyecto inexistente, `404`; un fallo de generación,
+  `ErrSprintNoFinalizadoParaReporte`; un Sprint o proyecto inexistente, `404`; un fallo de generación,
   `500` con "no se pudo generar el reporte".
 - **Rationale**: cumple US4 y FR-022 sin dejar archivos corruptos. Mantiene el orden de
   precedencia de la spec (existencia antes que estado).

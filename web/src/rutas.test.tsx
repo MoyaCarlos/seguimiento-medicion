@@ -5,7 +5,10 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LayoutProyecto } from './compartido/router/LayoutProyecto'
+import { borrarToken, guardarToken } from './features/autenticacion/almacenamientoToken'
 import { rutas } from './rutas'
+
+const USUARIO = { id: 7, nombre: 'ana.perez' }
 
 const PROYECTO = {
   id: 42,
@@ -19,12 +22,17 @@ const PROYECTO = {
 let proyectosSimulados: { id: number; nombre: string }[] = []
 
 function responderListado(url: string) {
+  if (url.includes('/auth/yo')) return JSON.stringify(USUARIO)
   if (url === '/projects') return JSON.stringify(proyectosSimulados)
   if (/^\/projects\/\d+$/.test(url)) return JSON.stringify(PROYECTO)
   return '[]'
 }
 
+// Sesión simulada: token guardado y `GET /auth/yo` responde 200.
 beforeEach(() => {
+  borrarToken()
+  localStorage.clear()
+  guardarToken('token-de-prueba')
   proyectosSimulados = []
   vi.stubGlobal(
     'fetch',
@@ -33,6 +41,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  borrarToken()
+  localStorage.clear()
   vi.unstubAllGlobals()
 })
 
@@ -62,9 +72,11 @@ describe('registro de rutas', () => {
       vi.fn((url: string) =>
         Promise.resolve(
           new Response(
-            url.includes('/votacion')
-              ? JSON.stringify({ historia_id: 3, ronda: 1, revelada_en: null, integrantes: [], promedio: null })
-              : '[]',
+            url.includes('/auth/yo')
+              ? JSON.stringify(USUARIO)
+              : url.includes('/votacion')
+                ? JSON.stringify({ historia_id: 3, ronda: 1, revelada_en: null, integrantes: [], promedio: null })
+                : '[]',
             { status: 200 },
           ),
         ),
@@ -74,6 +86,40 @@ describe('registro de rutas', () => {
 
     expect(await screen.findByRole('heading', { name: 'Votación de la historia #3' })).toBeTruthy()
     expect(screen.getByText('42')).toBeTruthy()
+  })
+
+  it('/projects/:id/dashboard muestra el Dashboard y la navegación lo ofrece como activo', async () => {
+    const metricas = {
+      story_points_planificados: 0,
+      story_points_completados: 0,
+      velocidad: 0,
+      porcentaje_historias_completadas: 0,
+      horas_estimadas: null,
+      horas_reales: 0,
+      desviacion_horas: null,
+      desviacion_porcentaje: null,
+      defectos_detectados: 0,
+      defectos_resueltos: 0,
+    }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.includes('/auth/yo')
+                ? USUARIO
+                : { proyecto_id: 42, horas_por_story_point: null, proyecto: metricas, sprints: [] },
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    abrir('/projects/42/dashboard')
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Dashboard' }).getAttribute('aria-current')).toBe('page')
   })
 
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
@@ -268,6 +314,63 @@ describe('registro de rutas', () => {
       expect(llamadasAlListado()).toBe(1)
     })
 
+    describe('renombrar el proyecto abierto', () => {
+      async function abrirEdicionDeBeta(usuario: ReturnType<typeof userEvent.setup>) {
+        proyectosSimulados = [{ id: 27, nombre: 'Beta' }]
+        const router = abrir('/projects/27/proyecto/edit')
+        await screen.findByRole('option', { name: 'Beta (#27)' })
+        const nombre = await screen.findByLabelText('Nombre del proyecto')
+        await usuario.clear(nombre)
+        await usuario.type(nombre, 'Beta Renombrado')
+        return router
+      }
+
+      it('al guardar el nombre nuevo, el selector lo muestra sin recargar la página', async () => {
+        const usuario = userEvent.setup()
+        const router = await abrirEdicionDeBeta(usuario)
+        proyectosSimulados = [{ id: 27, nombre: 'Beta Renombrado' }]
+
+        await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+        expect(await screen.findByRole('option', { name: 'Beta Renombrado (#27)' })).toBeTruthy()
+        expect(screen.queryByRole('option', { name: 'Beta (#27)' })).toBeNull()
+        expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('27')
+        expect(router.state.location.pathname).toBe('/projects/27/proyecto')
+      })
+
+      it('al cancelar la edición no se vuelve a pedir el listado', async () => {
+        const usuario = userEvent.setup()
+        const router = await abrirEdicionDeBeta(usuario)
+
+        await usuario.click(screen.getByRole('link', { name: 'Cancelar' }))
+
+        expect(router.state.location.pathname).toBe('/projects/27/proyecto')
+        expect(await screen.findByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
+        expect(llamadasAlListado()).toBe(1)
+      })
+
+      it('si el guardado falla no se vuelve a pedir el listado', async () => {
+        const usuario = userEvent.setup()
+        await abrirEdicionDeBeta(usuario)
+        const respuestaBase = vi.mocked(fetch).getMockImplementation()!
+        const llamadasPrevias = llamadasAlListado()
+        vi.stubGlobal(
+          'fetch',
+          vi.fn((url: string, init?: RequestInit) =>
+            init?.method === 'PUT'
+              ? Promise.resolve(new Response(JSON.stringify({ mensaje: 'No se pudo guardar' }), { status: 500 }))
+              : respuestaBase(url, init)),
+        )
+
+        await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+        expect(await screen.findByText('No se pudo guardar')).toBeTruthy()
+        expect(screen.getByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
+        expect(llamadasPrevias).toBe(1)
+        expect(llamadasAlListado()).toBe(0)
+      })
+    })
+
     it('US1.4: al cambiar de proyecto la pantalla no muestra datos del proyecto anterior', async () => {
       proyectosSimulados = DOS_PROYECTOS
       const historia = {
@@ -325,5 +428,100 @@ describe('registro de rutas', () => {
     abrir(url)
 
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeTruthy()
+  })
+
+  it('con sesión el encabezado muestra el menú de usuario', async () => {
+    abrir('/')
+
+    expect(await screen.findByText('ana.perez')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeTruthy()
+  })
+})
+
+describe('rutas protegidas', () => {
+  // Todas las rutas que declara rutas.tsx, con una URL concreta de cada una.
+  const protegidas = [
+    '/',
+    '/projects/42',
+    '/projects/42/proyecto',
+    '/projects/42/proyecto/settings',
+    '/projects/42/backlog',
+    '/projects/42/backlog/nueva',
+    '/projects/42/votacion/3',
+    '/projects/42/sprints',
+    '/projects/42/status',
+    '/projects/42/dashboard',
+    '/projects/42/otra',
+    '/no-existe',
+  ]
+
+  it.each(protegidas)('sin sesión %s redirige a /ingresar conservando la ruta en state.desde', async (url) => {
+    borrarToken()
+    const router = abrir(url)
+
+    expect(await screen.findByRole('heading', { name: 'Ingresar' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/ingresar')
+    expect((router.state.location.state as { desde?: string }).desde).toBe(url)
+  })
+
+  it('sin sesión conserva también la búsqueda de la ruta pedida', async () => {
+    borrarToken()
+    const router = abrir('/projects/42/backlog?orden=prioridad')
+
+    expect(await screen.findByRole('heading', { name: 'Ingresar' })).toBeTruthy()
+    expect((router.state.location.state as { desde?: string }).desde).toBe(
+      '/projects/42/backlog?orden=prioridad',
+    )
+  })
+
+  it('/ingresar abre sin sesión', async () => {
+    borrarToken()
+    const router = abrir('/ingresar')
+
+    expect(await screen.findByRole('heading', { name: 'Ingresar' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/ingresar')
+  })
+
+  it('/registro abre sin sesión', async () => {
+    borrarToken()
+    const router = abrir('/registro')
+
+    expect(await screen.findByRole('heading', { name: 'Crear cuenta' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/registro')
+  })
+
+  it('tras ingresar vuelve a la ruta pedida', async () => {
+    borrarToken()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            url.includes('/auth/ingreso')
+              ? JSON.stringify({ usuario: USUARIO, token: 'token-nuevo', vence_en: '2026-11-10T12:00:00Z' })
+              : '[]',
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    const router = abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Ingresar' })
+
+    await userEvent.type(screen.getByLabelText('Nombre de usuario'), 'ana.perez')
+    await userEvent.type(screen.getByLabelText('Contraseña'), 'secreta123')
+    await userEvent.click(screen.getByRole('button', { name: 'Ingresar' }))
+
+    expect(await screen.findByRole('heading', { name: 'Product Backlog' })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+
+  it('el encabezado ofrece ingresar y registrarse a quien no tiene sesión', async () => {
+    borrarToken()
+    abrir('/ingresar')
+    await screen.findByRole('heading', { name: 'Ingresar' })
+
+    expect(screen.getAllByRole('link', { name: 'Ingresar' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'Registrarse' }).length).toBeGreaterThan(0)
   })
 })

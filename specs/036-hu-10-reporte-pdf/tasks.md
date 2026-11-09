@@ -74,7 +74,7 @@ Sprints finalizados, US4 errores). US5 (frontend, #78) queda fuera del Sprint 4.
 - [X] T007 Crear internal/domain/reporte.go con los tipos de data-model.md
   (`HistoriaReporte`, `DefectoReporte`, `SprintReporte`, `SprintActivoReporte`,
   `ReporteSprint`, `ReporteProyecto`); agregar en internal/domain/errors.go
-  `ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el
+  `ErrSprintNoFinalizadoParaReporte = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el
   reporte de un Sprint finalizado"}` y
   `ErrReporteNoGenerado = errors.New("no se pudo generar el reporte")`, con comentario
   `(HU-10)`; crear internal/repository/reporte_repository.go con el puerto
@@ -97,7 +97,7 @@ finalizado da `400` y uno inexistente `404`.
 - [X] T009 [US1] RED: en internal/service/generar_reporte_test.go, con fakes de proyecto,
   Sprint, backlog, arrastradas, métricas y defectos: `EjecutarSprint` con Sprint inexistente →
   `domain.ErrSprintNoEncontrado` sin leer historias; Sprint Pendiente o Activo →
-  `domain.ErrSprintNoFinalizado` sin generar; Sprint finalizado con una historia completada y
+  `domain.ErrSprintNoFinalizadoParaReporte` sin generar; Sprint finalizado con una historia completada y
   una arrastrada → `Planificadas` con ambas, la arrastrada `Completada=false` y su estimación
   congelada; métricas del Sprint tomadas de `domain.CalcularMetricas`; defectos detectados y
   resueltos filtrados para ese Sprint; un defecto detectado en otro Sprint y resuelto en este
@@ -129,7 +129,7 @@ finalizado da `400` y uno inexistente `404`.
 - [X] T018 [US1] COMMIT `RED: agregar tests del handler GET /sprints/{id}/reporte (falla)`
 - [X] T019 [US1] GREEN: implementar `ReporteHandler.Sprint` y el helper `escribirPDF` en
   internal/http/reporte_handler.go (generar los bytes antes de escribir cabeceras); mapear
-  `ErrSprintNoFinalizado` a `400` y `ErrReporteNoGenerado` a `500` en
+  `ErrSprintNoFinalizadoParaReporte` a `400` y `ErrReporteNoGenerado` a `500` en
   internal/http/sprint_handler.go — tests en verde
 - [X] T020 [US1] COMMIT `GREEN: implementar handler GET /sprints/{id}/reporte, test en verde`
 - [X] T021 [US1] Cablear en cmd/api/main.go el generador de reportes, `NewGenerarReporte`,

@@ -491,6 +491,115 @@ func (f *fakeCambioEstadoRepository) registroDeLlamadas() []llamadaCambioEstado 
 	return slices.Clone(f.llamadas)
 }
 
+type fakeCredenciales struct {
+	mu       sync.Mutex
+	usuarios map[string]domain.User
+	hashes   map[string]string
+	err      error
+}
+
+func (f *fakeCredenciales) Registrar(_ context.Context, u domain.User, hash string) (domain.User, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return domain.User{}, f.err
+	}
+	if f.usuarios == nil {
+		f.usuarios = map[string]domain.User{}
+		f.hashes = map[string]string{}
+	}
+	if _, ok := f.usuarios[u.NombreNormalizado]; ok {
+		return domain.User{}, repository.ErrUsuarioDuplicado
+	}
+	u.ID = int64(len(f.usuarios) + 1)
+	u.CreadoEn = time.Now().UTC()
+	f.usuarios[u.NombreNormalizado] = u
+	f.hashes[u.NombreNormalizado] = hash
+	return u, nil
+}
+
+func (f *fakeCredenciales) ObtenerPorNombreNormalizado(_ context.Context, normalizado string) (domain.User, string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.err != nil {
+		return domain.User{}, "", f.err
+	}
+	u, ok := f.usuarios[normalizado]
+	if !ok {
+		return domain.User{}, "", domain.ErrNoEncontrado
+	}
+	return u, f.hashes[normalizado], nil
+}
+
+type fakeSesiones struct {
+	sesiones map[string]domain.SesionConUsuario
+	usuarios map[int64]domain.User
+	creadas  int
+	cerradas []int64
+	err      error
+}
+
+func (f *fakeSesiones) Crear(_ context.Context, huella string, s domain.Sesion) (domain.Sesion, error) {
+	if f.err != nil {
+		return domain.Sesion{}, f.err
+	}
+	if f.sesiones == nil {
+		f.sesiones = map[string]domain.SesionConUsuario{}
+	}
+	f.creadas++
+	s.ID = int64(f.creadas)
+	f.sesiones[huella] = domain.SesionConUsuario{Sesion: s, Usuario: f.usuarios[s.UsuarioID]}
+	return s, nil
+}
+
+func (f *fakeSesiones) ObtenerPorHuella(_ context.Context, huella string) (domain.SesionConUsuario, error) {
+	if f.err != nil {
+		return domain.SesionConUsuario{}, f.err
+	}
+	s, ok := f.sesiones[huella]
+	if !ok {
+		return domain.SesionConUsuario{}, domain.ErrNoEncontrado
+	}
+	return s, nil
+}
+
+func (f *fakeSesiones) Cerrar(_ context.Context, sesionID int64, ahora time.Time) error {
+	if f.err != nil {
+		return f.err
+	}
+	for huella, s := range f.sesiones {
+		if s.ID == sesionID {
+			s.CerradaEn = &ahora
+			f.sesiones[huella] = s
+		}
+	}
+	f.cerradas = append(f.cerradas, sesionID)
+	return nil
+}
+
+// fakeContrasenas hashea con un prefijo fijo y cuenta las llamadas a Verificar.
+type fakeContrasenas struct {
+	mu          sync.Mutex
+	verificadas int
+}
+
+func (f *fakeContrasenas) Hashear(contrasena string) (string, error) {
+	return "hash:" + contrasena, nil
+}
+
+func (f *fakeContrasenas) Verificar(contrasena, hash string) bool {
+	f.mu.Lock()
+	f.verificadas++
+	f.mu.Unlock()
+	return hash == "hash:"+contrasena
+}
+
+func (f *fakeContrasenas) llamadasAVerificar() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.verificadas
+}
+
 // fakeEstimacionRepository guarda las historias y cuenta las escrituras de la
 // estimación, para comprobar que un rechazo no escribe.
 type fakeEstimacionRepository struct {
@@ -515,4 +624,71 @@ func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64
 	f.historias[id] = h
 	f.escrituras++
 	return nil
+}
+
+// fakeCalculadorMetricas simula el cálculo de métricas de HU-03 (HU-12).
+type fakeCalculadorMetricas struct {
+	resultado domain.MetricasProyecto
+	err       error
+}
+
+func (f *fakeCalculadorMetricas) Ejecutar(_ context.Context, _ int64) (domain.MetricasProyecto, error) {
+	return f.resultado, f.err
+}
+
+// fakeListadorSprints cuenta las llamadas para comprobar que no se lista
+// cuando el proyecto no existe (HU-12).
+type fakeListadorSprints struct {
+	sprints  []domain.Sprint
+	err      error
+	llamadas int
+}
+
+func (f *fakeListadorSprints) ListarPorProyecto(_ context.Context, _ int64) ([]domain.Sprint, error) {
+	f.llamadas++
+	return f.sprints, f.err
+}
+
+// fakeObtenedorSprint devuelve los Sprints sembrados por id (HU-12).
+type fakeObtenedorSprint struct {
+	sprints map[int64]domain.Sprint
+	err     error
+}
+
+func (f *fakeObtenedorSprint) ObtenerPorID(_ context.Context, id int64) (domain.Sprint, error) {
+	if f.err != nil {
+		return domain.Sprint{}, f.err
+	}
+	s, ok := f.sprints[id]
+	if !ok {
+		return domain.Sprint{}, domain.ErrSprintNoEncontrado
+	}
+	return s, nil
+}
+
+// fakeHistorialSprintRepository simula la lectura del detalle de un Sprint y
+// cuenta las lecturas (HU-12).
+type fakeHistorialSprintRepository struct {
+	historias   []domain.HistoriaComprometida
+	minutos     map[int64]int
+	defectos    []domain.DefectoDetalle
+	errHistoria error
+	errMinutos  error
+	errDefectos error
+	lecturas    int
+}
+
+func (f *fakeHistorialSprintRepository) HistoriasComprometidas(_ context.Context, _ int64) ([]domain.HistoriaComprometida, error) {
+	f.lecturas++
+	return f.historias, f.errHistoria
+}
+
+func (f *fakeHistorialSprintRepository) MinutosPorHistoria(_ context.Context, _ int64) (map[int64]int, error) {
+	f.lecturas++
+	return f.minutos, f.errMinutos
+}
+
+func (f *fakeHistorialSprintRepository) DefectosDeSprint(_ context.Context, _ int64) ([]domain.DefectoDetalle, error) {
+	f.lecturas++
+	return f.defectos, f.errDefectos
 }

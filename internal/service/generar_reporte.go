@@ -42,7 +42,7 @@ func (s *GenerarReporte) EjecutarSprint(ctx context.Context, sprintID int64, _ t
 		return domain.ReporteSprint{}, err
 	}
 	if sprint.Estado != domain.SprintFinalizado {
-		return domain.ReporteSprint{}, domain.ErrSprintNoFinalizado
+		return domain.ReporteSprint{}, domain.ErrSprintNoFinalizadoParaReporte
 	}
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, sprint.ProyectoID)
 	if err != nil {
