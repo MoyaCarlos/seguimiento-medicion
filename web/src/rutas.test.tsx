@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
-import { createMemoryRouter } from 'react-router'
+import { createMemoryRouter, type RouteObject } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LayoutProyecto } from './compartido/router/LayoutProyecto'
 import { borrarToken, guardarToken } from './features/autenticacion/almacenamientoToken'
 import { rutas } from './rutas'
@@ -27,6 +27,20 @@ function responderListado(url: string) {
   if (/^\/projects\/\d+$/.test(url)) return JSON.stringify(PROYECTO)
   return '[]'
 }
+
+// Las pantallas se importan de forma diferida y, con toda la suite en paralelo, la importación
+// (el Dashboard arrastra la librería de gráficos) puede superar la espera de findBy*. Se
+// precargan antes de las pruebas para que esa espera mida solo la pantalla (#284).
+function importacionesDiferidas(rutasARecorrer: RouteObject[]): Promise<unknown>[] {
+  return rutasARecorrer.flatMap((ruta) => [
+    ...(typeof ruta.lazy === 'function' ? [ruta.lazy()] : []),
+    ...importacionesDiferidas(ruta.children ?? []),
+  ])
+}
+
+beforeAll(async () => {
+  await Promise.all(importacionesDiferidas(rutas))
+}, 120_000)
 
 // Sesión simulada: token guardado y `GET /auth/yo` responde 200.
 beforeEach(() => {
