@@ -38,7 +38,7 @@ Prerrequisito: el servidor corriendo (`go run ./cmd/api`) sobre una base nueva.
 ## Prueba manual en la interfaz
 
 1. Abrir `/projects/<proyecto>/status`: se ven los tres grupos con cantidad y Story Points, y el Sprint de cada historia ("Sprint 1" o "Product Backlog").
-2. Proyecto sin historias: mensaje de que no hay historias y totales en cero.
+2. Proyecto sin historias: mensaje de que no hay historias, los tres grupos con 0 historias y 0 Story Points y el total en cero.
 3. `/projects/abc/status`: mensaje de error sin pedir datos al servidor.
 4. Con el servidor detenido: mensaje de error de conexión y ningún dato parcial.
 
@@ -56,6 +56,6 @@ Con la app real: backend Go sobre una base temporal (`DEMO_HABILITADO=true`, `PO
 | API 6 | OK: `GET /projects/<proyecto>/backlog` devuelve solo las dos historias sin Sprint |
 | Extra | OK: `GET /projects/<proyecto>/status` con `Accept: text/html` sirve la SPA y `GET /projects/<proyecto>/avance` con `Accept: application/json` sirve la API |
 | UI 1 | OK en el proyecto 25 (más una historia de 120 caracteres sin espacios): los tres grupos con cantidad y Story Points, "Sprint N" o "Product Backlog" en cada historia, "sin estimar" donde corresponde y total 11 historias y 47 Story Points. A 320 px la página no desborda (`scrollWidth` 320 = `clientWidth` 320, ningún elemento pasa de los 320 px) y el título largo se parte en líneas. Con la barra de scroll clásica puede aparecer el desplazamiento de 15 px del `min-width: 320px` de `web/src/App.css`, anterior a esta historia (ver la spec 035) |
-| UI 2 | OK en un proyecto recién creado: mensaje "El proyecto todavía no tiene historias.", total 0 y 0, sin grupos ni errores |
+| UI 2 | OK en un proyecto recién creado: mensaje "El proyecto todavía no tiene historias.", total 0 y 0 y sin errores. En esa validación la pantalla ocultaba los tres grupos; desde la review del PR #281 los muestra en cero, como pide la spec (US1.4, FR-002). Ese cambio lo cubre la prueba de componente "US3.1 y US1.4" y **no se repitió a mano** |
 | UI 3 | OK en `/projects/abc/status`: alerta `El proyecto "abc" no es válido` y ningún pedido a `/avance`. Además, `/projects/9999/status` muestra "El proyecto no existe" |
 | UI 4 | OK, verificado a mano por el Scrum Master (2026-11-07): con el servidor detenido y la pantalla ya cargada, aparece el mensaje de conexión y ningún dato parcial. No se pudo reproducir en el navegador headless; además lo cubre la prueba de componente "US3.4" |
