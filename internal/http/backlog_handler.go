@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	nethttp "net/http"
+	"strconv"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -82,7 +83,15 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 }
 
 // Obtener atiende GET /backlog/{id}.
-func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {}
+func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, _ := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	item, err := h.obtenerHistoria.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(item))
+}
 
 // Editar atiende PUT /backlog/{id}.
 func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
