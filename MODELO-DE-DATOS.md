@@ -40,7 +40,7 @@ Además hay un hueco de diseño que ninguna historia nota por separado: ver
 | Idioma | Tablas y columnas en **español**, `snake_case`, tablas en plural. Los valores de los enums son los del dominio, tal cual (`Nueva`, `En progreso`, `M`, `scrum_master`); no se traducen ni se renombran. |
 | Identificadores | `id INTEGER PRIMARY KEY AUTOINCREMENT` (int64). Toda referencia se llama `<entidad>_id`; si hay dos a la misma tabla, `<rol>_<entidad>_id` (`sprint_deteccion_id`). |
 | Fechas de calendario | `TEXT` `YYYY-MM-DD` (`time.DateOnly`). Aplica a `fecha_inicio`, `fecha_fin`, `fecha` y `fecha_finalizacion`. |
-| Instantes | `TEXT` RFC 3339 en UTC, columna `creado_en` (nunca `created_at`). Solo auditoría; no se usa en reglas de negocio. |
+| Instantes | `TEXT` RFC 3339 en UTC, columna `creado_en` (nunca `created_at`). Solo auditoría; no se usa en reglas de negocio. Excepción (HU-20, `sesiones`): `vence_en` entra en una regla de negocio (una sesión vencida no es vigente) y `cerrada_en` registra el cierre de sesión sin borrar la fila, porque ninguna historia borra datos. |
 | Obligatoriedad | Se declara `NOT NULL` todo lo que el dominio exige siempre. `NULL` significa "todavía no definido", nunca "cero" ni "vacío". |
 | Borrado | Ninguna historia borra datos. **Sin `ON DELETE CASCADE`**: se deja el comportamiento por defecto de SQLite, `NO ACTION`, que rechaza borrar (o cambiar el id de) un padre con hijos con `SQLITE_CONSTRAINT_FOREIGNKEY`. **No** se declara `ON DELETE RESTRICT`: rechaza igual pero con otro código (`SQLITE_CONSTRAINT_TRIGGER`), y rompería la traducción de errores de §5. Si algún día hace falta borrar, es una historia nueva con su propia decisión. |
 | Claves foráneas | `PRAGMA foreign_keys = ON` en cada conexión (ya lo hace `AbrirSQLite`). Un test de repositorio por FK debe probarlo contra SQLite real, no contra un fake. |
@@ -70,6 +70,7 @@ erDiagram
     sprints   ||--o{ registros_horas : "se atribuyen a"
     historias ||--o{ defectos : "relacionada"
     sprints   ||--o{ defectos : "detección / resolución"
+    usuarios  ||--o{ sesiones : "inicia"
 
     proyectos {
         int id PK
@@ -84,6 +85,7 @@ erDiagram
         int id PK
         text nombre
         text nombre_normalizado UK
+        text contrasena_hash
         text creado_en
     }
     integrantes {
@@ -152,6 +154,14 @@ erDiagram
         int sprint_resolucion_id FK
         text creado_en
     }
+    sesiones {
+        int id PK
+        int usuario_id FK
+        text token_hash UK
+        text creado_en
+        text vence_en
+        text cerrada_en
+    }
 ```
 
 ## 4. Tablas
@@ -176,13 +186,14 @@ Restricciones de base:
 - `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12)
 - `CHECK (fecha_inicio IS NULL OR fecha_fin IS NULL OR fecha_fin > fecha_inicio)` — fin **estrictamente** posterior (#100). Los bordes inclusivos de HU-13 son una regla de *consulta*, no de almacenamiento.
 
-### 4.2 `usuarios` — HU-04 (antes `users`)
+### 4.2 `usuarios` — HU-04, HU-20 (antes `users`)
 
 | Columna | Tipo | Notas |
 |---|---|---|
 | `id` | PK | |
 | `nombre` | TEXT NOT NULL | |
 | `nombre_normalizado` | TEXT NOT NULL **UK** | minúsculas y sin espacios externos; es la identidad del usuario |
+| `contrasena_hash` | TEXT? | **Nueva** (HU-20, migración 006). `pbkdf2-sha256$<iter>$<sal>$<hash>`. `NULL` = usuario previo o creado por HU-04: no puede ingresar. Nunca se devuelve. |
 | `creado_en` | TEXT NOT NULL | |
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
@@ -367,6 +378,21 @@ En SQL, un `CHECK` que evalúa a `NULL` **no falla**. Por eso, en toda columna q
 
 Cada caso con `NULL` figura en el test de esquema (§9, punto 6). Un hueco **distinto** de los `NULL` —el formato de las fechas— se cubre con el `CHECK` de D12 (§2).
 
+### 4.11 `sesiones` — HU-20 (**tabla nueva**, migración 006)
+
+| Columna | Tipo | Notas |
+|---|---|---|
+| `id` | PK | |
+| `usuario_id` | FK → `usuarios(id)` NOT NULL | sin `ON DELETE` (§2) |
+| `token_hash` | TEXT NOT NULL **UK** | SHA-256 hexadecimal del token; el token en claro no se guarda |
+| `creado_en` | TEXT NOT NULL | RFC 3339 UTC |
+| `vence_en` | TEXT NOT NULL | RFC 3339 UTC; `creado_en` + 7 días. Entra en una regla de negocio (desvío de §2) |
+| `cerrada_en` | TEXT? | instante del cierre de sesión; `NULL` = no cerrada. Cerrar no borra la fila |
+
+- Sin `CHECK` de fecha de calendario: son instantes, no fechas (§2 limita el `date()` a fechas de calendario).
+- `UNIQUE (token_hash)` crea el índice que usa «quién soy».
+- Una sesión es vigente si no está cerrada y `ahora` es anterior a `vence_en`. Un usuario puede tener varias sesiones; cerrar una no toca las otras.
+
 ## 5. Dónde vive cada regla
 
 Regla de oro: **la base garantiza la forma; el servicio garantiza el flujo**. Todo
@@ -473,6 +499,7 @@ pendientes D15 a D17, que surgieron del beta testing del
 | HU-14 Consenso | `rondas_votacion`, `historias.estimacion_sp` | `votos` | 003 |
 | HU-07 Horas | `registros_horas` | `integrantes`, `historias`, `sprints` | 004 |
 | HU-08 Defectos | `defectos` | `historias`, `sprints` | 005 |
+| HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
 | HU-03 Métricas | `proyectos.horas_por_story_point` | todo lo anterior | 001 |
 | HU-09 / HU-10 / HU-12 | — | solo lectura | — |
 
@@ -509,8 +536,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 003 | `rondas_votacion`, `votos` | HU-02 |
    | 004 | `registros_horas` | HU-07 |
    | 005 | `defectos` | HU-08 |
-   | 006 | Autenticación (contraseñas y sesiones) | HU-20. Reservada; mientras no esté en `main` la numeración tiene un hueco, que el runner tolera. |
-   | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 / spec 039. No se renumera. |
+   | 006 | `usuarios.contrasena_hash`, `sesiones` | HU-20 |
+   | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 039) |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
 4. **SQLite no altera restricciones.** Cambiar un `CHECK`, una FK o una columna

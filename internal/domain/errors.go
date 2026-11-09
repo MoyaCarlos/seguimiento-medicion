@@ -82,6 +82,17 @@ var (
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
 
+// Errores de autenticación (HU-20).
+// Errores de autenticación (HU-20).
+var (
+	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.
+	ErrCredencialesInvalidas = errors.New("Usuario o contraseña incorrectos")
+	// ErrNoAutenticado indica un pedido sin sesión vigente.
+	ErrNoAutenticado = errors.New("Tu sesión no es válida")
+	// ErrNombreUsuarioEnUso indica un registro con un nombre de usuario ya existente.
+	ErrNombreUsuarioEnUso = errors.New("Ese nombre de usuario ya existe")
+)
+
 // ErrHorasPorStoryPointInvalidas indica un parámetro que no es un número mayor que cero (HU-03).
 var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_point", Mensaje: "las horas por Story Point deben ser un número mayor que cero"}
 

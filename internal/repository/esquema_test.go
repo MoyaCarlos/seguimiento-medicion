@@ -4,9 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io/fs"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	sqlite "modernc.org/sqlite"
 )
@@ -67,8 +70,22 @@ var esquemaEsperado = map[string]tablaEsperada{
 			{nombre: "nombre", tipo: "TEXT", notNull: true},
 			{nombre: "nombre_normalizado", tipo: "TEXT", notNull: true},
 			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+			{nombre: "contrasena_hash", tipo: "TEXT"},
 		},
 		uniques: []string{"nombre_normalizado"},
+	},
+	// §4.11 sesiones
+	"sesiones": {
+		columnas: []columnaEsperada{
+			{nombre: "id", tipo: "INTEGER", pk: 1},
+			{nombre: "usuario_id", tipo: "INTEGER", notNull: true},
+			{nombre: "token_hash", tipo: "TEXT", notNull: true},
+			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+			{nombre: "vence_en", tipo: "TEXT", notNull: true},
+			{nombre: "cerrada_en", tipo: "TEXT"},
+		},
+		fks:     []string{"usuario_id -> usuarios(id)"},
+		uniques: []string{"token_hash"},
 	},
 	// §4.3 integrantes
 	"integrantes": {
@@ -239,9 +256,91 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 7}) {
-		t.Errorf("se esperaban las versiones 1, 2, 3, 4, 5 y 7 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7}) {
+		t.Errorf("se esperaban las versiones 1, 2, 3, 4, 5, 6 y 7 registradas, se obtuvo %v", got)
 	}
+}
+
+func TestEsquema_SesionesConIdAutoincremental(t *testing.T) {
+	db := nuevaBDMigrada(t)
+
+	ddl := consultarTextos(t, db, "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'sesiones'")
+
+	if len(ddl) != 1 {
+		t.Fatalf("se esperaba la tabla sesiones, se obtuvo %v", ddl)
+	}
+	if !strings.Contains(strings.ToUpper(ddl[0]), "AUTOINCREMENT") {
+		t.Errorf("sesiones.id debe ser AUTOINCREMENT, DDL: %s", ddl[0])
+	}
+}
+
+// Una base con usuarios anteriores a HU-20 tiene que migrar sin error y
+// conservar a cada usuario, sin contraseña (no puede ingresar).
+func TestEsquema_MigracionDeAutenticacion_ConUsuariosPrevios(t *testing.T) {
+	db := nuevaBDVacia(t)
+	ctx := context.Background()
+	if err := aplicarMigraciones(ctx, db, migracionesHasta(t, 5)); err != nil {
+		t.Fatalf("no se pudieron aplicar las migraciones 001 a 005: %v", err)
+	}
+	if _, err := db.Exec(
+		`INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (7, 'Ana Pérez', 'ana pérez', '2026-10-01T10:00:00Z')`,
+	); err != nil {
+		t.Fatalf("no se pudo insertar el usuario previo: %v", err)
+	}
+
+	if err := AplicarMigraciones(ctx, db); err != nil {
+		t.Fatalf("la migración 006 debe aplicarse sin error sobre usuarios previos: %v", err)
+	}
+
+	var (
+		id                            int64
+		nombre, normalizado, creadoEn string
+		contrasenaHash                sql.NullString
+	)
+	err := db.QueryRow(
+		`SELECT id, nombre, nombre_normalizado, creado_en, contrasena_hash FROM usuarios WHERE id = 7`,
+	).Scan(&id, &nombre, &normalizado, &creadoEn, &contrasenaHash)
+	if err != nil {
+		t.Fatalf("no se pudo leer el usuario previo tras la migración 006: %v", err)
+	}
+	if id != 7 || nombre != "Ana Pérez" || normalizado != "ana pérez" || creadoEn != "2026-10-01T10:00:00Z" {
+		t.Errorf("el usuario previo cambió: id=%d nombre=%q normalizado=%q creado_en=%q", id, nombre, normalizado, creadoEn)
+	}
+	if contrasenaHash.Valid {
+		t.Errorf("el usuario previo debe quedar sin contraseña (NULL), se obtuvo %q", contrasenaHash.String)
+	}
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6}) {
+		t.Errorf("se esperaban las versiones 1 a 6 registradas, se obtuvo %v", got)
+	}
+}
+
+// migracionesHasta devuelve las migraciones embebidas con versión <= maxima.
+func migracionesHasta(t *testing.T, maxima int) fstest.MapFS {
+	t.Helper()
+	embebidas, err := fs.Sub(migracionesFS, "migraciones")
+	if err != nil {
+		t.Fatalf("no se pudieron abrir las migraciones embebidas: %v", err)
+	}
+	archivos, err := fs.ReadDir(embebidas, ".")
+	if err != nil {
+		t.Fatalf("no se pudieron listar las migraciones embebidas: %v", err)
+	}
+	parcial := fstest.MapFS{}
+	for _, archivo := range archivos {
+		version, err := strconv.Atoi(archivo.Name()[:3])
+		if err != nil {
+			t.Fatalf("nombre de migración inesperado %q: %v", archivo.Name(), err)
+		}
+		if version > maxima {
+			continue
+		}
+		contenido, err := fs.ReadFile(embebidas, archivo.Name())
+		if err != nil {
+			t.Fatalf("no se pudo leer %s: %v", archivo.Name(), err)
+		}
+		parcial[archivo.Name()] = &fstest.MapFile{Data: contenido}
+	}
+	return parcial
 }
 
 func indicesIguales(a, b indiceEsperado) bool {
