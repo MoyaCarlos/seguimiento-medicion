@@ -1,10 +1,10 @@
 # Feature Specification: Registro y Seguimiento de Defectos (HU-08)
 
-**Feature Branch**: `feature/HU-08-registro-defectos`
+**Feature Branch**: `feature/HU-08-registro-defectos` (backend) y `feature/HU-08-frontend` (#68)
 
 **Created**: 2026-10-30
 
-**Status**: Backend implementado (frontend #68 pendiente)
+**Status**: Implementado (backend mergeado; frontend #68 en `feature/HU-08-frontend`)
 
 **Input**: User description: "HU-08: Registro y Seguimiento de Bugs (issue #8, sub-issue de spec #64). Como integrante del equipo quiero registrar un defecto técnico indicando su severidad, la historia relacionada y el sprint de detección para poder hacer un seguimiento de la calidad y asegurar que se resuelva antes del despliegue final. Escenario 1 (carga de un nuevo defecto): Dado que se detecta un error técnico y el proyecto tiene un Sprint "Activo", cuando completo el formulario de Defectos con la descripción, nivel de severidad (Alta, Media, Baja) y la historia relacionada, y guardo, entonces el Bug se registra asociado a esa historia, con el Sprint "Activo" como Sprint de detección y estado "Pendiente". Escenario 2 (resolución): Dado que un desarrollador solucionó un Bug pendiente, cuando cambia su estado a "Resuelto", entonces el sistema registra el Sprint de resolución (el Sprint Activo en ese momento) para que luego aparezca en el Dashboard de métricas de calidad. Escenario 3 (sin Sprint activo): Dado que el proyecto no tiene Sprint "Activo", cuando intento registrar un defecto o marcar uno como "Resuelto", entonces el sistema rechaza la operación e indica que no hay un Sprint activo al que asociarlo. Depende de HU-01 (historia relacionada) y HU-05 (Sprints). Prioridad Must, valor 8, estimación 8 SP. Modelo de datos ya definido en MODELO-DE-DATOS.md §4.9 (tabla defectos, migración 005): sin título (D6), historia obligatoria, CHECK (estado='Resuelto') = (sprint_resolucion_id IS NOT NULL), FK compuestas con proyecto_id. Rama: feature/HU-08-registro-defectos desde origin/main."
 
@@ -145,4 +145,4 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - La resolución es de un solo sentido y definitiva: si el error reaparece, se registra un defecto nuevo (decidido en Clarifications). Editar o borrar un defecto queda fuera de esta historia (ninguna historia del backlog borra datos, D9); si hace falta, será una historia nueva.
 - La consulta de defectos no tiene filtros ni paginación (YAGNI): el volumen de un proyecto académico es chico y el frontend puede filtrar por estado si lo necesita.
 - Las métricas de defectos detectados y resueltos por Sprint son de HU-03, y su visualización de HU-09; esta historia solo provee los datos.
-- El frontend (formulario, listado con estado, acción de resolver y mensaje sin Sprint activo) es la sub-issue #68 y se entrega en otro Sprint; esta spec cubre el comportamiento del sistema que esa pantalla va a usar.
+- El frontend (formulario, listado con estado, acción de resolver y mensaje sin Sprint activo) es la sub-issue #68 y se implementa en `feature/HU-08-frontend` con pruebas de componente (Vitest y Testing Library); esta spec cubre el comportamiento del sistema que esa pantalla usa.
