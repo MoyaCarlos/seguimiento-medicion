@@ -173,6 +173,8 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: "la historia cambió de estado mientras tanto: recargá y volvé a intentar"})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrHistoriaFueraDelSprint.Error()})
+	case errors.Is(err, domain.ErrReporteNoGenerado):
+		escribirJSON(w, nethttp.StatusInternalServerError, errorResponse{Mensaje: err.Error()})
 	default:
 		escribirJSON(w, nethttp.StatusInternalServerError, errorResponse{Mensaje: "error interno"})
 	}
