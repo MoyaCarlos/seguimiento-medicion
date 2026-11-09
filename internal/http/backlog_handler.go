@@ -46,11 +46,12 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	item, err := h.crearHistoria.Ejecutar(r.Context(), service.CrearHistoriaInput{
-		ProyectoID:   req.ProyectoID,
-		Titulo:       req.Titulo,
-		Descripcion:  req.Descripcion,
-		Prioridad:    domain.Prioridad(req.Prioridad),
-		ValorNegocio: req.ValorNegocio,
+		ProyectoID:          req.ProyectoID,
+		Titulo:              req.Titulo,
+		Descripcion:         req.Descripcion,
+		Prioridad:           domain.Prioridad(req.Prioridad),
+		ValorNegocio:        req.ValorNegocio,
+		CriteriosAceptacion: req.CriteriosAceptacion,
 	})
 	if err != nil {
 		escribirError(w, err)
@@ -79,6 +80,20 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 		respuesta = append(respuesta, aRespuesta(item))
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
+}
+
+// Obtener atiende GET /backlog/{id}.
+func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
+	id, ok := idDeRuta(w, r)
+	if !ok {
+		return
+	}
+	item, err := h.obtenerHistoria.Ejecutar(r.Context(), id)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, aRespuesta(item))
 }
 
 // Editar atiende PUT /backlog/{id}.
