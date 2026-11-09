@@ -131,7 +131,7 @@ func (c *scrumMasterUnicoContext) baseRechaza() error {
 	return nil
 }
 
-// InitializeScenarioScrumMasterUnico registra los pasos propios de la spec 039 (#236).
+// InitializeScenarioScrumMasterUnico registra los pasos propios de la spec 040 (#236).
 func InitializeScenarioScrumMasterUnico(ctx *godog.ScenarioContext, pc *proyectoContext) {
 	c := &scrumMasterUnicoContext{pc: pc}
 

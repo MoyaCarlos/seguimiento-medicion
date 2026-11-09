@@ -2,7 +2,7 @@
 
 **Branch**: `feature/236-scrum-master-unico` | **Date**: 2026-11-08 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `specs/039-scrum-master-unico/spec.md`
+**Input**: Feature specification from `specs/040-scrum-master-unico/spec.md`
 
 ## Summary
 
@@ -46,7 +46,7 @@ Sin violaciones; no hay tabla de complejidad. Re-chequeo posterior al diseño: i
 ### Documentation (this feature)
 
 ```text
-specs/039-scrum-master-unico/
+specs/040-scrum-master-unico/
 ├── plan.md
 ├── research.md
 ├── data-model.md

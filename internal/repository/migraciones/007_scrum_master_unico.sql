@@ -1,4 +1,4 @@
--- Scrum Master único por proyecto: MODELO-DE-DATOS.md §4.3 (D4, spec 039, #236).
+-- Scrum Master único por proyecto: MODELO-DE-DATOS.md §4.3 (D4, spec 040, #236).
 --
 -- 1) Corrección previa: si un proyecto ya tiene más de un scrum_master, queda el
 --    de creado_en más antiguo (si empatan, el de menor usuario_id) y los demás

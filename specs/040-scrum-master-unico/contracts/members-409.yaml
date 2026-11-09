@@ -1,4 +1,4 @@
-# Cambio de contrato de la spec 039: POST /projects/{id}/members suma la respuesta 409.
+# Cambio de contrato de la spec 040: POST /projects/{id}/members suma la respuesta 409.
 # Se aplica sobre specs/002-hu-04-crear-proyecto-equipo/contracts/openapi.yaml
 # (responses de asignarIntegrante, entre el 404 y el 500). Nada más cambia.
 paths:

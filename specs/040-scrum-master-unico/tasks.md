@@ -1,6 +1,6 @@
 # Tasks: Un único Scrum Master por proyecto (#236)
 
-**Input**: `specs/039-scrum-master-unico/` (plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md)
+**Input**: `specs/040-scrum-master-unico/` (plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md)
 
 **Prerequisites**: plan.md, spec.md
 

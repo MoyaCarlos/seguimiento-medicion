@@ -537,7 +537,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 004 | `registros_horas` | HU-07 |
    | 005 | `defectos` | HU-08 |
    | 006 | `usuarios.contrasena_hash`, `sesiones` | HU-20 |
-   | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 039) |
+   | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 040) |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
 4. **SQLite no altera restricciones.** Cambiar un `CHECK`, una FK o una columna
