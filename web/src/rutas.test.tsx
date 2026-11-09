@@ -58,6 +58,7 @@ describe('registro de rutas', () => {
     ['/projects/42/backlog', 'Product Backlog'],
     ['/projects/42/backlog/nueva', 'Nueva historia'],
     ['/projects/42/sprints', 'Sprints'],
+    ['/projects/42/defectos', 'Defectos'],
     ['/projects/42/status', 'Estado del proyecto'],
   ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo) => {
     abrir(url)
