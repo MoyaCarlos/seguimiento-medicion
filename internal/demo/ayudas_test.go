@@ -7,7 +7,29 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
+
+const contrasenaDemo = "demo1234"
+
+// hasheadorBarato usa una iteración: las pruebas no deben pagar 600 000.
+var hasheadorBarato = service.NewServicioContrasenas(1)
+
+type hasheadorContador struct{ llamadas int }
+
+func (h *hasheadorContador) Hashear(contrasena string) (string, error) {
+	h.llamadas++
+	return hasheadorBarato.Hashear(contrasena)
+}
+
+func hashDePrueba(t *testing.T) string {
+	t.Helper()
+	hash, err := hasheadorBarato.Hashear(contrasenaDemo)
+	if err != nil {
+		t.Fatalf("hashear: %v", err)
+	}
+	return hash
+}
 
 var ahoraFijo = time.Date(2026, 10, 30, 15, 0, 0, 0, time.UTC)
 
@@ -26,7 +48,7 @@ func baseMigrada(t *testing.T) *sql.DB {
 
 func ejecutar(t *testing.T, db *sql.DB, bloques ...bloque) *carga {
 	t.Helper()
-	c, err := ejecutarBloques(context.Background(), db, ahoraFijo, bloques)
+	c, err := ejecutarBloques(context.Background(), db, ahoraFijo, hashDePrueba(t), bloques)
 	if err != nil {
 		t.Fatalf("ejecutar bloques: %v", err)
 	}

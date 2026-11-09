@@ -2,7 +2,7 @@ package demo
 
 import "testing"
 
-func TestBloqueVotacion_RondaReveladaConLosVotosDeLosTresIntegrantes(t *testing.T) {
+func TestBloqueVotacion_RondaReveladaConLosVotosDeLosIntegrantes(t *testing.T) {
 	db := baseMigrada(t)
 
 	c := ejecutar(t, db, bloqueUsuarios, bloqueProyecto, bloqueSprints, bloqueHistorias, bloqueVotacion)
@@ -11,7 +11,7 @@ func TestBloqueVotacion_RondaReveladaConLosVotosDeLosTresIntegrantes(t *testing.
 	if n := contar(t, db, `SELECT COUNT(*) FROM rondas_votacion WHERE historia_id = ? AND numero = 1 AND revelada_en IS NOT NULL`, aviso); n != 1 {
 		t.Fatalf("falta la ronda revelada de la historia sin estimar")
 	}
-	votos := map[string]int{"Beta Uno": 3, "Beta Dos": 5, "Beta Tres": 5}
+	votos := map[string]int{"carlos.moya": 3, "ana.iriarte": 5, "candela.vulcano": 5}
 	for nombre, valor := range votos {
 		if n := contar(t, db, `SELECT COUNT(*) FROM votos v JOIN rondas_votacion r ON r.id = v.ronda_id WHERE r.historia_id = ? AND v.usuario_id = ? AND v.valor = ?`,
 			aviso, c.usuarios[nombre], valor); n != 1 {

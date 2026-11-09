@@ -14,6 +14,7 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	apphttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
 var tablasDeDatosDePrueba = []string{"usuarios", "proyectos", "integrantes", "sprints", "historias",
@@ -48,7 +49,7 @@ func (p *pasosDatosPrueba) cerrar() {
 
 func (p *pasosDatosPrueba) pedir(metodo, ruta string) *httptest.ResponseRecorder {
 	mux := http.NewServeMux()
-	cargador := demo.NewCargador(p.db, time.Now)
+	cargador := demo.NewCargador(p.db, time.Now, service.NewServicioContrasenas(1))
 	apphttp.NewDemoHandler(func() bool { return p.habilitado }, cargador).Registrar(mux)
 	respuesta := httptest.NewRecorder()
 	mux.ServeHTTP(respuesta, httptest.NewRequest(metodo, ruta, nil))

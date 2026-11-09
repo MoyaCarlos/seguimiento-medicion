@@ -13,9 +13,10 @@ func TestCargar_UnBloqueQueFallaAlFinalNoDejaNingunDato(t *testing.T) {
 	errInyectado := errors.New("fallo inyectado")
 	fallaAlFinal := func(context.Context, *sql.Tx, *carga) error { return errInyectado }
 	cargador := &Cargador{
-		db:      db,
-		ahora:   func() time.Time { return ahoraFijo },
-		bloques: append(append([]bloque{}, bloquesV1...), fallaAlFinal),
+		db:        db,
+		ahora:     func() time.Time { return ahoraFijo },
+		hasheador: hasheadorBarato,
+		bloques:   append(append([]bloque{}, bloquesV1...), fallaAlFinal),
 	}
 
 	_, err := cargador.Cargar(context.Background())

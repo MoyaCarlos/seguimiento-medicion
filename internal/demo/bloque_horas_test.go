@@ -25,16 +25,13 @@ func TestBloqueHoras_SoloEnHistoriasDeLosSprints1Y2ConFechasDentroDelSprint(t *t
 	}
 }
 
-func TestBloqueHoras_RepartidasEntreLosTresIntegrantes(t *testing.T) {
+func TestBloqueHoras_RepartidasEntreLosIntegrantes(t *testing.T) {
 	c, n := cargarHoras(t)
 
-	for _, nombre := range []string{"Beta Uno", "Beta Dos", "Beta Tres"} {
+	for _, nombre := range []string{"carlos.moya", "ana.iriarte", "candela.vulcano"} {
 		if n(`SELECT COUNT(*) FROM registros_horas WHERE usuario_id = ?`, c.usuarios[nombre]) == 0 {
 			t.Errorf("%s no tiene horas imputadas", nombre)
 		}
-	}
-	if n(`SELECT COUNT(*) FROM registros_horas WHERE usuario_id = ?`, c.usuarios["Beta Cuatro"]) != 0 {
-		t.Error("Beta Cuatro no integra el proyecto y no debe tener horas")
 	}
 }
 
