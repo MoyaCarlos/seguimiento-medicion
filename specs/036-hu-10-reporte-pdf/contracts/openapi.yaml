@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Software Metrics & Estimation API — Reporte en PDF (HU-10)
+  version: 1.0.0
+  description: |
+    Descarga de reportes PDF de solo lectura. El de Sprint exige que el Sprint esté
+    Finalizado. El del proyecto incluye siempre el Product Backlog y, si existe, el
+    Sprint Activo; las métricas, el esfuerzo y los defectos se calculan solo con los
+    Sprints finalizados.
+servers:
+  - url: /
+paths:
+  /projects/{id}/reporte:
+    get:
+      summary: Descargar el reporte PDF de un proyecto
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: PDF del proyecto
+          headers:
+            Content-Disposition:
+              description: attachment; filename="reporte-proyecto-<id>.pdf"
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Identificador inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Proyecto inexistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: No se pudo generar el reporte; no se devuelve archivo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /sprints/{id}/reporte:
+    get:
+      summary: Descargar el reporte PDF de un Sprint finalizado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+      responses:
+        "200":
+          description: PDF del Sprint
+          headers:
+            Content-Disposition:
+              description: attachment; filename="reporte-proyecto-<proyecto_id>-sprint-<numero>.pdf"
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Identificador inválido o Sprint no finalizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Sprint inexistente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: No se pudo generar el reporte; no se devuelve archivo
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - mensaje
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string
