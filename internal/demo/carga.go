@@ -45,6 +45,7 @@ type Resumen struct {
 	RegistrosHoras int   `json:"registros_horas"`
 	Rondas         int   `json:"rondas_votacion"`
 	Votos          int   `json:"votos"`
+	Defectos       int
 }
 
 // carga es el estado compartido entre los bloques de una misma transacción.

@@ -16,18 +16,18 @@ func TestCargar_BaseVaciaDevuelveElResumenCompleto(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cargar: %v", err)
 	}
-	esperado := Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 4, Sprints: 4, Historias: 12, RegistrosHoras: 20, Rondas: 2, Votos: 6}
+	esperado := Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 4, Sprints: 4, Historias: 12, RegistrosHoras: 20, Rondas: 2, Votos: 6, Defectos: 5}
 	if resumen != esperado {
 		t.Errorf("resumen %+v, se esperaba %+v", resumen, esperado)
 	}
 }
 
 func TestCargar_ElResumenSerializaConLosNombresDelContrato(t *testing.T) {
-	cuerpo, err := json.Marshal(Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 3, Sprints: 3, Historias: 10, RegistrosHoras: 15, Rondas: 1, Votos: 3})
+	cuerpo, err := json.Marshal(Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 3, Sprints: 3, Historias: 10, RegistrosHoras: 15, Rondas: 1, Votos: 3, Defectos: 5})
 	if err != nil {
 		t.Fatal(err)
 	}
-	esperado := `{"proyecto_id":25,"usuarios":4,"integrantes":3,"sprints":3,"historias":10,"registros_horas":15,"rondas_votacion":1,"votos":3}`
+	esperado := `{"proyecto_id":25,"usuarios":4,"integrantes":3,"sprints":3,"historias":10,"registros_horas":15,"rondas_votacion":1,"votos":3,"defectos":5}`
 	if string(cuerpo) != esperado {
 		t.Errorf("JSON %s, se esperaba %s", cuerpo, esperado)
 	}
@@ -40,7 +40,7 @@ func TestCargar_NoEscribeEnTablasAjenasALaVersion1(t *testing.T) {
 	}
 
 	propias := map[string]bool{"usuarios": true, "proyectos": true, "integrantes": true, "sprints": true, "historias": true,
-		"historias_arrastradas": true, "registros_horas": true, "rondas_votacion": true, "votos": true,
+		"historias_arrastradas": true, "registros_horas": true, "rondas_votacion": true, "votos": true, "defectos": true,
 		"migraciones_aplicadas": true, "sqlite_sequence": true}
 	filas, err := db.Query(`SELECT name FROM sqlite_master WHERE type = 'table'`)
 	if err != nil {

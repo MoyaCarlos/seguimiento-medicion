@@ -10,7 +10,7 @@ import (
 )
 
 var tablasDeLaCarga = []string{"usuarios", "proyectos", "integrantes", "sprints", "historias",
-	"historias_arrastradas", "registros_horas", "rondas_votacion", "votos"}
+	"historias_arrastradas", "registros_horas", "rondas_votacion", "votos", "defectos"}
 
 func fotoDeLaBase(t *testing.T, db *sql.DB) map[string]int {
 	t.Helper()
