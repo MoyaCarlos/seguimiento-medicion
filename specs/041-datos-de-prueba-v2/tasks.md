@@ -76,11 +76,11 @@ description: "Tareas de la spec 041 (datos de prueba v2): TDD con commits por fa
 
 ## Phase D: Escenarios Godog de `features/datos_prueba.feature`
 
-- [ ] T024 Actualizar `features/datos_prueba.feature` (en español, tag `@HU-…` existente) a partir de los criterios de la spec 041: el escenario de éxito pasa a «12 historias, 4 Sprints y 4 integrantes» y suma defectos; nuevos escenarios: inicio de sesión con un usuario de la demo, usuario existente ⇒ 409 con su nombre y sin cambios, `ya_cargado` aunque haya usuarios; revisar las 4 categorías (normal, alternativo, límite, error) y decir cuáles no aplican
-- [ ] T025 RED: pasos pendientes en `features/steps_datos_prueba.go` — `go test ./features/` falla por pasos sin definir
-- [ ] T026 COMMIT `RED: agregar escenarios BDD de datos de prueba v2 (falla)`
-- [ ] T027 GREEN: definir los pasos (hasheador barato, login con `ServicioContrasenas`, conteo de defectos y Sprints) — `go test ./features/` en verde
-- [ ] T028 COMMIT `GREEN: pasos BDD de datos de prueba v2, test en verde`
+- [X] T024 Actualizar `features/datos_prueba.feature` (en español, tag `@HU-…` existente) a partir de los criterios de la spec 041: el escenario de éxito pasa a «12 historias, 4 Sprints y 4 integrantes» y suma defectos; nuevos escenarios: inicio de sesión con un usuario de la demo, usuario existente ⇒ 409 con su nombre y sin cambios, `ya_cargado` aunque haya usuarios; revisar las 4 categorías (normal, alternativo, límite, error) y decir cuáles no aplican
+- [X] T025 RED: pasos pendientes en `features/steps_datos_prueba.go` — `go test ./features/` falla por pasos sin definir (nota: no hubo RED; el comportamiento ya existía, ver commit 4899cbe)
+- [X] T026 COMMIT `RED: agregar escenarios BDD de datos de prueba v2 (falla)`
+- [X] T027 GREEN: definir los pasos (hasheador barato, login con `ServicioContrasenas`, conteo de defectos y Sprints) — `go test ./features/` en verde
+- [X] T028 COMMIT `GREEN: pasos BDD de datos de prueba v2, test en verde`
 
 ---
 
