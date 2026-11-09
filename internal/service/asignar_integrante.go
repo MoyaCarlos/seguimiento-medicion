@@ -59,7 +59,7 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 	guardada, err := s.proyectos.AgregarIntegrante(ctx, membresia)
 	if err != nil {
 		if errors.Is(err, repository.ErrMiembroDuplicado) {
-			return domain.Member{}, domain.ValidationError{Campo: "integrante", Mensaje: "el integrante ya pertenece al proyecto"}
+			return domain.Member{}, errIntegranteDuplicado()
 		}
 		return domain.Member{}, err
 	}
@@ -73,9 +73,14 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 	}, nil
 }
 
+func errIntegranteDuplicado() error {
+	return domain.ValidationError{Campo: "integrante", Mensaje: "el integrante ya pertenece al proyecto"}
+}
+
 // verificarScrumMasterLibre devuelve ErrScrumMasterYaExiste si el proyecto ya
-// tiene Scrum Master. Si el candidato ya es integrante no se rechaza acá: el
-// alta falla después como duplicado, que tiene prioridad. No crea usuarios.
+// tiene Scrum Master. Si el candidato ya es integrante devuelve el duplicado,
+// que tiene prioridad (SQLite informaría el índice en vez de la clave primaria).
+// No crea usuarios.
 func (s *AsignarIntegrante) verificarScrumMasterLibre(ctx context.Context, proyectoID int64, candidato domain.User) error {
 	integrantes, err := s.proyectos.ListarIntegrantes(ctx, proyectoID)
 	if err != nil {
@@ -93,7 +98,7 @@ func (s *AsignarIntegrante) verificarScrumMasterLibre(ctx context.Context, proye
 	}
 	yaIntegrante := slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.UserID == existente.ID })
 	if yaIntegrante {
-		return nil
+		return errIntegranteDuplicado()
 	}
 	return domain.ErrScrumMasterYaExiste
 }
