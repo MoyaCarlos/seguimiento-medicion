@@ -18,7 +18,7 @@ const (
 // bloqueProyecto crea el proyecto con id fijo y su equipo. El INSERT con id
 // fijo es la fuente de la idempotencia: falla por clave primaria si ya existe.
 func bloqueProyecto(ctx context.Context, tx *sql.Tx, c *carga) error {
-	inicio, fin := c.dia(-15), c.dia(45)
+	inicio, fin := c.dia(-30), c.dia(45)
 	proyecto, err := domain.NewProject(nombreProyecto,
 		"Trámite de licencia de conducir: turno, examen teórico, pago y emisión. Proyecto de demostración con datos de ejemplo.",
 		&inicio, &fin)

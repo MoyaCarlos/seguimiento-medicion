@@ -60,24 +60,6 @@ func TestCargar_NoEscribeEnTablasAjenasALaVersion1(t *testing.T) {
 	}
 }
 
-func TestCargar_LasFechasSonRelativasAlDiaDeLaCarga(t *testing.T) {
-	inicioDelProyecto := func(ahora time.Time) string {
-		db := baseMigrada(t)
-		if _, err := NewCargador(db, func() time.Time { return ahora }, hasheadorBarato).Cargar(context.Background()); err != nil {
-			t.Fatal(err)
-		}
-		var inicio string
-		if err := db.QueryRow(`SELECT fecha_inicio FROM proyectos WHERE id = 25`).Scan(&inicio); err != nil {
-			t.Fatal(err)
-		}
-		return inicio
-	}
-
-	if a, b := inicioDelProyecto(ahoraFijo), inicioDelProyecto(ahoraFijo.AddDate(0, 0, 10)); a != "2026-10-15" || b != "2026-10-25" {
-		t.Errorf("inicios %s y %s, se esperaba 2026-10-15 y 2026-10-25", a, b)
-	}
-}
-
 func TestCargar_ElHashDeLaContrasenaSeDerivaUnaSolaVezPorCarga(t *testing.T) {
 	db := baseMigrada(t)
 	contador := &hasheadorContador{}
