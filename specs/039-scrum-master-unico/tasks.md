@@ -103,10 +103,10 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 ## Phase 7: Cierre
 
-- [ ] T028 `go build ./...`, `go vet ./...` y `gofmt -l .` sin salida
-- [ ] T029 `go test ./...` y `go test -race ./...` sin errores
-- [ ] T030 Recorrer `quickstart.md` (API manual y migración) y confirmar los resultados esperados
-- [ ] T031 Confirmar que `git log` muestra los commits RED/GREEN de cada fase y que el árbol queda limpio (sin `git push`)
+- [x] T028 `go build ./...`, `go vet ./...` y `gofmt -l .` sin salida
+- [x] T029 `go test ./...` y `go test -race ./...` sin errores
+- [x] T030 Recorrer `quickstart.md` (API manual y migración) y confirmar los resultados esperados
+- [x] T031 Confirmar que `git log` muestra los commits RED/GREEN de cada fase y que el árbol queda limpio (sin `git push`)
 
 ---
 
