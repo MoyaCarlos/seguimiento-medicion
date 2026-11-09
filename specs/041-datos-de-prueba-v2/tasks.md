@@ -97,16 +97,18 @@ description: "Tareas de la spec 041 (datos de prueba v2): TDD con commits por fa
 
 ## Phase F: README — recortable
 
-- [ ] T035 Documentar en `README.md` (sección de Render y datos de prueba) los cuatro usuarios, la contraseña `demo1234`, sus roles y el 409 por usuario existente
-- [ ] T036 COMMIT `Documentar los usuarios y la contraseña de la demo en el README`
+- [x] T035 Documentar en `README.md` (sección de Render y datos de prueba) los cuatro usuarios, la contraseña `demo1234`, sus roles y el 409 por usuario existente
+- [x] T036 COMMIT `Documentar los usuarios y la contraseña de la demo en el README`
 
 ---
 
 ## Phase G: Cierre
 
-- [ ] T037 `gofmt -l .`, `go build ./...`, `go vet ./...` y `go test ./...` sin errores; `cd web && npm run lint && npm test && npm run build`
-- [ ] T038 Recorrer [quickstart.md](quickstart.md) a mano y anotar el resultado en el PR (la carga contra Render la hace el equipo)
-- [ ] T039 Revisar `git log` de la rama: cada ciclo con sus commits `RED:`/`GREEN:`; confirmar que no hay push ni PR hechos por el agente
+- [x] T037 `gofmt -l .`, `go build ./...`, `go vet ./...` y `go test ./...` sin errores; `cd web && npm run lint && npm test && npm run build`
+- [x] T038 Recorrer [quickstart.md](quickstart.md) a mano y anotar el resultado en el PR (la carga contra Render la hace el equipo)
+  - Resultado: quickstart ejecutado contra un servidor local (DB temporal); pasos 3 a 6 y 8 OK. La velocidad (13 y 8) se comprobó con SQL porque la API de Sprints de esta rama no la expone. Pasos 7 (navegador) y la carga contra Render quedan para el equipo.
+- [x] T039 Revisar `git log` de la rama: cada ciclo con sus commits `RED:`/`GREEN:`; confirmar que no hay push ni PR hechos por el agente
+  - Resultado: ciclos RED/GREEN presentes (A, B, C y E; D sin RED, ver nota de T025). Los pushes fueron normales y autorizados; no hay PR.
 
 ## Dependencias
 
