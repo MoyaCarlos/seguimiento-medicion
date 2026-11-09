@@ -86,12 +86,12 @@ description: "Tareas de la spec 041 (datos de prueba v2): TDD con commits por fa
 
 ## Phase E: Frontend `/ingresar` (US5) — recortable
 
-- [ ] T029 [US5] RED: `web/src/compartido/demo/BotonDatosDePrueba.test.tsx` — con el nombre del escenario en cada prueba: 201 ⇒ aviso + tabla con los cuatro usuarios, `demo1234` y roles; 409 `ya_cargado` ⇒ aviso + tabla; 409 `usuario_existente` ⇒ aviso con el nombre y sin tabla; 409 `proyecto_id` y 500 ⇒ error; botón deshabilitado mientras carga; sin botón si `/demo/estado` no es 200 — confirmar que FALLAN
-- [ ] T030 [US5] RED: `web/src/features/autenticacion/Ingresar.test.tsx` — con `/demo/estado` habilitado aparece «Cargar datos de prueba»; con 404 no aparece; el `fetch` simulado distingue por URL para no romper las pruebas de ingreso existentes — confirmar que FALLAN
-- [ ] T031 COMMIT `RED: agregar pruebas de la pantalla de ingreso con datos de prueba (falla)`
-- [ ] T032 [US5] GREEN: `web/src/compartido/demo/CredencialesDemo.tsx` (tabla constante), `BotonDatosDePrueba.tsx` (tabla tras 201 y `ya_cargado`, aviso para `usuario_existente`), `web/src/features/autenticacion/Ingresar.tsx` (monta el botón bajo el formulario); `npm test`, `npm run lint` y `npm run build` en verde
-- [ ] T033 COMMIT `GREEN: botón y tabla de credenciales de la demo en /ingresar, test en verde`
-- [ ] T034 REFACTOR (solo si hay algo que limpiar, p. ej. estilos) + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T029 [US5] RED: `web/src/compartido/demo/BotonDatosDePrueba.test.tsx` — con el nombre del escenario en cada prueba: 201 ⇒ aviso + tabla con los cuatro usuarios, `demo1234` y roles; 409 `ya_cargado` ⇒ aviso + tabla; 409 `usuario_existente` ⇒ aviso con el nombre y sin tabla; 409 `proyecto_id` y 500 ⇒ error; botón deshabilitado mientras carga; sin botón si `/demo/estado` no es 200 — confirmar que FALLAN
+- [X] T030 [US5] RED: `web/src/features/autenticacion/Ingresar.test.tsx` — con `/demo/estado` habilitado aparece «Cargar datos de prueba»; con 404 no aparece; el `fetch` simulado distingue por URL para no romper las pruebas de ingreso existentes — confirmar que FALLAN
+- [X] T031 COMMIT `RED: agregar pruebas de la pantalla de ingreso con datos de prueba (falla)`
+- [X] T032 [US5] GREEN: `web/src/compartido/demo/CredencialesDemo.tsx` (tabla constante), `BotonDatosDePrueba.tsx` (tabla tras 201 y `ya_cargado`, aviso para `usuario_existente`), `web/src/features/autenticacion/Ingresar.tsx` (monta el botón bajo el formulario); `npm test`, `npm run lint` y `npm run build` en verde
+- [X] T033 COMMIT `GREEN: botón y tabla de credenciales de la demo en /ingresar, test en verde`
+- [X] T034 REFACTOR (solo si hay algo que limpiar, p. ej. estilos) + COMMIT `REFACTOR: <qué se limpió>` (sin cambios: no había nada que limpiar)
 
 ---
 
