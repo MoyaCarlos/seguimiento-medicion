@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 
@@ -396,5 +397,115 @@ func TestSQLiteProjectRepository_ActualizarLasHorasPorStoryPoint(t *testing.T) {
 	borrado, _ := repo.ObtenerPorID(ctx, id)
 	if borrado.HorasPorStoryPoint != nil {
 		t.Fatalf("se esperaba sin definir, se obtuvo %v", *borrado.HorasPorStoryPoint)
+	}
+}
+
+// proyectoConUsuarios crea un proyecto sin integrantes y un usuario por nombre.
+func proyectoConUsuarios(t *testing.T, db *sql.DB, nombres ...string) (int64, []int64) {
+	t.Helper()
+	ctx := context.Background()
+	p, _ := domain.NewProject("Proyecto", "", nil, nil)
+	guardado, err := NewSQLiteProjectRepository(db).Guardar(ctx, p)
+	if err != nil {
+		t.Fatalf("no se pudo guardar el proyecto: %v", err)
+	}
+	usuarios := NewSQLiteUserRepository(db)
+	var ids []int64
+	for _, nombre := range nombres {
+		u, _ := domain.NewUser(nombre)
+		guardadoU, err := usuarios.Guardar(ctx, u)
+		if err != nil {
+			t.Fatalf("no se pudo guardar el usuario %s: %v", nombre, err)
+		}
+		ids = append(ids, guardadoU.ID)
+	}
+	return guardado.ID, ids
+}
+
+func TestSQLiteProjectRepository_AgregarIntegrante_SegundoScrumMasterEsErrorDeDominio(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	proyectoID, ids := proyectoConUsuarios(t, db, "Ana", "Beto")
+	ctx := context.Background()
+	if _, err := repo.AgregarIntegrante(ctx, domain.Membership{ProjectID: proyectoID, UserID: ids[0], Role: domain.RolScrumMaster}); err != nil {
+		t.Fatalf("no se esperaba error al agregar el primer Scrum Master: %v", err)
+	}
+
+	_, err := repo.AgregarIntegrante(ctx, domain.Membership{ProjectID: proyectoID, UserID: ids[1], Role: domain.RolScrumMaster})
+
+	if !errors.Is(err, domain.ErrScrumMasterYaExiste) {
+		t.Fatalf("se esperaba domain.ErrScrumMasterYaExiste, se obtuvo %v", err)
+	}
+	if errors.Is(err, ErrMiembroDuplicado) {
+		t.Errorf("la violación del índice no debe confundirse con un integrante duplicado")
+	}
+}
+
+func TestSQLiteProjectRepository_AgregarIntegrante_MismoUsuarioSigueSiendoDuplicado(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	proyectoID, ids := proyectoConUsuarios(t, db, "Ana")
+	ctx := context.Background()
+	m := domain.Membership{ProjectID: proyectoID, UserID: ids[0], Role: domain.RolProductBuilder}
+	if _, err := repo.AgregarIntegrante(ctx, m); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	_, err := repo.AgregarIntegrante(ctx, m)
+
+	if !errors.Is(err, ErrMiembroDuplicado) {
+		t.Fatalf("se esperaba ErrMiembroDuplicado, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteProjectRepository_AgregarIntegrante_ProductBuildersYScrumMasterEnOtroProyecto(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	proyectoID, ids := proyectoConUsuarios(t, db, "Ana", "Beto", "Cami")
+	otroID, _ := proyectoConUsuarios(t, db, "Dani")
+	ctx := context.Background()
+	altas := []domain.Membership{
+		{ProjectID: proyectoID, UserID: ids[0], Role: domain.RolScrumMaster},
+		{ProjectID: proyectoID, UserID: ids[1], Role: domain.RolProductBuilder},
+		{ProjectID: proyectoID, UserID: ids[2], Role: domain.RolProductBuilder},
+		{ProjectID: otroID, UserID: ids[0], Role: domain.RolScrumMaster},
+	}
+	for _, m := range altas {
+		if _, err := repo.AgregarIntegrante(ctx, m); err != nil {
+			t.Fatalf("no se esperaba error para %+v: %v", m, err)
+		}
+	}
+}
+
+func TestSQLiteProjectRepository_AgregarIntegrante_DosAltasSimultaneasDeScrumMaster(t *testing.T) {
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	proyectoID, ids := proyectoConUsuarios(t, db, "Ana", "Beto")
+	ctx := context.Background()
+
+	resultados := make([]error, len(ids))
+	var espera sync.WaitGroup
+	for i, id := range ids {
+		espera.Add(1)
+		go func() {
+			defer espera.Done()
+			_, resultados[i] = repo.AgregarIntegrante(ctx, domain.Membership{ProjectID: proyectoID, UserID: id, Role: domain.RolScrumMaster})
+		}()
+	}
+	espera.Wait()
+
+	var aceptadas, conflictos int
+	for _, err := range resultados {
+		switch {
+		case err == nil:
+			aceptadas++
+		case errors.Is(err, domain.ErrScrumMasterYaExiste):
+			conflictos++
+		default:
+			t.Errorf("error inesperado: %v", err)
+		}
+	}
+	if aceptadas != 1 || conflictos != 1 {
+		t.Fatalf("se esperaba 1 alta aceptada y 1 conflicto, se obtuvo %d y %d", aceptadas, conflictos)
 	}
 }

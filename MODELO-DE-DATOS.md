@@ -207,7 +207,7 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 | `rol` | TEXT NOT NULL | `CHECK IN ('scrum_master','product_builder')` |
 | `creado_en` | TEXT NOT NULL | |
 
-Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Hoy no se impone un único Scrum Master por proyecto (ver D4).
+Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Un proyecto tiene **a lo sumo un** Scrum Master (D4): lo impone el índice único parcial `integrantes_un_scrum_master`, `CREATE UNIQUE INDEX integrantes_un_scrum_master ON integrantes (proyecto_id) WHERE rol = 'scrum_master'` (migración 007), y el servicio lo comprueba antes de insertar. Puede haber varios `product_builder`, y la misma persona puede ser Scrum Master de proyectos distintos.
 
 ### 4.4 `historias` — HU-01, HU-15, HU-06, HU-11, HU-14 (antes `backlog_items`)
 
@@ -405,6 +405,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Una historia solo entra a Sprints de su proyecto | FK compuesta | — |
 | Horas y defectos referencian historia, Sprint e integrante del mismo proyecto | FK compuestas | — |
 | Fin posterior a inicio (proyecto y Sprint) | `CHECK` | `ValidationError` sobre `fecha_fin` |
+| A lo sumo un Scrum Master por proyecto (D4) | Índice único parcial `integrantes_un_scrum_master` | Se chequea antes de insertar y responde `ErrScrumMasterYaExiste` (409); si la persona ya es integrante, prevalece el error de integrante duplicado; el índice cubre la carrera |
 | Un solo Sprint Activo y un solo Pendiente | Índices únicos parciales | Se chequea antes para devolver el mensaje; el índice cubre la carrera (ver la traducción del error, abajo) |
 | `En progreso`/`Completada` solo con Sprint | `CHECK` | Transiciones válidas (HU-11) |
 | Fecha de finalización ⇔ `Completada` | `CHECK` | Se asigna al completar |
@@ -456,7 +457,7 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
 requiere confirmación del equipo o del profesor; este documento no la decide. Hoy están
-pendientes D4 (reabierta por HU-16) y D14 a D17, que surgieron del beta testing del
+pendientes D15 a D17, que surgieron del beta testing del
 2026-10-30; las demás están cerradas.
 
 | # | Tema | Recomendación | Afecta |
@@ -466,7 +467,7 @@ pendientes D4 (reabierta por HU-16) y D14 a D17, que surgieron del beta testing 
 | **D2b** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Regla "no se modifica una `estimacion_sp` **ya cargada** de una historia con Sprint `Activo` o `Finalizado`"; cargarla por primera vez (estaba en `NULL`) se permite (decidido el 2026-10-14). **Reabierta el 2026-11-03** en la reunión de HU-03: con Sprint `Finalizado` tampoco se permite la primera carga, para que las métricas de los Sprints cerrados queden fijas; con Sprint `Activo`, sí. Una historia que quedó sin estimar suma 0 para siempre. Es una **decisión de producto**, no de datos: cambia el comportamiento de la edición del backlog (HU-15) y del registro de la estimación acordada (HU-14); quedó reflejada en el backlog con este PR (decisiones transversales, HU-14 Esc. 4 y HU-15 Esc. 3). | Aprobada: sin ella, los SP de las historias completadas pueden cambiar después y las métricas históricas dejan de ser reproducibles. Alternativa descartada: guardar también una foto de las completadas. | HU-14, 15, 03 |
 | **D2c** | **Aprobada el 2026-10-13** por el equipo (recomendación aceptada). Definición de "comprometidas = lo asignado **al cerrar** el Sprint" (incluye lo agregado con el Sprint ya `Activo`). Es una definición de producto que afecta las métricas de HU-03, 09, 10 y 12; quedó reflejada en el backlog con este PR (decisiones transversales y notas de esas historias). | Aceptada: es lo más simple y el backlog no pide distinguir el alcance agregado a mitad del Sprint. La alternativa (foto al *iniciar* el Sprint) agrega una tabla o columna. | HU-03, 09, 10, 12 |
 | **D3** | Fechas del proyecto en RFC 3339 y las del Sprint en `YYYY-MM-DD`. | Ambas `YYYY-MM-DD`. No cambia la API (ya expone solo la fecha); sí el repositorio de proyectos. | HU-04, 13 |
-| **D4** | No hay regla de "un solo Scrum Master por proyecto" en ninguna historia. **Reabierta (PENDIENTE):** HU-16 pide que haya siempre **al menos un** Scrum Master activo (no que sea uno solo). | Hasta que el equipo la confirme, no imponer nada; si se aprueba, la regla es del dominio y se verifica en la misma transacción que el cambio. | HU-04, HU-16 |
+| **D4** | **Cerrada el 2026-11-03** (decisión del Scrum Master): un solo Scrum Master por proyecto. Antes no había regla en ninguna historia, y HU-16 pedía que hubiera siempre **al menos un** Scrum Master activo. | La regla es del dominio y de la base: el servicio la verifica antes de insertar (`ErrScrumMasterYaExiste`, 409) y el índice único parcial `integrantes_un_scrum_master` (migración 007) cubre la carrera y las escrituras directas. **Criterio de la migración (2026-11-08, opción B):** antes de crear el índice, en cada proyecto con más de un Scrum Master queda el de `creado_en` más antiguo (si empatan, el de menor `usuario_id`) y los demás pasan a `product_builder`, sin borrar filas. Transferir el rol y dar de baja integrantes queda fuera de esta regla (HU-16, #175). | HU-04, HU-16 |
 | **D5** | Ninguna historia cubre sacar una historia de un Sprint o pasarla a otro. El modelo lo permitiría con un `UPDATE`, sin reglas. | Fuera de alcance; si HU-06 lo necesita, lo define en su spec. | HU-06 |
 | **D6** | HU-08 refinada ya no tiene "título" del defecto (la versión original sí). | Seguir el backlog refinado: solo descripción. | HU-08 |
 | **D7** | **Cerrada el 2026-10-28** por el equipo (votó la opción A; si el profesor aclara otra fuente, se ajusta). Origen de las "horas estimadas". | `proyectos.horas_por_story_point` nullable, como ya propone HU-03. | HU-03 |
@@ -476,7 +477,7 @@ pendientes D4 (reabierta por HU-16) y D14 a D17, que surgieron del beta testing 
 | **D11** | `CHECK` de la escala Fibonacci. **Decidido el 2026-10-09: sin `CHECK`**, la escala vive solo en el dominio. Si la escala cambia, no hay que recrear tablas. | — (cerrada) | HU-01, 02, 14, 15 |
 | **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
-| **D14** | **PENDIENTE.** Dónde se guarda el dueño de un proyecto (HU-19): el creador, transferible a otro integrante. | Sin recomendación: opciones, una referencia al usuario en `proyectos` o un tercer rol en `integrantes`. Se decide en la spec con el Scrum Master; es cambio de esquema (documento y migración en un solo PR). | HU-19 |
+| **D14** | **No necesaria** (2026-11-03). Dónde se guarda el dueño de un proyecto (HU-19). | El dueño es el Scrum Master del proyecto, que es quien lo creó y es único (D4): no se guarda aparte ni hay cambio de esquema. | HU-19 |
 | **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
 | **D16** | **PENDIENTE.** Cierre manual del proyecto (#173): hoy el estado es derivado y no se guarda. | Guardar la fecha de cierre en `proyectos`; sin cierre manual, el proyecto no pasa a Finalizado. Cambio de esquema. | HU-13 |
 | **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
@@ -536,6 +537,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 004 | `registros_horas` | HU-07 |
    | 005 | `defectos` | HU-08 |
    | 006 | `usuarios.contrasena_hash`, `sesiones` | HU-20 |
+   | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 040) |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
 4. **SQLite no altera restricciones.** Cambiar un `CHECK`, una FK o una columna
@@ -566,6 +568,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    - `sprints`: Activo **y** Finalizado con `fecha_fin NULL`, con `fecha_inicio NULL` y con `sprint_goal NULL` (los seis rechazados); Pendiente con goal o con alguna fecha; fin = inicio y fin < inicio.
    - `historias`: `En progreso` y `Completada` sin Sprint; `Completada` sin `fecha_finalizacion`; `Nueva` y `En progreso` con `fecha_finalizacion`; Sprint de otro proyecto; Sprint `NULL` (válido, la FK compuesta no se evalúa).
    - Índices parciales: segundo Activo y segundo Pendiente, por `INSERT` y por `UPDATE`; varios Finalizado (válidos).
+   - `integrantes` (D4): segundo `scrum_master` en el mismo proyecto, por `INSERT` y por `UPDATE` (rechazados); varios `product_builder` en un proyecto y un `scrum_master` en cada proyecto distinto (válidos).
+   - Migración 007, sobre una base sembrada antes de migrar: proyecto con 2 o más Scrum Master (queda el de `creado_en` más antiguo y los demás pasan a `product_builder`, sin borrar filas), empate de `creado_en` (queda el de menor `usuario_id`), proyecto sin Scrum Master y proyecto con uno solo (sin tocar).
    - Fechas (D12), en `proyectos`, `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
    - `registros_horas`: `minutos` 0, negativos, `NULL`, `1.5` y `'abc'` (rechazados) y `60` (válido); historia, Sprint o usuario de otro proyecto, o usuario que no es integrante.
    - `defectos`: `Resuelto` sin `sprint_resolucion_id` y `Pendiente` con él; `sprint_resolucion_id NULL` (válido).

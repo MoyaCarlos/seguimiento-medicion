@@ -248,6 +248,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorInterno'
+        '409':
+          description: >-
+            El proyecto ya tiene un Scrum Master y se pidió agregar otro
+            integrante con rol scrum_master. Si la persona ya es integrante, la
+            respuesta es el 400 de integrante ya vinculado, no esta.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorInterno'
+              examples:
+                scrumMasterRepetido:
+                  value:
+                    mensaje: el proyecto ya tiene un Scrum Master
         '500':
           description: Error interno (fallo de persistencia).
           content:
