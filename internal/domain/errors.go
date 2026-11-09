@@ -15,6 +15,10 @@ func (e ValidationError) Error() string {
 	return e.Campo + ": " + e.Mensaje
 }
 
+// ErrScrumMasterYaExiste indica que el proyecto ya tiene un Scrum Master y se
+// quiso agregar otro (spec 040, #236).
+var ErrScrumMasterYaExiste = errors.New("el proyecto ya tiene un Scrum Master")
+
 // ErrNoEncontrado indica que la entidad solicitada no existe.
 var ErrNoEncontrado = errors.New("registro no encontrado")
 
@@ -85,7 +89,6 @@ var ErrSprintNoFinalizadoParaReporte = ValidationError{Campo: "estado", Mensaje:
 // ErrReporteNoGenerado indica un fallo real al armar o escribir el PDF (HU-10).
 var ErrReporteNoGenerado = errors.New("no se pudo generar el reporte")
 
-// Errores de autenticación (HU-20).
 // Errores de autenticación (HU-20).
 var (
 	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.

@@ -99,6 +99,9 @@ var esquemaEsperado = map[string]tablaEsperada{
 			"proyecto_id -> proyectos(id)",
 			"usuario_id -> usuarios(id)",
 		},
+		indices: []indiceEsperado{
+			{nombre: "integrantes_un_scrum_master", columnas: []string{"proyecto_id"}, where: "WHERE rol = 'scrum_master'"},
+		},
 	},
 	// §4.4 historias
 	"historias": {
@@ -253,8 +256,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6}) {
-		t.Errorf("se esperaban las versiones 1, 2, 3, 4, 5 y 6 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7}) {
+		t.Errorf("se esperaban las versiones 1, 2, 3, 4, 5, 6 y 7 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -306,8 +309,8 @@ func TestEsquema_MigracionDeAutenticacion_ConUsuariosPrevios(t *testing.T) {
 	if contrasenaHash.Valid {
 		t.Errorf("el usuario previo debe quedar sin contraseña (NULL), se obtuvo %q", contrasenaHash.String)
 	}
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6}) {
-		t.Errorf("se esperaban las versiones 1 a 6 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7}) {
+		t.Errorf("se esperaban las versiones 1 a 7 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -551,6 +554,20 @@ func TestEsquema_Filas(t *testing.T) {
 		{"segundo Activo por UPDATE", "UPDATE sprints SET estado = 'Activo' WHERE id = 11", violaUnique},
 		{"segundo Pendiente por UPDATE", "UPDATE sprints SET estado = 'Pendiente', sprint_goal = NULL, fecha_inicio = NULL, fecha_fin = NULL WHERE id = 21", violaUnique},
 		{"varios Finalizado", insertarSprint + "(1, 'g', '2026-08-01', '2026-08-15', 'Finalizado')", aceptada},
+
+		// Scrum Master único por proyecto (#236); el usuario 1 es el Scrum Master del proyecto 1
+		{"segundo Scrum Master por INSERT",
+			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + ");" +
+				"INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (1, 2, 'scrum_master', " + ahora + ")", violaUnique},
+		{"segundo Scrum Master por UPDATE",
+			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + ");" +
+				"INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (1, 2, 'product_builder', " + ahora + ");" +
+				"UPDATE integrantes SET rol = 'scrum_master' WHERE proyecto_id = 1 AND usuario_id = 2", violaUnique},
+		{"varios Product Builder",
+			"INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Bea', 'bea', " + ahora + "), (3, 'Cami', 'cami', " + ahora + ");" +
+				"INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (1, 2, 'product_builder', " + ahora + "), (1, 3, 'product_builder', " + ahora + ")", aceptada},
+		{"un Scrum Master por proyecto distinto",
+			"INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (2, 1, 'scrum_master', " + ahora + ")", aceptada},
 
 		// CA-10 fechas (D12)
 		{"proyecto fecha_inicio sin cero", "INSERT INTO proyectos (nombre, fecha_inicio, creado_en) VALUES ('x', '2026-10-9', " + ahora + ")", violaCheck},

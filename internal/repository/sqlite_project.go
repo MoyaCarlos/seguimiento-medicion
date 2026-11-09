@@ -147,9 +147,13 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 	)
 	if err != nil {
 		var sqliteErr *sqlite.Error
-		if errors.As(err, &sqliteErr) &&
-			(sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY) {
-			return domain.Membership{}, ErrMiembroDuplicado
+		if errors.As(err, &sqliteErr) {
+			switch sqliteErr.Code() {
+			case sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
+				return domain.Membership{}, ErrMiembroDuplicado
+			case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
+				return domain.Membership{}, domain.ErrScrumMasterYaExiste
+			}
 		}
 		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", errorDeEscritura(err))
 	}
