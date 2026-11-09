@@ -107,6 +107,9 @@ Entonces el sistema responde "proyecto no encontrado" y no registra la HU.
 ### Depende de
 HU-04 (el proyecto debe existir).
 
+### Notas
+Los criterios de aceptación se pueden cargar al crear la historia (issue #174, spec 039): texto libre opcional de hasta 2000 caracteres, con el mismo límite y normalización que la edición (HU-15). Vacío o solo espacios equivale a no tener criterios. Notas y depende_de siguen fuera de alcance (decisión D17).
+
 ### Prioridad
 M (Must have) - Esencial para el MVP. 
 
@@ -567,7 +570,7 @@ Entonces el sistema responde "no encontrado".
 HU-01 (historias), HU-04 (proyecto), HU-05 (campo de Sprint de la historia, que ya existe).
 ### Notas
 La asignación de historias a un Sprint llega después, con la historia de movimiento al Sprint Backlog; hasta entonces el listado se prueba sembrando historias con Sprint.
-Los criterios de aceptación son un texto libre opcional de hasta 2000 caracteres (el mismo límite que la descripción); vacío o solo espacios equivale a no tener criterios.
+Los criterios de aceptación son un texto libre opcional de hasta 2000 caracteres (el mismo límite que la descripción); vacío o solo espacios equivale a no tener criterios. Desde el issue #174 (spec 039) también se pueden cargar al crear la historia, sin pasar por la edición.
 ### Prioridad
 M (Must have) - El enunciado exige los criterios de aceptación y los Story Points como parte mínima de cada elemento del Product Backlog, HU-06 necesita el listado y HU-03 y HU-10 necesitan los Story Points.
 ### Estado
