@@ -95,9 +95,9 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Goal**: documento y esquema no divergen; va en el MISMO PR que la migración.
 
-- [ ] T025 [US5] `MODELO-DE-DATOS.md`: §4.3 (reemplazar la nota "no se impone un único Scrum Master" por la regla y el nombre del índice); §7 (D4 cerrada el 2026-11-03, D14 "no necesaria" porque el dueño es el Scrum Master, y el párrafo de encabezado sin D4 ni D14); §9 (la 007 en la tabla de números con el criterio de desempate, nota de que la 006 es de HU-20, y los casos del FR-014 en el punto 6); §5 (fila de la regla)
-- [ ] T026 [US5] Contrastar el documento con `esquema_test.go` y la 007: mismo nombre de índice, mismo `WHERE`, mismos casos. `go test ./internal/repository/` en verde
-- [ ] T027 COMMIT `Documentar el Scrum Master único en MODELO-DE-DATOS.md (D4, D14, 007)`
+- [x] T025 [US5] `MODELO-DE-DATOS.md`: §4.3 (reemplazar la nota "no se impone un único Scrum Master" por la regla y el nombre del índice); §7 (D4 cerrada el 2026-11-03, D14 "no necesaria" porque el dueño es el Scrum Master, y el párrafo de encabezado sin D4 ni D14); §9 (la 007 en la tabla de números con el criterio de desempate, nota de que la 006 es de HU-20, y los casos del FR-014 en el punto 6); §5 (fila de la regla)
+- [x] T026 [US5] Contrastar el documento con `esquema_test.go` y la 007: mismo nombre de índice, mismo `WHERE`, mismos casos. `go test ./internal/repository/` en verde
+- [x] T027 COMMIT `Documentar el Scrum Master único en MODELO-DE-DATOS.md (D4, D14, 007)`
 
 ---
 
