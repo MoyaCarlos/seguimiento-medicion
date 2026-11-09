@@ -172,6 +172,60 @@ describe('contexto de sesión', () => {
     expect(ubicacion().state).toMatchObject({ vencida: true })
   })
 
+  it('Escenario 8: arranque con token y GET /auth/yo caído (500) queda sin_conexion y conserva el token', async () => {
+    guardarToken('token-guardado')
+    simularFetch({ 'GET /auth/yo': () => json({ mensaje: 'Error interno' }, 500) })
+    montar('/backlog')
+
+    await waitFor(() => expect(estado()).toBe('sin_conexion'))
+
+    expect(leerToken()).toBe('token-guardado')
+    expect(sesion.usuario).toBeNull()
+    expect(ubicacion().pathname).toBe('/backlog')
+  })
+
+  it('Escenario 8: arranque con token y la red caída queda sin_conexion y conserva el token', async () => {
+    guardarToken('token-guardado')
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch') }))
+    montar('/backlog')
+
+    await waitFor(() => expect(estado()).toBe('sin_conexion'))
+
+    expect(leerToken()).toBe('token-guardado')
+  })
+
+  it('Escenario 8: reintentar con el servidor de vuelta pasa a autenticado', async () => {
+    guardarToken('token-guardado')
+    const respuestas = [() => json({ mensaje: 'Error interno' }, 500), () => json(USUARIO, 200)]
+    simularFetch({ 'GET /auth/yo': () => respuestas.shift()!() })
+    montar('/backlog')
+    await waitFor(() => expect(estado()).toBe('sin_conexion'))
+
+    await act(() => sesion.reintentar())
+
+    expect(estado()).toBe('autenticado')
+    expect(sesion.usuario).toEqual(USUARIO)
+    expect(leerToken()).toBe('token-guardado')
+  })
+
+  it('Escenario 8: reintentar que recibe 401 descarta el token y navega a /ingresar con state.vencida', async () => {
+    guardarToken('token-guardado')
+    const respuestas = [
+      () => json({ mensaje: 'Error interno' }, 500),
+      () => json({ mensaje: 'Tu sesión no es válida' }, 401),
+    ]
+    simularFetch({ 'GET /auth/yo': () => respuestas.shift()!() })
+    montar('/backlog')
+    await waitFor(() => expect(estado()).toBe('sin_conexion'))
+
+    await act(() => sesion.reintentar())
+
+    expect(leerToken()).toBeNull()
+    expect(estado()).toBe('anonimo')
+    expect(ubicacion().pathname).toBe('/ingresar')
+    expect(ubicacion().state).toMatchObject({ vencida: true })
+  })
+
   it('Escenario 7: salir pide POST /auth/salir, borra el token, queda anónimo y navega a /ingresar', async () => {
     guardarToken('token-guardado')
     const fetchMock = simularFetch({
