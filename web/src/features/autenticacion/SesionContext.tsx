@@ -7,7 +7,7 @@ import * as api from './api'
 import type { Usuario } from './api'
 import { borrarToken, guardarToken, leerToken } from './almacenamientoToken'
 
-export type EstadoSesion = 'cargando' | 'anonimo' | 'autenticado'
+export type EstadoSesion = 'cargando' | 'anonimo' | 'autenticado' | 'sin_conexion'
 
 export type Sesion = {
   estado: EstadoSesion
@@ -15,6 +15,7 @@ export type Sesion = {
   ingresar(nombre: string, contrasena: string): Promise<void>
   registrar(nombre: string, contrasena: string): Promise<void>
   salir(): Promise<void>
+  reintentar(): Promise<void>
 }
 
 const SesionContext = createContext<Sesion | null>(null)
@@ -86,6 +87,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       usuario,
       ingresar: async (nombre, contrasena) => iniciar(await api.ingresar(nombre, contrasena)),
       registrar: async (nombre, contrasena) => iniciar(await api.registrar(nombre, contrasena)),
+      reintentar: async () => {},
       salir: async () => {
         try {
           await api.salir()
