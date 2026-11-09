@@ -119,7 +119,7 @@ Como persona que llega a `/ingresar` sin cuenta, quiero cargar los datos de prue
 - Existe un proyecto 25 con otro nombre y no hay conflicto de usuarios: se mantiene el 409 de id ocupado de la v1.
 - Una base con los usuarios «Beta» de la v1: no es conflicto (nombres distintos); los usuarios Beta quedan como están.
 - Cambia el día entre cargas en bases distintas: todas las fechas, incluidas las de los defectos, son relativas al día de la carga.
-- Hashear cuatro contraseñas es costoso: no debe agotar el tiempo de espera de la carga ni mantener tomada la escritura de la base más de lo necesario.
+- Hashear es costoso: se hace una sola vez y fuera de la transacción, para no mantener tomada la escritura de la base más de lo necesario (una carga que termina en 409 también paga ese hash).
 
 ## Requirements *(mandatory)*
 
@@ -130,7 +130,7 @@ Las reglas se redactan en formato EARS.
 **Usuarios y equipo (Ubicuo / No deseado)**
 
 - **FR-001**: El sistema deberá crear los usuarios `carlos.moya`, `ana.iriarte`, `candela.vulcano` y `jimena.martinez`, cada uno con la contraseña de demostración `demo1234`, y los reemplaza a los usuarios «Beta Uno» a «Beta Cuatro» de la v1.
-- **FR-002**: El sistema deberá guardar cada contraseña hasheada con el servicio PBKDF2 de HU-20, recibido por el cargador como dependencia (no instanciado dentro del bloque), nunca en claro.
+- **FR-002**: El sistema deberá guardar cada contraseña hasheada con el servicio PBKDF2 de HU-20, recibido por el cargador como dependencia (no instanciado dentro del bloque), nunca en claro. El sistema deberá derivar la contraseña de demostración **una sola vez** por carga, fuera de la transacción, y reutilizar ese hash para los cuatro usuarios.
 - **FR-003**: El sistema deberá asignar a `carlos.moya` como Scrum Master y a los otros tres como Product Builder del proyecto 25, con un único Scrum Master.
 - **FR-004**: El sistema deberá exigir que los nombres de usuario de la demo cumplan la regla de nombre de HU-20 (3 a 30 caracteres: letras sin tildes, números, punto, guion y guion bajo).
 - **FR-005**: Si alguno de los usuarios de la demo ya existe (comparando el nombre normalizado), el sistema responderá 409 con el mensaje «ya existe el usuario X», donde X es el primero en conflicto en el orden de la lista de la demo, y deshará toda la carga.
@@ -236,7 +236,7 @@ Qué asume hoy tres Sprints o los usuarios «Beta» (rutas relativas a la raíz;
 - **SC-004**: En el 100 % de las cargas fallidas no queda ningún dato, tampoco usuarios.
 - **SC-005**: Con dos cargas simultáneas, exactamente una se completa.
 - **SC-006**: Tras la carga, el historial muestra dos Sprints finalizados con velocidades distintas y el registro de defectos tiene casos Pendientes y Resueltos de las tres severidades.
-- **SC-007**: La carga completa termina en tiempo razonable aun con el hashing de cuatro contraseñas (a validar en el plan con el costo real de PBKDF2).
+- **SC-007**: Cada carga deriva la contraseña de demostración una sola vez (verificable contando las invocaciones del hasheador), de modo que el costo de hashing no crece con la cantidad de usuarios.
 
 ## Assumptions
 
@@ -245,6 +245,6 @@ Qué asume hoy tres Sprints o los usuarios «Beta» (rutas relativas a la raíz;
 - Las contraseñas de la demo son públicas y se documentan en el README y en la pantalla de ingreso; la URL de Render es pública, y el endpoint sigue apagado salvo `DEMO_HABILITADO=true`.
 - La tabla de usuarios del frontend es una constante del frontend (datos públicos de demostración), no se pide a la API.
 - El botón sigue montado en la pantalla de creación de proyectos (`crear.tsx`) además de `/ingresar`; la tabla vive dentro del mismo componente, así aparece en ambos lugares.
-- El hasheo (costoso) se hace antes de abrir la transacción de escritura; el cómo se decide en el plan.
+- El hasheo (costoso) se hace una sola vez, antes de abrir la transacción de escritura, y se reutiliza para los cuatro usuarios (decisión del Scrum Master, 2026-11-09).
 - Se mantiene el id fijo 25 y el nombre reservado de la v1.
 - No hay cambio de rutas, ni de `GET /demo/estado`.
