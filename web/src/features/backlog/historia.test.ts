@@ -6,6 +6,7 @@ import type { FormularioHistoria } from './historia'
 const FORMULARIO: FormularioHistoria = {
   titulo: '  Como usuario quiero iniciar sesión  ',
   descripcion: '  Autenticación con email y contraseña  ',
+  criterios: '',
   prioridad: 'M',
   valorNegocio: '',
 }
@@ -65,11 +66,30 @@ describe('armarCuerpo', () => {
 
     expect(cuerpo).not.toHaveProperty('valor_negocio')
   })
+
+  it('incluye los criterios de aceptación recortados cuando se informan', () => {
+    const cuerpo = armarCuerpo(42, {
+      ...FORMULARIO,
+      criterios: '  Dado, cuando, entonces  ',
+    })
+
+    expect(cuerpo.criterios_aceptacion).toBe('Dado, cuando, entonces')
+  })
+
+  it.each([
+    ['vacíos', ''],
+    ['con solo espacios', '   '],
+  ])('omite los criterios de aceptación %s', (_caso, criterios) => {
+    const cuerpo = armarCuerpo(42, { ...FORMULARIO, criterios })
+
+    expect(cuerpo).not.toHaveProperty('criterios_aceptacion')
+  })
 })
 
 const VALIDO: FormularioHistoria = {
   titulo: 'Historia de usuario',
   descripcion: 'Descripción de la historia',
+  criterios: '',
   prioridad: 'M',
   valorNegocio: '',
 }
@@ -133,6 +153,23 @@ describe('validarHistoria', () => {
     expect(validarHistoria({ ...VALIDO, descripcion: 'a'.repeat(2000) })).toEqual({})
   })
 
+  it('acepta criterios de aceptación de exactamente 2000 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, criterios: 'a'.repeat(2000) })).toEqual({})
+  })
+
+  it('rechaza criterios de aceptación de 2001 puntos de código', () => {
+    expect(validarHistoria({ ...VALIDO, criterios: 'a'.repeat(2001) })).toEqual({
+      criterios: expect.any(String),
+    })
+  })
+
+  it.each([
+    ['vacíos', ''],
+    ['con solo espacios', '   '],
+  ])('acepta criterios de aceptación %s', (_caso, criterios) => {
+    expect(validarHistoria({ ...VALIDO, criterios })).toEqual({})
+  })
+
   it('evalúa la longitud después de recortar los extremos', () => {
     expect(validarHistoria({ ...VALIDO, titulo: `  ${'a'.repeat(200)}  ` })).toEqual({})
   })
@@ -162,6 +199,17 @@ describe('mapearError', () => {
     ['valor_negocio', 'el valor de negocio debe ser uno de 1, 2, 3, 5, 8, 13, 21'],
   ] as const)('ubica el mensaje del campo %s junto a ese campo', (campo, mensaje) => {
     expect(mapearError(new ApiError(400, mensaje, campo))).toEqual({ campo, mensaje })
+  })
+
+  it('ubica el error de criterios_aceptacion junto al campo criterios', () => {
+    expect(
+      mapearError(
+        new ApiError(400, 'los criterios de aceptación no pueden superar los 2000 caracteres', 'criterios_aceptacion'),
+      ),
+    ).toEqual({
+      campo: 'criterios',
+      mensaje: 'los criterios de aceptación no pueden superar los 2000 caracteres',
+    })
   })
 
   it('manda al aviso general un error sin campo', () => {

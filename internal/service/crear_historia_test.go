@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
@@ -162,6 +163,95 @@ func TestCrearHistoriaBacklog_Ejecutar_InvalidaConProyectoInexistente(t *testing
 	}
 	if verr.Campo != "titulo" {
 		t.Errorf("se esperaba campo titulo, se obtuvo %q", verr.Campo)
+	}
+	if len(repo.guardados) != 0 {
+		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
+	}
+}
+
+func ptrTextosIguales(a, b *string) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	return *a == *b
+}
+
+func TestCrearHistoriaBacklog_Ejecutar_CriteriosAceptacion(t *testing.T) {
+	casos := []struct {
+		nombre    string
+		criterios *string
+		esperado  *string
+	}{
+		{"con criterios", strPtr("  Dado, cuando, entonces  "), strPtr("Dado, cuando, entonces")},
+		{"sin criterios", nil, nil},
+		{"solo espacios", strPtr("   "), nil},
+	}
+
+	for _, tc := range casos {
+		t.Run(tc.nombre, func(t *testing.T) {
+			repo := &fakeBacklogRepository{}
+			servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
+
+			resultado, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+				ProyectoID:          1,
+				Titulo:              "Título",
+				Descripcion:         "Descripción",
+				Prioridad:           domain.PrioridadMust,
+				CriteriosAceptacion: tc.criterios,
+			})
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if len(repo.guardados) != 1 {
+				t.Fatalf("se esperaba 1 historia guardada, se guardaron %d", len(repo.guardados))
+			}
+			if !ptrTextosIguales(resultado.CriteriosAceptacion, tc.esperado) {
+				t.Errorf("criterios devueltos = %v, se esperaba %v", resultado.CriteriosAceptacion, tc.esperado)
+			}
+			if !ptrTextosIguales(repo.guardados[0].CriteriosAceptacion, tc.esperado) {
+				t.Errorf("criterios persistidos = %v, se esperaba %v", repo.guardados[0].CriteriosAceptacion, tc.esperado)
+			}
+		})
+	}
+}
+
+func TestCrearHistoriaBacklog_Ejecutar_CriteriosAceptacionDemasiadoLargos(t *testing.T) {
+	repo := &fakeBacklogRepository{}
+	servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
+	demasiadoLargo := strings.Repeat("a", 2001)
+
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+		ProyectoID:          1,
+		Titulo:              "Título",
+		Descripcion:         "Descripción",
+		Prioridad:           domain.PrioridadMust,
+		CriteriosAceptacion: &demasiadoLargo,
+	})
+	var verr domain.ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("se esperaba ValidationError, se obtuvo %T (%v)", err, err)
+	}
+	if verr.Campo != "criterios_aceptacion" {
+		t.Errorf("se esperaba campo criterios_aceptacion, se obtuvo %q", verr.Campo)
+	}
+	if len(repo.guardados) != 0 {
+		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
+	}
+}
+
+func TestCrearHistoriaBacklog_Ejecutar_ProyectoInexistenteConCriterios(t *testing.T) {
+	repo := &fakeBacklogRepository{}
+	servicio := NewCrearHistoriaBacklog(repo, &fakeProjectRepository{})
+
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+		ProyectoID:          999,
+		Titulo:              "Historia huérfana",
+		Descripcion:         "No debe persistir",
+		Prioridad:           domain.PrioridadMust,
+		CriteriosAceptacion: strPtr("Dado, cuando, entonces"),
+	})
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
 	if len(repo.guardados) != 0 {
 		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
