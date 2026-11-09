@@ -509,7 +509,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 003 | `rondas_votacion`, `votos` | HU-02 |
    | 004 | `registros_horas` | HU-07 |
    | 005 | `defectos` | HU-08 |
-   | 006 | Autenticación (login y roles) | HU-20. Reservada; mientras no esté en `main` la numeración tiene un hueco, que el runner tolera. |
+   | 006 | Autenticación (contraseñas y sesiones) | HU-20. Reservada; mientras no esté en `main` la numeración tiene un hueco, que el runner tolera. |
    | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 / spec 039. No se renumera. |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
