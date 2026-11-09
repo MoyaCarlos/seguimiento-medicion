@@ -701,3 +701,89 @@ func TestSQLiteBacklogRepository_GuardarEstimacion_NoTocaOtrasHistorias(t *testi
 		t.Errorf("la otra historia debía seguir con 3 Story Points, tiene %v", guardada.EstimacionSP)
 	}
 }
+
+func TestSQLiteBacklogRepository_ListarPorProyecto(t *testing.T) {
+	t.Run("devuelve todas las historias del proyecto, con y sin Sprint, ordenadas por id", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		activo, pendiente := sprintsDePrueba(t, repo, 1)
+		cinco, ocho := 5, 8
+
+		sinSprint := guardarHistoria(t, repo, 1, "Sin Sprint", domain.PrioridadWont)
+		nuevaAsignada := historiaEnSprint(t, repo.db, 1, pendiente.ID, domain.EstadoNueva, nil)
+		enProgreso := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoEnProgreso, &cinco)
+		completada := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoCompletada, &ocho)
+
+		historias, err := repo.ListarPorProyecto(context.Background(), 1)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+
+		esperadas := []domain.BacklogItem{sinSprint, nuevaAsignada, enProgreso, completada}
+		if len(historias) != len(esperadas) {
+			t.Fatalf("se esperaban %d historias, se obtuvieron %d", len(esperadas), len(historias))
+		}
+		for i, esperada := range esperadas {
+			if historias[i].ID != esperada.ID {
+				t.Fatalf("posición %d: se esperaba la historia %d, se obtuvo %d", i, esperada.ID, historias[i].ID)
+			}
+		}
+		if historias[0].SprintID != nil {
+			t.Errorf("la historia sin Sprint debe conservar SprintID nil, se obtuvo %d", *historias[0].SprintID)
+		}
+		if historias[1].SprintID == nil || *historias[1].SprintID != pendiente.ID || historias[1].Estado != domain.EstadoNueva {
+			t.Errorf("la Nueva asignada debe conservar su Sprint pendiente %d, se obtuvo %+v", pendiente.ID, historias[1])
+		}
+		if historias[2].Estado != domain.EstadoEnProgreso || historias[3].Estado != domain.EstadoCompletada {
+			t.Errorf("se esperaban los estados En progreso y Completada, se obtuvo %q y %q", historias[2].Estado, historias[3].Estado)
+		}
+	})
+
+	t.Run("excluye las historias de otros proyectos", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		otroProyecto := guardarProyecto(t, repo.db)
+		propia := guardarHistoria(t, repo, 1, "Propia", domain.PrioridadMust)
+		guardarHistoria(t, repo, otroProyecto, "Ajena", domain.PrioridadMust)
+
+		historias, err := repo.ListarPorProyecto(context.Background(), 1)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if len(historias) != 1 || historias[0].ID != propia.ID {
+			t.Errorf("se esperaba solo la historia propia %d, se obtuvo %+v", propia.ID, historias)
+		}
+	})
+
+	t.Run("conserva la estimación en nil cuando la historia no está estimada", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+		activo, _ := sprintsDePrueba(t, repo, 1)
+		tres := 3
+		historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoEnProgreso, nil)
+		historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoEnProgreso, &tres)
+
+		historias, err := repo.ListarPorProyecto(context.Background(), 1)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if len(historias) != 2 {
+			t.Fatalf("se esperaban 2 historias, se obtuvieron %d", len(historias))
+		}
+		if historias[0].EstimacionSP != nil {
+			t.Errorf("la historia sin estimar debe tener EstimacionSP nil, se obtuvo %d", *historias[0].EstimacionSP)
+		}
+		if historias[1].EstimacionSP == nil || *historias[1].EstimacionSP != 3 {
+			t.Errorf("se esperaban 3 Story Points, se obtuvo %v", historias[1].EstimacionSP)
+		}
+	})
+
+	t.Run("un proyecto sin historias devuelve un slice vacío, nunca nil", func(t *testing.T) {
+		repo := nuevaBDDePrueba(t)
+
+		historias, err := repo.ListarPorProyecto(context.Background(), 1)
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if historias == nil || len(historias) != 0 {
+			t.Errorf("se esperaba un slice vacío no nil, se obtuvo %#v", historias)
+		}
+	})
+}
