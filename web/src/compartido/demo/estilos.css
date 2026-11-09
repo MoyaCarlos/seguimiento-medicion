@@ -1,0 +1,43 @@
+.demo-credenciales {
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+  width: 100%;
+}
+
+.demo-credenciales caption {
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  text-align: left;
+}
+
+.demo-credenciales th,
+.demo-credenciales td {
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+  padding: 0.4rem 0.3rem;
+  text-align: left;
+}
+
+.demo-credenciales th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.demo-credenciales button:focus-visible {
+  outline: 2px solid var(--lilac-dark);
+  outline-offset: 2px;
+}
+
+.solo-lector {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
