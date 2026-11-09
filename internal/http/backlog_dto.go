@@ -8,11 +8,12 @@ import (
 )
 
 type crearHistoriaRequest struct {
-	ProyectoID   int64  `json:"proyecto_id"`
-	Titulo       string `json:"titulo"`
-	Descripcion  string `json:"descripcion"`
-	Prioridad    string `json:"prioridad"`
-	ValorNegocio *int   `json:"valor_negocio"`
+	ProyectoID          int64   `json:"proyecto_id"`
+	Titulo              string  `json:"titulo"`
+	Descripcion         string  `json:"descripcion"`
+	Prioridad           string  `json:"prioridad"`
+	ValorNegocio        *int    `json:"valor_negocio"`
+	CriteriosAceptacion *string `json:"criterios_aceptacion"`
 }
 
 type editarHistoriaRequest struct {

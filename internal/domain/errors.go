@@ -78,6 +78,13 @@ var (
 	ErrRondaEnHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede abrir una ronda en una historia completada"}
 )
 
+// ErrSprintNoFinalizadoParaReporte indica que se pidió el reporte de un Sprint
+// que no está Finalizado (HU-10).
+var ErrSprintNoFinalizadoParaReporte = ValidationError{Campo: "estado", Mensaje: "solo se puede generar el reporte de un Sprint finalizado"}
+
+// ErrReporteNoGenerado indica un fallo real al armar o escribir el PDF (HU-10).
+var ErrReporteNoGenerado = errors.New("no se pudo generar el reporte")
+
 // Errores de autenticación (HU-20).
 var (
 	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.

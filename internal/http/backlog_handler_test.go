@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -130,6 +131,94 @@ func TestBacklogHandler_Crear_Exitosa(t *testing.T) {
 	}
 	if len(repo.guardados) != 1 {
 		t.Errorf("se esperaba 1 historia persistida")
+	}
+}
+
+func TestBacklogHandler_Crear_ConCriteriosAceptacion(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M","criterios_aceptacion":"  Dado, cuando, entonces  "}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion == nil || *resp.CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("se esperaban los criterios normalizados en la respuesta, se obtuvo %v", resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 {
+		t.Fatalf("se esperaba 1 historia persistida, se guardaron %d", len(repo.guardados))
+	}
+	if repo.guardados[0].CriteriosAceptacion == nil || *repo.guardados[0].CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("se esperaban los criterios persistidos, se obtuvo %v", repo.guardados[0].CriteriosAceptacion)
+	}
+}
+
+func TestBacklogHandler_Crear_SinCriteriosAceptacion(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M"}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos, se obtuvo %q", *resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 || repo.guardados[0].CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos persistidos, se obtuvo %v", repo.guardados)
+	}
+}
+
+func TestBacklogHandler_Crear_CriteriosSoloEspacios(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, construirPeticion(`{"proyecto_id":1,"titulo":"Iniciar sesión","descripcion":"Autenticación","prioridad":"M","criterios_aceptacion":"   "}`))
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos, se obtuvo %q", *resp.CriteriosAceptacion)
+	}
+	if len(repo.guardados) != 1 || repo.guardados[0].CriteriosAceptacion != nil {
+		t.Errorf("se esperaban criterios nulos persistidos, se obtuvo %v", repo.guardados)
+	}
+}
+
+func TestBacklogHandler_Crear_CriteriosDemasiadoLargos(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	rec := httptest.NewRecorder()
+	cuerpo := `{"proyecto_id":1,"titulo":"Título","descripcion":"Descripción","prioridad":"M","criterios_aceptacion":"` + strings.Repeat("a", 2001) + `"}`
+
+	handler.Crear(rec, construirPeticion(cuerpo))
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Campo != "criterios_aceptacion" {
+		t.Errorf("se esperaba campo criterios_aceptacion, se obtuvo %q", resp.Campo)
+	}
+	if len(repo.guardados) != 0 {
+		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
 	}
 }
 

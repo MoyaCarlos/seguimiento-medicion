@@ -136,7 +136,7 @@ por capa, y los demás cambios extienden el código de HU-04, HU-14 y HU-15.
 ## Dependencias con otras historias
 
 - **HU-12 (spec 033)**: espera este merge. Usa los mismos nombres de `MetricasSprint`, así que su contrato no cambia. Debe llamar a `service.CalcularMetricas` y unir por `sprint_id`, y corregir su supuesto sobre D2b (línea de "Reproducibilidad").
-- **HU-10 (spec 034)**: consume el mismo service; su FR-028 ya prevé la integración.
+- **HU-10 (spec 036)**: consume el mismo service; su FR-028 ya prevé la integración.
 - **HU-09**: consume `GET /projects/{id}/metricas`.
 - **PR #268**: modifica `consenso_estimacion.feature`, que este plan no toca (R10).
 - **PR #250**: modifica `docs/PRODUCT-BACKLOG.md`; posible conflicto menor.

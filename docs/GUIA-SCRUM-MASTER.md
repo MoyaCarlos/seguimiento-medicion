@@ -14,8 +14,9 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
 - **Sprint 3 (Funcionalidad y calidad): cerrado** (27-oct al 2-nov, se acortó
   de 14 a 7 días) con el tag `v0.3.0`.
 - **Sprint 4 (Métricas y defectos): en curso**, del 3 al 9-nov (el 9 es feriado, así que se
-  trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10. Suman 24 SP con HU-20
-  (8 + 8 + 8); el backend de HU-14 ya está mergeado y no suma. Para
+  trabaja hasta el 8). HU-03 y HU-08, que son la base de HU-09 y HU-10, y HU-18, que pasó a
+  obligatoria por decisión del Scrum Master (2026-11-07): la pantalla Estado no puede quedar vacía en la
+  entrega. Suman 29 SP con HU-20 y HU-18 (8 + 8 + 8 + 5, con la estimación propuesta de HU-18); el backend de HU-14 ya está mergeado y no suma. Para
   llegar a tiempo, la spec y los escenarios BDD de HU-10 arrancan en este Sprint
   como stretch. También figuran en el plan de este Sprint HU-20 (autenticación) y
   las mejoras #235 (datos de prueba v2), #236 (un único Scrum Master por
@@ -29,7 +30,7 @@ la fuente completa está en los links de la sección [Dónde está todo](#dónde
   HU-21 (permisos por rol), HU-12 (después de HU-03, su dependencia) y el
   frontend de HU-14 (#93) figuran en el plan de este Sprint y no dependen de que
   sobre tiempo. También las pantallas del rediseño visual #230 y, como propuesta, eliminar un proyecto (#232, solo el Scrum Master, con triple confirmación).
-  Solo HU-16, HU-17 y HU-18 entran si sobra tiempo.
+  Solo HU-16 y HU-17 entran si sobra tiempo.
 - **Product Backlog: 21 historias** (HU-16 a HU-19 son propuestas del beta testing; HU-20 y HU-21 salen de la decisión del Scrum Master del 2026-11-03) en `docs/PRODUCT-BACKLOG.md`, cada una como
   Issue padre con sub-issues en el tablero.
 - **Despliegue:** decidido en Render, con un solo servicio Docker que se

@@ -10,6 +10,7 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/report"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -88,6 +89,7 @@ func main() {
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 
+	metricasRepo := repository.NewSQLiteMetricasRepository(db)
 	credenciales := repository.NewSQLiteCredencialRepository(db)
 	hasheador := service.NewServicioContrasenasProduccion()
 	sesionesRepo := repository.NewSQLiteSesionRepository(db)
@@ -100,12 +102,17 @@ func main() {
 		service.NewCerrarSesion(obtenerSesion, sesionesRepo, time.Now),
 	)
 
-	calcularMetricas := service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db))
+	calcularMetricas := service.NewCalcularMetricas(proyectos, metricasRepo)
 	metricasHandler := apihttp.NewMetricasHandler(calcularMetricas)
 	historialHandler := apihttp.NewHistorialHandler(
 		service.NewConsultarHistorialSprints(calcularMetricas, sprintRepo),
 		service.NewConsultarDetalleSprint(proyectos, sprintRepo, calcularMetricas, repository.NewSQLiteHistorialSprintRepository(db)),
 	)
+	reporteHandler := apihttp.NewReporteHandler(
+		service.NewGenerarReporte(proyectos, sprintRepo, backlogRepo, backlogRepo, backlogRepo, metricasRepo, defectosRepo),
+		report.Generador{},
+	)
+	avanceHandler := apihttp.NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, backlogRepo, sprintRepo))
 
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },
@@ -139,9 +146,12 @@ func main() {
 	mux.HandleFunc("GET /projects/{id}/metricas", metricasHandler.Consultar)
 	mux.HandleFunc("GET /projects/{id}/historial", historialHandler.Listar)
 	mux.HandleFunc("GET /projects/{id}/historial/{sprintId}", historialHandler.Detalle)
+	mux.HandleFunc("GET /projects/{id}/avance", avanceHandler.Consultar)
 	mux.HandleFunc("POST /projects/{id}/defectos", defectoHandler.Registrar)
 	mux.HandleFunc("GET /projects/{id}/defectos", defectoHandler.Listar)
 	mux.HandleFunc("POST /defectos/{id}/resolver", defectoHandler.Resolver)
+	mux.HandleFunc("GET /sprints/{id}/reporte", reporteHandler.Sprint)
+	mux.HandleFunc("GET /projects/{id}/reporte", reporteHandler.Proyecto)
 	mux.HandleFunc("POST /sprints", sprintHandler.Crear)
 	mux.HandleFunc("POST /sprints/{id}/iniciar", sprintHandler.Iniciar)
 	mux.HandleFunc("POST /sprints/{id}/cerrar", sprintHandler.Cerrar)
