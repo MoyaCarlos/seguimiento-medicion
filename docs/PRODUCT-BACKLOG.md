@@ -707,7 +707,7 @@ Reemplaza el texto "esta pantalla será implementada" de la pestaña Estado (`/p
 ### Prioridad
 M (Must have) - Responde a la pregunta básica de seguimiento ("¿qué está terminado y qué no?") que hoy no se puede contestar desde la pantalla. Decisión del Scrum Master (2026-11-07): la pantalla Estado no puede quedar vacía en la entrega.
 ### Estado
-Implementada (backend y frontend, issue #177; pendiente de revisión por PR)
+Implementada (backend y frontend, issue #177, PR #281)
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
