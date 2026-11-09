@@ -13,11 +13,23 @@ import (
 // en el orden en que se cargaron.
 type fakeHistoriasDeSprintRepository struct {
 	historias []domain.BacklogItem
+	porSprint map[int64][]domain.BacklogItem
+	err       error
 	llamadas  int
 }
 
-func (f *fakeHistoriasDeSprintRepository) ListarPorSprint(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
+func (f *fakeHistoriasDeSprintRepository) ListarPorSprint(_ context.Context, sprintID int64) ([]domain.BacklogItem, error) {
 	f.llamadas++
+	if f.err != nil {
+		return nil, f.err
+	}
+	if f.porSprint != nil {
+		historias := f.porSprint[sprintID]
+		if historias == nil {
+			return []domain.BacklogItem{}, nil
+		}
+		return historias, nil
+	}
 	return f.historias, nil
 }
 
