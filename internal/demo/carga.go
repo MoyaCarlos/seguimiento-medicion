@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	sqlite "modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
@@ -124,7 +125,11 @@ func NewCargador(db *sql.DB, ahora func() time.Time, hasheador Hasheador) *Carga
 
 // Cargar crea todos los datos o ninguno.
 func (l *Cargador) Cargar(ctx context.Context) (Resumen, error) {
-	c, err := ejecutarBloques(ctx, l.db, l.ahora(), "", l.bloques)
+	hash, err := l.hasheador.Hashear(contrasenaDeLaDemo)
+	if err != nil {
+		return Resumen{}, fmt.Errorf("derivar la contraseña de la demo: %w", err)
+	}
+	c, err := ejecutarBloques(ctx, l.db, l.ahora(), hash, l.bloques)
 	if esViolacionDeClave(err) {
 		return Resumen{}, l.clasificarConflicto(ctx, err)
 	}
@@ -134,19 +139,38 @@ func (l *Cargador) Cargar(ctx context.Context) (Resumen, error) {
 	return c.resumen, nil
 }
 
-// clasificarConflicto se llama con la transacción ya deshecha: distingue la
-// carga repetida del id ocupado por el nombre del proyecto 25.
+// clasificarConflicto se llama con la transacción ya deshecha y mira la base,
+// no qué restricción falló: gana la carga repetida, después el usuario de la
+// demo que ya existe y por último el id 25 ocupado por otro proyecto.
 func (l *Cargador) clasificarConflicto(ctx context.Context, original error) error {
 	var nombre string
 	err := l.db.QueryRowContext(ctx, `SELECT nombre FROM proyectos WHERE id = ?`, proyectoID).Scan(&nombre)
-	switch {
-	case err != nil:
+	proyectoExiste := err == nil
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return original
-	case nombre == nombreProyecto:
+	}
+	if proyectoExiste && nombre == nombreProyecto {
 		return ErrYaCargado
-	default:
+	}
+	if existente, ok := l.primerUsuarioExistente(ctx); ok {
+		return ErrUsuarioExistente{Nombre: existente}
+	}
+	if proyectoExiste {
 		return ErrIdOcupado
 	}
+	return original
+}
+
+func (l *Cargador) primerUsuarioExistente(ctx context.Context) (string, bool) {
+	for _, demo := range usuariosDemo {
+		var id int64
+		err := l.db.QueryRowContext(ctx, `SELECT id FROM usuarios WHERE nombre_normalizado = ?`,
+			domain.NormalizarNombre(demo.nombre)).Scan(&id)
+		if err == nil {
+			return demo.nombre, true
+		}
+	}
+	return "", false
 }
 
 func esViolacionDeClave(err error) bool {

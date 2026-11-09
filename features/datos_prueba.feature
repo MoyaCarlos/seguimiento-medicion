@@ -12,7 +12,7 @@ Característica: Cargar datos de prueba
     Y que la base no tiene datos de prueba
     Cuando pido cargar los datos de prueba
     Entonces el sistema responde 201 con el resumen del proyecto 25
-    Y el proyecto 25 tiene 10 historias, 3 Sprints y 3 integrantes
+    Y el proyecto 25 tiene 10 historias, 3 Sprints y 4 integrantes
 
   Escenario: Datos de prueba ya cargados
     Dado que la carga de datos de prueba está habilitada

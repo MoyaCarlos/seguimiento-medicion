@@ -15,17 +15,6 @@ const (
 	horasPorSP           = 4
 )
 
-type integranteDemo struct {
-	usuario string
-	rol     domain.Role
-}
-
-var equipo = []integranteDemo{
-	{"Beta Uno", domain.RolScrumMaster},
-	{"Beta Dos", domain.RolProductBuilder},
-	{"Beta Tres", domain.RolProductBuilder},
-}
-
 // bloqueProyecto crea el proyecto con id fijo y su equipo. El INSERT con id
 // fijo es la fuente de la idempotencia: falla por clave primaria si ya existe.
 func bloqueProyecto(ctx context.Context, tx *sql.Tx, c *carga) error {
@@ -45,15 +34,15 @@ func bloqueProyecto(ctx context.Context, tx *sql.Tx, c *carga) error {
 	}
 	c.resumen.ProyectoID = proyectoID
 
-	for _, integrante := range equipo {
-		m, err := domain.NewMembership(proyectoID, c.usuarios[integrante.usuario], integrante.rol)
+	for _, integrante := range usuariosDemo {
+		m, err := domain.NewMembership(proyectoID, c.usuarios[integrante.nombre], integrante.rol)
 		if err != nil {
 			return err
 		}
 		if _, err := tx.ExecContext(ctx,
 			`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
 			m.ProjectID, m.UserID, string(m.Role), c.creadoEn()); err != nil {
-			return fmt.Errorf("agregar integrante %s: %w", integrante.usuario, err)
+			return fmt.Errorf("agregar integrante %s: %w", integrante.nombre, err)
 		}
 		c.resumen.Integrantes++
 	}

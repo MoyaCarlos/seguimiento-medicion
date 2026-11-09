@@ -19,21 +19,21 @@ type horasDemo struct {
 }
 
 var horasImputadas = []horasDemo{
-	{"turno", 1, "Beta Dos", -13, "6", "Diseño de la agenda de turnos"},
-	{"turno", 1, "Beta Tres", -12, "8", "Implementación del cupo por turno"},
-	{"turno", 1, "Beta Uno", -11, "4", "Revisión y pruebas de aceptación"},
-	{"datos", 1, "Beta Tres", -13, "5", "Formulario de datos personales"},
-	{"datos", 1, "Beta Dos", -12, "6", "Validación del DNI y del domicilio"},
-	{"apto", 1, "Beta Dos", -11, "10", "Lectura y carga del certificado"},
-	{"apto", 1, "Beta Uno", -10, "8", "Reglas de vigencia del certificado"},
-	{"apto", 1, "Beta Tres", -9, "12", "Pruebas con certificados vencidos"},
-	{"tasa", 1, "Beta Uno", -10, "3", "Análisis de la pasarela de pagos"},
-	{"tasa", 1, "Beta Tres", -9, "4", "Maqueta de la pantalla de pago"},
-	{"examen", 2, "Beta Dos", -6, "8", "Banco de preguntas y sorteo"},
-	{"examen", 2, "Beta Tres", -4, "7", "Pantalla del examen con temporizador"},
-	{"examen", 2, "Beta Uno", -2, "5", "Corrección automática del examen"},
-	{"comprobante", 2, "Beta Tres", -3, "3", "Plantilla del comprobante"},
-	{"comprobante", 2, "Beta Dos", -1, "2", "Generación del código QR"},
+	{"turno", 1, "ana.iriarte", -13, "6", "Diseño de la agenda de turnos"},
+	{"turno", 1, "candela.vulcano", -12, "8", "Implementación del cupo por turno"},
+	{"turno", 1, "carlos.moya", -11, "4", "Revisión y pruebas de aceptación"},
+	{"datos", 1, "candela.vulcano", -13, "5", "Formulario de datos personales"},
+	{"datos", 1, "ana.iriarte", -12, "6", "Validación del DNI y del domicilio"},
+	{"apto", 1, "ana.iriarte", -11, "10", "Lectura y carga del certificado"},
+	{"apto", 1, "carlos.moya", -10, "8", "Reglas de vigencia del certificado"},
+	{"apto", 1, "candela.vulcano", -9, "12", "Pruebas con certificados vencidos"},
+	{"tasa", 1, "carlos.moya", -10, "3", "Análisis de la pasarela de pagos"},
+	{"tasa", 1, "candela.vulcano", -9, "4", "Maqueta de la pantalla de pago"},
+	{"examen", 2, "ana.iriarte", -6, "8", "Banco de preguntas y sorteo"},
+	{"examen", 2, "candela.vulcano", -4, "7", "Pantalla del examen con temporizador"},
+	{"examen", 2, "carlos.moya", -2, "5", "Corrección automática del examen"},
+	{"comprobante", 2, "candela.vulcano", -3, "3", "Plantilla del comprobante"},
+	{"comprobante", 2, "ana.iriarte", -1, "2", "Generación del código QR"},
 }
 
 // bloqueHoras imputa horas históricas en los Sprints 1 y 2. No exige que el

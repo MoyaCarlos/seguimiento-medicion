@@ -15,9 +15,9 @@ var votosDemo = []struct {
 	usuario string
 	valor   int
 }{
-	{"Beta Uno", 3},
-	{"Beta Dos", 5},
-	{"Beta Tres", 5},
+	{"carlos.moya", 3},
+	{"ana.iriarte", 5},
+	{"candela.vulcano", 5},
 }
 
 // bloqueVotacion crea una ronda revelada en una historia sin estimar del
