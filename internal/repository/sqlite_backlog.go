@@ -74,6 +74,17 @@ func (r *SQLiteBacklogRepository) ListarSinSprint(ctx context.Context, proyectoI
 	return historias, nil
 }
 
+// ListarPorProyecto devuelve todas las historias del proyecto, con o sin
+// Sprint, ordenadas por id (HU-18).
+func (r *SQLiteBacklogRepository) ListarPorProyecto(ctx context.Context, proyectoID int64) ([]domain.BacklogItem, error) {
+	historias, err := r.listarHistorias(ctx,
+		`SELECT `+columnasHistoria+` FROM historias WHERE proyecto_id = ? ORDER BY id`, proyectoID)
+	if err != nil {
+		return nil, fmt.Errorf("listar historias del proyecto %d: %w", proyectoID, err)
+	}
+	return historias, nil
+}
+
 // ObtenerPorID devuelve la historia con el identificador indicado.
 func (r *SQLiteBacklogRepository) ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error) {
 	return escanearHistoria(r.db.QueryRowContext(ctx,
