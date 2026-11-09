@@ -161,7 +161,8 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, repository.ErrIntegridadReferencial):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrIntegridadReferencial.Error()})
-	case errors.Is(err, domain.ErrVotacionYaIniciada), errors.Is(err, domain.ErrRondaYaAbierta):
+	case errors.Is(err, domain.ErrVotacionYaIniciada), errors.Is(err, domain.ErrRondaYaAbierta),
+		errors.Is(err, domain.ErrScrumMasterYaExiste):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrConflictoEstadoHistoria):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: "la historia cambió de estado mientras tanto: recargá y volvé a intentar"})
