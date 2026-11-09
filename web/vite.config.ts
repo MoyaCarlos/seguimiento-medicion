@@ -17,6 +17,7 @@ export default defineConfig({
       '/projects': apiProxy,
       '/sprints': apiProxy,
       '/demo': apiProxy,
+      '/auth': apiProxy,
     },
   },
 })
