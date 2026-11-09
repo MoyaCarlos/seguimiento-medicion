@@ -140,7 +140,7 @@ Redactados en formato EARS.
 **Esquema**
 
 - **FR-008**: El esquema MUST impedir, con un índice único parcial sobre `integrantes(proyecto_id)` restringido a `rol = 'scrum_master'`, dos Scrum Master en el mismo proyecto, tanto por `INSERT` como por `UPDATE`, y también ante escrituras simultáneas.
-- **FR-009**: El índice MUST crearse en una migración numerada, embebida en el binario, con el **número 007** (la 006 es `006_autenticacion.sql` de HU-20, en otra rama).
+- **FR-009**: El índice MUST crearse en una migración numerada, embebida en el binario, con el **número 007** (la 006 es `006_autenticacion.sql` de HU-20, ya en `main`).
 - **FR-010**: El índice MUST aceptar varios `product_builder` por proyecto y un `scrum_master` en cada proyecto distinto.
 - **FR-011**: Una violación del índice MUST traducirse al conflicto de FR-003 y MUST distinguirse del error de integrante duplicado (clave primaria).
 - **FR-012**: Antes de crear el índice y dentro de la misma migración, la 007 MUST dejar un solo Scrum Master en cada proyecto que tenga más de uno: el de `creado_en` más antiguo (si empatan, el de menor `usuario_id`), y MUST pasar a `product_builder` a los demás. MUST dejar sin tocar a los proyectos con un solo Scrum Master o con ninguno. MUST no borrar ninguna fila de `integrantes`. MUST explicar este criterio en un comentario de la propia migración.
@@ -172,7 +172,7 @@ Redactados en formato EARS.
 
 - **Decisión de producto**: tomada por el Scrum Master el 2026-11-03; es del equipo y no se consulta a la cátedra.
 - **Dependencia con HU-20/HU-21**: esta historia no exige login; la regla vale con o sin él. Los permisos por rol (HU-20, HU-21) se apoyan en ella.
-- **Numeración de la migración**: 007, siempre. No hace falta renumerar: el runner aplica las migraciones que faltan aunque haya huecos (`MODELO-DE-DATOS.md` §9), así que si #236 se mergea antes que HU-20, la 006 queda libre para HU-20 y se aplica después sin problema.
+- **Numeración de la migración**: 007, siempre. No hace falta renumerar: el runner aplica las migraciones que faltan aunque haya huecos (`MODELO-DE-DATOS.md` §9), y HU-20 (la 006) ya está en `main`, así que la 007 sigue a la 006 sin renumerar.
 - **Quién es el dueño**: el Scrum Master del proyecto. No se guarda una referencia aparte al dueño (D14 deja de hacer falta).
 - **Cómo se crea hoy el proyecto**: `POST /projects` con `creador`, que inserta el proyecto y la membresía de Scrum Master en una sola transacción. Ese camino ya cumple la regla y no cambia.
 - **Cómo se cambia el rol hoy**: no existe. No hay endpoint ni operación para cambiar el rol ni reactivar a un integrante; la clave primaria impide repetir a una persona. Por eso el único camino a cubrir además de la creación es `POST /projects/{id}/members`.

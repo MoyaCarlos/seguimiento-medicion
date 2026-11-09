@@ -52,7 +52,7 @@ El índice se creó sin error y ninguna fila se borró. El `UPDATE` es seguro au
 
 **El comentario del criterio** va al principio del archivo de la 007: qué corrige, el desempate y por qué (la base de Render se vacía en cada deploy; los datos de prueba v2 crean un Scrum Master por proyecto).
 
-**Numeración**: 007. `origin/feature/HU-20-autenticacion` ya tiene `006_autenticacion.sql`; `main` llega hasta la 005. El runner tolera huecos, así que la 007 funciona aunque la 006 todavía no esté en `main`. Si #236 se mergea antes, la tabla de §9 queda con un hueco en la 006 (reservada a HU-20); si se mergea después, no hay que renumerar nada. No hace falta renumerar: el runner tolera el hueco de la 006 (`MODELO-DE-DATOS.md` §9).
+**Numeración**: 007. HU-20 ya está en `main` con `006_autenticacion.sql` (al planificar estaba en `origin/feature/HU-20-autenticacion` y `main` llegaba hasta la 005). La 007 sigue a la 006, sin renumerar. El runner igual tolera huecos de numeración (`MODELO-DE-DATOS.md` §9).
 
 ## 4. Cómo se testea la migración
 
