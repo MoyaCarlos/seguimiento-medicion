@@ -9,6 +9,7 @@ describe('rutaDeSeccion', () => {
     ['ignora la barra final', '/projects/1/backlog/', '2', '/projects/2/backlog'],
     ['cae en proyecto si la sección no es del menú', '/projects/1/otra', 2, '/projects/2/proyecto'],
     ['no traslada el id de una historia', '/projects/1/votacion/3', 2, '/projects/2/proyecto'],
+    ['conserva la sección escrita con mayúsculas', '/projects/1/Backlog', 2, '/projects/2/backlog'],
   ])('%s', (_caso, pathname, idNuevo, esperada) => {
     expect(rutaDeSeccion(pathname, idNuevo)).toBe(esperada)
   })
