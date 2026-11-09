@@ -25,6 +25,8 @@ type stubBacklogRepository struct {
 	actualizaciones  []domain.BacklogItem
 	sprints          *repository.SprintRepositoryEnMemoria
 	errCambiarEstado error
+
+	llamadasObtenerPorID int
 }
 
 func (s *stubBacklogRepository) Guardar(_ context.Context, item domain.BacklogItem) (domain.BacklogItem, error) {
@@ -38,6 +40,7 @@ func (s *stubBacklogRepository) ListarSinSprint(_ context.Context, _ int64) ([]d
 }
 
 func (s *stubBacklogRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
+	s.llamadasObtenerPorID++
 	h, ok := s.historias[id]
 	if !ok {
 		return domain.BacklogItem{}, domain.ErrHistoriaNoEncontrada
@@ -333,6 +336,63 @@ func TestBacklogHandler_Obtener_CompletadaDeOtroProyecto(t *testing.T) {
 	rec := consultarHistoria(handler, "6")
 
 	exigirCuerpoCanonico(t, rec, historia)
+}
+
+func TestBacklogHandler_Obtener_NoExiste(t *testing.T) {
+	handler, _ := nuevoHandlerDePrueba()
+
+	rec := consultarHistoria(handler, "999")
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("se esperaba 404, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if got := bytes.TrimSpace(rec.Body.Bytes()); string(got) != `{"mensaje":"historia no encontrada"}` {
+		t.Errorf("cuerpo inesperado: %s", got)
+	}
+}
+
+func TestBacklogHandler_Obtener_IDInvalido(t *testing.T) {
+	for _, id := range []string{"abc", "0", "-3", "1.5", "99999999999999999999"} {
+		t.Run(id, func(t *testing.T) {
+			handler, repo := nuevoHandlerDePrueba()
+
+			rec := consultarHistoria(handler, id)
+
+			if rec.Code != nethttp.StatusBadRequest {
+				t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+			}
+			if resp := leerError(t, rec); resp.Campo != "id" || resp.Mensaje != "identificador inválido" {
+				t.Errorf("error inesperado: %+v", resp)
+			}
+			if repo.llamadasObtenerPorID != 0 {
+				t.Errorf("no se debía consultar el repositorio, llamadas: %d", repo.llamadasObtenerPorID)
+			}
+		})
+	}
+}
+
+func TestBacklogHandler_Obtener_CerosAIzquierda(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	repo.historias[7] = domain.BacklogItem{
+		ID: 7, ProyectoID: 1, Titulo: "Con ceros", Descripcion: "Id con ceros a la izquierda",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoNueva,
+	}
+
+	rec := consultarHistoria(handler, "007")
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.ID != 7 {
+		t.Errorf("id = %d, se esperaba 7", resp.ID)
+	}
+	if repo.llamadasObtenerPorID != 1 {
+		t.Errorf("llamadas a ObtenerPorID = %d, se esperaba 1", repo.llamadasObtenerPorID)
+	}
 }
 
 func mustJSON(t *testing.T, v any) []byte {
