@@ -53,21 +53,27 @@ export function SesionProvider({ children }: { children: ReactNode }) {
     return () => configurarSesionHttp(null)
   }, [])
 
+  const consultarSesion = useRef<(sigueActivo: () => boolean) => Promise<void>>(async () => {})
+  useEffect(() => {
+    consultarSesion.current = async (sigueActivo) => {
+      try {
+        const actual = await api.yo()
+        if (!sigueActivo()) return
+        setUsuario(actual)
+        setEstado('autenticado')
+      } catch (error: unknown) {
+        if (!sigueActivo()) return
+        if (!(error instanceof ApiError && error.status === 401)) setEstado('sin_conexion')
+        else if (leerToken()) sesionVencida.current()
+        else setEstado('anonimo')
+      }
+    }
+  })
+
   useEffect(() => {
     if (!leerToken()) return
     let activo = true
-    api
-      .yo()
-      .then((actual) => {
-        if (!activo) return
-        setUsuario(actual)
-        setEstado('autenticado')
-      })
-      .catch((error: unknown) => {
-        if (!activo) return
-        if (error instanceof ApiError && error.status === 401 && leerToken()) sesionVencida.current()
-        else setEstado('anonimo')
-      })
+    void consultarSesion.current(() => activo)
     return () => {
       activo = false
     }
@@ -87,7 +93,10 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       usuario,
       ingresar: async (nombre, contrasena) => iniciar(await api.ingresar(nombre, contrasena)),
       registrar: async (nombre, contrasena) => iniciar(await api.registrar(nombre, contrasena)),
-      reintentar: async () => {},
+      reintentar: async () => {
+        setEstado('cargando')
+        await consultarSesion.current(() => true)
+      },
       salir: async () => {
         try {
           await api.salir()
