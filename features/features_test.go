@@ -26,6 +26,8 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioMetricas(ctx)                 // HU-03
 			InitializeScenarioAutenticacion(ctx)            // HU-20
 			InitializeScenarioHistorial(ctx)                // HU-12
+			InitializeScenarioAvance(ctx, sc)               // HU-18
+			InitializeScenarioObtenerHistoria(ctx)          // Issue #222
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

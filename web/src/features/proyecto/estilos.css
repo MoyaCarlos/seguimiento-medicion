@@ -26,6 +26,7 @@
 .hu04-tarjeta p {
   color: var(--muted);
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .hu04-encabezado {

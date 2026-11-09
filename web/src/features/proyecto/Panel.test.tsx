@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 import { Component } from './index'
+import estilos from './estilos.css?raw'
 import { Panel } from './Panel'
 
 const proyecto = {
@@ -174,5 +175,31 @@ describe('panel del proyecto', () => {
 
     expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
     expect(await screen.findByText('Suspendido')).toBeTruthy()
+  })
+
+  it('dado una descripción larga sin espacios, permite cortarla en varias líneas', async () => {
+    const descripcion = 'a'.repeat(300)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url === '/projects/3' ? { ...proyecto, descripcion } : { estado: 'Planificado' },
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    const hojaDeEstilos = document.createElement('style')
+    hojaDeEstilos.textContent = estilos
+    document.head.append(hojaDeEstilos)
+    onTestFinished(() => hojaDeEstilos.remove())
+    abrir()
+
+    const parrafo = await screen.findByText(descripcion)
+
+    expect(getComputedStyle(parrafo).getPropertyValue('overflow-wrap')).toBe('anywhere')
   })
 })
