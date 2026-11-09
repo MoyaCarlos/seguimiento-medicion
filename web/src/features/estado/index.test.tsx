@@ -215,15 +215,19 @@ describe('pantalla Estado', () => {
     expect(within(nueva).getByRole('listitem').textContent).toContain('Product Backlog')
   })
 
-  it('US3.1: Given un proyecto sin historias, When ingreso a Estado, Then veo el mensaje y los totales en cero, sin grupos ni errores', async () => {
+  it('US3.1 y US1.4: Given un proyecto sin historias, When ingreso a Estado, Then veo el mensaje, los tres grupos con 0 historias y 0 Story Points y los totales en cero, sin errores', async () => {
     simularApi(() => respuesta(200, sinHistorias))
 
     abrir()
 
     expect(await screen.findByText('El proyecto todavía no tiene historias.')).toBeTruthy()
+    for (const estado of ['Nueva', 'En progreso', 'Completada']) {
+      const grupo = region(estado)
+      expect([valorDe(grupo, 'Historias'), valorDe(grupo, 'Story Points')]).toEqual(['0', '0'])
+      expect(within(grupo).getByText('No hay historias en este grupo.')).toBeTruthy()
+    }
     const total = region('Total del proyecto')
     expect([valorDe(total, 'Historias'), valorDe(total, 'Story Points')]).toEqual(['0', '0'])
-    expect(screen.queryByRole('region', { name: 'Nueva' })).toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryByRole('status')).toBeNull()
   })
