@@ -259,6 +259,82 @@ func TestBacklogHandler_Obtener_SinSprint(t *testing.T) {
 	}
 }
 
+// exigirCuerpoCanonico comprueba que la respuesta sea 200 y que su cuerpo sea idéntico a json.Marshal(aRespuesta(historia)).
+func exigirCuerpoCanonico(t *testing.T, rec *httptest.ResponseRecorder, historia domain.BacklogItem) {
+	t.Helper()
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	canonico, err := json.Marshal(aRespuesta(historia))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := bytes.TrimSpace(rec.Body.Bytes()); !bytes.Equal(got, canonico) {
+		t.Errorf("el cuerpo difiere de aRespuesta:\n%s\n%s", got, canonico)
+	}
+}
+
+func TestBacklogHandler_Obtener_ConSprint(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint := sembrarSprint(t, repo, 1, domain.SprintActivo)
+	historia := domain.BacklogItem{
+		ID: 4, ProyectoID: 1, Titulo: "Planificada", Descripcion: "En un Sprint",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoEnProgreso, SprintID: &sprint.ID,
+	}
+	repo.historias[4] = historia
+
+	rec := consultarHistoria(handler, "4")
+
+	exigirCuerpoCanonico(t, rec, historia)
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.SprintID == nil || *resp.SprintID != sprint.ID {
+		t.Errorf("sprint_id = %v, se esperaba %d", resp.SprintID, sprint.ID)
+	}
+}
+
+func TestBacklogHandler_Obtener_Completada(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprint := sembrarSprint(t, repo, 1, domain.SprintActivo)
+	fecha := time.Date(2026, 10, 29, 15, 30, 0, 0, time.UTC)
+	historia := domain.BacklogItem{
+		ID: 5, ProyectoID: 1, Titulo: "Terminada", Descripcion: "Completada",
+		Prioridad: domain.PrioridadMust, Estado: domain.EstadoCompletada, SprintID: &sprint.ID, FechaFinalizacion: &fecha,
+	}
+	repo.historias[5] = historia
+
+	rec := consultarHistoria(handler, "5")
+
+	exigirCuerpoCanonico(t, rec, historia)
+	var resp historiaResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Estado != string(domain.EstadoCompletada) {
+		t.Errorf("estado = %q, se esperaba %q", resp.Estado, domain.EstadoCompletada)
+	}
+	if resp.FechaFinalizacion == nil || *resp.FechaFinalizacion != fecha.Format(time.DateOnly) {
+		t.Errorf("fecha_finalizacion = %v, se esperaba %s", resp.FechaFinalizacion, fecha.Format(time.DateOnly))
+	}
+}
+
+func TestBacklogHandler_Obtener_CompletadaDeOtroProyecto(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	sprintID := int64(9)
+	fecha := time.Date(2026, 10, 29, 15, 30, 0, 0, time.UTC)
+	historia := domain.BacklogItem{
+		ID: 6, ProyectoID: 2, Titulo: "De otro proyecto", Descripcion: "Completada",
+		Prioridad: domain.PrioridadShould, Estado: domain.EstadoCompletada, SprintID: &sprintID, FechaFinalizacion: &fecha,
+	}
+	repo.historias[6] = historia
+
+	rec := consultarHistoria(handler, "6")
+
+	exigirCuerpoCanonico(t, rec, historia)
+}
+
 func mustJSON(t *testing.T, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)
