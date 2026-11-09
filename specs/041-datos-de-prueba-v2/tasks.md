@@ -64,11 +64,11 @@ description: "Tareas de la spec 041 (datos de prueba v2): TDD con commits por fa
 
 **Independent Test**: tras la carga, `SELECT` sobre `defectos` y el campo `defectos` del resumen.
 
-- [ ] T019 [US4] RED: `internal/demo/bloque_defectos_test.go` — 5 filas con las tres severidades; 3 Resueltos con `sprint_resolucion_id` ≥ el de detección y 2 Pendientes sin él; historia y Sprints del proyecto 25 (FK compuestas); `resumen.Defectos` = 5; `carga_test.go` — JSON del resumen incluye `"defectos":5`; `idempotencia_test.go` — `defectos` en `tablasDeLaCarga` — confirmar que FALLAN
-- [ ] T020 COMMIT `RED: agregar tests del bloque de defectos (falla)`
-- [ ] T021 [US4] GREEN: `internal/demo/bloque_defectos.go` (`NewDefecto`, `Resolver`, INSERT con `creado_en` relativo), `Resumen.Defectos` y `bloqueDefectos` al final de `bloquesDemo` en `carga.go` — adaptar `concurrencia_test.go` (defectos 5) — tests en verde
-- [ ] T022 COMMIT `GREEN: bloque de defectos y conteo en el resumen, test en verde`
-- [ ] T023 REFACTOR (solo si hay algo que limpiar) + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T019 [US4] RED: `internal/demo/bloque_defectos_test.go` — 5 filas con las tres severidades; 3 Resueltos con `sprint_resolucion_id` ≥ el de detección y 2 Pendientes sin él; historia y Sprints del proyecto 25 (FK compuestas); `resumen.Defectos` = 5; `carga_test.go` — JSON del resumen incluye `"defectos":5`; `idempotencia_test.go` — `defectos` en `tablasDeLaCarga` — confirmar que FALLAN
+- [X] T020 COMMIT `RED: agregar tests del bloque de defectos (falla)`
+- [X] T021 [US4] GREEN: `internal/demo/bloque_defectos.go` (`NewDefecto`, `Resolver`, INSERT con `creado_en` relativo), `Resumen.Defectos` y `bloqueDefectos` al final de `bloquesDemo` en `carga.go` — adaptar `concurrencia_test.go` (defectos 5) — tests en verde
+- [X] T022 COMMIT `GREEN: bloque de defectos y conteo en el resumen, test en verde`
+- [X] T023 REFACTOR (solo si hay algo que limpiar) + COMMIT `REFACTOR: <qué se limpió>` (sin cambios: no había nada que limpiar)
 
 **Checkpoint**: la carga completa coincide con [data-model.md](data-model.md).
 
