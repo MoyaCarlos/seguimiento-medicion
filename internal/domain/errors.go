@@ -79,7 +79,6 @@ var (
 )
 
 // Errores de autenticación (HU-20).
-// Errores de autenticación (HU-20).
 var (
 	// ErrCredencialesInvalidas indica un ingreso con usuario o contraseña que no coinciden.
 	ErrCredencialesInvalidas = errors.New("Usuario o contraseña incorrectos")
