@@ -692,3 +692,16 @@ func (f *fakeHistorialSprintRepository) DefectosDeSprint(_ context.Context, _ in
 	f.lecturas++
 	return f.defectos, f.errDefectos
 }
+
+// fakeAvanceHistoriasRepository devuelve las historias sembradas y cuenta las
+// lecturas (HU-18).
+type fakeAvanceHistoriasRepository struct {
+	historias []domain.BacklogItem
+	err       error
+	llamadas  int
+}
+
+func (f *fakeAvanceHistoriasRepository) ListarPorProyecto(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
+	f.llamadas++
+	return f.historias, f.err
+}

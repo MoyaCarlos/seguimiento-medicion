@@ -246,3 +246,70 @@ func TestBacklogItem_ConEstimacion_FueraDeLaBaraja(t *testing.T) {
 		}
 	}
 }
+
+func TestBacklogItem_ConCriteriosAceptacion_Valida(t *testing.T) {
+	original := historiaParaEditar()
+
+	conCriterios, err := original.ConCriteriosAceptacion(strPtr("  Dado, cuando, entonces  "))
+	if err != nil {
+		t.Fatalf("no se esperaba error, se obtuvo %v", err)
+	}
+	if conCriterios.CriteriosAceptacion == nil || *conCriterios.CriteriosAceptacion != "Dado, cuando, entonces" {
+		t.Errorf("se esperaban los criterios normalizados, se obtuvo %v", conCriterios.CriteriosAceptacion)
+	}
+	if conCriterios.ID != original.ID || conCriterios.Titulo != original.Titulo || conCriterios.Descripcion != original.Descripcion ||
+		conCriterios.Prioridad != original.Prioridad || conCriterios.Estado != original.Estado ||
+		conCriterios.ValorNegocio != original.ValorNegocio || conCriterios.EstimacionSP != original.EstimacionSP ||
+		conCriterios.SprintID != original.SprintID {
+		t.Errorf("se modificaron campos que no correspondían: %+v", conCriterios)
+	}
+	if original.CriteriosAceptacion != nil {
+		t.Errorf("la historia original no debía cambiar, quedó con %q", *original.CriteriosAceptacion)
+	}
+}
+
+func TestBacklogItem_ConCriteriosAceptacion_OpcionalesVacios(t *testing.T) {
+	for _, criterios := range []*string{nil, strPtr(""), strPtr("   ")} {
+		conCriterios, err := historiaParaEditar().ConCriteriosAceptacion(criterios)
+		if err != nil {
+			t.Fatalf("no se esperaba error, se obtuvo %v", err)
+		}
+		if conCriterios.CriteriosAceptacion != nil {
+			t.Errorf("se esperaban criterios vacíos (nil), se obtuvo %q", *conCriterios.CriteriosAceptacion)
+		}
+	}
+}
+
+func TestBacklogItem_ConCriteriosAceptacion_Limite(t *testing.T) {
+	enElLimite := strings.Repeat("a", 2000)
+	conCriterios, err := historiaParaEditar().ConCriteriosAceptacion(&enElLimite)
+	if err != nil {
+		t.Fatalf("2000 caracteres debería aceptarse, se obtuvo %v", err)
+	}
+	if conCriterios.CriteriosAceptacion == nil || *conCriterios.CriteriosAceptacion != enElLimite {
+		t.Errorf("se esperaban los 2000 caracteres, se obtuvo %v", conCriterios.CriteriosAceptacion)
+	}
+
+	demasiadoLargo := " " + strings.Repeat("a", 2001) + " "
+	_, err = historiaParaEditar().ConCriteriosAceptacion(&demasiadoLargo)
+	var verr ValidationError
+	if !errors.As(err, &verr) {
+		t.Fatalf("se esperaba ValidationError, se obtuvo %v", err)
+	}
+	if verr.Campo != "criterios_aceptacion" || verr.Mensaje != "los criterios de aceptación no pueden superar los 2000 caracteres" {
+		t.Errorf("se esperaba el error de criterios, se obtuvo %q/%q", verr.Campo, verr.Mensaje)
+	}
+}
+
+func TestBacklogItem_ConCriteriosAceptacion_InvalidaNoModificaLaOriginal(t *testing.T) {
+	original := historiaParaEditar()
+	original.CriteriosAceptacion = strPtr("Vigentes")
+	demasiadoLargo := strings.Repeat("a", 2001)
+
+	if _, err := original.ConCriteriosAceptacion(&demasiadoLargo); err == nil {
+		t.Fatalf("se esperaba un error de validación")
+	}
+	if original.CriteriosAceptacion == nil || *original.CriteriosAceptacion != "Vigentes" {
+		t.Errorf("la historia original fue modificada: %v", original.CriteriosAceptacion)
+	}
+}

@@ -9,6 +9,7 @@ import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { crearHistoria } from './api'
 import { ESTADO_INICIAL, armarCuerpo, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
+import { Markdown } from './Markdown'
 import { PRIORIDADES, VALORES_NEGOCIO, etiquetaPrioridad } from './opciones'
 import './backlog.css'
 
@@ -29,6 +30,10 @@ export function Component() {
 
   function cambiarDescripcion(evento: ChangeEvent<HTMLTextAreaElement>) {
     setFormulario((actual) => ({ ...actual, descripcion: evento.target.value }))
+  }
+
+  function cambiarCriterios(evento: ChangeEvent<HTMLTextAreaElement>) {
+    setFormulario((actual) => ({ ...actual, criterios: evento.target.value }))
   }
 
   function cambiarPrioridad(evento: ChangeEvent<HTMLSelectElement>) {
@@ -130,6 +135,22 @@ export function Component() {
           </div>
 
           <div className="field">
+            <label htmlFor="criterios">Criterios de aceptación</label>
+            <textarea
+              id="criterios"
+              name="criterios"
+              value={formulario.criterios}
+              onChange={cambiarCriterios}
+              disabled={deshabilitado}
+              aria-invalid={Boolean(errores.criterios)}
+              aria-describedby={errores.criterios ? 'criterios-error' : undefined}
+            />
+            {errores.criterios && (
+              <ErrorMessage id="criterios-error" message={errores.criterios} />
+            )}
+          </div>
+
+          <div className="field">
             <label htmlFor="prioridad">Prioridad</label>
             <select
               id="prioridad"
@@ -204,6 +225,14 @@ export function Component() {
               </>
             )}
           </dl>
+          <div className="backlog-confirmacion__criterios">
+            <h3>Criterios de aceptación</h3>
+            {confirmacion.criterios_aceptacion ? (
+              <Markdown texto={confirmacion.criterios_aceptacion} />
+            ) : (
+              <p>Sin criterios de aceptación</p>
+            )}
+          </div>
         </section>
       )}
     </section>
