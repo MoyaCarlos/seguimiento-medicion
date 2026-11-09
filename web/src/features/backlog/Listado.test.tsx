@@ -427,6 +427,19 @@ describe('casos límite del listado y la edición', () => {
     expect(await screen.findByText('Historia actualizada')).toBeTruthy()
     expect(fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))).toHaveLength(2)
   })
+
+  it('Defensa: dos envíos seguidos del formulario de edición llaman a la API una sola vez', async () => {
+    const fetchSimulado = simularApi(conHistorias(MUST), () => new Promise<Response>(() => {}))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+
+    const formulario = screen.getByRole('form', { name: `Editar ${MUST.titulo}` })
+    fireEvent.submit(formulario)
+    fireEvent.submit(formulario)
+
+    expect(fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))).toHaveLength(1)
+  })
 })
 
 const SPRINTS = [
