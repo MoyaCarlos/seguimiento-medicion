@@ -86,8 +86,8 @@ Formato: `[ID] [US] Descripción`. Rutas reales según plan.md.
 
 **Goal**: los 4 escenarios Godog, escritos al final para no romper `TestFeatures`.
 
-- [ ] T023 [US1][US2][US3] `features/scrum_master_unico.feature` (Gherkin en español, tag `@HU-04`, Característica con el Como/Quiero/Para de la spec) con 4 escenarios: crear un proyecto deja un único Scrum Master; agregar un segundo Scrum Master (409 y lista sin cambios); agregar un Product Builder (éxito); el índice rechaza un segundo Scrum Master insertado por fuera del dominio. Pasos en `features/steps_scrum_master_unico.go` (siguiendo el patrón de `steps_creacion.go`) y registro en `features/features_test.go`. `go test ./features/` en verde
-- [ ] T024 COMMIT `Agregar escenarios BDD del Scrum Master único`
+- [x] T023 [US1][US2][US3] `features/scrum_master_unico.feature` (Gherkin en español, tag `@HU-04`, Característica con el Como/Quiero/Para de la spec) con 4 escenarios: crear un proyecto deja un único Scrum Master; agregar un segundo Scrum Master (409 y lista sin cambios); agregar un Product Builder (éxito); el índice rechaza un segundo Scrum Master insertado por fuera del dominio. Pasos en `features/steps_scrum_master_unico.go` (siguiendo el patrón de `steps_creacion.go`) y registro en `features/features_test.go`. `go test ./features/` en verde
+- [x] T024 COMMIT `Agregar escenarios BDD del Scrum Master único`
 
 ---
 
