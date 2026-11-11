@@ -32,6 +32,7 @@ type sesionDeEscenario struct {
 	db     *sql.DB
 	mux    *http.ServeMux
 	tokens map[string]string
+	ids    map[string]int64
 	ahora  time.Time
 }
 
@@ -39,6 +40,7 @@ func (s *sesionDeEscenario) reiniciar() {
 	s.cerrar()
 	s.nombre = ""
 	s.tokens = map[string]string{}
+	s.ids = map[string]int64{}
 	s.ahora = time.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)
 }
 
@@ -103,21 +105,38 @@ func (s *sesionDeEscenario) token(nombre string) (string, error) {
 		return "", fmt.Errorf("no se pudo iniciar la sesión de %q: %d %s", nombre, rec.Code, rec.Body.String())
 	}
 	var resp struct {
-		Token string `json:"token"`
+		Token   string `json:"token"`
+		Usuario struct {
+			ID int64 `json:"id"`
+		} `json:"usuario"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil || resp.Token == "" {
 		return "", fmt.Errorf("respuesta de sesión inválida para %q: %s", nombre, rec.Body.String())
 	}
 	s.tokens[nombre] = resp.Token
+	s.ids[nombre] = resp.Usuario.ID
 	return resp.Token, nil
+}
+
+// idDe devuelve el id de usuario de nombre, registrándolo si hace falta.
+func (s *sesionDeEscenario) idDe(nombre string) (int64, error) {
+	if _, err := s.token(nombre); err != nil {
+		return 0, err
+	}
+	return s.ids[nombre], nil
 }
 
 // peticion llama a la API con la sesión de quien actúa; sin sesión iniciada
 // la petición viaja sin cabecera Authorization.
 func (s *sesionDeEscenario) peticion(metodo, ruta string, cuerpo any) (*httptest.ResponseRecorder, error) {
+	return s.peticionDe(s.nombre, metodo, ruta, cuerpo)
+}
+
+// peticionDe llama a la API con la sesión de nombre (vacío: sin sesión).
+func (s *sesionDeEscenario) peticionDe(nombre, metodo, ruta string, cuerpo any) (*httptest.ResponseRecorder, error) {
 	autorizacion := ""
-	if s.nombre != "" {
-		t, err := s.token(s.nombre)
+	if nombre != "" {
+		t, err := s.token(nombre)
 		if err != nil {
 			return nil, err
 		}

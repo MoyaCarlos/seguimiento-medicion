@@ -36,7 +36,7 @@ Característica: Permisos por rol (segregación de funciones)
   Escenario: 3. Sin sesión
     Dado que no inicié sesión
     Cuando consulto mis proyectos
-    Entonces el sistema responde 401
+    Entonces el sistema rechaza la petición con 401
 
   Escenario: 4. No integrante
     Dado que "diego" tiene cuenta y no integra "Tienda"
@@ -53,7 +53,7 @@ Característica: Permisos por rol (segregación de funciones)
     Dado que inicié sesión como "ana"
     Y que "carla" tiene cuenta
     Cuando agrego a "carla" al equipo de "Tienda" como "scrum_master"
-    Entonces el sistema responde 409
+    Entonces el sistema rechaza la petición con 409
     Y "Tienda" sigue teniendo a "ana" como único Scrum Master
 
   Escenario: 7. Identidad de la sesión
