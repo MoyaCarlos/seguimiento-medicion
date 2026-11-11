@@ -14,7 +14,7 @@ func TestFeatures(t *testing.T) {
 			sc := InitializeScenario(ctx)                       // HU-01 (+ HU-05)
 			proyecto := InitializeScenarioProyecto(ctx, sesion) // HU-04
 			InitializeScenarioScrumMasterUnico(ctx, proyecto)   // #236
-			InitializeScenarioListado(ctx)                      // HU-04 (listado)
+			InitializeScenarioListado(ctx, sesion)              // HU-04 (listado)
 			InitializeScenarioEstado(ctx, sc)                   // HU-13
 			InitializeScenarioBacklog(ctx, sc)                  // HU-15
 			InitializeScenarioConsultarSprints(ctx)             // HU-05 (consulta)

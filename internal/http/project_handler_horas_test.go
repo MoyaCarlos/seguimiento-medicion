@@ -132,7 +132,7 @@ func TestProjectHandler_ElParametroEsNullSiNoEstaDefinido(t *testing.T) {
 	}
 
 	listado := httptest.NewRecorder()
-	handler.Listar(listado, httptest.NewRequest(nethttp.MethodGet, "/projects", nil))
+	handler.Listar(listado, conSesionDe(httptest.NewRequest(nethttp.MethodGet, "/projects", nil), anaDePrueba))
 	if !bytes.Contains(listado.Body.Bytes(), []byte(`"horas_por_story_point":null`)) {
 		t.Errorf("el listado no incluye el parámetro: %s", listado.Body.String())
 	}

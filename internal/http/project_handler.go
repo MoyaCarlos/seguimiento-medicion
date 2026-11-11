@@ -42,16 +42,22 @@ func NewProjectHandler(
 	}
 }
 
-// Listar atiende GET /projects.
+// Listar atiende GET /projects: los proyectos de la sesión, con su rol (HU-21).
 func (h *ProjectHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	proyectos, err := h.listarProyectos.Ejecutar(r.Context())
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	proyectos, err := h.listarProyectos.Ejecutar(r.Context(), actor)
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 	respuesta := make([]proyectoResponse, 0, len(proyectos))
-	for _, proyecto := range proyectos {
-		respuesta = append(respuesta, aProyectoResponse(proyecto))
+	for _, p := range proyectos {
+		proyecto := aProyectoResponse(p.Proyecto)
+		proyecto.Rol = string(p.Rol)
+		respuesta = append(respuesta, proyecto)
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
@@ -102,12 +108,14 @@ func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escribirError(w, err)
 		return
 	}
-	proyecto, _, err := h.obtener.ComoIntegrante(r.Context(), id, actor)
+	proyecto, rol, err := h.obtener.ComoIntegrante(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusOK, aProyectoResponse(proyecto))
+	respuesta := aProyectoResponse(proyecto)
+	respuesta.Rol = string(rol)
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // ObtenerEstado atiende GET /projects/{id}/status.
