@@ -15,7 +15,7 @@ func editarProyectoViaHTTP(handler *ProjectHandler, id int64, cuerpo string) *ht
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPut, "/projects/"+idStr, bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -25,7 +25,7 @@ func horasDelProyecto(t *testing.T, handler *ProjectHandler, id int64) any {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+idStr, nil)
 	req.SetPathValue("id", idStr)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != nethttp.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}
@@ -126,13 +126,13 @@ func TestProjectHandler_ElParametroEsNullSiNoEstaDefinido(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 
 	alta := httptest.NewRecorder()
-	handler.Crear(alta, httptest.NewRequest(nethttp.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Nuevo","creador":"Ana"}`)))
+	handler.Crear(alta, conSesionDe(httptest.NewRequest(nethttp.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Nuevo"}`)), anaDePrueba))
 	if horas, existe := cuerpoJSON(t, alta)["horas_por_story_point"]; !existe || horas != nil {
 		t.Errorf("el alta: se esperaba null, se obtuvo %v (existe: %v)", horas, existe)
 	}
 
 	listado := httptest.NewRecorder()
-	handler.Listar(listado, httptest.NewRequest(nethttp.MethodGet, "/projects", nil))
+	handler.Listar(listado, conSesionDe(httptest.NewRequest(nethttp.MethodGet, "/projects", nil), anaDePrueba))
 	if !bytes.Contains(listado.Body.Bytes(), []byte(`"horas_por_story_point":null`)) {
 		t.Errorf("el listado no incluye el parámetro: %s", listado.Body.String())
 	}

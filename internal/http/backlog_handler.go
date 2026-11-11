@@ -39,6 +39,10 @@ func NewBacklogHandler(
 
 // Crear atiende POST /backlog.
 func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	var req crearHistoriaRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
@@ -46,6 +50,7 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	item, err := h.crearHistoria.Ejecutar(r.Context(), service.CrearHistoriaInput{
+		UsuarioID:           actor,
 		ProyectoID:          req.ProyectoID,
 		Titulo:              req.Titulo,
 		Descripcion:         req.Descripcion,
@@ -98,6 +103,10 @@ func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Editar atiende PUT /backlog/{id}.
 func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -139,6 +148,7 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 
 	item, err := h.editarHistoria.Ejecutar(r.Context(), service.EditarHistoriaInput{
+		UsuarioID:           actor,
 		ID:                  id,
 		Titulo:              req.Titulo,
 		Descripcion:         req.Descripcion,
@@ -154,6 +164,10 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // AsignarSprint atiende PUT /backlog/{id}/sprint.
 func (h *BacklogHandler) AsignarSprint(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -176,7 +190,7 @@ func (h *BacklogHandler) AsignarSprint(w nethttp.ResponseWriter, r *nethttp.Requ
 		return
 	}
 
-	item, err := h.asignarSprint.Ejecutar(r.Context(), id, *req.SprintID)
+	item, err := h.asignarSprint.Ejecutar(r.Context(), id, *req.SprintID, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -186,6 +200,10 @@ func (h *BacklogHandler) AsignarSprint(w nethttp.ResponseWriter, r *nethttp.Requ
 
 // CambiarEstado atiende PUT /backlog/{id}/estado.
 func (h *BacklogHandler) CambiarEstado(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -208,7 +226,7 @@ func (h *BacklogHandler) CambiarEstado(w nethttp.ResponseWriter, r *nethttp.Requ
 		return
 	}
 
-	item, err := h.cambiarEstado.Ejecutar(r.Context(), id, domain.Estado(req.Estado))
+	item, err := h.cambiarEstado.Ejecutar(r.Context(), id, actor, domain.Estado(req.Estado))
 	if err != nil {
 		escribirError(w, err)
 		return

@@ -64,15 +64,15 @@ type escenarioDefectosHTTP struct {
 // "Carrito de compras" del proyecto 1. Los Sprints los agrega cada test.
 func nuevoEscenarioDefectosHTTP() escenarioDefectosHTTP {
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}, 2: {ID: 2}}}
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}, 2: {ID: 2}}, miembros: anaIntegra(1, 2)}
 	historias := &stubBacklogRepository{historias: map[int64]domain.BacklogItem{
 		3: {ID: 3, ProyectoID: 1, Titulo: "Carrito de compras", Estado: domain.EstadoNueva},
 	}}
 	defectos := &stubDefectoRepository{}
 	handler := NewDefectoHandler(
 		service.NewObtenerProyecto(proyectos),
-		service.NewRegistrarDefecto(sprints, historias, defectos),
-		service.NewResolverDefecto(defectos, sprints),
+		service.NewRegistrarDefecto(sprints, historias, defectos, proyectos),
+		service.NewResolverDefecto(defectos, sprints, proyectos),
 		service.NewListarDefectos(proyectos, defectos),
 	)
 	return escenarioDefectosHTTP{handler: handler, sprints: sprints, defectos: defectos}
@@ -92,7 +92,7 @@ func (e escenarioDefectosHTTP) registrar(id, cuerpo string) *httptest.ResponseRe
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Registrar(rec, req)
+	e.handler.Registrar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -193,7 +193,7 @@ func (e escenarioDefectosHTTP) resolver(id string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(nethttp.MethodPost, "/defectos/"+id+"/resolver", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Resolver(rec, req)
+	e.handler.Resolver(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

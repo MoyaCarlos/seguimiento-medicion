@@ -10,11 +10,11 @@ import (
 
 // imputarHorasRequest lee horas como json.RawMessage para pasar su texto al
 // dominio sin float64 y sin que un string rompa el Unmarshal (research.md R3).
+// Quien carga las horas sale de la sesión (HU-21), no del cuerpo.
 type imputarHorasRequest struct {
-	IntegranteID int64           `json:"integrante_id"`
-	Fecha        string          `json:"fecha"`
-	Actividad    string          `json:"actividad"`
-	Horas        json.RawMessage `json:"horas"`
+	Fecha     string          `json:"fecha"`
+	Actividad string          `json:"actividad"`
+	Horas     json.RawMessage `json:"horas"`
 }
 
 type registroHorasResponse struct {

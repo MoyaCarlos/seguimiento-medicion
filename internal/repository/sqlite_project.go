@@ -91,27 +91,45 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 	return escanearProyecto(row)
 }
 
-// Listar devuelve todos los proyectos ordenados por id.
-func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project, error) {
+// ListarPorIntegrante devuelve los proyectos que integra usuarioID con el rol
+// de su fila en integrantes, ordenados por id.
+func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos ORDER BY id`)
+		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, i.rol
+		 FROM proyectos p
+		 JOIN integrantes i ON i.proyecto_id = p.id
+		 WHERE i.usuario_id = ?
+		 ORDER BY p.id`,
+		usuarioID,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("listar proyectos: %w", err)
+		return nil, fmt.Errorf("listar proyectos del integrante: %w", err)
 	}
 	defer filas.Close()
 
-	proyectos := make([]domain.Project, 0)
+	proyectos := make([]domain.ProyectoConRol, 0)
 	for filas.Next() {
-		p, err := escanearProyecto(filas)
+		var rol domain.Role
+		p, err := escanearProyecto(conRol{filas, &rol})
 		if err != nil {
 			return nil, err
 		}
-		proyectos = append(proyectos, p)
+		proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: p, Rol: rol})
 	}
 	if err := filas.Err(); err != nil {
-		return nil, fmt.Errorf("listar proyectos: %w", err)
+		return nil, fmt.Errorf("listar proyectos del integrante: %w", err)
 	}
 	return proyectos, nil
+}
+
+// conRol lee, después de las columnas del proyecto, el rol del integrante.
+type conRol struct {
+	fila escaneable
+	rol  *domain.Role
+}
+
+func (c conRol) Scan(destinos ...any) error {
+	return c.fila.Scan(append(destinos, c.rol)...)
 }
 
 // Actualizar reemplaza los datos editables del proyecto.

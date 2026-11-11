@@ -20,6 +20,8 @@ type proyectoContext struct {
 	obtener  *service.ObtenerProyecto
 	editar   *service.EditarProyecto
 	asignar  *service.AsignarIntegrante
+	usuarios repository.UserRepository
+	sesion   *sesionDeEscenario
 	proyecto domain.Project
 	err      error
 }
@@ -36,10 +38,11 @@ func (c *proyectoContext) iniciar() error {
 
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	usuarios := repository.NewSQLiteUserRepository(db)
-	c.crear = service.NewCrearProyecto(proyectos, usuarios)
+	c.crear = service.NewCrearProyecto(proyectos)
+	c.usuarios = usuarios
 	c.obtener = service.NewObtenerProyecto(proyectos)
 	c.editar = service.NewEditarProyecto(proyectos)
-	c.asignar = service.NewAsignarIntegrante(proyectos, usuarios)
+	c.asignar = service.NewAsignarIntegrante(proyectos, repository.NewSQLiteCredencialRepository(db))
 	c.proyecto = domain.Project{}
 	c.err = nil
 	return nil
@@ -48,12 +51,34 @@ func (c *proyectoContext) iniciar() error {
 func (c *proyectoContext) enPantallaPrincipal() error { return nil }
 
 func (c *proyectoContext) crearProyectoValido(nombre string) error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	c.proyecto, c.err = c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
 		Nombre:      nombre,
 		Descripcion: "Sistema de estimación, seguimiento y medición",
-		Creador:     "Ana Valentina",
+		CreadorID:   creador,
 	})
 	return nil
+}
+
+// creadorDeLaSesion devuelve el id de quien inició sesión en el escenario
+// (HU-21), con su usuario en la base del contexto.
+func (c *proyectoContext) creadorDeLaSesion() (int64, error) {
+	nombre := c.sesion.actor()
+	if nombre == "" {
+		return 0, errors.New("el escenario no inició sesión: falta «Dado que inicié sesión como \"X\"»")
+	}
+	usuario, err := domain.NewUser(nombre)
+	if err != nil {
+		return 0, err
+	}
+	if existente, err := c.usuarios.ObtenerPorNombreNormalizado(context.Background(), usuario.NombreNormalizado); err == nil {
+		return existente.ID, nil
+	}
+	guardado, err := c.usuarios.Guardar(context.Background(), usuario)
+	return guardado.ID, err
 }
 
 func (c *proyectoContext) proyectoPersistido() error {
@@ -85,9 +110,13 @@ func (c *proyectoContext) habilitaPanel() error { return nil }
 func (c *proyectoContext) intentoCrearProyecto() error { return nil }
 
 func (c *proyectoContext) crearProyectoNombreVacio() error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	c.proyecto, c.err = c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
-		Nombre:  "   ",
-		Creador: "Ana",
+		Nombre:    "   ",
+		CreadorID: creador,
 	})
 	return nil
 }
@@ -112,10 +141,14 @@ func (c *proyectoContext) noGeneraProyecto() error {
 }
 
 func (c *proyectoContext) existeProyectoCreado() error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	proyecto, err := c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
 		Nombre:      "Proyecto base",
 		Descripcion: "descripción base",
-		Creador:     "Scrum Master",
+		CreadorID:   creador,
 	})
 	if err != nil {
 		return err
@@ -126,11 +159,24 @@ func (c *proyectoContext) existeProyectoCreado() error {
 
 func (c *proyectoContext) enConfiguracion() error { return nil }
 
+// tieneCuentaRegistrada registra a la persona con el mismo servicio que atiende
+// POST /auth/registro (HU-21: el equipo se arma solo con usuarios registrados).
+func (c *proyectoContext) tieneCuentaRegistrada(nombre string) error {
+	registrar := service.NewRegistrarUsuario(
+		repository.NewSQLiteCredencialRepository(c.db),
+		service.NewServicioContrasenas(iteracionesDePruebaAutenticacion),
+		service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(c.db), time.Now),
+	)
+	_, err := registrar.Ejecutar(context.Background(), nombre, contrasenaDeEscenario)
+	return err
+}
+
 func (c *proyectoContext) asignarProductBuilder() error {
 	_, c.err = c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
-		Nombre:     "Jimena Martinez",
+		Nombre:     "jimena.martinez",
 		Rol:        domain.RolProductBuilder,
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -163,11 +209,13 @@ func (c *proyectoContext) asignarInvalido() error {
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "",
 		Rol:        domain.RolProductBuilder,
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	_, errRol := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
-		Nombre:     "Jimena Martinez",
+		Nombre:     "jimena.martinez",
 		Rol:        domain.Role("Product Owner"),
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	var vNombre, vRol domain.ValidationError
 	if !errors.As(errNombre, &vNombre) || vNombre.Campo != "nombre" {
@@ -223,6 +271,7 @@ func (c *proyectoContext) editarValido() error {
 		Descripcion: "descripción corregida",
 		FechaInicio: &inicio,
 		FechaFin:    &fin,
+		UsuarioID:   scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -252,8 +301,9 @@ func (c *proyectoContext) persisteCambios() error {
 
 func (c *proyectoContext) editarNombreVacio() error {
 	_, c.err = c.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
-		ID:     c.proyecto.ID,
-		Nombre: "   ",
+		ID:        c.proyecto.ID,
+		Nombre:    "   ",
+		UsuarioID: scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -269,6 +319,7 @@ func (c *proyectoContext) editarFechaInvalida(relacion string) error {
 		Nombre:      "Proyecto base",
 		FechaInicio: &inicio,
 		FechaFin:    &fin,
+		UsuarioID:   scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -294,8 +345,8 @@ func (c *proyectoContext) permaneceSinModificaciones() error {
 }
 
 // InitializeScenarioProyecto registra los pasos de los escenarios de HU-04.
-func InitializeScenarioProyecto(ctx *godog.ScenarioContext) *proyectoContext {
-	pc := &proyectoContext{}
+func InitializeScenarioProyecto(ctx *godog.ScenarioContext, sesion *sesionDeEscenario) *proyectoContext {
+	pc := &proyectoContext{sesion: sesion}
 
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		if pc.db != nil {
@@ -323,6 +374,7 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext) *proyectoContext {
 	ctx.Step(`^no genera el proyecto$`, pc.noGeneraProyecto)
 	ctx.Step(`^que existe un proyecto creado$`, pc.existeProyectoCreado)
 	ctx.Step(`^estoy en la vista de configuración del proyecto$`, pc.enConfiguracion)
+	ctx.Step(`^"([^"]*)" tiene una cuenta registrada$`, pc.tieneCuentaRegistrada)
 	ctx.Step(`^ingreso el nombre de un integrante, selecciono su rol "Product Builder" y confirmo$`, pc.asignarProductBuilder)
 	ctx.Step(`^el sistema vincula al integrante con el proyecto$`, pc.vinculaIntegrante)
 	ctx.Step(`^le habilita los permisos correspondientes a su rol$`, pc.habilitaPermisos)

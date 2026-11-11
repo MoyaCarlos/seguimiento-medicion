@@ -193,32 +193,19 @@ describe('registro de rutas', () => {
   })
 
   describe('inicio con datos de prueba', () => {
-    it('el aviso de datos ya cargados queda junto a los botones, en el último bloque de la tarjeta del formulario', async () => {
+    it('la pantalla de crear proyecto no ofrece el botón «Cargar datos de prueba»', async () => {
       const respuestaBase = vi.mocked(fetch).getMockImplementation()!
-      vi.stubGlobal(
-        'fetch',
-        vi.fn((url: string, init?: RequestInit) => {
-          if (url === '/demo/estado') return Promise.resolve(new Response('{"habilitado":true}', { status: 200 }))
-          if (url === '/demo/datos' && init?.method === 'POST') {
-            return Promise.resolve(new Response(
-              JSON.stringify({ campo: 'ya_cargado', mensaje: 'los datos de prueba ya están cargados' }),
-              { status: 409 },
-            ))
-          }
-          return Promise.resolve(respuestaBase(url, init))
-        }),
-      )
-      const usuario = userEvent.setup()
+      const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+        if (url === '/demo/estado') return Promise.resolve(new Response('{"habilitado":true}', { status: 200 }))
+        return Promise.resolve(respuestaBase(url, init))
+      })
+      vi.stubGlobal('fetch', fetchMock)
       abrir('/')
 
-      const botonDemo = await screen.findByRole('button', { name: 'Cargar datos de prueba' }, { timeout: 5000 })
-      await usuario.click(botonDemo)
-      const aviso = await screen.findByText(/los datos de prueba ya están cargados/)
+      await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+      await new Promise((resolver) => setTimeout(resolver, 50))
 
-      const botonCrear = screen.getByRole('button', { name: 'Crear proyecto' })
-      const tarjeta = botonCrear.closest('section')
-      expect(tarjeta?.lastElementChild).toBe(botonDemo.parentElement)
-      expect(botonDemo.parentElement?.contains(aviso)).toBe(true)
+      expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).toBeNull()
     })
   })
 

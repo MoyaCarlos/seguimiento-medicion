@@ -130,13 +130,14 @@ func TestImputarHoras_Rechazos(t *testing.T) {
 			entradaValida(2, "1"), domain.ErrHistoriaFueraDelSprintActivo},
 		{"historia en un Sprint Finalizado", func(t *testing.T, e escenarioImputar) { e.moverHistoriaA(t, domain.SprintFinalizado) },
 			entradaValida(2, "1"), domain.ErrHistoriaFueraDelSprintActivo},
-		{"integrante de otro proyecto", nil, entradaValida(9, "1"), domain.ErrIntegranteAjeno},
-		{"integrante inexistente", nil, entradaValida(99, "1"), domain.ErrIntegranteAjeno},
+		{"integrante de otro proyecto", nil, entradaValida(9, "1"), domain.ErrNoEsIntegrante},
+		{"integrante inexistente", nil, entradaValida(99, "1"), domain.ErrNoEsIntegrante},
 		{"horas inválidas", nil, entradaValida(2, "0"),
 			domain.ValidationError{Campo: "horas", Mensaje: "las horas deben ser mayores que cero"}},
+		// HU-21: la pertenencia (403) va antes que las validaciones de la carga (400).
 		{"fuera del Sprint, integrante ajeno y horas inválidas", func(_ *testing.T, e escenarioImputar) { e.sacarHistoriaDelSprint() },
-			entradaValida(99, "0"), domain.ErrHistoriaFueraDelSprintActivo},
-		{"integrante ajeno y horas inválidas", nil, entradaValida(99, "0"), domain.ErrIntegranteAjeno},
+			entradaValida(99, "0"), domain.ErrNoEsIntegrante},
+		{"integrante ajeno y horas inválidas", nil, entradaValida(99, "0"), domain.ErrNoEsIntegrante},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {

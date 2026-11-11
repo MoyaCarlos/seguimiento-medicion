@@ -85,21 +85,21 @@ func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 		historias: map[int64]domain.BacklogItem{},
 		sprints:   repository.NewSprintRepositoryEnMemoria(),
 	}
-	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}, miembros: anaIntegra(1)}
 	return NewBacklogHandler(
 		service.NewCrearHistoriaBacklog(repo, proyectos),
 		service.NewConsultarProductBacklog(proyectos, repo),
 		service.NewObtenerHistoria(repo),
-		service.NewEditarHistoria(repo, repo.sprints),
-		service.NewAsignarHistoriaASprint(repo, repo.sprints),
-		service.NewCambiarEstadoHistoria(repo, repo.sprints, relojDePrueba),
+		service.NewEditarHistoria(repo, repo.sprints, proyectos),
+		service.NewAsignarHistoriaASprint(repo, repo.sprints, proyectos),
+		service.NewCambiarEstadoHistoria(repo, repo.sprints, relojDePrueba, proyectos),
 	), repo
 }
 
 func construirPeticion(cuerpo string) *nethttp.Request {
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
-	return req
+	return conSesionDe(req, anaDePrueba)
 }
 
 func TestBacklogHandler_Crear_Exitosa(t *testing.T) {
@@ -615,7 +615,7 @@ func editarHistoria(handler *BacklogHandler, id, cuerpo string) *httptest.Respon
 	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id, bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -778,7 +778,7 @@ func asignarSprint(handler *BacklogHandler, id, cuerpo string) *httptest.Respons
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id+"/sprint", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
-	mux.ServeHTTP(rec, req)
+	mux.ServeHTTP(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -926,7 +926,7 @@ func cambiarEstado(handler *BacklogHandler, id, cuerpo string) *httptest.Respons
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPut, "/backlog/"+id+"/estado", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
-	mux.ServeHTTP(rec, req)
+	mux.ServeHTTP(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

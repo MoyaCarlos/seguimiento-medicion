@@ -15,7 +15,7 @@ func sembrarProyecto(t *testing.T, repo repository.ProjectRepository) domain.Pro
 	if err != nil {
 		t.Fatalf("no se esperaba error de dominio: %v", err)
 	}
-	guardado, err := repo.Guardar(context.Background(), p)
+	guardado, err := repo.GuardarConScrumMaster(context.Background(), p, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error al sembrar el proyecto: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestCrearSprint_Exitoso(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	proyecto := sembrarProyecto(t, proyectos)
 
-	creado, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID)
+	creado, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -42,7 +42,7 @@ func TestCrearSprint_Exitoso(t *testing.T) {
 func TestCrearSprint_ProyectoInexistente(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 
-	_, err := NewCrearSprint(repository.NewProjectRepositoryEnMemoria(), sprints).Ejecutar(context.Background(), 999)
+	_, err := NewCrearSprint(repository.NewProjectRepositoryEnMemoria(), sprints).Ejecutar(context.Background(), 999, actorDePrueba)
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
@@ -61,7 +61,7 @@ func TestCrearSprint_RechazaSegundoPendiente(t *testing.T) {
 	proyecto := sembrarProyecto(t, proyectos)
 	sembrarSprintPendiente(t, sprints, proyecto.ID)
 
-	_, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID)
+	_, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID, actorDePrueba)
 	esperarValidacion(t, err, "estado")
 
 	delProyecto, err := sprints.ListarPorProyecto(context.Background(), proyecto.ID)
@@ -78,11 +78,11 @@ func TestCrearSprint_PermitePendienteSiElOtroEstaActivo(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	proyecto := sembrarProyecto(t, proyectos)
 	activo := sembrarSprintPendiente(t, sprints, proyecto.ID)
-	if _, err := NewIniciarSprint(sprints).Ejecutar(context.Background(), inputValido(activo.ID)); err != nil {
+	if _, err := NewIniciarSprint(sprints, scrumMasterConActor{}).Ejecutar(context.Background(), inputValido(activo.ID)); err != nil {
 		t.Fatalf("no se esperaba error al iniciar: %v", err)
 	}
 
-	if _, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID); err != nil {
+	if _, err := NewCrearSprint(proyectos, sprints).Ejecutar(context.Background(), proyecto.ID, actorDePrueba); err != nil {
 		t.Fatalf("con un Sprint Activo se debe poder preparar el siguiente: %v", err)
 	}
 }

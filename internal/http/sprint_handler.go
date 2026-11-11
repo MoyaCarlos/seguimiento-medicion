@@ -64,12 +64,16 @@ func (h *SprintHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Re
 
 // Crear atiende POST /sprints.
 func (h *SprintHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	var req crearSprintRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return
 	}
-	sprint, err := h.crear.Ejecutar(r.Context(), req.ProyectoID)
+	sprint, err := h.crear.Ejecutar(r.Context(), req.ProyectoID, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -79,12 +83,17 @@ func (h *SprintHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Iniciar atiende POST /sprints/{id}/iniciar.
 func (h *SprintHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := idDeRuta(w, r)
 	if !ok {
 		return
 	}
-	// El Sprint inexistente domina (404) sobre cualquier validación del cuerpo.
-	if _, err := h.sprints.ObtenerPorID(r.Context(), id); err != nil {
+	// El Sprint inexistente (404) y el permiso (403) dominan sobre cualquier
+	// validación del cuerpo.
+	if err := h.iniciar.Autorizar(r.Context(), id, actor); err != nil {
 		escribirError(w, err)
 		return
 	}
@@ -107,6 +116,7 @@ func (h *SprintHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		SprintGoal:  req.SprintGoal,
 		FechaInicio: inicio,
 		FechaFin:    fin,
+		UsuarioID:   actor,
 	})
 	if err != nil {
 		escribirError(w, err)
@@ -117,11 +127,15 @@ func (h *SprintHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Cerrar atiende POST /sprints/{id}/cerrar.
 func (h *SprintHandler) Cerrar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := idDeRuta(w, r)
 	if !ok {
 		return
 	}
-	sprint, err := h.cerrar.Ejecutar(r.Context(), id)
+	sprint, err := h.cerrar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -155,7 +169,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
 	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado),
 		errors.Is(err, domain.ErrHistoriaNoEncontrada), errors.Is(err, domain.ErrVotacionNoIniciada),
-		errors.Is(err, domain.ErrDefectoNoEncontrado):
+		errors.Is(err, domain.ErrDefectoNoEncontrado), errors.Is(err, domain.ErrUsuarioNoEncontrado):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})

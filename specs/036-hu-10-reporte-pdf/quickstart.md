@@ -25,16 +25,18 @@ go test ./features/...        # escenarios Godog, incluido features/reporte_pdf.
 2. Crear un proyecto, un Sprint finalizado con historias completadas, horas y defectos
    (se puede usar `POST /demo` si está habilitado, o los endpoints de las historias
    anteriores). Anotar el `id` del proyecto y del Sprint.
+   Desde HU-21 la descarga pide sesión: ingresar con `POST /auth/ingreso` y guardar el
+   token en `TOKEN` (con la demo, `carlos.moya` / `demo1234`).
 3. Descargar el reporte del Sprint:
    ```bash
-   curl -s -D cabeceras.txt -o sprint.pdf localhost:8080/sprints/<sprint>/reporte
+   curl -s -D cabeceras.txt -o sprint.pdf -H "Authorization: Bearer $TOKEN" localhost:8080/sprints/<sprint>/reporte
    ```
    Esperado: `200`, `Content-Type: application/pdf`,
    `Content-Disposition: attachment; filename="reporte-proyecto-<proyecto>-sprint-<numero>.pdf"`,
    y `sprint.pdf` empieza con `%PDF-`.
 4. Descargar el reporte del proyecto:
    ```bash
-   curl -s -D cabeceras.txt -o proyecto.pdf localhost:8080/projects/<proyecto>/reporte
+   curl -s -D cabeceras.txt -o proyecto.pdf -H "Authorization: Bearer $TOKEN" localhost:8080/projects/<proyecto>/reporte
    ```
    Esperado: `200` y un PDF con datos del proyecto, integrantes, Product Backlog, Sprints
    finalizados y Sprint Activo si existe.
@@ -47,8 +49,11 @@ go test ./features/...        # escenarios Godog, incluido features/reporte_pdf.
    métricas, esfuerzo y defectos como "sin datos".
 7. Abrir los PDF en un visor: verificar tildes y eñes, que las secciones estén completas y
    que el documento pagine si hay muchas historias.
-8. Navegar directo a la URL de descarga desde el navegador (con `Accept: text/html`): debe
-   bajar el PDF, no devolver `index.html`.
+8. Navegar directo a la URL de descarga desde el navegador (con `Accept: text/html`): desde
+   HU-21 responde `401` `{"mensaje":"Tu sesión no es válida"}`, porque el navegador no manda
+   el token (nunca devuelve `index.html`). Con la cabecera `Authorization` baja el PDF. Por
+   eso la pantalla descarga el reporte con el cliente de la API (`fetch` + blob con
+   `Authorization`), no con un enlace común (issue #78).
 9. Reiniciar el servidor y repetir: el reporte se recalcula y no modifica la base.
 
 ## Resultado de la validación manual
