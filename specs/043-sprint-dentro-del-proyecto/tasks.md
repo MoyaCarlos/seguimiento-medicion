@@ -39,17 +39,17 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
 
 **Independent Test**: `go test ./internal/domain/ -run AdmiteSprint -v`.
 
-- [ ] T001 [US1][US2][US3] RED: en `internal/domain/project_test.go`, agregar `TestProject_AdmiteSprint` como prueba de tabla (Arrange-Act-Assert) sobre `func (p Project) AdmiteSprint(inicio, fin time.Time) error`, con fechas `time.Date(..., 0, 0, 0, 0, time.UTC)`. Casos, con proyecto de inicio 2026-10-31 y fin 2026-11-16 salvo que se indique otra cosa:
+- [x] T001 [US1][US2][US3] RED: en `internal/domain/project_test.go`, agregar `TestProject_AdmiteSprint` como prueba de tabla (Arrange-Act-Assert) sobre `func (p Project) AdmiteSprint(inicio, fin time.Time) error`, con fechas `time.Date(..., 0, 0, 0, 0, time.UTC)`. Casos, con proyecto de inicio 2026-10-31 y fin 2026-11-16 salvo que se indique otra cosa:
   - proyecto sin fechas (`FechaInicio` y `FechaFin` nil), Sprint 2026-01-01 a 2027-01-01 → `nil` (US3);
   - solo `FechaInicio` 2026-10-31: Sprint 2026-10-30 a 2026-11-06 → `ValidationError` en `fecha_inicio`; Sprint 2026-10-31 a 2027-03-01 → `nil`; Sprint 2026-12-01 a 2027-03-01 → `nil` (US1, US3);
   - solo `FechaFin` 2026-11-16: Sprint 2026-01-01 a 2026-01-15 → `nil`; Sprint 2026-11-10 a 2026-11-16 → `nil`; Sprint 2026-11-10 a 2026-11-20 → `ValidationError` en `fecha_fin` (US2, US3);
   - ambas fechas: Sprint 2026-11-01 a 2026-11-10 → `nil`; Sprint 2026-10-31 a 2026-11-16 (los dos bordes) → `nil`; Sprint 2026-10-30 a 2026-11-06 → `fecha_inicio`; Sprint 2026-11-10 a 2026-11-17 → `fecha_fin`; Sprint 2026-10-01 a 2026-12-01 (las dos afuera) → `fecha_inicio`.
   - En los casos de error, verificar el mensaje exacto: `el Sprint no puede empezar antes del inicio del proyecto (2026-10-31)` y `el Sprint no puede terminar después del fin del proyecto (2026-11-16)` ([research.md §6](research.md)).
   - Correr `go test ./internal/domain/` y confirmar que FALLA (no compila: `AdmiteSprint` no existe).
-- [ ] T002 COMMIT `RED: agregar tests de Project.AdmiteSprint, plazo del proyecto (falla)` (solo `internal/domain/project_test.go`)
-- [ ] T003 [US1][US2][US3] GREEN: en `internal/domain/project.go`, implementar `AdmiteSprint`: si `p.FechaInicio != nil && inicio.Before(*p.FechaInicio)` → `ValidationError{Campo: "fecha_inicio", Mensaje: "el Sprint no puede empezar antes del inicio del proyecto (" + p.FechaInicio.Format(time.DateOnly) + ")"}`; después, si `p.FechaFin != nil && fin.After(*p.FechaFin)` → `ValidationError{Campo: "fecha_fin", Mensaje: "el Sprint no puede terminar después del fin del proyecto (" + p.FechaFin.Format(time.DateOnly) + ")"}`; si no, `nil`. Bordes incluidos; comparación directa con `Before`/`After`, sin normalizar ([research.md §3](research.md)). Comentario de doc breve que cite #168. `go test ./...` en verde.
-- [ ] T004 COMMIT `GREEN: implementar Project.AdmiteSprint, test en verde`
-- [ ] T005 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [x] T002 COMMIT `RED: agregar tests de Project.AdmiteSprint, plazo del proyecto (falla)` (solo `internal/domain/project_test.go`)
+- [x] T003 [US1][US2][US3] GREEN: en `internal/domain/project.go`, implementar `AdmiteSprint`: si `p.FechaInicio != nil && inicio.Before(*p.FechaInicio)` → `ValidationError{Campo: "fecha_inicio", Mensaje: "el Sprint no puede empezar antes del inicio del proyecto (" + p.FechaInicio.Format(time.DateOnly) + ")"}`; después, si `p.FechaFin != nil && fin.After(*p.FechaFin)` → `ValidationError{Campo: "fecha_fin", Mensaje: "el Sprint no puede terminar después del fin del proyecto (" + p.FechaFin.Format(time.DateOnly) + ")"}`; si no, `nil`. Bordes incluidos; comparación directa con `Before`/`After`, sin normalizar ([research.md §3](research.md)). Comentario de doc breve que cite #168. `go test ./...` en verde.
+- [x] T004 COMMIT `GREEN: implementar Project.AdmiteSprint, test en verde`
+- [x] T005 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>` — no hizo falta: dos condiciones sin duplicación. Nota: el test reutiliza el helper `dia` de `registro_horas_test.go` (mismo paquete).
 
 **Checkpoint**: la regla existe y está probada; nadie la llama todavía.
 
