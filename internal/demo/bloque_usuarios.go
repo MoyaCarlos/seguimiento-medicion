@@ -8,34 +8,45 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
-var nombresUsuarios = []string{"Beta Uno", "Beta Dos", "Beta Tres", "Beta Cuatro"}
+const contrasenaDeLaDemo = "demo1234"
 
-// bloqueUsuarios asegura los usuarios predeterminados, sin rol. Es la primera
-// escritura de la transacción (ver plan.md, decisión 3).
+type usuarioDemo struct {
+	nombre string
+	rol    domain.Role
+}
+
+// usuariosDemo va en orden: el conflicto se informa por el primero que ya existe.
+var usuariosDemo = []usuarioDemo{
+	{"carlos.moya", domain.RolScrumMaster},
+	{"ana.iriarte", domain.RolProductBuilder},
+	{"candela.vulcano", domain.RolProductBuilder},
+	{"jimena.martinez", domain.RolProductBuilder},
+}
+
+// bloqueUsuarios crea los usuarios de la demo con el hash único de la carga.
+// Es la primera escritura de la transacción (ver plan.md, decisión 1) y no
+// reutiliza usuarios: si uno existe, la clave única aborta la carga.
 func bloqueUsuarios(ctx context.Context, tx *sql.Tx, c *carga) error {
-	for _, nombre := range nombresUsuarios {
-		usuario, err := domain.NewUser(nombre)
+	for _, demo := range usuariosDemo {
+		if err := domain.ValidarNombreUsuario(demo.nombre); err != nil {
+			return err
+		}
+		usuario, err := domain.NewUser(demo.nombre)
 		if err != nil {
 			return err
 		}
 		resultado, err := tx.ExecContext(ctx,
-			`INSERT OR IGNORE INTO usuarios (nombre, nombre_normalizado, creado_en) VALUES (?, ?, ?)`,
-			usuario.Nombre, usuario.NombreNormalizado, c.creadoEn())
+			`INSERT INTO usuarios (nombre, nombre_normalizado, contrasena_hash, creado_en) VALUES (?, ?, ?, ?)`,
+			usuario.Nombre, usuario.NombreNormalizado, c.hashContrasena, c.creadoEn())
 		if err != nil {
-			return fmt.Errorf("crear usuario %s: %w", nombre, err)
+			return fmt.Errorf("crear usuario %s: %w", demo.nombre, err)
 		}
-		creados, err := resultado.RowsAffected()
+		id, err := resultado.LastInsertId()
 		if err != nil {
 			return err
 		}
-		c.resumen.Usuarios += int(creados)
-
-		var id int64
-		if err := tx.QueryRowContext(ctx,
-			`SELECT id FROM usuarios WHERE nombre_normalizado = ?`, usuario.NombreNormalizado).Scan(&id); err != nil {
-			return fmt.Errorf("leer usuario %s: %w", nombre, err)
-		}
-		c.usuarios[nombre] = id
+		c.usuarios[demo.nombre] = id
+		c.resumen.Usuarios++
 	}
 	return nil
 }

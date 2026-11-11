@@ -116,7 +116,7 @@ func main() {
 
 	demoHandler := apihttp.NewDemoHandler(
 		func() bool { return cfg.DemoHabilitado },
-		demo.NewCargador(db, time.Now),
+		demo.NewCargador(db, time.Now, hasheador),
 	)
 
 	mux := http.NewServeMux()
