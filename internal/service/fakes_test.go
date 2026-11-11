@@ -122,49 +122,6 @@ func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID 
 	return derivados, nil
 }
 
-type fakeUserRepository struct {
-	usuarios map[string]domain.User
-	creates  int
-	err      error
-}
-
-func (f *fakeUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
-	if f.err != nil {
-		return nil, f.err
-	}
-	u, ok := f.usuarios[normalized]
-	if !ok {
-		return nil, domain.ErrNoEncontrado
-	}
-	return &u, nil
-}
-
-func (f *fakeUserRepository) ListarRegistrados(context.Context) ([]domain.User, error) {
-	usuarios := make([]domain.User, 0, len(f.usuarios))
-	for _, u := range f.usuarios {
-		usuarios = append(usuarios, u)
-	}
-	sort.Slice(usuarios, func(i, j int) bool { return usuarios[i].NombreNormalizado < usuarios[j].NombreNormalizado })
-	return usuarios, nil
-}
-
-func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
-	if f.err != nil {
-		return domain.User{}, f.err
-	}
-	if f.usuarios == nil {
-		f.usuarios = map[string]domain.User{}
-	}
-	if _, ok := f.usuarios[u.NombreNormalizado]; ok {
-		return domain.User{}, repository.ErrUsuarioDuplicado
-	}
-	f.creates++
-	u.ID = int64(f.creates)
-	u.CreadoEn = time.Now().UTC()
-	f.usuarios[u.NombreNormalizado] = u
-	return u, nil
-}
-
 type fakeProductBacklogRepository struct {
 	historias []domain.BacklogItem
 	err       error

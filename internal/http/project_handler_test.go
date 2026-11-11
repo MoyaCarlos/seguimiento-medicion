@@ -117,41 +117,6 @@ func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, proyectoID 
 	return derivados, nil
 }
 
-type stubUserRepository struct {
-	usuarios map[string]domain.User
-	creates  int
-}
-
-func (s *stubUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
-	if u, ok := s.usuarios[normalized]; ok {
-		return &u, nil
-	}
-	return nil, domain.ErrNoEncontrado
-}
-
-func (s *stubUserRepository) ListarRegistrados(context.Context) ([]domain.User, error) {
-	usuarios := make([]domain.User, 0, len(s.usuarios))
-	for _, u := range s.usuarios {
-		usuarios = append(usuarios, u)
-	}
-	sort.Slice(usuarios, func(i, j int) bool { return usuarios[i].NombreNormalizado < usuarios[j].NombreNormalizado })
-	return usuarios, nil
-}
-
-func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
-	if s.usuarios == nil {
-		s.usuarios = map[string]domain.User{}
-	}
-	if _, ok := s.usuarios[u.NombreNormalizado]; ok {
-		return domain.User{}, repository.ErrUsuarioDuplicado
-	}
-	s.creates++
-	u.ID = int64(s.creates)
-	u.CreadoEn = time.Now().UTC()
-	s.usuarios[u.NombreNormalizado] = u
-	return u, nil
-}
-
 // credencialesDePrueba tiene con cuenta a la persona de la sesión, a Jimena y a
 // Carlos; «Sin Cuenta» existe sin contraseña (HU-21: el equipo se arma solo
 // con usuarios registrados).
