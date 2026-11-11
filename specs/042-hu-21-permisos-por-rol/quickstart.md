@@ -34,8 +34,10 @@ curl -i -H "Authorization: Bearer $PB" localhost:8080/projects/1
 curl -s -H "Authorization: Bearer $SM" localhost:8080/users
 curl -s -XPOST -H "Authorization: Bearer $SM" localhost:8080/projects/1/members -d '{"nombre":"bruno"}'
 
-# 6. Segundo Scrum Master → 409 (escenario 6)
-curl -i -XPOST -H "Authorization: Bearer $SM" localhost:8080/projects/1/members -d '{"nombre":"bruno","rol":"scrum_master"}'
+# 6. Segundo Scrum Master → 409 (escenario 6). Con alguien que todavía no integra el
+#    proyecto: si ya lo integra (Bruno), gana el 400 de duplicado de #236.
+curl -s -XPOST localhost:8080/auth/registro -d '{"nombre":"carla","contrasena":"secreta123"}'
+curl -i -XPOST -H "Authorization: Bearer $SM" localhost:8080/projects/1/members -d '{"nombre":"carla","rol":"scrum_master"}'
 
 # 7. Bruno intenta crear un Sprint → 403 "Solo el Scrum Master puede…" (escenario 2)
 curl -i -XPOST -H "Authorization: Bearer $PB" localhost:8080/sprints -d '{"proyecto_id":1,"objetivo":"x"}'
@@ -49,6 +51,8 @@ Bruno vota y Ana consulta `GET /backlog/{id}/votacion?usuario_id=2`: el voto de 
 ve hasta revelar.
 
 ## En la interfaz
+
+Depende de US7 (frontend), que se entrega con su propia sub-issue.
 
 1. Ingresar como Bruno (Product Builder): las acciones de Sprints, votación, edición y
    equipo aparecen deshabilitadas con «Solo el Scrum Master puede…».
