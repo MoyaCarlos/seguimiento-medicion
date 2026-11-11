@@ -163,7 +163,7 @@ func TestHorasHandler_Imputar_Errores(t *testing.T) {
 		{"horas nulas", "3", 2, cuerpo("x", "null"), nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
 		{"horas negativas", "3", 2, cuerpo("x", "-2"), nethttp.StatusBadRequest, "horas", "las horas deben ser mayores que cero"},
 		{"actividad vacía", "3", 2, cuerpo("", "1"), nethttp.StatusBadRequest, "actividad", "la actividad es obligatoria"},
-		{"integrante ajeno", "3", 99, cuerpo("x", "1"), nethttp.StatusBadRequest, "integrante_id", "el integrante no pertenece al proyecto de la historia"},
+		{"integrante ajeno", "3", 99, cuerpo("x", "1"), nethttp.StatusForbidden, "", "No sos integrante de este proyecto"},
 		{"historia fuera del Sprint activo", "4", 2, cuerpo("x", "1"), nethttp.StatusBadRequest, "historia_id", "solo se imputan horas a historias del Sprint activo"},
 	}
 	for _, c := range casos {

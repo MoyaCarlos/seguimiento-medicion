@@ -19,7 +19,7 @@ func historiaDelBacklog() domain.BacklogItem {
 }
 
 func edicionValida(id int64) EditarHistoriaInput {
-	return EditarHistoriaInput{
+	return EditarHistoriaInput{UsuarioID: actorDePrueba,
 		ID: id, Titulo: "Nuevo", Descripcion: "Descripción nueva",
 		CriteriosAceptacion: strPtr("Dado, cuando, entonces"), EstimacionSP: intPtr(5),
 	}
@@ -31,13 +31,13 @@ func nuevoEditarHistoria(historias ...domain.BacklogItem) (*EditarHistoria, *fak
 		repo.historias[h.ID] = h
 	}
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	return NewEditarHistoria(repo, sprints), repo, sprints
+	return NewEditarHistoria(repo, sprints, integrantesConActor{}), repo, sprints
 }
 
 func TestEditarHistoria_Inexistente_DominaSobreLaValidacion(t *testing.T) {
 	servicio, repo, _ := nuevoEditarHistoria()
 
-	_, err := servicio.Ejecutar(context.Background(), EditarHistoriaInput{ID: 999, Titulo: ""})
+	_, err := servicio.Ejecutar(context.Background(), EditarHistoriaInput{UsuarioID: actorDePrueba, ID: 999, Titulo: ""})
 
 	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Fatalf("se esperaba domain.ErrHistoriaNoEncontrada, se obtuvo %v", err)

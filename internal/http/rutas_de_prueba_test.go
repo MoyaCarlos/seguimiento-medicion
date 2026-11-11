@@ -11,6 +11,15 @@ import (
 // anaDePrueba es la persona con sesión iniciada en los tests de handlers.
 var anaDePrueba = domain.User{ID: 7, Nombre: "ana", NombreNormalizado: "ana"}
 
+// anaIntegra devuelve las membresías de anaDePrueba como Product Builder.
+func anaIntegra(proyectos ...int64) []domain.Membership {
+	var miembros []domain.Membership
+	for _, id := range proyectos {
+		miembros = append(miembros, domain.Membership{ProjectID: id, UserID: anaDePrueba.ID, Role: domain.RolProductBuilder})
+	}
+	return miembros
+}
+
 // conSesionDe devuelve la petición con u como usuario de la sesión, igual que
 // la deja ConSesion.
 func conSesionDe(r *nethttp.Request, u domain.User) *nethttp.Request {

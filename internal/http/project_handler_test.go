@@ -98,11 +98,20 @@ func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
-func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {
+func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
-	return s.listaMiembros, nil
+	if s.listaMiembros != nil {
+		return s.listaMiembros, nil
+	}
+	var derivados []domain.Member
+	for _, m := range s.miembros {
+		if m.ProjectID == proyectoID {
+			derivados = append(derivados, domain.Member{UserID: m.UserID, ProjectID: m.ProjectID, Role: m.Role})
+		}
+	}
+	return derivados, nil
 }
 
 type stubUserRepository struct {
@@ -314,7 +323,7 @@ func TestProjectHandler_Obtener_Existente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr, nil)
 	req.SetPathValue("id", idStr)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d", rec.Code)
@@ -331,7 +340,7 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/999", nil)
 	req.SetPathValue("id", "999")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -344,7 +353,7 @@ func TestProjectHandler_Obtener_IDNoNumerico(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/abc", nil)
 	req.SetPathValue("id", "abc")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -361,7 +370,7 @@ func TestProjectHandler_Obtener_IDNoPositivo(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/0", nil)
 	req.SetPathValue("id", "0")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)

@@ -108,7 +108,7 @@ func obtenerProyectoViaHTTP(t *testing.T, handler *ProjectHandler, id int64) jso
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr, nil)
 	req.SetPathValue("id", idStr)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("no se pudo consultar el proyecto %d: %d (%s)", id, rec.Code, rec.Body.String())
 	}

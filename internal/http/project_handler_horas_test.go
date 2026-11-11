@@ -25,7 +25,7 @@ func horasDelProyecto(t *testing.T, handler *ProjectHandler, id int64) any {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+idStr, nil)
 	req.SetPathValue("id", idStr)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != nethttp.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}

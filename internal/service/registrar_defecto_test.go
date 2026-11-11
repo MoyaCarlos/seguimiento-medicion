@@ -38,11 +38,11 @@ func (e escenarioDefecto) sprint(t *testing.T, proyectoID int64, estado domain.E
 }
 
 func (e escenarioDefecto) registrar() *RegistrarDefecto {
-	return NewRegistrarDefecto(e.sprints, e.historias, e.defectos)
+	return NewRegistrarDefecto(e.sprints, e.historias, e.defectos, integrantesConActor{})
 }
 
 func defectoValido() RegistrarDefectoInput {
-	return RegistrarDefectoInput{ProyectoID: 1, HistoriaID: 3, Descripcion: "El total no se actualiza", Severidad: "Alta"}
+	return RegistrarDefectoInput{ProyectoID: 1, HistoriaID: 3, Descripcion: "El total no se actualiza", Severidad: "Alta", UsuarioID: actorDePrueba}
 }
 
 func TestRegistrarDefecto_RegistraEnElSprintActivo(t *testing.T) {

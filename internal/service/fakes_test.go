@@ -217,6 +217,16 @@ func (f *fakeRegistroHorasRepository) ListarPorHistoria(_ context.Context, histo
 	return detalle, nil
 }
 
+// actorDePrueba es quien actúa en los tests de servicios que no prueban la
+// pertenencia: integrantesConActor lo da por integrante de cualquier proyecto.
+const actorDePrueba int64 = 1
+
+type integrantesConActor struct{}
+
+func (integrantesConActor) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolProductBuilder}}, nil
+}
+
 type fakeIntegrantesRepository struct {
 	miembros []domain.Member
 }
