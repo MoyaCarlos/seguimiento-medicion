@@ -193,10 +193,10 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 
 El texto de la feature se redacta en el paso BDD del flujo (después de `/speckit.analyze`, antes de `/speckit.implement`, con el prompt de referencia de AGENTS.md) y se revisa con el equipo; se commitea como RED recién en esta fase porque Godog corre en modo `Strict` y unos pasos sin definir romperían el check `backend` de las fases anteriores (mismo criterio que HU-20, spec 034).
 
-- [ ] T056 RED: agregar features/permisos_por_rol.feature (`@HU-21`, español) con la Característica Como/Quiero/Para de la spec y **un Escenario por criterio de aceptación (1 a 9)**, sin inventar casos; Antecedentes con «Dado que inicié sesión como "ana"» y un proyecto de ana con «bruno» como Product Builder; cubrir caso normal (1, 5), alternativo (8, 9), límite (6, 7) y error (2, 3, 4). Registrar en features/steps_permisos.go solo un stub de los pasos nuevos (sin implementar), de modo que el paquete compile; `go test ./features/` debe FALLAR por pasos sin definir (Strict), no por compilación
-- [ ] T057 COMMIT `RED: agregar escenarios BDD de permisos por rol (fallan)`
-- [ ] T058 GREEN: implementar los pasos en features/steps_permisos.go usando solo la API real (`RegistrarRutas` + `peticion()` con token; usuarios con `/auth/registro`, sin atajos de prueba); `go test ./features/` en verde
-- [ ] T059 COMMIT `GREEN: agregar pasos BDD de permisos por rol, escenarios en verde`
+- [X] T056 RED: agregar features/permisos_por_rol.feature (`@HU-21`, español) con la Característica Como/Quiero/Para de la spec y **un Escenario por criterio de aceptación (1 a 9)**, sin inventar casos; Antecedentes con «Dado que inicié sesión como "ana"» y un proyecto de ana con «bruno» como Product Builder; cubrir caso normal (1, 5), alternativo (8, 9), límite (6, 7) y error (2, 3, 4). Registrar en features/steps_permisos.go solo un stub de los pasos nuevos (sin implementar), de modo que el paquete compile; `go test ./features/` debe FALLAR por pasos sin definir (Strict), no por compilación
+- [X] T057 COMMIT `RED: agregar escenarios BDD de permisos por rol (fallan)`
+- [X] T058 GREEN: implementar los pasos en features/steps_permisos.go usando solo la API real (`RegistrarRutas` + `peticion()` con token; usuarios con `/auth/registro`, sin atajos de prueba); `go test ./features/` en verde. Nota: los pasos quedaron en features/steps_permisos_por_rol.go (steps_permisos.go conserva la sesión compartida); «el sistema responde 401/409» pasó a «el sistema rechaza la petición con N» para no chocar con un paso de autenticación; se verificó por mutación que el escenario 2 falla si CrearSprint deja de exigir el Scrum Master
+- [X] T059 COMMIT `GREEN: agregar pasos BDD de permisos por rol, escenarios en verde`
 
 ---
 
