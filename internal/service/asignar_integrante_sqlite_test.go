@@ -23,7 +23,11 @@ func TestAsignarIntegrante_SQLiteReal_ScrumMasterQueYaEsScrumMasterEsDuplicado(t
 	}
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	usuarios := repository.NewSQLiteUserRepository(db)
-	proyecto, err := NewCrearProyecto(proyectos, usuarios).Ejecutar(ctx, CrearProyectoInput{Nombre: "Proyecto", Creador: "Ana"})
+	ana, err := usuarios.Guardar(ctx, domain.User{Nombre: "Ana", NombreNormalizado: "ana"})
+	if err != nil {
+		t.Fatalf("no se pudo preparar a Ana: %v", err)
+	}
+	proyecto, err := NewCrearProyecto(proyectos).Ejecutar(ctx, CrearProyectoInput{Nombre: "Proyecto", CreadorID: ana.ID})
 	if err != nil {
 		t.Fatalf("no se pudo preparar el proyecto: %v", err)
 	}

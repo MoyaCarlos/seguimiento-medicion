@@ -138,9 +138,10 @@ func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
 
 func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepository, *repository.SprintRepositoryEnMemoria) {
 	proyectos := &stubProjectRepository{}
-	usuarios := &stubUserRepository{}
+	// La persona de la sesión ya tiene cuenta: es quien crea los proyectos.
+	usuarios := &stubUserRepository{usuarios: map[string]domain.User{anaDePrueba.NombreNormalizado: anaDePrueba}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	crear := service.NewCrearProyecto(proyectos, usuarios)
+	crear := service.NewCrearProyecto(proyectos)
 	obtener := service.NewObtenerProyecto(proyectos)
 	editar := service.NewEditarProyecto(proyectos)
 	asignar := service.NewAsignarIntegrante(proyectos, usuarios)
@@ -155,9 +156,9 @@ func crearProyectoViaHTTP(t *testing.T, handler *ProjectHandler, nombre string) 
 	t.Helper()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"`+nombre+`","creador":"Ana"}`,
+		`{"nombre":"`+nombre+`"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("no se pudo preparar el proyecto: %d (%s)", rec.Code, rec.Body.String())
 	}
@@ -173,9 +174,9 @@ func TestProjectHandler_Crear_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"Software Metrics & Estimation","descripcion":"Sistema","creador":"Ana","fecha_inicio":"2026-03-01","fecha_fin":"2026-11-30"}`,
+		`{"nombre":"Software Metrics & Estimation","descripcion":"Sistema","fecha_inicio":"2026-03-01","fecha_fin":"2026-11-30"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -190,8 +191,42 @@ func TestProjectHandler_Crear_Exitosa(t *testing.T) {
 	if resp.FechaInicio == nil || *resp.FechaInicio != "2026-03-01" {
 		t.Errorf("fecha_inicio inesperada: %v", resp.FechaInicio)
 	}
-	if len(repo.miembros) != 1 || repo.miembros[0].Role != domain.RolScrumMaster {
-		t.Errorf("se esperaba el creador como scrum_master")
+	if resp.Rol != "scrum_master" {
+		t.Errorf("rol = %q, se esperaba scrum_master", resp.Rol)
+	}
+	if len(repo.miembros) != 1 || repo.miembros[0].Role != domain.RolScrumMaster || repo.miembros[0].UserID != anaDePrueba.ID {
+		t.Errorf("se esperaba a la persona de la sesión como scrum_master, se obtuvo %+v", repo.miembros)
+	}
+}
+
+// Escenario 7 de HU-21: quien crea el proyecto sale de la sesión; un creador
+// en el cuerpo se ignora.
+func TestProjectHandler_Crear_IgnoraElCreadorDelCuerpo(t *testing.T) {
+	handler, repo := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"P","creador":"bruno"}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(repo.miembros) != 1 || repo.miembros[0].UserID != anaDePrueba.ID {
+		t.Errorf("el Scrum Master debía ser la persona de la sesión, se obtuvo %+v", repo.miembros)
+	}
+}
+
+func TestProjectHandler_Crear_SinSesionResponde401(t *testing.T) {
+	handler, repo := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"P"}`)))
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("se esperaba 401, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if repo.creates != 0 {
+		t.Error("no se debía persistir el proyecto sin sesión")
 	}
 }
 
@@ -199,8 +234,8 @@ func TestProjectHandler_Crear_NombreVacio(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"","creador":"Ana"}`))
-	handler.Crear(rec, req)
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":""}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -220,9 +255,9 @@ func TestProjectHandler_Crear_FechaInvalida(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"Proyecto","creador":"Ana","fecha_inicio":"2026-11-30","fecha_fin":"2026-03-01"}`,
+		`{"nombre":"Proyecto","fecha_inicio":"2026-11-30","fecha_fin":"2026-03-01"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -239,7 +274,7 @@ func TestProjectHandler_Crear_JSONInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{no-es-json`))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -263,8 +298,8 @@ func TestProjectHandler_Crear_ErrorPersistencia(t *testing.T) {
 	repo.err = errPersistencia
 	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Proyecto","creador":"Ana"}`))
-	handler.Crear(rec, req)
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Proyecto"}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("se esperaba 500, se obtuvo %d", rec.Code)
@@ -630,7 +665,7 @@ func TestProjectHandler_AsignarIntegrante_ScrumMasterQueYaEsIntegranteSigueSiend
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Ana","rol":"scrum_master"}`)
 

@@ -126,7 +126,7 @@ func TestProjectHandler_ElParametroEsNullSiNoEstaDefinido(t *testing.T) {
 	handler, _ := nuevoProjectHandlerDePrueba()
 
 	alta := httptest.NewRecorder()
-	handler.Crear(alta, httptest.NewRequest(nethttp.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Nuevo","creador":"Ana"}`)))
+	handler.Crear(alta, conSesionDe(httptest.NewRequest(nethttp.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Nuevo"}`)), anaDePrueba))
 	if horas, existe := cuerpoJSON(t, alta)["horas_por_story_point"]; !existe || horas != nil {
 		t.Errorf("el alta: se esperaba null, se obtuvo %v (existe: %v)", horas, existe)
 	}

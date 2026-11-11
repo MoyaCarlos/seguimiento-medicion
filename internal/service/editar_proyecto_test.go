@@ -11,9 +11,8 @@ import (
 
 func TestEditarProyecto_Exitosa(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	crear := NewCrearProyecto(proyectos, usuarios)
-	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Descripcion: "desc", Creador: "Ana"})
+	crear := NewCrearProyecto(proyectos)
+	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Descripcion: "desc", CreadorID: 1})
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -50,8 +49,7 @@ func TestEditarProyecto_Inexistente(t *testing.T) {
 
 func TestEditarProyecto_NoPersisteSiInvalido(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	creado, _ := NewCrearProyecto(proyectos, usuarios).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Creador: "Ana"})
+	creado, _ := NewCrearProyecto(proyectos).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", CreadorID: 1})
 
 	servicio := NewEditarProyecto(proyectos)
 	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{ID: creado.ID, Nombre: "   "})

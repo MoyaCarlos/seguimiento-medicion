@@ -89,9 +89,9 @@ func TestProjectHandler_Listar_ErrorDePersistencia(t *testing.T) {
 func crearProyectoViaHTTPConFechas(t *testing.T, handler *ProjectHandler, nombre, inicio, fin string) int64 {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	cuerpo := `{"nombre":"` + nombre + `","creador":"Ana","fecha_inicio":"` + inicio + `","fecha_fin":"` + fin + `"}`
+	cuerpo := `{"nombre":"` + nombre + `","fecha_inicio":"` + inicio + `","fecha_fin":"` + fin + `"}`
 	req := httptest.NewRequest(http.MethodPost, "/projects", strings.NewReader(cuerpo))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("no se pudo preparar el proyecto: %d (%s)", rec.Code, rec.Body.String())
 	}

@@ -10,8 +10,8 @@ import (
 
 func TestObtenerProyecto_Ejecutar_Existente(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	crear := NewCrearProyecto(proyectos, &fakeUserRepository{})
-	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto", Creador: "Ana"})
+	crear := NewCrearProyecto(proyectos)
+	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto", CreadorID: 1})
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}

@@ -10,8 +10,11 @@ import (
 
 func proyectoDePrueba(t *testing.T, proyectos *fakeProjectRepository, usuarios *fakeUserRepository) int64 {
 	t.Helper()
-	crear := NewCrearProyecto(proyectos, usuarios)
-	proyecto, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto", Creador: "Ana"})
+	ana, err := usuarios.Guardar(context.Background(), domain.User{Nombre: "Ana", NombreNormalizado: "ana"})
+	if err != nil {
+		t.Fatalf("no se pudo preparar a Ana: %v", err)
+	}
+	proyecto, err := NewCrearProyecto(proyectos).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto", CreadorID: ana.ID})
 	if err != nil {
 		t.Fatalf("no se pudo preparar el proyecto: %v", err)
 	}
@@ -64,7 +67,11 @@ func TestAsignarIntegrante_ReutilizaUsuario(t *testing.T) {
 	usuarios := &fakeUserRepository{}
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
-	otro, err := NewCrearProyecto(proyectos, usuarios).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Otro", Creador: "Ana"})
+	ana, err := usuarios.ObtenerPorNombreNormalizado(context.Background(), "ana")
+	if err != nil {
+		t.Fatalf("no se encontró a Ana: %v", err)
+	}
+	otro, err := NewCrearProyecto(proyectos).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Otro", CreadorID: ana.ID})
 	if err != nil {
 		t.Fatalf("no se pudo preparar el segundo proyecto: %v", err)
 	}
