@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { obtenerEstadoProyecto, obtenerProyecto } from './api'
+import { descargarReporteProyecto, obtenerEstadoProyecto, obtenerProyecto } from './api'
 import type { EstadoProyecto, Proyecto } from './api'
 import { mensajeDeError } from './errores'
 
@@ -67,6 +68,9 @@ export function Panel() {
           </p>
         </div>
         <div className="hu04-acciones">
+          <BotonExportar descargar={() => descargarReporteProyecto(id)}>
+            Exportar reporte del proyecto
+          </BotonExportar>
           <Link className="button button--secondary" to="settings">
             Configurar equipo
           </Link>
