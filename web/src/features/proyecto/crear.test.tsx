@@ -4,8 +4,6 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Component } from './crear'
 
-vi.mock('../../compartido/demo/BotonDatosDePrueba', () => ({ BotonDatosDePrueba: () => null }))
-
 function abrir() {
   render(
     <MemoryRouter>
