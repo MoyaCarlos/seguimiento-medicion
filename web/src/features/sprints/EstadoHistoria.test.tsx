@@ -105,4 +105,29 @@ describe('EstadoHistoria', () => {
     expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
     expect(alCambiar).not.toHaveBeenCalled()
   })
+
+  it('Defensa: un reintento exitoso tras un error borra el mensaje viejo', async () => {
+    cambiarMock.mockRejectedValueOnce(new ApiError(409, 'la historia cambió de estado mientras tanto'))
+    cambiarMock.mockResolvedValueOnce(EN_PROGRESO)
+    const { alCambiar } = abrir(NUEVA)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    expect(await screen.findByRole('alert')).toBeTruthy()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    await waitFor(() => expect(alCambiar).toHaveBeenCalledWith(EN_PROGRESO))
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('US3.8: ante un 404 historia no encontrada muestra el mensaje de la API tal cual y no llama a alCambiar', async () => {
+    const mensaje = 'historia no encontrada'
+    cambiarMock.mockRejectedValue(new ApiError(404, mensaje))
+    const { alCambiar } = abrir(NUEVA)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
+    expect(alCambiar).not.toHaveBeenCalled()
+  })
 })
