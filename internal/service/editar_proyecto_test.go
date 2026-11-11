@@ -11,16 +11,15 @@ import (
 
 func TestEditarProyecto_Exitosa(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	crear := NewCrearProyecto(proyectos, usuarios)
-	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Descripcion: "desc", Creador: "Ana"})
+	crear := NewCrearProyecto(proyectos)
+	creado, err := crear.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Descripcion: "desc", CreadorID: 1})
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
 	fin := time.Date(2026, 12, 15, 0, 0, 0, 0, time.UTC)
 	servicio := NewEditarProyecto(proyectos)
-	editado, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{
+	editado, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba,
 		ID:          creado.ID,
 		Nombre:      "Corregido",
 		Descripcion: "nueva desc",
@@ -42,7 +41,7 @@ func TestEditarProyecto_Exitosa(t *testing.T) {
 
 func TestEditarProyecto_Inexistente(t *testing.T) {
 	servicio := NewEditarProyecto(&fakeProjectRepository{})
-	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{ID: 0, Nombre: "X"})
+	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba, ID: 0, Nombre: "X"})
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
@@ -50,11 +49,10 @@ func TestEditarProyecto_Inexistente(t *testing.T) {
 
 func TestEditarProyecto_NoPersisteSiInvalido(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	creado, _ := NewCrearProyecto(proyectos, usuarios).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", Creador: "Ana"})
+	creado, _ := NewCrearProyecto(proyectos).Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Original", CreadorID: 1})
 
 	servicio := NewEditarProyecto(proyectos)
-	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{ID: creado.ID, Nombre: "   "})
+	_, err := servicio.Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba, ID: creado.ID, Nombre: "   "})
 	var verr domain.ValidationError
 	if !errors.As(err, &verr) || verr.Campo != "nombre" {
 		t.Fatalf("se esperaba ValidationError de nombre, se obtuvo %v", err)
@@ -81,9 +79,9 @@ func TestEditarProyecto_HorasPorStoryPoint(t *testing.T) {
 
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
-			proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original", HorasPorStoryPoint: &guardadas}}}
+			proyectos := &fakeProjectRepository{miembros: actorScrumMasterDe(1), proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original", HorasPorStoryPoint: &guardadas}}}
 
-			editado, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{
+			editado, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba,
 				ID: 1, Nombre: "Corregido", HorasPorSPEnviadas: c.enviadas, HorasPorSP: c.valor,
 			})
 
@@ -101,9 +99,9 @@ func TestEditarProyecto_HorasPorStoryPoint(t *testing.T) {
 
 func TestEditarProyecto_HorasPorStoryPointInvalidasNoActualiza(t *testing.T) {
 	cero := "0"
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original"}}}
+	proyectos := &fakeProjectRepository{miembros: actorScrumMasterDe(1), proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original"}}}
 
-	_, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{
+	_, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba,
 		ID: 1, Nombre: "Corregido", HorasPorSPEnviadas: true, HorasPorSP: &cero,
 	})
 
@@ -117,9 +115,9 @@ func TestEditarProyecto_HorasPorStoryPointInvalidasNoActualiza(t *testing.T) {
 
 func TestEditarProyecto_LasHorasPorStoryPointSeValidanAlFinal(t *testing.T) {
 	cero := "0"
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original"}}}
+	proyectos := &fakeProjectRepository{miembros: actorScrumMasterDe(1), proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Original"}}}
 
-	_, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{
+	_, err := NewEditarProyecto(proyectos).Ejecutar(context.Background(), EditarProyectoInput{UsuarioID: actorDePrueba,
 		ID: 1, Nombre: "  ", HorasPorSPEnviadas: true, HorasPorSP: &cero,
 	})
 

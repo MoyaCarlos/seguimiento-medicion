@@ -78,3 +78,10 @@ type Member struct {
 	Role      Role
 	CreadoEn  time.Time
 }
+
+// ProyectoConRol es un proyecto visto por uno de sus integrantes, con el rol
+// que tiene en él («Mis proyectos», HU-21).
+type ProyectoConRol struct {
+	Proyecto Project
+	Rol      Role
+}

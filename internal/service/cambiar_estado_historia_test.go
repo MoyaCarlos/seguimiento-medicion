@@ -31,7 +31,7 @@ func TestCambiarEstadoHistoria_NuevaAEnProgreso(t *testing.T) {
 	activo := sembrarSprintActivo(t, sprints, 1)
 	historias := fakeCambioConHistorias(historiaEnSprint(1, activo.ID, domain.EstadoNueva))
 
-	h, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo).Ejecutar(context.Background(), 1, domain.EstadoEnProgreso)
+	h, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo, integrantesConActor{}).Ejecutar(context.Background(), 1, actorDePrueba, domain.EstadoEnProgreso)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -56,7 +56,7 @@ func TestCambiarEstadoHistoria_EnProgresoACompletada(t *testing.T) {
 	activo := sembrarSprintActivo(t, sprints, 1)
 	historias := fakeCambioConHistorias(historiaEnSprint(1, activo.ID, domain.EstadoEnProgreso))
 
-	h, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo).Ejecutar(context.Background(), 1, domain.EstadoCompletada)
+	h, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo, integrantesConActor{}).Ejecutar(context.Background(), 1, actorDePrueba, domain.EstadoCompletada)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -78,9 +78,9 @@ func TestCambiarEstadoHistoria_EnProgresoACompletada(t *testing.T) {
 
 func TestCambiarEstadoHistoria_HistoriaInexistente(t *testing.T) {
 	historias := fakeCambioConHistorias()
-	caso := NewCambiarEstadoHistoria(historias, repository.NewSprintRepositoryEnMemoria(), relojFijo)
+	caso := NewCambiarEstadoHistoria(historias, repository.NewSprintRepositoryEnMemoria(), relojFijo, integrantesConActor{})
 
-	_, err := caso.Ejecutar(context.Background(), 99, domain.EstadoEnProgreso)
+	_, err := caso.Ejecutar(context.Background(), 99, actorDePrueba, domain.EstadoEnProgreso)
 
 	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Errorf("err = %v, quería ErrHistoriaNoEncontrada", err)
@@ -92,9 +92,9 @@ func TestCambiarEstadoHistoria_HistoriaInexistente(t *testing.T) {
 
 func TestCambiarEstadoHistoria_HistoriaSinSprint(t *testing.T) {
 	historias := fakeCambioConHistorias(historiaSinSprint(1, 1, domain.EstadoNueva))
-	caso := NewCambiarEstadoHistoria(historias, repository.NewSprintRepositoryEnMemoria(), relojFijo)
+	caso := NewCambiarEstadoHistoria(historias, repository.NewSprintRepositoryEnMemoria(), relojFijo, integrantesConActor{})
 
-	_, err := caso.Ejecutar(context.Background(), 1, domain.EstadoEnProgreso)
+	_, err := caso.Ejecutar(context.Background(), 1, actorDePrueba, domain.EstadoEnProgreso)
 
 	if !errors.Is(err, domain.ErrHistoriaSinSprint) {
 		t.Errorf("err = %v, quería ErrHistoriaSinSprint", err)
@@ -116,7 +116,7 @@ func TestCambiarEstadoHistoria_SprintNoActivo(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			historias := fakeCambioConHistorias(historiaEnSprint(1, c.sprintID, domain.EstadoNueva))
 
-			_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo).Ejecutar(context.Background(), 1, domain.EstadoEnProgreso)
+			_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo, integrantesConActor{}).Ejecutar(context.Background(), 1, actorDePrueba, domain.EstadoEnProgreso)
 
 			if !errors.Is(err, domain.ErrSprintNoActivoParaEstado) {
 				t.Errorf("err = %v, quería ErrSprintNoActivoParaEstado", err)
@@ -146,7 +146,7 @@ func TestCambiarEstadoHistoria_ErroresDeReglaSePropaganTalCual(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			historias := fakeCambioConHistorias(historiaEnSprint(1, activo.ID, c.actual))
 
-			_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo).Ejecutar(context.Background(), 1, c.nuevo)
+			_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo, integrantesConActor{}).Ejecutar(context.Background(), 1, actorDePrueba, c.nuevo)
 
 			if !errors.Is(err, c.esperado) {
 				t.Errorf("err = %v, quería %v", err, c.esperado)
@@ -173,7 +173,7 @@ func TestCambiarEstadoHistoria_PropagaLaCarreraDelRepositorio(t *testing.T) {
 	activo := sembrarSprintActivo(t, sprints, 1)
 	historias := ganaOtroCambioDeEstado{fakeCambioConHistorias(historiaEnSprint(1, activo.ID, domain.EstadoNueva))}
 
-	_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo).Ejecutar(context.Background(), 1, domain.EstadoEnProgreso)
+	_, err := NewCambiarEstadoHistoria(historias, sprints, relojFijo, integrantesConActor{}).Ejecutar(context.Background(), 1, actorDePrueba, domain.EstadoEnProgreso)
 
 	if !errors.Is(err, domain.ErrConflictoEstadoHistoria) {
 		t.Errorf("err = %v, quería ErrConflictoEstadoHistoria", err)

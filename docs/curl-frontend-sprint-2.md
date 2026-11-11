@@ -5,6 +5,11 @@ para probar las pantallas contra la API local.
 
 La API debe estar ejecutándose en `http://localhost:8080`.
 
+Desde HU-21 todas las rutas, salvo el registro y el ingreso, piden sesión: cada
+comando lleva la cabecera `Authorization: Bearer <token>`. El proyecto lo crea
+quien tiene la sesión (queda como su Scrum Master) y al equipo solo se suma a
+usuarios registrados, que entran como Product Builder.
+
 Hay dos versiones con los mismos datos: la de **bash** (Linux, macOS y Git Bash
 en Windows) y la de **cmd** (Windows). Usá la que corresponda a tu terminal;
 solo cambia la forma de escribir los comandos.
@@ -17,12 +22,32 @@ ejemplo usa `1`.
 
 ## Versión bash (Linux, macOS y Git Bash)
 
+### Registrar a las personas e iniciar sesión
+
+Carlos se registra para poder sumarlo después al equipo. El registro de Ana
+devuelve su token, que se guarda en `TOKEN` para los comandos siguientes:
+
+```bash
+curl -X POST http://localhost:8080/auth/registro \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"carlos","contrasena":"una-clave-larga"}'
+```
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/registro \
+  -H 'Content-Type: application/json' \
+  -d '{"nombre":"ana","contrasena":"una-clave-larga"}' | sed -E 's/.*"token":"([^"]+)".*/\1/')
+```
+
+Si Ana ya tiene cuenta, usá `/auth/ingreso` con el mismo cuerpo.
+
 ### Crear un proyecto
 
 ```bash
 curl -X POST http://localhost:8080/projects \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"nombre":"Proyecto Demo","descripcion":"Datos para probar el frontend","creador":"Ana","fecha_inicio":"2026-10-20","fecha_fin":"2026-12-20"}'
+  -d '{"nombre":"Proyecto Demo","descripcion":"Datos para probar el frontend","fecha_inicio":"2026-10-20","fecha_fin":"2026-12-20"}'
 ```
 
 La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
@@ -32,18 +57,21 @@ La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
 
 ```bash
 curl -X POST http://localhost:8080/projects/1/members \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"nombre":"Carlos","rol":"product_builder"}'
+  -d '{"nombre":"carlos","rol":"product_builder"}'
 ```
 
 ```bash
-curl http://localhost:8080/projects/1/members
+curl http://localhost:8080/projects/1/members \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Crear un Sprint
 
 ```bash
 curl -X POST http://localhost:8080/sprints \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"proyecto_id":1}'
 ```
@@ -53,6 +81,7 @@ La respuesta incluye el `id` del Sprint. En los comandos siguientes se usa
 
 ```bash
 curl -X POST http://localhost:8080/sprints/1/iniciar \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"sprint_goal":"Validar el seguimiento","fecha_inicio":"2026-10-20","fecha_fin":"2026-11-03"}'
 ```
@@ -63,7 +92,8 @@ Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
 ejemplo; reemplazalo por el id real.
 
 ```bash
-curl -X POST http://localhost:8080/sprints/1/cerrar
+curl -X POST http://localhost:8080/sprints/1/cerrar \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
@@ -75,6 +105,7 @@ Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
 
 ```bash
 curl -X POST http://localhost:8080/backlog \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"proyecto_id":1,"titulo":"Validar dashboard","descripcion":"Historia de ejemplo","prioridad":"M"}'
 ```
@@ -83,6 +114,7 @@ curl -X POST http://localhost:8080/backlog \
 
 ```bash
 curl -X PUT http://localhost:8080/backlog/1/sprint \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"sprint_id":1}'
 ```
@@ -93,7 +125,8 @@ La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 
 ### Consultar el Sprint Backlog
 
 ```bash
-curl http://localhost:8080/sprints/1/backlog
+curl http://localhost:8080/sprints/1/backlog \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
@@ -103,7 +136,8 @@ no tiene historias. Si el Sprint no existe, responde 404 con
 ### Consultar una historia
 
 ```bash
-curl http://localhost:8080/backlog/1
+curl http://localhost:8080/backlog/1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Responde 200 con la historia. `sprint_id` es `null` mientras la historia está en el
@@ -118,12 +152,14 @@ La historia debe estar asignada a un Sprint activo. Primero se pasa a
 
 ```bash
 curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"estado":"En progreso"}'
 ```
 
 ```bash
 curl -X PUT http://localhost:8080/backlog/1/estado \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"estado":"Completada"}'
 ```
@@ -135,11 +171,13 @@ La respuesta es la historia con su `estado` y, al completarla, su
 ### Consultar y actualizar el proyecto
 
 ```bash
-curl http://localhost:8080/projects/1
+curl http://localhost:8080/projects/1 \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ```bash
 curl -X PUT http://localhost:8080/projects/1 \
+  -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"nombre":"Proyecto Demo actualizado","descripcion":"Descripción actualizada","fecha_inicio":"2026-10-20","fecha_fin":"2026-12-20"}'
 ```
@@ -149,12 +187,30 @@ curl -X PUT http://localhost:8080/projects/1 \
 Mismos pasos y mismos datos que la versión bash. En cmd la continuación de
 línea es `^` y las comillas dobles del JSON se escriben con `\"`.
 
+### Registrar a las personas e iniciar sesión
+
+```bat
+curl -X POST http://localhost:8080/auth/registro ^
+  -H "Content-Type: application/json" ^
+  -d "{\"nombre\":\"carlos\",\"contrasena\":\"una-clave-larga\"}"
+```
+
+```bat
+curl -X POST http://localhost:8080/auth/registro ^
+  -H "Content-Type: application/json" ^
+  -d "{\"nombre\":\"ana\",\"contrasena\":\"una-clave-larga\"}"
+```
+
+Copiá el `token` de la respuesta de Ana y guardalo con `set TOKEN=<token>`. Si Ana
+ya tiene cuenta, usá `/auth/ingreso` con el mismo cuerpo.
+
 ### Crear un proyecto
 
 ```bat
 curl -X POST http://localhost:8080/projects ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
-  -d "{\"nombre\":\"Proyecto Demo\",\"descripcion\":\"Datos para probar el frontend\",\"creador\":\"Ana\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-12-20\"}"
+  -d "{\"nombre\":\"Proyecto Demo\",\"descripcion\":\"Datos para probar el frontend\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-12-20\"}"
 ```
 
 La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
@@ -164,18 +220,21 @@ La respuesta incluye el `id` del proyecto. En los comandos siguientes se usa
 
 ```bat
 curl -X POST http://localhost:8080/projects/1/members ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
-  -d "{\"nombre\":\"Carlos\",\"rol\":\"product_builder\"}"
+  -d "{\"nombre\":\"carlos\",\"rol\":\"product_builder\"}"
 ```
 
 ```bat
-curl http://localhost:8080/projects/1/members
+curl http://localhost:8080/projects/1/members ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 ### Crear un Sprint
 
 ```bat
 curl -X POST http://localhost:8080/sprints ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1}"
 ```
@@ -185,6 +244,7 @@ La respuesta incluye el `id` del Sprint. En los comandos siguientes se usa
 
 ```bat
 curl -X POST http://localhost:8080/sprints/1/iniciar ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"sprint_goal\":\"Validar el seguimiento\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-11-03\"}"
 ```
@@ -195,7 +255,8 @@ Cerralo cuando termines de probarlo: el comando no lleva cuerpo. Se usa `1` como
 ejemplo; reemplazalo por el id real.
 
 ```bat
-curl -X POST http://localhost:8080/sprints/1/cerrar
+curl -X POST http://localhost:8080/sprints/1/cerrar ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 La respuesta es el Sprint con `estado` en `Finalizado`. Las historias sin completar
@@ -207,6 +268,7 @@ Si el Sprint no existe, responde 404 con `{"mensaje":"sprint no encontrado"}`.
 
 ```bat
 curl -X POST http://localhost:8080/backlog ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"proyecto_id\":1,\"titulo\":\"Validar dashboard\",\"descripcion\":\"Historia de ejemplo\",\"prioridad\":\"M\"}"
 ```
@@ -215,6 +277,7 @@ curl -X POST http://localhost:8080/backlog ^
 
 ```bat
 curl -X PUT http://localhost:8080/backlog/1/sprint ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"sprint_id\":1}"
 ```
@@ -225,7 +288,8 @@ La respuesta es la historia con su `sprint_id`. Repetir la asignación responde 
 ### Consultar el Sprint Backlog
 
 ```bat
-curl http://localhost:8080/sprints/1/backlog
+curl http://localhost:8080/sprints/1/backlog ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 Devuelve las historias del Sprint en orden M, S, C, W y luego por creación; `[]` si
@@ -235,7 +299,8 @@ no tiene historias. Si el Sprint no existe, responde 404 con
 ### Consultar una historia
 
 ```bat
-curl http://localhost:8080/backlog/1
+curl http://localhost:8080/backlog/1 ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 Responde 200 con la historia. `sprint_id` es `null` mientras la historia está en el
@@ -250,12 +315,14 @@ La historia debe estar asignada a un Sprint activo. Primero se pasa a
 
 ```bat
 curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"estado\":\"En progreso\"}"
 ```
 
 ```bat
 curl -X PUT http://localhost:8080/backlog/1/estado ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"estado\":\"Completada\"}"
 ```
@@ -267,11 +334,13 @@ La respuesta es la historia con su `estado` y, al completarla, su
 ### Consultar y actualizar el proyecto
 
 ```bat
-curl http://localhost:8080/projects/1
+curl http://localhost:8080/projects/1 ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 ```bat
 curl -X PUT http://localhost:8080/projects/1 ^
+  -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"nombre\":\"Proyecto Demo actualizado\",\"descripcion\":\"Descripción actualizada\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-12-20\"}"
 ```

@@ -44,14 +44,15 @@ func TestIniciarVotacion_HistoriaInexistente(t *testing.T) {
 }
 
 func TestIniciarVotacion_NoEsScrumMaster(t *testing.T) {
-	for _, usuarioID := range []int64{candela, ajeno} {
+	esperados := map[int64]error{candela: domain.ErrNoEsScrumMaster, ajeno: domain.ErrNoEsIntegrante}
+	for usuarioID, esperado := range esperados {
 		votaciones := &fakeVotacionRepository{}
 		servicio := NewIniciarVotacion(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
 
 		_, err := servicio.Ejecutar(context.Background(), 3, usuarioID)
 
-		if !errors.Is(err, domain.ErrNoEsScrumMaster) {
-			t.Errorf("usuario %d: se esperaba ErrNoEsScrumMaster, se obtuvo %v", usuarioID, err)
+		if !errors.Is(err, esperado) {
+			t.Errorf("usuario %d: se esperaba %v, se obtuvo %v", usuarioID, esperado, err)
 		}
 		esperarSinRondas(t, votaciones)
 	}

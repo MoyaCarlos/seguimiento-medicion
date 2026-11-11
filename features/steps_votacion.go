@@ -241,13 +241,19 @@ func (p *pasosVotacion) revelo(nombre string) error {
 	return p.err
 }
 
+// vistaDe consulta la votación como la ve nombre. Sin nombre consulta el Scrum
+// Master, que conduce la votación: desde HU-21 hace falta integrar el proyecto.
 func (p *pasosVotacion) vistaDe(nombre string) (service.VistaVotacion, error) {
 	var id int64
-	if nombre != "" {
-		var err error
-		if id, err = p.usuario(nombre); err != nil {
-			return service.VistaVotacion{}, err
-		}
+	var err error
+	if nombre == "" {
+		err = p.base.db.QueryRow(`SELECT i.usuario_id FROM integrantes i JOIN historias h ON h.proyecto_id = i.proyecto_id
+			WHERE h.id = ? AND i.rol = 'scrum_master'`, p.historiaID).Scan(&id)
+	} else {
+		id, err = p.usuario(nombre)
+	}
+	if err != nil {
+		return service.VistaVotacion{}, err
 	}
 	return p.consultar.Ejecutar(context.Background(), p.historiaID, id)
 }

@@ -11,17 +11,23 @@ import (
 // como arrastradas las historias que no se completaron y las devuelve al
 // Product Backlog.
 type CerrarSprint struct {
-	sprints   repository.SprintRepository
-	historias repository.HistoriasDeSprintRepository
+	sprints     repository.SprintRepository
+	historias   repository.HistoriasDeSprintRepository
+	integrantes repository.IntegrantesRepository
 }
 
-func NewCerrarSprint(sprints repository.SprintRepository, historias repository.HistoriasDeSprintRepository) *CerrarSprint {
-	return &CerrarSprint{sprints: sprints, historias: historias}
+func NewCerrarSprint(sprints repository.SprintRepository, historias repository.HistoriasDeSprintRepository, integrantes repository.IntegrantesRepository) *CerrarSprint {
+	return &CerrarSprint{sprints: sprints, historias: historias, integrantes: integrantes}
 }
 
-func (s *CerrarSprint) Ejecutar(ctx context.Context, sprintID int64) (domain.Sprint, error) {
+// Ejecutar cierra el Sprint; quien lo cierra (usuarioID, la sesión) debe ser el
+// Scrum Master del proyecto (HU-21).
+func (s *CerrarSprint) Ejecutar(ctx context.Context, sprintID, usuarioID int64) (domain.Sprint, error) {
 	sprint, err := s.sprints.ObtenerPorID(ctx, sprintID)
 	if err != nil {
+		return domain.Sprint{}, err
+	}
+	if err := exigirScrumMaster(ctx, s.integrantes, sprint.ProyectoID, usuarioID); err != nil {
 		return domain.Sprint{}, err
 	}
 	if err := sprint.Cerrar(); err != nil {

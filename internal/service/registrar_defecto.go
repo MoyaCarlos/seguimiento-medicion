@@ -11,9 +11,10 @@ import (
 // RegistrarDefecto registra un defecto Pendiente con el Sprint activo del
 // proyecto como Sprint de detección (HU-08).
 type RegistrarDefecto struct {
-	sprints   repository.SprintRepository
-	historias repository.HistoriaRepository
-	defectos  repository.DefectoRepository
+	sprints     repository.SprintRepository
+	historias   repository.HistoriaRepository
+	defectos    repository.DefectoRepository
+	integrantes repository.IntegrantesRepository
 }
 
 // RegistrarDefectoInput son los datos de un defecto. El estado y los Sprints
@@ -23,16 +24,22 @@ type RegistrarDefectoInput struct {
 	HistoriaID  int64
 	Descripcion string
 	Severidad   string
+	// UsuarioID es quien registra (la sesión, HU-21); debe integrar el proyecto.
+	UsuarioID int64
 }
 
-func NewRegistrarDefecto(sprints repository.SprintRepository, historias repository.HistoriaRepository, defectos repository.DefectoRepository) *RegistrarDefecto {
-	return &RegistrarDefecto{sprints: sprints, historias: historias, defectos: defectos}
+func NewRegistrarDefecto(sprints repository.SprintRepository, historias repository.HistoriaRepository, defectos repository.DefectoRepository, integrantes repository.IntegrantesRepository) *RegistrarDefecto {
+	return &RegistrarDefecto{sprints: sprints, historias: historias, defectos: defectos, integrantes: integrantes}
 }
 
-// Ejecutar valida en el orden de la spec: Sprint activo, historia relacionada
-// y, en el dominio, descripción y severidad. La existencia del proyecto la
-// verifica el handler antes de leer el cuerpo.
+// Ejecutar valida en el orden de la spec: quien registra integra el proyecto
+// (HU-21), Sprint activo, historia relacionada y, en el dominio, descripción y
+// severidad. La existencia del proyecto la verifica el handler antes de leer
+// el cuerpo.
 func (s *RegistrarDefecto) Ejecutar(ctx context.Context, in RegistrarDefectoInput) (domain.DefectoDetalle, error) {
+	if err := exigirIntegrante(ctx, s.integrantes, in.ProyectoID, in.UsuarioID); err != nil {
+		return domain.DefectoDetalle{}, err
+	}
 	sprints, err := s.sprints.ListarPorProyecto(ctx, in.ProyectoID)
 	if err != nil {
 		return domain.DefectoDetalle{}, err

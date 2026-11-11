@@ -53,7 +53,12 @@ func (p *pasosDatosPrueba) cerrar() {
 func (p *pasosDatosPrueba) pedir(metodo, ruta string, cuerpo io.Reader) *httptest.ResponseRecorder {
 	mux := http.NewServeMux()
 	hasheador := service.NewServicioContrasenas(1)
-	apphttp.NewDemoHandler(func() bool { return p.habilitado }, demo.NewCargador(p.db, time.Now, hasheador)).Registrar(mux)
+	demoHandler := apphttp.NewDemoHandler(func() bool { return p.habilitado }, demo.NewCargador(p.db, time.Now, hasheador))
+	for _, r := range apphttp.Rutas(apphttp.Handlers{Demo: demoHandler}) {
+		if strings.Contains(r.Patron, "/demo/") {
+			mux.HandleFunc(r.Patron, r.Handler)
+		}
+	}
 	mux.HandleFunc("POST /auth/ingreso", p.autenticacion(hasheador).Ingreso)
 	respuesta := httptest.NewRecorder()
 	mux.ServeHTTP(respuesta, httptest.NewRequest(metodo, ruta, cuerpo))

@@ -17,12 +17,18 @@ func NewCrearSprint(proyectos repository.ProjectRepository, sprints repository.S
 	return &CrearSprint{proyectos: proyectos, sprints: sprints}
 }
 
-func (s *CrearSprint) Ejecutar(ctx context.Context, proyectoID int64) (domain.Sprint, error) {
+// Ejecutar crea el Sprint; quien lo crea (usuarioID, la sesión) debe ser el
+// Scrum Master del proyecto (HU-21). Orden: proyecto existente (404), Scrum
+// Master (403) y reglas del Sprint (400/409).
+func (s *CrearSprint) Ejecutar(ctx context.Context, proyectoID, usuarioID int64) (domain.Sprint, error) {
 	sprint, err := domain.NewSprint(proyectoID)
 	if err != nil {
 		return domain.Sprint{}, err
 	}
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return domain.Sprint{}, err
+	}
+	if err := exigirScrumMaster(ctx, s.proyectos, proyectoID, usuarioID); err != nil {
 		return domain.Sprint{}, err
 	}
 

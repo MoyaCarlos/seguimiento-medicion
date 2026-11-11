@@ -9,15 +9,16 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 )
 
-func TestCrearProyecto_Ejecutar_Exitosa(t *testing.T) {
+const creadorDePrueba int64 = 7
+
+func TestCrearProyecto_Ejecutar_ElCreadorDeLaSesionQuedaComoScrumMaster(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	servicio := NewCrearProyecto(proyectos, usuarios)
+	servicio := NewCrearProyecto(proyectos)
 
 	proyecto, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
 		Nombre:      "Software Metrics & Estimation",
 		Descripcion: "Sistema de estimación",
-		Creador:     "Ana Valentina",
+		CreadorID:   creadorDePrueba,
 	})
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -31,26 +32,20 @@ func TestCrearProyecto_Ejecutar_Exitosa(t *testing.T) {
 	if len(proyectos.miembros) != 1 {
 		t.Fatalf("se esperaba 1 vinculación, se obtuvieron %d", len(proyectos.miembros))
 	}
-	if proyectos.miembros[0].Role != domain.RolScrumMaster {
-		t.Errorf("se esperaba rol scrum_master, se obtuvo %q", proyectos.miembros[0].Role)
-	}
-	if proyectos.miembros[0].ProjectID != proyecto.ID {
-		t.Errorf("la vinculación apunta a otro proyecto: %+v", proyectos.miembros[0])
+	m := proyectos.miembros[0]
+	if m.UserID != creadorDePrueba || m.Role != domain.RolScrumMaster || m.ProjectID != proyecto.ID {
+		t.Errorf("se esperaba al creador %d como scrum_master del proyecto %d, se obtuvo %+v", creadorDePrueba, proyecto.ID, m)
 	}
 }
 
 func TestCrearProyecto_Ejecutar_NoPersisteSiInvalido(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	servicio := NewCrearProyecto(proyectos, usuarios)
+	servicio := NewCrearProyecto(proyectos)
 
 	_, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
-		Nombre:  "   ",
-		Creador: "Ana",
+		Nombre:    "   ",
+		CreadorID: creadorDePrueba,
 	})
-	if err == nil {
-		t.Fatal("se esperaba error de validación")
-	}
 	var verr domain.ValidationError
 	if !errors.As(err, &verr) || verr.Campo != "nombre" {
 		t.Fatalf("se esperaba ValidationError de nombre, se obtuvo %v", err)
@@ -60,50 +55,27 @@ func TestCrearProyecto_Ejecutar_NoPersisteSiInvalido(t *testing.T) {
 	}
 }
 
-func TestCrearProyecto_Ejecutar_CreadorObligatorio(t *testing.T) {
+func TestCrearProyecto_Ejecutar_SinCreadorNoPersisteNada(t *testing.T) {
 	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	servicio := NewCrearProyecto(proyectos, usuarios)
+	servicio := NewCrearProyecto(proyectos)
 
-	_, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
-		Nombre:  "Proyecto",
-		Creador: "",
-	})
-	var verr domain.ValidationError
-	if !errors.As(err, &verr) || verr.Campo != "creador" {
-		t.Fatalf("se esperaba ValidationError de creador, se obtuvo %v", err)
+	_, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{Nombre: "Proyecto"})
+
+	if !errors.Is(err, domain.ErrNoAutenticado) {
+		t.Fatalf("se esperaba ErrNoAutenticado, se obtuvo %v", err)
 	}
-	if proyectos.creates != 0 {
-		t.Error("no se debía persistir el proyecto sin creador válido")
+	if proyectos.creates != 0 || len(proyectos.miembros) != 0 {
+		t.Error("no se debía persistir el proyecto sin creador")
 	}
 }
 
-func TestCrearProyecto_Ejecutar_ReutilizaCreadorExistente(t *testing.T) {
-	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	servicio := NewCrearProyecto(proyectos, usuarios)
-
-	for i := 0; i < 2; i++ {
-		if _, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
-			Nombre:  "Proyecto",
-			Creador: "ana",
-		}); err != nil {
-			t.Fatalf("no se esperaba error: %v", err)
-		}
-	}
-	if usuarios.creates != 1 {
-		t.Errorf("se esperaba un único usuario reutilizado, se crearon %d", usuarios.creates)
-	}
-}
-
-func TestCrearProyecto_Ejecutar_RepoEnMemoriaConFakeDeUsuarios(t *testing.T) {
+func TestCrearProyecto_Ejecutar_RepoEnMemoria(t *testing.T) {
 	proyectos := repository.NewProjectRepositoryEnMemoria()
-	usuarios := &fakeUserRepository{}
-	servicio := NewCrearProyecto(proyectos, usuarios)
+	servicio := NewCrearProyecto(proyectos)
 
 	proyecto, err := servicio.Ejecutar(context.Background(), CrearProyectoInput{
-		Nombre:  "Proyecto",
-		Creador: "Ana",
+		Nombre:    "Proyecto",
+		CreadorID: creadorDePrueba,
 	})
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -112,7 +84,7 @@ func TestCrearProyecto_Ejecutar_RepoEnMemoriaConFakeDeUsuarios(t *testing.T) {
 	if err != nil {
 		t.Fatalf("no se esperaba error al listar integrantes: %v", err)
 	}
-	if len(miembros) != 1 || miembros[0].UserID != 1 || miembros[0].Role != domain.RolScrumMaster {
+	if len(miembros) != 1 || miembros[0].UserID != creadorDePrueba || miembros[0].Role != domain.RolScrumMaster {
 		t.Fatalf("se esperaba el Scrum Master vinculado, se obtuvo %+v", miembros)
 	}
 }
