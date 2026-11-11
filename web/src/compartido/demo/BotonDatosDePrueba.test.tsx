@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -7,7 +7,7 @@ import { BotonDatosDePrueba } from './BotonDatosDePrueba'
 const json = (status: number, cuerpo: unknown) => new Response(JSON.stringify(cuerpo), { status })
 const sinCuerpo = (status: number) => new Response('404 page not found', { status })
 
-const resumen = { proyecto_id: 25, usuarios: 4, integrantes: 3, sprints: 3, historias: 10 }
+const resumen = { proyecto_id: 25, usuarios: 4, integrantes: 4, sprints: 4, historias: 12, defectos: 5 }
 
 function simularApi(estado: Response | Error, carga?: Response | Promise<Response>) {
   const fetchSimulado = vi.fn((ruta: string, _opciones?: RequestInit) => {
@@ -18,13 +18,15 @@ function simularApi(estado: Response | Error, carga?: Response | Promise<Respons
   return fetchSimulado
 }
 
-function abrir() {
+function abrir(alUsar?: (nombre: string, contrasena: string) => void) {
   render(
     <MemoryRouter>
-      <BotonDatosDePrueba />
+      <BotonDatosDePrueba alUsar={alUsar} />
     </MemoryRouter>,
   )
 }
+
+const tablaDeUsuarios = () => screen.findByRole('table', { name: 'Usuarios de la demostración' })
 
 const boton = () => screen.findByRole('button', { name: 'Cargar datos de prueba' })
 
@@ -116,5 +118,84 @@ describe('BotonDatosDePrueba', () => {
 
     expect((screen.getByRole('button', { name: 'Cargar datos de prueba' }) as HTMLButtonElement).disabled).toBe(true)
     expect(screen.getByText('Cargando…')).toBeTruthy()
+  })
+
+  it('Dado el botón visible, cuando la carga responde 201, entonces muestra la tabla con usuario, contraseña y rol de los cuatro usuarios', async () => {
+    simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
+    abrir()
+
+    await userEvent.click(await boton())
+
+    const tabla = await tablaDeUsuarios()
+    const filas = within(tabla).getAllByRole('row').slice(1)
+    expect(filas.map((fila) => within(fila).getAllByRole('cell').map((celda) => celda.textContent))).toEqual([
+      ['carlos.moya', 'demo1234', 'Scrum Master'],
+      ['ana.iriarte', 'demo1234', 'Product Builder'],
+      ['candela.vulcano', 'demo1234', 'Product Builder'],
+      ['jimena.martinez', 'demo1234', 'Product Builder'],
+    ])
+    expect(within(tabla).getAllByRole('columnheader').map((c) => c.textContent)).toEqual(['Usuario', 'Contraseña', 'Rol'])
+  })
+
+  it('Dado el botón visible, cuando la carga responde 409 ya cargado, entonces también muestra la tabla de usuarios', async () => {
+    simularApi(
+      json(200, { habilitado: true }),
+      Promise.resolve(json(409, { campo: 'ya_cargado', mensaje: 'los datos de prueba ya están cargados' })),
+    )
+    abrir()
+
+    await userEvent.click(await boton())
+
+    expect(await tablaDeUsuarios()).toBeTruthy()
+  })
+
+  it('Dado el botón visible, cuando la carga responde 409 por usuario existente, entonces avisa con el nombre del usuario, sin error ni tabla', async () => {
+    simularApi(
+      json(200, { habilitado: true }),
+      Promise.resolve(json(409, { campo: 'usuario_existente', mensaje: 'ya existe el usuario ana.iriarte' })),
+    )
+    abrir()
+
+    await userEvent.click(await boton())
+
+    expect((await screen.findByRole('status')).textContent).toContain('ya existe el usuario ana.iriarte')
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('table')).toBeNull()
+    expect((screen.getByRole('button', { name: 'Cargar datos de prueba' }) as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('Dado el botón visible, cuando la carga responde un error, entonces no muestra la tabla de usuarios', async () => {
+    simularApi(
+      json(200, { habilitado: true }),
+      Promise.resolve(json(409, { campo: 'proyecto_id', mensaje: 'el id 25 ya lo usa otro proyecto' })),
+    )
+    abrir()
+
+    await userEvent.click(await boton())
+
+    await screen.findByRole('alert')
+    expect(screen.queryByRole('table')).toBeNull()
+  })
+
+  it('Dado la tabla de usuarios y un destino para «Usar», cuando uso a ana.iriarte, entonces se entregan su usuario y su contraseña', async () => {
+    simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
+    const alUsar = vi.fn()
+    abrir(alUsar)
+
+    await userEvent.click(await boton())
+    const fila = within(await tablaDeUsuarios()).getByRole('row', { name: /ana\.iriarte/ })
+    await userEvent.click(within(fila).getByRole('button', { name: 'Usar ana.iriarte' }))
+
+    expect(alUsar).toHaveBeenCalledWith('ana.iriarte', 'demo1234')
+  })
+
+  it('Dado la tabla de usuarios sin destino para «Usar», entonces no hay botones «Usar»', async () => {
+    simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
+    abrir()
+
+    await userEvent.click(await boton())
+    await tablaDeUsuarios()
+
+    expect(screen.queryByRole('button', { name: /^Usar / })).toBeNull()
   })
 })

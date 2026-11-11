@@ -15,6 +15,7 @@ type Props = {
   contrasenaNueva?: boolean
   aviso?: string
   pie: ReactNode
+  relleno?: { nombre: string; contrasena: string }
   enviar(nombre: string, contrasena: string): Promise<void>
 }
 
@@ -36,6 +37,7 @@ export function FormularioCredenciales({
   contrasenaNueva = false,
   aviso,
   pie,
+  relleno,
   enviar,
 }: Props) {
   const [nombre, setNombre] = useState('')
@@ -43,6 +45,15 @@ export function FormularioCredenciales({
   const [errores, setErrores] = useState<Partial<Record<Campo, string>>>({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [rellenoAplicado, setRellenoAplicado] = useState(relleno)
+
+  if (relleno !== rellenoAplicado) {
+    setRellenoAplicado(relleno)
+    if (relleno) {
+      setNombre(relleno.nombre)
+      setContrasena(relleno.contrasena)
+    }
+  }
 
   async function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
