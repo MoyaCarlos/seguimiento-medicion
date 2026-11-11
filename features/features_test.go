@@ -10,6 +10,7 @@ func TestFeatures(t *testing.T) {
 	suite := godog.TestSuite{
 		Name: "BDD",
 		ScenarioInitializer: func(ctx *godog.ScenarioContext) {
+			_ = InitializeScenarioSesion(ctx)                 // HU-21 (quién actúa)
 			sc := InitializeScenario(ctx)                     // HU-01 (+ HU-05)
 			proyecto := InitializeScenarioProyecto(ctx)       // HU-04
 			InitializeScenarioScrumMasterUnico(ctx, proyecto) // #236
