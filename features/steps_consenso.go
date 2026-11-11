@@ -8,11 +8,12 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/cucumber/godog"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/app"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
-	apphttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -27,6 +28,7 @@ type pasosConsenso struct {
 	vista     service.VistaVotacion
 	consulta  service.HistorialRondas
 	mux       *http.ServeMux
+	sesiones  *service.EmisorSesiones
 	rec       *httptest.ResponseRecorder
 }
 
@@ -39,9 +41,12 @@ func (c *pasosConsenso) preparar() {
 	c.abrir = service.NewAbrirNuevaRonda(historias, proyectos, votaciones)
 	c.historial = service.NewConsultarHistorialRondas(historias, proyectos, votaciones)
 	c.vista, c.consulta = service.VistaVotacion{}, service.HistorialRondas{}
-	handler := apphttp.NewVotacionHandler(service.NewObtenerHistoria(historias), nil, nil, nil, nil, c.registrar, nil, nil)
-	c.mux = http.NewServeMux()
-	c.mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", handler.RegistrarEstimacion)
+	c.mux = app.NuevoMux(db, app.Opciones{
+		DemoHabilitado: func() bool { return false },
+		Ahora:          time.Now,
+		Contrasenas:    service.NewServicioContrasenas(1),
+	})
+	c.sesiones = service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(db), time.Now)
 	c.rec = nil
 }
 
@@ -128,9 +133,14 @@ func (c *pasosConsenso) enviaALaAPI(nombre, valor string) error {
 		return err
 	}
 	ruta := fmt.Sprintf("/backlog/%d/votacion/estimacion", c.votacion.historiaID)
-	cuerpo := fmt.Sprintf(`{"usuario_id":%d,"estimacion_sp":%s}`, id, valor)
+	token, _, err := c.sesiones.Emitir(context.Background(), id)
+	if err != nil {
+		return err
+	}
+	req := httptest.NewRequest(http.MethodPost, ruta, strings.NewReader(`{"estimacion_sp":`+valor+`}`))
+	req.Header.Set("Authorization", "Bearer "+token)
 	c.rec = httptest.NewRecorder()
-	c.mux.ServeHTTP(c.rec, httptest.NewRequest(http.MethodPost, ruta, strings.NewReader(cuerpo)))
+	c.mux.ServeHTTP(c.rec, req)
 	return nil
 }
 

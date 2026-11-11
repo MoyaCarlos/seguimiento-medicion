@@ -32,6 +32,17 @@ func ConSesion(obtener *service.ObtenerSesion) func(nethttp.HandlerFunc) nethttp
 	}
 }
 
+// actorDeSesion devuelve el id de quien actúa; sin usuario de sesión responde
+// 401 y devuelve false. Protege al handler aunque la ruta no esté envuelta.
+func actorDeSesion(w nethttp.ResponseWriter, r *nethttp.Request) (int64, bool) {
+	id := usuarioDeSesion(r).ID
+	if id <= 0 {
+		escribirError(w, domain.ErrNoAutenticado)
+		return 0, false
+	}
+	return id, true
+}
+
 // usuarioDeSesion devuelve el usuario que dejó ConSesion en el contexto; el
 // valor cero si la ruta no está envuelta.
 func usuarioDeSesion(r *nethttp.Request) domain.User {
