@@ -219,6 +219,33 @@ Sprints finalizados, métricas/esfuerzo/defectos dicen "sin datos".
 
 ---
 
+## Phase 7: User Story 5 - Exportar desde la interfaz (Sprint 5, #78)
+
+**Goal**: ofrecer los dos botones de exportación, descargar el PDF y mostrar el error
+si la generación falla.
+
+- [ ] T044 [US5] RED: en web/src/compartido/api/descarga.test.ts, `descargar` envía
+  `Accept: application/pdf` (y `Authorization` si hay token), devuelve el blob con el
+  nombre de `Content-Disposition`, usa un nombre por defecto si falta la cabecera, y
+  mapea error JSON, gateway y conexión caída a los errores existentes. En
+  web/src/features/historial/Detalle.test.tsx y web/src/features/proyecto/Panel.test.tsx,
+  pruebas de componente con el escenario en el nombre: el botón descarga el PDF del
+  Sprint finalizado / del proyecto con el nombre que identifica proyecto y Sprint; un
+  error del backend muestra el mensaje y no descarga ningún archivo. Confirmar que
+  `npm test` FALLA
+- [ ] T045 [US5] COMMIT `RED: agregar tests del frontend de reportes en PDF (fallan)`
+- [ ] T046 [US5] GREEN: implementar `descargar` en web/src/compartido/api/client.ts;
+  compartir en web/src/compartido/componentes/BotonExportar.tsx el botón, el estado de
+  generación, el mensaje de error y la descarga por blob; agregar
+  `descargarReporteSprint` en web/src/features/historial/api.ts y
+  `descargarReporteProyecto` en web/src/features/proyecto/api.ts; integrar el botón
+  "Exportar a PDF" en el resumen del Sprint finalizado y "Exportar reporte del proyecto"
+  en el panel del proyecto — `npm test` en verde
+- [ ] T047 [US5] COMMIT `GREEN: implementar la exportación de reportes en PDF, tests en verde`
+- [ ] T048 [US5] Correr en web/ `npm run lint`, `npm test` y `npm run build` sin errores;
+  marcar las tareas de esta fase y actualizar el avance de #78 + COMMIT
+  `docs: actualizar el avance del frontend de HU-10`
+
 ## Dependencies & Execution Order
 
 - **Setup (Phase 1)** → **Foundational (Phase 2)** → **US1 (Phase 3)** → **US2/US3 (Phase 4)**
