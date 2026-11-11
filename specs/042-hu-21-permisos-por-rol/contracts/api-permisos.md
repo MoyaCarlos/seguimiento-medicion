@@ -13,7 +13,8 @@ mantienen la forma actual `{"campo"?: string, "mensaje": string}`.
 | No es Scrum Master (en acción de gestión) | 403 | `{"mensaje": "Solo el Scrum Master puede realizar esta acción"}` |
 
 Orden: 401 → 404 → 403 (no integrante) → 403 (no Scrum Master) → 400/409. Excepción: un
-cuerpo que no es JSON válido responde 400 «JSON inválido» antes del 403.
+cuerpo mal formado (no es JSON válido, o le faltan las claves que la ruta exige, como
+`criterios_aceptacion` y `estimacion_sp` en `PUT /backlog/{id}`) responde 400 antes del 403.
 
 ## Nivel de cada ruta
 

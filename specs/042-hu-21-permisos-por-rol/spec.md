@@ -267,8 +267,8 @@ pantalla «No sos integrante».
 - `POST /sprints` y `POST /backlog` reciben el proyecto en el cuerpo: se evalúa la
   pertenencia (y el rol, en Sprints) sobre ese proyecto.
 - Un Product Builder con datos inválidos en una acción de gestión: recibe 403, no el error
-  de validación (no se le revela nada de la acción). Única excepción: un cuerpo que no es
-  JSON válido responde 400 «JSON inválido» (FR-006).
+  de validación (no se le revela nada de la acción). Única excepción: un cuerpo mal
+  formado (no es JSON, o le faltan las claves que la ruta exige) responde 400 (FR-006).
 - La persona que creó el proyecto es la única Scrum Master; no puede dejar de serlo en esta
   historia.
 - `GET /projects` nunca responde 403, aunque la persona no integre ningún proyecto.
@@ -292,9 +292,12 @@ pantalla «No sos integrante».
 - **FR-006**: Ante varias condiciones de error a la vez, el sistema SHALL responder la
   primera en este orden: 401 (sin sesión) → 404 (recurso inexistente) → 403 no integrante
   → 403 no Scrum Master → 400/409 (validación y conflictos del caso de uso). Excepción: un
-  cuerpo que no es JSON válido responde 400 «JSON inválido» antes del 403, porque en
+  cuerpo mal formado responde 400 antes del 403 —no es JSON válido («JSON inválido»), o
+  le faltan las claves que la ruta exige que viajen siempre (por ejemplo
+  `criterios_aceptacion` y `estimacion_sp` en `PUT /backlog/{id}`, HU-15)—, porque en
   algunas rutas (`POST /sprints`, `POST /backlog`) el proyecto viaja en el cuerpo y sin
-  leerlo no se sabe sobre qué proyecto evaluar; esa respuesta no revela nada de la acción.
+  leerlo no se sabe sobre qué proyecto evaluar; esa respuesta habla de la forma del
+  pedido y no revela nada de la acción.
 
 **Basadas en evento**
 
