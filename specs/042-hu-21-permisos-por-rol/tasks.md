@@ -41,7 +41,7 @@ un commit por fase.
 
 ## Phase 1: Setup
 
-- [ ] T001 Verificar la base: `go build ./... && go vet ./... && go test ./...` y `cd web && npm test` en verde sobre la rama `feature/HU-21-permisos-por-rol` antes de tocar código (sin commit).
+- [X] T001 Verificar la base: `go build ./... && go vet ./... && go test ./...` y `cd web && npm test` en verde sobre la rama `feature/HU-21-permisos-por-rol` antes de tocar código (sin commit).
 
 ---
 
@@ -51,23 +51,23 @@ un commit por fase.
 
 ### Reglas de pertenencia y rol (servicio)
 
-- [ ] T002 RED: tests en internal/service/integrantes_test.go (archivo nuevo) para `exigirIntegrante(ctx, proyectos, proyectoID, usuarioID)` → nil si integra, `domain.ErrNoEsIntegrante` si no; y `exigirScrumMaster` → nil si es Scrum Master, `ErrNoEsScrumMaster` si es Product Builder, **`ErrNoEsIntegrante` si no integra** (hoy devuelve `ErrNoEsScrumMaster`). Incluir aserciones de los mensajes: `ErrNoEsIntegrante.Error() == "No sos integrante de este proyecto"` y `ErrNoEsScrumMaster.Error() == "Solo el Scrum Master puede realizar esta acción"` — confirmar que FALLA
-- [ ] T003 COMMIT `RED: pertenencia y rol por proyecto con los mensajes de HU-21 (falla)`
-- [ ] T004 GREEN: implementar `exigirIntegrante` y el cambio de `exigirScrumMaster` en internal/service/integrantes.go; cambiar los mensajes en internal/domain/errors.go. Actualizar los tests y `.feature` existentes que esperan el mensaje viejo («solo el Scrum Master del proyecto puede hacerlo», `features/votacion_planning_poker.feature`, `features/consenso_estimacion.feature`, tests de internal/service y internal/http) y los que esperaban 403 de rol para un no integrante — `go test ./...` en verde
-- [ ] T005 COMMIT `GREEN: pertenencia y rol por proyecto con los mensajes de HU-21, test en verde`
+- [X] T002 RED: tests en internal/service/integrantes_test.go (archivo nuevo) para `exigirIntegrante(ctx, proyectos, proyectoID, usuarioID)` → nil si integra, `domain.ErrNoEsIntegrante` si no; y `exigirScrumMaster` → nil si es Scrum Master, `ErrNoEsScrumMaster` si es Product Builder, **`ErrNoEsIntegrante` si no integra** (hoy devuelve `ErrNoEsScrumMaster`). Incluir aserciones de los mensajes: `ErrNoEsIntegrante.Error() == "No sos integrante de este proyecto"` y `ErrNoEsScrumMaster.Error() == "Solo el Scrum Master puede realizar esta acción"` — confirmar que FALLA
+- [X] T003 COMMIT `RED: pertenencia y rol por proyecto con los mensajes de HU-21 (falla)`
+- [X] T004 GREEN: implementar `exigirIntegrante` y el cambio de `exigirScrumMaster` en internal/service/integrantes.go; cambiar los mensajes en internal/domain/errors.go. Actualizar los tests y `.feature` existentes que esperan el mensaje viejo («solo el Scrum Master del proyecto puede hacerlo», `features/votacion_planning_poker.feature`, `features/consenso_estimacion.feature`, tests de internal/service y internal/http) y los que esperaban 403 de rol para un no integrante — `go test ./...` en verde
+- [X] T005 COMMIT `GREEN: pertenencia y rol por proyecto con los mensajes de HU-21, test en verde`
 
 ### Sesión en la capa HTTP
 
-- [ ] T006 RED: tests en internal/http/sesion_middleware_test.go (nuevo) para `conSesion(obtener)(handler)`: sin cabecera, esquema distinto de Bearer, token mal formado, inexistente o vencido → 401 `{"mensaje":"Tu sesión no es válida"}` y el handler NO se ejecuta; con sesión vigente el handler se ejecuta y `usuarioDeSesion(r)` devuelve el `ID` y el `Nombre` del usuario. Usar un fake del puerto que usa `service.ObtenerSesion` — confirmar que FALLA
-- [ ] T007 COMMIT `RED: exigir sesión vigente en la capa HTTP (falla)`
-- [ ] T008 GREEN: implementar `conSesion` y `usuarioDeSesion` en internal/http/sesion_middleware.go, reutilizando `tokenBearer` (auth_handler.go) y `service.ObtenerSesion`; guardar el usuario en el `context` con una clave no exportada — tests en verde
-- [ ] T009 COMMIT `GREEN: exigir sesión vigente en la capa HTTP, test en verde`
+- [X] T006 RED: tests en internal/http/sesion_middleware_test.go (nuevo) para `conSesion(obtener)(handler)`: sin cabecera, esquema distinto de Bearer, token mal formado, inexistente o vencido → 401 `{"mensaje":"Tu sesión no es válida"}` y el handler NO se ejecuta; con sesión vigente el handler se ejecuta y `usuarioDeSesion(r)` devuelve el `ID` y el `Nombre` del usuario. Usar un fake del puerto que usa `service.ObtenerSesion` — confirmar que FALLA
+- [X] T007 COMMIT `RED: exigir sesión vigente en la capa HTTP (falla)`
+- [X] T008 GREEN: implementar `conSesion` y `usuarioDeSesion` en internal/http/sesion_middleware.go, reutilizando `tokenBearer` (auth_handler.go) y `service.ObtenerSesion`; guardar el usuario en el `context` con una clave no exportada — tests en verde
+- [X] T009 COMMIT `GREEN: exigir sesión vigente en la capa HTTP, test en verde`
 
 ### Registro de rutas compartido
 
-- [ ] T010 Mover el registro de rutas de cmd/api/main.go a `RegistrarRutas(mux *http.ServeMux, h Handlers, conSesion func(http.HandlerFunc) http.HandlerFunc)` en internal/http/rutas.go (archivo nuevo; `Handlers` agrupa los handlers ya construidos, incluidos `votacionHandler` y `demoHandler`). Las rutas se declaran en una **tabla exportada para tests** (`[]ruta{patron string; nivel nivelRuta; handler http.HandlerFunc}`, con `nivel` ∈ `publica`, `soloSesion`, `sesionIntegrante`, `sesionScrumMaster`, `lectura`) que `RegistrarRutas` recorre; las rutas de `VotacionHandler.Registrar` y `DemoHandler.Registrar` pasan a esa tabla. En este paso **ninguna ruta se envuelve todavía** (comportamiento idéntico); `main.go` solo construye y llama. `go test ./...` en verde
-- [ ] T011 Agregar en features/steps_permisos.go (nuevo) el contexto compartido `sesionDeEscenario` y el paso «Dado que inicié sesión como "X"», que registra a X con `POST /auth/registro` (o ingresa si ya existe) contra el mux de `RegistrarRutas`, guarda token e `id`, y expone `actor()` (id de quien actúa) y `peticion(metodo, ruta, cuerpo)` que agrega `Authorization: Bearer`. Inicializarlo en features/features_test.go antes de los demás `InitializeScenario*` y pasarlo a los que lo necesiten. Sin escenarios nuevos todavía
-- [ ] T012 COMMIT `Extraer RegistrarRutas y agregar el paso de sesión de Godog`
+- [X] T010 Mover el registro de rutas de cmd/api/main.go a `RegistrarRutas(mux *http.ServeMux, h Handlers, conSesion func(http.HandlerFunc) http.HandlerFunc)` en internal/http/rutas.go (archivo nuevo; `Handlers` agrupa los handlers ya construidos, incluidos `votacionHandler` y `demoHandler`). Las rutas se declaran en una **tabla exportada para tests** (`[]ruta{patron string; nivel nivelRuta; handler http.HandlerFunc}`, con `nivel` ∈ `publica`, `soloSesion`, `sesionIntegrante`, `sesionScrumMaster`, `lectura`) que `RegistrarRutas` recorre; las rutas de `VotacionHandler.Registrar` y `DemoHandler.Registrar` pasan a esa tabla. En este paso **ninguna ruta se envuelve todavía** (comportamiento idéntico); `main.go` solo construye y llama. `go test ./...` en verde
+- [X] T011 Extraer el armado de repositorios, servicios y handlers de cmd/api/main.go a `app.NuevoMux(db, app.Opciones{DemoHabilitado, Ahora, Contrasenas})` en internal/app/app.go (raíz de composición compartida: `main` y Godog arman la misma API, sin atajos). Agregar en features/steps_permisos.go el contexto compartido `sesionDeEscenario` y el paso «Dado que inicié sesión como "X"», que fija quién actúa: `actor()` devuelve su **nombre** (cada step de servicio lo resuelve en su propia base, porque cada contexto de Godog arma la suya) y `peticion(metodo, ruta, cuerpo)` levanta la API con `app.NuevoMux` sobre una base en memoria solo si hace falta, registra o hace ingresar a la persona con `/auth/...` y agrega `Authorization: Bearer`. Inicializarlo en features/features_test.go antes de los demás `InitializeScenario*`. Sin escenarios nuevos todavía
+- [X] T012 COMMIT `Extraer RegistrarRutas y la raíz de composición, y agregar el paso de sesión de Godog`
 
 **Checkpoint**: reglas y sesión listas; todavía ninguna ruta exige sesión.
 

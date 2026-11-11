@@ -73,8 +73,9 @@ specs/042-hu-21-permisos-por-rol/
 ### Source Code (repository root)
 
 ```text
-cmd/api/main.go                       # wiring; delega el registro de rutas
+cmd/api/main.go                       # config, base y migraciones; llama a app.NuevoMux
 internal/
+├── app/app.go                        # NUEVO: raíz de composición compartida por main y Godog
 ├── domain/errors.go                  # mensajes de ErrNoEsIntegrante / ErrNoEsScrumMaster; ErrUsuarioNoEncontrado
 ├── service/
 │   ├── integrantes.go                # exigirIntegrante; exigirScrumMaster (no integrante → ErrNoEsIntegrante)
