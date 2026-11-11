@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
@@ -90,8 +91,53 @@ function responderEstado(estado: string | null) {
   return fetchMock
 }
 
+function respuestaPdf(nombre = 'reporte-proyecto-3.pdf') {
+  return new Response('%PDF-1.4 contenido', {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${nombre}"`,
+    },
+  })
+}
+
+function simularDescarga() {
+  const crear = vi.fn((_blob: Blob) => 'blob:reporte')
+  const revocar = vi.fn()
+  vi.stubGlobal('URL', { createObjectURL: crear, revokeObjectURL: revocar })
+
+  let descargado: { nombre?: string; href?: string } = {}
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    descargado = { nombre: this.download, href: this.href }
+  })
+
+  return { crear, revocar, click, descargado: () => descargado }
+}
+
+function responderPanelYReporte(reporte: Response) {
+  const fetchMock = vi.fn((url: string) => {
+    if (url === '/projects/3') {
+      return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
+    }
+    if (url === '/projects/3/status') {
+      return Promise.resolve(
+        new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
+      )
+    }
+    if (url === '/projects/3/reporte') {
+      return Promise.resolve(reporte)
+    }
+    return Promise.reject(new Error(`URL inesperada: ${url}`))
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('panel del proyecto', () => {
@@ -175,6 +221,38 @@ describe('panel del proyecto', () => {
 
     expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
     expect(await screen.findByText('Suspendido')).toBeTruthy()
+  })
+
+  it('US5.2: Given el resumen de un proyecto, When presiono "Exportar reporte del proyecto", Then se descarga el PDF del proyecto', async () => {
+    const usuario = userEvent.setup()
+    const descarga = simularDescarga()
+    const api = responderPanelYReporte(respuestaPdf())
+    abrir()
+    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+
+    await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
+
+    await waitFor(() => expect(descarga.click).toHaveBeenCalledTimes(1))
+    expect(api.mock.calls.some(([url]) => url === '/projects/3/reporte')).toBe(true)
+    expect(descarga.revocar).toHaveBeenCalledWith('blob:reporte')
+    expect(descarga.descargado().nombre).toBe('reporte-proyecto-3.pdf')
+    expect(await descarga.crear.mock.calls[0][0].text()).toBe('%PDF-1.4 contenido')
+  })
+
+  it('US5.3: Given que el backend informa un error de generación, When presiono "Exportar reporte del proyecto", Then veo el mensaje y no se descarga un archivo', async () => {
+    const usuario = userEvent.setup()
+    const descarga = simularDescarga()
+    responderPanelYReporte(
+      new Response(JSON.stringify({ mensaje: 'no se pudo generar el reporte' }), { status: 500 }),
+    )
+    abrir()
+    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+
+    await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('no se pudo generar el reporte')
+    expect(descarga.crear).not.toHaveBeenCalled()
+    expect(descarga.click).not.toHaveBeenCalled()
   })
 
   it('dado una descripción larga sin espacios, permite cortarla en varias líneas', async () => {
