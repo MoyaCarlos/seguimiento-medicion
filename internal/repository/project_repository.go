@@ -16,6 +16,9 @@ type ProjectRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.Project, error)
 	// Listar devuelve todos los proyectos ordenados ascendentemente por id.
 	Listar(ctx context.Context) ([]domain.Project, error)
+	// ListarPorIntegrante devuelve los proyectos que integra usuarioID, con su
+	// rol en cada uno, ordenados por id; arreglo vacío si no integra ninguno.
+	ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error)
 	Actualizar(ctx context.Context, p domain.Project) error
 	AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error)
 	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)

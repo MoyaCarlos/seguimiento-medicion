@@ -71,6 +71,20 @@ func (f *fakeProjectRepository) Listar(_ context.Context) ([]domain.Project, err
 	return proyectos, nil
 }
 
+func (f *fakeProjectRepository) ListarPorIntegrante(_ context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	proyectos := make([]domain.ProyectoConRol, 0)
+	for _, m := range f.miembros {
+		if m.UserID == usuarioID {
+			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: f.proyectos[m.ProjectID], Rol: m.Role})
+		}
+	}
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].Proyecto.ID < proyectos[j].Proyecto.ID })
+	return proyectos, nil
+}
+
 func (f *fakeProjectRepository) Actualizar(_ context.Context, p domain.Project) error {
 	if f.err != nil {
 		return f.err
