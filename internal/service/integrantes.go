@@ -21,12 +21,27 @@ func rolEnProyecto(ctx context.Context, proyectos repository.ProjectRepository, 
 	return "", false, nil
 }
 
-// exigirScrumMaster devuelve ErrNoEsScrumMaster si el usuario no tiene ese rol
-// en el proyecto, también si no lo integra.
-func exigirScrumMaster(ctx context.Context, proyectos repository.ProjectRepository, proyectoID, usuarioID int64) error {
-	rol, _, err := rolEnProyecto(ctx, proyectos, proyectoID, usuarioID)
+// exigirIntegrante devuelve ErrNoEsIntegrante si el usuario no integra el proyecto.
+func exigirIntegrante(ctx context.Context, proyectos repository.ProjectRepository, proyectoID, usuarioID int64) error {
+	_, integra, err := rolEnProyecto(ctx, proyectos, proyectoID, usuarioID)
 	if err != nil {
 		return err
+	}
+	if !integra {
+		return domain.ErrNoEsIntegrante
+	}
+	return nil
+}
+
+// exigirScrumMaster devuelve ErrNoEsIntegrante si el usuario no integra el
+// proyecto y ErrNoEsScrumMaster si lo integra con otro rol.
+func exigirScrumMaster(ctx context.Context, proyectos repository.ProjectRepository, proyectoID, usuarioID int64) error {
+	rol, integra, err := rolEnProyecto(ctx, proyectos, proyectoID, usuarioID)
+	if err != nil {
+		return err
+	}
+	if !integra {
+		return domain.ErrNoEsIntegrante
 	}
 	if rol != domain.RolScrumMaster {
 		return domain.ErrNoEsScrumMaster

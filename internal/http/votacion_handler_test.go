@@ -174,7 +174,7 @@ func TestVotacionHandler_Votar_Errores(t *testing.T) {
 		"JSON inválido":                      {"3", `{no-es-json`, []string{rondaAbierta}, nethttp.StatusBadRequest, "", "JSON inválido"},
 		"sin usuario_id":                     {"3", `{"valor":8}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "usuario_id", ""},
 		"usuario_id no positivo":             {"3", `{"usuario_id":0,"valor":8}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es integrante":                   {"3", `{"usuario_id":9,"valor":8}`, []string{rondaAbierta}, nethttp.StatusForbidden, "", "el usuario no es integrante del proyecto"},
+		"no es integrante":                   {"3", `{"usuario_id":9,"valor":8}`, []string{rondaAbierta}, nethttp.StatusForbidden, "", "No sos integrante de este proyecto"},
 		"sin votación":                       {"3", `{"usuario_id":2,"valor":8}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 		"carta fuera de la baraja":           {"3", `{"usuario_id":2,"valor":4}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "valor", ""},
 		"ronda revelada":                     {"3", `{"usuario_id":2,"valor":8}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estado", ""},
@@ -213,7 +213,7 @@ func TestVotacionHandler_Votar_PermisoAntesQueElValor(t *testing.T) {
 
 	rec := votarEn(handler, "3", `{"usuario_id":9,"valor":2.5}`)
 
-	esperarError(t, rec, nethttp.StatusForbidden, "", "el usuario no es integrante del proyecto")
+	esperarError(t, rec, nethttp.StatusForbidden, "", "No sos integrante de este proyecto")
 }
 
 func TestVotacionHandler_Consultar_SoloElVotoPropioEsVisible(t *testing.T) {
@@ -315,7 +315,7 @@ func TestVotacionHandler_Revelar_Errores(t *testing.T) {
 	}{
 		"historia inexistente con JSON roto": {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"sin usuario_id":                     {"3", `{}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es Scrum Master":                 {"3", `{"usuario_id":2}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"no es Scrum Master":                 {"3", `{"usuario_id":2}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
 		"sin votación":                       {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 		"falta votar Jimena":                 {"3", `{"usuario_id":1}`, []string{rondaAbierta, votosDeCarlosYCandela}, nethttp.StatusBadRequest, "votos", ""},
 		"ya revelada":                        {"3", `{"usuario_id":1}`, []string{rondaRevelada, votosDeTodos}, nethttp.StatusBadRequest, "estado", ""},
@@ -380,7 +380,7 @@ func TestVotacionHandler_Iniciar_Errores(t *testing.T) {
 	}{
 		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
 		"sin usuario_id":                        {"3", `{}`, nil, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es Scrum Master":                    {"3", `{"usuario_id":2}`, nil, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"no es Scrum Master":                    {"3", `{"usuario_id":2}`, nil, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
 		"historia Completada":                   {"3", `{"usuario_id":1}`, []string{historiaCompletada}, nethttp.StatusBadRequest, "estado", ""},
 		"ya tiene votación":                     {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusConflict, "", "la historia ya tiene una votación"},
 	}
@@ -476,7 +476,7 @@ func TestVotacionHandler_RegistrarEstimacion_PermisoAntesQueElValor(t *testing.T
 
 	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":2,"estimacion_sp":2.5}`)
 
-	esperarError(t, rec, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo")
+	esperarError(t, rec, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción")
 }
 
 func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
@@ -495,7 +495,7 @@ func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 		"sin usuario_id":                        {"3", `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
 		"carta fuera de la baraja":              {"3", `{"usuario_id":1,"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},
 		"ronda oculta":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
-		"Product Builder":                       {"3", `{"usuario_id":2,"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"Product Builder":                       {"3", `{"usuario_id":2,"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
 		"sin votación":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 	}
 	for nombre, c := range casos {
@@ -564,7 +564,7 @@ func TestVotacionHandler_AbrirRonda_Errores(t *testing.T) {
 		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
 		"sin usuario_id":                        {"3", `{}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
 		"ronda oculta":                          {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
-		"Product Builder":                       {"3", `{"usuario_id":2}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "solo el Scrum Master del proyecto puede hacerlo"},
+		"Product Builder":                       {"3", `{"usuario_id":2}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
 		"sin votación":                          {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 	}
 	for nombre, c := range casos {

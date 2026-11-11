@@ -274,6 +274,7 @@ func InitializeScenarioConsenso(ctx *godog.ScenarioContext, votacion *pasosVotac
 	ctx.Step(`^la historia mantiene sus (\d+) Story Points$`, c.tieneStoryPoints)
 	ctx.Step(`^la estimación se rechaza con una advertencia sobre el campo "([^"]*)"$`, votacion.rechazadoConAdvertenciaSobre)
 	ctx.Step(`^la estimación se rechaza porque "([^"]*)" no es Scrum Master del proyecto$`, votacion.noEsScrumMaster)
+	ctx.Step(`^la estimación se rechaza porque "([^"]*)" no es integrante del proyecto$`, votacion.noEsIntegrante)
 	ctx.Step(`^la estimación se rechaza porque la votación no está iniciada$`, c.votacionNoIniciada)
 	ctx.Step(`^la estimación se rechaza con error "historia no encontrada"$`, votacion.historiaNoEncontrada)
 	ctx.Step(`^la API rechaza la estimación con el estado (\d+) y una advertencia sobre el campo "([^"]*)"$`, c.apiRechaza)

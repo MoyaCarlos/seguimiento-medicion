@@ -197,7 +197,7 @@ Característica: Consenso y registro de la estimación acordada
       | Jimena     | 8     |
     Y que "Carlos" reveló los votos
     Cuando "Valentina", que no es integrante del proyecto, registra el valor acordado 5
-    Entonces la estimación se rechaza porque "Valentina" no es Scrum Master del proyecto
+    Entonces la estimación se rechaza porque "Valentina" no es integrante del proyecto
     Y la historia mantiene sus 3 Story Points
 
   Escenario: Estimación con una carta que nadie votó

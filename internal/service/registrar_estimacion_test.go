@@ -116,7 +116,7 @@ func TestRegistrarEstimacion_Rechaza(t *testing.T) {
 	}{
 		{"historia inexistente", escenarioEstimacion{votaciones: votacionReveladaConDiferencias()}, 999, carlos, 5, domain.ErrHistoriaNoEncontrada},
 		{"Product Builder", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, candela, 5, domain.ErrNoEsScrumMaster},
-		{"quien no integra el proyecto", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, ajeno, 5, domain.ErrNoEsScrumMaster},
+		{"quien no integra el proyecto", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, ajeno, 5, domain.ErrNoEsIntegrante},
 		{"carta fuera de la baraja", escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()}, 3, carlos, 4, domain.ErrEstimacionInvalida},
 		{"ronda oculta", escenarioEstimacion{sp: intPtr(3), votaciones: votacionAbierta()}, 3, carlos, 5, domain.ErrRondaNoRevelada},
 		{"sin votación", escenarioEstimacion{sp: intPtr(3), votaciones: &fakeVotacionRepository{}}, 3, carlos, 5, domain.ErrVotacionNoIniciada},

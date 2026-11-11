@@ -69,9 +69,9 @@ var (
 	// ErrRondaYaAbierta indica que otra petición abrió esa misma ronda mientras tanto.
 	ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")
 	// ErrNoEsIntegrante indica que quien actúa no integra el proyecto de la historia.
-	ErrNoEsIntegrante = errors.New("el usuario no es integrante del proyecto")
+	ErrNoEsIntegrante = errors.New("No sos integrante de este proyecto")
 	// ErrNoEsScrumMaster indica que la acción es exclusiva del Scrum Master del proyecto.
-	ErrNoEsScrumMaster = errors.New("solo el Scrum Master del proyecto puede hacerlo")
+	ErrNoEsScrumMaster = errors.New("Solo el Scrum Master puede realizar esta acción")
 
 	ErrVotoInvalido       = ValidationError{Campo: "valor", Mensaje: "el voto debe ser una carta de la baraja: 1, 2, 3, 5, 8, 13, 21"}
 	ErrHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede votar una historia completada"}
