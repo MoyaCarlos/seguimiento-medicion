@@ -52,8 +52,8 @@ func cargarEnParalelo(t *testing.T, dbs []*sql.DB, cargas int) (exitosas, repeti
 
 func verificarUnaSolaCarga(t *testing.T, db *sql.DB) {
 	t.Helper()
-	esperado := map[string]int{"usuarios": 4, "proyectos": 1, "integrantes": 3, "sprints": 3, "historias": 10,
-		"historias_arrastradas": 1, "registros_horas": 15, "rondas_votacion": 1, "votos": 3}
+	esperado := map[string]int{"usuarios": 4, "proyectos": 1, "integrantes": 4, "sprints": 4, "historias": 12,
+		"historias_arrastradas": 1, "registros_horas": 20, "rondas_votacion": 2, "votos": 6, "defectos": 5}
 	for tabla, filas := range fotoDeLaBase(t, db) {
 		if filas != esperado[tabla] {
 			t.Errorf("%s: %d filas, se esperaban %d", tabla, filas, esperado[tabla])

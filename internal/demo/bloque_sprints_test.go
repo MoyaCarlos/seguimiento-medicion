@@ -2,22 +2,22 @@ package demo
 
 import "testing"
 
-func TestBloqueSprints_CreaFinalizadoActivoYPendienteSinFechas(t *testing.T) {
+func TestBloqueSprints_CreaDosFinalizadosUnActivoYUnPendienteSinFechas(t *testing.T) {
 	db := baseMigrada(t)
 
 	c := ejecutar(t, db, bloqueUsuarios, bloqueProyecto, bloqueSprints)
 
-	if len(c.sprints) != 3 || c.resumen.Sprints != 3 {
-		t.Fatalf("se esperaban 3 Sprints, hay %d (resumen %d)", len(c.sprints), c.resumen.Sprints)
+	if len(c.sprints) != 4 || c.resumen.Sprints != 4 {
+		t.Fatalf("se esperaban 4 Sprints, hay %d (resumen %d)", len(c.sprints), c.resumen.Sprints)
 	}
 	casos := []struct {
-		indice              int
-		estado, inicio, fin string
-		conGoal, conFechas  bool
+		indice                    int
+		estado, goal, inicio, fin string
 	}{
-		{0, "Finalizado", "2026-10-16", "2026-10-22", true, true},
-		{1, "Activo", "2026-10-23", "2026-11-05", true, true},
-		{2, "Pendiente", "", "", false, false},
+		{0, "Finalizado", "Alta del trámite y validación médica", "2026-10-02", "2026-10-15"},
+		{1, "Finalizado", "Turno y comprobante", "2026-10-16", "2026-10-22"},
+		{2, "Activo", "Examen teórico y reprogramación de turnos", "2026-10-23", "2026-11-05"},
+		{3, "Pendiente", "", "", ""},
 	}
 	for _, caso := range casos {
 		var estado string
@@ -30,11 +30,17 @@ func TestBloqueSprints_CreaFinalizadoActivoYPendienteSinFechas(t *testing.T) {
 		if estado != caso.estado {
 			t.Errorf("Sprint %d: estado %s, se esperaba %s", caso.indice+1, estado, caso.estado)
 		}
-		if (goal != nil) != caso.conGoal || (inicio != nil) != caso.conFechas || (fin != nil) != caso.conFechas {
-			t.Errorf("Sprint %d: goal/fechas inesperados (%v %v %v)", caso.indice+1, goal, inicio, fin)
+		if caso.estado == "Pendiente" {
+			if goal != nil || inicio != nil || fin != nil {
+				t.Errorf("el Sprint pendiente no lleva goal ni fechas (%v %v %v)", goal, inicio, fin)
+			}
+			continue
 		}
-		if caso.conFechas && (*inicio != caso.inicio || *fin != caso.fin) {
-			t.Errorf("Sprint %d: fechas %s a %s, se esperaba %s a %s", caso.indice+1, *inicio, *fin, caso.inicio, caso.fin)
+		if goal == nil || inicio == nil || fin == nil {
+			t.Fatalf("Sprint %d: faltan goal o fechas (%v %v %v)", caso.indice+1, goal, inicio, fin)
+		}
+		if *goal != caso.goal || *inicio != caso.inicio || *fin != caso.fin {
+			t.Errorf("Sprint %d: %q %s a %s, se esperaba %q %s a %s", caso.indice+1, *goal, *inicio, *fin, caso.goal, caso.inicio, caso.fin)
 		}
 	}
 }

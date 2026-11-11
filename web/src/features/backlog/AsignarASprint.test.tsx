@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../compartido/api/client'
@@ -50,7 +50,7 @@ afterEach(() => {
 })
 
 describe('AsignarASprint', () => {
-  it('US3.1: el selector "Sprint" ofrece solo los Sprints Pendiente y Activo', () => {
+  it('US3.3: el selector "Sprint" ofrece solo los Sprints Pendiente y Activo', () => {
     abrir()
 
     const opciones = screen.getAllByRole('option').map((opcion) => opcion.textContent)
@@ -62,7 +62,7 @@ describe('AsignarASprint', () => {
     expect(screen.getByLabelText('Sprint')).toBeTruthy()
   })
 
-  it('US3.2: al confirmar llama a asignarASprint con la historia y el Sprint elegidos', async () => {
+  it('US3.1: al confirmar llama a asignarASprint con la historia y el Sprint elegidos', async () => {
     asignarMock.mockResolvedValue({ ...HISTORIA, sprint_id: 13 })
     const user = userEvent.setup()
     abrir()
@@ -74,7 +74,7 @@ describe('AsignarASprint', () => {
     expect(asignarMock).toHaveBeenCalledWith(7, 13)
   })
 
-  it('US3.3: el botón de confirmar queda deshabilitado mientras la petición está en curso y no envía dos veces', async () => {
+  it('Defensa: el botón queda deshabilitado mientras la petición está en curso y no envía dos veces', async () => {
     asignarMock.mockReturnValue(new Promise(() => {}))
     const user = userEvent.setup()
     abrir()
@@ -88,7 +88,7 @@ describe('AsignarASprint', () => {
     expect(asignarMock).toHaveBeenCalledTimes(1)
   })
 
-  it('US3.4: tras el 200 llama a onAsignada con la historia devuelta', async () => {
+  it('US3.1: tras el 200 llama a onAsignada con la historia devuelta', async () => {
     const devuelta = { ...HISTORIA, sprint_id: 12 }
     asignarMock.mockResolvedValue(devuelta)
     const user = userEvent.setup()
@@ -101,7 +101,7 @@ describe('AsignarASprint', () => {
     expect(onAsignada).toHaveBeenCalledWith(devuelta, 12)
   })
 
-  it('US3.5: ante un error muestra el mensaje de la API y no llama a onAsignada', async () => {
+  it('US3.4: ante un error muestra el mensaje de la API y no llama a onAsignada', async () => {
     asignarMock.mockRejectedValue(new ApiError(409, 'El Sprint ya finalizó'))
     const user = userEvent.setup()
     const { onAsignada } = abrir()
@@ -113,11 +113,24 @@ describe('AsignarASprint', () => {
     expect(onAsignada).not.toHaveBeenCalled()
   })
 
-  it('US3.6: sin Sprints Pendiente/Activo muestra el aviso y no permite confirmar', () => {
+  it('Caso límite: sin Sprints Pendiente/Activo muestra el aviso y no permite confirmar', () => {
     abrir([{ id: 11, numero: 1, estado: 'Finalizado', sprint_goal: null }])
 
     expect(screen.getByText('No hay Sprints disponibles para asignar')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Confirmar asignación' })).toBeNull()
     expect(asignarMock).not.toHaveBeenCalled()
+  })
+
+  it('Defensa: un segundo submit con la petición pendiente no vuelve a llamar a asignarASprint', async () => {
+    asignarMock.mockReturnValue(new Promise(() => {}))
+    const user = userEvent.setup()
+    abrir()
+
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
+    const formulario = screen.getByRole('form', { name: `Asignar ${HISTORIA.titulo} a un Sprint` })
+    fireEvent.submit(formulario)
+    fireEvent.submit(formulario)
+
+    expect(asignarMock).toHaveBeenCalledTimes(1)
   })
 })

@@ -53,11 +53,14 @@ func (h *DemoHandler) Estado(w nethttp.ResponseWriter, _ *nethttp.Request) {
 // Cargar atiende POST /demo/datos.
 func (h *DemoHandler) Cargar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	resumen, err := h.cargador.Cargar(r.Context())
+	var usuarioExistente demo.ErrUsuarioExistente
 	switch {
 	case err == nil:
 		escribirJSON(w, nethttp.StatusCreated, resumen)
 	case errors.Is(err, demo.ErrYaCargado):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "ya_cargado", Mensaje: err.Error()})
+	case errors.As(err, &usuarioExistente):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "usuario_existente", Mensaje: err.Error()})
 	case errors.Is(err, demo.ErrIdOcupado):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "proyecto_id", Mensaje: err.Error()})
 	default:
