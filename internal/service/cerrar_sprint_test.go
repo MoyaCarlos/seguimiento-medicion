@@ -33,7 +33,7 @@ func puntos(v int) *int { return &v }
 func sembrarSprintActivo(t *testing.T, repo repository.SprintRepository, proyectoID int64) domain.Sprint {
 	t.Helper()
 	pendiente := sembrarSprintPendiente(t, repo, proyectoID)
-	activo, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(pendiente.ID))
+	activo, err := NewIniciarSprint(repo, proyectosSinFechas{}).Ejecutar(context.Background(), inputValido(pendiente.ID))
 	if err != nil {
 		t.Fatalf("no se pudo iniciar el Sprint: %v", err)
 	}

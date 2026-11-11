@@ -41,8 +41,9 @@ type pasosSprint struct {
 func (p *pasosSprint) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
-	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
+	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
+	p.crear = service.NewCrearSprint(proyectos, p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.editar = service.NewEditarHistoria(p.backlog, p.sprints)
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil

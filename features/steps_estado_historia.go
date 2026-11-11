@@ -39,7 +39,7 @@ func (p *pasosEstadoHistoria) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints)
 	p.cambiar = service.NewCambiarEstadoHistoria(p.backlog, p.sprints, func() time.Time { return relojEstadoHistoria })

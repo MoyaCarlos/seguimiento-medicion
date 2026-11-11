@@ -31,7 +31,7 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	handler := NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprints),
-		service.NewIniciarSprint(sprints),
+		service.NewIniciarSprint(sprints, proyectos),
 		service.NewCerrarSprint(sprints, sinHistorias{}),
 		service.NewConsultarSprints(proyectos, sprints),
 		nil,
@@ -42,7 +42,9 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 
 func nuevoSprintHandlerDePrueba(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria) {
 	t.Helper()
-	handler, sprints, _ := nuevoSprintHandlerConProyectos(t)
+	handler, sprints, proyectos := nuevoSprintHandlerConProyectos(t)
+	// sembrarPendiente crea los Sprints del proyecto 1: el primero del repositorio.
+	sembrarProyectoParaSprints(t, proyectos)
 	return handler, sprints
 }
 

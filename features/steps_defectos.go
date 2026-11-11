@@ -48,7 +48,7 @@ func (p *pasosDefectos) preparar() {
 	p.resolver = service.NewResolverDefecto(p.defectos, sprints)
 	p.listar = service.NewListarDefectos(proyectos, p.defectos)
 	p.crearSprint = service.NewCrearSprint(proyectos, sprints)
-	p.iniciarSprint = service.NewIniciarSprint(sprints)
+	p.iniciarSprint = service.NewIniciarSprint(sprints, proyectos)
 	p.cerrarSprint = service.NewCerrarSprint(sprints, p.historias)
 	p.sprints, p.historiasPorTitulo, p.defectosPorDescripcion = map[string]int64{}, map[string]int64{}, map[string]int64{}
 	p.otroProyecto, p.ultimo, p.listado, p.err = 0, domain.DefectoDetalle{}, nil, nil

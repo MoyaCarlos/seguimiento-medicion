@@ -44,7 +44,7 @@ func (p *pasosAsignacion) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints)
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.backlog)
