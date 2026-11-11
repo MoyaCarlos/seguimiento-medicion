@@ -128,6 +128,15 @@ func (s *stubUserRepository) ObtenerPorNombreNormalizado(_ context.Context, norm
 	return nil, domain.ErrNoEncontrado
 }
 
+func (s *stubUserRepository) ListarRegistrados(context.Context) ([]domain.User, error) {
+	usuarios := make([]domain.User, 0, len(s.usuarios))
+	for _, u := range s.usuarios {
+		usuarios = append(usuarios, u)
+	}
+	sort.Slice(usuarios, func(i, j int) bool { return usuarios[i].NombreNormalizado < usuarios[j].NombreNormalizado })
+	return usuarios, nil
+}
+
 func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
 	if s.usuarios == nil {
 		s.usuarios = map[string]domain.User{}

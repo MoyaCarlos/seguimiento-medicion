@@ -139,6 +139,15 @@ func (f *fakeUserRepository) ObtenerPorNombreNormalizado(_ context.Context, norm
 	return &u, nil
 }
 
+func (f *fakeUserRepository) ListarRegistrados(context.Context) ([]domain.User, error) {
+	usuarios := make([]domain.User, 0, len(f.usuarios))
+	for _, u := range f.usuarios {
+		usuarios = append(usuarios, u)
+	}
+	sort.Slice(usuarios, func(i, j int) bool { return usuarios[i].NombreNormalizado < usuarios[j].NombreNormalizado })
+	return usuarios, nil
+}
+
 func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
 	if f.err != nil {
 		return domain.User{}, f.err
