@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -51,10 +51,35 @@ const detalle: DetalleSprint = {
 
 const respuesta = (status: number, cuerpo: unknown) => new Response(JSON.stringify(cuerpo), { status })
 
-function simularApi(responder: () => Response | Promise<Response>) {
-  const simulado = vi.fn(() => Promise.resolve(responder()))
+function respuestaPdf(nombre = 'reporte-proyecto-7-sprint-1.pdf') {
+  return new Response('%PDF-1.4 contenido', {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${nombre}"`,
+    },
+  })
+}
+
+function simularApi(responder: (url: string) => Response | Promise<Response>) {
+  const simulado = vi.fn((url: string) => Promise.resolve(responder(url)))
   vi.stubGlobal('fetch', simulado)
   return simulado
+}
+
+function simularDescarga() {
+  const crear = vi.fn((_blob: Blob) => 'blob:reporte')
+  const revocar = vi.fn()
+  vi.stubGlobal('URL', { createObjectURL: crear, revokeObjectURL: revocar })
+
+  let descargado: { nombre?: string; href?: string } = {}
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    this: HTMLAnchorElement,
+  ) {
+    descargado = { nombre: this.download, href: this.href }
+  })
+
+  return { crear, revocar, click, descargado: () => descargado }
 }
 
 function abrir() {
@@ -81,6 +106,7 @@ function metrica(contenedor: HTMLElement, nombre: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 describe('detalle de un Sprint del historial', () => {
@@ -232,5 +258,52 @@ describe('detalle de un Sprint del historial', () => {
 
     expect((await screen.findByRole('alert')).textContent).toBe('sprint no encontrado')
     expect(screen.queryByRole('heading', { level: 1, name: 'Sprint 1' })).toBeNull()
+  })
+
+  it('US5.1: Given el resumen de un Sprint finalizado, When presiono "Exportar a PDF", Then se descarga el PDF del Sprint', async () => {
+    const usuario = userEvent.setup()
+    const descarga = simularDescarga()
+    const api = simularApi((url) =>
+      url === '/sprints/71/reporte' ? respuestaPdf() : respuesta(200, detalle),
+    )
+    abrir()
+    await screen.findByRole('heading', { level: 1, name: 'Sprint 1' })
+
+    await usuario.click(screen.getByRole('button', { name: 'Exportar a PDF' }))
+
+    await waitFor(() => expect(descarga.click).toHaveBeenCalledTimes(1))
+    expect(api.mock.calls.some(([url]) => url === '/sprints/71/reporte')).toBe(true)
+    expect(descarga.revocar).toHaveBeenCalledWith('blob:reporte')
+    expect(descarga.descargado().nombre).toBe('reporte-proyecto-7-sprint-1.pdf')
+    expect(await descarga.crear.mock.calls[0][0].text()).toBe('%PDF-1.4 contenido')
+  })
+
+  it('US5.3: Given que el backend informa un error de generación, When presiono "Exportar a PDF", Then veo el mensaje y no se descarga un archivo', async () => {
+    const usuario = userEvent.setup()
+    const descarga = simularDescarga()
+    simularApi((url) =>
+      url === '/sprints/71/reporte'
+        ? respuesta(500, { mensaje: 'no se pudo generar el reporte' })
+        : respuesta(200, detalle),
+    )
+    abrir()
+    await screen.findByRole('heading', { level: 1, name: 'Sprint 1' })
+
+    await usuario.click(screen.getByRole('button', { name: 'Exportar a PDF' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('no se pudo generar el reporte')
+    expect(descarga.crear).not.toHaveBeenCalled()
+    expect(descarga.click).not.toHaveBeenCalled()
+  })
+
+  it('US5.4: Given un Sprint todavía no finalizado, When abro su detalle, Then no ofrezco el botón de exportar', async () => {
+    simularApi(() => respuesta(400, { campo: 'estado', mensaje: 'el Sprint todavía no está finalizado' }))
+
+    abrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'el Sprint todavía no está finalizado',
+    )
+    expect(screen.queryByRole('button', { name: 'Exportar a PDF' })).toBeNull()
   })
 })
