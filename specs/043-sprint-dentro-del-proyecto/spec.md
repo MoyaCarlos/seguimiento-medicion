@@ -17,7 +17,7 @@ Decisiones abiertas del issue, resueltas por el equipo antes de especificar:
 - Q: El issue habla de `CrearSprint`, pero crear un Sprint no recibe fechas. ¿Dónde se valida? → A: Al **iniciar** el Sprint, que es la única operación que carga sus fechas (pasa de Pendiente a Activo con Goal, inicio y fin). Crear un Sprint no cambia.
 - Q: Las fechas del proyecto son opcionales y cada una puede faltar por separado. ¿Contra qué se valida? → A: Contra **cada fecha que exista**. Si el proyecto tiene inicio, el Sprint no puede empezar antes; si tiene fin, el Sprint no puede terminar después; si no tiene ninguna, no se valida.
 - Q: ¿Bordes y Sprint parcialmente afuera? → A: Los **bordes se incluyen**: un Sprint puede empezar el mismo día que el proyecto y terminar el mismo día que él. Se rechaza si **cualquiera** de las dos fechas del Sprint queda afuera.
-- Q: Si después se acortan las fechas del proyecto (HU-04) y un Sprint ya iniciado queda afuera, ¿qué pasa? → A: **Se tolera**. Queda fuera de alcance y se registra en un issue aparte.
+- Q: Si después se acortan las fechas del proyecto (HU-04) y un Sprint ya iniciado queda afuera, ¿qué pasa? → A: **Se tolera**. Queda fuera de alcance y se registra en el issue #302.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -118,4 +118,4 @@ Redactados en formato EARS.
 - **Formato de las fechas**: ambas llegan por la API como `AAAA-MM-DD` y se interpretan a las 00:00 UTC, así que se comparan por día sin problemas de zona horaria (`MODELO-DE-DATOS.md` D3).
 - **Sin cambio de esquema**: no hay migración ni cambios en `MODELO-DE-DATOS.md` más allá de, a lo sumo, mencionar dónde vive la regla.
 - **Datos de prueba**: los datos de prueba v2 y los escenarios existentes deben seguir siendo válidos; si alguno inicia Sprints fuera del plazo de su proyecto, se ajustan sus fechas.
-- **Fuera de alcance**: el frontend (issue hermano) y la edición posterior de las fechas del proyecto, que se registra en un issue aparte.
+- **Fuera de alcance**: el frontend (issue hermano) y la edición posterior de las fechas del proyecto, registrada en el issue #302.
