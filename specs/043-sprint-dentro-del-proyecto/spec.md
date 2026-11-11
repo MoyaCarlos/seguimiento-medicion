@@ -78,7 +78,7 @@ Redactados en formato EARS.
 - **Basado en estado**: **WHILE** el proyecto no tenga fecha de inicio, el sistema **shall** no imponer un límite inferior a la fecha de inicio del Sprint; **WHILE** no tenga fecha de fin, **shall** no imponer un límite superior a la fecha de fin del Sprint.
 - **No deseado**: **IF** las dos fechas del Sprint quedan fuera del proyecto, **THEN** el sistema **shall** informar el error de `fecha_inicio` (se valida primero el inicio, como en las validaciones existentes).
 - **No deseado**: **IF** el Sprint ya incumple una regla existente (Goal vacío, fecha de inicio faltante, fin no posterior al inicio), **THEN** el sistema **shall** responder ese error, sin cambios: la regla del plazo se evalúa después.
-- **No deseado**: **IF** quien inicia no es Scrum Master, el Sprint no existe, o el proyecto ya tiene un Sprint Activo, **THEN** el sistema **shall** responder como hoy (403, 404, 409), antes de evaluar el plazo.
+- **No deseado**: **IF** el Sprint no existe o el proyecto ya tiene un Sprint Activo, **THEN** el sistema **shall** responder como hoy (404, 409), antes de evaluar el plazo. Lo mismo vale para el 403 de quien no es Scrum Master cuando HU-21 (#301) esté mergeada.
 - **No deseado**: **IF** se rechaza el inicio por el plazo, **THEN** el Sprint **shall** quedar Pendiente, sin Goal ni fechas guardadas.
 - **Basado en evento**: **WHEN** un Sprint empieza exactamente el día de inicio del proyecto o termina exactamente el día de fin, **THEN** el sistema **shall** aceptarlo.
 - **Opcional**: **WHERE** se editan después las fechas del proyecto, el sistema **shall** comportarse como hoy (no revisa los Sprints existentes); queda fuera de alcance.
@@ -92,7 +92,7 @@ Redactados en formato EARS.
 - **FR-003**: Las comparaciones MUST ser por día calendario y con bordes incluidos.
 - **FR-004**: El sistema MUST validar solo contra las fechas del proyecto que estén definidas; un proyecto sin fechas no impone restricción.
 - **FR-005**: La regla MUST vivir en la lógica de negocio (dominio o caso de uso), no solo en la pantalla, para que valga para cualquier cliente de la API.
-- **FR-006**: El orden de los errores existentes (404, 403, 409 por Sprint Activo, 400 de Goal y fechas propias del Sprint) MUST mantenerse; la regla del plazo se evalúa después de ellos.
+- **FR-006**: El orden de los errores existentes (404, 409 por Sprint Activo, 400 de Goal y fechas propias del Sprint; y el 403 de HU-21 cuando #301 esté mergeada) MUST mantenerse; la regla del plazo se evalúa después de ellos.
 - **FR-007**: Un inicio rechazado MUST dejar el Sprint sin cambios (Pendiente, sin Goal ni fechas).
 - **FR-008**: Crear un Sprint, cerrarlo, editar el proyecto y los Sprints ya iniciados MUST no cambiar de comportamiento.
 - **FR-009**: Los escenarios BDD (Godog) MUST cubrir: inicio antes del proyecto (error), fin después del proyecto (error), los dos bordes (aceptados) y un proyecto sin fechas (aceptado). La combinatoria de fechas parciales se cubre con tests unitarios.
@@ -118,4 +118,5 @@ Redactados en formato EARS.
 - **Formato de las fechas**: ambas llegan por la API como `AAAA-MM-DD` y se interpretan a las 00:00 UTC, así que se comparan por día sin problemas de zona horaria (`MODELO-DE-DATOS.md` D3).
 - **Sin cambio de esquema**: no hay migración ni cambios en `MODELO-DE-DATOS.md` más allá de, a lo sumo, mencionar dónde vive la regla.
 - **Datos de prueba**: los datos de prueba v2 y los escenarios existentes deben seguir siendo válidos; si alguno inicia Sprints fuera del plazo de su proyecto, se ajustan sus fechas.
-- **Fuera de alcance**: el frontend (issue hermano) y la edición posterior de las fechas del proyecto, registrada en el issue #302.
+- **Frontend**: sin cambios. El formulario de inicio ya muestra el error debajo del campo que informa la API (`fecha_inicio` o `fecha_fin`); ver research.md §8.
+- **Fuera de alcance**: la edición posterior de las fechas del proyecto, registrada en el issue #302.

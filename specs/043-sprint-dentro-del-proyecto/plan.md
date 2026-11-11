@@ -73,7 +73,7 @@ internal/service/
 └── crear_sprint_test.go           # ajuste de NewIniciarSprint
 internal/http/
 └── sprint_handler_test.go         # ajuste de NewIniciarSprint (el 400 por ValidationError ya está mapeado)
-cmd/api/main.go                    # cableado: NewIniciarSprint(sprintRepo, projectRepo)
+cmd/api/main.go                    # cableado: NewIniciarSprint(sprintRepo, proyectos)
 features/
 ├── sprint_dentro_del_proyecto.feature   # nuevo, @HU-05 @168
 ├── steps_sprint_dentro_del_proyecto.go  # nuevo
@@ -86,7 +86,7 @@ MODELO-DE-DATOS.md                 # §5: fila de la regla nueva
 ## Fases de implementación (insumo para `/speckit-tasks`)
 
 1. **Dominio** (RED/GREEN/REFACTOR): `Project.AdmiteSprint` con tabla de casos: sin fechas; solo inicio (antes, igual, después); solo fin (antes, igual, después); ambas (dentro, bordes, inicio afuera, fin afuera, las dos afuera → `fecha_inicio`); mensaje con la fecha límite.
-2. **Servicio** (RED/GREEN): `IniciarSprint` rechaza fuera del plazo y deja el Sprint Pendiente; acepta en bordes; el orden de errores se mantiene (Goal vacío con fechas afuera → `sprint_goal`; otro Activo → 409). El cambio de firma de `NewIniciarSprint` y el ajuste de todos sus llamadores (cableado, pasos BDD, tests) van en el mismo commit `GREEN:` para que el árbol compile; el `RED:` previo solo agrega los tests nuevos (que no compilan o fallan, como en las historias anteriores).
+2. **Servicio** (RED/GREEN): `IniciarSprint` rechaza fuera del plazo y deja el Sprint Pendiente; acepta en bordes; el orden de errores se mantiene (Goal vacío con fechas afuera → `sprint_goal`; otro Activo → 409). El `RED:` lleva **todo** el código de test de la nueva firma de `NewIniciarSprint` (tests nuevos, Arrange de los existentes y pasos BDD), y no compila; el `GREEN:` lleva solo el servicio y el cableado. Así no se mezclan test e implementación en un commit (Principio I).
 3. **BDD**: `.feature` + pasos; escenarios de la spec (US1–US3).
 4. **Documentación**: fila de §5 en `MODELO-DE-DATOS.md`; marcar tareas hechas.
 5. **Cierre**: `go build`, `go vet`, `gofmt -l .`, `go test ./...` en verde; `/speckit-analyze` registrado.

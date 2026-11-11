@@ -16,7 +16,7 @@ description: "Tareas de la spec 043: Sprints dentro del plazo del proyecto (#168
 ## Orden de las fases (y por qué)
 
 1. **Dominio** primero: la regla no depende de nada y el servicio la necesita.
-2. **Servicio** después: suma el `ProjectRepository` a `NewIniciarSprint`. El cambio de firma rompe la compilación de todos los llamadores, por eso el `GREEN:` ajusta en el mismo commit el cableado, los pasos BDD y los tests existentes (si no, el árbol queda sin compilar entre commits).
+2. **Servicio** después: suma el `ProjectRepository` a `NewIniciarSprint`. El cambio de firma toca código de test (tests existentes y pasos BDD) y de producción (servicio y cableado). Para no mezclar test e implementación en un commit (regla 3 de la plantilla, Principio I), **todo el código de test va en el `RED:`** (que no compila: es su falla) y **el `GREEN:` solo toca `internal/service/iniciar_sprint.go` y `cmd/api/main.go`**, con lo que el árbol vuelve a compilar y queda en verde.
 3. **Godog al final**: sin pasos definidos, un `.feature` nuevo rompe `TestFeatures` (`Strict: true`), así que el `.feature` y sus pasos van juntos cuando la regla ya está implementada (mismo criterio que la spec 040).
 4. **`MODELO-DE-DATOS.md`** y cierre.
 
@@ -61,25 +61,28 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
 
 **Independent Test**: `go test ./internal/service/ -run IniciarSprint -v`.
 
-- [ ] T006 [US1][US2][US3] RED: en `internal/service/iniciar_sprint_test.go`:
-  - Agregar un helper `sembrarProyecto(t, proyectos *repository.ProjectRepositoryEnMemoria, inicio, fin *time.Time) int64` que guarda un `domain.NewProject("Proyecto", "", inicio, fin)` y devuelve su ID.
-  - Pasar a `NewIniciarSprint(repo, proyectos)` en **los tests nuevos** (los existentes se ajustan en T008).
-  - Casos nuevos, con proyecto del 2026-10-31 al 2026-11-16:
+- [ ] T006 [US1][US2][US3] RED, con **todo** el código de test que pide la nueva firma `NewIniciarSprint(sprints, proyectos)`:
+  - En `internal/service/iniciar_sprint_test.go`, agregar el helper `sembrarProyectoConPlazo(t *testing.T, repo repository.ProjectRepository, inicio, fin *time.Time) int64`, que guarda `domain.NewProject("Software Metrics & Estimation", "", inicio, fin)` y devuelve su ID. **No** se llama `sembrarProyecto`: ese nombre ya existe en `internal/service/crear_sprint_test.go:12` (sin fechas, devuelve `domain.Project`) y se reutiliza para los casos sin fechas.
+  - Casos nuevos en `internal/service/iniciar_sprint_test.go`, con un `repository.NewProjectRepositoryEnMemoria()` y un proyecto del 2026-10-31 al 2026-11-16:
     - US1: Sprint 2026-10-30 a 2026-11-06 → `ValidationError` en `fecha_inicio` (el caso del beta testing de Render) y, releyendo el repositorio, el Sprint sigue `Pendiente` con `SprintGoal` vacío y fechas cero (FR-007);
     - US1: Sprint 2026-10-31 a 2026-11-06 → `Activo`;
     - US2: Sprint 2026-11-10 a 2026-11-17 → `ValidationError` en `fecha_fin` y sigue `Pendiente`;
     - US2: Sprint 2026-11-10 a 2026-11-16 → `Activo`;
     - US3: proyecto sin fechas, Sprint 2026-01-01 a 2026-01-15 → `Activo`;
-    - orden de errores (FR-006): Goal vacío con fechas fuera del plazo → `ValidationError` en `sprint_goal`; otro Sprint `Activo` en el proyecto con fechas fuera del plazo → `domain.ErrYaHaySprintActivo`.
-  - Correr `go test ./internal/service/` y confirmar que FALLA (no compila: `NewIniciarSprint` todavía recibe un solo argumento).
-- [ ] T007 COMMIT `RED: agregar tests de IniciarSprint con el plazo del proyecto (falla)` (solo `internal/service/iniciar_sprint_test.go`)
-- [ ] T008 [US1][US2][US3] GREEN, en un solo commit para que el árbol compile:
+    - orden de errores (FR-006): Goal vacío con fechas fuera del plazo → `ValidationError` en `sprint_goal`; fin no posterior al inicio con fechas fuera del plazo (2026-10-30 a 2026-10-29) → `ValidationError` en `fecha_fin` por la regla existente; otro Sprint `Activo` en el proyecto con fechas fuera del plazo → `domain.ErrYaHaySprintActivo`.
+  - Ajuste de Arrange de los tests existentes (ninguna aserción cambia; los proyectos se dan de alta **sin fechas**, así que el resultado esperado es el mismo):
+    - `internal/service/iniciar_sprint_test.go`: los casos viejos crean un `ProjectRepositoryEnMemoria`, siembran el proyecto con `sembrarProyecto` y usan su ID en lugar de `1`/`2` (el caso "otro proyecto" siembra dos).
+    - `internal/service/cerrar_sprint_test.go:33`: `sembrarSprintActivo(t, repo, proyectoID)` **conserva su firma**, porque lo llaman `cerrar_sprint_test.go`, `cambiar_estado_historia_test.go` (con `1`) y `asignar_historia_sprint_test.go` (con `proyectoID` y con `2`, el caso de otro proyecto). Pasa a usar `NewIniciarSprint(repo, proyectosSinFechas{})`, con un fake nuevo en el mismo archivo: `type proyectosSinFechas struct{ repository.ProjectRepository }` cuyo único método propio es `ObtenerPorID(_ context.Context, id int64) (domain.Project, error)`, que devuelve `domain.Project{ID: id}` (sin fechas, así que admite cualquier Sprint). Los demás métodos de la interfaz embebida no se usan en estos tests.
+    - `internal/service/crear_sprint_test.go:81`: pasar el `proyectos` que el test ya crea: `NewIniciarSprint(sprints, proyectos)`.
+    - `internal/http/sprint_handler_test.go`: `nuevoSprintHandlerConProyectos` pasa su `proyectos` a `service.NewIniciarSprint(sprints, proyectos)`, y `nuevoSprintHandlerDePrueba` siembra un proyecto sin fechas con `sembrarProyectoParaSprints` antes de devolver, porque `sembrarPendiente` crea los Sprints con `domain.NewSprint(1)` (el primer proyecto del repositorio en memoria tiene ID 1).
+    - Pasos BDD: pasar un `repository.NewSQLiteProjectRepository(p.base.db)` a `NewIniciarSprint` en `features/steps_asignacion.go:47`, `features/steps_defectos.go:51` (ya tiene `proyectos` en la línea 45), `features/steps_estado_historia.go:42`, `features/steps_estado_proyecto.go:38` y `features/steps_sprints.go:45`.
+  - Correr `go test ./...` y confirmar que FALLA (no compila: `NewIniciarSprint` todavía recibe un solo argumento).
+- [ ] T007 COMMIT `RED: agregar tests de IniciarSprint con el plazo del proyecto (falla)` (solo archivos `_test.go` y `features/steps_*.go`)
+- [ ] T008 [US1][US2][US3] GREEN, solo código de producción:
   - `internal/service/iniciar_sprint.go`: campo `proyectos repository.ProjectRepository`; `NewIniciarSprint(sprints repository.SprintRepository, proyectos repository.ProjectRepository)`. En `Ejecutar`, después de `sprint.Iniciar(...)` y antes de `s.sprints.Actualizar(...)`: `proyecto, err := s.proyectos.ObtenerPorID(ctx, sprint.ProyectoID)` (propagar el error) y `if err := proyecto.AdmiteSprint(sprint.FechaInicio, sprint.FechaFin); err != nil { return domain.Sprint{}, err }`. Actualizar el comentario del tipo ("…y que sus fechas caigan dentro del plazo del proyecto, #168").
-  - Cableado `cmd/api/main.go`: `service.NewIniciarSprint(sprintRepo, projectRepo)` (usar el nombre de la variable del `ProjectRepository` que ya existe en ese archivo).
-  - Pasos BDD existentes: pasar un `repository.NewSQLiteProjectRepository(<db del escenario>)` a `NewIniciarSprint` en `features/steps_asignacion.go`, `features/steps_defectos.go`, `features/steps_estado_historia.go`, `features/steps_estado_proyecto.go` y `features/steps_sprints.go`.
-  - Tests existentes: `internal/service/iniciar_sprint_test.go` (los casos viejos siembran el proyecto sin fechas con `sembrarProyecto` y usan su ID en lugar de `1`/`2`), `internal/service/cerrar_sprint_test.go`, `internal/service/crear_sprint_test.go` y `internal/http/sprint_handler_test.go` (pasarle el `proyectos` en memoria que ya crea `nuevoSprintHandlerConProyectos`; si algún test inicia un Sprint de un proyecto que no dio de alta, darlo de alta sin fechas). Es ajuste de Arrange: ninguna aserción existente cambia.
-  - `gofmt -l .` sin salida y `go test ./...` en verde (incluye Godog).
-- [ ] T009 COMMIT `GREEN: IniciarSprint rechaza fechas fuera del plazo del proyecto, test en verde`
+  - Cableado `cmd/api/main.go:57`: `service.NewIniciarSprint(sprintRepo, proyectos)` (la variable `proyectos` ya existe en la línea 34).
+  - `gofmt -l .` sin salida y `go test ./...` en verde (incluye Godog). Si algún test existente queda en rojo por un proyecto no sembrado, el ajuste es de test: volver a T006 con un commit `test: sembrar el proyecto en <test>` aparte, nunca dentro del `GREEN:`.
+- [ ] T009 COMMIT `GREEN: IniciarSprint rechaza fechas fuera del plazo del proyecto, test en verde` (solo `internal/service/iniciar_sprint.go` y `cmd/api/main.go`)
 - [ ] T010 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: la regla rige en la API. El caso de Render (proyecto desde 31/10, Sprint desde 30/10) da 400 en `fecha_inicio`.
@@ -132,7 +135,7 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
 ## Parallel Opportunities
 
 - T014 (documentación) en paralelo con las fases 2 a 4.
-- Dentro de T008, los ajustes de los distintos archivos de pasos y de tests son independientes entre sí, pero van en un solo commit.
+- Dentro de T006, los ajustes de los distintos archivos de pasos y de tests son independientes entre sí, pero van en un solo commit `RED:`.
 
 ## Implementation Strategy
 
