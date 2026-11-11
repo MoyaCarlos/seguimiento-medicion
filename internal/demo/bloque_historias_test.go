@@ -6,14 +6,17 @@ func cargarHistorias(t *testing.T) (*carga, func(consulta string, args ...any) i
 	t.Helper()
 	db := baseMigrada(t)
 	c := ejecutar(t, db, bloqueUsuarios, bloqueProyecto, bloqueSprints, bloqueHistorias)
+	if len(c.sprints) != 4 {
+		t.Fatalf("se esperaban 4 Sprints, hay %d", len(c.sprints))
+	}
 	return c, func(consulta string, args ...any) int { return contar(t, db, consulta, args...) }
 }
 
 func TestBloqueHistorias_RepartoPorSprintYEstado(t *testing.T) {
 	c, n := cargarHistorias(t)
 
-	if c.resumen.Historias != 10 || n(`SELECT COUNT(*) FROM historias WHERE proyecto_id = 25`) != 10 {
-		t.Fatalf("se esperaban 10 historias, resumen %d", c.resumen.Historias)
+	if c.resumen.Historias != 12 || n(`SELECT COUNT(*) FROM historias WHERE proyecto_id = 25`) != 12 {
+		t.Fatalf("se esperaban 12 historias, resumen %d", c.resumen.Historias)
 	}
 	casos := []struct {
 		descripcion string
@@ -22,9 +25,10 @@ func TestBloqueHistorias_RepartoPorSprintYEstado(t *testing.T) {
 		esperadas   int
 	}{
 		{"Completadas en el Sprint 1", 0, "Completada", 3},
-		{"En progreso en el Sprint 2", 1, "En progreso", 2},
-		{"Nuevas en el Sprint 2", 1, "Nueva", 1},
+		{"Completadas en el Sprint 2", 1, "Completada", 2},
+		{"En progreso en el Sprint 3", 2, "En progreso", 2},
 		{"Nuevas en el Sprint 3", 2, "Nueva", 1},
+		{"Nuevas en el Sprint 4", 3, "Nueva", 1},
 	}
 	for _, caso := range casos {
 		if got := n(`SELECT COUNT(*) FROM historias WHERE sprint_id = ? AND estado = ?`, c.sprints[caso.sprint], caso.estado); got != caso.esperadas {
@@ -62,11 +66,31 @@ func TestBloqueHistorias_VariedadDePrioridadesEstimacionesYCriterios(t *testing.
 	}
 }
 
-func TestBloqueHistorias_CompletadasTienenFechaDeFinalizacionDentroDelSprint1(t *testing.T) {
-	_, n := cargarHistorias(t)
+func TestBloqueHistorias_LasVelocidadesDeLosSprintsFinalizadosDifieren(t *testing.T) {
+	c, n := cargarHistorias(t)
 
-	if got := n(`SELECT COUNT(*) FROM historias WHERE estado = 'Completada' AND fecha_finalizacion BETWEEN '2026-10-16' AND '2026-10-22'`); got != 3 {
-		t.Errorf("fechas de finalización dentro del Sprint 1: %d, se esperaban 3", got)
+	for indice, esperados := range []int{13, 8} {
+		got := n(`SELECT COALESCE(SUM(estimacion_sp), 0) FROM historias WHERE sprint_id = ? AND estado = 'Completada'`, c.sprints[indice])
+		if got != esperados {
+			t.Errorf("Sprint %d: %d SP completados, se esperaban %d", indice+1, got, esperados)
+		}
+	}
+}
+
+func TestBloqueHistorias_CompletadasTienenFechaDeFinalizacionDentroDeSuSprint(t *testing.T) {
+	c, n := cargarHistorias(t)
+
+	casos := []struct {
+		indice      int
+		inicio, fin string
+		completadas int
+	}{{0, "2026-10-02", "2026-10-15", 3}, {1, "2026-10-16", "2026-10-22", 2}}
+	for _, caso := range casos {
+		got := n(`SELECT COUNT(*) FROM historias WHERE sprint_id = ? AND estado = 'Completada' AND fecha_finalizacion BETWEEN ? AND ?`,
+			c.sprints[caso.indice], caso.inicio, caso.fin)
+		if got != caso.completadas {
+			t.Errorf("Sprint %d: %d fechas de finalización dentro del Sprint, se esperaban %d", caso.indice+1, got, caso.completadas)
+		}
 	}
 	if got := n(`SELECT COUNT(*) FROM historias WHERE estado <> 'Completada' AND fecha_finalizacion IS NOT NULL`); got != 0 {
 		t.Errorf("solo las Completadas llevan fecha de finalización, hay %d de más", got)
@@ -77,8 +101,8 @@ func TestBloqueHistorias_LaArrastradaVolvioAlBacklogConSuRegistro(t *testing.T) 
 	c, n := cargarHistorias(t)
 
 	if got := n(`SELECT COUNT(*) FROM historias_arrastradas WHERE sprint_id = ? AND historia_id = ? AND proyecto_id = 25 AND estimacion_sp = 8`,
-		c.sprints[0], c.historias["tasa"]); got != 1 {
-		t.Fatalf("falta el registro de arrastrada de la historia 'tasa'")
+		c.sprints[1], c.historias["tasa"]); got != 1 {
+		t.Fatalf("falta el registro de arrastrada de la historia 'tasa' en el Sprint 2")
 	}
 	if got := n(`SELECT COUNT(*) FROM historias WHERE id = ? AND sprint_id IS NULL AND estado = 'Nueva'`, c.historias["tasa"]); got != 1 {
 		t.Error("la arrastrada debe estar en el backlog como Nueva")
