@@ -161,14 +161,14 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 
 **Independent Test**: dos personas con proyectos distintos ven cada una solo los suyos.
 
-- [ ] T040 [P] [US5] RED: en internal/repository/sqlite_project_listar_test.go y project_repository_en_memoria_listar_test.go, `ListarPorIntegrante(ctx, usuarioID)` devuelve solo los proyectos donde el usuario está en `integrantes`, con el `rol` de esa fila, ordenados por `proyectos.id`; usuario sin proyectos → lista vacía (no nil) — confirmar que FALLA
-- [ ] T041 [US5] COMMIT `RED: listar los proyectos de un integrante con su rol (falla)`
-- [ ] T042 [US5] GREEN: agregar `ListarPorIntegrante` al puerto internal/repository/project_repository.go, a internal/repository/sqlite_project.go (`JOIN integrantes`, sin cambio de esquema) y a project_repository_en_memoria.go; el tipo de retorno lleva proyecto + rol (por ejemplo `domain.ProyectoConRol`) — tests en verde
-- [ ] T043 [US5] COMMIT `GREEN: listar los proyectos de un integrante con su rol, test en verde`
-- [ ] T044 [US5] RED: internal/service/listar_proyectos_test.go — `ListarProyectos.Ejecutar(ctx, usuarioID)` devuelve solo los suyos con rol; internal/http/project_handler_listar_test.go — `GET /projects` responde cada proyecto con `"rol"`, `[]` si no integra ninguno, nunca 403; `GET /projects/{id}` trae `"rol"` de quien consulta — confirmar que FALLA
-- [ ] T045 [US5] COMMIT `RED: «Mis proyectos» con el rol de cada uno (falla)`
-- [ ] T046 [US5] GREEN: internal/service/listar_proyectos.go usa `ListarPorIntegrante`; `ObtenerProyecto` devuelve también el rol; `proyectoResponse` en internal/http/project_dto.go suma `Rol string \`json:"rol,omitempty"\``; ajustar features/steps_listado_proyectos.go y listado_proyectos.feature — `go test ./...` en verde
-- [ ] T047 [US5] COMMIT `GREEN: «Mis proyectos» con el rol de cada uno, test en verde`
+- [X] T040 [P] [US5] RED: en internal/repository/sqlite_project_listar_test.go y project_repository_en_memoria_listar_test.go, `ListarPorIntegrante(ctx, usuarioID)` devuelve solo los proyectos donde el usuario está en `integrantes`, con el `rol` de esa fila, ordenados por `proyectos.id`; usuario sin proyectos → lista vacía (no nil) — confirmar que FALLA
+- [X] T041 [US5] COMMIT `RED: listar los proyectos de un integrante con su rol (falla)`
+- [X] T042 [US5] GREEN: agregar `ListarPorIntegrante` al puerto internal/repository/project_repository.go, a internal/repository/sqlite_project.go (`JOIN integrantes`, sin cambio de esquema) y a project_repository_en_memoria.go; el tipo de retorno lleva proyecto + rol (por ejemplo `domain.ProyectoConRol`) — tests en verde
+- [X] T043 [US5] COMMIT `GREEN: listar los proyectos de un integrante con su rol, test en verde`
+- [X] T044 [US5] RED: internal/service/listar_proyectos_test.go — `ListarProyectos.Ejecutar(ctx, usuarioID)` devuelve solo los suyos con rol; internal/http/project_handler_listar_test.go — `GET /projects` responde cada proyecto con `"rol"`, `[]` si no integra ninguno, nunca 403; `GET /projects/{id}` trae `"rol"` de quien consulta — confirmar que FALLA
+- [X] T045 [US5] COMMIT `RED: «Mis proyectos» con el rol de cada uno (falla)`
+- [X] T046 [US5] GREEN: internal/service/listar_proyectos.go usa `ListarPorIntegrante`; `ObtenerProyecto` devuelve también el rol; `proyectoResponse` en internal/http/project_dto.go suma `Rol string \`json:"rol,omitempty"\``; ajustar features/steps_listado_proyectos.go y listado_proyectos.feature — `go test ./...` en verde
+- [X] T047 [US5] COMMIT `GREEN: «Mis proyectos» con el rol de cada uno, test en verde`. Nota: hubo REFACTOR — se quitó `ProjectRepository.Listar` (todos los proyectos), que quedó sin uso; el escenario del 500 de listado_proyectos.feature pide con una sesión real emitida en la base del escenario
 
 ---
 
