@@ -390,7 +390,7 @@ func TestProjectHandler_Editar_SinClavesObligatorias(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"X"}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -417,7 +417,7 @@ func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -437,7 +437,7 @@ func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -454,7 +454,7 @@ func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", "999")
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -466,7 +466,7 @@ func TestProjectHandler_Editar_InexistenteConCuerpoInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X"}`))
 	req.SetPathValue("id", "999")
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre cuerpo inválido), se obtuvo %d", rec.Code)
@@ -481,7 +481,7 @@ func TestProjectHandler_AsignarIntegrante_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -501,7 +501,7 @@ func TestProjectHandler_AsignarIntegrante_RolInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"Product Owner"}`))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -521,12 +521,12 @@ func TestProjectHandler_AsignarIntegrante_Duplicado(t *testing.T) {
 	cuerpo := `{"nombre":"Jimena","rol":"product_builder"}`
 	req1 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req1.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(httptest.NewRecorder(), req1)
+	handler.AsignarIntegrante(httptest.NewRecorder(), conSesionDe(req1, anaDePrueba))
 
 	rec := httptest.NewRecorder()
 	req2 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req2.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req2)
+	handler.AsignarIntegrante(rec, conSesionDe(req2, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -543,7 +543,7 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
 	req.SetPathValue("id", "999")
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -555,7 +555,7 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistenteConCuerpoInvalido(t
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{nombre:`))
 	req.SetPathValue("id", "999")
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre JSON inválido), se obtuvo %d", rec.Code)
@@ -566,7 +566,7 @@ func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	repo.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	repo.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/members", nil)
@@ -648,7 +648,7 @@ func asignarViaHTTP(handler *ProjectHandler, idStr, cuerpo string) *httptest.Res
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -656,7 +656,7 @@ func TestProjectHandler_AsignarIntegrante_SegundoScrumMasterEs409(t *testing.T) 
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"scrum_master"}`)
 
@@ -692,7 +692,7 @@ func TestProjectHandler_AsignarIntegrante_ProductBuilderConScrumMasterEs201(t *t
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"product_builder"}`)
 

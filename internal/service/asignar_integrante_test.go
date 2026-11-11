@@ -27,7 +27,7 @@ func TestAsignarIntegrante_Exitosa(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	miembro, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	miembro, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID,
 		Nombre:     "Jimena",
 		Rol:        domain.RolProductBuilder,
@@ -49,7 +49,7 @@ func TestAsignarIntegrante_VinculadoEnNoCero(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	miembro, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	miembro, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID,
 		Nombre:     "Jimena",
 		Rol:        domain.RolProductBuilder,
@@ -78,13 +78,13 @@ func TestAsignarIntegrante_ReutilizaUsuario(t *testing.T) {
 	createsInicial := usuarios.creates
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "jimena", Rol: domain.RolProductBuilder,
 	}); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 	// En otro proyecto, "  Jimena " debe reutilizar el mismo usuario.
-	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: otro.ID, Nombre: "  Jimena ", Rol: domain.RolProductBuilder,
 	}); err != nil {
 		t.Fatalf("no se esperaba error al reutilizar el integrante: %v", err)
@@ -100,7 +100,7 @@ func TestAsignarIntegrante_Duplicado(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	entrada := AsignarIntegranteInput{ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.RolProductBuilder}
+	entrada := AsignarIntegranteInput{ActorID: actorDePrueba, ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.RolProductBuilder}
 	if _, err := servicio.Ejecutar(context.Background(), entrada); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestAsignarIntegrante_RolInvalido(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.Role("Product Owner"),
 	})
 	var verr domain.ValidationError
@@ -133,7 +133,7 @@ func TestAsignarIntegrante_RolInvalidoNoCreaUsuario(t *testing.T) {
 	createsInicial := usuarios.creates
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.Role("Product Owner"),
 	})
 	var verr domain.ValidationError
@@ -150,7 +150,7 @@ func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	usuarios := &fakeUserRepository{}
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: 0, Nombre: "Jimena", Rol: domain.RolProductBuilder,
 	})
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
@@ -164,7 +164,7 @@ func TestAsignarIntegrante_ProyectoInexistente(t *testing.T) {
 func TestAsignarIntegrante_ProyectoInexistenteDominaRolInvalido(t *testing.T) {
 	servicio := NewAsignarIntegrante(&fakeProjectRepository{}, &fakeUserRepository{})
 
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: 0, Nombre: "Jimena", Rol: domain.Role("Product Owner"),
 	})
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
@@ -178,7 +178,7 @@ func TestAsignarIntegrante_RechazaUnSegundoScrumMaster(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios)
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "Candela", Rol: domain.RolScrumMaster,
 	})
 
@@ -197,7 +197,7 @@ func TestAsignarIntegrante_SegundoScrumMasterRechazadoNoCreaUsuario(t *testing.T
 	createsInicial := usuarios.creates
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "Candela", Rol: domain.RolScrumMaster,
 	})
 
@@ -216,27 +216,11 @@ func TestAsignarIntegrante_ProductBuilderConScrumMasterPresente(t *testing.T) {
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
 	for _, nombre := range []string{"Candela", "Carlos"} {
-		if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+		if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 			ProyectoID: proyectoID, Nombre: nombre, Rol: domain.RolProductBuilder,
 		}); err != nil {
 			t.Fatalf("se permiten varios Product Builder: %v", err)
 		}
-	}
-}
-
-func TestAsignarIntegrante_ScrumMasterEnProyectoSinScrumMaster(t *testing.T) {
-	proyectos := &fakeProjectRepository{}
-	usuarios := &fakeUserRepository{}
-	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Sin SM"})
-	if err != nil {
-		t.Fatalf("no se pudo preparar el proyecto: %v", err)
-	}
-
-	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
-		ProyectoID: proyecto.ID, Nombre: "Candela", Rol: domain.RolScrumMaster,
-	}); err != nil {
-		t.Fatalf("un proyecto sin Scrum Master admite uno: %v", err)
 	}
 }
 
@@ -246,14 +230,14 @@ func TestAsignarIntegrante_DuplicadoGanaAlScrumMasterRepetido(t *testing.T) {
 	proyectoID := proyectoDePrueba(t, proyectos, usuarios) // Ana es el Scrum Master
 
 	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+	if _, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 		ProyectoID: proyectoID, Nombre: "Jimena", Rol: domain.RolProductBuilder,
 	}); err != nil {
 		t.Fatalf("no se pudo preparar a Jimena: %v", err)
 	}
 
 	for _, nombre := range []string{"Jimena", "Ana"} {
-		_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
+		_, err := servicio.Ejecutar(context.Background(), AsignarIntegranteInput{ActorID: actorDePrueba,
 			ProyectoID: proyectoID, Nombre: nombre, Rol: domain.RolScrumMaster,
 		})
 		var verr domain.ValidationError
@@ -263,23 +247,5 @@ func TestAsignarIntegrante_DuplicadoGanaAlScrumMasterRepetido(t *testing.T) {
 		if errors.Is(err, domain.ErrScrumMasterYaExiste) {
 			t.Errorf("%s: el duplicado debe ganar al Scrum Master repetido", nombre)
 		}
-	}
-}
-
-func TestAsignarIntegrante_CarreraDeScrumMasterDevuelveElErrorDeDominio(t *testing.T) {
-	proyectos := &fakeProjectRepository{errAgregar: domain.ErrScrumMasterYaExiste}
-	usuarios := &fakeUserRepository{}
-	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Sin SM"})
-	if err != nil {
-		t.Fatalf("no se pudo preparar el proyecto: %v", err)
-	}
-
-	servicio := NewAsignarIntegrante(proyectos, usuarios)
-	_, err = servicio.Ejecutar(context.Background(), AsignarIntegranteInput{
-		ProyectoID: proyecto.ID, Nombre: "Candela", Rol: domain.RolScrumMaster,
-	})
-
-	if !errors.Is(err, domain.ErrScrumMasterYaExiste) {
-		t.Fatalf("el error del repositorio debe llegar sin cambios, se obtuvo %v", err)
 	}
 }

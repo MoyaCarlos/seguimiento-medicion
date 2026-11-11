@@ -15,7 +15,7 @@ func editarProyectoViaHTTP(handler *ProjectHandler, id int64, cuerpo string) *ht
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPut, "/projects/"+idStr, bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

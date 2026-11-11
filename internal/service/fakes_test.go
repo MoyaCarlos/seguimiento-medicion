@@ -227,6 +227,18 @@ func (integrantesConActor) ListarIntegrantes(_ context.Context, proyectoID int64
 	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolProductBuilder}}, nil
 }
 
+// actorScrumMasterDe devuelve la membresía del actor de prueba como Scrum Master.
+func actorScrumMasterDe(proyectoID int64) []domain.Membership {
+	return []domain.Membership{{ProjectID: proyectoID, UserID: actorDePrueba, Role: domain.RolScrumMaster}}
+}
+
+// scrumMasterConActor da al actor de prueba por Scrum Master de cualquier proyecto.
+type scrumMasterConActor struct{}
+
+func (scrumMasterConActor) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolScrumMaster}}, nil
+}
+
 type fakeIntegrantesRepository struct {
 	miembros []domain.Member
 }

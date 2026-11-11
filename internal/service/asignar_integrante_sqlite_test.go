@@ -32,7 +32,7 @@ func TestAsignarIntegrante_SQLiteReal_ScrumMasterQueYaEsScrumMasterEsDuplicado(t
 		t.Fatalf("no se pudo preparar el proyecto: %v", err)
 	}
 
-	_, err = NewAsignarIntegrante(proyectos, usuarios).Ejecutar(ctx, AsignarIntegranteInput{
+	_, err = NewAsignarIntegrante(proyectos, usuarios).Ejecutar(ctx, AsignarIntegranteInput{ActorID: ana.ID,
 		ProyectoID: proyecto.ID, Nombre: "Ana", Rol: domain.RolScrumMaster,
 	})
 
