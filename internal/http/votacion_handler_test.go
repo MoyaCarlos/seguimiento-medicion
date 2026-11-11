@@ -74,20 +74,20 @@ func ejecutar(t *testing.T, db *sql.DB, sentencia string) {
 	}
 }
 
-func votarEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+func votarEn(handler *VotacionHandler, id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/votos", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
-	handler.Votar(rec, req)
+	handler.Votar(rec, comoActor(req, actor))
 	return rec
 }
 
-func consultarVotacionDe(handler *VotacionHandler, id, consulta string) *httptest.ResponseRecorder {
+func consultarVotacionDe(handler *VotacionHandler, id string, actor int64, consulta string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/votacion"+consulta, nil)
 	req.SetPathValue("id", id)
-	handler.Consultar(rec, req)
+	handler.Consultar(rec, comoActor(req, actor))
 	return rec
 }
 
@@ -141,7 +141,7 @@ func TestVotacionHandler_Votar_Exitoso(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta,
 		"INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (1, 1, 3)")
 
-	rec := votarEn(handler, "3", `{"usuario_id":2,"valor":8}`)
+	rec := votarEn(handler, "3", 2, `{"valor":8}`)
 
 	resp := leerVotacion(t, rec)
 	if resp.HistoriaID != 3 || resp.Ronda != 1 {
@@ -163,27 +163,28 @@ func TestVotacionHandler_Votar_Exitoso(t *testing.T) {
 
 func TestVotacionHandler_Votar_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, cuerpo string
-		previas    []string
-		status     int
-		campo      string
-		mensaje    string
+		id      string
+		actor   int64
+		cuerpo  string
+		previas []string
+		status  int
+		campo   string
+		mensaje string
 	}{
-		"id no numérico":                     {"abc", `{"usuario_id":2,"valor":8}`, nil, nethttp.StatusBadRequest, "id", ""},
-		"historia inexistente con JSON roto": {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"JSON inválido":                      {"3", `{no-es-json`, []string{rondaAbierta}, nethttp.StatusBadRequest, "", "JSON inválido"},
-		"sin usuario_id":                     {"3", `{"valor":8}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"usuario_id no positivo":             {"3", `{"usuario_id":0,"valor":8}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es integrante":                   {"3", `{"usuario_id":9,"valor":8}`, []string{rondaAbierta}, nethttp.StatusForbidden, "", "No sos integrante de este proyecto"},
-		"sin votación":                       {"3", `{"usuario_id":2,"valor":8}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
-		"carta fuera de la baraja":           {"3", `{"usuario_id":2,"valor":4}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "valor", ""},
-		"ronda revelada":                     {"3", `{"usuario_id":2,"valor":8}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estado", ""},
+		"id no numérico":                     {"abc", 2, `{"valor":8}`, nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente con JSON roto": {"999", 2, `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"JSON inválido":                      {"3", 2, `{no-es-json`, []string{rondaAbierta}, nethttp.StatusBadRequest, "", "JSON inválido"},
+		"sin sesión":                         {"3", 0, `{"valor":8}`, []string{rondaAbierta}, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"no es integrante":                   {"3", 9, `{"valor":8}`, []string{rondaAbierta}, nethttp.StatusForbidden, "", "No sos integrante de este proyecto"},
+		"sin votación":                       {"3", 2, `{"valor":8}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"carta fuera de la baraja":           {"3", 2, `{"valor":4}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "valor", ""},
+		"ronda revelada":                     {"3", 2, `{"valor":8}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estado", ""},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := votarEn(handler, c.id, c.cuerpo)
+			rec := votarEn(handler, c.id, c.actor, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
@@ -191,17 +192,20 @@ func TestVotacionHandler_Votar_Errores(t *testing.T) {
 }
 
 func TestVotacionHandler_Votar_ValorNoEntero(t *testing.T) {
-	casos := map[string]string{
-		"decimal":        `{"usuario_id":2,"valor":2.5}`,
-		"entre comillas": `{"usuario_id":2,"valor":"5"}`,
-		"null":           `{"usuario_id":2,"valor":null}`,
-		"sin el campo":   `{"usuario_id":2}`,
+	casos := map[string]struct {
+		actor  int64
+		cuerpo string
+	}{
+		"decimal":        {2, `{"valor":2.5}`},
+		"entre comillas": {2, `{"valor":"5"}`},
+		"null":           {2, `{"valor":null}`},
+		"sin el campo":   {2, `{}`},
 	}
-	for nombre, cuerpo := range casos {
+	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
 
-			rec := votarEn(handler, "3", cuerpo)
+			rec := votarEn(handler, "3", c.actor, c.cuerpo)
 
 			esperarError(t, rec, nethttp.StatusBadRequest, "valor", "")
 		})
@@ -211,7 +215,7 @@ func TestVotacionHandler_Votar_ValorNoEntero(t *testing.T) {
 func TestVotacionHandler_Votar_PermisoAntesQueElValor(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
 
-	rec := votarEn(handler, "3", `{"usuario_id":9,"valor":2.5}`)
+	rec := votarEn(handler, "3", 9, `{"valor":2.5}`)
 
 	esperarError(t, rec, nethttp.StatusForbidden, "", "No sos integrante de este proyecto")
 }
@@ -219,7 +223,7 @@ func TestVotacionHandler_Votar_PermisoAntesQueElValor(t *testing.T) {
 func TestVotacionHandler_Consultar_SoloElVotoPropioEsVisible(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeCarlosYCandela)
 
-	resp := leerVotacion(t, consultarVotacionDe(handler, "3", "?usuario_id=2"))
+	resp := leerVotacion(t, consultarVotacionDe(handler, "3", 2, ""))
 
 	esperarValores(t, resp, -1, 8, -1)
 	if !resp.Integrantes[0].YaVoto || resp.Integrantes[2].YaVoto {
@@ -230,19 +234,34 @@ func TestVotacionHandler_Consultar_SoloElVotoPropioEsVisible(t *testing.T) {
 	}
 }
 
-func TestVotacionHandler_Consultar_SinUsuarioTodoOculto(t *testing.T) {
+// Escenario 7 de HU-21: el «mi voto» de la vista es siempre el de la sesión;
+// un usuario_id en la query se ignora y no deja ver el voto oculto de otro.
+func TestVotacionHandler_Consultar_IgnoraElUsuarioDeLaQuery(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeCarlosYCandela)
 
-	resp := leerVotacion(t, consultarVotacionDe(handler, "3", ""))
+	resp := leerVotacion(t, consultarVotacionDe(handler, "3", 2, "?usuario_id=1"))
 
-	esperarValores(t, resp, -1, -1, -1)
+	esperarValores(t, resp, -1, 8, -1)
+}
+
+// Escenario 7 de HU-21: el voto queda a nombre de la sesión aunque el cuerpo
+// traiga el usuario_id de otra persona.
+func TestVotacionHandler_Votar_IgnoraElUsuarioDelCuerpo(t *testing.T) {
+	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta)
+
+	if rec := votarEn(handler, "3", 2, `{"usuario_id":1,"valor":8}`); rec.Code != nethttp.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+
+	esperarValores(t, leerVotacion(t, consultarVotacionDe(handler, "3", 2, "")), -1, 8, -1)
+	esperarValores(t, leerVotacion(t, consultarVotacionDe(handler, "3", 1, "")), -1, -1, -1)
 }
 
 func TestVotacionHandler_Consultar_Revelada(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada,
 		"INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (1, 1, 3), (1, 2, 8), (1, 3, 5)")
 
-	resp := leerVotacion(t, consultarVotacionDe(handler, "3", ""))
+	resp := leerVotacion(t, consultarVotacionDe(handler, "3", 3, ""))
 
 	esperarValores(t, resp, 3, 8, 5)
 	if resp.ReveladaEn == nil || *resp.ReveladaEn != "2026-10-27T15:04:05Z" {
@@ -255,34 +274,36 @@ func TestVotacionHandler_Consultar_Revelada(t *testing.T) {
 
 func TestVotacionHandler_Consultar_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, consulta string
-		previas      []string
-		status       int
-		campo        string
-		mensaje      string
+		id       string
+		actor    int64
+		consulta string
+		previas  []string
+		status   int
+		campo    string
+		mensaje  string
 	}{
-		"id no numérico":         {"abc", "", nil, nethttp.StatusBadRequest, "id", ""},
-		"historia inexistente":   {"999", "?usuario_id=abc", nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"usuario_id no numérico": {"3", "?usuario_id=abc", []string{rondaAbierta}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"sin votación":           {"3", "?usuario_id=2", nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"id no numérico":       {"abc", 2, "", nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente": {"999", 2, "", nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin sesión":           {"3", 0, "", []string{rondaAbierta}, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"sin votación":         {"3", 2, "", nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := consultarVotacionDe(handler, c.id, c.consulta)
+			rec := consultarVotacionDe(handler, c.id, c.actor, c.consulta)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
 	}
 }
 
-func revelarEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+func revelarEn(handler *VotacionHandler, id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/revelar", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
-	handler.Revelar(rec, req)
+	handler.Revelar(rec, comoActor(req, actor))
 	return rec
 }
 
@@ -291,7 +312,7 @@ const votosDeTodos = "INSERT INTO votos (ronda_id, usuario_id, valor) VALUES (1,
 func TestVotacionHandler_Revelar_Exitoso(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaAbierta, votosDeTodos)
 
-	resp := leerVotacion(t, revelarEn(handler, "3", `{"usuario_id":1}`))
+	resp := leerVotacion(t, revelarEn(handler, "3", 1, `{}`))
 
 	esperarValores(t, resp, 3, 8, 5)
 	if resp.ReveladaEn == nil {
@@ -307,24 +328,26 @@ func TestVotacionHandler_Revelar_Exitoso(t *testing.T) {
 
 func TestVotacionHandler_Revelar_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, cuerpo string
-		previas    []string
-		status     int
-		campo      string
-		mensaje    string
+		id      string
+		actor   int64
+		cuerpo  string
+		previas []string
+		status  int
+		campo   string
+		mensaje string
 	}{
-		"historia inexistente con JSON roto": {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"sin usuario_id":                     {"3", `{}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es Scrum Master":                 {"3", `{"usuario_id":2}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
-		"sin votación":                       {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
-		"falta votar Jimena":                 {"3", `{"usuario_id":1}`, []string{rondaAbierta, votosDeCarlosYCandela}, nethttp.StatusBadRequest, "votos", ""},
-		"ya revelada":                        {"3", `{"usuario_id":1}`, []string{rondaRevelada, votosDeTodos}, nethttp.StatusBadRequest, "estado", ""},
+		"historia inexistente con JSON roto": {"999", 1, `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin sesión":                         {"3", 0, `{}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"no es Scrum Master":                 {"3", 2, `{}`, []string{rondaAbierta, votosDeTodos}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
+		"sin votación":                       {"3", 1, `{}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"falta votar Jimena":                 {"3", 1, `{}`, []string{rondaAbierta, votosDeCarlosYCandela}, nethttp.StatusBadRequest, "votos", ""},
+		"ya revelada":                        {"3", 1, `{}`, []string{rondaRevelada, votosDeTodos}, nethttp.StatusBadRequest, "estado", ""},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := revelarEn(handler, c.id, c.cuerpo)
+			rec := revelarEn(handler, c.id, c.actor, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
@@ -338,19 +361,19 @@ INSERT INTO sprints (id, proyecto_id, sprint_goal, fecha_inicio, fecha_fin, esta
 UPDATE historias SET estado = 'Completada', sprint_id = 10, fecha_finalizacion = '2026-10-10' WHERE id = 3;
 `
 
-func iniciarEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+func iniciarEn(handler *VotacionHandler, id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
-	handler.Iniciar(rec, req)
+	handler.Iniciar(rec, comoActor(req, actor))
 	return rec
 }
 
 func TestVotacionHandler_Iniciar_Exitoso(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t)
 
-	rec := iniciarEn(handler, "3", `{"usuario_id":1}`)
+	rec := iniciarEn(handler, "3", 1, `{}`)
 
 	if rec.Code != nethttp.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -372,23 +395,25 @@ func TestVotacionHandler_Iniciar_Exitoso(t *testing.T) {
 
 func TestVotacionHandler_Iniciar_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, cuerpo string
-		previas    []string
-		status     int
-		campo      string
-		mensaje    string
+		id      string
+		actor   int64
+		cuerpo  string
+		previas []string
+		status  int
+		campo   string
+		mensaje string
 	}{
-		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"sin usuario_id":                        {"3", `{}`, nil, nethttp.StatusBadRequest, "usuario_id", ""},
-		"no es Scrum Master":                    {"3", `{"usuario_id":2}`, nil, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
-		"historia Completada":                   {"3", `{"usuario_id":1}`, []string{historiaCompletada}, nethttp.StatusBadRequest, "estado", ""},
-		"ya tiene votación":                     {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusConflict, "", "la historia ya tiene una votación"},
+		"historia inexistente con cuerpo vacío": {"999", 1, `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin sesión":                            {"3", 0, `{}`, nil, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"no es Scrum Master":                    {"3", 2, `{}`, nil, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
+		"historia Completada":                   {"3", 1, `{}`, []string{historiaCompletada}, nethttp.StatusBadRequest, "estado", ""},
+		"ya tiene votación":                     {"3", 1, `{}`, []string{rondaAbierta}, nethttp.StatusConflict, "", "la historia ya tiene una votación"},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := iniciarEn(handler, c.id, c.cuerpo)
+			rec := iniciarEn(handler, c.id, c.actor, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
@@ -410,7 +435,7 @@ func TestVotacionHandler_Consultar_Diferencias(t *testing.T) {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := consultarVotacionDe(handler, "3", "?usuario_id=1")
+			rec := consultarVotacionDe(handler, "3", 1, "")
 
 			if rec.Code != nethttp.StatusOK {
 				t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -422,18 +447,18 @@ func TestVotacionHandler_Consultar_Diferencias(t *testing.T) {
 	}
 }
 
-func registrarEstimacionEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+func registrarEstimacionEn(handler *VotacionHandler, id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/estimacion", bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", id)
-	handler.RegistrarEstimacion(rec, req)
+	handler.RegistrarEstimacion(rec, comoActor(req, actor))
 	return rec
 }
 
 func TestVotacionHandler_RegistrarEstimacion_Exitoso(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)
 
-	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+	rec := registrarEstimacionEn(handler, "3", 1, `{"estimacion_sp":5}`)
 
 	if rec.Code != nethttp.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -448,23 +473,26 @@ const sprintActivo = "INSERT INTO sprints (id, proyecto_id, estado, sprint_goal,
 func TestVotacionHandler_RegistrarEstimacion_Congelada(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintActivo, "UPDATE historias SET sprint_id = 1, estimacion_sp = 3 WHERE id = 3")
 
-	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+	rec := registrarEstimacionEn(handler, "3", 1, `{"estimacion_sp":5}`)
 
 	esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado")
 }
 
 func TestVotacionHandler_RegistrarEstimacion_ValorNoEntero(t *testing.T) {
-	casos := map[string]string{
-		"decimal":        `{"usuario_id":1,"estimacion_sp":2.5}`,
-		"entre comillas": `{"usuario_id":1,"estimacion_sp":"5"}`,
-		"null":           `{"usuario_id":1,"estimacion_sp":null}`,
-		"sin el campo":   `{"usuario_id":1}`,
+	casos := map[string]struct {
+		actor  int64
+		cuerpo string
+	}{
+		"decimal":        {1, `{"estimacion_sp":2.5}`},
+		"entre comillas": {1, `{"estimacion_sp":"5"}`},
+		"null":           {1, `{"estimacion_sp":null}`},
+		"sin el campo":   {1, `{}`},
 	}
-	for nombre, cuerpo := range casos {
+	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada)
 
-			rec := registrarEstimacionEn(handler, "3", cuerpo)
+			rec := registrarEstimacionEn(handler, "3", c.actor, c.cuerpo)
 
 			esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "")
 		})
@@ -474,53 +502,55 @@ func TestVotacionHandler_RegistrarEstimacion_ValorNoEntero(t *testing.T) {
 func TestVotacionHandler_RegistrarEstimacion_PermisoAntesQueElValor(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada)
 
-	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":2,"estimacion_sp":2.5}`)
+	rec := registrarEstimacionEn(handler, "3", 2, `{"estimacion_sp":2.5}`)
 
 	esperarError(t, rec, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción")
 }
 
 func TestVotacionHandler_RegistrarEstimacion_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, cuerpo string
-		previas    []string
-		status     int
-		campo      string
-		mensaje    string
+		id      string
+		actor   int64
+		cuerpo  string
+		previas []string
+		status  int
+		campo   string
+		mensaje string
 	}{
-		"id no numérico":                        {"abc", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusBadRequest, "id", ""},
-		"historia inexistente con JSON roto":    {"999", `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"historia inexistente con pedido bueno": {"999", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
-		"sin usuario_id":                        {"3", `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"carta fuera de la baraja":              {"3", `{"usuario_id":1,"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},
-		"ronda oculta":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
-		"Product Builder":                       {"3", `{"usuario_id":2,"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
-		"sin votación":                          {"3", `{"usuario_id":1,"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"id no numérico":                        {"abc", 1, `{"estimacion_sp":5}`, nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente con JSON roto":    {"999", 1, `{no-es-json`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"historia inexistente con cuerpo vacío": {"999", 1, `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"historia inexistente con pedido bueno": {"999", 1, `{"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"JSON inválido":                         {"3", 1, `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
+		"sin sesión":                            {"3", 0, `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"carta fuera de la baraja":              {"3", 1, `{"estimacion_sp":4}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "estimacion_sp", ""},
+		"ronda oculta":                          {"3", 1, `{"estimacion_sp":5}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
+		"Product Builder":                       {"3", 2, `{"estimacion_sp":5}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
+		"sin votación":                          {"3", 1, `{"estimacion_sp":5}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := registrarEstimacionEn(handler, c.id, c.cuerpo)
+			rec := registrarEstimacionEn(handler, c.id, c.actor, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
 	}
 }
 
-func abrirRondaEn(handler *VotacionHandler, id, cuerpo string) *httptest.ResponseRecorder {
+func abrirRondaEn(handler *VotacionHandler, id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/votacion/rondas", bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", id)
-	handler.AbrirRonda(rec, req)
+	handler.AbrirRonda(rec, comoActor(req, actor))
 	return rec
 }
 
 func TestVotacionHandler_AbrirRonda_Exitoso(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)
 
-	rec := abrirRondaEn(handler, "3", `{"usuario_id":1}`)
+	rec := abrirRondaEn(handler, "3", 1, `{}`)
 
 	if rec.Code != nethttp.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -546,32 +576,33 @@ func TestVotacionHandler_AbrirRonda_HistoriaCompletada(t *testing.T) {
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintActivo,
 		"UPDATE historias SET estado = 'Completada', sprint_id = 1, fecha_finalizacion = '2026-10-10' WHERE id = 3")
 
-	rec := abrirRondaEn(handler, "3", `{"usuario_id":1}`)
+	rec := abrirRondaEn(handler, "3", 1, `{}`)
 
 	esperarError(t, rec, nethttp.StatusBadRequest, "estado", "no se puede abrir una ronda en una historia completada")
 }
 
 func TestVotacionHandler_AbrirRonda_Errores(t *testing.T) {
 	casos := map[string]struct {
-		id, cuerpo string
-		previas    []string
-		status     int
-		campo      string
-		mensaje    string
+		id      string
+		actor   int64
+		cuerpo  string
+		previas []string
+		status  int
+		campo   string
+		mensaje string
 	}{
-		"id no numérico":                        {"abc", `{"usuario_id":1}`, nil, nethttp.StatusBadRequest, "id", ""},
-		"historia inexistente con cuerpo vacío": {"999", `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
-		"JSON inválido":                         {"3", `{no-es-json`, []string{rondaRevelada}, nethttp.StatusBadRequest, "", "JSON inválido"},
-		"sin usuario_id":                        {"3", `{}`, []string{rondaRevelada}, nethttp.StatusBadRequest, "usuario_id", ""},
-		"ronda oculta":                          {"3", `{"usuario_id":1}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
-		"Product Builder":                       {"3", `{"usuario_id":2}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
-		"sin votación":                          {"3", `{"usuario_id":1}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
+		"id no numérico":                        {"abc", 1, `{}`, nil, nethttp.StatusBadRequest, "id", ""},
+		"historia inexistente con cuerpo vacío": {"999", 1, `{}`, nil, nethttp.StatusNotFound, "", "historia no encontrada"},
+		"sin sesión":                            {"3", 0, `{}`, []string{rondaRevelada}, nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		"ronda oculta":                          {"3", 1, `{}`, []string{rondaAbierta}, nethttp.StatusBadRequest, "estado", "la ronda actual todavía no fue revelada"},
+		"Product Builder":                       {"3", 2, `{}`, []string{rondaRevelada}, nethttp.StatusForbidden, "", "Solo el Scrum Master puede realizar esta acción"},
+		"sin votación":                          {"3", 1, `{}`, nil, nethttp.StatusNotFound, "", "la historia no tiene votación iniciada"},
 	}
 	for nombre, c := range casos {
 		t.Run(nombre, func(t *testing.T) {
 			handler := nuevoVotacionHandlerDePrueba(t, c.previas...)
 
-			rec := abrirRondaEn(handler, c.id, c.cuerpo)
+			rec := abrirRondaEn(handler, c.id, c.actor, c.cuerpo)
 
 			esperarError(t, rec, c.status, c.campo, c.mensaje)
 		})
@@ -634,17 +665,19 @@ func TestEscribirError_RondaYaAbierta(t *testing.T) {
 
 func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 	casos := []struct {
-		metodo, ruta, cuerpo string
-		status               int
-		esperado             string
+		metodo, ruta string
+		actor        int64
+		cuerpo       string
+		status       int
+		esperado     string
 	}{
-		{nethttp.MethodGet, "/backlog/3/votacion", "", nethttp.StatusOK, `"diferencias":{`},
-		{nethttp.MethodPost, "/backlog/3/votacion", `{"usuario_id":1}`, nethttp.StatusConflict, "la historia ya tiene una votación"},
-		{nethttp.MethodPost, "/backlog/3/votacion/votos", `{"usuario_id":2,"valor":8}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
-		{nethttp.MethodPost, "/backlog/3/votacion/revelar", `{"usuario_id":1}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
-		{nethttp.MethodPost, "/backlog/3/votacion/estimacion", `{"usuario_id":1,"estimacion_sp":5}`, nethttp.StatusOK, `"estimacion_sp":5`},
-		{nethttp.MethodPost, "/backlog/3/votacion/rondas", `{"usuario_id":1}`, nethttp.StatusCreated, `"ronda":2`},
-		{nethttp.MethodGet, "/backlog/3/votacion/rondas", "", nethttp.StatusOK, `"rondas":[{"ronda":1`},
+		{nethttp.MethodGet, "/backlog/3/votacion", 1, "", nethttp.StatusOK, `"diferencias":{`},
+		{nethttp.MethodPost, "/backlog/3/votacion", 1, `{}`, nethttp.StatusConflict, "la historia ya tiene una votación"},
+		{nethttp.MethodPost, "/backlog/3/votacion/votos", 2, `{"valor":8}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
+		{nethttp.MethodPost, "/backlog/3/votacion/revelar", 1, `{}`, nethttp.StatusBadRequest, "la ronda ya fue revelada"},
+		{nethttp.MethodPost, "/backlog/3/votacion/estimacion", 1, `{"estimacion_sp":5}`, nethttp.StatusOK, `"estimacion_sp":5`},
+		{nethttp.MethodPost, "/backlog/3/votacion/rondas", 1, `{}`, nethttp.StatusCreated, `"ronda":2`},
+		{nethttp.MethodGet, "/backlog/3/votacion/rondas", 1, "", nethttp.StatusOK, `"rondas":[{"ronda":1`},
 	}
 	for _, c := range casos {
 		t.Run(c.metodo+" "+c.ruta, func(t *testing.T) {
@@ -652,7 +685,7 @@ func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 			registrarRutasDe(mux, Handlers{Votacion: nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)}, "/backlog/{id}/votacion")
 			rec := httptest.NewRecorder()
 
-			mux.ServeHTTP(rec, httptest.NewRequest(c.metodo, c.ruta, strings.NewReader(c.cuerpo)))
+			mux.ServeHTTP(rec, comoActor(httptest.NewRequest(c.metodo, c.ruta, strings.NewReader(c.cuerpo)), c.actor))
 
 			if rec.Code != c.status {
 				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
@@ -668,7 +701,7 @@ func TestVotacionHandler_RegistrarEstimacion_CargaConSprintFinalizado(t *testing
 	sprintFinalizado := strings.Replace(sprintActivo, "'Activo'", "'Finalizado'", 1)
 	handler := nuevoVotacionHandlerDePrueba(t, rondaRevelada, sprintFinalizado, "UPDATE historias SET sprint_id = 1, estimacion_sp = NULL WHERE id = 3")
 
-	rec := registrarEstimacionEn(handler, "3", `{"usuario_id":1,"estimacion_sp":5}`)
+	rec := registrarEstimacionEn(handler, "3", 1, `{"estimacion_sp":5}`)
 
 	esperarError(t, rec, nethttp.StatusBadRequest, "estimacion_sp", "no se pueden cargar Story Points en un Sprint Finalizado")
 }
