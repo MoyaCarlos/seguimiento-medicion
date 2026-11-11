@@ -82,6 +82,7 @@ func (c *scrumMasterUnicoContext) intentoAgregarScrumMaster() error {
 		ProyectoID: c.pc.proyecto.ID,
 		Nombre:     "Candela Vulcano",
 		Rol:        domain.RolScrumMaster,
+		ActorID:    scrumMasterDelProyecto(c.pc.db, c.pc.proyecto.ID),
 	})
 	return nil
 }

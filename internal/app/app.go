@@ -51,8 +51,8 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
-		service.NewIniciarSprint(sprintRepo),
-		service.NewCerrarSprint(sprintRepo, backlogRepo),
+		service.NewIniciarSprint(sprintRepo, proyectos),
+		service.NewCerrarSprint(sprintRepo, backlogRepo, proyectos),
 		service.NewConsultarSprints(proyectos, sprintRepo),
 		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
 		sprintRepo,

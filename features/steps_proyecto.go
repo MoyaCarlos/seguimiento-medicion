@@ -164,6 +164,7 @@ func (c *proyectoContext) asignarProductBuilder() error {
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "Jimena Martinez",
 		Rol:        domain.RolProductBuilder,
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -196,11 +197,13 @@ func (c *proyectoContext) asignarInvalido() error {
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "",
 		Rol:        domain.RolProductBuilder,
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	_, errRol := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
 		Nombre:     "Jimena Martinez",
 		Rol:        domain.Role("Product Owner"),
+		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	var vNombre, vRol domain.ValidationError
 	if !errors.As(errNombre, &vNombre) || vNombre.Campo != "nombre" {
@@ -256,6 +259,7 @@ func (c *proyectoContext) editarValido() error {
 		Descripcion: "descripción corregida",
 		FechaInicio: &inicio,
 		FechaFin:    &fin,
+		UsuarioID:   scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -285,8 +289,9 @@ func (c *proyectoContext) persisteCambios() error {
 
 func (c *proyectoContext) editarNombreVacio() error {
 	_, c.err = c.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
-		ID:     c.proyecto.ID,
-		Nombre: "   ",
+		ID:        c.proyecto.ID,
+		Nombre:    "   ",
+		UsuarioID: scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }
@@ -302,6 +307,7 @@ func (c *proyectoContext) editarFechaInvalida(relacion string) error {
 		Nombre:      "Proyecto base",
 		FechaInicio: &inicio,
 		FechaFin:    &fin,
+		UsuarioID:   scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
 	return nil
 }

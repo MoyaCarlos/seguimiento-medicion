@@ -44,8 +44,8 @@ func (p *pasosAsignacion) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
-	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
+	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
+	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, proyectos)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.backlog)
 	p.consultarBacklog = service.NewConsultarSprintBacklog(p.sprints, p.backlog)
@@ -60,6 +60,7 @@ func (p *pasosAsignacion) preparar() {
 func (p *pasosAsignacion) iniciarSprint(id int64) error {
 	_, err := p.iniciar.Ejecutar(context.Background(), service.IniciarSprintInput{
 		SprintID: id, SprintGoal: "Goal del Sprint", FechaInicio: inicioSprint, FechaFin: finSprint,
+		UsuarioID: scrumMasterDelSprint(p.base.db, id),
 	})
 	return err
 }
@@ -81,7 +82,7 @@ func (p *pasosAsignacion) sprintAPlanificar() (int64, error) {
 // crearSprintEnEstado crea un Sprint y lo lleva al estado pedido con los
 // services de HU-05: nunca se siembra el estado del Sprint a mano.
 func (p *pasosAsignacion) crearSprintEnEstado(estado string) (int64, error) {
-	s, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	s, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return 0, err
 	}
@@ -94,7 +95,7 @@ func (p *pasosAsignacion) crearSprintEnEstado(estado string) (int64, error) {
 		if err := p.iniciarSprint(s.ID); err != nil {
 			return 0, err
 		}
-		_, err := p.cerrar.Ejecutar(context.Background(), s.ID)
+		_, err := p.cerrar.Ejecutar(context.Background(), s.ID, scrumMasterDelSprint(p.base.db, s.ID))
 		return s.ID, err
 	default:
 		return 0, fmt.Errorf("estado de Sprint no soportado: %q", estado)
@@ -142,7 +143,7 @@ func (p *pasosAsignacion) existeCompletadaEnOtroSprint(titulo string) error {
 	if err != nil {
 		return err
 	}
-	otro, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	otro, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return err
 	}
@@ -172,7 +173,7 @@ func (p *pasosAsignacion) existeOtroProyectoConSprint() error {
 	if err != nil {
 		return err
 	}
-	s, err := p.crear.Ejecutar(context.Background(), proyecto.ID)
+	s, err := p.crear.Ejecutar(context.Background(), proyecto.ID, scrumMasterDelProyecto(p.base.db, proyecto.ID))
 	p.otroSprint = s.ID
 	return err
 }

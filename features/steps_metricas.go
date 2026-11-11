@@ -354,6 +354,7 @@ func (p *pasosMetricas) consultarInexistente(id int) error {
 func (p *pasosMetricas) editarProyecto(enviadas bool, valor *string) error {
 	_, err := p.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
 		ID: p.proyectoID, Nombre: "Proyecto", HorasPorSPEnviadas: enviadas, HorasPorSP: valor,
+		UsuarioID: scrumMasterDelProyecto(p.db, p.proyectoID),
 	})
 	return err
 }

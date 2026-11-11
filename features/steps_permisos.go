@@ -205,6 +205,48 @@ func integranteDelDefecto(db *sql.DB, defectoID int64) (int64, error) {
 	return integranteDelProyecto(db, proyectoID)
 }
 
+// nombreScrumMasterDeEscenario es quien hace las acciones de gestión (HU-21) en
+// los escenarios que no prueban permisos, cuando el proyecto no tiene ya un
+// Scrum Master. Se siembra por SQL, como el resto de esos datos.
+const nombreScrumMasterDeEscenario = "scrum.master.de.escenario"
+
+// scrumMasterDelProyecto devuelve el id del Scrum Master del proyecto; si no
+// tiene, siembra a la persona de escenario con ese rol. Devuelve 0 si el
+// proyecto no existe o falla la base: el servicio responde con su error.
+func scrumMasterDelProyecto(db *sql.DB, proyectoID int64) int64 {
+	var id int64
+	err := db.QueryRow(`SELECT usuario_id FROM integrantes WHERE proyecto_id = ? AND rol = 'scrum_master'`, proyectoID).Scan(&id)
+	if err == nil {
+		return id
+	}
+	var existe int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM proyectos WHERE id = ?`, proyectoID).Scan(&existe); err != nil || existe == 0 {
+		return 0
+	}
+	const ahora = "2026-11-11T00:00:00Z"
+	if _, err := db.Exec(`INSERT OR IGNORE INTO usuarios (nombre, nombre_normalizado, creado_en) VALUES (?, ?, ?)`,
+		nombreScrumMasterDeEscenario, nombreScrumMasterDeEscenario, ahora); err != nil {
+		return 0
+	}
+	if err := db.QueryRow(`SELECT id FROM usuarios WHERE nombre_normalizado = ?`, nombreScrumMasterDeEscenario).Scan(&id); err != nil {
+		return 0
+	}
+	if _, err := db.Exec(`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, 'scrum_master', ?)`,
+		proyectoID, id, ahora); err != nil {
+		return 0
+	}
+	return id
+}
+
+// scrumMasterDelSprint hace lo mismo con el proyecto del Sprint.
+func scrumMasterDelSprint(db *sql.DB, sprintID int64) int64 {
+	var proyectoID int64
+	if err := db.QueryRow(`SELECT proyecto_id FROM sprints WHERE id = ?`, sprintID).Scan(&proyectoID); err != nil {
+		return 0
+	}
+	return scrumMasterDelProyecto(db, proyectoID)
+}
+
 // InitializeScenarioSesion registra el paso de contexto de HU-21 y devuelve la
 // sesión del escenario para los contextos que la necesitan.
 func InitializeScenarioSesion(ctx *godog.ScenarioContext) *sesionDeEscenario {

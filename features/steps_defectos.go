@@ -48,8 +48,8 @@ func (p *pasosDefectos) preparar() {
 	p.resolver = service.NewResolverDefecto(p.defectos, sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.listar = service.NewListarDefectos(proyectos, p.defectos)
 	p.crearSprint = service.NewCrearSprint(proyectos, sprints)
-	p.iniciarSprint = service.NewIniciarSprint(sprints)
-	p.cerrarSprint = service.NewCerrarSprint(sprints, p.historias)
+	p.iniciarSprint = service.NewIniciarSprint(sprints, proyectos)
+	p.cerrarSprint = service.NewCerrarSprint(sprints, p.historias, proyectos)
 	p.sprints, p.historiasPorTitulo, p.defectosPorDescripcion = map[string]int64{}, map[string]int64{}, map[string]int64{}
 	p.otroProyecto, p.ultimo, p.listado, p.err = 0, domain.DefectoDetalle{}, nil, nil
 }
@@ -73,18 +73,19 @@ func (p *pasosDefectos) tieneHistoria(titulo string) error {
 // los casos de uso de HU-05.
 func (p *pasosDefectos) sprintEn(proyectoID int64, estado string) (int64, error) {
 	ctx := context.Background()
-	sprint, err := p.crearSprint.Ejecutar(ctx, proyectoID)
+	sprint, err := p.crearSprint.Ejecutar(ctx, proyectoID, scrumMasterDelProyecto(p.base.db, proyectoID))
 	if err != nil || estado == string(domain.SprintPendiente) {
 		return sprint.ID, err
 	}
 	if _, err := p.iniciarSprint.Ejecutar(ctx, service.IniciarSprintInput{
 		SprintID: sprint.ID, SprintGoal: "Objetivo",
 		FechaInicio: p.hoy.AddDate(0, 0, -7), FechaFin: p.hoy.AddDate(0, 0, 7),
+		UsuarioID: scrumMasterDelSprint(p.base.db, sprint.ID),
 	}); err != nil {
 		return 0, err
 	}
 	if estado == string(domain.SprintFinalizado) {
-		_, err = p.cerrarSprint.Ejecutar(ctx, sprint.ID)
+		_, err = p.cerrarSprint.Ejecutar(ctx, sprint.ID, scrumMasterDelSprint(p.base.db, sprint.ID))
 	}
 	return sprint.ID, err
 }
@@ -96,7 +97,7 @@ func (p *pasosDefectos) tieneSprint(nombre, estado string) error {
 }
 
 func (p *pasosDefectos) cerroSprint(nombre string) error {
-	_, err := p.cerrarSprint.Ejecutar(context.Background(), p.sprints[nombre])
+	_, err := p.cerrarSprint.Ejecutar(context.Background(), p.sprints[nombre], scrumMasterDelSprint(p.base.db, p.sprints[nombre]))
 	return err
 }
 

@@ -127,14 +127,19 @@ func (h *ProjectHandler) ObtenerEstado(w nethttp.ResponseWriter, r *nethttp.Requ
 
 // Editar atiende PUT /projects/{id}.
 func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	// El proyecto inexistente domina (404) sobre cualquier validación del cuerpo.
-	if _, err := h.obtener.Ejecutar(r.Context(), id); err != nil {
+	// El proyecto inexistente (404) y el permiso (403) dominan sobre cualquier
+	// validación del cuerpo.
+	if err := h.editar.Autorizar(r.Context(), id, actor); err != nil {
 		escribirError(w, err)
 		return
 	}
@@ -181,6 +186,7 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		FechaFin:           fin,
 		HorasPorSPEnviadas: horasEnviadas,
 		HorasPorSP:         horas,
+		UsuarioID:          actor,
 	})
 	if err != nil {
 		escribirError(w, err)
@@ -191,6 +197,10 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // AsignarIntegrante atiende POST /projects/{id}/members.
 func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -210,6 +220,7 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 	}
 
 	miembro, err := h.asignar.Ejecutar(r.Context(), service.AsignarIntegranteInput{
+		ActorID:    actor,
 		ProyectoID: id,
 		Nombre:     req.Nombre,
 		Rol:        domain.Role(req.Rol),

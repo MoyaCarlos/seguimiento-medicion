@@ -137,7 +137,7 @@ func (p *pasosAvance) seCierraElSprint(nombre string) error {
 	if !ok {
 		return fmt.Errorf("el Sprint %q no fue creado en el escenario", nombre)
 	}
-	_, err := p.plan.cerrar.Ejecutar(context.Background(), id)
+	_, err := p.plan.cerrar.Ejecutar(context.Background(), id, scrumMasterDelSprint(p.base.db, id))
 	return err
 }
 

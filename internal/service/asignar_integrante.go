@@ -14,6 +14,9 @@ type AsignarIntegranteInput struct {
 	ProyectoID int64
 	Nombre     string
 	Rol        domain.Role
+	// ActorID es quien configura el equipo (la sesión, HU-21); debe ser el
+	// Scrum Master. Nombre es la persona que se agrega.
+	ActorID int64
 }
 
 // AsignarIntegrante vincula a un integrante (existente o nuevo) con un rol.
@@ -31,6 +34,9 @@ func NewAsignarIntegrante(proyectos repository.ProjectRepository, usuarios repos
 func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegranteInput) (domain.Member, error) {
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, input.ProyectoID)
 	if err != nil {
+		return domain.Member{}, err
+	}
+	if err := exigirScrumMaster(ctx, s.proyectos, proyecto.ID, input.ActorID); err != nil {
 		return domain.Member{}, err
 	}
 

@@ -39,8 +39,8 @@ func (p *pasosEstadoHistoria) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints)
-	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
+	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
+	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, proyectos)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.cambiar = service.NewCambiarEstadoHistoria(p.backlog, p.sprints, func() time.Time { return relojEstadoHistoria }, repository.NewSQLiteProjectRepository(p.base.db))
 	p.sprintID = 0
@@ -88,7 +88,7 @@ func (p *pasosEstadoHistoria) tableroConHistoria(estadoSprint, titulo string, pu
 	}
 	p.historias[titulo] = guardada.ID
 
-	sprint, err := p.crear.Ejecutar(ctx, p.base.proyectoID)
+	sprint, err := p.crear.Ejecutar(ctx, p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return err
 	}
@@ -108,6 +108,7 @@ func (p *pasosEstadoHistoria) tableroConHistoria(estadoSprint, titulo string, pu
 	}
 	if _, err := p.iniciar.Ejecutar(ctx, service.IniciarSprintInput{
 		SprintID: sprint.ID, SprintGoal: "Goal del Sprint", FechaInicio: inicioSprint, FechaFin: finSprint,
+		UsuarioID: scrumMasterDelSprint(p.base.db, sprint.ID),
 	}); err != nil {
 		return err
 	}
@@ -132,7 +133,7 @@ func (p *pasosEstadoHistoria) tableroConHistoria(estadoSprint, titulo string, pu
 	if estado != string(domain.EstadoCompletada) {
 		return fmt.Errorf("una historia %q no permanece en un Sprint Finalizado: el cierre la devuelve al Product Backlog", estado)
 	}
-	_, err = p.cerrar.Ejecutar(ctx, sprint.ID)
+	_, err = p.cerrar.Ejecutar(ctx, sprint.ID, scrumMasterDelSprint(p.base.db, sprint.ID))
 	return err
 }
 
@@ -178,7 +179,7 @@ func (p *pasosEstadoHistoria) consultoDeNuevo(titulo string) error {
 }
 
 func (p *pasosEstadoHistoria) cierroElSprint() error {
-	_, err := p.cerrar.Ejecutar(context.Background(), p.sprintID)
+	_, err := p.cerrar.Ejecutar(context.Background(), p.sprintID, scrumMasterDelSprint(p.base.db, p.sprintID))
 	return err
 }
 

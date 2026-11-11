@@ -46,7 +46,7 @@ func (p *pasosHoras) preparar() {
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.imputar = service.NewImputarHoras(p.historias, sprints, proyectos, p.horas)
 	p.consultar = service.NewConsultarEsfuerzoReal(p.historias, p.horas)
-	p.cerrar = service.NewCerrarSprint(sprints, p.historias)
+	p.cerrar = service.NewCerrarSprint(sprints, p.historias, proyectos)
 	p.integrantes = map[string]int64{}
 	p.sprintActivo, p.sprintCerrado, p.historiaID, p.otraID = 0, 0, 0, 0
 	p.ultima, p.esfuerzo, p.minutosAntes, p.err = domain.RegistroHorasDetalle{}, service.EsfuerzoReal{}, 0, nil
@@ -224,7 +224,7 @@ func (p *pasosHoras) intentaEnOtra(integrante string) error {
 }
 
 func (p *pasosHoras) cierraYPlanificaEnOtro() error {
-	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprintActivo); err != nil {
+	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprintActivo, scrumMasterDelSprint(p.base.db, p.sprintActivo)); err != nil {
 		return fmt.Errorf("no se pudo cerrar el Sprint: %w", err)
 	}
 	nuevo, err := p.crearSprint(domain.SprintActivo, p.hoy, p.hoy.AddDate(0, 0, 14))
