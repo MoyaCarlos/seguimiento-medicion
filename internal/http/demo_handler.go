@@ -26,15 +26,8 @@ func NewDemoHandler(habilitado func() bool, cargador CargadorDatosPrueba) *DemoH
 	return &DemoHandler{habilitado: habilitado, cargador: cargador}
 }
 
-// Registrar agrega GET /demo/estado y POST /demo/datos al mux. Cualquier otra
-// combinación de método y ruta bajo /demo/ responde 404, también con la
-// función apagada.
-func (h *DemoHandler) Registrar(mux *nethttp.ServeMux) {
-	mux.HandleFunc("GET /demo/estado", h.soloSiHabilitado(h.Estado))
-	mux.HandleFunc("POST /demo/datos", h.soloSiHabilitado(h.Cargar))
-	mux.HandleFunc("/demo/", nethttp.NotFound)
-}
-
+// soloSiHabilitado responde 404 mientras la función de demo está apagada. Las
+// rutas de la demo se registran en la tabla de rutas.go.
 func (h *DemoHandler) soloSiHabilitado(siguiente nethttp.HandlerFunc) nethttp.HandlerFunc {
 	return func(w nethttp.ResponseWriter, r *nethttp.Request) {
 		if !h.habilitado() {

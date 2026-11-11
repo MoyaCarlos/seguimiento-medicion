@@ -649,7 +649,7 @@ func TestVotacionHandler_Registrar_AtiendeCadaRuta(t *testing.T) {
 	for _, c := range casos {
 		t.Run(c.metodo+" "+c.ruta, func(t *testing.T) {
 			mux := nethttp.NewServeMux()
-			nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela).Registrar(mux)
+			registrarRutasDe(mux, Handlers{Votacion: nuevoVotacionHandlerDePrueba(t, rondaRevelada, votosDeCarlosYCandela)}, "/backlog/{id}/votacion")
 			rec := httptest.NewRecorder()
 
 			mux.ServeHTTP(rec, httptest.NewRequest(c.metodo, c.ruta, strings.NewReader(c.cuerpo)))

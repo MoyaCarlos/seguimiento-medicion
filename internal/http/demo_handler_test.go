@@ -24,7 +24,7 @@ func (c *cargadorFalso) Cargar(context.Context) (demo.Resumen, error) {
 
 func pedirDemo(habilitado bool, cargador *cargadorFalso, metodo, ruta string) *httptest.ResponseRecorder {
 	mux := nethttp.NewServeMux()
-	NewDemoHandler(func() bool { return habilitado }, cargador).Registrar(mux)
+	registrarRutasDe(mux, Handlers{Demo: NewDemoHandler(func() bool { return habilitado }, cargador)}, "/demo/")
 	respuesta := httptest.NewRecorder()
 	mux.ServeHTTP(respuesta, httptest.NewRequest(metodo, ruta, nil))
 	return respuesta

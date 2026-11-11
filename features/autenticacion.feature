@@ -78,9 +78,10 @@ Característica: Autenticación de usuarios
     Cuando consulto quién soy sin token
     Entonces la consulta de quién soy se rechaza con el mensaje "Tu sesión no es válida"
 
-  Escenario: Las rutas existentes siguen respondiendo sin token
+  # Desde HU-21 (spec 042, escenario 3) las rutas que no son públicas exigen sesión.
+  Escenario: Una ruta protegida sin token se rechaza
     Cuando consulto la lista de proyectos sin token
-    Entonces la lista de proyectos responde con éxito
+    Entonces la lista de proyectos se rechaza con el mensaje "Tu sesión no es válida"
 
   Escenario: Al cerrar la sesión el token deja de ser válido
     Dado que "ana.perez" inició sesión

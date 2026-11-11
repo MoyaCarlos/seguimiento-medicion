@@ -121,6 +121,6 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		Reporte:   reporteHandler,
 		Avance:    apihttp.NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, backlogRepo, sprintRepo)),
 		Demo:      apihttp.NewDemoHandler(op.DemoHabilitado, demo.NewCargador(db, op.Ahora, op.Contrasenas)),
-	})
+	}, apihttp.ConSesion(obtenerSesion))
 	return mux
 }

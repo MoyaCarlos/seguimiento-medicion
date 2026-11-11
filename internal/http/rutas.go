@@ -101,10 +101,15 @@ func Rutas(h Handlers) []Ruta {
 	}
 }
 
-// RegistrarRutas registra en el mux todas las rutas de la tabla.
-func RegistrarRutas(mux *nethttp.ServeMux, h Handlers) {
+// RegistrarRutas registra en el mux todas las rutas de la tabla y envuelve con
+// conSesion las que no son públicas.
+func RegistrarRutas(mux *nethttp.ServeMux, h Handlers, conSesion func(nethttp.HandlerFunc) nethttp.HandlerFunc) {
 	for _, r := range Rutas(h) {
-		mux.HandleFunc(r.Patron, r.Handler)
+		handler := r.Handler
+		if r.Nivel != Publica {
+			handler = conSesion(handler)
+		}
+		mux.HandleFunc(r.Patron, handler)
 	}
 }
 
