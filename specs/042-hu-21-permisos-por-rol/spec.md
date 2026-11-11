@@ -27,6 +27,7 @@ producción."
 - Q: Con varios errores a la vez, ¿cuál se responde primero? → A: 401 (sin sesión) → 404 (recurso inexistente) → 403 no integrante → 403 no Scrum Master → 400/409 (validación y conflictos), como en #101.
 - Q: ¿Qué usuarios aparecen en la lista para configurar el equipo y se pueden agregar? → A: Solo los registrados con contraseña (HU-20). Un usuario sin contraseña no aparece en la lista y agregarlo se rechaza igual que un usuario inexistente.
 - Q: ¿Cómo se muestra «No tenés permiso» ante un 403 de rol inesperado? → A: Como aviso en la misma pantalla, junto a la acción, con el mensaje del servidor, sin salir de la pantalla ni perder lo escrito. «No sos integrante» sí es una pantalla completa.
+- Q: ¿El equipo acepta los cambios de comportamiento sobre escenarios ya en verde y las decisiones de diseño del plan? → A: Sí (confirmado por el equipo, 2026-11-11). Se aceptan: (1) un no integrante recibe «No sos integrante de este proyecto» (403) antes que el error de rol, lo que cambia el mensaje esperado en `consenso_estimacion.feature` y `votacion_planning_poker.feature`, y en `imputacion_horas.feature` pasa de 400 sobre `integrante_id` a 403; (2) un cuerpo que no es JSON válido responde 400 antes del 403; (3) los integrantes se agregan por `nombre`, elegido de la lista de usuarios registrados; (4) se actualiza solo texto de `MODELO-DE-DATOS.md` (§4.2 y §8), sin cambio de esquema. La regla de fondo de esos escenarios no cambia: un no integrante sigue sin poder actuar.
 
 ## Objetivo
 
@@ -178,7 +179,7 @@ pertenencia.
 1. *(Escenario 4)* **Given** que no soy integrante del proyecto, **When** intento acceder a
    él, **Then** el sistema responde 403 con el mensaje «No sos integrante de este
    proyecto».
-2. **Given** que no soy integrante del proyecto, **When** intento una escritura de las
+2. **Given** que no soy integrante del proyecto, **When** intento una escritura de los
    niveles «sesión e integrante» o «sesión y Scrum Master» sobre ese proyecto, **Then**
    recibo 403 «No sos integrante de este proyecto» y no cambia nada.
 3. **Given** que no soy integrante del proyecto, **When** leo sus historias, Sprints, horas
@@ -266,7 +267,8 @@ pantalla «No sos integrante».
 - `POST /sprints` y `POST /backlog` reciben el proyecto en el cuerpo: se evalúa la
   pertenencia (y el rol, en Sprints) sobre ese proyecto.
 - Un Product Builder con datos inválidos en una acción de gestión: recibe 403, no el error
-  de validación (no se le revela nada de la acción).
+  de validación (no se le revela nada de la acción). Única excepción: un cuerpo que no es
+  JSON válido responde 400 «JSON inválido» (FR-006).
 - La persona que creó el proyecto es la única Scrum Master; no puede dejar de serlo en esta
   historia.
 - `GET /projects` nunca responde 403, aunque la persona no integre ningún proyecto.
@@ -289,7 +291,10 @@ pantalla «No sos integrante».
   (cuenta de HU-20) y contener solo identificador y nombre de cada uno.
 - **FR-006**: Ante varias condiciones de error a la vez, el sistema SHALL responder la
   primera en este orden: 401 (sin sesión) → 404 (recurso inexistente) → 403 no integrante
-  → 403 no Scrum Master → 400/409 (validación y conflictos del caso de uso).
+  → 403 no Scrum Master → 400/409 (validación y conflictos del caso de uso). Excepción: un
+  cuerpo que no es JSON válido responde 400 «JSON inválido» antes del 403, porque en
+  algunas rutas (`POST /sprints`, `POST /backlog`) el proyecto viaja en el cuerpo y sin
+  leerlo no se sabe sobre qué proyecto evaluar; esa respuesta no revela nada de la acción.
 
 **Basadas en evento**
 
@@ -329,8 +334,8 @@ pantalla «No sos integrante».
   contraseña, THEN el sistema SHALL rechazarlo igual en ambos casos, sin agregar a nadie.
 - **FR-019**: IF se intenta agregar un integrante con rol Scrum Master, THEN el sistema SHALL
   rechazarlo con el conflicto de #236 (409) sin agregar a nadie.
-- **FR-020**: IF se intenta quitar o cambiar el rol del único Scrum Master, THEN el sistema
-  SHALL no ofrecerlo (fuera de alcance; no hay operación para hacerlo).
+- **FR-020**: *(Retirado en `/speckit.analyze`: quitar o cambiar el rol del único Scrum
+  Master no es una regla a construir sino un límite; ver «Fuera de alcance».)*
 
 **Opcionales**
 

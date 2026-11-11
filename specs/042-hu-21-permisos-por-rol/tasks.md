@@ -65,7 +65,7 @@ un commit por fase.
 
 ### Registro de rutas compartido
 
-- [ ] T010 Mover el registro de rutas de cmd/api/main.go a `RegistrarRutas(mux *http.ServeMux, h Handlers, conSesion func(http.HandlerFunc) http.HandlerFunc)` en internal/http/rutas.go (archivo nuevo; `Handlers` agrupa los handlers ya construidos, incluidos `votacionHandler` y `demoHandler`). En este paso **ninguna ruta se envuelve todavía** (comportamiento idéntico); `main.go` solo construye y llama. `go test ./...` en verde
+- [ ] T010 Mover el registro de rutas de cmd/api/main.go a `RegistrarRutas(mux *http.ServeMux, h Handlers, conSesion func(http.HandlerFunc) http.HandlerFunc)` en internal/http/rutas.go (archivo nuevo; `Handlers` agrupa los handlers ya construidos, incluidos `votacionHandler` y `demoHandler`). Las rutas se declaran en una **tabla exportada para tests** (`[]ruta{patron string; nivel nivelRuta; handler http.HandlerFunc}`, con `nivel` ∈ `publica`, `soloSesion`, `sesionIntegrante`, `sesionScrumMaster`, `lectura`) que `RegistrarRutas` recorre; las rutas de `VotacionHandler.Registrar` y `DemoHandler.Registrar` pasan a esa tabla. En este paso **ninguna ruta se envuelve todavía** (comportamiento idéntico); `main.go` solo construye y llama. `go test ./...` en verde
 - [ ] T011 Agregar en features/steps_permisos.go (nuevo) el contexto compartido `sesionDeEscenario` y el paso «Dado que inicié sesión como "X"», que registra a X con `POST /auth/registro` (o ingresa si ya existe) contra el mux de `RegistrarRutas`, guarda token e `id`, y expone `actor()` (id de quien actúa) y `peticion(metodo, ruta, cuerpo)` que agrega `Authorization: Bearer`. Inicializarlo en features/features_test.go antes de los demás `InitializeScenario*` y pasarlo a los que lo necesiten. Sin escenarios nuevos todavía
 - [ ] T012 COMMIT `Extraer RegistrarRutas y agregar el paso de sesión de Godog`
 
@@ -79,7 +79,7 @@ un commit por fase.
 
 **Independent Test**: internal/http/rutas_permisos_test.go recorre la tabla «Qué se protege».
 
-- [ ] T013 [US3] RED: test de tabla en internal/http/rutas_permisos_test.go (nuevo) que arma el mux con `RegistrarRutas` y fakes/handlers reales: cada ruta de los niveles «Solo sesión», «Sesión e integrante», «Sesión y Scrum Master» y **todas las lecturas `GET`** de la spec (incluidas `GET /projects/{id}/status`, `/members`, `/sprints`, `/metricas`, `/historial`, `/historial/{sprintId}`, `/avance`, `/defectos`, `/reporte`, `GET /sprints/{id}/reporte`, `/backlog`, `GET /backlog/{id}`, `/horas`, `/votacion/rondas`, `GET /users`, `GET /auth/yo`, `POST /auth/salir`) sin token → 401; `POST /auth/registro`, `POST /auth/ingreso`, `GET /health`, `GET /demo/estado`, `POST /demo/datos` sin token → distinto de 401. Un test extra verifica que la cantidad de rutas registradas coincide con la tabla (ninguna ruta nueva sin clasificar) — confirmar que FALLA
+- [ ] T013 [US3] RED: test de tabla en internal/http/rutas_permisos_test.go (nuevo) que arma el mux con `RegistrarRutas` y fakes/handlers reales: cada ruta de los niveles «Solo sesión», «Sesión e integrante», «Sesión y Scrum Master» y **todas las lecturas `GET`** de la spec (incluidas `GET /projects/{id}/status`, `/members`, `/sprints`, `/metricas`, `/historial`, `/historial/{sprintId}`, `/avance`, `/defectos`, `/reporte`, `GET /sprints/{id}/reporte`, `/backlog`, `GET /backlog/{id}`, `/horas`, `/votacion/rondas`, `GET /users`, `GET /auth/yo`, `POST /auth/salir`) sin token → 401; `POST /auth/registro`, `POST /auth/ingreso`, `GET /health`, `GET /demo/estado`, `POST /demo/datos` sin token → distinto de 401. El test recorre la **tabla declarativa** de T010 y además compara su lista de patrones con una lista fija escrita en el test a partir de la spec: una ruta nueva sin clasificar, o clasificada en un nivel distinto al de la spec, hace fallar el test — confirmar que FALLA
 - [ ] T014 [US3] COMMIT `RED: rutas protegidas responden 401 sin sesión (falla)`
 - [ ] T015 [US3] GREEN: envolver con `conSesion` todas las rutas protegidas en internal/http/rutas.go y en `VotacionHandler.Registrar` (internal/http/votacion_handler.go); `GET /auth/yo` y `POST /auth/salir` mantienen su manejo propio. Cablear `conSesion` real en cmd/api/main.go. Ajustar los steps de Godog que hacen peticiones HTTP (features/steps_consenso.go, steps_consultar_sprints.go, steps_datos_prueba.go, steps_avance_historias.go, steps_obtener_historia.go, steps_listado_proyectos.go, steps_autenticacion.go) para usar `RegistrarRutas` + `peticion()` con token, y los tests de handlers de internal/http que pasan por el mux — `go test ./...` en verde
 - [ ] T016 [US3] COMMIT `GREEN: rutas protegidas responden 401 sin sesión, test en verde`
@@ -130,7 +130,7 @@ panel, en la votación y en las escrituras de nivel «sesión e integrante».
 
 - [ ] T030 [P] [US4] RED: tests de servicio con fakes en memoria — un no integrante recibe `ErrNoEsIntegrante` y **no se persiste nada** en: `ObtenerProyecto` (internal/service/obtener_proyecto_test.go), `ConsultarVotacion` (consultar_votacion_test.go), `CrearHistoriaBacklog` (crear_historia_test.go), `EditarHistoria` (editar_historia_test.go), `CambiarEstadoHistoria` (cambiar_estado_historia_test.go), `AsignarHistoriaASprint` (asignar_historia_sprint_test.go), `ImputarHoras` (imputar_horas_test.go), `RegistrarDefecto` (registrar_defecto_test.go), `ResolverDefecto` (resolver_defecto_test.go), `Votar` (votar_test.go). En la API (internal/http/rutas_permisos_test.go), un no integrante con sesión: `GET /projects/{id}` y `GET /backlog/{id}/votacion` → 403 `{"mensaje":"No sos integrante de este proyecto"}`; `GET /projects/{id}/backlog`, `/sprints`, `/defectos` y `GET /backlog/{id}/horas` → 200 (límite conocido). Por cada servicio: recurso inexistente → 404 antes que el 403, y un integrante con datos inválidos sigue recibiendo el 400 actual — confirmar que FALLA
 - [ ] T031 [US4] COMMIT `RED: escrituras y lecturas protegidas exigen ser integrante (falla)`
-- [ ] T032 [US4] GREEN: cada servicio recibe el `usuarioID` de quien actúa (parámetro o campo del input) y llama a `exigirIntegrante` sobre el proyecto del recurso **después de cargarlo y antes de validar**; inyectar `repository.ProjectRepository` donde falte. Handlers en internal/http (project, backlog, horas, defecto, votacion) pasan `usuarioDeSesion(r).ID`. Ajustar cmd/api/main.go y los steps de features/ (backlog, estado_historia, asignacion, horas, defectos, votacion, obtener_historia) para que el actor integre el proyecto. `ImputarHoras` deja de usar `ErrIntegranteAjeno` si queda cubierto por `ErrNoEsIntegrante` — `go test ./...` en verde
+- [ ] T032 [US4] GREEN: cada servicio recibe el `usuarioID` de quien actúa (parámetro o campo del input) y llama a `exigirIntegrante` sobre el proyecto del recurso **después de cargarlo y antes de validar**; inyectar `repository.ProjectRepository` donde falte. Handlers en internal/http (project, backlog, horas, defecto, votacion) pasan `usuarioDeSesion(r).ID`. Ajustar cmd/api/main.go y los steps de features/ (backlog, estado_historia, asignacion, horas, defectos, votacion, obtener_historia) para que el actor integre el proyecto. `ImputarHoras` reemplaza `ErrIntegranteAjeno` (400) por `ErrNoEsIntegrante` (403) y se elimina `ErrIntegranteAjeno` de internal/domain/errors.go; ajustar el escenario correspondiente de features/imputacion_horas.feature (pasa de 400 a 403 con «No sos integrante de este proyecto») — `go test ./...` en verde
 - [ ] T033 [US4] COMMIT `GREEN: escrituras y lecturas protegidas exigen ser integrante, test en verde`
 - [ ] T034 [US4] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
@@ -191,9 +191,12 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 
 ## Phase 9: BDD de HU-21 (escenarios de la historia)
 
-- [ ] T056 Escribir features/permisos_por_rol.feature (`@HU-21`, español) con la Característica Como/Quiero/Para de la spec y **un Escenario por criterio de aceptación (1 a 9)**, sin inventar casos; Antecedentes con «Dado que inicié sesión como "ana"» y un proyecto de ana con «bruno» como Product Builder. Cubrir caso normal (1, 5), alternativo (8, 9), límite (6, 7) y error (2, 3, 4)
-- [ ] T057 Implementar los pasos en features/steps_permisos.go usando solo la API real (`RegistrarRutas` + `peticion()` con token; usuarios con `/auth/registro`); `go test ./features/` en verde
-- [ ] T058 COMMIT `Agregar escenarios BDD de HU-21 (permisos por rol)`
+El texto de la feature se redacta en el paso BDD del flujo (después de `/speckit.analyze`, antes de `/speckit.implement`, con el prompt de referencia de AGENTS.md) y se revisa con el equipo; se commitea como RED recién en esta fase porque Godog corre en modo `Strict` y unos pasos sin definir romperían el check `backend` de las fases anteriores (mismo criterio que HU-20, spec 034).
+
+- [ ] T056 RED: agregar features/permisos_por_rol.feature (`@HU-21`, español) con la Característica Como/Quiero/Para de la spec y **un Escenario por criterio de aceptación (1 a 9)**, sin inventar casos; Antecedentes con «Dado que inicié sesión como "ana"» y un proyecto de ana con «bruno» como Product Builder; cubrir caso normal (1, 5), alternativo (8, 9), límite (6, 7) y error (2, 3, 4). Registrar en features/steps_permisos.go solo un stub de los pasos nuevos (sin implementar), de modo que el paquete compile; `go test ./features/` debe FALLAR por pasos sin definir (Strict), no por compilación
+- [ ] T057 COMMIT `RED: agregar escenarios BDD de permisos por rol (fallan)`
+- [ ] T058 GREEN: implementar los pasos en features/steps_permisos.go usando solo la API real (`RegistrarRutas` + `peticion()` con token; usuarios con `/auth/registro`, sin atajos de prueba); `go test ./features/` en verde
+- [ ] T059 COMMIT `GREEN: agregar pasos BDD de permisos por rol, escenarios en verde`
 
 ---
 
@@ -205,49 +208,50 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 
 ### Cliente y permisos compartidos
 
-- [ ] T059 [P] [US7] RED: web/src/compartido/api/client.test.ts — un 403 con mensaje «No sos integrante de este proyecto» se distingue (por ejemplo `error.tipo === 'no_integrante'`) de cualquier otro 403 (`'sin_permiso'`, conserva el mensaje del servidor); web/src/compartido/permisos/permisos.test.tsx (nuevo) — `NoIntegrante` muestra «No sos integrante de este proyecto» con enlace a «Mis proyectos»; `AvisoSinPermiso` muestra «No tenés permiso» y el mensaje; `useEsScrumMaster(proyecto)` según `proyecto.rol` — confirmar que FALLA
-- [ ] T060 [US7] COMMIT `RED: 403 de pertenencia y de rol en la interfaz (falla)`
-- [ ] T061 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
-- [ ] T062 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
+- [ ] T060 [P] [US7] RED: web/src/compartido/api/client.test.ts — un 403 con mensaje «No sos integrante de este proyecto» se distingue (por ejemplo `error.tipo === 'no_integrante'`) de cualquier otro 403 (`'sin_permiso'`, conserva el mensaje del servidor); web/src/compartido/permisos/permisos.test.tsx (nuevo) — `NoIntegrante` muestra «No sos integrante de este proyecto» con enlace a «Mis proyectos»; `AvisoSinPermiso` muestra «No tenés permiso» y el mensaje; `useEsScrumMaster(proyecto)` según `proyecto.rol` — confirmar que FALLA
+- [ ] T061 [US7] COMMIT `RED: 403 de pertenencia y de rol en la interfaz (falla)`
+- [ ] T062 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
+- [ ] T063 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
 
 ### Mis proyectos
 
-- [ ] T063 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
-- [ ] T064 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
-- [ ] T065 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
-- [ ] T066 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
+- [ ] T064 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
+- [ ] T065 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
+- [ ] T066 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
+- [ ] T067 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
 
 ### Identidad sin selectores
 
-- [ ] T067 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
-- [ ] T068 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
-- [ ] T069 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
-- [ ] T070 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
+- [ ] T068 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
+- [ ] T069 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
+- [ ] T070 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
+- [ ] T071 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
 
 ### Acciones de gestión deshabilitadas
 
-- [ ] T071 [P] [US7] RED: pruebas «Escenario 2: como Product Builder veo la acción deshabilitada con la nota "Solo el Scrum Master puede…"» y «Escenario 1: como Scrum Master la acción está habilitada» en web/src/features/sprints/index.test.tsx (crear, iniciar — FormularioInicio — y cerrar — BotonCerrar), web/src/features/votacion/index.test.tsx (AccionesScrumMaster: iniciar, revelar, nueva ronda, registrar estimación), web/src/features/proyecto/Editar.test.tsx y Configuracion.test.tsx; y «un 403 de rol inesperado muestra "No tenés permiso" sin perder lo escrito» en Editar.test.tsx — confirmar que FALLA
-- [ ] T072 [US7] COMMIT `RED: acciones de gestión deshabilitadas para el Product Builder (falla)`
-- [ ] T073 [US7] GREEN: usar `useEsScrumMaster` y `AvisoSinPermiso` en web/src/features/sprints/ (SeccionSprints.tsx, FormularioInicio.tsx, BotonCerrar.tsx), web/src/features/votacion/AccionesScrumMaster.tsx, web/src/features/proyecto/Editar.tsx y Configuracion.tsx — `npm test` en verde
-- [ ] T074 [US7] COMMIT `GREEN: acciones de gestión deshabilitadas para el Product Builder, test en verde`
+- [ ] T072 [P] [US7] RED: pruebas «Escenario 2: como Product Builder veo la acción deshabilitada con la nota "Solo el Scrum Master puede…"» y «Escenario 1: como Scrum Master la acción está habilitada» en web/src/features/sprints/index.test.tsx (crear, iniciar — FormularioInicio — y cerrar — BotonCerrar), web/src/features/votacion/index.test.tsx (AccionesScrumMaster: iniciar, revelar, nueva ronda, registrar estimación), web/src/features/proyecto/Editar.test.tsx y Configuracion.test.tsx; y «un 403 de rol inesperado muestra "No tenés permiso" sin perder lo escrito» en Editar.test.tsx — confirmar que FALLA
+- [ ] T073 [US7] COMMIT `RED: acciones de gestión deshabilitadas para el Product Builder (falla)`
+- [ ] T074 [US7] GREEN: usar `useEsScrumMaster` y `AvisoSinPermiso` en web/src/features/sprints/ (SeccionSprints.tsx, FormularioInicio.tsx, BotonCerrar.tsx), web/src/features/votacion/AccionesScrumMaster.tsx, web/src/features/proyecto/Editar.tsx y Configuracion.tsx — `npm test` en verde
+- [ ] T075 [US7] COMMIT `GREEN: acciones de gestión deshabilitadas para el Product Builder, test en verde`
 
 ### Configurar el equipo
 
-- [ ] T075 [P] [US7] RED: web/src/features/proyecto/Configuracion.test.tsx — «Escenario 8: elijo de la lista un usuario registrado y entra como Product Builder» (carga `GET /users`, no hay selector de rol, el pedido manda `{"nombre"}`); muestra el error del servidor si el usuario no existe — confirmar que FALLA
-- [ ] T076 [US7] COMMIT `RED: configurar el equipo eligiendo de la lista de usuarios (falla)`
-- [ ] T077 [US7] GREEN: web/src/features/proyecto/Configuracion.tsx y api.ts (`listarUsuarios`) — `npm test` en verde
-- [ ] T078 [US7] COMMIT `GREEN: configurar el equipo eligiendo de la lista de usuarios, test en verde`
-- [ ] T079 [US7] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T076 [P] [US7] RED: web/src/features/proyecto/Configuracion.test.tsx — «Escenario 8: elijo de la lista un usuario registrado y entra como Product Builder» (carga `GET /users`, no hay selector de rol, el pedido manda `{"nombre"}`); muestra el error del servidor si el usuario no existe — confirmar que FALLA
+- [ ] T077 [US7] COMMIT `RED: configurar el equipo eligiendo de la lista de usuarios (falla)`
+- [ ] T078 [US7] GREEN: web/src/features/proyecto/Configuracion.tsx y api.ts (`listarUsuarios`) — `npm test` en verde
+- [ ] T079 [US7] COMMIT `GREEN: configurar el equipo eligiendo de la lista de usuarios, test en verde`
+- [ ] T080 [US7] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 ---
 
 ## Phase 11: Polish & Cross-Cutting Concerns
 
-- [ ] T080 Actualizar MODELO-DE-DATOS.md **solo texto, sin esquema**: §4.2 (`contrasena_hash` `NULL` = usuario previo; desde HU-21 ninguna ruta crea usuarios sin contraseña) y §8 (fila «HU-21 Permisos por rol | lee `integrantes`, `usuarios`, `sesiones` | — | sin migración»)
-- [ ] T081 Declarar el **límite conocido** (con sesión, un no integrante puede leer historias, Sprints, horas, defectos, métricas, historial y reportes de un proyecto) y que el traspaso del Scrum Master queda fuera de alcance, en README.md o en la documentación de la API que corresponda; actualizar los `curl` de docs/ que manden `usuario_id`, `integrante_id` o `creador`
-- [ ] T082 COMMIT `docs: permisos por rol en el modelo de datos y límite conocido de lectura (Refs #234)`
-- [ ] T083 `gofmt -l .` vacío, `go build ./...`, `go vet ./...`, `go test ./...`; `cd web && npm run lint && npm test && npm run build` — todo en verde
-- [ ] T084 Recorrer [quickstart.md](quickstart.md) a mano (curl e interfaz) y anotar el resultado en el PR
+- [ ] T081 Actualizar MODELO-DE-DATOS.md **solo texto, sin esquema**: §4.2 (`contrasena_hash` `NULL` = usuario previo; desde HU-21 ninguna ruta crea usuarios sin contraseña) y §8 (fila «HU-21 Permisos por rol | lee `integrantes`, `usuarios`, `sesiones` | — | sin migración»)
+- [ ] T082 Agregar en docs/PRODUCT-BACKLOG.md una nota en las secciones de HU-02, HU-07 y HU-14 (en «Notas», con el mismo estilo de la nota que ya tiene HU-07 sobre su escenario 1): desde HU-21, un no integrante recibe 403 «No sos integrante de este proyecto» antes que el error de rol, y en las horas el rechazo pasa de 400 sobre `integrante_id` a ese 403 (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications)
+- [ ] T083 Declarar el **límite conocido** (con sesión, un no integrante puede leer historias, Sprints, horas, defectos, métricas, historial y reportes de un proyecto) y que el traspaso del Scrum Master queda fuera de alcance, en README.md o en la documentación de la API que corresponda; actualizar los `curl` de docs/ que manden `usuario_id`, `integrante_id` o `creador`
+- [ ] T084 COMMIT `docs: permisos por rol en el modelo de datos, el backlog y el límite conocido de lectura (Refs #234)`
+- [ ] T085 `gofmt -l .` vacío, `go build ./...`, `go vet ./...`, `go test ./...`; `cd web && npm run lint && npm test && npm run build` — todo en verde
+- [ ] T086 Recorrer [quickstart.md](quickstart.md) a mano (curl e interfaz) y anotar el resultado en el PR
 
 ---
 
@@ -256,7 +260,7 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 - **Phase 1 → Phase 2** (bloqueante) → **US3** (T013–T016: todas las rutas pasan a exigir sesión) → **US1** → **US4** → **US2** → **US5** → **US6** → **BDD HU-21** → **US7** → **Polish**.
 - US1, US4 y US2 tocan los mismos servicios y steps de Godog: hacerlas en ese orden, no en paralelo.
 - US5 y US6 son independientes entre sí (repositorios distintos) una vez terminada US2.
-- La fase BDD (T056–T058) necesita US1 a US6 terminadas (sus escenarios cubren los 9 criterios).
+- La fase BDD (T056–T059) necesita US1 a US6 terminadas (sus escenarios cubren los 9 criterios).
 - US7 (frontend) depende solo del contrato ([contracts/api-permisos.md](contracts/api-permisos.md)); se puede empezar en paralelo por otra persona después de la Phase 2, con mocks del cliente.
 - Dentro de cada comportamiento: RED → COMMIT → GREEN → COMMIT → (REFACTOR → COMMIT). Nunca saltear el COMMIT de RED.
 
@@ -264,7 +268,7 @@ editar proyecto y configurar equipo: solo el Scrum Master.
 
 - Las RED marcadas [P] de una misma story tocan archivos de test distintos y se pueden escribir a la vez, pero sus GREEN se integran en orden.
 - T040 (repositorio de proyectos) y T048 (repositorio de usuarios).
-- Frontend: T059, T063, T067, T071 y T075 tocan pruebas distintas.
+- Frontend: T060, T064, T068, T072 y T076 tocan pruebas distintas.
 
 ## Implementation Strategy
 

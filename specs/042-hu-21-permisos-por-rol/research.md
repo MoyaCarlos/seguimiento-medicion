@@ -21,10 +21,13 @@ de diseño tomadas a partir del código actual de `main`.
 ## R2. Cómo se garantiza que ninguna ruta quede sin proteger
 
 - **Decision**: el registro de rutas sale de `cmd/api/main.go` a una función
-  `apihttp.RegistrarRutas(mux, Handlers, conSesion)` en `internal/http/rutas.go`, donde cada
-  ruta protegida se registra envuelta. Un test de tabla (`rutas_permisos_test.go`) recorre la
-  tabla «Qué se protege» de la spec completa: cada ruta protegida sin token → 401; cada
-  pública sin token → distinto de 401.
+  `apihttp.RegistrarRutas(mux, Handlers, conSesion)` en `internal/http/rutas.go`, que recorre
+  una **tabla declarativa** de rutas (patrón, nivel, handler) y envuelve las protegidas.
+  `http.ServeMux` no permite listar sus rutas, por eso la tabla es la fuente. Un test
+  (`rutas_permisos_test.go`) la recorre contra la tabla «Qué se protege» de la spec: cada
+  ruta protegida sin token → 401; cada pública sin token → distinto de 401; y compara la
+  lista de patrones con una lista fija del test, de modo que una ruta nueva sin clasificar
+  lo hace fallar.
 - **Rationale**: Godog y los tests usan **el mismo** enrutamiento que producción (FR-028: sin
   atajos de prueba); una ruta nueva sin envolver hace fallar el test.
 - **Alternatives considered**: seguir registrando en `main.go` — no se puede testear sin
