@@ -34,9 +34,9 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		service.NewCrearHistoriaBacklog(backlogRepo, proyectos),
 		service.NewConsultarProductBacklog(proyectos, backlogRepo),
 		service.NewObtenerHistoria(backlogRepo),
-		service.NewEditarHistoria(backlogRepo, sprintRepo),
-		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo),
-		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, op.Ahora),
+		service.NewEditarHistoria(backlogRepo, sprintRepo, proyectos),
+		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo, proyectos),
+		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, op.Ahora, proyectos),
 	)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
 	projectHandler := apihttp.NewProjectHandler(
@@ -80,8 +80,8 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 	defectosRepo := repository.NewSQLiteDefectoRepository(db)
 	defectoHandler := apihttp.NewDefectoHandler(
 		obtenerProyecto,
-		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo),
-		service.NewResolverDefecto(defectosRepo, sprintRepo),
+		service.NewRegistrarDefecto(sprintRepo, backlogRepo, defectosRepo, proyectos),
+		service.NewResolverDefecto(defectosRepo, sprintRepo, proyectos),
 		service.NewListarDefectos(proyectos, defectosRepo),
 	)
 

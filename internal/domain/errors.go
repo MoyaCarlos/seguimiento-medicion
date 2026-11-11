@@ -40,10 +40,6 @@ var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "l
 // no está en un Sprint Activo (HU-07).
 var ErrHistoriaFueraDelSprintActivo = ValidationError{Campo: "historia_id", Mensaje: "solo se imputan horas a historias del Sprint activo"}
 
-// ErrIntegranteAjeno indica una carga de horas de alguien que no es integrante
-// del proyecto de la historia (HU-07).
-var ErrIntegranteAjeno = ValidationError{Campo: "integrante_id", Mensaje: "el integrante no pertenece al proyecto de la historia"}
-
 // Errores del registro y la resolución de defectos (HU-08).
 var (
 	// ErrDefectoNoEncontrado indica que el defecto solicitado no existe (HU-08).

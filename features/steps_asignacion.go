@@ -46,7 +46,7 @@ func (p *pasosAsignacion) preparar() {
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
-	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints)
+	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.backlog)
 	p.consultarBacklog = service.NewConsultarSprintBacklog(p.sprints, p.backlog)
 	p.estadoPlan, p.planID, p.otroSprint = "", 0, 0
@@ -179,7 +179,17 @@ func (p *pasosAsignacion) existeOtroProyectoConSprint() error {
 
 func (p *pasosAsignacion) intentarAsignar(historiaID, sprintID int64) {
 	p.antes, _ = p.backlog.ObtenerPorID(context.Background(), historiaID)
-	_, p.err = p.asignar.Ejecutar(context.Background(), historiaID, sprintID)
+	_, p.err = p.asignarComoIntegrante(historiaID, sprintID)
+}
+
+// asignarComoIntegrante asigna a nombre de la persona de escenario, integrante
+// del proyecto de la historia (HU-21).
+func (p *pasosAsignacion) asignarComoIntegrante(historiaID, sprintID int64) (domain.BacklogItem, error) {
+	actor, err := integranteDeLaHistoria(p.base.db, historiaID)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	return p.asignar.Ejecutar(context.Background(), historiaID, sprintID, actor)
 }
 
 func (p *pasosAsignacion) asignoAlSprintAPlanificar(titulo string) error {
@@ -292,7 +302,7 @@ func (p *pasosAsignacion) sprintConHistoria(estado, titulo string) error {
 	if err != nil {
 		return err
 	}
-	if _, err := p.asignar.Ejecutar(context.Background(), historiaID, sprintID); err != nil {
+	if _, err := p.asignarComoIntegrante(historiaID, sprintID); err != nil {
 		return fmt.Errorf("no se pudo asignar %q al Sprint %q: %w", titulo, estado, err)
 	}
 	return nil
@@ -311,7 +321,7 @@ func (p *pasosAsignacion) sprintConHistorias(estado string, tabla *godog.Table) 
 		if err != nil {
 			return err
 		}
-		if _, err := p.asignar.Ejecutar(context.Background(), historiaID, sprintID); err != nil {
+		if _, err := p.asignarComoIntegrante(historiaID, sprintID); err != nil {
 			return fmt.Errorf("no se pudo asignar %q al Sprint %q: %w", titulo, estado, err)
 		}
 	}

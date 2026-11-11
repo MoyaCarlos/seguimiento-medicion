@@ -301,6 +301,15 @@ func (p *pasosHoras) rechazoSobreCampo(campo string) error {
 	return nil
 }
 
+// rechazoPorNoIntegrante es el 403 de HU-21 (escenario confirmado por el equipo
+// el 2026-11-11): antes era un error de validación sobre integrante_id.
+func (p *pasosHoras) rechazoPorNoIntegrante(string) error {
+	if !errors.Is(p.err, domain.ErrNoEsIntegrante) {
+		return fmt.Errorf("se esperaba ErrNoEsIntegrante, se obtuvo %v", p.err)
+	}
+	return nil
+}
+
 func (p *pasosHoras) rechazoConMensaje(mensaje string) error {
 	var verr domain.ValidationError
 	if !errors.As(p.err, &verr) || verr.Mensaje != mensaje {
@@ -444,6 +453,7 @@ func InitializeScenarioHoras(ctx *godog.ScenarioContext, base *scenarioContext) 
 	ctx.Step(`^que existe otra historia en un Sprint en estado "([^"]*)"$`, p.otraEnSprint)
 	ctx.Step(`^"([^"]*)" intenta imputar horas a esa otra historia$`, p.intentaEnOtra)
 	ctx.Step(`^la carga se rechaza con el mensaje "([^"]*)"$`, p.rechazoConMensaje)
+	ctx.Step(`^la carga se rechaza porque "([^"]*)" no es integrante del proyecto$`, p.rechazoPorNoIntegrante)
 	ctx.Step(`^esa otra historia no tiene horas imputadas$`, p.otraSinHoras)
 	ctx.Step(`^"([^"]*)" intenta imputar horas a la historia con identificador (\d+)$`, p.intentaEnInexistente)
 	ctx.Step(`^la carga se rechaza con error "historia no encontrada"$`, p.imputacionHistoriaNoEncontrada)

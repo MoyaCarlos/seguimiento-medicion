@@ -44,7 +44,7 @@ func (p *pasosSprint) preparar() {
 	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
-	p.editar = service.NewEditarHistoria(p.backlog, p.sprints)
+	p.editar = service.NewEditarHistoria(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
 	p.completada, p.pendiente, p.estimada, p.sinEstimar = 0, 0, 0, 0
 }
@@ -199,7 +199,12 @@ func (p *pasosSprint) cambioLaEstimacion(puntos int) error {
 	if err != nil {
 		return err
 	}
+	actor, err := integranteDeLaHistoria(p.base.db, actual.ID)
+	if err != nil {
+		return err
+	}
 	_, err = p.editar.Ejecutar(context.Background(), service.EditarHistoriaInput{
+		UsuarioID:           actor,
 		ID:                  actual.ID,
 		Titulo:              actual.Titulo,
 		Descripcion:         actual.Descripcion,

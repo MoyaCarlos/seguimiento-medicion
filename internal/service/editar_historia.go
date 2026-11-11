@@ -14,16 +14,19 @@ type EditarHistoriaInput struct {
 	Descripcion         string
 	CriteriosAceptacion *string
 	EstimacionSP        *int
+	// UsuarioID es quien edita (la sesión, HU-21); debe integrar el proyecto.
+	UsuarioID int64
 }
 
 // EditarHistoria aplica la edición de una historia del Product Backlog.
 type EditarHistoria struct {
-	historias repository.HistoriaRepository
-	sprints   repository.SprintRepository
+	historias   repository.HistoriaRepository
+	sprints     repository.SprintRepository
+	integrantes repository.IntegrantesRepository
 }
 
-func NewEditarHistoria(historias repository.HistoriaRepository, sprints repository.SprintRepository) *EditarHistoria {
-	return &EditarHistoria{historias: historias, sprints: sprints}
+func NewEditarHistoria(historias repository.HistoriaRepository, sprints repository.SprintRepository, integrantes repository.IntegrantesRepository) *EditarHistoria {
+	return &EditarHistoria{historias: historias, sprints: sprints, integrantes: integrantes}
 }
 
 // Ejecutar carga la historia, valida los datos, aplica la regla D2b sobre los
@@ -31,6 +34,9 @@ func NewEditarHistoria(historias repository.HistoriaRepository, sprints reposito
 func (s *EditarHistoria) Ejecutar(ctx context.Context, input EditarHistoriaInput) (domain.BacklogItem, error) {
 	actual, err := s.historias.ObtenerPorID(ctx, input.ID)
 	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	if err := exigirIntegrante(ctx, s.integrantes, actual.ProyectoID, input.UsuarioID); err != nil {
 		return domain.BacklogItem{}, err
 	}
 

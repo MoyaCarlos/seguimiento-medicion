@@ -93,12 +93,16 @@ func (h *ProjectHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Obtener atiende GET /projects/{id}.
 func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	proyecto, err := h.obtener.Ejecutar(r.Context(), id)
+	proyecto, _, err := h.obtener.ComoIntegrante(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

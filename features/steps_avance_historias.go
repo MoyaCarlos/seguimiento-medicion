@@ -56,7 +56,7 @@ type pasosAvance struct {
 func (p *pasosAvance) preparar() {
 	p.plan = &pasosAsignacion{base: p.base}
 	p.plan.preparar()
-	p.cambiar = service.NewCambiarEstadoHistoria(p.plan.backlog, p.plan.sprints, func() time.Time { return relojEstadoHistoria })
+	p.cambiar = service.NewCambiarEstadoHistoria(p.plan.backlog, p.plan.sprints, func() time.Time { return relojEstadoHistoria }, repository.NewSQLiteProjectRepository(p.base.db))
 	handler := apihttp.NewAvanceHandler(service.NewConsultarAvanceHistorias(
 		repository.NewSQLiteProjectRepository(p.base.db), p.plan.backlog, p.plan.sprints))
 	mux := nethttp.NewServeMux()
@@ -112,7 +112,7 @@ func (p *pasosAvance) historiaEnSprint(titulo string, puntos int, sprint, estado
 	if err != nil {
 		return err
 	}
-	if _, err := p.plan.asignar.Ejecutar(ctx, historiaID, sprintID); err != nil {
+	if _, err := p.plan.asignarComoIntegrante(historiaID, sprintID); err != nil {
 		return err
 	}
 	recorrido := map[domain.Estado][]domain.Estado{
@@ -120,8 +120,12 @@ func (p *pasosAvance) historiaEnSprint(titulo string, puntos int, sprint, estado
 		domain.EstadoEnProgreso: {domain.EstadoEnProgreso},
 		domain.EstadoCompletada: {domain.EstadoEnProgreso, domain.EstadoCompletada},
 	}
+	actor, err := integranteDeLaHistoria(p.base.db, historiaID)
+	if err != nil {
+		return err
+	}
 	for _, siguiente := range recorrido[estado] {
-		if _, err := p.cambiar.Ejecutar(ctx, historiaID, siguiente); err != nil {
+		if _, err := p.cambiar.Ejecutar(ctx, historiaID, actor, siguiente); err != nil {
 			return err
 		}
 	}

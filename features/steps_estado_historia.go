@@ -41,8 +41,8 @@ func (p *pasosEstadoHistoria) preparar() {
 	p.crear = service.NewCrearSprint(proyectos, p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints)
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
-	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints)
-	p.cambiar = service.NewCambiarEstadoHistoria(p.backlog, p.sprints, func() time.Time { return relojEstadoHistoria })
+	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
+	p.cambiar = service.NewCambiarEstadoHistoria(p.backlog, p.sprints, func() time.Time { return relojEstadoHistoria }, repository.NewSQLiteProjectRepository(p.base.db))
 	p.sprintID = 0
 	p.historias = map[string]int64{}
 	p.antes, p.err = domain.BacklogItem{}, nil
@@ -57,8 +57,18 @@ func (p *pasosEstadoHistoria) historia(titulo string) (domain.BacklogItem, error
 }
 
 func (p *pasosEstadoHistoria) cambiarEstado(titulo string, estado domain.Estado) error {
-	_, err := p.cambiar.Ejecutar(context.Background(), p.historias[titulo], estado)
+	_, err := p.cambiarComoIntegrante(p.historias[titulo], estado)
 	return err
+}
+
+// cambiarComoIntegrante cambia el estado a nombre de la persona de escenario,
+// integrante del proyecto de la historia (HU-21).
+func (p *pasosEstadoHistoria) cambiarComoIntegrante(historiaID int64, estado domain.Estado) (domain.BacklogItem, error) {
+	actor, err := integranteDeLaHistoria(p.base.db, historiaID)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	return p.cambiar.Ejecutar(context.Background(), historiaID, actor, estado)
 }
 
 // tableroConHistoria prepara un Sprint en el estado pedido con la historia ya
@@ -83,7 +93,11 @@ func (p *pasosEstadoHistoria) tableroConHistoria(estadoSprint, titulo string, pu
 		return err
 	}
 	p.sprintID = sprint.ID
-	if _, err := p.asignar.Ejecutar(ctx, guardada.ID, sprint.ID); err != nil {
+	actor, err := integranteDeLaHistoria(p.base.db, guardada.ID)
+	if err != nil {
+		return err
+	}
+	if _, err := p.asignar.Ejecutar(ctx, guardada.ID, sprint.ID, actor); err != nil {
 		return err
 	}
 	if estadoSprint == "Pendiente" {
@@ -133,7 +147,7 @@ func (p *pasosEstadoHistoria) tableroConHistoriaConPuntos(estadoSprint, titulo s
 // tableroConHistoriaSinSprint crea la historia con CrearHistoriaBacklog y la
 // deja en el Product Backlog, sin Sprint.
 func (p *pasosEstadoHistoria) tableroConHistoriaSinSprint(titulo string) error {
-	h, err := p.base.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	h, err := p.base.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID: p.base.proyectoID, Titulo: titulo, Descripcion: "Descripción", Prioridad: domain.PrioridadMust,
 	})
 	if err != nil {
@@ -144,7 +158,7 @@ func (p *pasosEstadoHistoria) tableroConHistoriaSinSprint(titulo string) error {
 }
 
 func (p *pasosEstadoHistoria) pongoInexistenteEnEstado(id int, estado string) error {
-	_, p.err = p.cambiar.Ejecutar(context.Background(), int64(id), domain.Estado(estado))
+	_, p.err = p.cambiarComoIntegrante(int64(id), domain.Estado(estado))
 	return nil
 }
 

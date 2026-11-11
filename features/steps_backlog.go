@@ -31,7 +31,7 @@ func (p *pasosBacklog) preparar() {
 	p.historias = repository.NewSQLiteBacklogRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.historias)
-	p.editar = service.NewEditarHistoria(p.historias, repository.NewSQLiteSprintRepository(p.base.db))
+	p.editar = service.NewEditarHistoria(p.historias, repository.NewSQLiteSprintRepository(p.base.db), repository.NewSQLiteProjectRepository(p.base.db))
 	p.backlog, p.historia, p.editada, p.err = nil, domain.BacklogItem{}, domain.BacklogItem{}, nil
 	p.enviado = service.EditarHistoriaInput{}
 }
@@ -193,6 +193,11 @@ func (p *pasosBacklog) guardar(cambios func(*service.EditarHistoriaInput)) error
 	}
 	cambios(&input)
 	p.enviado = input
+	actor, err := integranteDeLaHistoria(p.base.db, input.ID)
+	if err != nil {
+		return err
+	}
+	input.UsuarioID = actor
 	p.editada, p.err = p.editar.Ejecutar(context.Background(), input)
 	return nil
 }

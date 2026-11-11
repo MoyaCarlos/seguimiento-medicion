@@ -44,8 +44,8 @@ func (p *pasosDefectos) preparar() {
 	sprints := repository.NewSQLiteSprintRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.obtenerProyecto = service.NewObtenerProyecto(proyectos)
-	p.registrar = service.NewRegistrarDefecto(sprints, p.historias, p.defectos)
-	p.resolver = service.NewResolverDefecto(p.defectos, sprints)
+	p.registrar = service.NewRegistrarDefecto(sprints, p.historias, p.defectos, repository.NewSQLiteProjectRepository(p.base.db))
+	p.resolver = service.NewResolverDefecto(p.defectos, sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.listar = service.NewListarDefectos(proyectos, p.defectos)
 	p.crearSprint = service.NewCrearSprint(proyectos, sprints)
 	p.iniciarSprint = service.NewIniciarSprint(sprints)
@@ -135,6 +135,9 @@ func (p *pasosDefectos) noTieneSprints() error { return nil }
 // el resto de las validaciones.
 func (p *pasosDefectos) registrarEn(in service.RegistrarDefectoInput) {
 	if _, p.err = p.obtenerProyecto.Ejecutar(context.Background(), in.ProyectoID); p.err != nil {
+		return
+	}
+	if in.UsuarioID, p.err = integranteDelProyecto(p.base.db, in.ProyectoID); p.err != nil {
 		return
 	}
 	p.ultimo, p.err = p.registrar.Ejecutar(context.Background(), in)
@@ -229,15 +232,23 @@ func (p *pasosDefectos) otroProyectoConDefecto() error {
 	if err != nil {
 		return err
 	}
+	actor, err := integranteDelProyecto(p.base.db, p.otroProyecto)
+	if err != nil {
+		return err
+	}
 	_, err = p.registrar.Ejecutar(context.Background(), service.RegistrarDefectoInput{
-		ProyectoID: p.otroProyecto, HistoriaID: historiaID, Descripcion: "Defecto ajeno", Severidad: "Baja",
+		ProyectoID: p.otroProyecto, HistoriaID: historiaID, Descripcion: "Defecto ajeno", Severidad: "Baja", UsuarioID: actor,
 	})
 	return err
 }
 
 func (p *pasosDefectos) resolverDefecto(id int64) {
 	var resuelto domain.DefectoDetalle
-	resuelto, p.err = p.resolver.Ejecutar(context.Background(), id)
+	var actor int64
+	if actor, p.err = integranteDelDefecto(p.base.db, id); p.err != nil {
+		return
+	}
+	resuelto, p.err = p.resolver.Ejecutar(context.Background(), id, actor)
 	if p.err == nil {
 		p.ultimo = resuelto
 	}

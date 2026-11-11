@@ -65,7 +65,7 @@ Característica: Imputación de horas trabajadas
 
   Escenario: Integrante que no pertenece al proyecto
     Cuando "Pedro", que no es integrante del proyecto, intenta imputar horas a la historia
-    Entonces la carga se rechaza con un error sobre el campo "integrante_id"
+    Entonces la carga se rechaza porque "Pedro" no es integrante del proyecto
     Y el esfuerzo acumulado de la historia no cambia
 
   Esquema del escenario: Historia fuera del Sprint activo

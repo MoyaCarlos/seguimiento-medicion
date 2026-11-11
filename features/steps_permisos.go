@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -147,6 +148,61 @@ func (s *sesionDeEscenario) enviar(metodo, ruta string, cuerpo any, autorizacion
 	rec := httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 	return rec, nil
+}
+
+// nombreIntegranteDeEscenario es la persona que actúa en los escenarios que no
+// prueban permisos (HU-21): integra, como Product Builder, el proyecto sobre el
+// que actúa. Se siembra por SQL, igual que el resto de los datos de esos
+// escenarios; el código de producción no la conoce.
+const nombreIntegranteDeEscenario = "integrante.de.escenario"
+
+// integranteDelProyecto hace integrante del proyecto a la persona de escenario
+// y devuelve su id.
+func integranteDelProyecto(db *sql.DB, proyectoID int64) (int64, error) {
+	const ahora = "2026-11-11T00:00:00Z"
+	var existe int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM proyectos WHERE id = ?`, proyectoID).Scan(&existe); err != nil || existe == 0 {
+		return 0, err
+	}
+	if _, err := db.Exec(`INSERT OR IGNORE INTO usuarios (nombre, nombre_normalizado, creado_en) VALUES (?, ?, ?)`,
+		nombreIntegranteDeEscenario, nombreIntegranteDeEscenario, ahora); err != nil {
+		return 0, err
+	}
+	var id int64
+	if err := db.QueryRow(`SELECT id FROM usuarios WHERE nombre_normalizado = ?`, nombreIntegranteDeEscenario).Scan(&id); err != nil {
+		return 0, err
+	}
+	_, err := db.Exec(`INSERT OR IGNORE INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, 'product_builder', ?)`,
+		proyectoID, id, ahora)
+	return id, err
+}
+
+// integranteDeLaHistoria hace integrante del proyecto de la historia a la
+// persona de escenario. Si la historia no existe devuelve 0: el servicio
+// responde que no la encontró antes de mirar la pertenencia.
+func integranteDeLaHistoria(db *sql.DB, historiaID int64) (int64, error) {
+	var proyectoID int64
+	err := db.QueryRow(`SELECT proyecto_id FROM historias WHERE id = ?`, historiaID).Scan(&proyectoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return integranteDelProyecto(db, proyectoID)
+}
+
+// integranteDelDefecto hace lo mismo con el proyecto de un defecto.
+func integranteDelDefecto(db *sql.DB, defectoID int64) (int64, error) {
+	var proyectoID int64
+	err := db.QueryRow(`SELECT proyecto_id FROM defectos WHERE id = ?`, defectoID).Scan(&proyectoID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	return integranteDelProyecto(db, proyectoID)
 }
 
 // InitializeScenarioSesion registra el paso de contexto de HU-21 y devuelve la
