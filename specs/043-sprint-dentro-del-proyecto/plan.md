@@ -72,7 +72,7 @@ internal/service/
 ├── cerrar_sprint_test.go          # ajuste de NewIniciarSprint
 └── crear_sprint_test.go           # ajuste de NewIniciarSprint
 internal/http/
-└── sprint_handler_test.go         # ajuste de NewIniciarSprint (+ caso 400 por plazo)
+└── sprint_handler_test.go         # ajuste de NewIniciarSprint (el 400 por ValidationError ya está mapeado)
 cmd/api/main.go                    # cableado: NewIniciarSprint(sprintRepo, projectRepo)
 features/
 ├── sprint_dentro_del_proyecto.feature   # nuevo, @HU-05 @168
