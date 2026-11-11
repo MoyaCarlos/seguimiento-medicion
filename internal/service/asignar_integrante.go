@@ -13,24 +13,26 @@ import (
 type AsignarIntegranteInput struct {
 	ProyectoID int64
 	Nombre     string
-	Rol        domain.Role
+	// Rol vacío es product_builder (HU-21).
+	Rol domain.Role
 	// ActorID es quien configura el equipo (la sesión, HU-21); debe ser el
 	// Scrum Master. Nombre es la persona que se agrega.
 	ActorID int64
 }
 
-// AsignarIntegrante vincula a un integrante (existente o nuevo) con un rol.
+// AsignarIntegrante suma al equipo a un usuario registrado (HU-21): no crea
+// usuarios.
 type AsignarIntegrante struct {
-	proyectos repository.ProjectRepository
-	usuarios  repository.UserRepository
+	proyectos    repository.ProjectRepository
+	credenciales repository.BuscadorCredenciales
 }
 
-func NewAsignarIntegrante(proyectos repository.ProjectRepository, usuarios repository.UserRepository) *AsignarIntegrante {
-	return &AsignarIntegrante{proyectos: proyectos, usuarios: usuarios}
+func NewAsignarIntegrante(proyectos repository.ProjectRepository, credenciales repository.BuscadorCredenciales) *AsignarIntegrante {
+	return &AsignarIntegrante{proyectos: proyectos, credenciales: credenciales}
 }
 
-// Ejecutar verifica el proyecto, resuelve el integrante y persiste la
-// vinculación (el rol se valida en el dominio), rechazando duplicados.
+// Ejecutar verifica el proyecto y que actúe su Scrum Master, valida el rol,
+// busca al usuario registrado y persiste la vinculación, rechazando duplicados.
 func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegranteInput) (domain.Member, error) {
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, input.ProyectoID)
 	if err != nil {
@@ -40,7 +42,11 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 		return domain.Member{}, err
 	}
 
-	if !input.Rol.Valido() {
+	rol := input.Rol
+	if rol == "" {
+		rol = domain.RolProductBuilder
+	}
+	if !rol.Valido() {
 		return domain.Member{}, domain.ValidationError{Campo: "rol", Mensaje: "el rol debe ser scrum_master o product_builder"}
 	}
 
@@ -48,17 +54,17 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 	if err != nil {
 		return domain.Member{}, err
 	}
-	if input.Rol == domain.RolScrumMaster {
+	if rol == domain.RolScrumMaster {
 		if err := s.verificarScrumMasterLibre(ctx, proyecto.ID, candidato); err != nil {
 			return domain.Member{}, err
 		}
 	}
-	usuario, err := resolverUsuario(ctx, s.usuarios, candidato)
+	usuario, err := s.usuarioRegistrado(ctx, candidato)
 	if err != nil {
 		return domain.Member{}, err
 	}
 
-	membresia, err := domain.NewMembership(proyecto.ID, usuario.ID, input.Rol)
+	membresia, err := domain.NewMembership(proyecto.ID, usuario.ID, rol)
 	if err != nil {
 		return domain.Member{}, err
 	}
@@ -74,9 +80,22 @@ func (s *AsignarIntegrante) Ejecutar(ctx context.Context, input AsignarIntegrant
 		UserID:    usuario.ID,
 		ProjectID: proyecto.ID,
 		Nombre:    usuario.Nombre,
-		Role:      input.Rol,
+		Role:      rol,
 		CreadoEn:  guardada.CreadoEn,
 	}, nil
+}
+
+// usuarioRegistrado busca al candidato entre los usuarios con cuenta: quien no
+// existe y quien no tiene contraseña dan el mismo ErrUsuarioNoEncontrado.
+func (s *AsignarIntegrante) usuarioRegistrado(ctx context.Context, candidato domain.User) (domain.User, error) {
+	usuario, hash, err := s.credenciales.ObtenerPorNombreNormalizado(ctx, candidato.NombreNormalizado)
+	if errors.Is(err, domain.ErrNoEncontrado) || (err == nil && hash == "") {
+		return domain.User{}, domain.ErrUsuarioNoEncontrado
+	}
+	if err != nil {
+		return domain.User{}, err
+	}
+	return usuario, nil
 }
 
 func errIntegranteDuplicado() error {
@@ -86,7 +105,6 @@ func errIntegranteDuplicado() error {
 // verificarScrumMasterLibre devuelve ErrScrumMasterYaExiste si el proyecto ya
 // tiene Scrum Master. Si el candidato ya es integrante devuelve el duplicado,
 // que tiene prioridad (SQLite informaría el índice en vez de la clave primaria).
-// No crea usuarios.
 func (s *AsignarIntegrante) verificarScrumMasterLibre(ctx context.Context, proyectoID int64, candidato domain.User) error {
 	integrantes, err := s.proyectos.ListarIntegrantes(ctx, proyectoID)
 	if err != nil {
@@ -95,15 +113,14 @@ func (s *AsignarIntegrante) verificarScrumMasterLibre(ctx context.Context, proye
 	if !slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.Role == domain.RolScrumMaster }) {
 		return nil
 	}
-	existente, err := s.usuarios.ObtenerPorNombreNormalizado(ctx, candidato.NombreNormalizado)
+	existente, _, err := s.credenciales.ObtenerPorNombreNormalizado(ctx, candidato.NombreNormalizado)
 	if errors.Is(err, domain.ErrNoEncontrado) {
 		return domain.ErrScrumMasterYaExiste
 	}
 	if err != nil {
 		return err
 	}
-	yaIntegrante := slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.UserID == existente.ID })
-	if yaIntegrante {
+	if slices.ContainsFunc(integrantes, func(m domain.Member) bool { return m.UserID == existente.ID }) {
 		return errIntegranteDuplicado()
 	}
 	return domain.ErrScrumMasterYaExiste

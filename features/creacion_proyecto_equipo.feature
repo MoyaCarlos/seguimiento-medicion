@@ -27,6 +27,7 @@ Característica: Creación de Proyecto y Asignación de Equipo
 
   Escenario: Asignación de integrante y rol
     Dado que existe un proyecto creado
+    Y "jimena.martinez" tiene una cuenta registrada
     Y estoy en la vista de configuración del proyecto
     Cuando ingreso el nombre de un integrante, selecciono su rol "Product Builder" y confirmo
     Entonces el sistema vincula al integrante con el proyecto

@@ -42,7 +42,7 @@ func (c *proyectoContext) iniciar() error {
 	c.usuarios = usuarios
 	c.obtener = service.NewObtenerProyecto(proyectos)
 	c.editar = service.NewEditarProyecto(proyectos)
-	c.asignar = service.NewAsignarIntegrante(proyectos, usuarios)
+	c.asignar = service.NewAsignarIntegrante(proyectos, repository.NewSQLiteCredencialRepository(db))
 	c.proyecto = domain.Project{}
 	c.err = nil
 	return nil
@@ -159,10 +159,22 @@ func (c *proyectoContext) existeProyectoCreado() error {
 
 func (c *proyectoContext) enConfiguracion() error { return nil }
 
+// tieneCuentaRegistrada registra a la persona con el mismo servicio que atiende
+// POST /auth/registro (HU-21: el equipo se arma solo con usuarios registrados).
+func (c *proyectoContext) tieneCuentaRegistrada(nombre string) error {
+	registrar := service.NewRegistrarUsuario(
+		repository.NewSQLiteCredencialRepository(c.db),
+		service.NewServicioContrasenas(iteracionesDePruebaAutenticacion),
+		service.NewEmisorSesiones(repository.NewSQLiteSesionRepository(c.db), time.Now),
+	)
+	_, err := registrar.Ejecutar(context.Background(), nombre, contrasenaDeEscenario)
+	return err
+}
+
 func (c *proyectoContext) asignarProductBuilder() error {
 	_, c.err = c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
-		Nombre:     "Jimena Martinez",
+		Nombre:     "jimena.martinez",
 		Rol:        domain.RolProductBuilder,
 		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
@@ -201,7 +213,7 @@ func (c *proyectoContext) asignarInvalido() error {
 	})
 	_, errRol := c.asignar.Ejecutar(context.Background(), service.AsignarIntegranteInput{
 		ProyectoID: c.proyecto.ID,
-		Nombre:     "Jimena Martinez",
+		Nombre:     "jimena.martinez",
 		Rol:        domain.Role("Product Owner"),
 		ActorID:    scrumMasterDelProyecto(c.db, c.proyecto.ID),
 	})
@@ -362,6 +374,7 @@ func InitializeScenarioProyecto(ctx *godog.ScenarioContext, sesion *sesionDeEsce
 	ctx.Step(`^no genera el proyecto$`, pc.noGeneraProyecto)
 	ctx.Step(`^que existe un proyecto creado$`, pc.existeProyectoCreado)
 	ctx.Step(`^estoy en la vista de configuración del proyecto$`, pc.enConfiguracion)
+	ctx.Step(`^"([^"]*)" tiene una cuenta registrada$`, pc.tieneCuentaRegistrada)
 	ctx.Step(`^ingreso el nombre de un integrante, selecciono su rol "Product Builder" y confirmo$`, pc.asignarProductBuilder)
 	ctx.Step(`^el sistema vincula al integrante con el proyecto$`, pc.vinculaIntegrante)
 	ctx.Step(`^le habilita los permisos correspondientes a su rol$`, pc.habilitaPermisos)

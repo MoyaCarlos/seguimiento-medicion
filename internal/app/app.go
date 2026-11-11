@@ -28,6 +28,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 	backlogRepo := repository.NewSQLiteBacklogRepository(db)
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	usuarios := repository.NewSQLiteUserRepository(db)
+	credenciales := repository.NewSQLiteCredencialRepository(db)
 	sprintRepo := repository.NewSQLiteSprintRepository(db)
 
 	backlogHandler := apihttp.NewBacklogHandler(
@@ -44,7 +45,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		obtenerProyecto,
 		service.NewListarProyectos(proyectos),
 		service.NewEditarProyecto(proyectos),
-		service.NewAsignarIntegrante(proyectos, usuarios),
+		service.NewAsignarIntegrante(proyectos, credenciales),
 		service.NewListarIntegrantes(proyectos),
 		service.NewObtenerEstadoProyecto(proyectos, sprintRepo),
 	)
@@ -86,7 +87,6 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 	)
 
 	metricasRepo := repository.NewSQLiteMetricasRepository(db)
-	credenciales := repository.NewSQLiteCredencialRepository(db)
 	sesionesRepo := repository.NewSQLiteSesionRepository(db)
 	emisorSesiones := service.NewEmisorSesiones(sesionesRepo, op.Ahora)
 	obtenerSesion := service.NewObtenerSesion(sesionesRepo, op.Ahora)
@@ -121,6 +121,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		Reporte:   reporteHandler,
 		Avance:    apihttp.NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, backlogRepo, sprintRepo)),
 		Demo:      apihttp.NewDemoHandler(op.DemoHabilitado, demo.NewCargador(db, op.Ahora, op.Contrasenas)),
+		Usuarios:  apihttp.NewUsuariosHandler(service.NewListarUsuarios(usuarios)),
 	}, apihttp.ConSesion(obtenerSesion))
 	return mux
 }

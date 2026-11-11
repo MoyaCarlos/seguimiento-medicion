@@ -22,6 +22,10 @@ var ErrScrumMasterYaExiste = errors.New("el proyecto ya tiene un Scrum Master")
 // ErrNoEncontrado indica que la entidad solicitada no existe.
 var ErrNoEncontrado = errors.New("registro no encontrado")
 
+// ErrUsuarioNoEncontrado indica que la persona que se quiso sumar al equipo no
+// existe o no tiene cuenta (HU-21).
+var ErrUsuarioNoEncontrado = errors.New("usuario no encontrado")
+
 // ErrProyectoNoEncontrado indica que el proyecto solicitado no existe.
 var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 

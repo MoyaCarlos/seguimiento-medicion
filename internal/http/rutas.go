@@ -43,6 +43,7 @@ type Handlers struct {
 	Reporte   *ReporteHandler
 	Avance    *AvanceHandler
 	Demo      *DemoHandler
+	Usuarios  *UsuariosHandler
 }
 
 // Rutas devuelve la tabla completa de rutas de la API con su nivel.
@@ -56,6 +57,8 @@ func Rutas(h Handlers) []Ruta {
 		{"GET /demo/estado", Publica, h.Demo.soloSiHabilitado(h.Demo.Estado)},
 		{"POST /demo/datos", Publica, h.Demo.soloSiHabilitado(h.Demo.Cargar)},
 		{"/demo/", Publica, nethttp.NotFound},
+
+		{"GET /users", SoloSesion, h.Usuarios.Listar},
 
 		{"GET /projects", Lectura, h.Proyectos.Listar},
 		{"POST /projects", SoloSesion, h.Proyectos.Crear},
