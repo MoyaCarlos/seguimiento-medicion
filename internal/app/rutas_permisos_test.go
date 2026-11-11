@@ -122,6 +122,10 @@ func pedidoDe(patron string) (string, string) {
 	return metodo, ruta
 }
 
+// respuestaSinSesion es el cuerpo del 401 de sesión (HU-20); un 401 con otro
+// cuerpo, como el de credenciales incorrectas en /auth/ingreso, no es de sesión.
+const respuestaSinSesion = "{\"mensaje\":\"Tu sesión no es válida\"}\n"
+
 func TestRutas_LasProtegidasResponden401SinSesionYLasPublicasNo(t *testing.T) {
 	mux := apiDePrueba(t)
 	for patron, nivel := range nivelesDeLaSpec {
@@ -130,11 +134,12 @@ func TestRutas_LasProtegidasResponden401SinSesionYLasPublicasNo(t *testing.T) {
 			rec := httptest.NewRecorder()
 			mux.ServeHTTP(rec, httptest.NewRequest(metodo, ruta, strings.NewReader("{}")))
 
-			if nivel == apihttp.Publica && rec.Code == http.StatusUnauthorized {
-				t.Errorf("%s %s es pública y respondió 401", metodo, ruta)
+			rechazoDeSesion := rec.Code == http.StatusUnauthorized && rec.Body.String() == respuestaSinSesion
+			if nivel == apihttp.Publica && rechazoDeSesion {
+				t.Errorf("%s %s es pública y la rechazó la capa de sesión", metodo, ruta)
 			}
-			if nivel != apihttp.Publica && rec.Code != http.StatusUnauthorized {
-				t.Errorf("%s %s sin sesión respondió %d, se esperaba 401", metodo, ruta, rec.Code)
+			if nivel != apihttp.Publica && !rechazoDeSesion {
+				t.Errorf("%s %s sin sesión respondió %d %q, se esperaba 401 %q", metodo, ruta, rec.Code, rec.Body.String(), respuestaSinSesion)
 			}
 		})
 	}
