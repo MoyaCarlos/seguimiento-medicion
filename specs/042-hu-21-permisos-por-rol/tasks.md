@@ -97,25 +97,25 @@ sesión; `usuario_id`, `integrante_id` y `creador` se ignoran.
 
 ### Crear proyecto
 
-- [ ] T017 [P] [US1] RED: en internal/service/crear_proyecto_test.go, `CrearProyectoInput` recibe `CreadorID int64` (no `Creador string`): el proyecto queda con ese usuario como único Scrum Master y **no se crea ningún usuario**; `CreadorID <= 0` → error (no se persiste nada). En internal/http/project_handler_test.go: `POST /projects` con sesión de ana y cuerpo `{"nombre":"P","creador":"bruno"}` → 201, el Scrum Master es ana y la respuesta trae `"rol":"scrum_master"` — confirmar que FALLA
-- [ ] T018 [US1] COMMIT `RED: el creador del proyecto sale de la sesión (falla)`
-- [ ] T019 [US1] GREEN: internal/service/crear_proyecto.go usa `CreadorID` y `GuardarConScrumMaster`; quitar `Creador` de `crearProyectoRequest` en internal/http/project_dto.go; `ProjectHandler.Crear` pasa `usuarioDeSesion(r).ID` y agrega `rol` a la respuesta; ajustar features/steps_proyecto.go, steps_creacion.go y los demás steps que crean proyectos con `creador` (usar `actor()`), y features/creacion_proyecto_equipo.feature — `go test ./...` en verde
-- [ ] T020 [US1] COMMIT `GREEN: el creador del proyecto sale de la sesión, test en verde`
+- [X] T017 [P] [US1] RED: en internal/service/crear_proyecto_test.go, `CrearProyectoInput` recibe `CreadorID int64` (no `Creador string`): el proyecto queda con ese usuario como único Scrum Master y **no se crea ningún usuario**; `CreadorID <= 0` → error (no se persiste nada). En internal/http/project_handler_test.go: `POST /projects` con sesión de ana y cuerpo `{"nombre":"P","creador":"bruno"}` → 201, el Scrum Master es ana y la respuesta trae `"rol":"scrum_master"` — confirmar que FALLA
+- [X] T018 [US1] COMMIT `RED: el creador del proyecto sale de la sesión (falla)`
+- [X] T019 [US1] GREEN: internal/service/crear_proyecto.go usa `CreadorID` y `GuardarConScrumMaster`; quitar `Creador` de `crearProyectoRequest` en internal/http/project_dto.go; `ProjectHandler.Crear` pasa `usuarioDeSesion(r).ID` y agrega `rol` a la respuesta; ajustar features/steps_proyecto.go, steps_creacion.go y los demás steps que crean proyectos con `creador` (usar `actor()`), y features/creacion_proyecto_equipo.feature — `go test ./...` en verde
+- [X] T020 [US1] COMMIT `GREEN: el creador del proyecto sale de la sesión, test en verde`
 
 ### Votación
 
-- [ ] T021 [P] [US1] RED: en internal/http/votacion_handler_test.go: `POST /backlog/{id}/votacion/votos` con cuerpo `{"valor":5,"usuario_id":<otro>}` registra el voto **a nombre de la sesión**; un cuerpo sin `usuario_id` ya no da 400 «el usuario es obligatorio»; `GET /backlog/{id}/votacion?usuario_id=<otro>` devuelve «mi voto» de la sesión y nunca el voto oculto del otro; iniciar/revelar/rondas/estimación usan la sesión como actor — confirmar que FALLA
-- [ ] T022 [US1] COMMIT `RED: la votación toma la identidad de la sesión (falla)`
-- [ ] T023 [US1] GREEN: quitar `UsuarioID` de los requests de internal/http/votacion_dto.go, eliminar `leerPedido` y la lectura de la query `usuario_id` en internal/http/votacion_handler.go; pasar `usuarioDeSesion(r).ID` a `Votar`, `ConsultarVotacion`, `IniciarVotacion`, `RevelarVotacion`, `AbrirNuevaRonda`, `RegistrarEstimacion`. Ajustar features/steps_votacion.go, steps_consenso.go, votacion_planning_poker.feature y consenso_estimacion.feature (quién actúa = sesión) — `go test ./...` en verde
-- [ ] T024 [US1] COMMIT `GREEN: la votación toma la identidad de la sesión, test en verde`
+- [X] T021 [P] [US1] RED: en internal/http/votacion_handler_test.go: `POST /backlog/{id}/votacion/votos` con cuerpo `{"valor":5,"usuario_id":<otro>}` registra el voto **a nombre de la sesión**; un cuerpo sin `usuario_id` ya no da 400 «el usuario es obligatorio»; `GET /backlog/{id}/votacion?usuario_id=<otro>` devuelve «mi voto» de la sesión y nunca el voto oculto del otro; iniciar/revelar/rondas/estimación usan la sesión como actor — confirmar que FALLA
+- [X] T022 [US1] COMMIT `RED: la votación toma la identidad de la sesión (falla)`
+- [X] T023 [US1] GREEN: quitar `UsuarioID` de los requests de internal/http/votacion_dto.go, eliminar `leerPedido` y la lectura de la query `usuario_id` en internal/http/votacion_handler.go; pasar `usuarioDeSesion(r).ID` a `Votar`, `ConsultarVotacion`, `IniciarVotacion`, `RevelarVotacion`, `AbrirNuevaRonda`, `RegistrarEstimacion`. Ajustar features/steps_votacion.go, steps_consenso.go, votacion_planning_poker.feature y consenso_estimacion.feature (quién actúa = sesión) — `go test ./...` en verde
+- [X] T024 [US1] COMMIT `GREEN: la votación toma la identidad de la sesión, test en verde`
 
 ### Horas
 
-- [ ] T025 [P] [US1] RED: en internal/service/imputar_horas_test.go el input trae el `UsuarioID` de quien actúa (renombrar el campo si hoy es `IntegranteID`) y en internal/http/horas_handler_test.go `POST /backlog/{id}/horas` con `{"horas":2,"integrante_id":<otro>,...}` registra las horas a nombre de la sesión — confirmar que FALLA
-- [ ] T026 [US1] COMMIT `RED: las horas quedan a nombre de la sesión (falla)`
-- [ ] T027 [US1] GREEN: quitar `IntegranteID` del request en internal/http/horas_dto.go (se conserva en la respuesta si ya existe); `HorasHandler.Imputar` pasa `usuarioDeSesion(r).ID`; ajustar features/steps_horas.go e imputacion_horas.feature — `go test ./...` en verde
-- [ ] T028 [US1] COMMIT `GREEN: las horas quedan a nombre de la sesión, test en verde`
-- [ ] T029 [US1] (solo si hay algo que limpiar) REFACTOR: eliminar `resolverUsuario` de internal/service/usuarios.go si quedó sin uso (se termina de quitar en US6) + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T025 [P] [US1] RED: (el servicio ya recibía a quien carga como dato aparte; no se renombra `IntegranteID`) en internal/http/horas_handler_test.go `POST /backlog/{id}/horas` con `{"horas":2,"integrante_id":<otro>,...}` registra las horas a nombre de la sesión — confirmar que FALLA
+- [X] T026 [US1] COMMIT `RED: las horas quedan a nombre de la sesión (falla)`
+- [X] T027 [US1] GREEN: quitar `IntegranteID` del request en internal/http/horas_dto.go (se conserva en la respuesta si ya existe); `HorasHandler.Imputar` pasa `usuarioDeSesion(r).ID`; ajustar features/steps_horas.go e imputacion_horas.feature — `go test ./...` en verde
+- [X] T028 [US1] COMMIT `GREEN: las horas quedan a nombre de la sesión, test en verde`
+- [X] T029 [US1] REFACTOR: no hubo nada que limpiar — `resolverUsuario` sigue en uso por `AsignarIntegrante` y se quita en US6 (T054); no se commitea un REFACTOR vacío
 
 **Checkpoint**: escenario 7 cumplido en la API.
 
@@ -248,7 +248,7 @@ El texto de la feature se redacta en el paso BDD del flujo (después de `/specki
 
 - [ ] T081 Actualizar MODELO-DE-DATOS.md **solo texto, sin esquema**: §4.2 (`contrasena_hash` `NULL` = usuario previo; desde HU-21 ninguna ruta crea usuarios sin contraseña) y §8 (fila «HU-21 Permisos por rol | lee `integrantes`, `usuarios`, `sesiones` | — | sin migración»)
 - [ ] T082 Agregar en docs/PRODUCT-BACKLOG.md una nota en las secciones de HU-02, HU-07 y HU-14 (en «Notas», con el mismo estilo de la nota que ya tiene HU-07 sobre su escenario 1): desde HU-21, un no integrante recibe 403 «No sos integrante de este proyecto» antes que el error de rol, y en las horas el rechazo pasa de 400 sobre `integrante_id` a ese 403 (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications)
-- [ ] T083 Declarar el **límite conocido** (con sesión, un no integrante puede leer historias, Sprints, horas, defectos, métricas, historial y reportes de un proyecto) y que el traspaso del Scrum Master queda fuera de alcance, en README.md o en la documentación de la API que corresponda; actualizar los `curl` de docs/ que manden `usuario_id`, `integrante_id` o `creador`
+- [ ] T083 Declarar el **límite conocido** (con sesión, un no integrante puede leer historias, Sprints, horas, defectos, métricas, historial y reportes de un proyecto) y que el traspaso del Scrum Master queda fuera de alcance, en README.md o en la documentación de la API que corresponda; actualizar los `curl` de docs/ que manden `usuario_id`, `integrante_id` o `creador`; actualizar el paso 8 de specs/036-hu-10-reporte-pdf/quickstart.md (descargar el PDF navegando directo a la URL ya no funciona sin token: la descarga necesita la sesión) y dejar anotado en el issue #78 (frontend del PDF) que la descarga se hace con el cliente de la API (`fetch` + blob con `Authorization`), no con un enlace común
 - [ ] T084 COMMIT `docs: permisos por rol en el modelo de datos, el backlog y el límite conocido de lectura (Refs #234)`
 - [ ] T085 `gofmt -l .` vacío, `go build ./...`, `go vet ./...`, `go test ./...`; `cd web && npm run lint && npm test && npm run build` — todo en verde
 - [ ] T086 Recorrer [quickstart.md](quickstart.md) a mano (curl e interfaz) y anotar el resultado en el PR
