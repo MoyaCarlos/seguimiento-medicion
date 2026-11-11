@@ -81,17 +81,6 @@ func (r *ProjectRepositoryEnMemoria) ObtenerPorID(_ context.Context, id int64) (
 	return p, nil
 }
 
-func (r *ProjectRepositoryEnMemoria) Listar(_ context.Context) ([]domain.Project, error) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	proyectos := make([]domain.Project, 0, len(r.proyectos))
-	for _, p := range r.proyectos {
-		proyectos = append(proyectos, p)
-	}
-	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
-	return proyectos, nil
-}
-
 func (r *ProjectRepositoryEnMemoria) ListarPorIntegrante(_ context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()

@@ -65,18 +65,6 @@ func (s *stubProjectRepository) ObtenerPorID(_ context.Context, id int64) (domai
 	return p, nil
 }
 
-func (s *stubProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
-	if s.err != nil {
-		return nil, s.err
-	}
-	proyectos := make([]domain.Project, 0, len(s.proyectos))
-	for _, p := range s.proyectos {
-		proyectos = append(proyectos, p)
-	}
-	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
-	return proyectos, nil
-}
-
 func (s *stubProjectRepository) ListarPorIntegrante(_ context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	if s.err != nil {
 		return nil, s.err

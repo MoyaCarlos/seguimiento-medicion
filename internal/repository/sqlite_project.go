@@ -91,29 +91,6 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 	return escanearProyecto(row)
 }
 
-// Listar devuelve todos los proyectos ordenados por id.
-func (r *SQLiteProjectRepository) Listar(ctx context.Context) ([]domain.Project, error) {
-	filas, err := r.db.QueryContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos ORDER BY id`)
-	if err != nil {
-		return nil, fmt.Errorf("listar proyectos: %w", err)
-	}
-	defer filas.Close()
-
-	proyectos := make([]domain.Project, 0)
-	for filas.Next() {
-		p, err := escanearProyecto(filas)
-		if err != nil {
-			return nil, err
-		}
-		proyectos = append(proyectos, p)
-	}
-	if err := filas.Err(); err != nil {
-		return nil, fmt.Errorf("listar proyectos: %w", err)
-	}
-	return proyectos, nil
-}
-
 // ListarPorIntegrante devuelve los proyectos que integra usuarioID con el rol
 // de su fila en integrantes, ordenados por id.
 func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
