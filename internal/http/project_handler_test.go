@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"sort"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -151,6 +152,24 @@ func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.U
 	return u, nil
 }
 
+// credencialesDePrueba tiene con cuenta a la persona de la sesión, a Jimena y a
+// Carlos; «Sin Cuenta» existe sin contraseña (HU-21: el equipo se arma solo
+// con usuarios registrados).
+func credencialesDePrueba() *credencialesEnMemoriaHTTP {
+	c := &credencialesEnMemoriaHTTP{usuarios: map[string]domain.User{}, hashes: map[string]string{}}
+	for _, u := range []domain.User{
+		anaDePrueba,
+		{ID: 20, Nombre: "Jimena", NombreNormalizado: "jimena"},
+		{ID: 21, Nombre: "Carlos", NombreNormalizado: "carlos"},
+		{ID: 22, Nombre: "Sin Cuenta", NombreNormalizado: "sin cuenta"},
+	} {
+		c.usuarios[u.NombreNormalizado] = u
+		c.hashes[u.NombreNormalizado] = "hash"
+	}
+	c.hashes["sin cuenta"] = ""
+	return c
+}
+
 func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
 	handler, proyectos, _ := nuevoProjectHandlerDePruebaConSprints()
 	return handler, proyectos
@@ -158,8 +177,7 @@ func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
 
 func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepository, *repository.SprintRepositoryEnMemoria) {
 	proyectos := &stubProjectRepository{}
-	// La persona de la sesión ya tiene cuenta: es quien crea los proyectos.
-	usuarios := &stubUserRepository{usuarios: map[string]domain.User{anaDePrueba.NombreNormalizado: anaDePrueba}}
+	usuarios := credencialesDePrueba()
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	crear := service.NewCrearProyecto(proyectos)
 	obtener := service.NewObtenerProyecto(proyectos)
@@ -709,5 +727,39 @@ func TestProjectHandler_AsignarIntegrante_ProductBuilderConScrumMasterEs201(t *t
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+}
+
+// HU-21, escenario 8: sin rol, el usuario registrado entra como Product Builder.
+func TestProjectHandler_AsignarIntegrante_SinRolEntraComoProductBuilder(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	idStr := strconv.FormatInt(crearProyectoViaHTTP(t, handler, "Proyecto"), 10)
+
+	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Carlos"}`)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp integranteResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Nombre != "Carlos" || resp.Rol != "product_builder" {
+		t.Errorf("integrante inesperado: %+v", resp)
+	}
+}
+
+// HU-21, escenario 8: quien no existe o no tiene cuenta da 404 «usuario no encontrado».
+func TestProjectHandler_AsignarIntegrante_UsuarioNoRegistradoEs404(t *testing.T) {
+	for _, nombre := range []string{"Nadie", "Sin Cuenta"} {
+		handler, proyectos := nuevoProjectHandlerDePrueba()
+		idStr := strconv.FormatInt(crearProyectoViaHTTP(t, handler, "Proyecto"), 10)
+
+		rec := asignarViaHTTP(handler, idStr, `{"nombre":"`+nombre+`","rol":"product_builder"}`)
+
+		if body := strings.TrimSpace(rec.Body.String()); rec.Code != http.StatusNotFound || body != `{"mensaje":"usuario no encontrado"}` {
+			t.Errorf("%s: se esperaba 404 «usuario no encontrado», se obtuvo %d %s", nombre, rec.Code, body)
+		}
+		if len(proyectos.miembros) != 1 {
+			t.Errorf("%s: no se debía agregar integrante", nombre)
+		}
 	}
 }

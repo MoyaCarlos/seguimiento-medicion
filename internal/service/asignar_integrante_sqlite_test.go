@@ -22,8 +22,8 @@ func TestAsignarIntegrante_SQLiteReal_ScrumMasterQueYaEsScrumMasterEsDuplicado(t
 		t.Fatalf("no se pudieron aplicar las migraciones: %v", err)
 	}
 	proyectos := repository.NewSQLiteProjectRepository(db)
-	usuarios := repository.NewSQLiteUserRepository(db)
-	ana, err := usuarios.Guardar(ctx, domain.User{Nombre: "Ana", NombreNormalizado: "ana"})
+	usuarios := repository.NewSQLiteCredencialRepository(db)
+	ana, err := usuarios.Registrar(ctx, domain.User{Nombre: "Ana", NombreNormalizado: "ana"}, "hash")
 	if err != nil {
 		t.Fatalf("no se pudo preparar a Ana: %v", err)
 	}

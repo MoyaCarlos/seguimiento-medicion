@@ -124,7 +124,7 @@ func TestGestion_ConfigurarEquipo(t *testing.T) {
 	for _, c := range rechazosDeGestion {
 		t.Run(c.nombre, func(t *testing.T) {
 			proyectos := proyectoConEquipoGuardado()
-			usuarios := &fakeUserRepository{}
+			usuarios := &fakeCredenciales{}
 
 			_, err := NewAsignarIntegrante(proyectos, usuarios).Ejecutar(context.Background(), AsignarIntegranteInput{
 				ProyectoID: proyectoPermisos, Nombre: "Nueva", Rol: "rol-invalido", ActorID: c.usuarioID,
@@ -132,7 +132,7 @@ func TestGestion_ConfigurarEquipo(t *testing.T) {
 			if !errors.Is(err, c.esperado) {
 				t.Fatalf("se esperaba %v, se obtuvo %v", c.esperado, err)
 			}
-			if len(proyectos.miembros) != 2 || usuarios.creates != 0 {
+			if len(proyectos.miembros) != 2 || len(usuarios.usuarios) != 0 {
 				t.Error("no se debía agregar a nadie ni crear usuarios")
 			}
 		})
