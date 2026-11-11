@@ -427,6 +427,19 @@ describe('casos límite del listado y la edición', () => {
     expect(await screen.findByText('Historia actualizada')).toBeTruthy()
     expect(fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))).toHaveLength(2)
   })
+
+  it('Defensa: dos envíos seguidos del formulario de edición llaman a la API una sola vez', async () => {
+    const fetchSimulado = simularApi(conHistorias(MUST), () => new Promise<Response>(() => {}))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+
+    const formulario = screen.getByRole('form', { name: `Editar ${MUST.titulo}` })
+    fireEvent.submit(formulario)
+    fireEvent.submit(formulario)
+
+    expect(fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))).toHaveLength(1)
+  })
 })
 
 const SPRINTS = [
@@ -577,5 +590,64 @@ describe('acceso a la votación de Planning Poker (HU-02, US4.1)', () => {
     const enlaceShould = within(articuloDe(SHOULD.titulo)).getByRole('link', { name: 'Votar' })
     expect(enlaceMust.getAttribute('href')).toBe('/projects/42/votacion/3')
     expect(enlaceShould.getAttribute('href')).toBe('/projects/42/votacion/1')
+  })
+})
+
+function diferida() {
+  let resolver!: (valor: Response) => void
+  const promesa = new Promise<Response>((resolve) => {
+    resolver = resolve
+  })
+  return { promesa, resolver }
+}
+
+describe('respuesta tardía de una carga vieja al cambiar de proyecto', () => {
+  it('Defensa: si el proyecto 1 responde después de abrir el proyecto 2, se siguen viendo solo las historias del 2', async () => {
+    const proyecto1 = diferida()
+    simularApi((proyecto) =>
+      proyecto === '1' ? proyecto1.promesa : respuesta(200, [SHOULD]),
+    )
+    const router = abrir('/projects/1/backlog')
+
+    await act(() => router.navigate('/projects/2/backlog'))
+    expect(await screen.findByRole('heading', { name: SHOULD.titulo })).toBeTruthy()
+
+    await act(async () => {
+      proyecto1.resolver(respuesta(200, [MUST]))
+      await proyecto1.promesa
+    })
+
+    expect(screen.queryByRole('heading', { name: MUST.titulo })).toBeNull()
+    expect(
+      articulos().map((articulo) => within(articulo).getByRole('heading', { level: 2 }).textContent),
+    ).toEqual([SHOULD.titulo])
+  })
+
+  it('Defensa: si los Sprints del proyecto 1 responden después de abrir el proyecto 2, el control ofrece solo los del 2', async () => {
+    const sprintsProyecto1 = diferida()
+    simularApi(
+      conHistorias(MUST),
+      undefined,
+      (proyecto) =>
+        proyecto === '1'
+          ? sprintsProyecto1.promesa
+          : respuesta(200, [{ id: 22, numero: 2, estado: 'Pendiente' }]),
+    )
+    const router = abrir('/projects/1/backlog')
+
+    await act(() => router.navigate('/projects/2/backlog'))
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await act(async () => {
+      sprintsProyecto1.resolver(respuesta(200, [{ id: 11, numero: 1, estado: 'Activo' }]))
+      await sprintsProyecto1.promesa
+    })
+
+    await abrirAsignacion(MUST.titulo)
+
+    const opciones = within(await screen.findByLabelText('Sprint')).getAllByRole('option')
+    expect(opciones.map((opcion) => opcion.textContent)).toEqual([
+      'Elegí un Sprint',
+      'Sprint 2 (Pendiente)',
+    ])
   })
 })
