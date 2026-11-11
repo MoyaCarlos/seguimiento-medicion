@@ -7,6 +7,11 @@ Característica: Creación de Proyecto y Asignación de Equipo
   Quiero crear un proyecto y agregar a los integrantes con sus respectivos roles
   Para poder tener un espacio de trabajo organizado y estructurar las responsabilidades del equipo
 
+
+  # Desde HU-21 el proyecto lo crea la persona con sesión iniciada.
+  Antecedentes:
+    Dado que inicié sesión como "Ana Valentina"
+
   Escenario: Creación del entorno del proyecto
     Dado que me encuentro en la pantalla principal del sistema
     Cuando ingreso el nombre "Software Metrics & Estimation", una descripción y presiono "Crear"

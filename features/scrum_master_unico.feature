@@ -7,6 +7,11 @@ Característica: Un único Scrum Master por proyecto
   Quiero que cada proyecto tenga un único Scrum Master
   Para que las acciones exclusivas del rol nunca queden repartidas entre varias personas
 
+
+  # Desde HU-21 el proyecto lo crea la persona con sesión iniciada.
+  Antecedentes:
+    Dado que inicié sesión como "Ana Valentina"
+
   Escenario: El proyecto nace con un único Scrum Master
     Dado que me encuentro en la pantalla principal del sistema
     Cuando ingreso el nombre "Software Metrics & Estimation", una descripción y presiono "Crear"

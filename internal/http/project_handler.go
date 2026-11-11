@@ -80,13 +80,15 @@ func (h *ProjectHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 		Descripcion: req.Descripcion,
 		FechaInicio: inicio,
 		FechaFin:    fin,
-		Creador:     req.Creador,
+		CreadorID:   usuarioDeSesion(r).ID,
 	})
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusCreated, aProyectoResponse(proyecto))
+	respuesta := aProyectoResponse(proyecto)
+	respuesta.Rol = string(domain.RolScrumMaster)
+	escribirJSON(w, nethttp.StatusCreated, respuesta)
 }
 
 // Obtener atiende GET /projects/{id}.

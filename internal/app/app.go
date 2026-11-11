@@ -40,7 +40,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 	)
 	obtenerProyecto := service.NewObtenerProyecto(proyectos)
 	projectHandler := apihttp.NewProjectHandler(
-		service.NewCrearProyecto(proyectos, usuarios),
+		service.NewCrearProyecto(proyectos),
 		obtenerProyecto,
 		service.NewListarProyectos(proyectos),
 		service.NewEditarProyecto(proyectos),

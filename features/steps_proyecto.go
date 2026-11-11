@@ -20,6 +20,8 @@ type proyectoContext struct {
 	obtener  *service.ObtenerProyecto
 	editar   *service.EditarProyecto
 	asignar  *service.AsignarIntegrante
+	usuarios repository.UserRepository
+	sesion   *sesionDeEscenario
 	proyecto domain.Project
 	err      error
 }
@@ -36,7 +38,8 @@ func (c *proyectoContext) iniciar() error {
 
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	usuarios := repository.NewSQLiteUserRepository(db)
-	c.crear = service.NewCrearProyecto(proyectos, usuarios)
+	c.crear = service.NewCrearProyecto(proyectos)
+	c.usuarios = usuarios
 	c.obtener = service.NewObtenerProyecto(proyectos)
 	c.editar = service.NewEditarProyecto(proyectos)
 	c.asignar = service.NewAsignarIntegrante(proyectos, usuarios)
@@ -48,12 +51,34 @@ func (c *proyectoContext) iniciar() error {
 func (c *proyectoContext) enPantallaPrincipal() error { return nil }
 
 func (c *proyectoContext) crearProyectoValido(nombre string) error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	c.proyecto, c.err = c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
 		Nombre:      nombre,
 		Descripcion: "Sistema de estimación, seguimiento y medición",
-		Creador:     "Ana Valentina",
+		CreadorID:   creador,
 	})
 	return nil
+}
+
+// creadorDeLaSesion devuelve el id de quien inició sesión en el escenario
+// (HU-21), con su usuario en la base del contexto.
+func (c *proyectoContext) creadorDeLaSesion() (int64, error) {
+	nombre := c.sesion.actor()
+	if nombre == "" {
+		return 0, errors.New("el escenario no inició sesión: falta «Dado que inicié sesión como \"X\"»")
+	}
+	usuario, err := domain.NewUser(nombre)
+	if err != nil {
+		return 0, err
+	}
+	if existente, err := c.usuarios.ObtenerPorNombreNormalizado(context.Background(), usuario.NombreNormalizado); err == nil {
+		return existente.ID, nil
+	}
+	guardado, err := c.usuarios.Guardar(context.Background(), usuario)
+	return guardado.ID, err
 }
 
 func (c *proyectoContext) proyectoPersistido() error {
@@ -85,9 +110,13 @@ func (c *proyectoContext) habilitaPanel() error { return nil }
 func (c *proyectoContext) intentoCrearProyecto() error { return nil }
 
 func (c *proyectoContext) crearProyectoNombreVacio() error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	c.proyecto, c.err = c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
-		Nombre:  "   ",
-		Creador: "Ana",
+		Nombre:    "   ",
+		CreadorID: creador,
 	})
 	return nil
 }
@@ -112,10 +141,14 @@ func (c *proyectoContext) noGeneraProyecto() error {
 }
 
 func (c *proyectoContext) existeProyectoCreado() error {
+	creador, err := c.creadorDeLaSesion()
+	if err != nil {
+		return err
+	}
 	proyecto, err := c.crear.Ejecutar(context.Background(), service.CrearProyectoInput{
 		Nombre:      "Proyecto base",
 		Descripcion: "descripción base",
-		Creador:     "Scrum Master",
+		CreadorID:   creador,
 	})
 	if err != nil {
 		return err
@@ -294,8 +327,8 @@ func (c *proyectoContext) permaneceSinModificaciones() error {
 }
 
 // InitializeScenarioProyecto registra los pasos de los escenarios de HU-04.
-func InitializeScenarioProyecto(ctx *godog.ScenarioContext) *proyectoContext {
-	pc := &proyectoContext{}
+func InitializeScenarioProyecto(ctx *godog.ScenarioContext, sesion *sesionDeEscenario) *proyectoContext {
+	pc := &proyectoContext{sesion: sesion}
 
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		if pc.db != nil {
