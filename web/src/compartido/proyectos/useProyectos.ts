@@ -11,7 +11,8 @@ export type EstadoProyectos =
 const MENSAJE_NO_INTERPRETABLE = 'No se pudo interpretar la lista de proyectos'
 
 function mensajeDeError(error: unknown): string {
-  if (error instanceof ApiError || error instanceof ConnectionError) return error.message
+  if (error instanceof ApiError && error.status >= 300) return error.message
+  if (error instanceof ConnectionError) return error.message
   return MENSAJE_NO_INTERPRETABLE
 }
 

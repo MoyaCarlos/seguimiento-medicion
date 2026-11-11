@@ -66,6 +66,18 @@ describe('useProyectos', () => {
     })
   })
 
+  it('trata una respuesta 200 con HTML como lista no interpretable', async () => {
+    simularRespuesta('<!doctype html><html>index</html>')
+
+    const { result } = renderHook(() => useProyectos())
+
+    await waitFor(() => expect(result.current.estado).toBe('error'))
+    expect(result.current).toEqual({
+      estado: 'error',
+      mensaje: 'No se pudo interpretar la lista de proyectos',
+    })
+  })
+
   it('no falla si se desmonta antes de que responda la API', async () => {
     const consola = vi.spyOn(console, 'error').mockImplementation(() => {})
     let responder: (respuesta: Response) => void = () => {}
