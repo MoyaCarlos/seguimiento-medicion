@@ -5,4 +5,5 @@ export const navegacion = [
   { ruta: 'defectos', texto: 'Defectos' },
   { ruta: 'status', texto: 'Estado' },
   { ruta: 'dashboard', texto: 'Dashboard' },
+  { ruta: 'historial', texto: 'Historial de Sprints' },
 ]

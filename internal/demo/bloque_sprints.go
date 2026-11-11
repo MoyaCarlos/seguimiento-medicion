@@ -9,26 +9,28 @@ import (
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
 
-// bloqueSprints crea el Sprint 1 Finalizado, el 2 Activo y el 3 Pendiente. El
-// Pendiente no lleva Sprint Goal ni fechas: lo exige el CHECK de la tabla.
-func bloqueSprints(ctx context.Context, tx *sql.Tx, c *carga) error {
-	finalizado, err := sprintIniciado("Gestión inicial del trámite", c.dia(-14), c.dia(-8))
-	if err != nil {
-		return err
-	}
-	if err := finalizado.Cerrar(); err != nil {
-		return err
-	}
-	activo, err := sprintIniciado("Examen teórico y comprobantes", c.dia(-7), c.dia(6))
-	if err != nil {
-		return err
-	}
-	pendiente, err := domain.NewSprint(proyectoID)
-	if err != nil {
-		return err
-	}
+// sprintDemo define un Sprint con sus días relativos a hoy. El Pendiente no
+// lleva Sprint Goal ni fechas: lo exige el CHECK de la tabla.
+type sprintDemo struct {
+	goal         string
+	desde, hasta int
+	estado       domain.EstadoSprint
+}
 
-	for _, sprint := range []domain.Sprint{finalizado, activo, pendiente} {
+var sprintsDemo = []sprintDemo{
+	{"Alta del trámite y validación médica", -28, -15, domain.SprintFinalizado},
+	{"Turno y comprobante", -14, -8, domain.SprintFinalizado},
+	{"Examen teórico y reprogramación de turnos", -7, 6, domain.SprintActivo},
+	{estado: domain.SprintPendiente},
+}
+
+// bloqueSprints crea los dos Sprints Finalizados, el Activo y el Pendiente.
+func bloqueSprints(ctx context.Context, tx *sql.Tx, c *carga) error {
+	for _, definicion := range sprintsDemo {
+		sprint, err := armarSprint(c, definicion)
+		if err != nil {
+			return err
+		}
 		id, err := insertarSprint(ctx, tx, sprint)
 		if err != nil {
 			return err
@@ -37,6 +39,20 @@ func bloqueSprints(ctx context.Context, tx *sql.Tx, c *carga) error {
 		c.resumen.Sprints++
 	}
 	return nil
+}
+
+func armarSprint(c *carga, definicion sprintDemo) (domain.Sprint, error) {
+	if definicion.estado == domain.SprintPendiente {
+		return domain.NewSprint(proyectoID)
+	}
+	sprint, err := sprintIniciado(definicion.goal, c.dia(definicion.desde), c.dia(definicion.hasta))
+	if err != nil {
+		return domain.Sprint{}, err
+	}
+	if definicion.estado == domain.SprintFinalizado {
+		return sprint, sprint.Cerrar()
+	}
+	return sprint, nil
 }
 
 func sprintIniciado(goal string, inicio, fin time.Time) (domain.Sprint, error) {
