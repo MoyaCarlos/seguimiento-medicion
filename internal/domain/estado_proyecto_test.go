@@ -94,6 +94,20 @@ func TestCalcularEstadoProyecto_TablaDeDecision(t *testing.T) {
 	}
 }
 
+// #173: cerrar todos los Sprints no finaliza el proyecto si su fecha de fin
+// todavía no pasó (caso detectado en Render con fin 2027-10-01).
+func TestCalcularEstadoProyecto_FechaFinFuturaConSprintsFinalizados(t *testing.T) {
+	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2027, 10, 1, 0, 0, 0, 0, time.UTC)
+	proyecto := Project{FechaInicio: tiempoPtr(inicio), FechaFin: tiempoPtr(fin)}
+	sprints := []Sprint{{Estado: SprintFinalizado}, {Estado: SprintFinalizado}}
+	ahora := civilLocal(2026, 10, 30)
+
+	if got := CalcularEstadoProyecto(proyecto, sprints, ahora); got != ProyectoEnCurso {
+		t.Errorf("CalcularEstadoProyecto() = %q, se esperaba %q", got, ProyectoEnCurso)
+	}
+}
+
 func TestCalcularEstadoProyecto_BordesConHoraDelDia(t *testing.T) {
 	inicio := time.Date(2026, 10, 10, 0, 0, 0, 0, time.UTC)
 	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
