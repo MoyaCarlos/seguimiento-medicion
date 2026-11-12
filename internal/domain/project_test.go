@@ -184,3 +184,76 @@ func TestProject_ConHorasPorStoryPoint_Invalidas(t *testing.T) {
 		})
 	}
 }
+
+// Spec 044 (#300): reglas del cierre del proyecto.
+func TestProject_Cerrar(t *testing.T) {
+	ahora := time.Date(2026, 11, 11, 15, 30, 0, 0, time.Local)
+	hoy := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+	cierrePrevio := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	sprint := func(e EstadoSprint) Sprint { return Sprint{Estado: e} }
+
+	t.Run("abierto sin Sprints se cierra con el día civil de hoy", func(t *testing.T) {
+		abierto := Project{ID: 1, Nombre: "Tienda"}
+
+		cerrado, err := abierto.Cerrar(ahora, nil)
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if cerrado.FechaCierre == nil || !cerrado.FechaCierre.Equal(hoy) {
+			t.Errorf("se esperaba la fecha de cierre %v, se obtuvo %v", hoy, cerrado.FechaCierre)
+		}
+		if cerrado.ID != 1 || cerrado.Nombre != "Tienda" {
+			t.Errorf("cerrar no debe cambiar los demás datos: %+v", cerrado)
+		}
+		if abierto.FechaCierre != nil {
+			t.Error("cerrar debe devolver una copia y no modificar el proyecto original")
+		}
+	})
+
+	t.Run("abierto con Sprints pendientes y finalizados se cierra", func(t *testing.T) {
+		cerrado, err := Project{}.Cerrar(ahora, []Sprint{sprint(SprintFinalizado), sprint(SprintPendiente)})
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if cerrado.FechaCierre == nil {
+			t.Error("se esperaba el proyecto cerrado")
+		}
+	})
+
+	t.Run("con un Sprint activo se rechaza", func(t *testing.T) {
+		_, err := Project{}.Cerrar(ahora, []Sprint{sprint(SprintFinalizado), sprint(SprintActivo)})
+
+		if err != ErrSprintActivoAlCerrarProyecto {
+			t.Fatalf("se esperaba ErrSprintActivoAlCerrarProyecto, se obtuvo %v", err)
+		}
+		if err.Error() != "Cerrá el Sprint activo antes de cerrar el proyecto" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+	})
+
+	t.Run("ya cerrado se rechaza y conserva la fecha original", func(t *testing.T) {
+		yaCerrado := Project{FechaCierre: &cierrePrevio}
+
+		_, err := yaCerrado.Cerrar(ahora, nil)
+
+		if err != ErrProyectoYaCerrado {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+		if err.Error() != "El proyecto ya está cerrado" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+		if !yaCerrado.FechaCierre.Equal(cierrePrevio) {
+			t.Errorf("la fecha de cierre original no debe cambiar, se obtuvo %v", *yaCerrado.FechaCierre)
+		}
+	})
+
+	t.Run("ya cerrado con un Sprint activo informa primero que ya está cerrado", func(t *testing.T) {
+		_, err := Project{FechaCierre: &cierrePrevio}.Cerrar(ahora, []Sprint{sprint(SprintActivo)})
+
+		if err != ErrProyectoYaCerrado {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+	})
+}
