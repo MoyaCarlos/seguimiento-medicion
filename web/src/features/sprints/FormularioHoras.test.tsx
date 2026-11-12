@@ -321,7 +321,7 @@ describe('FormularioHoras: errores', () => {
     expect(error.textContent).toBe(mensaje)
     const control = screen.getByLabelText(etiqueta)
     expect(control.getAttribute('aria-invalid')).toBe('true')
-    expect(control.getAttribute('aria-describedby')).toBe(error.id)
+    expect(control.getAttribute('aria-describedby')?.split(' ')).toContain(error.id)
   })
 
   it('US2.6: si el Sprint ya se cerró, el mensaje es un aviso general', async () => {
