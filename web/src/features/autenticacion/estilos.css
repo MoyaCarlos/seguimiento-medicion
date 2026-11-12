@@ -355,3 +355,13 @@
     padding: 28px 20px 48px;
   }
 }
+
+.demo-exito {
+  background: #dcf5e4;
+  border-radius: 10px;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  padding: 10px 12px;
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
@@ -59,6 +59,14 @@ export function FormularioCredenciales({
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [rellenoAplicado, setRellenoAplicado] = useState(relleno)
+  const formulario = useRef<HTMLFormElement>(null)
+  const fallo = useRef(false)
+
+  useEffect(() => {
+    if (enviando || !fallo.current) return
+    fallo.current = false
+    formulario.current?.querySelector<HTMLButtonElement>('button[type="submit"]')?.focus()
+  }, [enviando])
 
   if (relleno !== rellenoAplicado) {
     setRellenoAplicado(relleno)
@@ -86,6 +94,7 @@ export function FormularioCredenciales({
       const campo = campoDeError(error)
       if (campo) setErrores({ [campo]: mensajeDeError(error) })
       else setErrorGeneral(mensajeDeError(error))
+      fallo.current = true
       setEnviando(false)
     }
   }
@@ -100,7 +109,7 @@ export function FormularioCredenciales({
       {aviso && <p className="auth-alerta auth-alerta--aviso" role="status">{aviso}</p>}
       {errorGeneral && <p className="auth-alerta" role="alert">{errorGeneral}</p>}
 
-      <form onSubmit={alEnviar} noValidate aria-label={titulo}>
+      <form ref={formulario} onSubmit={alEnviar} noValidate aria-label={titulo}>
         <Field
           name="nombre"
           label="Nombre de usuario"
