@@ -407,6 +407,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Una historia solo entra a Sprints de su proyecto | FK compuesta | — |
 | Horas y defectos referencian historia, Sprint e integrante del mismo proyecto | FK compuestas | — |
 | Fin posterior a inicio (proyecto y Sprint) | `CHECK` | `ValidationError` sobre `fecha_fin` |
+| Las fechas de un Sprint, al iniciarlo, caen dentro del plazo del proyecto (bordes incluidos; solo contra las fechas que el proyecto tenga) | — (cruza dos tablas: no entra en un `CHECK`) | Dominio (`Project.AdmiteSprint`), llamado desde `IniciarSprint`: `ValidationError` sobre `fecha_inicio` o `fecha_fin` (#168). Editar después las fechas del proyecto no revisa los Sprints existentes (#302) |
 | A lo sumo un Scrum Master por proyecto (D4) | Índice único parcial `integrantes_un_scrum_master` | Se chequea antes de insertar y responde `ErrScrumMasterYaExiste` (409); si la persona ya es integrante, prevalece el error de integrante duplicado; el índice cubre la carrera |
 | Un solo Sprint Activo y un solo Pendiente | Índices únicos parciales | Se chequea antes para devolver el mensaje; el índice cubre la carrera (ver la traducción del error, abajo) |
 | `En progreso`/`Completada` solo con Sprint | `CHECK` | Transiciones válidas (HU-11) |

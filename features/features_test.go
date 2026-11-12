@@ -33,6 +33,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioHistorial(ctx)                    // HU-12
 			InitializeScenarioAvance(ctx, sc)                   // HU-18
 			InitializeScenarioObtenerHistoria(ctx)              // Issue #222
+			InitializeScenarioSprintDentroDelProyecto(ctx, sc)  // #168
 		},
 		Options: &godog.Options{
 			Format:   "pretty",
