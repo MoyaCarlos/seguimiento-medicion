@@ -47,6 +47,8 @@ var nivelesDeLaSpec = map[string]apihttp.NivelRuta{
 	"POST /backlog/{id}/votacion/estimacion": apihttp.SesionScrumMaster,
 	"PUT /projects/{id}":                     apihttp.SesionScrumMaster,
 	"POST /projects/{id}/members":            apihttp.SesionScrumMaster,
+	"POST /projects/{id}/cerrar":             apihttp.SesionScrumMaster,
+	"POST /projects/{id}/reabrir":            apihttp.SesionScrumMaster,
 
 	"GET /projects":                           apihttp.Lectura,
 	"GET /projects/{id}":                      apihttp.Lectura,

@@ -31,12 +31,8 @@ func (s *Votar) Ejecutar(ctx context.Context, input VotarInput) (domain.RondaVot
 	if err != nil {
 		return domain.RondaVotacion{}, err
 	}
-	_, integra, err := rolEnProyecto(ctx, s.proyectos, historia.ProyectoID, input.UsuarioID)
-	if err != nil {
+	if err := exigirIntegrante(ctx, s.proyectos, historia.ProyectoID, input.UsuarioID); err != nil {
 		return domain.RondaVotacion{}, err
-	}
-	if !integra {
-		return domain.RondaVotacion{}, domain.ErrNoEsIntegrante
 	}
 
 	ronda, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)

@@ -229,8 +229,8 @@ func (c *permisosContext) intentoAgregarAlEquipo(persona, proyecto string) error
 	return c.agregarAlEquipo(persona, proyecto)
 }
 
-// estado es lo que el Scrum Master ve del proyecto «Tienda»: panel, Sprints,
-// equipo y votación de «Carrito».
+// estado es lo que el Scrum Master ve del proyecto «Tienda»: panel, backlog,
+// Sprints, equipo, y votación y horas de «Carrito».
 func (c *permisosContext) estado() (string, error) {
 	proyecto, err := c.proyecto("Tienda")
 	if err != nil {
@@ -243,9 +243,11 @@ func (c *permisosContext) estado() (string, error) {
 	var partes []string
 	for _, ruta := range []string{
 		fmt.Sprintf("/projects/%d", proyecto),
+		fmt.Sprintf("/projects/%d/backlog", proyecto),
 		fmt.Sprintf("/projects/%d/sprints", proyecto),
 		fmt.Sprintf("/projects/%d/members", proyecto),
 		fmt.Sprintf("/backlog/%d/votacion", historia),
+		fmt.Sprintf("/backlog/%d/horas", historia),
 	} {
 		rec, err := c.sesion.peticionDe(c.scrumMasterDe(), http.MethodGet, ruta, nil)
 		if err != nil {
@@ -555,8 +557,9 @@ func (c *permisosContext) noVeElVotoOculto(quien, persona string) error {
 	return nil
 }
 
-// InitializeScenarioPermisos registra los pasos de permisos_por_rol.feature (HU-21).
-func InitializeScenarioPermisos(ctx *godog.ScenarioContext, sesion *sesionDeEscenario) {
+// InitializeScenarioPermisos registra los pasos de permisos_por_rol.feature
+// (HU-21) y devuelve su contexto para los escenarios que reutilizan sus pasos.
+func InitializeScenarioPermisos(ctx *godog.ScenarioContext, sesion *sesionDeEscenario) *permisosContext {
 	c := &permisosContext{sesion: sesion}
 	ctx.Before(func(goctx context.Context, _ *godog.Scenario) (context.Context, error) {
 		c.reiniciar()
@@ -601,4 +604,5 @@ func InitializeScenarioPermisos(ctx *godog.ScenarioContext, sesion *sesionDeEsce
 	ctx.Step(`^"([^"]*)" consulta la votación de "([^"]*)" indicando el usuario de "([^"]*)"$`, c.consultaIndicandoOtroUsuario)
 	ctx.Step(`^el voto de (\d+) queda a nombre de "([^"]*)"$`, c.votoANombreDe)
 	ctx.Step(`^"([^"]*)" no ve el voto oculto de "([^"]*)"$`, c.noVeElVotoOculto)
+	return c
 }
