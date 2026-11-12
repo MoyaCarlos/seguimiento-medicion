@@ -258,8 +258,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8}) {
-		t.Errorf("se esperaban las versiones 1 a 8 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8, 9}) {
+		t.Errorf("se esperaban las versiones 1 a 9 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -311,8 +311,8 @@ func TestEsquema_MigracionDeAutenticacion_ConUsuariosPrevios(t *testing.T) {
 	if contrasenaHash.Valid {
 		t.Errorf("el usuario previo debe quedar sin contraseña (NULL), se obtuvo %q", contrasenaHash.String)
 	}
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8}) {
-		t.Errorf("se esperaban las versiones 1 a 8 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8, 9}) {
+		t.Errorf("se esperaban las versiones 1 a 9 registradas, se obtuvo %v", got)
 	}
 }
 
