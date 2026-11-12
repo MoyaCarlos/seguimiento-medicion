@@ -36,7 +36,8 @@ func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 		esperado  domain.EstadoProyecto
 	}{
 		{"sprint activo con fecha fin vencida => en curso", true, []domain.EstadoSprint{domain.SprintActivo}, despues, domain.ProyectoEnCurso},
-		{"sin activos y todos finalizados => finalizado", true, []domain.EstadoSprint{domain.SprintFinalizado, domain.SprintFinalizado}, enRango, domain.ProyectoFinalizado},
+		{"sin activos y todos finalizados con fecha de fin futura => en curso", true, []domain.EstadoSprint{domain.SprintFinalizado, domain.SprintFinalizado}, enRango, domain.ProyectoEnCurso},
+		{"sin activos y todos finalizados con fecha de fin vencida => finalizado", true, []domain.EstadoSprint{domain.SprintFinalizado, domain.SprintFinalizado}, despues, domain.ProyectoFinalizado},
 		{"sin sprints iniciados, ahora antes del inicio => planificado", true, nil, antes, domain.ProyectoPlanificado},
 		{"sin sprints iniciados, ahora igual al inicio (borde) => en curso", true, nil, inicioHoy, domain.ProyectoEnCurso},
 		{"sin sprints iniciados, ahora dentro del rango => en curso", true, nil, enRango, domain.ProyectoEnCurso},
@@ -170,9 +171,11 @@ func TestObtenerEstadoProyecto_RecalculaOnDemand(t *testing.T) {
 
 func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 	ctx := context.Background()
+	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	guardado, err := proyectos.Guardar(ctx, domain.Project{Nombre: "Proyecto"})
+	guardado, err := proyectos.Guardar(ctx, domain.Project{Nombre: "Proyecto", FechaInicio: &inicio, FechaFin: &fin})
 	if err != nil {
 		t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 	}
@@ -181,8 +184,9 @@ func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 		t.Fatalf("no se esperaba error al guardar el Sprint: %v", err)
 	}
 	servicio := NewObtenerEstadoProyecto(proyectos, sprints)
+	ahora := civilLocal(2026, 12, 1)
 
-	estado, err := servicio.Ejecutar(ctx, guardado.ID, time.Now())
+	estado, err := servicio.Ejecutar(ctx, guardado.ID, ahora)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -194,7 +198,7 @@ func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 	if err := sprints.Actualizar(ctx, sprint); err != nil {
 		t.Fatalf("no se esperaba error al finalizar el Sprint: %v", err)
 	}
-	estado, err = servicio.Ejecutar(ctx, guardado.ID, time.Now())
+	estado, err = servicio.Ejecutar(ctx, guardado.ID, ahora)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
