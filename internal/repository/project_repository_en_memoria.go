@@ -169,13 +169,24 @@ func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (dom
 	if _, ok := r.proyectos[m.ProjectID]; !ok {
 		return domain.Membership{}, domain.ErrProyectoNoEncontrado
 	}
-	for _, existente := range r.miembros {
+	dadoDeBaja := -1
+	for i, existente := range r.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
-			return domain.Membership{}, ErrMiembroDuplicado
+			if r.activo(existente) {
+				return domain.Membership{}, ErrMiembroDuplicado
+			}
+			dadoDeBaja = i
+			continue
 		}
-		if m.Role == domain.RolScrumMaster && existente.ProjectID == m.ProjectID && existente.Role == domain.RolScrumMaster {
+		if m.Role == domain.RolScrumMaster && existente.ProjectID == m.ProjectID && existente.Role == domain.RolScrumMaster && r.activo(existente) {
 			return domain.Membership{}, domain.ErrScrumMasterYaExiste
 		}
+	}
+	if dadoDeBaja >= 0 {
+		// Reactivación (HU-16): mismo vínculo, rol pedido y CreadoEn original.
+		delete(r.bajas, claveIntegrante{proyecto: m.ProjectID, usuario: m.UserID})
+		r.miembros[dadoDeBaja].Role = m.Role
+		return r.miembros[dadoDeBaja], nil
 	}
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()

@@ -223,27 +223,33 @@ func (r *SQLiteProjectRepository) motivoDeNoCerrar(ctx context.Context, id int64
 }
 
 // AgregarIntegrante vincula un integrante con un rol al proyecto y devuelve la
-// membresía guardada (con su CreadoEn asignado).
+// membresía guardada (con su CreadoEn). Si la persona fue dada de baja, la
+// reactiva en la misma fila con el rol pedido y conserva su CreadoEn original
+// (HU-16, D15); si ya es integrante activo, devuelve ErrMiembroDuplicado. El
+// upsert lo decide en una sola sentencia: sin fila devuelta, era un activo.
 func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error) {
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
 	}
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
+	var creadoEn string
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)
+		 ON CONFLICT (proyecto_id, usuario_id) DO UPDATE SET fecha_baja = NULL, rol = excluded.rol
+		 WHERE integrantes.fecha_baja IS NOT NULL
+		 RETURNING creado_en`,
 		m.ProjectID, m.UserID, string(m.Role), m.CreadoEn.Format(time.RFC3339),
-	)
+	).Scan(&creadoEn)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Membership{}, ErrMiembroDuplicado
+	}
 	if err != nil {
 		var sqliteErr *sqlite.Error
-		if errors.As(err, &sqliteErr) {
-			switch sqliteErr.Code() {
-			case sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
-				return domain.Membership{}, ErrMiembroDuplicado
-			case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
-				return domain.Membership{}, domain.ErrScrumMasterYaExiste
-			}
+		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+			return domain.Membership{}, domain.ErrScrumMasterYaExiste
 		}
 		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", errorDeEscritura(err))
 	}
+	m.CreadoEn = parsearTiempo(creadoEn)
 	return m, nil
 }
 
