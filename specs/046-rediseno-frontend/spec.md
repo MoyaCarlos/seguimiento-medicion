@@ -30,7 +30,7 @@ Proyectos (inicio), Panel del proyecto, Historias, Sprints, Votación, Editar pr
 
 - Lo que la API no entrega: estado, avance, Scrum Master y rol en las tarjetas de proyecto; barra de avance por fechas; prioridad de cada historia en Estado.
 - Lo que el prototipo marca como «Propuesta»: «Repetir contraseña», aviso de sesión no válida (401), permisos por rol, cerrar/reabrir y eliminar proyecto.
-- Decisiones del equipo (2026-11-11): sin ventana modal para crear proyecto, sin barra de pestañas inferior en celular, sin avisos flotantes, sin tarjeta «Equipo» en el Panel, sin menú de usuario desplegable.
+- Decisiones del equipo (2026-11-11 y 2026-11-12): las pantallas de acceso van a pantalla completa, sin cabecera; sin ventana modal para crear proyecto, sin barra de pestañas inferior en celular, sin avisos flotantes, sin tarjeta «Equipo» en el Panel, sin menú de usuario desplegable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -48,7 +48,7 @@ Como integrante de un proyecto quiero una barra lateral con las secciones y una 
 2. **Given** una sesión iniciada y una pantalla de un proyecto, **When** se muestra la barra superior, **Then** la «Ruta de navegación» muestra «Proyectos» como enlace al inicio y la sección actual, y el menú de usuario muestra el nombre y el botón «Cerrar sesión».
 3. **Given** una sesión iniciada en el inicio, **When** se muestra la barra lateral, **Then** no aparecen el selector ni las secciones del proyecto.
 4. **Given** una pantalla angosta, **When** la persona presiona «Abrir menú», **Then** la barra lateral se abre como cajón; **When** elige una sección, presiona Escape o presiona «Cerrar menú», **Then** el cajón se cierra.
-5. **Given** una persona sin sesión, **When** abre Ingresar o Registro, **Then** no ve la barra lateral y tiene a mano los enlaces «Ingresar» y «Registrarse».
+5. **Given** una persona sin sesión, **When** abre Ingresar o Registro, **Then** la pantalla ocupa todo el ancho, sin barra lateral ni cabecera, con el panel de presentación (con la marca) a la izquierda y el formulario a la derecha, y el formulario ofrece el enlace a la otra pantalla («Registrate» o «Ingresá»).
 
 ---
 
@@ -103,7 +103,7 @@ Reglas en formato EARS.
 - **FR-003** (Basado en estado): Mientras la ruta sea de un proyecto, la barra lateral debe mostrar el selector «Proyecto» (lista desplegable nativa con «nombre (#id)»), el enlace «Nuevo proyecto» y la navegación «Secciones del proyecto» con la sección actual marcada como página actual.
 - **FR-004** (Ubicuo): La barra superior debe mostrar una navegación «Ruta de navegación» y el menú de usuario con el nombre de la persona una sola vez y un único botón «Cerrar sesión» visible.
 - **FR-005** (Basado en evento): Cuando la persona presiona «Abrir menú» en una pantalla angosta, la aplicación debe abrir la barra lateral como cajón; cuando navega, presiona Escape o presiona «Cerrar menú», debe cerrarlo.
-- **FR-006** (Basado en estado): Mientras no haya sesión iniciada, la aplicación no debe mostrar la barra lateral y debe ofrecer los enlaces «Ingresar» y «Registrarse».
+- **FR-006** (Basado en estado): Mientras no haya sesión iniciada, la aplicación no debe mostrar la barra lateral ni la cabecera, y las pantallas de acceso deben ofrecer en el formulario el enlace a la otra pantalla («Registrate» o «Ingresá»).
 - **FR-007** (Ubicuo): El listado de proyectos se debe pedir una sola vez al montar una pantalla de proyecto y no al cambiar de sección.
 - **FR-008** (Basado en evento): Cuando la persona presiona «Mostrar contraseña», el campo debe mostrar el texto y el botón debe quedar con `aria-pressed` verdadero, sin cambiar su nombre accesible; al presionarlo de nuevo debe volver al estado inicial.
 - **FR-009** (Ubicuo): Las fechas visibles en las pantallas de la ola 1 se deben mostrar como dd/mm/aaaa.
@@ -129,7 +129,7 @@ Reglas en formato EARS.
 **No regresión**
 
 - **SC-006**: Todas las pruebas de componente existentes siguen en verde sin debilitarse. Solo se reemplazan dos, atadas al diseño anterior: la que exigía que las pestañas pasaran de línea a 600 px (ahora verifica que la barra lateral no ocupa ancho en pantallas angostas) y la espera por el texto «Ruta actual» (ahora espera otra señal del cambio de proyecto, con la misma aserción).
-- **SC-007**: Se conservan los roles y nombres accesibles: lista «Proyecto», navegación «Secciones del proyecto», botón «Cerrar sesión», enlaces «Ingresar», «Registrarse» y «Nuevo proyecto», y el título de cada pantalla.
+- **SC-007**: Se conservan los roles y nombres accesibles: lista «Proyecto», navegación «Secciones del proyecto», botón «Cerrar sesión», enlace «Nuevo proyecto», y el título de cada pantalla.
 - **SC-008**: Ningún PR de la ola 1 modifica archivos de las pantallas de la ola 2.
 
 ## Assumptions
