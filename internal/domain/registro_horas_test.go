@@ -234,6 +234,15 @@ func TestMinutosDesdeHoras_FormatoHmm(t *testing.T) {
 		{"-0:20", 0, errNumero},
 		{":30", 0, errNumero},
 		{"1:", 0, errNumero},
+		// Casos de borde.
+		{"24:60", 0, errMinutos},
+		{"00:30", 30, ""},
+		{"001:30", 90, ""},
+		{"99999999999999999999:00", 0, errTope},
+		{" 1:30", 0, errNumero},
+		{"1:30 ", 0, errNumero},
+		{"1:30\n", 0, errNumero},
+		{"０:２０", 0, errNumero}, // dígitos de ancho completo
 		// Los decimales de hoy siguen igual.
 		{"1.5", 90, ""},
 		{"0.05", 3, ""},
