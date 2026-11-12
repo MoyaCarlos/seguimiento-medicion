@@ -37,3 +37,8 @@ it('Given una etiqueta, When se estiliza, Then es un rectángulo chico (radio de
 it('Given la pantalla, When hay lugar, Then el formulario y el listado van en dos columnas de al menos 300px', () => {
   expect(regla('.defectos-columnas')).toMatch(/grid-template-columns:\s*repeat\(auto-fit, minmax\(300px, 1fr\)\)/)
 })
+
+it('Given una tarjeta angosta, When el formulario no cabe, Then los campos se encogen y no se salen de la tarjeta', () => {
+  expect(regla('.defectos-registro .field')).toMatch(/min-width:\s*0/)
+  expect(regla('.defectos-registro .field textarea,\n.defectos-registro .field select')).toMatch(/width:\s*100%/)
+})
