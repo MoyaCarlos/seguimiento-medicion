@@ -85,7 +85,7 @@ func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (do
 // ObtenerPorID devuelve el proyecto con el identificador indicado.
 func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Project, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos WHERE id = ?`,
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point, fecha_cierre FROM proyectos WHERE id = ?`,
 		id,
 	)
 	return escanearProyecto(row)
@@ -95,7 +95,7 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 // de su fila en integrantes, ordenados por id.
 func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, i.rol
+		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, p.fecha_cierre, i.rol
 		 FROM proyectos p
 		 JOIN integrantes i ON i.proyecto_id = p.id
 		 WHERE i.usuario_id = ?
@@ -213,11 +213,11 @@ func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyect
 
 func escanearProyecto(fila escaneable) (domain.Project, error) {
 	var (
-		p                      domain.Project
-		inicio, fin, createdAt sql.NullString
-		horas                  sql.NullFloat64
+		p                              domain.Project
+		inicio, fin, createdAt, cierre sql.NullString
+		horas                          sql.NullFloat64
 	)
-	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt, &horas); err != nil {
+	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt, &horas, &cierre); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Project{}, domain.ErrProyectoNoEncontrado
 		}
@@ -225,6 +225,7 @@ func escanearProyecto(fila escaneable) (domain.Project, error) {
 	}
 	p.FechaInicio = valorATiempoOpcional(inicio)
 	p.FechaFin = valorATiempoOpcional(fin)
+	p.FechaCierre = valorATiempoOpcional(cierre)
 	p.CreadoEn = parsearTiempo(createdAt.String)
 	if horas.Valid {
 		p.HorasPorStoryPoint = &horas.Float64
