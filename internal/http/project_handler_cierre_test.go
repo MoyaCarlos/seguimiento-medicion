@@ -62,25 +62,21 @@ func TestProjectHandler_Cerrar_ElScrumMasterCierra(t *testing.T) {
 
 func TestProjectHandler_Cerrar_Errores(t *testing.T) {
 	casos := []struct {
-		nombre   string
-		preparar func(t *testing.T, handler *ProjectHandler, proyectos *stubProjectRepository, idStr string)
-		id       func(idStr string) string
-		actor    domain.User
-		codigo   int
-		mensaje  string
+		nombre          string
+		yaCerrado       bool
+		conSprintActivo bool
+		id              func(idStr string) string
+		actor           domain.User
+		codigo          int
+		mensaje         string
 	}{
 		{
-			nombre: "ya cerrado",
-			preparar: func(t *testing.T, handler *ProjectHandler, _ *stubProjectRepository, idStr string) {
-				if rec := cerrarProyectoHTTP(handler, idStr, anaDePrueba); rec.Code != http.StatusOK {
-					t.Fatalf("no se pudo cerrar de antemano: %d", rec.Code)
-				}
-			},
+			nombre: "ya cerrado", yaCerrado: true,
 			actor: anaDePrueba, codigo: http.StatusConflict, mensaje: "El proyecto ya está cerrado",
 		},
 		{
-			nombre: "con un Sprint activo",
-			actor:  anaDePrueba, codigo: http.StatusConflict, mensaje: "Cerrá el Sprint activo antes de cerrar el proyecto",
+			nombre: "con un Sprint activo", conSprintActivo: true,
+			actor: anaDePrueba, codigo: http.StatusConflict, mensaje: "Cerrá el Sprint activo antes de cerrar el proyecto",
 		},
 		{
 			nombre: "Product Builder",
@@ -96,14 +92,16 @@ func TestProjectHandler_Cerrar_Errores(t *testing.T) {
 		t.Run(c.nombre, func(t *testing.T) {
 			handler, proyectos, sprints := nuevoProjectHandlerDePruebaConSprints()
 			idStr := proyectoDeAnaConBuilder(t, handler, proyectos)
-			if c.nombre == "con un Sprint activo" {
+			if c.conSprintActivo {
 				id, _ := strconv.ParseInt(idStr, 10, 64)
 				if _, err := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: id, Estado: domain.SprintActivo}); err != nil {
 					t.Fatalf("no se pudo sembrar el Sprint: %v", err)
 				}
 			}
-			if c.preparar != nil {
-				c.preparar(t, handler, proyectos, idStr)
+			if c.yaCerrado {
+				if rec := cerrarProyectoHTTP(handler, idStr, anaDePrueba); rec.Code != http.StatusOK {
+					t.Fatalf("no se pudo cerrar de antemano: %d", rec.Code)
+				}
 			}
 			objetivo := idStr
 			if c.id != nil {
