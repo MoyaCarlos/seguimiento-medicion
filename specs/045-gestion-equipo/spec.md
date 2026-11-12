@@ -65,6 +65,10 @@ aportó, para poder mantener el equipo al día sin perder el historial del proye
 - Editar el nombre de la persona: pertenece al usuario (HU-17).
 - Que un integrante se dé de baja a sí mismo: solo el Scrum Master gestiona el equipo.
 - Borrar físicamente a un integrante o sus aportes.
+- Mostrar al Product Builder la acción de quitar deshabilitada, con la nota «Solo el Scrum
+  Master puede…» (antes US6, escenario 3). La pantalla del equipo todavía no conoce el rol de
+  quien la ve. Va con el frontend de HU-21 (#247). Mientras tanto, si un Product Builder pide
+  la baja, el servidor responde 403 (FR-012) y la interfaz muestra ese mensaje (FR-016).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -172,8 +176,9 @@ se verifica que siga en verde.
    Builder y confirmo, **Then** desaparece de la lista.
 2. **Given** que veo el equipo, **When** se muestra el Scrum Master, **Then** no tiene la
    acción de quitar.
-3. **Given** que soy Product Builder, **When** veo el equipo, **Then** la acción de quitar
-   aparece deshabilitada con la nota «Solo el Scrum Master puede…» (HU-21).
+
+El escenario «el Product Builder ve la acción deshabilitada» queda fuera de alcance (ver
+«Fuera de alcance»): va con el frontend de HU-21 (#247).
 
 ### Edge Cases
 

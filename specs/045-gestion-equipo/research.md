@@ -103,5 +103,6 @@ TDD; el `WHERE` del repositorio la respalda.
 - `Configuracion.tsx` (equipo): botón «Quitar» en cada Product Builder, con confirmación, que
   llama a `quitarIntegrante(id, usuarioId)` y saca la fila de la lista; el Scrum Master no
   tiene botón; un error del servidor se muestra con su mensaje.
-- La deshabilitación para Product Builders («Solo el Scrum Master puede…») depende del
-  frontend de HU-21 (#247); si no está mergeado, se aplica el patrón que deje esa historia.
+- La deshabilitación para Product Builders («Solo el Scrum Master puede…») queda **fuera de
+  alcance** de esta spec (decisión del 2026-11-12). En `main`, `Configuracion.tsx` no conoce
+  el rol de quien la ve, y ese patrón llega con el frontend de HU-21 (#247).
