@@ -100,7 +100,7 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
 
 **Independent Test**: `go test ./features/ -v`.
 
-- [ ] T011 [US1][US2][US3] Crear `features/sprint_dentro_del_proyecto.feature` en Gherkin en español (`# language: es`), tags `@HU-05 @168`, Característica con el Como/Quiero/Para de la US1 de la spec. Escenarios, uno por criterio de aceptación de la spec (sin inventar casos):
+- [x] T011 [US1][US2][US3] Crear `features/sprint_dentro_del_proyecto.feature` en Gherkin en español (`# language: es`), tags `@HU-05 @168`, Característica con el Como/Quiero/Para de la US1 de la spec. Escenarios, uno por criterio de aceptación de la spec (sin inventar casos):
   - US1.1 error: proyecto que empieza el 2026-10-31; iniciar del 2026-10-30 al 2026-11-06 → rechazo en `fecha_inicio` y el Sprint sigue Pendiente;
   - US1.2 límite: iniciar del 2026-10-31 al 2026-11-06 → Activo;
   - US2.1 error: proyecto que termina el 2026-11-16; iniciar del 2026-11-10 al 2026-11-17 → rechazo en `fecha_fin` y sigue Pendiente;
@@ -111,23 +111,25 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
   - US3.4 error: proyecto solo con fin 2026-11-16, iniciar del 2026-11-10 al 2026-11-20 → rechazo en `fecha_fin`.
   - Las 4 categorías (normal, alternativo, límite, error) quedan cubiertas; el "normal" es un Sprint dentro del plazo, cubierto por los límites, que son el caso más exigente.
   - Usar `Esquema del escenario` con `Ejemplos` si agrupa casos del mismo paso sin perder la trazabilidad a los criterios.
-- [ ] T012 [US1][US2][US3] Pasos en `features/steps_sprint_dentro_del_proyecto.go` (patrón de `features/steps_sprints.go`): un proyecto con fechas opcionales creado con `repository.NewSQLiteProjectRepository` sobre la base del escenario, un Sprint Pendiente, el inicio vía `service.NewIniciarSprint(sprints, proyectos)` y las verificaciones de estado y del `ValidationError.Campo`. Registrar `InitializeScenarioSprintDentroDelProyecto` en `features/features_test.go` con el comentario `// #168`. `go test ./features/` en verde.
-- [ ] T013 COMMIT `Agregar escenarios BDD de Sprints dentro del plazo del proyecto (Refs #168)`
+- [x] T012 [US1][US2][US3] Pasos en `features/steps_sprint_dentro_del_proyecto.go` (patrón de `features/steps_sprints.go`): un proyecto con fechas opcionales creado con `repository.NewSQLiteProjectRepository` sobre la base del escenario, un Sprint Pendiente, el inicio vía `service.NewIniciarSprint(sprints, proyectos)` y las verificaciones de estado y del `ValidationError.Campo`. Registrar `InitializeScenarioSprintDentroDelProyecto` en `features/features_test.go` con el comentario `// #168`. `go test ./features/` en verde.
+- [x] T013 COMMIT `Agregar escenarios BDD de Sprints dentro del plazo del proyecto (Refs #168)`
 
 ---
 
 ## Phase 5: Documentación
 
-- [ ] T014 [P] Agregar en `MODELO-DE-DATOS.md` §5 ("Dónde vive cada regla") la fila definida en [data-model.md](data-model.md) (regla en el dominio, sin restricción de base, menciona #168 y #302), después de la fila "Fin posterior a inicio (proyecto y Sprint)".
-- [ ] T015 COMMIT `docs: regla del plazo del proyecto en MODELO-DE-DATOS.md §5 (Refs #168)`
+- [x] T014 [P] Agregar en `MODELO-DE-DATOS.md` §5 ("Dónde vive cada regla") la fila definida en [data-model.md](data-model.md) (regla en el dominio, sin restricción de base, menciona #168 y #302), después de la fila "Fin posterior a inicio (proyecto y Sprint)".
+- [x] T015 COMMIT `docs: regla del plazo del proyecto en MODELO-DE-DATOS.md §5 (Refs #168)`
 
 ---
 
 ## Phase 6: Cierre
 
-- [ ] T016 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test -count=1 ./...` en verde.
-- [ ] T017 Validar con [quickstart.md](quickstart.md) §2 contra la API levantada localmente (los tres casos de la tabla) y anotar el resultado en el PR.
-- [ ] T018 Marcar las tareas hechas en este archivo + COMMIT `docs: marcar las tareas de la spec 043 como hechas (Refs #168)`
+- [x] T016 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test -count=1 ./...` en verde.
+- [x] T017 Validar con [quickstart.md](quickstart.md) §2 contra la API levantada localmente (los tres casos de la tabla) y anotar el resultado en el PR.
+  - Hecho el 2026-11-11 con el binario de la rama sobre una base temporal: proyecto del 2026-10-31 al 2026-11-16; iniciar del 2026-10-30 al 2026-11-06 → 400 `fecha_inicio` ("el Sprint no puede empezar antes del inicio del proyecto (2026-10-31)"); del 2026-11-10 al 2026-11-17 → 400 `fecha_fin`; tras los rechazos el Sprint sigue Pendiente sin Goal ni fechas; del 2026-10-31 al 2026-11-16 → 200 Activo. Proyecto sin fechas, del 2026-01-01 al 2026-01-15 → 200 Activo.
+  - Prueba de mutación de los BDD: con la llamada a `AdmiteSprint` desactivada fallan exactamente los 3 escenarios de rechazo (281 escenarios: 278 en verde, 3 en rojo); con la regla, 281 en verde.
+- [x] T018 Marcar las tareas hechas en este archivo + COMMIT `docs: marcar las tareas de la spec 043 como hechas (Refs #168)`
 
 ---
 
