@@ -89,9 +89,9 @@ it('Given la tipografía Inter, When se declara, Then sale de un woff2 propio co
 })
 
 it('Given el foco visible, When se dibuja, Then el contorno es sólido y se distingue 3:1 de los fondos', () => {
-  const contorno = bloque(':focus-visible').match(/outline:\s*3px solid\s*(#[0-9a-f]{6})\s*;/)?.[1] ?? ''
+  const contorno = resolver(bloque(':focus-visible').match(/outline:\s*3px solid\s*([^;]+);/)?.[1].trim() ?? '')
 
-  expect(contorno).not.toBe('')
+  expect(contorno).toMatch(/^#[0-9a-f]{6}$/)
   expect(contraste(contorno, FONDO_PAGINA)).toBeGreaterThanOrEqual(3)
   expect(contraste(contorno, BLANCO)).toBeGreaterThanOrEqual(3)
 })
