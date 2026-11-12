@@ -64,6 +64,9 @@
 }
 
 .demo-tarjeta > .button {
+  font-size: 0.875rem;
+  min-height: 40px;
+  padding: 0 1rem;
   width: 100%;
 }
 
