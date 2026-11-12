@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"io/fs"
-	"strings"
 	"testing"
 	"testing/fstest"
 )
@@ -15,6 +14,13 @@ type clave struct{ proyecto, usuario int }
 // embebidas salvo la 007, para sembrar datos con el esquema anterior.
 func baseAntesDeLa007(t *testing.T) *sql.DB {
 	t.Helper()
+	return baseSinLaMigracion(t, "007_")
+}
+
+// baseSinLaMigracion migra una base en memoria con todas las migraciones
+// embebidas salvo la que empieza con prefijo y las posteriores.
+func baseSinLaMigracion(t *testing.T, prefijo string) *sql.DB {
+	t.Helper()
 	db := nuevaBDVacia(t)
 	previas := fstest.MapFS{}
 	entradas, err := fs.ReadDir(migracionesFS, "migraciones")
@@ -22,7 +28,7 @@ func baseAntesDeLa007(t *testing.T) *sql.DB {
 		t.Fatalf("no se pudieron listar las migraciones: %v", err)
 	}
 	for _, e := range entradas {
-		if strings.HasPrefix(e.Name(), "007_") {
+		if e.Name() >= prefijo {
 			continue
 		}
 		datos, err := migracionesFS.ReadFile("migraciones/" + e.Name())
