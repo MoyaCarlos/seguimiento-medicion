@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -20,4 +21,8 @@ type ProjectRepository interface {
 	Actualizar(ctx context.Context, p domain.Project) error
 	AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error)
 	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)
+	// Cerrar guarda la fecha de cierre solo si el proyecto está abierto y sin
+	// Sprint Activo (#300). Si no lo cierra, devuelve ErrProyectoNoEncontrado,
+	// ErrProyectoYaCerrado o ErrSprintActivoAlCerrarProyecto.
+	Cerrar(ctx context.Context, id int64, fecha time.Time) error
 }

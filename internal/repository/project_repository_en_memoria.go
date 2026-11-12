@@ -97,10 +97,29 @@ func (r *ProjectRepositoryEnMemoria) ListarPorIntegrante(_ context.Context, usua
 func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Project) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if _, ok := r.proyectos[p.ID]; !ok {
+	actual, ok := r.proyectos[p.ID]
+	if !ok {
 		return domain.ErrProyectoNoEncontrado
 	}
+	p.FechaCierre = actual.FechaCierre
 	r.proyectos[p.ID] = p
+	return nil
+}
+
+// Cerrar guarda la fecha de cierre si el proyecto está abierto (#300). No
+// conoce los Sprints: la regla del Sprint Activo la da Project.Cerrar.
+func (r *ProjectRepositoryEnMemoria) Cerrar(_ context.Context, id int64, fecha time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	p, ok := r.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	p.FechaCierre = &fecha
+	r.proyectos[id] = p
 	return nil
 }
 

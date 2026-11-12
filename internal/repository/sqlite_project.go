@@ -153,6 +153,40 @@ func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Proje
 	return nil
 }
 
+// Cerrar guarda la fecha de cierre con un UPDATE condicional, así dos cierres
+// simultáneos, o un Sprint que se inicia mientras tanto, no pasan los dos
+// (#300, como el inicio de Sprint en #158). Si no cerró, explica por qué.
+func (r *SQLiteProjectRepository) Cerrar(ctx context.Context, id int64, fecha time.Time) error {
+	resultado, err := r.db.ExecContext(ctx,
+		`UPDATE proyectos SET fecha_cierre = ?
+		 WHERE id = ? AND fecha_cierre IS NULL
+		   AND NOT EXISTS (SELECT 1 FROM sprints WHERE proyecto_id = proyectos.id AND estado = 'Activo')`,
+		tiempoOpcionalAValor(&fecha), id,
+	)
+	if err != nil {
+		return fmt.Errorf("cerrar proyecto: %w", err)
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("cerrar proyecto: %w", err)
+	}
+	if afectadas == 1 {
+		return nil
+	}
+	return r.motivoDeNoCerrar(ctx, id)
+}
+
+func (r *SQLiteProjectRepository) motivoDeNoCerrar(ctx context.Context, id int64) error {
+	proyecto, err := r.ObtenerPorID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if proyecto.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	return domain.ErrSprintActivoAlCerrarProyecto
+}
+
 // AgregarIntegrante vincula un integrante con un rol al proyecto y devuelve la
 // membresía guardada (con su CreadoEn asignado).
 func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error) {
