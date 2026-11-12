@@ -21,31 +21,29 @@ export function CredencialesDemo({ alUsar }: Props) {
           <th scope="col">Usuario</th>
           <th scope="col">Contraseña</th>
           <th scope="col">Rol</th>
-          {alUsar && (
-            <th scope="col">
-              <span className="solo-lector">Acción</span>
-            </th>
-          )}
         </tr>
       </thead>
       <tbody>
         {USUARIOS_DEMO.map(({ nombre, rol }) => (
           <tr key={nombre}>
-            <td>{nombre}</td>
-            <td>{CONTRASENA_DEMO}</td>
-            <td>{rol}</td>
-            {alUsar && (
-              <td>
-                <Button
-                  type="button"
-                  variant="quiet"
-                  aria-label={`Usar ${nombre}`}
-                  onClick={() => alUsar(nombre, CONTRASENA_DEMO)}
-                >
-                  Usar
-                </Button>
-              </td>
-            )}
+            <td><code>{nombre}</code></td>
+            <td><code>{CONTRASENA_DEMO}</code></td>
+            <td>
+              {rol}
+              {alUsar && (
+                <>
+                  <br />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    aria-label={`Usar ${nombre}`}
+                    onClick={() => alUsar(nombre, CONTRASENA_DEMO)}
+                  >
+                    Usar
+                  </Button>
+                </>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>

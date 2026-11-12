@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
 import { ApiError } from '../api/client'
 import { Button } from '../componentes/Button'
 import { ErrorMessage } from '../componentes/ErrorMessage'
@@ -7,7 +6,7 @@ import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { PROYECTO_DE_PRUEBA, cargarDatosDePrueba, datosDePruebaHabilitados } from './api'
 import { CredencialesDemo } from './CredencialesDemo'
 
-type Resultado = { tipo: 'aviso'; mensaje: string; proyecto: boolean } | { tipo: 'error'; mensaje: string }
+type Resultado = { tipo: 'aviso'; mensaje: string; conTabla: boolean } | { tipo: 'error'; mensaje: string }
 
 type Props = { alUsar?: (nombre: string, contrasena: string) => void }
 
@@ -31,7 +30,11 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
     setEnviando(true)
     try {
       await cargarDatosDePrueba()
-      setResultado({ tipo: 'aviso', mensaje: 'Datos de prueba cargados.', proyecto: true })
+      setResultado({
+        tipo: 'aviso',
+        mensaje: 'Datos de prueba cargados: ya podés ingresar con los usuarios de la lista',
+        conTabla: true,
+      })
     } catch (error) {
       setResultado(aResultado(error))
     } finally {
@@ -51,12 +54,9 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
       </p>
       {resultado?.tipo === 'error' && <ErrorMessage message={resultado.mensaje} />}
       {resultado?.tipo === 'aviso' && (
-        <p className="message" role="status">
-          {resultado.mensaje}{' '}
-          {resultado.proyecto && <Link to={`/projects/${PROYECTO_DE_PRUEBA}`}>Abrir el proyecto de prueba</Link>}
-        </p>
+        <p className="message" role="status">{resultado.mensaje}</p>
       )}
-      {resultado?.tipo === 'aviso' && resultado.proyecto && <CredencialesDemo alUsar={alUsar} />}
+      {resultado?.tipo === 'aviso' && resultado.conTabla && <CredencialesDemo alUsar={alUsar} />}
       {enviando && <LoadingIndicator />}
       <Button type="button" variant="secondary" onClick={cargar} disabled={enviando}>
         Cargar datos de prueba
@@ -67,10 +67,10 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
 
 function aResultado(error: unknown): Resultado {
   if (error instanceof ApiError && error.status === 409 && error.field === 'ya_cargado') {
-    return { tipo: 'aviso', mensaje: error.message, proyecto: true }
+    return { tipo: 'aviso', mensaje: error.message, conTabla: true }
   }
   if (error instanceof ApiError && error.status === 409 && error.field === 'usuario_existente') {
-    return { tipo: 'aviso', mensaje: error.message, proyecto: false }
+    return { tipo: 'aviso', mensaje: error.message, conTabla: false }
   }
   return { tipo: 'error', mensaje: error instanceof Error ? error.message : 'No se pudieron cargar los datos de prueba' }
 }
