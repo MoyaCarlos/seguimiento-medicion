@@ -39,6 +39,9 @@ func (s *ImputarHoras) Ejecutar(ctx context.Context, in ImputarHorasInput, ahora
 	if err != nil {
 		return domain.RegistroHorasDetalle{}, err
 	}
+	if err := exigirProyectoAbierto(ctx, s.integrantes, historia.ProyectoID); err != nil {
+		return domain.RegistroHorasDetalle{}, err
+	}
 	if historia.SprintID == nil {
 		return domain.RegistroHorasDetalle{}, domain.ErrHistoriaFueraDelSprintActivo
 	}

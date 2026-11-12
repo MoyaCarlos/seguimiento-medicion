@@ -44,6 +44,11 @@ func (proyectosSinFechas) ListarIntegrantes(ctx context.Context, proyectoID int6
 	return scrumMasterConActor{}.ListarIntegrantes(ctx, proyectoID)
 }
 
+// ProyectoCerrado: el proyecto está siempre abierto (#300).
+func (proyectosSinFechas) ProyectoCerrado(context.Context, int64) (bool, error) {
+	return false, nil
+}
+
 func sembrarProyectoConPlazo(t *testing.T, repo repository.ProjectRepository, inicio, fin *time.Time) int64 {
 	t.Helper()
 	p, err := domain.NewProject("Software Metrics & Estimation", "", inicio, fin)

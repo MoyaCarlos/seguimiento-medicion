@@ -85,7 +85,7 @@ func insertarProyecto(ctx context.Context, ex ejecutorSQL, p domain.Project) (do
 // ObtenerPorID devuelve el proyecto con el identificador indicado.
 func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (domain.Project, error) {
 	row := r.db.QueryRowContext(ctx,
-		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point FROM proyectos WHERE id = ?`,
+		`SELECT id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en, horas_por_story_point, fecha_cierre FROM proyectos WHERE id = ?`,
 		id,
 	)
 	return escanearProyecto(row)
@@ -95,7 +95,7 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 // de su fila en integrantes, ordenados por id.
 func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	filas, err := r.db.QueryContext(ctx,
-		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, i.rol
+		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, p.fecha_cierre, i.rol
 		 FROM proyectos p
 		 JOIN integrantes i ON i.proyecto_id = p.id
 		 WHERE i.usuario_id = ?
@@ -151,6 +151,74 @@ func (r *SQLiteProjectRepository) Actualizar(ctx context.Context, p domain.Proje
 		return domain.ErrProyectoNoEncontrado
 	}
 	return nil
+}
+
+// Cerrar guarda la fecha de cierre con un UPDATE condicional, así dos cierres
+// simultáneos, o un Sprint que se inicia mientras tanto, no pasan los dos
+// (#300, como el inicio de Sprint en #158). Si no cerró, explica por qué.
+func (r *SQLiteProjectRepository) Cerrar(ctx context.Context, id int64, fecha time.Time) error {
+	resultado, err := r.db.ExecContext(ctx,
+		`UPDATE proyectos SET fecha_cierre = ?
+		 WHERE id = ? AND fecha_cierre IS NULL
+		   AND NOT EXISTS (SELECT 1 FROM sprints WHERE proyecto_id = proyectos.id AND estado = 'Activo')`,
+		tiempoOpcionalAValor(&fecha), id,
+	)
+	if err != nil {
+		return fmt.Errorf("cerrar proyecto: %w", err)
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("cerrar proyecto: %w", err)
+	}
+	if afectadas == 1 {
+		return nil
+	}
+	return r.motivoDeNoCerrar(ctx, id)
+}
+
+// Reabrir deja vacía la fecha de cierre con un UPDATE condicional, así dos
+// reaperturas simultáneas no pasan las dos (#300).
+func (r *SQLiteProjectRepository) Reabrir(ctx context.Context, id int64) error {
+	resultado, err := r.db.ExecContext(ctx,
+		`UPDATE proyectos SET fecha_cierre = NULL WHERE id = ? AND fecha_cierre IS NOT NULL`, id)
+	if err != nil {
+		return fmt.Errorf("reabrir proyecto: %w", err)
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("reabrir proyecto: %w", err)
+	}
+	if afectadas == 1 {
+		return nil
+	}
+	if _, err := r.ObtenerPorID(ctx, id); err != nil {
+		return err
+	}
+	return domain.ErrProyectoNoCerrado
+}
+
+// ProyectoCerrado informa si el proyecto tiene fecha de cierre (#300).
+func (r *SQLiteProjectRepository) ProyectoCerrado(ctx context.Context, id int64) (bool, error) {
+	var cerrado bool
+	err := r.db.QueryRowContext(ctx, `SELECT fecha_cierre IS NOT NULL FROM proyectos WHERE id = ?`, id).Scan(&cerrado)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("consultar cierre del proyecto: %w", err)
+	}
+	return cerrado, nil
+}
+
+func (r *SQLiteProjectRepository) motivoDeNoCerrar(ctx context.Context, id int64) error {
+	proyecto, err := r.ObtenerPorID(ctx, id)
+	if err != nil {
+		return err
+	}
+	if proyecto.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	return domain.ErrSprintActivoAlCerrarProyecto
 }
 
 // AgregarIntegrante vincula un integrante con un rol al proyecto y devuelve la
@@ -213,11 +281,11 @@ func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyect
 
 func escanearProyecto(fila escaneable) (domain.Project, error) {
 	var (
-		p                      domain.Project
-		inicio, fin, createdAt sql.NullString
-		horas                  sql.NullFloat64
+		p                              domain.Project
+		inicio, fin, createdAt, cierre sql.NullString
+		horas                          sql.NullFloat64
 	)
-	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt, &horas); err != nil {
+	if err := fila.Scan(&p.ID, &p.Nombre, &p.Descripcion, &inicio, &fin, &createdAt, &horas, &cierre); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return domain.Project{}, domain.ErrProyectoNoEncontrado
 		}
@@ -225,6 +293,7 @@ func escanearProyecto(fila escaneable) (domain.Project, error) {
 	}
 	p.FechaInicio = valorATiempoOpcional(inicio)
 	p.FechaFin = valorATiempoOpcional(fin)
+	p.FechaCierre = valorATiempoOpcional(cierre)
 	p.CreadoEn = parsearTiempo(createdAt.String)
 	if horas.Valid {
 		p.HorasPorStoryPoint = &horas.Float64

@@ -184,6 +184,9 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrVotacionYaIniciada), errors.Is(err, domain.ErrRondaYaAbierta),
 		errors.Is(err, domain.ErrScrumMasterYaExiste):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
+	case errors.Is(err, domain.ErrProyectoCerrado), errors.Is(err, domain.ErrProyectoYaCerrado),
+		errors.Is(err, domain.ErrSprintActivoAlCerrarProyecto), errors.Is(err, domain.ErrProyectoNoCerrado):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrConflictoEstadoHistoria):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: "la historia cambió de estado mientras tanto: recargá y volvé a intentar"})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):

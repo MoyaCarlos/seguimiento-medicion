@@ -66,6 +66,8 @@ func Rutas(h Handlers) []Ruta {
 		{"GET /projects/{id}/status", Lectura, h.Proyectos.ObtenerEstado},
 		{"PUT /projects/{id}", SesionScrumMaster, h.Proyectos.Editar},
 		{"POST /projects/{id}/members", SesionScrumMaster, h.Proyectos.AsignarIntegrante},
+		{"POST /projects/{id}/cerrar", SesionScrumMaster, h.Proyectos.Cerrar},
+		{"POST /projects/{id}/reabrir", SesionScrumMaster, h.Proyectos.Reabrir},
 		{"GET /projects/{id}/members", Lectura, h.Proyectos.ListarIntegrantes},
 
 		{"POST /backlog", SesionIntegrante, h.Backlog.Crear},
