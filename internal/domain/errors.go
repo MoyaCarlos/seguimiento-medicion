@@ -29,6 +29,15 @@ var ErrUsuarioNoEncontrado = errors.New("usuario no encontrado")
 // ErrProyectoNoEncontrado indica que el proyecto solicitado no existe.
 var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 
+// Errores del cierre y la reapertura del proyecto (spec 044, #300).
+var (
+	// ErrProyectoYaCerrado indica que se quiso cerrar un proyecto que ya está cerrado.
+	ErrProyectoYaCerrado = errors.New("El proyecto ya está cerrado")
+	// ErrSprintActivoAlCerrarProyecto indica que el proyecto tiene un Sprint Activo
+	// y por eso no se puede cerrar.
+	ErrSprintActivoAlCerrarProyecto = errors.New("Cerrá el Sprint activo antes de cerrar el proyecto")
+)
+
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
 var ErrHistoriaNoEncontrada = errors.New("historia no encontrada")
 

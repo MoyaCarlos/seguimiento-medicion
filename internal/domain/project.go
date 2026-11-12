@@ -71,6 +71,23 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 	return nombre, descripcion, nil
 }
 
+// Cerrar devuelve una copia del proyecto cerrado con el día civil de ahora
+// como fecha de cierre (#300). Un proyecto ya cerrado, o con un Sprint Activo,
+// no se puede cerrar.
+func (p Project) Cerrar(ahora time.Time, sprints []Sprint) (Project, error) {
+	if p.FechaCierre != nil {
+		return Project{}, ErrProyectoYaCerrado
+	}
+	for _, s := range sprints {
+		if s.Estado == SprintActivo {
+			return Project{}, ErrSprintActivoAlCerrarProyecto
+		}
+	}
+	hoy := inicioDelDiaCivil(ahora)
+	p.FechaCierre = &hoy
+	return p, nil
+}
+
 // ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
 // indicado. valor es el número en texto; nil lo deja sin definir.
 func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {
