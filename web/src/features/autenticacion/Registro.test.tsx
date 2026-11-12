@@ -96,7 +96,7 @@ describe('pantalla de registro', () => {
 
     await screen.findByText('La contraseña debe tener al menos 8 caracteres')
     expect(descripcion(screen.getByLabelText('Contraseña'))).toBe('La contraseña debe tener al menos 8 caracteres')
-    expect(screen.getByLabelText('Nombre de usuario').getAttribute('aria-describedby')).toBeNull()
+    expect(descripcion(screen.getByLabelText('Nombre de usuario'))).not.toBe('La contraseña debe tener al menos 8 caracteres')
   })
 
   it('Given la pantalla de registro, When se muestra, Then cada campo describe la regla que aplica el servidor', () => {

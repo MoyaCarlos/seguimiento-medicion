@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { BotonDatosDePrueba } from '../../compartido/demo/BotonDatosDePrueba'
 import { FormularioCredenciales } from './FormularioCredenciales'
+import { PantallaAcceso } from './PantallaAcceso'
 import { useSesion } from './SesionContext'
 
 export function Ingresar() {
@@ -11,10 +12,11 @@ export function Ingresar() {
   const vencida = Boolean((state as { vencida?: boolean } | null)?.vencida)
 
   return (
-    <>
+    <PantallaAcceso>
       <FormularioCredenciales
         titulo="Ingresar"
         accion="Ingresar"
+        bajada="Ingresá con tu cuenta para ver tus proyectos."
         aviso={vencida ? 'Tu sesión venció' : undefined}
         enviar={ingresar}
         relleno={relleno}
@@ -27,6 +29,6 @@ export function Ingresar() {
       <div className="auth-demo">
         <BotonDatosDePrueba alUsar={(nombre, contrasena) => setRelleno({ nombre, contrasena })} />
       </div>
-    </>
+    </PantallaAcceso>
   )
 }
