@@ -6,7 +6,7 @@ import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { PROYECTO_DE_PRUEBA, cargarDatosDePrueba, datosDePruebaHabilitados } from './api'
 import { CredencialesDemo } from './CredencialesDemo'
 
-type Resultado = { tipo: 'aviso'; mensaje: string; conTabla: boolean } | { tipo: 'error'; mensaje: string }
+type Resultado = { tipo: 'aviso'; mensaje: string; conTabla: boolean; exito?: boolean } | { tipo: 'error'; mensaje: string }
 
 type Props = { alUsar?: (nombre: string, contrasena: string) => void }
 
@@ -34,6 +34,7 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
         tipo: 'aviso',
         mensaje: 'Datos de prueba cargados: ya podés ingresar con los usuarios de la lista',
         conTabla: true,
+        exito: true,
       })
     } catch (error) {
       setResultado(aResultado(error))
@@ -52,9 +53,9 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
         (dos finalizados, uno activo y uno pendiente), 12 historias, 20 registros de horas, 2 votaciones y 5 defectos.
         Si algún usuario ya existe, no se carga nada.
       </p>
-      {resultado?.tipo === 'error' && <ErrorMessage message={resultado.mensaje} />}
+      {resultado?.tipo === 'error' && <ErrorMessage className="auth-alerta" message={resultado.mensaje} />}
       {resultado?.tipo === 'aviso' && (
-        <p className="message" role="status">{resultado.mensaje}</p>
+        <p className={resultado.exito ? 'demo-exito' : 'auth-alerta'} role="status">{resultado.mensaje}</p>
       )}
       {resultado?.tipo === 'aviso' && resultado.conTabla && <CredencialesDemo alUsar={alUsar} />}
       {enviando && <LoadingIndicator />}

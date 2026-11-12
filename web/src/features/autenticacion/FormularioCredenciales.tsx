@@ -2,7 +2,6 @@ import { useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
-import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { CampoContrasena } from './CampoContrasena'
@@ -93,14 +92,15 @@ export function FormularioCredenciales({
 
   return (
     <section className="auth-pantalla" aria-labelledby="credenciales-title">
-      <p className="auth-sobretitulo">{sobretitulo}</p>
-      <h1 id="credenciales-title">{titulo}</h1>
-      {bajada && <p className="auth-bajada">{bajada}</p>}
-      {aviso && <p className="message auth-aviso" role="status">{aviso}</p>}
+      <div>
+        <p className="auth-sobretitulo">{sobretitulo}</p>
+        <h1 id="credenciales-title">{titulo}</h1>
+        {bajada && <p className="auth-bajada">{bajada}</p>}
+      </div>
+      {aviso && <p className="auth-alerta auth-alerta--aviso" role="status">{aviso}</p>}
+      {errorGeneral && <p className="auth-alerta" role="alert">{errorGeneral}</p>}
 
       <form onSubmit={alEnviar} noValidate aria-label={titulo}>
-        {errorGeneral && <ErrorMessage message={errorGeneral} />}
-
         <Field
           name="nombre"
           label="Nombre de usuario"
@@ -139,7 +139,7 @@ export function FormularioCredenciales({
         </Button>
       </form>
 
-      <p>{pie}</p>
+      <p className="auth-cambio">{pie}</p>
     </section>
   )
 }
