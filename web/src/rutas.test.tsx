@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, type RouteObject } from 'react-router'
@@ -465,8 +465,7 @@ describe('registro de rutas', () => {
 
     await router.navigate('/projects/2/pantalla')
 
-    await screen.findByText('/projects/2/pantalla', { selector: 'code' }, { timeout: 5000 })
-    expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1)
+    await waitFor(() => expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1), { timeout: 5000 })
   })
 
   it.each(['/no-existe', '/projects/1/otra'])('%s muestra "Página no encontrada"', async (url) => {
