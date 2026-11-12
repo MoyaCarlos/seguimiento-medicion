@@ -43,6 +43,15 @@
   gap: 16px;
 }
 
+.defectos-registro .field {
+  min-width: 0;
+}
+
+.defectos-registro .field textarea,
+.defectos-registro .field select {
+  width: 100%;
+}
+
 .defectos-registro form .button {
   justify-self: start;
 }
