@@ -16,8 +16,8 @@ tablas existentes:
 | Valor | Significado |
 |---|---|
 | `Planificado` | El proyecto aún no inició ejecución: sin Sprints iniciados y sin alcanzar la fecha de inicio (o sin fecha de inicio cargada). |
-| `En curso` | Hay un Sprint `Activo`, o hay un Sprint `Finalizado` junto a un `Pendiente`, o (sin Sprints iniciados) la fecha actual está dentro del rango del proyecto. |
-| `Finalizado` | Todos los Sprints existentes están `Finalizado`, o (sin Sprints iniciados) la fecha actual superó la fecha de fin. |
+| `En curso` | Hay un Sprint `Activo`; o hay un Sprint `Finalizado` junto a un `Pendiente`; o todos los Sprints están `Finalizado` pero la fecha de fin es futura o no está cargada; o (sin Sprints iniciados) la fecha actual está dentro del rango del proyecto. |
+| `Finalizado` | El proyecto se cerró manualmente (`fecha_cierre`), o no tiene Sprints `Activo` ni `Pendiente` y la fecha de fin ya pasó (con o sin Sprints `Finalizado`). |
 
 **Representación**: `domain.EstadoProyecto string` con constantes
 (`ProyectoPlanificado`/`ProyectoEnCurso`/`ProyectoFinalizado`). No se agrega método
@@ -30,22 +30,28 @@ tablas existentes:
 Entradas: el `Project` (con `FechaInicio`/`FechaFin` opcionales), los `Sprint` del proyecto
 (con `Estado` ∈ {`Pendiente`, `Activo`, `Finalizado`}) y el instante `ahora`.
 
-Algoritmo (precedencia: Sprints sobre fechas):
+Algoritmo (precedencia: Sprints sobre fechas; #173):
 
-1. ¿Algún Sprint con `Estado == Activo`? → `En curso`.
-2. ¿Hay ≥ 1 Sprint y todos están `Finalizado`? → `Finalizado`.
-3. ¿Hay al menos un Sprint `Finalizado` (sin `Activo` y sin ser todos `Finalizado`, es
-   decir, conviviendo con al menos un `Pendiente`)? → `En curso`.
-4. Si no (sin ejecución iniciada), decide la fecha:
+1. Si `FechaCierre != nil` (cierre manual, #300) → `Finalizado`.
+2. ¿Algún Sprint con `Estado == Activo`? → `En curso`.
+3. ¿Hay ≥ 1 Sprint y todos están `Finalizado`?
+   - `FechaFin != nil` y `ahora` > `FechaFin` → `Finalizado`.
+   - en otro caso (fecha futura o sin fecha de fin) → `En curso`.
+4. ¿Hay al menos un Sprint `Finalizado` (sin `Activo` y sin ser todos `Finalizado`, es
+   decir, conviviendo con al menos un `Pendiente`)? → `En curso`, sin mirar las fechas.
+5. Si no (sin ejecución iniciada), decide la fecha:
    - `FechaInicio == nil` o `ahora` < `FechaInicio` → `Planificado`.
    - `FechaFin != nil` y `ahora` > `FechaFin` → `Finalizado`.
    - en otro caso (dentro del rango, bordes inclusivos) → `En curso`.
 
 Reglas de borde:
 - Los límites `[FechaInicio, FechaFin]` son **inclusivos**: el día de inicio y el día de fin
-  cuentan como `En curso`.
+  cuentan como `En curso`. Con todos los Sprints `Finalizado`, el proyecto recién pasa a
+  `Finalizado` al día siguiente de `FechaFin`.
 - Un Sprint `Pendiente` no es evidencia de ejecución.
 - Un proyecto sin fechas y sin Sprints iniciados ⇒ `Planificado`.
+- Un proyecto con todos los Sprints `Finalizado` y sin `FechaFin` ⇒ `En curso`: nunca pasa
+  a `Finalizado` por fecha mientras no tenga fecha de fin (#173).
 
 ## Consumo por el caso de uso
 
