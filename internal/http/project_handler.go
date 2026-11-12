@@ -22,6 +22,7 @@ type ProjectHandler struct {
 	estado            *service.ObtenerEstadoProyecto
 	cerrar            *service.CerrarProyecto
 	reabrir           *service.ReabrirProyecto
+	quitar            *service.QuitarIntegrante
 }
 
 func NewProjectHandler(
@@ -34,6 +35,7 @@ func NewProjectHandler(
 	estado *service.ObtenerEstadoProyecto,
 	cerrar *service.CerrarProyecto,
 	reabrir *service.ReabrirProyecto,
+	quitar *service.QuitarIntegrante,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		crear:             crear,
@@ -45,7 +47,32 @@ func NewProjectHandler(
 		estado:            estado,
 		cerrar:            cerrar,
 		reabrir:           reabrir,
+		quitar:            quitar,
 	}
+}
+
+// QuitarIntegrante atiende DELETE /projects/{id}/members/{usuario_id} (HU-16):
+// da de baja al integrante conservando sus aportes y responde 204 sin cuerpo.
+func (h *ProjectHandler) QuitarIntegrante(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	usuarioID, err := parsearIDDeCampo("usuario_id", r.PathValue("usuario_id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	if err := h.quitar.Ejecutar(r.Context(), service.QuitarIntegranteInput{ProyectoID: id, UsuarioID: usuarioID, ActorID: actor}); err != nil {
+		escribirError(w, err)
+		return
+	}
+	w.WriteHeader(nethttp.StatusNoContent)
 }
 
 // Reabrir atiende POST /projects/{id}/reabrir (#300): responde el proyecto

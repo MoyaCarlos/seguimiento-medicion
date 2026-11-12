@@ -190,7 +190,7 @@ func (c *listadoContext) consultoListadoConPersistenciaFallida() error {
 		return err
 	}
 	mux := http.NewServeMux()
-	handler := apphttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repositorioQueFalla{}), nil, nil, nil, nil, nil, nil)
+	handler := apphttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repositorioQueFalla{}), nil, nil, nil, nil, nil, nil, nil)
 	apphttp.RegistrarRutas(mux, apphttp.Handlers{Proyectos: handler}, apphttp.ConSesion(service.NewObtenerSesion(sesiones, time.Now)))
 	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
