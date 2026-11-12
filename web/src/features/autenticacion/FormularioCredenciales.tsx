@@ -22,6 +22,14 @@ type Props = {
   enviar(nombre: string, contrasena: string): Promise<void>
 }
 
+const MENSAJES_VACIO: Record<'ingreso' | 'registro', Record<Campo, string>> = {
+  ingreso: { nombre: 'Ingresá tu nombre de usuario.', contrasena: 'Ingresá tu contraseña.' },
+  registro: {
+    nombre: 'el nombre de usuario debe tener entre 3 y 30 caracteres',
+    contrasena: 'la contraseña debe tener entre 8 y 128 caracteres',
+  },
+}
+
 function mensajeDeError(error: unknown): string {
   if (error instanceof ApiError || error instanceof ConnectionError) return error.message
   return 'Ocurrió un error inesperado'
@@ -62,8 +70,13 @@ export function FormularioCredenciales({
 
   async function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    setErrores({})
     setErrorGeneral('')
+    const mensajes = MENSAJES_VACIO[contrasenaNueva ? 'registro' : 'ingreso']
+    const vacios: Partial<Record<Campo, string>> = {}
+    if (!nombre.trim()) vacios.nombre = mensajes.nombre
+    if (!contrasena) vacios.contrasena = mensajes.contrasena
+    setErrores(vacios)
+    if (Object.keys(vacios).length > 0) return
     setEnviando(true)
     try {
       await enviar(nombre, contrasena)

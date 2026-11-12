@@ -308,4 +308,17 @@ describe('pantalla de ingreso: campos vacíos', () => {
     expect(screen.queryAllByRole('alert')).toHaveLength(0)
     expect(JSON.parse(String(ingresos(fetchMock)[0][1]?.body))).toEqual({ nombre: 'ana.perez', contrasena: 'una-clave-larga' })
   })
+
+  it('Given mensajes por campos vacíos, When completo los campos y el servidor rechaza las credenciales, Then solo queda el error del servidor', async () => {
+    simularFetch(() => json({ mensaje: 'Usuario o contraseña incorrectos' }, 401))
+    montar()
+    const usuario = userEvent.setup()
+    await usuario.click(screen.getByRole('button', { name: 'Ingresar' }))
+
+    await usuario.type(screen.getByLabelText('Nombre de usuario'), 'ana.perez')
+    await usuario.type(screen.getByLabelText('Contraseña'), 'clave-equivocada')
+    await usuario.click(screen.getByRole('button', { name: 'Ingresar' }))
+
+    await waitFor(() => expect(screen.getAllByRole('alert').map((aviso) => aviso.textContent)).toEqual(['Usuario o contraseña incorrectos']))
+  })
 })
