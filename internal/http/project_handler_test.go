@@ -766,7 +766,18 @@ func (s *stubProjectRepository) ListarIntegrantesHistoricos(_ context.Context, _
 	return nil, errors.New("no implementado")
 }
 
-// DarDeBajaIntegrante: pendiente de implementar (HU-16).
-func (s *stubProjectRepository) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
-	return errors.New("no implementado")
+// DarDeBajaIntegrante saca al integrante de las membresías con las reglas del
+// repositorio (HU-16); el stub no distingue «dado de baja» de «nunca integró».
+func (s *stubProjectRepository) DarDeBajaIntegrante(_ context.Context, proyectoID, usuarioID int64, _ time.Time) error {
+	for i, m := range s.miembros {
+		if m.ProjectID != proyectoID || m.UserID != usuarioID {
+			continue
+		}
+		if m.Role == domain.RolScrumMaster {
+			return domain.ErrScrumMasterNoSeQuita
+		}
+		s.miembros = append(s.miembros[:i], s.miembros[i+1:]...)
+		return nil
+	}
+	return domain.ErrIntegranteNoEncontrado
 }
