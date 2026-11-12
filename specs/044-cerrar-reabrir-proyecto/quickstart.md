@@ -10,7 +10,7 @@ go test ./internal/domain/ -run 'Cerrar|Reabrir|EstadoProyecto'
 go test ./internal/repository/ -run 'Esquema|Migracion008|Cerrar|Reabrir'
 go test ./internal/service/ -run 'CerrarProyecto|ReabrirProyecto|Cerrado'
 go test ./internal/app/ -run 'ProyectoCerrado'
-go test ./features/ -godog.tags=@300
+go test ./features/   # todos los escenarios; TestFeatures no admite filtrar por tag
 go test ./...
 ```
 

@@ -59,8 +59,10 @@ para que sus datos queden fijos y el equipo no los modifique por error.
 - **Cerrar**: el proyecto con su estado «Finalizado» y su fecha de cierre (la de hoy).
 - **Reabrir**: el proyecto con la fecha de cierre vacía y el estado recalculado con las
   reglas de HU-13.
-- **Consultar un proyecto** (detalle, estado, «Mis proyectos»): incluye la fecha de cierre,
-  vacía si el proyecto está abierto, para que la interfaz sepa si está en solo lectura.
+- **Consultar un proyecto** (detalle y «Mis proyectos», y la respuesta de crearlo y
+  editarlo): incluye la fecha de cierre, vacía si el proyecto está abierto, para que la
+  interfaz sepa si está en solo lectura. La consulta del estado mantiene su forma y da
+  «Finalizado».
 - **Escritura sobre un proyecto cerrado**: 409 «El proyecto está cerrado», sin cambios.
 
 ## Fuera de alcance
@@ -218,8 +220,9 @@ integra el proyecto, cerrar y reabrir responden el 403 de HU-21 y el proyecto no
   «Finalizado».
 - **FR-007**: WHEN el Scrum Master reabre un proyecto cerrado, el sistema SHALL dejar vacía
   la fecha de cierre y responder con el proyecto y su estado recalculado según HU-13.
-- **FR-008**: WHEN se consulta un proyecto (detalle, estado o «Mis proyectos»), el sistema
-  SHALL incluir su fecha de cierre, vacía si está abierto.
+- **FR-008**: WHEN se consulta un proyecto (detalle o «Mis proyectos») o se lo crea o
+  edita, el sistema SHALL incluir su fecha de cierre en la respuesta, vacía si está
+  abierto.
 
 **Basadas en estado**
 

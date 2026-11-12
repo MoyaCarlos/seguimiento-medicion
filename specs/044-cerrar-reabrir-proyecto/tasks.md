@@ -60,7 +60,7 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - §7: D16 **cerrada el 2026-11-11**, con la decisión del issue (cerrado ⇒ Finalizado con prioridad; abierto ⇒ HU-13 sin cambios; la propuesta «sin cierre manual no hay Finalizado» se descarta).
   - §8: fila de #300 → `proyectos.fecha_cierre`, migración 008.
   - §9: fila `008 | proyectos.fecha_cierre | #300 (spec 044)` en la tabla de números reservados, y los casos de `fecha_cierre` en el punto 6.
-  - Las filas de §5 van en T034, cuando existan las reglas.
+  - Las filas de §5 van en T036, cuando existan las reglas.
 - [ ] T006 COMMIT `docs: proyectos.fecha_cierre en MODELO-DE-DATOS.md, cierra D16 (Refs #300)`
 - [ ] T007 RED: lectura y escritura de `fecha_cierre` en `internal/repository/sqlite_project_test.go`.
   - Con un proyecto al que se le pone `fecha_cierre = '2026-11-11'` por SQL directo, verificar:
@@ -120,7 +120,8 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - con un Sprint `Activo` (sembrado por SQL) → `domain.ErrSprintActivoAlCerrarProyecto`, sin cerrar;
   - inexistente → `domain.ErrProyectoNoEncontrado`;
   - carrera: dos `Cerrar` seguidos sobre el mismo proyecto → el segundo `ErrProyectoYaCerrado` (FR-017).
-  - Lo mismo en un test del repositorio en memoria (`internal/repository/project_repository_en_memoria_test.go` si existe; si no, crearlo).
+  - Lo mismo en `internal/repository/project_repository_en_memoria_test.go`, salvo el caso del Sprint Activo: el repositorio en memoria no conoce los Sprints.
+  - Fakes de test que implementan `ProjectRepository`: sumar `Cerrar` a `fakeProjectRepository` (`internal/service/fakes_test.go`) y a `stubProjectRepository` (`internal/http/project_handler_test.go`). Un método de más compila aunque el puerto todavía no lo tenga, así que van en este RED y el GREEN queda solo con producción.
   - Confirmar que FALLA.
 - [ ] T020 [US1] COMMIT `RED: agregar tests de Cerrar en los repositorios de proyectos (falla)`
 - [ ] T021 [US1] GREEN: implementar `Cerrar` en los repositorios.
@@ -129,11 +130,12 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
     - no existe → `ErrProyectoNoEncontrado`;
     - `fecha_cierre` no nula → `ErrProyectoYaCerrado`;
     - si no → `ErrSprintActivoAlCerrarProyecto` ([research.md §5](research.md)).
-  - `internal/repository/project_repository_en_memoria.go`: lo mismo, bajo su mutex. Si el repositorio en memoria no conoce los Sprints, verifica solo «ya cerrado»; la regla del Sprint Activo la da el dominio (documentarlo en el comentario).
-  - Fakes que implementan `ProjectRepository` en tests: `fakeProjectRepository` (`internal/service/fakes_test.go`) y `stubProjectRepository` (`internal/http/project_handler_test.go`) suman `Cerrar`. Van en este GREEN porque sin ellos el árbol no compila; registrarlo en las notas si el revisor lo pide.
+  - `internal/repository/project_repository_en_memoria.go`: lo mismo, bajo su mutex. El repositorio en memoria no conoce los Sprints: verifica solo «ya cerrado» y la regla del Sprint Activo la da el dominio (documentarlo en el comentario).
   - `go test ./...` en verde.
 - [ ] T022 [US1] COMMIT `GREEN: Cerrar en los repositorios de proyectos con UPDATE condicional, test en verde`
-- [ ] T023 [US1] [US4] RED: en `internal/service/cerrar_proyecto_test.go`, `NewCerrarProyecto(proyectos repository.ProjectRepository, sprints repository.SprintRepository, reloj func() time.Time)` y `Ejecutar(ctx, proyectoID, usuarioID int64) (domain.Project, error)`, con `fakeProjectRepository` y `repository.NewSprintRepositoryEnMemoria()`:
+- [ ] T023 [US1] REFACTOR previo (sin cambio de comportamiento): en `internal/service/integrantes.go`, separar el chequeo de rol del guardia de escritura. Renombrar el cuerpo actual de `exigirIntegrante` a `verificarIntegrante` y el de `exigirScrumMaster` a `verificarScrumMaster`, y dejar `exigirIntegrante`/`exigirScrumMaster` llamándolas. `go test ./...` en verde antes y después ([research.md §1](research.md)).
+- [ ] T024 [US1] COMMIT `REFACTOR: separar verificarIntegrante/ScrumMaster de los guardias exigir*`
+- [ ] T025 [US1] [US4] RED: en `internal/service/cerrar_proyecto_test.go`, `NewCerrarProyecto(proyectos repository.ProjectRepository, sprints repository.SprintRepository, reloj func() time.Time)` y `Ejecutar(ctx, proyectoID, usuarioID int64) (domain.Project, error)`, con `fakeProjectRepository` y `repository.NewSprintRepositoryEnMemoria()`:
   - Scrum Master, proyecto abierto sin Sprints → devuelve el proyecto con `FechaCierre` = hoy del reloj, persistido;
   - con un Sprint `Activo` → `ErrSprintActivoAlCerrarProyecto` y el proyecto sigue abierto;
   - ya cerrado → `ErrProyectoYaCerrado`;
@@ -142,8 +144,8 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - US4: proyecto inexistente → `ErrProyectoNoEncontrado`;
   - orden: inexistente gana sobre no integrante; Product Builder sobre un proyecto ya cerrado → `ErrNoEsScrumMaster` (403 antes que 409).
   - Confirmar que FALLA.
-- [ ] T024 [US1] COMMIT `RED: agregar tests de CerrarProyecto (falla)`
-- [ ] T025 [US1] GREEN: crear `internal/service/cerrar_proyecto.go`.
+- [ ] T026 [US1] COMMIT `RED: agregar tests de CerrarProyecto (falla)`
+- [ ] T027 [US1] GREEN: crear `internal/service/cerrar_proyecto.go`.
   - Flujo de `Ejecutar`:
     1. `ObtenerPorID` (404);
     2. `verificarScrumMaster` (403, el chequeo de rol **sin** el de proyecto abierto);
@@ -151,10 +153,10 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
     4. `p.Cerrar(s.reloj(), sprints)` (409);
     5. `s.proyectos.Cerrar(ctx, id, *cerrado.FechaCierre)`;
     6. devolver `cerrado`.
-  - `verificarScrumMaster` todavía no existe con ese nombre: en este GREEN, en `internal/service/integrantes.go`, renombrar el cuerpo actual de `exigirScrumMaster` a `verificarScrumMaster` y dejar `exigirScrumMaster` llamándola (sin cambio de comportamiento; lo mismo con `verificarIntegrante`/`exigirIntegrante`).
+  - `verificarScrumMaster` ya existe desde el REFACTOR de T023.
   - `go test ./...` en verde.
-- [ ] T026 [US1] COMMIT `GREEN: implementar CerrarProyecto, test en verde`
-- [ ] T027 [US1] [US4] RED: handler y rutas de cerrar.
+- [ ] T028 [US1] COMMIT `GREEN: implementar CerrarProyecto, test en verde`
+- [ ] T029 [US1] [US4] RED: handler y rutas de cerrar.
   - En `internal/http/project_handler_test.go`, tests de `POST /projects/{id}/cerrar` (actor por sesión, como los demás tests del handler):
     - 200 con cuerpo `{..., "fecha_cierre":"2026-11-11", "estado":"Finalizado"}`;
     - 409 `{"mensaje":"El proyecto ya está cerrado"}`;
@@ -162,23 +164,23 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
     - 403 de Product Builder;
     - 404 de proyecto inexistente.
   - `GET /projects/{id}` y `GET /projects` incluyen `"fecha_cierre": null` en un proyecto abierto.
-  - En `internal/app/rutas_permisos_test.go`, `nivelesDeLaSpec`: `"POST /projects/{id}/cerrar": apihttp.SesionScrumMaster` (y `"POST /projects/{id}/reabrir"`, que se registra en US3: agregarlo recién en T051, para que este RED no dependa de US3).
-  - Ajustar los llamadores de `NewProjectHandler` en test (`internal/http/project_handler_test.go`, `features/steps_listado_proyectos.go`) a la firma nueva con `*service.CerrarProyecto` y `*service.ReabrirProyecto`; para el segundo, pasar `nil` hasta US3.
+  - En `internal/app/rutas_permisos_test.go`, `nivelesDeLaSpec`: `"POST /projects/{id}/cerrar": apihttp.SesionScrumMaster` (y `"POST /projects/{id}/reabrir"`, que se registra en US3: agregarlo recién en T053, para que este RED no dependa de US3).
+  - Ajustar los llamadores de `NewProjectHandler` en test (`internal/http/project_handler_test.go`, `features/steps_listado_proyectos.go`) a la firma nueva, que suma solo `*service.CerrarProyecto`. `ReabrirProyecto` todavía no existe: se agrega en US3 (T055).
   - Confirmar que FALLA.
-- [ ] T028 [US1] COMMIT `RED: agregar tests del handler POST /projects/{id}/cerrar (falla)`
-- [ ] T029 [US1] GREEN: implementar el handler y la ruta de cerrar.
+- [ ] T030 [US1] COMMIT `RED: agregar tests del handler POST /projects/{id}/cerrar (falla)`
+- [ ] T031 [US1] GREEN: implementar el handler y la ruta de cerrar.
   - `internal/http/project_dto.go`:
     - `FechaCierre *string \`json:"fecha_cierre"\`` en `proyectoResponse`, con `aProyectoResponse` formateando `YYYY-MM-DD`;
     - tipo `proyectoConEstadoResponse { proyectoResponse; Estado string \`json:"estado"\` }`.
   - `internal/http/project_handler.go`:
-    - `NewProjectHandler` recibe `cerrar *service.CerrarProyecto, reabrir *service.ReabrirProyecto`;
+    - `NewProjectHandler` recibe `cerrar *service.CerrarProyecto`;
     - handler `Cerrar`: `actorDeSesion`, id de la ruta, `Ejecutar`, `escribirError` ante error y 200 con el proyecto y `domain.CalcularEstadoProyecto(p, nil, time.Now())`. Un proyecto cerrado siempre da «Finalizado», así que no hacen falta los Sprints.
   - `internal/http/sprint_handler.go`, `escribirError`: `ErrProyectoYaCerrado` y `ErrSprintActivoAlCerrarProyecto` en el `case` de 409.
   - `internal/http/rutas.go`: `{"POST /projects/{id}/cerrar", SesionScrumMaster, h.Proyectos.Cerrar}`.
-  - `internal/app/app.go`: `service.NewCerrarProyecto(proyectos, sprintRepo, op.Ahora)` en `NewProjectHandler` (y `nil` para reabrir hasta US3).
+  - `internal/app/app.go`: `service.NewCerrarProyecto(proyectos, sprintRepo, op.Ahora)` en `NewProjectHandler`.
   - `gofmt -l .` sin salida; `go test ./...` en verde.
-- [ ] T030 [US1] COMMIT `GREEN: POST /projects/{id}/cerrar, test en verde`
-- [ ] T031 [US1] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T032 [US1] COMMIT `GREEN: POST /projects/{id}/cerrar, test en verde`
+- [ ] T033 [US1] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: el Scrum Master puede cerrar; el proyecto se ve «Finalizado». Todavía se puede escribir sobre él (US2).
 
@@ -190,25 +192,24 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
 
 **Independent Test**: `go test ./internal/service/ -run 'Integrantes|Votar|ImputarHoras' && go test ./internal/app/ -run ProyectoCerrado`.
 
-- [ ] T032 [US2] RED: el dato «cerrado» en los repositorios.
+- [ ] T034 [US2] RED: el dato «cerrado» en los repositorios.
   - En `internal/repository/sqlite_project_test.go`: `ProyectoCerrado(ctx, id) (bool, error)` da `true` con `fecha_cierre` y `false` sin ella, y también `false` para un id inexistente (el 404 lo resuelve el servicio antes).
   - El mismo test para `ProjectRepositoryEnMemoria`.
+  - Fakes de test que implementarán `IntegrantesRepository`, con `ProyectoCerrado(ctx, id) (bool, error)` (en este RED, como en T019):
+    - `fakeProjectRepository` (campo `cerrados map[int64]bool`) y `fakeIntegrantesRepository` (ídem) en `internal/service/fakes_test.go`;
+    - `integrantesConActor` y `scrumMasterConActor` → `false`;
+    - `stubProjectRepository` de `internal/http/project_handler_test.go` → `false`.
   - Confirmar que FALLA.
-- [ ] T033 [US2] COMMIT `RED: agregar tests de ProyectoCerrado en los repositorios (falla)`
-- [ ] T034 [US2] GREEN: implementar `ProyectoCerrado`.
+- [ ] T035 [US2] COMMIT `RED: agregar tests de ProyectoCerrado en los repositorios (falla)`
+- [ ] T036 [US2] GREEN: implementar `ProyectoCerrado`.
   - Implementarlo en `internal/repository/sqlite_project.go` (`SELECT fecha_cierre IS NOT NULL FROM proyectos WHERE id = ?`; `sql.ErrNoRows` → `false, nil`) y en `internal/repository/project_repository_en_memoria.go`.
   - Agregarlo a `IntegrantesRepository` (`internal/repository/registro_horas_repository.go`), con el comentario del puerto actualizado: «control de acceso de HU-21: integrantes y si el proyecto está cerrado (#300)».
-  - Fakes que implementan `IntegrantesRepository`:
-    - `fakeProjectRepository` (campo `cerrados map[int64]bool`) y `fakeIntegrantesRepository` (ídem);
-    - `integrantesConActor` y `scrumMasterConActor` → `false`;
-    - `stubProjectRepository` de `internal/http` → `false`.
-    - Van en este GREEN por compilación, como en T021.
   - En `MODELO-DE-DATOS.md` §5, dos filas:
     - «Cerrar solo sin Sprint Activo, y no dos veces»: base = `UPDATE` condicional; servicio = `Project.Cerrar` (409).
     - «Proyecto cerrado = solo lectura»: servicio = guardia `exigirProyectoAbierto` (409), con el límite de la escritura concurrente ([research.md §6](research.md)).
   - `go test ./...` en verde.
-- [ ] T035 [US2] COMMIT `GREEN: ProyectoCerrado en el puerto de control de acceso, test en verde`
-- [ ] T036 [US2] RED: el guardia.
+- [ ] T037 [US2] COMMIT `GREEN: ProyectoCerrado en el puerto de control de acceso, test en verde`
+- [ ] T038 [US2] RED: el guardia.
   - En `internal/service/integrantes_test.go`, con `fakeIntegrantesRepository` y un proyecto cerrado:
     - `exigirIntegrante` y `exigirScrumMaster` → `domain.ErrProyectoCerrado` (mensaje exacto `El proyecto está cerrado`) para un integrante o Scrum Master;
     - un no integrante sigue recibiendo `ErrNoEsIntegrante`, y un Product Builder en `exigirScrumMaster`, `ErrNoEsScrumMaster` (403 antes que 409);
@@ -217,8 +218,8 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - En `internal/service/votar_test.go` e `internal/service/imputar_horas_test.go`: un integrante que vota, o registra horas, en un proyecto cerrado → `ErrProyectoCerrado`, sin voto ni registro guardado.
   - En `internal/service/consultar_votacion_test.go` (o el test existente de la consulta): con el proyecto cerrado, un integrante **sí** consulta.
   - Confirmar que FALLA (no compila: `ErrProyectoCerrado` no existe).
-- [ ] T037 [US2] COMMIT `RED: agregar tests del guardia de proyecto cerrado (falla)`
-- [ ] T038 [US2] GREEN: implementar el guardia.
+- [ ] T039 [US2] COMMIT `RED: agregar tests del guardia de proyecto cerrado (falla)`
+- [ ] T040 [US2] GREEN: implementar el guardia.
   - `internal/domain/errors.go`: `ErrProyectoCerrado = errors.New("El proyecto está cerrado")`.
   - `internal/service/integrantes.go`: `exigirProyectoAbierto(ctx, integrantes, proyectoID)` (único lugar del chequeo, FR-005), llamada al final de `exigirIntegrante` y de `exigirScrumMaster`.
   - `internal/service/consultar_votacion.go`: pasa a `verificarIntegrante`.
@@ -226,8 +227,8 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - `internal/service/imputar_horas.go`: `exigirIntegrante` antes de `nombreDelIntegrante`.
   - `internal/http/sprint_handler.go`, `escribirError`: `ErrProyectoCerrado` → 409.
   - `go test ./...` en verde, incluido Godog sin cambios (ningún escenario existente cierra proyectos).
-- [ ] T039 [US2] COMMIT `GREEN: un proyecto cerrado rechaza las escrituras con 409, test en verde`
-- [ ] T040 [US2] RED/verificación: nuevo `internal/app/proyecto_cerrado_test.go`, sobre `clienteDePrueba`.
+- [ ] T041 [US2] COMMIT `GREEN: un proyecto cerrado rechaza las escrituras con 409, test en verde`
+- [ ] T042 [US2] RED/verificación: nuevo `internal/app/proyecto_cerrado_test.go`, sobre `clienteDePrueba`.
   - Arrange, vía la API, con `ana` como Scrum Master del proyecto 1:
     - historias 1 y 2;
     - Sprint 1 iniciado, con la historia 1 asignada y un defecto registrado;
@@ -240,8 +241,8 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
   - `TestProyectoCerrado_LasLecturasSiguen`: cada `GET` de `nivelesDeLaSpec` sobre el proyecto 1 responde 200, y `GET /projects/1/status` responde `{"estado":"Finalizado"}`.
   - Si los tres pasan de entrada (el guardia ya está), es la verificación de US2 y no hay `RED:` real. Commitear como `test: verificar que un proyecto cerrado rechaza todas las escrituras (Refs #300)`.
   - Si alguna ruta **no** da 409, ese caso es el `RED:`: commitear `RED: <ruta> escribe sobre un proyecto cerrado (falla)`, después un `GREEN:` que la pase por el guardia y avisar en la revisión.
-- [ ] T041 [US2] COMMIT según T040
-- [ ] T042 [US2] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T043 [US2] COMMIT según T042
+- [ ] T044 [US2] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: un proyecto cerrado es de solo lectura en toda la API.
 
@@ -253,51 +254,55 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
 
 **Independent Test**: `go test ./internal/domain/ ./internal/repository/ ./internal/service/ ./internal/http/ -run Reabrir`.
 
-- [ ] T043 [P] [US3] RED: en `internal/domain/project_test.go`, `TestProject_Reabrir`:
+- [ ] T045 [P] [US3] RED: en `internal/domain/project_test.go`, `TestProject_Reabrir`:
   - cerrado → copia con `FechaCierre == nil`, y el receptor no cambia;
   - abierto → `ErrProyectoNoCerrado`, mensaje exacto `El proyecto no está cerrado`;
   - un proyecto cerrado y reabierto con la fecha de fin vencida da «Finalizado» por HU-13 (ver el borde en la spec).
   - Confirmar que FALLA.
-- [ ] T044 [US3] COMMIT `RED: agregar tests de Project.Reabrir (falla)`
-- [ ] T045 [US3] GREEN: `ErrProyectoNoCerrado` en `internal/domain/errors.go` y `Reabrir` en `internal/domain/project.go`. `go test ./...` en verde.
-- [ ] T046 [US3] COMMIT `GREEN: implementar Project.Reabrir, test en verde`
-- [ ] T047 [US3] RED: repositorios y servicio de reabrir.
+- [ ] T046 [US3] COMMIT `RED: agregar tests de Project.Reabrir (falla)`
+- [ ] T047 [US3] GREEN: `ErrProyectoNoCerrado` en `internal/domain/errors.go` y `Reabrir` en `internal/domain/project.go`. `go test ./...` en verde.
+- [ ] T048 [US3] COMMIT `GREEN: implementar Project.Reabrir, test en verde`
+- [ ] T049 [US3] RED: repositorios y servicio de reabrir.
   - En `internal/repository/sqlite_project_test.go` (y en memoria), `Reabrir(ctx, id) error`:
     - cerrado → `fecha_cierre` `NULL`;
     - abierto → `domain.ErrProyectoNoCerrado`;
-    - inexistente → `ErrProyectoNoEncontrado`.
+    - inexistente → `ErrProyectoNoEncontrado`;
+    - carrera: dos `Reabrir` seguidos → el segundo `ErrProyectoNoCerrado` (FR-017).
+  - Fakes de test: `Reabrir` en `fakeProjectRepository` y `stubProjectRepository` (en este RED, como en T019).
   - En `internal/service/reabrir_proyecto_test.go`, `NewReabrirProyecto(proyectos repository.ProjectRepository)` y `Ejecutar(ctx, proyectoID, usuarioID)`:
     - el Scrum Master reabre → `FechaCierre == nil`, persistido;
     - abierto → `ErrProyectoNoCerrado`;
     - US4: Product Builder → `ErrNoEsScrumMaster`, no integrante → `ErrNoEsIntegrante`, inexistente → `ErrProyectoNoEncontrado`, y el proyecto sigue cerrado;
     - **reabrir no recibe `ErrProyectoCerrado`** (usa `verificarScrumMaster`).
   - Confirmar que FALLA.
-- [ ] T048 [US3] COMMIT `RED: agregar tests de Reabrir en repositorios y ReabrirProyecto (falla)`
-- [ ] T049 [US3] GREEN: implementar la reapertura.
+- [ ] T050 [US3] COMMIT `RED: agregar tests de Reabrir en repositorios y ReabrirProyecto (falla)`
+- [ ] T051 [US3] GREEN: implementar la reapertura.
   - `Reabrir` en `ProjectRepository`, en `internal/repository/sqlite_project.go` (`UPDATE proyectos SET fecha_cierre = NULL WHERE id = ? AND fecha_cierre IS NOT NULL`; con 0 filas, releer: `ErrProyectoNoEncontrado` o `ErrProyectoNoCerrado`) y en el repositorio en memoria.
-  - `Reabrir` en los fakes `fakeProjectRepository` y `stubProjectRepository`.
   - `internal/service/reabrir_proyecto.go`: `ObtenerPorID` → `verificarScrumMaster` → `p.Reabrir()` → `s.proyectos.Reabrir`.
   - `go test ./...` en verde.
-- [ ] T050 [US3] COMMIT `GREEN: implementar ReabrirProyecto, test en verde`
-- [ ] T051 [US3] [US4] RED: handler y rutas de reabrir.
+- [ ] T052 [US3] COMMIT `GREEN: implementar ReabrirProyecto, test en verde`
+- [ ] T053 [US3] [US4] RED: handler y rutas de reabrir.
   - En `internal/http/project_handler_test.go`, `POST /projects/{id}/reabrir`:
     - 200 con `"fecha_cierre": null` y `estado` según HU-13;
     - 409 `{"mensaje":"El proyecto no está cerrado"}`;
     - 403 de Product Builder;
     - 404.
   - `nivelesDeLaSpec`: `"POST /projects/{id}/reabrir": apihttp.SesionScrumMaster`.
-  - En `internal/app/proyecto_cerrado_test.go`, `TestProyectoCerrado_AlReabrirVuelveAAceptarEscrituras`: cerrar, reabrir y `POST /backlog` → 201.
-  - Reemplazar el `nil` de reabrir en los llamadores de `NewProjectHandler` en test por `service.NewReabrirProyecto(...)`.
+  - En `internal/app/proyecto_cerrado_test.go`:
+    - `TestProyectoCerrado_AlReabrirVuelveAAceptarEscrituras`: cerrar, reabrir y `POST /backlog` → 201;
+    - `TestProyectoCerrado_ReabrirDevuelveElEstadoPrevio` (SC-003): un proyecto «En curso» (con fecha de inicio pasada y fin futura respecto del reloj de prueba, sin Sprints) da el mismo `GET /projects/{id}/status` antes de cerrar y después de reabrir.
+  - Ajustar los llamadores de `NewProjectHandler` en test a la firma que suma `*service.ReabrirProyecto`, pasando `service.NewReabrirProyecto(...)`.
   - Confirmar que FALLA.
-- [ ] T052 [US3] COMMIT `RED: agregar tests del handler POST /projects/{id}/reabrir (falla)`
-- [ ] T053 [US3] GREEN: implementar el handler y la ruta de reabrir.
+- [ ] T054 [US3] COMMIT `RED: agregar tests del handler POST /projects/{id}/reabrir (falla)`
+- [ ] T055 [US3] GREEN: implementar el handler y la ruta de reabrir.
+  - `NewProjectHandler` suma `reabrir *service.ReabrirProyecto`.
   - Handler `Reabrir` en `internal/http/project_handler.go`: responde el proyecto con su estado recalculado, usando el servicio `ObtenerEstadoProyecto` existente para no duplicar la lectura de Sprints.
   - `ErrProyectoNoCerrado` → 409 en `escribirError`.
   - La ruta en `internal/http/rutas.go`.
   - Cableado en `internal/app/app.go`.
   - `go test ./...` en verde.
-- [ ] T054 [US3] COMMIT `GREEN: POST /projects/{id}/reabrir, test en verde`
-- [ ] T055 [US3] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [ ] T056 [US3] COMMIT `GREEN: POST /projects/{id}/reabrir, test en verde`
+- [ ] T057 [US3] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
 
 **Checkpoint**: las cuatro historias funcionan por la API.
 
@@ -305,7 +310,7 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
 
 ## Phase 6: Escenarios BDD (US1, US2, US3, US4)
 
-- [ ] T056 [US1] [US2] [US3] [US4] Escribir `features/cerrar_reabrir_proyecto.feature`.
+- [ ] T058 [US1] [US2] [US3] [US4] Escribir `features/cerrar_reabrir_proyecto.feature`.
   - Encabezado y Característica:
     - `# language: es` y el tag `@300`;
     - Característica con el Como/Quiero/Para de la Descripción de la spec;
@@ -325,29 +330,29 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
     - US3.3 reabrir uno abierto → 409;
     - US4 `Esquema` con «bruno» (403 «Solo el Scrum Master puede realizar esta acción»), un no integrante (403 «No sos integrante de este proyecto») y sin sesión (401), para cerrar y reabrir.
   - Si una categoría no aplica, decirlo en el comentario.
-- [ ] T057 [US1] [US2] [US3] [US4] Pasos: nuevo `features/steps_cerrar_reabrir_proyecto.go` con `InitializeScenarioCierreProyecto(ctx, permisos *permisosContext)`.
+- [ ] T059 [US1] [US2] [US3] [US4] Pasos: nuevo `features/steps_cerrar_reabrir_proyecto.go` con `InitializeScenarioCierreProyecto(ctx, permisos *permisosContext)`.
   - `InitializeScenarioPermisos` (`features/steps_permisos_por_rol.go:559`) pasa a devolver su `*permisosContext`, para reutilizar `proyectos`, `historias`, `pedir`/`esperar` y `noCambiaNada`.
   - Registrar el initializer en `features/features_test.go` con el comentario `// #300`.
   - Reutilizar los pasos existentes donde el texto coincide (`no cambia nada`, `el sistema rechaza la petición con (\d+)`, `el sistema responde 403 con el mensaje "..."`). Pasos nuevos solo para cerrar/reabrir y sus aserciones.
   - `go test ./features/` en verde, incluidos todos los escenarios existentes.
-- [ ] T058 COMMIT `Agregar escenarios BDD de cerrar y reabrir un proyecto (Refs #300)`
+- [ ] T060 COMMIT `Agregar escenarios BDD de cerrar y reabrir un proyecto (Refs #300)`
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T059 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores.
-- [ ] T060 Correr la validación manual de [quickstart.md](quickstart.md) (tabla de pasos con curl) y anotar el resultado en el PR.
-- [ ] T061 Revisar que `MODELO-DE-DATOS.md` (§2, §3, §4.1, §4.10, §5, §6, §7, §8 y §9) quedó consistente con la migración 008 y el código. Ante una contradicción, frenar y avisar.
-- [ ] T062 Marcar las tareas hechas en este archivo y commitear `docs: marcar las tareas de la spec 044 como hechas (Refs #300)`.
+- [ ] T061 `go build ./...`, `go vet ./...`, `gofmt -l .` (sin salida) y `go test ./...` sin errores.
+- [ ] T062 Correr la validación manual de [quickstart.md](quickstart.md) (tabla de pasos con curl) y anotar el resultado en el PR.
+- [ ] T063 Revisar que `MODELO-DE-DATOS.md` (§2, §3, §4.1, §4.10, §5, §6, §7, §8 y §9) quedó consistente con la migración 008 y el código. Ante una contradicción, frenar y avisar.
+- [ ] T064 Marcar las tareas hechas en este archivo y commitear `docs: marcar las tareas de la spec 044 como hechas (Refs #300)`.
 
 ---
 
 ## Dependencies & Execution Order
 
 - **Foundational (Phase 2)** → **US1 (Phase 3)** → **US2 (Phase 4)** → **US3 (Phase 5)** → **BDD (Phase 6)** → **Polish**.
-- US2 depende de US1: necesita un proyecto cerrado vía la API para el test de T040.
-- US3 depende de US1 y de T025: usa `verificarScrumMaster`, el renombre que se hace ahí.
+- US2 depende de US1: necesita un proyecto cerrado vía la API para el test de T042.
+- US3 depende de US1 y de T023: usa `verificarScrumMaster`, el renombre que se hace ahí.
 - Dentro de cada comportamiento: RED → COMMIT → GREEN → COMMIT → (REFACTOR → COMMIT). Nunca saltear el COMMIT del RED.
 - T005/T006 (documentación del esquema) pueden ir en cualquier momento antes del PR, pero se dejan junto a la migración para que el PR los traiga juntos.
 - Si el PR #304 (spec 043) se mergea antes, traer `main` a la rama antes de abrir el PR y resolver los conflictos en `internal/domain/project.go`, `MODELO-DE-DATOS.md` §5 y `features/steps_estado_proyecto.go` ([research.md §10](research.md)).
@@ -355,7 +360,7 @@ Sin tareas: la rama `feature/300-cerrar-reabrir-proyecto` ya existe y sale de `m
 ## Parallel Opportunities
 
 - T015 (tests de `Project.Cerrar`) y T011 (tests del estado) tocan archivos distintos del dominio. Se pueden escribir juntos, pero cada uno lleva su propio commit RED.
-- T043 (tests de `Project.Reabrir`) no depende de US2: se puede adelantar después de T018.
+- T045 (tests de `Project.Reabrir`) no depende de US2: se puede adelantar después de T018.
 - Entre fases no hay paralelismo real: los GREEN de los repositorios tocan los mismos fakes y el mismo `sqlite_project.go`.
 
 ## Implementation Strategy
