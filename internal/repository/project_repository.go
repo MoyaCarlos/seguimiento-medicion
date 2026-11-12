@@ -28,4 +28,7 @@ type ProjectRepository interface {
 	// Sprint Activo (#300). Si no lo cierra, devuelve ErrProyectoNoEncontrado,
 	// ErrProyectoYaCerrado o ErrSprintActivoAlCerrarProyecto.
 	Cerrar(ctx context.Context, id int64, fecha time.Time) error
+	// Reabrir deja vacía la fecha de cierre solo si el proyecto está cerrado
+	// (#300). Si no, devuelve ErrProyectoNoEncontrado o ErrProyectoNoCerrado.
+	Reabrir(ctx context.Context, id int64) error
 }

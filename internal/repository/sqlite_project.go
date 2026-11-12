@@ -176,6 +176,27 @@ func (r *SQLiteProjectRepository) Cerrar(ctx context.Context, id int64, fecha ti
 	return r.motivoDeNoCerrar(ctx, id)
 }
 
+// Reabrir deja vacía la fecha de cierre con un UPDATE condicional, así dos
+// reaperturas simultáneas no pasan las dos (#300).
+func (r *SQLiteProjectRepository) Reabrir(ctx context.Context, id int64) error {
+	resultado, err := r.db.ExecContext(ctx,
+		`UPDATE proyectos SET fecha_cierre = NULL WHERE id = ? AND fecha_cierre IS NOT NULL`, id)
+	if err != nil {
+		return fmt.Errorf("reabrir proyecto: %w", err)
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("reabrir proyecto: %w", err)
+	}
+	if afectadas == 1 {
+		return nil
+	}
+	if _, err := r.ObtenerPorID(ctx, id); err != nil {
+		return err
+	}
+	return domain.ErrProyectoNoCerrado
+}
+
 // ProyectoCerrado informa si el proyecto tiene fecha de cierre (#300).
 func (r *SQLiteProjectRepository) ProyectoCerrado(ctx context.Context, id int64) (bool, error) {
 	var cerrado bool

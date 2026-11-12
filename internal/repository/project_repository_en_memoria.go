@@ -106,6 +106,22 @@ func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Proj
 	return nil
 }
 
+// Reabrir deja vacía la fecha de cierre de un proyecto cerrado (#300).
+func (r *ProjectRepositoryEnMemoria) Reabrir(_ context.Context, id int64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	p, ok := r.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre == nil {
+		return domain.ErrProyectoNoCerrado
+	}
+	p.FechaCierre = nil
+	r.proyectos[id] = p
+	return nil
+}
+
 // ProyectoCerrado informa si el proyecto tiene fecha de cierre (#300).
 func (r *ProjectRepositoryEnMemoria) ProyectoCerrado(_ context.Context, id int64) (bool, error) {
 	r.mu.Lock()
