@@ -281,3 +281,37 @@ describe('panel del proyecto', () => {
     expect(getComputedStyle(parrafo).getPropertyValue('overflow-wrap')).toBe('anywhere')
   })
 })
+
+describe('pretítulo del panel', () => {
+  function responderTodo() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(JSON.stringify(url.endsWith('/status') ? { estado: 'Planificado' } : proyecto), { status: 200 }),
+        ),
+      ),
+    )
+  }
+
+  it('Dado el panel principal, cuando se abre, entonces «Panel principal» va encima del título', async () => {
+    responderTodo()
+    abrirNavegable()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Panel del proyecto' })
+    const pretitulo = screen.getByText('Panel principal')
+
+    expect(pretitulo.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getAllByText('Panel principal')).toHaveLength(1)
+  })
+
+  it('Dado «Editar proyecto», cuando se abre, entonces no muestra «Panel principal»', async () => {
+    responderTodo()
+    const router = abrirNavegable()
+    await router.navigate('/projects/3/proyecto/edit')
+
+    await screen.findByRole('heading', { name: 'Editar proyecto' })
+
+    expect(screen.queryByText('Panel principal')).toBeNull()
+  })
+})
