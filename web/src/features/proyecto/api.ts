@@ -1,4 +1,4 @@
-import { get, post, put } from '../../compartido/api/client'
+import { descargar, get, post, put } from '../../compartido/api/client'
 import { aHorasPorStoryPoint } from './validacion'
 import type { DatosProyecto } from './validacion'
 
@@ -53,6 +53,9 @@ export const obtenerProyecto = (id: string) =>
 
 export const obtenerEstadoProyecto = (id: string) =>
   get<{ estado: EstadoProyecto }>(`/projects/${id}/status`)
+
+export const descargarReporteProyecto = (id: string) =>
+  descargar(`/projects/${id}/reporte`)
 
 export const editarProyecto = (id: string, datos: ProyectoEditado) =>
   put<Proyecto>(`/projects/${id}`, datos)

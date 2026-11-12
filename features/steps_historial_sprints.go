@@ -56,7 +56,7 @@ func (p *pasosHistorial) preparar() error {
 		calcular:   calcular,
 		listar:     service.NewConsultarHistorialSprints(calcular, sprints),
 		detallar:   service.NewConsultarDetalleSprint(proyectos, sprints, calcular, repository.NewSQLiteHistorialSprintRepository(db)),
-		editarHist: service.NewEditarHistoria(repository.NewSQLiteBacklogRepository(db), sprints),
+		editarHist: service.NewEditarHistoria(repository.NewSQLiteBacklogRepository(db), sprints, repository.NewSQLiteProjectRepository(db)),
 		sprints:    map[string]int64{},
 		historias:  map[string]int64{},
 	}
@@ -273,8 +273,12 @@ func (p *pasosHistorial) defectoEntreSprints(descripcion, deteccion, resolucion 
 // historiaPasaATener edita los Story Points con el caso de uso real: la
 // historia arrastrada volvió al Product Backlog, así que D2b lo permite.
 func (p *pasosHistorial) historiaPasaATener(titulo string, puntos int) error {
-	_, err := p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
-		ID: p.historias[titulo], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: &puntos,
+	actor, err := integranteDeLaHistoria(p.db, p.historias[titulo])
+	if err != nil {
+		return err
+	}
+	_, err = p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
+		ID: p.historias[titulo], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: &puntos, UsuarioID: actor,
 	})
 	return err
 }

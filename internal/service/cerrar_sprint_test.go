@@ -33,7 +33,7 @@ func puntos(v int) *int { return &v }
 func sembrarSprintActivo(t *testing.T, repo repository.SprintRepository, proyectoID int64) domain.Sprint {
 	t.Helper()
 	pendiente := sembrarSprintPendiente(t, repo, proyectoID)
-	activo, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(pendiente.ID))
+	activo, err := NewIniciarSprint(repo, scrumMasterConActor{}).Ejecutar(context.Background(), inputValido(pendiente.ID))
 	if err != nil {
 		t.Fatalf("no se pudo iniciar el Sprint: %v", err)
 	}
@@ -50,7 +50,7 @@ func TestCerrarSprint_FinalizaYArrastraLasNoCompletadas(t *testing.T) {
 		historia(4, domain.EstadoNueva, sprint.ID+100, puntos(5)),
 	}}
 
-	resultado, err := NewCerrarSprint(sprints, historias).Ejecutar(context.Background(), sprint.ID)
+	resultado, err := NewCerrarSprint(sprints, historias, scrumMasterConActor{}).Ejecutar(context.Background(), sprint.ID, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -74,7 +74,7 @@ func TestCerrarSprint_SinHistoriasAsignadas(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sembrarSprintActivo(t, sprints, 1)
 
-	resultado, err := NewCerrarSprint(sprints, &historiasEnMemoria{}).Ejecutar(context.Background(), sprint.ID)
+	resultado, err := NewCerrarSprint(sprints, &historiasEnMemoria{}, scrumMasterConActor{}).Ejecutar(context.Background(), sprint.ID, actorDePrueba)
 	if err != nil {
 		t.Fatalf("cerrar un Sprint sin historias no es un error: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestCerrarSprint_FalloAlPersistirNoCierraElSprint(t *testing.T) {
 	deOtroProyecto.ProyectoID = 2
 	historias := &historiasEnMemoria{items: []domain.BacklogItem{historia(2, domain.EstadoNueva, sprint.ID, nil), deOtroProyecto}}
 
-	_, err := NewCerrarSprint(sprints, historias).Ejecutar(context.Background(), sprint.ID)
+	_, err := NewCerrarSprint(sprints, historias, scrumMasterConActor{}).Ejecutar(context.Background(), sprint.ID, actorDePrueba)
 
 	if !errors.Is(err, repository.ErrIntegridadReferencial) {
 		t.Fatalf("se esperaba ErrIntegridadReferencial, se obtuvo %v", err)
@@ -108,7 +108,7 @@ func TestCerrarSprint_SoloSiEstaActivo(t *testing.T) {
 	pendiente := sembrarSprintPendiente(t, sprints, 1)
 	historias := &historiasEnMemoria{items: []domain.BacklogItem{historia(1, domain.EstadoNueva, pendiente.ID, nil)}}
 
-	_, err := NewCerrarSprint(sprints, historias).Ejecutar(context.Background(), pendiente.ID)
+	_, err := NewCerrarSprint(sprints, historias, scrumMasterConActor{}).Ejecutar(context.Background(), pendiente.ID, actorDePrueba)
 
 	esperarValidacion(t, err, "estado")
 	if got := sprints.Arrastradas(pendiente.ID); len(got) != 0 {
@@ -120,8 +120,8 @@ func TestCerrarSprint_SoloSiEstaActivo(t *testing.T) {
 }
 
 func TestCerrarSprint_NoEncontrado(t *testing.T) {
-	_, err := NewCerrarSprint(repository.NewSprintRepositoryEnMemoria(), &historiasEnMemoria{}).
-		Ejecutar(context.Background(), 999)
+	_, err := NewCerrarSprint(repository.NewSprintRepositoryEnMemoria(), &historiasEnMemoria{}, scrumMasterConActor{}).
+		Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Fatalf("se esperaba ErrSprintNoEncontrado, se obtuvo %v", err)

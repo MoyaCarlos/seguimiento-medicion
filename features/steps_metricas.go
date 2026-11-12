@@ -55,7 +55,7 @@ func (p *pasosMetricas) preparar() error {
 		historiasBD: historias,
 		calcular:    service.NewCalcularMetricas(proyectos, repository.NewSQLiteMetricasRepository(db)),
 		editar:      service.NewEditarProyecto(proyectos),
-		editarHist:  service.NewEditarHistoria(historias, sprints),
+		editarHist:  service.NewEditarHistoria(historias, sprints, repository.NewSQLiteProjectRepository(db)),
 		registrar:   service.NewRegistrarEstimacion(historias, proyectos, repository.NewSQLiteVotacionRepository(db), sprints),
 		sprints:     map[string]int64{},
 		historias:   map[string]int64{},
@@ -305,8 +305,12 @@ func (p *pasosMetricas) rondaRevelada(nombre string) error {
 }
 
 func (p *pasosMetricas) editarHistoria(nombre, titulo string, puntos *int) error {
-	_, err := p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
-		ID: p.historias[nombre], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: puntos,
+	actor, err := integranteDeLaHistoria(p.db, p.historias[nombre])
+	if err != nil {
+		return err
+	}
+	_, err = p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
+		ID: p.historias[nombre], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: puntos, UsuarioID: actor,
 	})
 	return err
 }
@@ -350,6 +354,7 @@ func (p *pasosMetricas) consultarInexistente(id int) error {
 func (p *pasosMetricas) editarProyecto(enviadas bool, valor *string) error {
 	_, err := p.editar.Ejecutar(context.Background(), service.EditarProyectoInput{
 		ID: p.proyectoID, Nombre: "Proyecto", HorasPorSPEnviadas: enviadas, HorasPorSP: valor,
+		UsuarioID: scrumMasterDelProyecto(p.db, p.proyectoID),
 	})
 	return err
 }

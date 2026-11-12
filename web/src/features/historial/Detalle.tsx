@@ -1,8 +1,9 @@
 import { useCallback } from 'react'
 import { Link, useParams } from 'react-router'
+import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { obtenerDetalleSprint } from './api'
+import { descargarReporteSprint, obtenerDetalleSprint } from './api'
 import { conUnidad, desviacion, numero, periodo } from './formato'
 import { BarraAvance, Chip, Metrica } from './Piezas'
 import type { DefectoDeSprint, DetalleSprint, HistoriaComprometida } from './tipos'
@@ -39,6 +40,9 @@ function Contenido({ sprint, proyectoId }: { sprint: DetalleSprint; proyectoId: 
           <p className="historial-goal historial-goal--detalle">{sprint.sprint_goal}</p>
           <p className="historial-fechas">{periodo(sprint.fecha_inicio, sprint.fecha_fin)}</p>
         </div>
+        <BotonExportar descargar={() => descargarReporteSprint(String(sprint.id))}>
+          Exportar a PDF
+        </BotonExportar>
       </header>
 
       <section className="historial-tarjeta historial-seccion" aria-labelledby="historial-metricas">

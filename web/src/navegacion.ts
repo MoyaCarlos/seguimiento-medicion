@@ -1,9 +1,11 @@
-export const navegacion = [
-  { ruta: 'proyecto', texto: 'Proyecto' },
-  { ruta: 'backlog', texto: 'Historias' },
-  { ruta: 'sprints', texto: 'Sprints' },
-  { ruta: 'defectos', texto: 'Defectos' },
-  { ruta: 'status', texto: 'Estado' },
-  { ruta: 'dashboard', texto: 'Dashboard' },
-  { ruta: 'historial', texto: 'Historial de Sprints' },
+import type { NombreIcono } from './compartido/componentes/Icono'
+
+export const navegacion: { ruta: string; texto: string; icono: NombreIcono }[] = [
+  { ruta: 'proyecto', texto: 'Proyecto', icono: 'panel' },
+  { ruta: 'backlog', texto: 'Historias', icono: 'lista' },
+  { ruta: 'sprints', texto: 'Sprints', icono: 'bandera' },
+  { ruta: 'defectos', texto: 'Defectos', icono: 'defecto' },
+  { ruta: 'status', texto: 'Estado', icono: 'estado' },
+  { ruta: 'dashboard', texto: 'Dashboard', icono: 'barras' },
+  { ruta: 'historial', texto: 'Historial de Sprints', icono: 'historial' },
 ]

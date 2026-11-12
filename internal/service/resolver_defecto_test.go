@@ -44,7 +44,7 @@ func (e escenarioResolver) pendiente(t *testing.T, deteccion domain.Sprint) doma
 }
 
 func (e escenarioResolver) resolver() *ResolverDefecto {
-	return NewResolverDefecto(e.defectos, e.sprints)
+	return NewResolverDefecto(e.defectos, e.sprints, integrantesConActor{})
 }
 
 func TestResolverDefecto_ResuelveEnElSprintActivo(t *testing.T) {
@@ -52,7 +52,7 @@ func TestResolverDefecto_ResuelveEnElSprintActivo(t *testing.T) {
 	activo := e.sprint(t, 1, domain.SprintActivo)
 	d := e.pendiente(t, activo)
 
-	detalle, err := e.resolver().Ejecutar(context.Background(), d.ID)
+	detalle, err := e.resolver().Ejecutar(context.Background(), d.ID, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -76,7 +76,7 @@ func TestResolverDefecto_DetectadoEnUnSprintFinalizado(t *testing.T) {
 	activo := e.sprint(t, 1, domain.SprintActivo)
 	d := e.pendiente(t, finalizado)
 
-	detalle, err := e.resolver().Ejecutar(context.Background(), d.ID)
+	detalle, err := e.resolver().Ejecutar(context.Background(), d.ID, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -90,7 +90,7 @@ func TestResolverDefecto_Inexistente(t *testing.T) {
 	e := nuevoEscenarioResolver()
 	e.sprint(t, 1, domain.SprintActivo)
 
-	_, err := e.resolver().Ejecutar(context.Background(), 999)
+	_, err := e.resolver().Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrDefectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrDefectoNoEncontrado, se obtuvo %v", err)
@@ -106,7 +106,7 @@ func TestResolverDefecto_YaResuelto(t *testing.T) {
 	d := e.pendiente(t, activo)
 	e.defectos.defectos[0].Estado, e.defectos.defectos[0].SprintResolucionID = domain.DefectoResuelto, &activo.ID
 
-	_, err := e.resolver().Ejecutar(context.Background(), d.ID)
+	_, err := e.resolver().Ejecutar(context.Background(), d.ID, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrDefectoYaResuelto) {
 		t.Fatalf("se esperaba ErrDefectoYaResuelto, se obtuvo %v", err)
@@ -133,7 +133,7 @@ func TestResolverDefecto_SinSprintActivo(t *testing.T) {
 			e.sprint(t, c.otroSprintEn, c.estadoDelOtro)
 			d := e.pendiente(t, deteccion)
 
-			_, err := e.resolver().Ejecutar(context.Background(), d.ID)
+			_, err := e.resolver().Ejecutar(context.Background(), d.ID, actorDePrueba)
 
 			if !errors.Is(err, domain.ErrSinSprintActivoParaResolver) {
 				t.Fatalf("se esperaba ErrSinSprintActivoParaResolver, se obtuvo %v", err)
@@ -152,7 +152,7 @@ func TestResolverDefecto_PropagaLasCarrerasDelRepositorio(t *testing.T) {
 			d := e.pendiente(t, e.sprint(t, 1, domain.SprintActivo))
 			e.defectos.errResolver = carrera
 
-			_, err := e.resolver().Ejecutar(context.Background(), d.ID)
+			_, err := e.resolver().Ejecutar(context.Background(), d.ID, actorDePrueba)
 
 			if !errors.Is(err, carrera) {
 				t.Fatalf("se esperaba %v, se obtuvo %v", carrera, err)

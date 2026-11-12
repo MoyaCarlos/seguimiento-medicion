@@ -25,6 +25,10 @@ func NewHorasHandler(
 
 // Imputar atiende POST /backlog/{id}/horas.
 func (h *HorasHandler) Imputar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -44,7 +48,7 @@ func (h *HorasHandler) Imputar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	}
 	detalle, err := h.imputar.Ejecutar(r.Context(), service.ImputarHorasInput{
 		HistoriaID:   id,
-		IntegranteID: req.IntegranteID,
+		IntegranteID: actor,
 		Fecha:        req.Fecha,
 		Actividad:    req.Actividad,
 		Horas:        textoDeHoras(req.Horas),

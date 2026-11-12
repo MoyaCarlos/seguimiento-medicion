@@ -65,6 +65,36 @@ func (r *SQLiteUserRepository) ObtenerPorNombreNormalizado(ctx context.Context, 
 	return &u, nil
 }
 
+// ListarRegistrados devuelve los usuarios con contraseña, ordenados por nombre
+// normalizado. Nunca lee la contraseña.
+func (r *SQLiteUserRepository) ListarRegistrados(ctx context.Context) ([]domain.User, error) {
+	filas, err := r.db.QueryContext(ctx,
+		`SELECT id, nombre, nombre_normalizado, creado_en FROM usuarios
+		 WHERE contrasena_hash IS NOT NULL
+		 ORDER BY nombre_normalizado`)
+	if err != nil {
+		return nil, fmt.Errorf("listar usuarios: %w", err)
+	}
+	defer filas.Close()
+
+	usuarios := make([]domain.User, 0)
+	for filas.Next() {
+		var (
+			u         domain.User
+			createdAt string
+		)
+		if err := filas.Scan(&u.ID, &u.Nombre, &u.NombreNormalizado, &createdAt); err != nil {
+			return nil, fmt.Errorf("leer usuario: %w", err)
+		}
+		u.CreadoEn = parsearTiempo(createdAt)
+		usuarios = append(usuarios, u)
+	}
+	if err := filas.Err(); err != nil {
+		return nil, fmt.Errorf("listar usuarios: %w", err)
+	}
+	return usuarios, nil
+}
+
 func parsearTiempo(valor string) time.Time {
 	t, err := time.Parse(time.RFC3339, valor)
 	if err != nil {

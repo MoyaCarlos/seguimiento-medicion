@@ -3,7 +3,6 @@ package http
 import (
 	"encoding/json"
 	nethttp "net/http"
-	"strconv"
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
@@ -25,105 +24,73 @@ func NewVotacionHandler(obtenerHistoria *service.ObtenerHistoria, votar *service
 	return &VotacionHandler{obtenerHistoria: obtenerHistoria, votar: votar, consultar: consultar, revelar: revelar, iniciar: iniciar, registrar: registrar, abrir: abrir, historial: historial}
 }
 
-// Registrar agrega las rutas de la votación al mux.
-func (h *VotacionHandler) Registrar(mux *nethttp.ServeMux) {
-	mux.HandleFunc("GET /backlog/{id}/votacion", h.Consultar)
-	mux.HandleFunc("POST /backlog/{id}/votacion", h.Iniciar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/votos", h.Votar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/revelar", h.Revelar)
-	mux.HandleFunc("POST /backlog/{id}/votacion/estimacion", h.RegistrarEstimacion)
-	mux.HandleFunc("POST /backlog/{id}/votacion/rondas", h.AbrirRonda)
-	mux.HandleFunc("GET /backlog/{id}/votacion/rondas", h.Historial)
-}
-
 // Iniciar atiende POST /backlog/{id}/votacion. Responde con la ronda 1 tal
 // como la ve quien la inició.
 func (h *VotacionHandler) Iniciar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
-	var req actorRequest
-	if !leerPedido(w, r, &req) {
-		return
-	}
-
-	if _, err := h.iniciar.Ejecutar(r.Context(), id, req.UsuarioID); err != nil {
+	if _, err := h.iniciar.Ejecutar(r.Context(), id, actor); err != nil {
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusCreated, id, actor)
 }
 
-// Votar atiende POST /backlog/{id}/votacion/votos. Responde con la vista de
-// quien votó.
+// Votar atiende POST /backlog/{id}/votacion/votos. El voto queda a nombre de la
+// sesión y la respuesta es la vista de quien votó.
 func (h *VotacionHandler) Votar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
 	var req votoRequest
-	if !leerPedido(w, r, &req) {
+	if !leerCuerpo(w, r, &req) {
 		return
 	}
-
-	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: req.UsuarioID, Valor: req.valor()}); err != nil {
+	if _, err := h.votar.Ejecutar(r.Context(), service.VotarInput{HistoriaID: id, UsuarioID: actor, Valor: req.valor()}); err != nil {
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, nethttp.StatusOK, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusOK, id, actor)
 }
 
 // Revelar atiende POST /backlog/{id}/votacion/revelar.
 func (h *VotacionHandler) Revelar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
-	var req actorRequest
-	if !leerPedido(w, r, &req) {
-		return
-	}
-
-	if _, err := h.revelar.Ejecutar(r.Context(), id, req.UsuarioID, time.Now()); err != nil {
+	if _, err := h.revelar.Ejecutar(r.Context(), id, actor, time.Now()); err != nil {
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, nethttp.StatusOK, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusOK, id, actor)
 }
 
-// Consultar atiende GET /backlog/{id}/votacion?usuario_id=N. Sin usuario_id
-// todos los votos de una ronda oculta quedan ocultos.
+// Consultar atiende GET /backlog/{id}/votacion: la vista de quien tiene la
+// sesión. Un usuario_id en la query se ignora (escenario 7 de HU-21).
 func (h *VotacionHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
-	var consultanteID int64
-	if valor := r.URL.Query().Get("usuario_id"); valor != "" {
-		n, err := strconv.ParseInt(valor, 10, 64)
-		if err != nil || n <= 0 {
-			escribirUsuarioInvalido(w)
-			return
-		}
-		consultanteID = n
-	}
-	h.responderVista(w, r, nethttp.StatusOK, id, consultanteID)
+	h.responderVista(w, r, nethttp.StatusOK, id, actor)
 }
 
 // RegistrarEstimacion atiende POST /backlog/{id}/votacion/estimacion. Responde
 // con la historia.
 func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
 	var req estimacionRequest
-	if !leerPedido(w, r, &req) {
+	if !leerCuerpo(w, r, &req) {
 		return
 	}
-
-	historia, err := h.registrar.Ejecutar(r.Context(), id, req.UsuarioID, req.valor())
+	historia, err := h.registrar.Ejecutar(r.Context(), id, actor, req.valor())
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -134,20 +101,15 @@ func (h *VotacionHandler) RegistrarEstimacion(w nethttp.ResponseWriter, r *netht
 // AbrirRonda atiende POST /backlog/{id}/votacion/rondas. Responde con la ronda
 // nueva tal como la ve quien la abrió.
 func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Request) {
-	id, ok := h.historiaDeRuta(w, r)
+	actor, id, ok := h.actorEHistoria(w, r)
 	if !ok {
 		return
 	}
-	var req actorRequest
-	if !leerPedido(w, r, &req) {
-		return
-	}
-
-	if _, err := h.abrir.Ejecutar(r.Context(), id, req.UsuarioID); err != nil {
+	if _, err := h.abrir.Ejecutar(r.Context(), id, actor); err != nil {
 		escribirError(w, err)
 		return
 	}
-	h.responderVista(w, r, nethttp.StatusCreated, id, req.UsuarioID)
+	h.responderVista(w, r, nethttp.StatusCreated, id, actor)
 }
 
 // Historial atiende GET /backlog/{id}/votacion/rondas.
@@ -187,19 +149,21 @@ func (h *VotacionHandler) responderVista(w nethttp.ResponseWriter, r *nethttp.Re
 	escribirJSON(w, status, aRespuestaVotacion(vista))
 }
 
-// leerPedido decodifica el cuerpo y exige quien actúa (usuario_id > 0).
-func leerPedido(w nethttp.ResponseWriter, r *nethttp.Request, req interface{ usuario() int64 }) bool {
+// actorEHistoria resuelve quién actúa (401 sin sesión) y la historia de la ruta.
+func (h *VotacionHandler) actorEHistoria(w nethttp.ResponseWriter, r *nethttp.Request) (int64, int64, bool) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return 0, 0, false
+	}
+	id, ok := h.historiaDeRuta(w, r)
+	return actor, id, ok
+}
+
+// leerCuerpo decodifica el cuerpo JSON; si no es válido responde 400.
+func leerCuerpo(w nethttp.ResponseWriter, r *nethttp.Request, req any) bool {
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return false
 	}
-	if req.usuario() <= 0 {
-		escribirUsuarioInvalido(w)
-		return false
-	}
 	return true
-}
-
-func escribirUsuarioInvalido(w nethttp.ResponseWriter) {
-	escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: "usuario_id", Mensaje: "el usuario es obligatorio"})
 }

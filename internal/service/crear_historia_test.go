@@ -26,14 +26,17 @@ func (f *fakeBacklogRepository) Guardar(_ context.Context, item domain.BacklogIt
 func intPtr(v int) *int { return &v }
 
 func proyectoValido() *fakeProjectRepository {
-	return &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
+	return &fakeProjectRepository{
+		proyectos: map[int64]domain.Project{1: {ID: 1}},
+		miembros:  []domain.Membership{{ProjectID: 1, UserID: actorDePrueba, Role: domain.RolProductBuilder}},
+	}
 }
 
 func TestCrearHistoriaBacklog_Ejecutar_Exitosa(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
 
-	resultado, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	resultado, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  1,
 		Titulo:      "Como usuario quiero iniciar sesión",
 		Descripcion: "Autenticación con email y contraseña",
@@ -57,7 +60,7 @@ func TestCrearHistoriaBacklog_Ejecutar_NoPersisteSiEsInvalida(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  1,
 		Titulo:      "   ",
 		Descripcion: "Descripción",
@@ -82,7 +85,7 @@ func TestCrearHistoriaBacklog_Ejecutar_ValorNegocio(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
 
-	if _, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	if _, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:   1,
 		Titulo:       "Con valor",
 		Descripcion:  "Descripción",
@@ -97,7 +100,7 @@ func TestCrearHistoriaBacklog_Ejecutar_ValorNegocio(t *testing.T) {
 
 	repo2 := &fakeBacklogRepository{}
 	servicio2 := NewCrearHistoriaBacklog(repo2, proyectoValido())
-	if _, err := servicio2.Ejecutar(context.Background(), CrearHistoriaInput{
+	if _, err := servicio2.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  1,
 		Titulo:      "Sin valor",
 		Descripcion: "Descripción",
@@ -114,7 +117,7 @@ func TestCrearHistoriaBacklog_Ejecutar_ProyectoInexistente(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, &fakeProjectRepository{})
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  999,
 		Titulo:      "Historia huérfana",
 		Descripcion: "No debe persistir",
@@ -133,7 +136,7 @@ func TestCrearHistoriaBacklog_Ejecutar_PropagaErrorDeProyecto(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, &fakeProjectRepository{err: errFalloPersistencia})
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  1,
 		Titulo:      "Historia válida",
 		Descripcion: "Descripción válida",
@@ -147,25 +150,23 @@ func TestCrearHistoriaBacklog_Ejecutar_PropagaErrorDeProyecto(t *testing.T) {
 	}
 }
 
+// HU-21 (FR-006): el proyecto inexistente (404) se informa antes que la
+// validación de la historia (400).
 func TestCrearHistoriaBacklog_Ejecutar_InvalidaConProyectoInexistente(t *testing.T) {
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, &fakeProjectRepository{})
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:  999,
 		Titulo:      "   ",
 		Descripcion: "Descripción válida",
 		Prioridad:   domain.PrioridadMust,
 	})
-	var verr domain.ValidationError
-	if !errors.As(err, &verr) {
-		t.Fatalf("se esperaba ValidationError, se obtuvo %T (%v)", err, err)
-	}
-	if verr.Campo != "titulo" {
-		t.Errorf("se esperaba campo titulo, se obtuvo %q", verr.Campo)
+	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %T (%v)", err, err)
 	}
 	if len(repo.guardados) != 0 {
-		t.Errorf("no se debía persistir ninguna historia, se guardaron %d", len(repo.guardados))
+		t.Error("no se debía persistir la historia")
 	}
 }
 
@@ -192,7 +193,7 @@ func TestCrearHistoriaBacklog_Ejecutar_CriteriosAceptacion(t *testing.T) {
 			repo := &fakeBacklogRepository{}
 			servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
 
-			resultado, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+			resultado, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 				ProyectoID:          1,
 				Titulo:              "Título",
 				Descripcion:         "Descripción",
@@ -220,7 +221,7 @@ func TestCrearHistoriaBacklog_Ejecutar_CriteriosAceptacionDemasiadoLargos(t *tes
 	servicio := NewCrearHistoriaBacklog(repo, proyectoValido())
 	demasiadoLargo := strings.Repeat("a", 2001)
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:          1,
 		Titulo:              "Título",
 		Descripcion:         "Descripción",
@@ -243,7 +244,7 @@ func TestCrearHistoriaBacklog_Ejecutar_ProyectoInexistenteConCriterios(t *testin
 	repo := &fakeBacklogRepository{}
 	servicio := NewCrearHistoriaBacklog(repo, &fakeProjectRepository{})
 
-	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{
+	_, err := servicio.Ejecutar(context.Background(), CrearHistoriaInput{UsuarioID: actorDePrueba,
 		ProyectoID:          999,
 		Titulo:              "Historia huérfana",
 		Descripcion:         "No debe persistir",

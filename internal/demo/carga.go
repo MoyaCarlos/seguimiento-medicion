@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	sqlite "modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
@@ -21,6 +22,19 @@ var (
 	ErrIdOcupado = errors.New("el id 25 ya lo usa otro proyecto")
 )
 
+// ErrUsuarioExistente indica que un usuario de la demostración ya existe.
+type ErrUsuarioExistente struct{ Nombre string }
+
+func (e ErrUsuarioExistente) Error() string {
+	return fmt.Sprintf("ya existe el usuario %s", e.Nombre)
+}
+
+// Hasheador deriva el hash de la contraseña de demostración (lo implementa el
+// servicio de contraseñas de HU-20).
+type Hasheador interface {
+	Hashear(contrasena string) (string, error)
+}
+
 // Resumen cuenta lo que creó la carga.
 type Resumen struct {
 	ProyectoID     int64 `json:"proyecto_id"`
@@ -31,27 +45,30 @@ type Resumen struct {
 	RegistrosHoras int   `json:"registros_horas"`
 	Rondas         int   `json:"rondas_votacion"`
 	Votos          int   `json:"votos"`
+	Defectos       int   `json:"defectos"`
 }
 
 // carga es el estado compartido entre los bloques de una misma transacción.
 type carga struct {
-	ahora     time.Time
-	hoy       time.Time
-	usuarios  map[string]int64
-	sprints   []int64
-	historias map[string]int64
-	resumen   Resumen
+	ahora          time.Time
+	hoy            time.Time
+	hashContrasena string
+	usuarios       map[string]int64
+	sprints        []int64
+	historias      map[string]int64
+	resumen        Resumen
 }
 
 type bloque func(ctx context.Context, tx *sql.Tx, c *carga) error
 
-func nuevaCarga(ahora time.Time) *carga {
+func nuevaCarga(ahora time.Time, hashContrasena string) *carga {
 	ahora = ahora.UTC()
 	return &carga{
-		ahora:     ahora,
-		hoy:       ahora.Truncate(24 * time.Hour),
-		usuarios:  map[string]int64{},
-		historias: map[string]int64{},
+		ahora:          ahora,
+		hoy:            ahora.Truncate(24 * time.Hour),
+		hashContrasena: hashContrasena,
+		usuarios:       map[string]int64{},
+		historias:      map[string]int64{},
 	}
 }
 
@@ -66,14 +83,14 @@ func (c *carga) creadoEn() string {
 
 // ejecutarBloques corre los bloques en orden dentro de una transacción: si uno
 // falla se deshace todo.
-func ejecutarBloques(ctx context.Context, db *sql.DB, ahora time.Time, bloques []bloque) (*carga, error) {
+func ejecutarBloques(ctx context.Context, db *sql.DB, ahora time.Time, hashContrasena string, bloques []bloque) (*carga, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("iniciar transacción de la carga: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	c := nuevaCarga(ahora)
+	c := nuevaCarga(ahora, hashContrasena)
 	for _, ejecutar := range bloques {
 		if err := ejecutar(ctx, tx, c); err != nil {
 			return nil, err
@@ -85,30 +102,36 @@ func ejecutarBloques(ctx context.Context, db *sql.DB, ahora time.Time, bloques [
 	return c, nil
 }
 
-// bloquesV1 es el orden de la carga. Una historia futura agrega su bloque acá.
-var bloquesV1 = []bloque{
+// bloquesDemo es el orden de la carga. Una historia futura agrega su bloque acá.
+var bloquesDemo = []bloque{
 	bloqueUsuarios,
 	bloqueProyecto,
 	bloqueSprints,
 	bloqueHistorias,
 	bloqueHoras,
 	bloqueVotacion,
+	bloqueDefectos,
 }
 
 // Cargador carga el proyecto de demostración en una sola transacción.
 type Cargador struct {
-	db      *sql.DB
-	ahora   func() time.Time
-	bloques []bloque
+	db        *sql.DB
+	ahora     func() time.Time
+	hasheador Hasheador
+	bloques   []bloque
 }
 
-func NewCargador(db *sql.DB, ahora func() time.Time) *Cargador {
-	return &Cargador{db: db, ahora: ahora, bloques: bloquesV1}
+func NewCargador(db *sql.DB, ahora func() time.Time, hasheador Hasheador) *Cargador {
+	return &Cargador{db: db, ahora: ahora, hasheador: hasheador, bloques: bloquesDemo}
 }
 
 // Cargar crea todos los datos o ninguno.
 func (l *Cargador) Cargar(ctx context.Context) (Resumen, error) {
-	c, err := ejecutarBloques(ctx, l.db, l.ahora(), l.bloques)
+	hash, err := l.hasheador.Hashear(contrasenaDeLaDemo)
+	if err != nil {
+		return Resumen{}, fmt.Errorf("derivar la contraseña de la demo: %w", err)
+	}
+	c, err := ejecutarBloques(ctx, l.db, l.ahora(), hash, l.bloques)
 	if esViolacionDeClave(err) {
 		return Resumen{}, l.clasificarConflicto(ctx, err)
 	}
@@ -118,19 +141,38 @@ func (l *Cargador) Cargar(ctx context.Context) (Resumen, error) {
 	return c.resumen, nil
 }
 
-// clasificarConflicto se llama con la transacción ya deshecha: distingue la
-// carga repetida del id ocupado por el nombre del proyecto 25.
+// clasificarConflicto se llama con la transacción ya deshecha y mira la base,
+// no qué restricción falló: gana la carga repetida, después el usuario de la
+// demo que ya existe y por último el id 25 ocupado por otro proyecto.
 func (l *Cargador) clasificarConflicto(ctx context.Context, original error) error {
 	var nombre string
 	err := l.db.QueryRowContext(ctx, `SELECT nombre FROM proyectos WHERE id = ?`, proyectoID).Scan(&nombre)
-	switch {
-	case err != nil:
+	proyectoExiste := err == nil
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return original
-	case nombre == nombreProyecto:
+	}
+	if proyectoExiste && nombre == nombreProyecto {
 		return ErrYaCargado
-	default:
+	}
+	if existente, ok := l.primerUsuarioExistente(ctx); ok {
+		return ErrUsuarioExistente{Nombre: existente}
+	}
+	if proyectoExiste {
 		return ErrIdOcupado
 	}
+	return original
+}
+
+func (l *Cargador) primerUsuarioExistente(ctx context.Context) (string, bool) {
+	for _, demo := range usuariosDemo {
+		var id int64
+		err := l.db.QueryRowContext(ctx, `SELECT id FROM usuarios WHERE nombre_normalizado = ?`,
+			domain.NormalizarNombre(demo.nombre)).Scan(&id)
+		if err == nil {
+			return demo.nombre, true
+		}
+	}
+	return "", false
 }
 
 func esViolacionDeClave(err error) bool {

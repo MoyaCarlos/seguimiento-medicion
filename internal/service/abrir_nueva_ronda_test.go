@@ -105,7 +105,7 @@ func TestAbrirNuevaRonda_Rechaza(t *testing.T) {
 	}{
 		{"historia inexistente", historiaDelBacklog(), votacionRevelada(votosDe(3, 8)...), 999, carlos, domain.ErrHistoriaNoEncontrada},
 		{"Product Builder", historiaDelBacklog(), votacionRevelada(votosDe(3, 8)...), 3, candela, domain.ErrNoEsScrumMaster},
-		{"quien no integra el proyecto", historiaDelBacklog(), votacionRevelada(votosDe(3, 8)...), 3, ajeno, domain.ErrNoEsScrumMaster},
+		{"quien no integra el proyecto", historiaDelBacklog(), votacionRevelada(votosDe(3, 8)...), 3, ajeno, domain.ErrNoEsIntegrante},
 		{"historia Completada", completada, votacionRevelada(votosDe(3, 8)...), 3, carlos, domain.ErrRondaEnHistoriaCompletada},
 		{"ronda oculta", historiaDelBacklog(), votacionAbierta(votosDe(3, 8)...), 3, carlos, domain.ErrRondaNoRevelada},
 		{"sin votación", historiaDelBacklog(), &fakeVotacionRepository{}, 3, carlos, domain.ErrVotacionNoIniciada},

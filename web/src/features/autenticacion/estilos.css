@@ -35,31 +35,87 @@
 .menu-usuario {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex: none;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.menu-usuario-avatar {
+  background: var(--nav);
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  height: 30px;
+  place-items: center;
+  width: 30px;
 }
 
 .menu-usuario-nombre {
+  font-size: 0.85rem;
   font-weight: 700;
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .menu-usuario a {
-  color: var(--lilac-dark);
+  color: var(--brand-dark);
   font-weight: 600;
   text-decoration: none;
 }
 
 .menu-usuario button {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 0.6rem;
-  color: var(--lilac-dark);
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--ink);
   cursor: pointer;
-  padding: 0.35rem 0.8rem;
+  display: inline-flex;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  min-height: 36px;
+  padding: 0 0.75rem;
+  white-space: nowrap;
+}
+
+.menu-usuario button:hover {
+  background: var(--background);
+}
+
+@media (max-width: 480px) {
+  .menu-usuario-nombre {
+    max-width: 8ch;
+  }
+
+  .menu-usuario button {
+    justify-content: center;
+    padding: 0;
+    width: 36px;
+  }
+
+  .menu-usuario-accion {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
 }
 
 @media (max-width: 600px) {
   .auth-pantalla {
     padding: 1.25rem;
   }
+}
+
+.auth-demo {
+  margin: 1.5rem auto 0;
+  max-width: 440px;
 }

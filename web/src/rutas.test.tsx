@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, type RouteObject } from 'react-router'
@@ -193,32 +193,19 @@ describe('registro de rutas', () => {
   })
 
   describe('inicio con datos de prueba', () => {
-    it('el aviso de datos ya cargados queda junto a los botones, en el último bloque de la tarjeta del formulario', async () => {
+    it('la pantalla de crear proyecto no ofrece el botón «Cargar datos de prueba»', async () => {
       const respuestaBase = vi.mocked(fetch).getMockImplementation()!
-      vi.stubGlobal(
-        'fetch',
-        vi.fn((url: string, init?: RequestInit) => {
-          if (url === '/demo/estado') return Promise.resolve(new Response('{"habilitado":true}', { status: 200 }))
-          if (url === '/demo/datos' && init?.method === 'POST') {
-            return Promise.resolve(new Response(
-              JSON.stringify({ campo: 'ya_cargado', mensaje: 'los datos de prueba ya están cargados' }),
-              { status: 409 },
-            ))
-          }
-          return Promise.resolve(respuestaBase(url, init))
-        }),
-      )
-      const usuario = userEvent.setup()
+      const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+        if (url === '/demo/estado') return Promise.resolve(new Response('{"habilitado":true}', { status: 200 }))
+        return Promise.resolve(respuestaBase(url, init))
+      })
+      vi.stubGlobal('fetch', fetchMock)
       abrir('/')
 
-      const botonDemo = await screen.findByRole('button', { name: 'Cargar datos de prueba' }, { timeout: 5000 })
-      await usuario.click(botonDemo)
-      const aviso = await screen.findByText(/los datos de prueba ya están cargados/)
+      await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+      await new Promise((resolver) => setTimeout(resolver, 50))
 
-      const botonCrear = screen.getByRole('button', { name: 'Crear proyecto' })
-      const tarjeta = botonCrear.closest('section')
-      expect(tarjeta?.lastElementChild).toBe(botonDemo.parentElement)
-      expect(botonDemo.parentElement?.contains(aviso)).toBe(true)
+      expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).toBeNull()
     })
   })
 
@@ -478,8 +465,7 @@ describe('registro de rutas', () => {
 
     await router.navigate('/projects/2/pantalla')
 
-    await screen.findByText('/projects/2/pantalla', { selector: 'code' }, { timeout: 5000 })
-    expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1)
+    await waitFor(() => expect(screen.getByTestId('marca').textContent).not.toBe(marcaDelProyecto1), { timeout: 5000 })
   })
 
   it.each(['/no-existe', '/projects/1/otra'])('%s muestra "Página no encontrada"', async (url) => {
@@ -581,5 +567,129 @@ describe('rutas protegidas', () => {
 
     expect(screen.getAllByRole('link', { name: 'Ingresar' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: 'Registrarse' }).length).toBeGreaterThan(0)
+  })
+})
+
+describe('armazón (spec 046)', () => {
+  it('Given una sesión iniciada y una pantalla de un proyecto, When se muestra, Then la barra lateral ofrece «Proyectos», el selector y las secciones', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
+    expect(barra).not.toBeNull()
+    const lateral = within(barra!)
+    expect(lateral.getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(lateral.getByRole('combobox', { name: 'Proyecto' })).toBeTruthy()
+    expect(lateral.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+    expect(within(lateral.getByRole('navigation', { name: 'Secciones del proyecto' })).getAllByRole('link')).toHaveLength(7)
+  })
+
+  it('Given una pantalla de un proyecto, When se muestra la barra superior, Then la ruta de navegación enlaza «Proyectos» y marca la sección actual', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const ruta = screen.queryByRole('navigation', { name: 'Ruta de navegación' })
+    expect(ruta).not.toBeNull()
+    expect(within(ruta!).getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given la votación de una historia, When se muestra la ruta de navegación, Then la sección actual es «Historias»', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            url.includes('/auth/yo')
+              ? JSON.stringify(USUARIO)
+              : url.includes('/votacion')
+                ? JSON.stringify({ historia_id: 3, ronda: 1, revelada_en: null, integrantes: [], promedio: null })
+                : '[]',
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+    abrir('/projects/42/votacion/3')
+    await screen.findByRole('heading', { name: 'Votación de la historia #3' }, { timeout: 5000 })
+
+    const ruta = screen.queryByRole('navigation', { name: 'Ruta de navegación' })
+    expect(ruta).not.toBeNull()
+    expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given una sesión iniciada en el inicio, When se muestra, Then la barra lateral no tiene selector ni secciones y la ruta marca «Proyectos»', async () => {
+    abrir('/')
+    await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
+    expect(barra).not.toBeNull()
+    expect(within(barra!).getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.queryByRole('combobox', { name: 'Proyecto' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Secciones del proyecto' })).toBeNull()
+    const ruta = screen.getByRole('navigation', { name: 'Ruta de navegación' })
+    expect(within(ruta).getByText('Proyectos').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given una persona sin sesión, When abre /ingresar, Then no ve la barra lateral', async () => {
+    borrarToken()
+    abrir('/ingresar')
+    await screen.findByRole('heading', { name: 'Ingresar' })
+
+    expect(screen.queryByRole('complementary', { name: 'Navegación principal' })).toBeNull()
+  })
+})
+
+describe('cajón de navegación en pantallas angostas (spec 046)', () => {
+  async function abrirBacklog() {
+    const router = abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+    return router
+  }
+
+  const estaAbierto = () => screen.queryByRole('button', { name: 'Abrir menú' })?.getAttribute('aria-expanded')
+
+  it('Given el cajón cerrado, When presiono «Abrir menú», Then el cajón se abre', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    expect(estaAbierto()).toBe('true')
+  })
+
+  it('Given el cajón abierto, When presiono Escape, Then el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.keyboard('{Escape}')
+
+    expect(estaAbierto()).toBe('false')
+  })
+
+  it('Given el cajón abierto, When presiono «Cerrar menú», Then el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar menú' }))
+
+    expect(estaAbierto()).toBe('false')
+  })
+
+  it('Given el cajón abierto, When elijo una sección, Then navega y el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    const router = await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/sprints')
+    expect(estaAbierto()).toBe('false')
   })
 })

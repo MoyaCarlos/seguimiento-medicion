@@ -73,12 +73,12 @@ func nuevoEscenarioHorasHTTP(t *testing.T) escenarioHorasHTTP {
 	return escenarioHorasHTTP{handler: handler, horas: horas, sprint: sprint}
 }
 
-func (e escenarioHorasHTTP) imputar(id, cuerpo string) *httptest.ResponseRecorder {
+func (e escenarioHorasHTTP) imputar(id string, actor int64, cuerpo string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(nethttp.MethodPost, "/backlog/"+id+"/horas", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Imputar(rec, req)
+	e.handler.Imputar(rec, comoActor(req, actor))
 	return rec
 }
 
@@ -86,7 +86,7 @@ func TestHorasHandler_Imputar_Exitosa(t *testing.T) {
 	e := nuevoEscenarioHorasHTTP(t)
 	hoy := hoyCivil().Format(time.DateOnly)
 
-	rec := e.imputar("3", `{"integrante_id": 2, "fecha": "`+hoy+`", "actividad": "Implementar", "horas": 4}`)
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Implementar", "horas": 4}`)
 
 	if rec.Code != nethttp.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -107,11 +107,27 @@ func TestHorasHandler_Imputar_Exitosa(t *testing.T) {
 	}
 }
 
+// Escenario 7 de HU-21: las horas quedan a nombre de la sesión aunque el cuerpo
+// traiga el integrante_id de otra persona.
+func TestHorasHandler_Imputar_IgnoraElIntegranteDelCuerpo(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	hoy := hoyCivil().Format(time.DateOnly)
+
+	rec := e.imputar("3", 2, `{"integrante_id": 99, "fecha": "`+hoy+`", "actividad": "Implementar", "horas": 4}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(e.horas.registros) != 1 || e.horas.registros[0].UsuarioID != 2 {
+		t.Errorf("la carga debía quedar a nombre de la sesión (2), se obtuvo %+v", e.horas.registros)
+	}
+}
+
 func TestHorasHandler_Imputar_HorasConDecimales(t *testing.T) {
 	e := nuevoEscenarioHorasHTTP(t)
 	hoy := hoyCivil().Format(time.DateOnly)
 
-	rec := e.imputar("3", `{"integrante_id": 2, "fecha": "`+hoy+`", "actividad": "Revisar", "horas": 1.5}`)
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Revisar", "horas": 1.5}`)
 
 	if rec.Code != nethttp.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -127,31 +143,34 @@ func TestHorasHandler_Imputar_HorasConDecimales(t *testing.T) {
 
 func TestHorasHandler_Imputar_Errores(t *testing.T) {
 	hoy := hoyCivil().Format(time.DateOnly)
-	cuerpo := func(integranteID, actividad, horas string) string {
-		return `{"integrante_id": ` + integranteID + `, "fecha": "` + hoy + `", "actividad": "` + actividad + `", "horas": ` + horas + `}`
+	cuerpo := func(actividad, horas string) string {
+		return `{"fecha": "` + hoy + `", "actividad": "` + actividad + `", "horas": ` + horas + `}`
 	}
 	casos := []struct {
-		nombre, id, cuerpo string
-		status             int
-		campo, mensaje     string
+		nombre, id     string
+		actor          int64
+		cuerpo         string
+		status         int
+		campo, mensaje string
 	}{
-		{"id no numérico", "abc", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "id", ""},
-		{"id cero", "0", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "id", ""},
-		{"historia inexistente con cuerpo inválido", "999", `no es json`, nethttp.StatusNotFound, "", "historia no encontrada"},
-		{"cuerpo que no es JSON", "3", `no es json`, nethttp.StatusBadRequest, "", "JSON inválido"},
-		{"horas como texto no numérico", "3", cuerpo("2", "x", `"abc"`), nethttp.StatusBadRequest, "horas", "las horas deben ser un número"},
-		{"horas ausentes", "3", `{"integrante_id": 2, "fecha": "` + hoy + `", "actividad": "x"}`, nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
-		{"horas nulas", "3", cuerpo("2", "x", "null"), nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
-		{"horas negativas", "3", cuerpo("2", "x", "-2"), nethttp.StatusBadRequest, "horas", "las horas deben ser mayores que cero"},
-		{"actividad vacía", "3", cuerpo("2", "", "1"), nethttp.StatusBadRequest, "actividad", "la actividad es obligatoria"},
-		{"integrante ajeno", "3", cuerpo("99", "x", "1"), nethttp.StatusBadRequest, "integrante_id", "el integrante no pertenece al proyecto de la historia"},
-		{"historia fuera del Sprint activo", "4", cuerpo("2", "x", "1"), nethttp.StatusBadRequest, "historia_id", "solo se imputan horas a historias del Sprint activo"},
+		{"sin sesión", "3", 0, cuerpo("x", "1"), nethttp.StatusUnauthorized, "", "Tu sesión no es válida"},
+		{"id no numérico", "abc", 2, cuerpo("x", "1"), nethttp.StatusBadRequest, "id", ""},
+		{"id cero", "0", 2, cuerpo("x", "1"), nethttp.StatusBadRequest, "id", ""},
+		{"historia inexistente con cuerpo inválido", "999", 2, `no es json`, nethttp.StatusNotFound, "", "historia no encontrada"},
+		{"cuerpo que no es JSON", "3", 2, `no es json`, nethttp.StatusBadRequest, "", "JSON inválido"},
+		{"horas como texto no numérico", "3", 2, cuerpo("x", `"abc"`), nethttp.StatusBadRequest, "horas", "las horas deben ser un número"},
+		{"horas ausentes", "3", 2, `{"fecha": "` + hoy + `", "actividad": "x"}`, nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
+		{"horas nulas", "3", 2, cuerpo("x", "null"), nethttp.StatusBadRequest, "horas", "las horas son obligatorias"},
+		{"horas negativas", "3", 2, cuerpo("x", "-2"), nethttp.StatusBadRequest, "horas", "las horas deben ser mayores que cero"},
+		{"actividad vacía", "3", 2, cuerpo("", "1"), nethttp.StatusBadRequest, "actividad", "la actividad es obligatoria"},
+		{"integrante ajeno", "3", 99, cuerpo("x", "1"), nethttp.StatusForbidden, "", "No sos integrante de este proyecto"},
+		{"historia fuera del Sprint activo", "4", 2, cuerpo("x", "1"), nethttp.StatusBadRequest, "historia_id", "solo se imputan horas a historias del Sprint activo"},
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
 			e := nuevoEscenarioHorasHTTP(t)
 
-			rec := e.imputar(c.id, c.cuerpo)
+			rec := e.imputar(c.id, c.actor, c.cuerpo)
 
 			if rec.Code != c.status {
 				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.status, rec.Code, rec.Body.String())
@@ -174,7 +193,7 @@ func TestHorasHandler_Imputar_HorasComoTextoNumerico(t *testing.T) {
 	e := nuevoEscenarioHorasHTTP(t)
 	hoy := hoyCivil().Format(time.DateOnly)
 
-	rec := e.imputar("3", `{"integrante_id": 2, "fecha": "`+hoy+`", "actividad": "Implementar", "horas": "4"}`)
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Implementar", "horas": "4"}`)
 
 	if rec.Code != nethttp.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())

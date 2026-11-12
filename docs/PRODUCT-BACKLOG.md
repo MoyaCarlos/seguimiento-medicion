@@ -140,6 +140,7 @@ Entonces el sistema debe mostrar el valor elegido por cada uno y calcular el pro
 HU-04 (integrantes que votan), HU-01 (historia a estimar).
 ### Notas
 El modelo de votación debe contemplar rondas desde el inicio (cada voto pertenece a una ronda), porque la historia de consenso (HU-14) agrega nuevas rondas y conserva el historial.
+Desde HU-21 (escenario 4) quien no integra el proyecto recibe 403 «No sos integrante de este proyecto» antes que el error de rol, al votar o consultar la votación (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 S (Should have) 
 ### Estado
@@ -311,6 +312,7 @@ HU-04 (integrantes), HU-06 (historia dentro de un Sprint), HU-05 (Sprint activo)
 ### Notas
 Las horas se guardan como minutos enteros y se convierten a horas solo al mostrarlas. El tope de horas por carga lo define la especificación de esta historia.
 El escenario 1 («selecciono mi nombre») cambia con HU-21 (escenario 7): las horas quedan a nombre de la persona con sesión iniciada y ya no se elige el integrante.
+En el escenario 2, desde HU-21 (escenario 4) la carga de quien no integra el proyecto pasa de un 400 sobre `integrante_id` a 403 «No sos integrante de este proyecto», antes que cualquier otro error de validación (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 M (Must have) - Fundamental para que luego se puedan calcular las métricas de desviación de esfuerzo. 
 ### Estado
@@ -535,6 +537,7 @@ HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
 ### Notas
 No bloquea al cálculo de métricas ni al reporte: los Story Points también se cargan de forma directa al editar el Product Backlog (HU-15).
 Planificación (2026-11-03): el backend va en el Sprint 4 (ya mergeado en el PR #237); el frontend (#93) queda en el Sprint 5.
+Desde HU-21 (escenario 4) quien no integra el proyecto recibe 403 «No sos integrante de este proyecto» antes que el error de rol; las acciones del Scrum Master (nueva ronda, registrar la estimación) dan 403 «Solo el Scrum Master puede…» a un Product Builder (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 S (Should have) - Completa el requisito de Planning Poker del enunciado (punto 4).
 ### Estado
@@ -803,10 +806,10 @@ Entonces la sesión deja de ser válida.
 HU-04 (usuarios y equipo).
 ### Notas
 Es el PR 1 de 2 del login: registro, ingreso y sesión **sin imponer permisos**, para que lo existente y los escenarios de Godog sigan funcionando. Los permisos por rol son HU-21.
-Cuentas y deploys: en Render (plan gratis) la base entera se vacía en cada deploy y, a confirmar, cada vez que el servicio gratis se despierta tras 15 minutos de inactividad: el sistema de archivos del plan gratis es efímero. No se pierden solo las sesiones: también los usuarios y sus contraseñas. Antes de la demo hay que despertar el servicio y recargar los datos de prueba; el #235 (datos de prueba v2) recrea los usuarios con una contraseña conocida.
+Cuentas y deploys: en Render (plan gratis) la base entera se vacía en cada deploy y, a confirmar, cada vez que el servicio gratis se despierta tras 15 minutos de inactividad: el sistema de archivos del plan gratis es efímero. No se pierden solo las sesiones: también los usuarios y sus contraseñas. Antes de la demo hay que despertar el servicio y recargar los datos de prueba; el #235 (datos de prueba v2, implementado) recrea los usuarios con la contraseña `demo1234`.
 Usa nombre de usuario y contraseña, sin correo electrónico (no existe ese dato en el modelo). La contraseña se guarda con hash y sal usando `crypto/pbkdf2` de la biblioteca estándar de Go, sin dependencias nuevas, y nunca se devuelve ni se registra. Fuera de alcance: recuperar la contraseña, ingreso con terceros y verificación por correo.
 Cambia el esquema (credenciales y sesiones): un solo PR con `MODELO-DE-DATOS.md` y la migración. Decidido (#233 y #238): el esquema suma `contrasena_hash` en `usuarios` y la tabla `sesiones`, en un solo PR con `MODELO-DE-DATOS.md` y la migración `006_autenticacion.sql`. El token viaja en la cabecera `Authorization: Bearer` y el frontend lo guarda en `localStorage`. Las sesiones viven en la tabla `sesiones` (se vacía junto con la base, ver arriba), vencen a los 7 días y el token es aleatorio: de él se guarda solo el hash. Los usuarios que ya existen no tienen acceso hasta que se registran de nuevo con otro nombre, sin romper la migración.
-Nombre de usuario (decidido por el Scrum Master, 2026-11-04): es `usuarios.nombre`; se ingresa por `nombre_normalizado`, que ya es único y no distingue mayúsculas. Renombrar queda fuera de HU-20. Regla: letras, números, punto, guion y guion bajo, de 3 a 30 caracteres; la contraseña, de 8 como mínimo. Los usuarios de la demo (#235) deben cumplirla (por ejemplo `beta.uno`, no `Beta Uno`).
+Nombre de usuario (decidido por el Scrum Master, 2026-11-04): es `usuarios.nombre`; se ingresa por `nombre_normalizado`, que ya es único y no distingue mayúsculas. Renombrar queda fuera de HU-20. Regla: letras, números, punto, guion y guion bajo, de 3 a 30 caracteres; la contraseña, de 8 como mínimo. Los usuarios de la demo (#235) la cumplen (`carlos.moya`, `ana.iriarte`, `candela.vulcano`, `jimena.martinez`).
 ### Prioridad
 S (Should have) - Hace que cada persona actúe a su nombre. El voto de Planning Poker realmente secreto se logra recién con HU-21, que quita el `usuario_id` del cuerpo y de la query; con HU-20 sola el servidor sigue aceptando el id que mande el cliente. Se planifica en el Sprint 4, antes de la entrega final, por decisión del Scrum Master (2026-11-03).
 ### Estado
@@ -948,5 +951,5 @@ issue y entra en los Sprints.
 | #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, Sprint 4 (solo los criterios de aceptación; notas y «depende de» quedan para después) |
 | #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, la base en el Sprint 4 y las pantallas en el Sprint 5 |
 | #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |
-| #235 | Datos de prueba v2: usuarios con contraseña (con nombres válidos, p. ej. `beta.uno`), equipo, historias con criterios, Sprints, horas, votaciones y defectos; tras cada deploy se recargan con `POST /demo/datos` (sin sesión) | Abierto, Sprint 4 |
+| #235 | Datos de prueba v2: 4 usuarios con contraseña `demo1234` (un Scrum Master), equipo, historias con criterios, Sprints, horas, votaciones y defectos; tras cada deploy se recargan con `POST /demo/datos` (sin sesión) | Implementado en `feature/235-datos-de-prueba-v2`, pendiente de PR, Sprint 4 |
 | #236 | Un único Scrum Master por proyecto (índice único parcial, cambio de esquema) | Abierto, Sprint 4 |

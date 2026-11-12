@@ -26,15 +26,8 @@ func NewDemoHandler(habilitado func() bool, cargador CargadorDatosPrueba) *DemoH
 	return &DemoHandler{habilitado: habilitado, cargador: cargador}
 }
 
-// Registrar agrega GET /demo/estado y POST /demo/datos al mux. Cualquier otra
-// combinación de método y ruta bajo /demo/ responde 404, también con la
-// función apagada.
-func (h *DemoHandler) Registrar(mux *nethttp.ServeMux) {
-	mux.HandleFunc("GET /demo/estado", h.soloSiHabilitado(h.Estado))
-	mux.HandleFunc("POST /demo/datos", h.soloSiHabilitado(h.Cargar))
-	mux.HandleFunc("/demo/", nethttp.NotFound)
-}
-
+// soloSiHabilitado responde 404 mientras la función de demo está apagada. Las
+// rutas de la demo se registran en la tabla de rutas.go.
 func (h *DemoHandler) soloSiHabilitado(siguiente nethttp.HandlerFunc) nethttp.HandlerFunc {
 	return func(w nethttp.ResponseWriter, r *nethttp.Request) {
 		if !h.habilitado() {
@@ -53,11 +46,14 @@ func (h *DemoHandler) Estado(w nethttp.ResponseWriter, _ *nethttp.Request) {
 // Cargar atiende POST /demo/datos.
 func (h *DemoHandler) Cargar(w nethttp.ResponseWriter, r *nethttp.Request) {
 	resumen, err := h.cargador.Cargar(r.Context())
+	var usuarioExistente demo.ErrUsuarioExistente
 	switch {
 	case err == nil:
 		escribirJSON(w, nethttp.StatusCreated, resumen)
 	case errors.Is(err, demo.ErrYaCargado):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "ya_cargado", Mensaje: err.Error()})
+	case errors.As(err, &usuarioExistente):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "usuario_existente", Mensaje: err.Error()})
 	case errors.Is(err, demo.ErrIdOcupado):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "proyecto_id", Mensaje: err.Error()})
 	default:

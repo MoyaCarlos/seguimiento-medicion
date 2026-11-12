@@ -22,6 +22,10 @@ var ErrScrumMasterYaExiste = errors.New("el proyecto ya tiene un Scrum Master")
 // ErrNoEncontrado indica que la entidad solicitada no existe.
 var ErrNoEncontrado = errors.New("registro no encontrado")
 
+// ErrUsuarioNoEncontrado indica que la persona que se quiso sumar al equipo no
+// existe o no tiene cuenta (HU-21).
+var ErrUsuarioNoEncontrado = errors.New("usuario no encontrado")
+
 // ErrProyectoNoEncontrado indica que el proyecto solicitado no existe.
 var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 
@@ -39,10 +43,6 @@ var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "l
 // ErrHistoriaFueraDelSprintActivo indica una carga de horas a una historia que
 // no está en un Sprint Activo (HU-07).
 var ErrHistoriaFueraDelSprintActivo = ValidationError{Campo: "historia_id", Mensaje: "solo se imputan horas a historias del Sprint activo"}
-
-// ErrIntegranteAjeno indica una carga de horas de alguien que no es integrante
-// del proyecto de la historia (HU-07).
-var ErrIntegranteAjeno = ValidationError{Campo: "integrante_id", Mensaje: "el integrante no pertenece al proyecto de la historia"}
 
 // Errores del registro y la resolución de defectos (HU-08).
 var (
@@ -69,9 +69,9 @@ var (
 	// ErrRondaYaAbierta indica que otra petición abrió esa misma ronda mientras tanto.
 	ErrRondaYaAbierta = errors.New("otra persona abrió esta ronda mientras tanto: recargá la votación")
 	// ErrNoEsIntegrante indica que quien actúa no integra el proyecto de la historia.
-	ErrNoEsIntegrante = errors.New("el usuario no es integrante del proyecto")
+	ErrNoEsIntegrante = errors.New("No sos integrante de este proyecto")
 	// ErrNoEsScrumMaster indica que la acción es exclusiva del Scrum Master del proyecto.
-	ErrNoEsScrumMaster = errors.New("solo el Scrum Master del proyecto puede hacerlo")
+	ErrNoEsScrumMaster = errors.New("Solo el Scrum Master puede realizar esta acción")
 
 	ErrVotoInvalido       = ValidationError{Campo: "valor", Mensaje: "el voto debe ser una carta de la baraja: 1, 2, 3, 5, 8, 13, 21"}
 	ErrHistoriaCompletada = ValidationError{Campo: "estado", Mensaje: "no se puede votar una historia completada"}

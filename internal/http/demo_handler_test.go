@@ -24,7 +24,7 @@ func (c *cargadorFalso) Cargar(context.Context) (demo.Resumen, error) {
 
 func pedirDemo(habilitado bool, cargador *cargadorFalso, metodo, ruta string) *httptest.ResponseRecorder {
 	mux := nethttp.NewServeMux()
-	NewDemoHandler(func() bool { return habilitado }, cargador).Registrar(mux)
+	registrarRutasDe(mux, Handlers{Demo: NewDemoHandler(func() bool { return habilitado }, cargador)}, "/demo/")
 	respuesta := httptest.NewRecorder()
 	mux.ServeHTTP(respuesta, httptest.NewRequest(metodo, ruta, nil))
 	return respuesta
@@ -78,6 +78,7 @@ func TestDemo_ErroresDeLaCarga(t *testing.T) {
 	}{
 		{"ya cargado", demo.ErrYaCargado, 409, `"campo":"ya_cargado"`},
 		{"id ocupado", demo.ErrIdOcupado, 409, `"campo":"proyecto_id"`},
+		{"usuario existente", demo.ErrUsuarioExistente{Nombre: "ana.iriarte"}, 409, `"campo":"usuario_existente"`},
 		{"error interno", errors.New("disco lleno"), 500, `"mensaje":"no se pudieron cargar los datos de prueba"`},
 	}
 	for _, caso := range casos {
@@ -99,5 +100,13 @@ func TestDemo_LosMensajesDel409ViajanEnElCuerpo(t *testing.T) {
 
 	if !strings.Contains(respuesta.Body.String(), "los datos de prueba ya están cargados") {
 		t.Errorf("cuerpo %q", respuesta.Body.String())
+	}
+}
+
+func TestDemo_ElMensajeDelUsuarioExistenteNombraAlUsuario(t *testing.T) {
+	respuesta := pedirDemo(true, &cargadorFalso{err: demo.ErrUsuarioExistente{Nombre: "ana.iriarte"}}, "POST", "/demo/datos")
+
+	if respuesta.Code != nethttp.StatusConflict || !strings.Contains(respuesta.Body.String(), `"mensaje":"ya existe el usuario ana.iriarte"`) {
+		t.Errorf("estado %d, cuerpo %q", respuesta.Code, respuesta.Body.String())
 	}
 }

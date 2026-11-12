@@ -29,7 +29,7 @@ func sembrarSprintPendiente(t *testing.T, repo repository.SprintRepository, proy
 }
 
 func inputValido(sprintID int64) IniciarSprintInput {
-	return IniciarSprintInput{SprintID: sprintID, SprintGoal: "Entregar el MVP", FechaInicio: inicioSprint, FechaFin: finSprint}
+	return IniciarSprintInput{SprintID: sprintID, SprintGoal: "Entregar el MVP", FechaInicio: inicioSprint, FechaFin: finSprint, UsuarioID: actorDePrueba}
 }
 
 func estadoPersistido(t *testing.T, repo repository.SprintRepository, id int64) domain.EstadoSprint {
@@ -56,7 +56,7 @@ func TestIniciarSprint_Exitoso(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
 	sprint := sembrarSprintPendiente(t, repo, 1)
 
-	resultado, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(sprint.ID))
+	resultado, err := NewIniciarSprint(repo, scrumMasterConActor{}).Ejecutar(context.Background(), inputValido(sprint.ID))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestIniciarSprint_Exitoso(t *testing.T) {
 
 func TestIniciarSprint_RechazaSegundoActivoEnElProyecto(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
-	servicio := NewIniciarSprint(repo)
+	servicio := NewIniciarSprint(repo, scrumMasterConActor{})
 	primero := sembrarSprintPendiente(t, repo, 1)
 	segundo := sembrarSprintPendiente(t, repo, 1)
 	if _, err := servicio.Ejecutar(context.Background(), inputValido(primero.ID)); err != nil {
@@ -87,7 +87,7 @@ func TestIniciarSprint_RechazaSegundoActivoEnElProyecto(t *testing.T) {
 
 func TestIniciarSprint_UnActivoEnOtroProyectoNoBloquea(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
-	servicio := NewIniciarSprint(repo)
+	servicio := NewIniciarSprint(repo, scrumMasterConActor{})
 	otroProyecto := sembrarSprintPendiente(t, repo, 2)
 	if _, err := servicio.Ejecutar(context.Background(), inputValido(otroProyecto.ID)); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -105,7 +105,7 @@ func TestIniciarSprint_FechasInvalidasNoPersiste(t *testing.T) {
 	input := inputValido(sprint.ID)
 	input.FechaFin = input.FechaInicio
 
-	_, err := NewIniciarSprint(repo).Ejecutar(context.Background(), input)
+	_, err := NewIniciarSprint(repo, scrumMasterConActor{}).Ejecutar(context.Background(), input)
 
 	esperarValidacion(t, err, "fecha_fin")
 	if estadoPersistido(t, repo, sprint.ID) != domain.SprintPendiente {
@@ -116,7 +116,7 @@ func TestIniciarSprint_FechasInvalidasNoPersiste(t *testing.T) {
 func TestIniciarSprint_NoEncontrado(t *testing.T) {
 	repo := repository.NewSprintRepositoryEnMemoria()
 
-	_, err := NewIniciarSprint(repo).Ejecutar(context.Background(), inputValido(999))
+	_, err := NewIniciarSprint(repo, scrumMasterConActor{}).Ejecutar(context.Background(), inputValido(999))
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Fatalf("se esperaba ErrSprintNoEncontrado, se obtuvo %v", err)

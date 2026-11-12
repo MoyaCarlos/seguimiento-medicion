@@ -26,6 +26,10 @@ func NewDefectoHandler(
 
 // Registrar atiende POST /projects/{id}/defectos.
 func (h *DefectoHandler) Registrar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -44,6 +48,7 @@ func (h *DefectoHandler) Registrar(w nethttp.ResponseWriter, r *nethttp.Request)
 		return
 	}
 	detalle, err := h.registrar.Ejecutar(r.Context(), service.RegistrarDefectoInput{
+		UsuarioID:   actor,
 		ProyectoID:  id,
 		HistoriaID:  req.HistoriaID,
 		Descripcion: req.Descripcion,
@@ -58,13 +63,17 @@ func (h *DefectoHandler) Registrar(w nethttp.ResponseWriter, r *nethttp.Request)
 
 // Resolver atiende POST /defectos/{id}/resolver. No tiene cuerpo.
 func (h *DefectoHandler) Resolver(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	detalle, err := h.resolver.Ejecutar(r.Context(), id)
+	detalle, err := h.resolver.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
