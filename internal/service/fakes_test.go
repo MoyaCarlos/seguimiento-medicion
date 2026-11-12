@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"slices"
 	"sort"
 	"sync"
@@ -22,6 +21,15 @@ type fakeProjectRepository struct {
 	updates       int
 	// cerrados marca proyectos cerrados sin necesidad de guardarlos (#300).
 	cerrados map[int64]bool
+	// bajas guarda la fecha de baja de cada vínculo {proyectoID, usuarioID}
+	// dado de baja (HU-16); sin entrada, el integrante está activo.
+	bajas map[[2]int64]time.Time
+}
+
+// dadoDeBaja informa si el vínculo del usuario con el proyecto tiene baja.
+func (f *fakeProjectRepository) dadoDeBaja(proyectoID, usuarioID int64) bool {
+	_, ok := f.bajas[[2]int64{proyectoID, usuarioID}]
+	return ok
 }
 
 // ProyectoCerrado da por cerrado un proyecto marcado en cerrados o guardado
@@ -77,7 +85,7 @@ func (f *fakeProjectRepository) ListarPorIntegrante(_ context.Context, usuarioID
 	}
 	proyectos := make([]domain.ProyectoConRol, 0)
 	for _, m := range f.miembros {
-		if m.UserID == usuarioID {
+		if m.UserID == usuarioID && !f.dadoDeBaja(m.ProjectID, m.UserID) {
 			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: f.proyectos[m.ProjectID], Rol: m.Role})
 		}
 	}
@@ -103,6 +111,9 @@ func (f *fakeProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	}
 	if f.errAgregar != nil {
 		return domain.Membership{}, f.errAgregar
+	}
+	if f.dadoDeBaja(m.ProjectID, m.UserID) {
+		return f.reactivar(m), nil
 	}
 	for _, existente := range f.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
@@ -151,14 +162,50 @@ func (f *fakeProjectRepository) Reabrir(_ context.Context, id int64) error {
 	return nil
 }
 
-// ListarIntegrantes devuelve listaMiembros si el test la fijó; si no, deriva la
-// lista de las membresías guardadas (sin nombre: el fake no conoce a los usuarios).
-func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+// reactivar vuelve a dejar activo al vínculo dado de baja con el rol pedido,
+// conservando su CreadoEn (HU-16: la reactivación reutiliza la misma fila).
+func (f *fakeProjectRepository) reactivar(m domain.Membership) domain.Membership {
+	delete(f.bajas, [2]int64{m.ProjectID, m.UserID})
+	for i, existente := range f.miembros {
+		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
+			f.miembros[i].Role = m.Role
+			return f.miembros[i]
+		}
+	}
+	for i, existente := range f.listaMiembros {
+		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
+			f.listaMiembros[i].Role = m.Role
+			m.CreadoEn = existente.CreadoEn
+		}
+	}
+	return m
+}
+
+// ListarIntegrantes devuelve los integrantes activos: los de listaMiembros si
+// el test la fijó o, si no, los derivados de las membresías guardadas (sin
+// nombre: el fake no conoce a los usuarios). Los dados de baja no figuran (HU-16).
+func (f *fakeProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	todos, err := f.ListarIntegrantesHistoricos(ctx, proyectoID)
+	if err != nil || todos == nil {
+		return todos, err
+	}
+	activos := make([]domain.Member, 0, len(todos))
+	for _, m := range todos {
+		if !f.dadoDeBaja(proyectoID, m.UserID) {
+			activos = append(activos, m)
+		}
+	}
+	return activos, nil
+}
+
+// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados de
+// baja, con el mismo origen que ListarIntegrantes (HU-16).
+func (f *fakeProjectRepository) ListarIntegrantesHistoricos(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
 	if f.listaMiembros != nil {
-		return f.listaMiembros, nil
+		return slices.Clone(f.listaMiembros), nil
 	}
 	var derivados []domain.Member
 	for _, m := range f.miembros {
@@ -167,6 +214,27 @@ func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID 
 		}
 	}
 	return derivados, nil
+}
+
+// DarDeBajaIntegrante marca la baja con las reglas del repositorio en memoria
+// (HU-16). No toca votos: viven en otro fake.
+func (f *fakeProjectRepository) DarDeBajaIntegrante(ctx context.Context, proyectoID, usuarioID int64, fecha time.Time) error {
+	activos, err := f.ListarIntegrantes(ctx, proyectoID)
+	if err != nil {
+		return err
+	}
+	i := slices.IndexFunc(activos, func(m domain.Member) bool { return m.UserID == usuarioID })
+	if i < 0 {
+		return domain.ErrIntegranteNoEncontrado
+	}
+	if activos[i].Role == domain.RolScrumMaster {
+		return domain.ErrScrumMasterNoSeQuita
+	}
+	if f.bajas == nil {
+		f.bajas = map[[2]int64]time.Time{}
+	}
+	f.bajas[[2]int64{proyectoID, usuarioID}] = fecha
+	return nil
 }
 
 type fakeProductBacklogRepository struct {
@@ -765,14 +833,4 @@ type fakeAvanceHistoriasRepository struct {
 func (f *fakeAvanceHistoriasRepository) ListarPorProyecto(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
 	f.llamadas++
 	return f.historias, f.err
-}
-
-// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
-func (f *fakeProjectRepository) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
-	return nil, errors.New("no implementado")
-}
-
-// DarDeBajaIntegrante: pendiente de implementar (HU-16).
-func (f *fakeProjectRepository) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
-	return errors.New("no implementado")
 }
