@@ -62,9 +62,9 @@ Como persona que usa la aplicación quiero pantallas de acceso claras, con la op
 
 **Acceptance Scenarios**:
 
-1. **Given** la pantalla Ingresar o Registro, **When** la persona presiona «Mostrar contraseña», **Then** la contraseña se ve como texto y el botón pasa a llamarse «Ocultar contraseña»; **When** lo presiona de nuevo, **Then** vuelve a ocultarse.
+1. **Given** la pantalla Ingresar o Registro, **When** la persona presiona «Mostrar contraseña», **Then** la contraseña se ve como texto y el botón queda marcado como presionado (el nombre del botón no cambia); **When** lo presiona de nuevo, **Then** vuelve a ocultarse.
 2. **Given** la pantalla Ingresar, **When** se muestra, **Then** conserva el formulario, el aviso «Tu sesión venció» cuando corresponde, el enlace a Registro y los datos de prueba, con el comportamiento actual.
-3. **Given** la pantalla Registro, **When** se muestra, **Then** indica las reglas del nombre de usuario y de la contraseña que ya aplica el servidor.
+3. **Given** la pantalla Registro, **When** se muestra, **Then** cada campo indica la regla que ya aplica el servidor (usuario: de 3 a 30 caracteres, letras sin tildes, números, punto, guion y guion bajo; contraseña: de 8 a 128 caracteres); **When** el servidor rechaza un campo, **Then** el mensaje de error reemplaza esa ayuda.
 
 ---
 
@@ -105,7 +105,7 @@ Reglas en formato EARS.
 - **FR-005** (Basado en evento): Cuando la persona presiona «Abrir menú» en una pantalla angosta, la aplicación debe abrir la barra lateral como cajón; cuando navega, presiona Escape o presiona «Cerrar menú», debe cerrarlo.
 - **FR-006** (Basado en estado): Mientras no haya sesión iniciada, la aplicación no debe mostrar la barra lateral y debe ofrecer los enlaces «Ingresar» y «Registrarse».
 - **FR-007** (Ubicuo): El listado de proyectos se debe pedir una sola vez al montar una pantalla de proyecto y no al cambiar de sección.
-- **FR-008** (Basado en evento): Cuando la persona presiona «Mostrar contraseña», el campo debe mostrar el texto y el botón debe llamarse «Ocultar contraseña»; al presionarlo de nuevo debe volver al estado inicial.
+- **FR-008** (Basado en evento): Cuando la persona presiona «Mostrar contraseña», el campo debe mostrar el texto y el botón debe quedar con `aria-pressed` verdadero, sin cambiar su nombre accesible; al presionarlo de nuevo debe volver al estado inicial.
 - **FR-009** (Ubicuo): Las fechas visibles en las pantallas de la ola 1 se deben mostrar como dd/mm/aaaa.
 - **FR-010** (Ubicuo): Los íconos deben ser decorativos (ocultos para lectores de pantalla) y no deben agregar dependencias.
 - **FR-011** (Ubicuo): Todo control interactivo debe tener foco visible, ser operable con teclado y cumplir contraste AA.

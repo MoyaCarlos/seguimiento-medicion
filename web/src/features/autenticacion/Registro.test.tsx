@@ -99,6 +99,15 @@ describe('pantalla de registro', () => {
     expect(screen.getByLabelText('Nombre de usuario').getAttribute('aria-describedby')).toBeNull()
   })
 
+  it('Given la pantalla de registro, When se muestra, Then cada campo describe la regla que aplica el servidor', () => {
+    montar()
+
+    expect(descripcion(screen.getByLabelText('Nombre de usuario'))).toBe(
+      'De 3 a 30 caracteres: letras sin tildes, números, punto, guion y guion bajo.',
+    )
+    expect(descripcion(screen.getByLabelText('Contraseña'))).toBe('De 8 a 128 caracteres.')
+  })
+
   it('Escenario 3: el error del campo nombre se muestra junto al nombre', async () => {
     simularFetch(() => json({ campo: 'nombre', mensaje: 'El nombre no es válido' }, 400))
     montar()
@@ -113,6 +122,34 @@ describe('pantalla de registro', () => {
     montar()
 
     expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('password')
+  })
+
+  it('Given la contraseña oculta, When presiono «Mostrar contraseña», Then se ve como texto y el botón queda presionado sin cambiar de nombre', async () => {
+    montar()
+    const usuario = userEvent.setup()
+    const campo = screen.getByLabelText('Contraseña')
+    const boton = screen.queryByRole('button', { name: 'Mostrar contraseña' })
+    expect(boton).not.toBeNull()
+    expect(boton!.getAttribute('aria-pressed')).toBe('false')
+
+    await usuario.click(boton!)
+
+    expect(campo.getAttribute('type')).toBe('text')
+    expect(screen.getByRole('button', { name: 'Mostrar contraseña' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('Given la contraseña visible, When presiono de nuevo «Mostrar contraseña», Then vuelve a ocultarse', async () => {
+    montar()
+    const usuario = userEvent.setup()
+    const boton = screen.queryByRole('button', { name: 'Mostrar contraseña' })
+    expect(boton).not.toBeNull()
+    await usuario.click(boton!)
+    expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('text')
+
+    await usuario.click(boton!)
+
+    expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('password')
+    expect(boton!.getAttribute('aria-pressed')).toBe('false')
   })
 
   it('tiene un enlace a la pantalla de ingreso', async () => {
