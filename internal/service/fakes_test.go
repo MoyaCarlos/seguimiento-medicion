@@ -59,15 +59,17 @@ func (f *fakeProjectRepository) ObtenerPorID(_ context.Context, id int64) (domai
 	return p, nil
 }
 
-func (f *fakeProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
+func (f *fakeProjectRepository) ListarPorIntegrante(_ context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	if f.err != nil {
 		return nil, f.err
 	}
-	proyectos := make([]domain.Project, 0, len(f.proyectos))
-	for _, p := range f.proyectos {
-		proyectos = append(proyectos, p)
+	proyectos := make([]domain.ProyectoConRol, 0)
+	for _, m := range f.miembros {
+		if m.UserID == usuarioID {
+			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: f.proyectos[m.ProjectID], Rol: m.Role})
+		}
 	}
-	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].Proyecto.ID < proyectos[j].Proyecto.ID })
 	return proyectos, nil
 }
 
@@ -118,40 +120,6 @@ func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID 
 		}
 	}
 	return derivados, nil
-}
-
-type fakeUserRepository struct {
-	usuarios map[string]domain.User
-	creates  int
-	err      error
-}
-
-func (f *fakeUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
-	if f.err != nil {
-		return nil, f.err
-	}
-	u, ok := f.usuarios[normalized]
-	if !ok {
-		return nil, domain.ErrNoEncontrado
-	}
-	return &u, nil
-}
-
-func (f *fakeUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
-	if f.err != nil {
-		return domain.User{}, f.err
-	}
-	if f.usuarios == nil {
-		f.usuarios = map[string]domain.User{}
-	}
-	if _, ok := f.usuarios[u.NombreNormalizado]; ok {
-		return domain.User{}, repository.ErrUsuarioDuplicado
-	}
-	f.creates++
-	u.ID = int64(f.creates)
-	u.CreadoEn = time.Now().UTC()
-	f.usuarios[u.NombreNormalizado] = u
-	return u, nil
 }
 
 type fakeProductBacklogRepository struct {
@@ -215,6 +183,28 @@ func (f *fakeRegistroHorasRepository) ListarPorHistoria(_ context.Context, histo
 		}
 	}
 	return detalle, nil
+}
+
+// actorDePrueba es quien actúa en los tests de servicios que no prueban la
+// pertenencia: integrantesConActor lo da por integrante de cualquier proyecto.
+const actorDePrueba int64 = 1
+
+type integrantesConActor struct{}
+
+func (integrantesConActor) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolProductBuilder}}, nil
+}
+
+// actorScrumMasterDe devuelve la membresía del actor de prueba como Scrum Master.
+func actorScrumMasterDe(proyectoID int64) []domain.Membership {
+	return []domain.Membership{{ProjectID: proyectoID, UserID: actorDePrueba, Role: domain.RolScrumMaster}}
+}
+
+// scrumMasterConActor da al actor de prueba por Scrum Master de cualquier proyecto.
+type scrumMasterConActor struct{}
+
+func (scrumMasterConActor) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolScrumMaster}}, nil
 }
 
 type fakeIntegrantesRepository struct {

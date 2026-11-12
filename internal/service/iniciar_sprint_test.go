@@ -30,7 +30,8 @@ func sembrarSprintPendiente(t *testing.T, repo repository.SprintRepository, proy
 }
 
 // proyectosSinFechas devuelve un proyecto sin fechas para cualquier ID, así
-// que admite cualquier Sprint (#168). Solo implementa ObtenerPorID.
+// que admite cualquier Sprint (#168), y al actor de prueba como su Scrum
+// Master (HU-21). Solo implementa ObtenerPorID y ListarIntegrantes.
 type proyectosSinFechas struct {
 	repository.ProjectRepository
 }
@@ -39,13 +40,17 @@ func (proyectosSinFechas) ObtenerPorID(_ context.Context, id int64) (domain.Proj
 	return domain.Project{ID: id, Nombre: "Software Metrics & Estimation"}, nil
 }
 
+func (proyectosSinFechas) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return scrumMasterConActor{}.ListarIntegrantes(ctx, proyectoID)
+}
+
 func sembrarProyectoConPlazo(t *testing.T, repo repository.ProjectRepository, inicio, fin *time.Time) int64 {
 	t.Helper()
 	p, err := domain.NewProject("Software Metrics & Estimation", "", inicio, fin)
 	if err != nil {
 		t.Fatalf("no se esperaba error de dominio: %v", err)
 	}
-	guardado, err := repo.Guardar(context.Background(), p)
+	guardado, err := repo.GuardarConScrumMaster(context.Background(), p, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error al sembrar el proyecto: %v", err)
 	}
@@ -57,7 +62,7 @@ func fecha(anio int, mes time.Month, dia int) time.Time {
 }
 
 func inputValido(sprintID int64) IniciarSprintInput {
-	return IniciarSprintInput{SprintID: sprintID, SprintGoal: "Entregar el MVP", FechaInicio: inicioSprint, FechaFin: finSprint}
+	return IniciarSprintInput{SprintID: sprintID, SprintGoal: "Entregar el MVP", FechaInicio: inicioSprint, FechaFin: finSprint, UsuarioID: actorDePrueba}
 }
 
 func estadoPersistido(t *testing.T, repo repository.SprintRepository, id int64) domain.EstadoSprint {
@@ -165,7 +170,7 @@ func iniciarEnProyectoConPlazo(t *testing.T, inicio, fin *time.Time, input func(
 
 func conFechas(goal string, inicio, fin time.Time) func(int64) IniciarSprintInput {
 	return func(sprintID int64) IniciarSprintInput {
-		return IniciarSprintInput{SprintID: sprintID, SprintGoal: goal, FechaInicio: inicio, FechaFin: fin}
+		return IniciarSprintInput{SprintID: sprintID, SprintGoal: goal, FechaInicio: inicio, FechaFin: fin, UsuarioID: actorDePrueba}
 	}
 }
 

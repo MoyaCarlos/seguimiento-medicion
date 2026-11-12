@@ -41,11 +41,10 @@ type pasosSprint struct {
 func (p *pasosSprint) preparar() {
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
-	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
-	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
-	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
-	p.editar = service.NewEditarHistoria(p.backlog, p.sprints)
+	p.crear = service.NewCrearSprint(repository.NewSQLiteProjectRepository(p.base.db), p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
+	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, repository.NewSQLiteProjectRepository(p.base.db))
+	p.editar = service.NewEditarHistoria(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.sprint, p.segundo, p.err = domain.Sprint{}, domain.Sprint{}, nil
 	p.completada, p.pendiente, p.estimada, p.sinEstimar = 0, 0, 0, 0
 }
@@ -61,6 +60,7 @@ func (p *pasosSprint) nuevoPendiente() (domain.Sprint, error) {
 func (p *pasosSprint) iniciarCon(id int64, goal string, fin time.Time) (domain.Sprint, error) {
 	return p.iniciar.Ejecutar(context.Background(), service.IniciarSprintInput{
 		SprintID: id, SprintGoal: goal, FechaInicio: inicioSprint, FechaFin: fin,
+		UsuarioID: scrumMasterDelSprint(p.base.db, id),
 	})
 }
 
@@ -84,17 +84,17 @@ func (p *pasosSprint) existeOtroPendiente() (err error) {
 }
 
 func (p *pasosSprint) creoUnSprint() error {
-	p.sprint, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	p.sprint, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	return nil
 }
 
 func (p *pasosSprint) intentoCrearParaProyecto(proyectoID int) error {
-	_, p.err = p.crear.Ejecutar(context.Background(), int64(proyectoID))
+	_, p.err = p.crear.Ejecutar(context.Background(), int64(proyectoID), scrumMasterDelProyecto(p.base.db, int64(proyectoID)))
 	return nil
 }
 
 func (p *pasosSprint) intentoCrearOtro() error {
-	_, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	_, p.err = p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	return nil
 }
 
@@ -135,7 +135,7 @@ func (p *pasosSprint) intentoIniciarConFechaInvalida() error {
 }
 
 func (p *pasosSprint) cierroElSprint() error {
-	cerrado, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID)
+	cerrado, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID, scrumMasterDelSprint(p.base.db, p.sprint.ID))
 	if err == nil {
 		p.sprint = cerrado
 	}
@@ -200,7 +200,12 @@ func (p *pasosSprint) cambioLaEstimacion(puntos int) error {
 	if err != nil {
 		return err
 	}
+	actor, err := integranteDeLaHistoria(p.base.db, actual.ID)
+	if err != nil {
+		return err
+	}
 	_, err = p.editar.Ejecutar(context.Background(), service.EditarHistoriaInput{
+		UsuarioID:           actor,
 		ID:                  actual.ID,
 		Titulo:              actual.Titulo,
 		Descripcion:         actual.Descripcion,

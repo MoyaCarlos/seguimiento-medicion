@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -352,11 +353,14 @@ func TestSQLiteProjectRepository_LeeLasHorasPorStoryPoint(t *testing.T) {
 		t.Errorf("se esperaba sin definir, se obtuvo %v", *sinDefinir.HorasPorStoryPoint)
 	}
 
-	listados, err := repo.Listar(ctx)
+	mustExec(t, db, `INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (1, 'Ana', 'ana', '2026-10-23T00:00:00Z')`)
+	mustExec(t, db, fmt.Sprintf(`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES
+		(%d, 1, 'scrum_master', '2026-10-23T00:00:00Z'), (%d, 1, 'scrum_master', '2026-10-23T00:00:00Z')`, conValor, sinValor))
+	listados, err := repo.ListarPorIntegrante(ctx, 1)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if len(listados) != 2 || listados[0].HorasPorStoryPoint == nil || *listados[0].HorasPorStoryPoint != 2.5 || listados[1].HorasPorStoryPoint != nil {
+	if len(listados) != 2 || listados[0].Proyecto.HorasPorStoryPoint == nil || *listados[0].Proyecto.HorasPorStoryPoint != 2.5 || listados[1].Proyecto.HorasPorStoryPoint != nil {
 		t.Errorf("el listado no trae el parámetro: %+v", listados)
 	}
 }

@@ -1,4 +1,4 @@
-import { get } from '../../compartido/api/client'
+import { descargar, get } from '../../compartido/api/client'
 import type { DetalleSprint, SprintHistorial } from './tipos'
 
 export async function listarHistorial(proyectoId: string): Promise<SprintHistorial[]> {
@@ -14,3 +14,6 @@ export async function obtenerDetalleSprint(proyectoId: string, sprintId: string)
   }
   return detalle as DetalleSprint
 }
+
+export const descargarReporteSprint = (sprintId: string) =>
+  descargar(`/sprints/${sprintId}/reporte`)

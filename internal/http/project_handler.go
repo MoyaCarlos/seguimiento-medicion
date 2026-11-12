@@ -42,16 +42,22 @@ func NewProjectHandler(
 	}
 }
 
-// Listar atiende GET /projects.
+// Listar atiende GET /projects: los proyectos de la sesión, con su rol (HU-21).
 func (h *ProjectHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
-	proyectos, err := h.listarProyectos.Ejecutar(r.Context())
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	proyectos, err := h.listarProyectos.Ejecutar(r.Context(), actor)
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 	respuesta := make([]proyectoResponse, 0, len(proyectos))
-	for _, proyecto := range proyectos {
-		respuesta = append(respuesta, aProyectoResponse(proyecto))
+	for _, p := range proyectos {
+		proyecto := aProyectoResponse(p.Proyecto)
+		proyecto.Rol = string(p.Rol)
+		respuesta = append(respuesta, proyecto)
 	}
 	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
@@ -80,28 +86,36 @@ func (h *ProjectHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 		Descripcion: req.Descripcion,
 		FechaInicio: inicio,
 		FechaFin:    fin,
-		Creador:     req.Creador,
+		CreadorID:   usuarioDeSesion(r).ID,
 	})
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusCreated, aProyectoResponse(proyecto))
+	respuesta := aProyectoResponse(proyecto)
+	respuesta.Rol = string(domain.RolScrumMaster)
+	escribirJSON(w, nethttp.StatusCreated, respuesta)
 }
 
 // Obtener atiende GET /projects/{id}.
 func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	proyecto, err := h.obtener.Ejecutar(r.Context(), id)
+	proyecto, rol, err := h.obtener.ComoIntegrante(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	escribirJSON(w, nethttp.StatusOK, aProyectoResponse(proyecto))
+	respuesta := aProyectoResponse(proyecto)
+	respuesta.Rol = string(rol)
+	escribirJSON(w, nethttp.StatusOK, respuesta)
 }
 
 // ObtenerEstado atiende GET /projects/{id}/status.
@@ -121,14 +135,19 @@ func (h *ProjectHandler) ObtenerEstado(w nethttp.ResponseWriter, r *nethttp.Requ
 
 // Editar atiende PUT /projects/{id}.
 func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	// El proyecto inexistente domina (404) sobre cualquier validación del cuerpo.
-	if _, err := h.obtener.Ejecutar(r.Context(), id); err != nil {
+	// El proyecto inexistente (404) y el permiso (403) dominan sobre cualquier
+	// validación del cuerpo.
+	if err := h.editar.Autorizar(r.Context(), id, actor); err != nil {
 		escribirError(w, err)
 		return
 	}
@@ -175,6 +194,7 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		FechaFin:           fin,
 		HorasPorSPEnviadas: horasEnviadas,
 		HorasPorSP:         horas,
+		UsuarioID:          actor,
 	})
 	if err != nil {
 		escribirError(w, err)
@@ -185,6 +205,10 @@ func (h *ProjectHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // AsignarIntegrante atiende POST /projects/{id}/members.
 func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -204,6 +228,7 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 	}
 
 	miembro, err := h.asignar.Ejecutar(r.Context(), service.AsignarIntegranteInput{
+		ActorID:    actor,
 		ProyectoID: id,
 		Nombre:     req.Nombre,
 		Rol:        domain.Role(req.Rol),

@@ -39,10 +39,10 @@ func TestAsignarHistoriaASprint_AsignacionValida(t *testing.T) {
 	pendiente := sembrarSprintPendiente(t, sprints, 1)
 	activo := sembrarSprintActivo(t, sprints, 2)
 	historias := fakeConHistorias(historiaSinSprint(1, 1, domain.EstadoNueva), historiaSinSprint(2, 2, domain.EstadoNueva))
-	caso := NewAsignarHistoriaASprint(historias, sprints)
+	caso := NewAsignarHistoriaASprint(historias, sprints, integrantesConActor{})
 
 	for _, c := range []struct{ historiaID, sprintID int64 }{{1, pendiente.ID}, {2, activo.ID}} {
-		h, err := caso.Ejecutar(context.Background(), c.historiaID, c.sprintID)
+		h, err := caso.Ejecutar(context.Background(), c.historiaID, c.sprintID, actorDePrueba)
 		if err != nil {
 			t.Fatalf("no se esperaba error: %v", err)
 		}
@@ -59,9 +59,9 @@ func TestAsignarHistoriaASprint_AsignacionValida(t *testing.T) {
 }
 
 func TestAsignarHistoriaASprint_HistoriaInexistenteGanaSobreSprintInexistente(t *testing.T) {
-	caso := NewAsignarHistoriaASprint(fakeConHistorias(), repository.NewSprintRepositoryEnMemoria())
+	caso := NewAsignarHistoriaASprint(fakeConHistorias(), repository.NewSprintRepositoryEnMemoria(), integrantesConActor{})
 
-	_, err := caso.Ejecutar(context.Background(), 99, 99)
+	_, err := caso.Ejecutar(context.Background(), 99, 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Errorf("err = %v, quería ErrHistoriaNoEncontrada", err)
@@ -70,9 +70,9 @@ func TestAsignarHistoriaASprint_HistoriaInexistenteGanaSobreSprintInexistente(t 
 
 func TestAsignarHistoriaASprint_SprintInexistente(t *testing.T) {
 	historias := fakeConHistorias(historiaSinSprint(1, 1, domain.EstadoNueva))
-	caso := NewAsignarHistoriaASprint(historias, repository.NewSprintRepositoryEnMemoria())
+	caso := NewAsignarHistoriaASprint(historias, repository.NewSprintRepositoryEnMemoria(), integrantesConActor{})
 
-	_, err := caso.Ejecutar(context.Background(), 1, 99)
+	_, err := caso.Ejecutar(context.Background(), 1, 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Errorf("err = %v, quería ErrSprintNoEncontrado", err)
@@ -104,7 +104,7 @@ func TestAsignarHistoriaASprint_ErroresDeValidacionSeDevuelvenTalCual(t *testing
 		t.Run(c.nombre, func(t *testing.T) {
 			historias := fakeConHistorias(c.historia)
 
-			_, err := NewAsignarHistoriaASprint(historias, sprints).Ejecutar(context.Background(), c.historia.ID, c.sprintID)
+			_, err := NewAsignarHistoriaASprint(historias, sprints, integrantesConActor{}).Ejecutar(context.Background(), c.historia.ID, c.sprintID, actorDePrueba)
 
 			if !errors.Is(err, c.esperado) {
 				t.Errorf("err = %v, quería %v", err, c.esperado)
@@ -131,7 +131,7 @@ func TestAsignarHistoriaASprint_PropagaLaCarreraDelRepositorio(t *testing.T) {
 	sprint := sembrarSprintPendiente(t, sprints, 1)
 	historias := ganaOtraAsignacion{fakeConHistorias(historiaSinSprint(1, 1, domain.EstadoNueva))}
 
-	_, err := NewAsignarHistoriaASprint(historias, sprints).Ejecutar(context.Background(), 1, sprint.ID)
+	_, err := NewAsignarHistoriaASprint(historias, sprints, integrantesConActor{}).Ejecutar(context.Background(), 1, sprint.ID, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrHistoriaYaAsignada) {
 		t.Errorf("err = %v, quería ErrHistoriaYaAsignada", err)
@@ -142,7 +142,7 @@ func TestAsignarHistoriaASprint_DosAsignacionesSimultaneas(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sembrarSprintPendiente(t, sprints, 1)
 	historias := fakeConHistorias(historiaSinSprint(1, 1, domain.EstadoNueva))
-	caso := NewAsignarHistoriaASprint(historias, sprints)
+	caso := NewAsignarHistoriaASprint(historias, sprints, integrantesConActor{})
 
 	inicio := make(chan struct{})
 	errores := make([]error, 2)
@@ -152,7 +152,7 @@ func TestAsignarHistoriaASprint_DosAsignacionesSimultaneas(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			<-inicio
-			_, errores[i] = caso.Ejecutar(context.Background(), 1, sprint.ID)
+			_, errores[i] = caso.Ejecutar(context.Background(), 1, sprint.ID, actorDePrueba)
 		}()
 	}
 	close(inicio)

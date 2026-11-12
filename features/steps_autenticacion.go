@@ -12,6 +12,7 @@ import (
 
 	"github.com/cucumber/godog"
 
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/app"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
@@ -26,7 +27,7 @@ type pasosAutenticacion struct {
 	db              *sql.DB
 	sesiones        *repository.SQLiteSesionRepository
 	handler         *apihttp.AuthHandler
-	proyectos       *apihttp.ProjectHandler
+	api             *http.ServeMux
 	ahora           time.Time
 	tokenSegunda    string
 	contrasena      string
@@ -74,7 +75,11 @@ func (p *pasosAutenticacion) preparar() error {
 		obtener,
 		service.NewCerrarSesion(obtener, p.sesiones, reloj),
 	)
-	p.proyectos = apihttp.NewProjectHandler(nil, nil, service.NewListarProyectos(repository.NewSQLiteProjectRepository(db)), nil, nil, nil, nil)
+	p.api = app.NuevoMux(db, app.Opciones{
+		DemoHabilitado: func() bool { return false },
+		Ahora:          reloj,
+		Contrasenas:    hasheador,
+	})
 	p.contrasena, p.cuentasAntes, p.sesionesAntes, p.respuesta = "", 0, 0, nil
 	p.respuestaSesion.Token, p.tokenSegunda = "", ""
 	p.respuestaYo.ID, p.respuestaYo.Nombre = 0, ""
@@ -353,13 +358,19 @@ func (p *pasosAutenticacion) consultoQuienSoyConElTokenDeMiSegundaSesion() error
 func (p *pasosAutenticacion) consultoLaListaDeProyectosSinToken() error {
 	req := httptest.NewRequest(http.MethodGet, "/projects", nil)
 	p.respuesta = httptest.NewRecorder()
-	p.proyectos.Listar(p.respuesta, req)
+	p.api.ServeHTTP(p.respuesta, req)
 	return nil
 }
 
-func (p *pasosAutenticacion) listaDeProyectosConExito() error {
-	if p.respuesta.Code != http.StatusOK {
-		return fmt.Errorf("se esperaba 200, se obtuvo %d: %s", p.respuesta.Code, p.respuesta.Body.String())
+func (p *pasosAutenticacion) listaDeProyectosRechazada(mensaje string) error {
+	if p.respuesta.Code != http.StatusUnauthorized {
+		return fmt.Errorf("se esperaba 401, se obtuvo %d: %s", p.respuesta.Code, p.respuesta.Body.String())
+	}
+	if err := json.Unmarshal(p.respuesta.Body.Bytes(), &p.respuestaError); err != nil {
+		return err
+	}
+	if p.respuestaError.Mensaje != mensaje {
+		return fmt.Errorf("se esperaba el mensaje %q, se obtuvo %q", mensaje, p.respuestaError.Mensaje)
 	}
 	return nil
 }
@@ -400,5 +411,5 @@ func InitializeScenarioAutenticacion(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el cierre de sesión responde sin contenido$`, p.cierreSinContenido)
 	ctx.Step(`^consulto quién soy con el token de mi segunda sesión$`, p.consultoQuienSoyConElTokenDeMiSegundaSesion)
 	ctx.Step(`^consulto la lista de proyectos sin token$`, p.consultoLaListaDeProyectosSinToken)
-	ctx.Step(`^la lista de proyectos responde con éxito$`, p.listaDeProyectosConExito)
+	ctx.Step(`^la lista de proyectos se rechaza con el mensaje "([^"]*)"$`, p.listaDeProyectosRechazada)
 }

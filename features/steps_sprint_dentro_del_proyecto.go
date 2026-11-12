@@ -84,6 +84,7 @@ func (p *pasosPlazoSprint) iniciaDelAl(inicio, fin string) error {
 	}
 	_, p.err = p.iniciar.Ejecutar(context.Background(), service.IniciarSprintInput{
 		SprintID: p.sprint.ID, SprintGoal: "Goal del Sprint", FechaInicio: desde, FechaFin: hasta,
+		UsuarioID: scrumMasterDelSprint(p.base.db, p.sprint.ID),
 	})
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"sort"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,15 +66,17 @@ func (s *stubProjectRepository) ObtenerPorID(_ context.Context, id int64) (domai
 	return p, nil
 }
 
-func (s *stubProjectRepository) Listar(_ context.Context) ([]domain.Project, error) {
+func (s *stubProjectRepository) ListarPorIntegrante(_ context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
-	proyectos := make([]domain.Project, 0, len(s.proyectos))
-	for _, p := range s.proyectos {
-		proyectos = append(proyectos, p)
+	proyectos := make([]domain.ProyectoConRol, 0)
+	for _, m := range s.miembros {
+		if m.UserID == usuarioID {
+			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: s.proyectos[m.ProjectID], Rol: m.Role})
+		}
 	}
-	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].ID < proyectos[j].ID })
+	sort.Slice(proyectos, func(i, j int) bool { return proyectos[i].Proyecto.ID < proyectos[j].Proyecto.ID })
 	return proyectos, nil
 }
 
@@ -98,37 +101,38 @@ func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
-func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, _ int64) ([]domain.Member, error) {
+func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
 	}
-	return s.listaMiembros, nil
+	if s.listaMiembros != nil {
+		return s.listaMiembros, nil
+	}
+	var derivados []domain.Member
+	for _, m := range s.miembros {
+		if m.ProjectID == proyectoID {
+			derivados = append(derivados, domain.Member{UserID: m.UserID, ProjectID: m.ProjectID, Role: m.Role})
+		}
+	}
+	return derivados, nil
 }
 
-type stubUserRepository struct {
-	usuarios map[string]domain.User
-	creates  int
-}
-
-func (s *stubUserRepository) ObtenerPorNombreNormalizado(_ context.Context, normalized string) (*domain.User, error) {
-	if u, ok := s.usuarios[normalized]; ok {
-		return &u, nil
+// credencialesDePrueba tiene con cuenta a la persona de la sesión, a Jimena y a
+// Carlos; «Sin Cuenta» existe sin contraseña (HU-21: el equipo se arma solo
+// con usuarios registrados).
+func credencialesDePrueba() *credencialesEnMemoriaHTTP {
+	c := &credencialesEnMemoriaHTTP{usuarios: map[string]domain.User{}, hashes: map[string]string{}}
+	for _, u := range []domain.User{
+		anaDePrueba,
+		{ID: 20, Nombre: "Jimena", NombreNormalizado: "jimena"},
+		{ID: 21, Nombre: "Carlos", NombreNormalizado: "carlos"},
+		{ID: 22, Nombre: "Sin Cuenta", NombreNormalizado: "sin cuenta"},
+	} {
+		c.usuarios[u.NombreNormalizado] = u
+		c.hashes[u.NombreNormalizado] = "hash"
 	}
-	return nil, domain.ErrNoEncontrado
-}
-
-func (s *stubUserRepository) Guardar(_ context.Context, u domain.User) (domain.User, error) {
-	if s.usuarios == nil {
-		s.usuarios = map[string]domain.User{}
-	}
-	if _, ok := s.usuarios[u.NombreNormalizado]; ok {
-		return domain.User{}, repository.ErrUsuarioDuplicado
-	}
-	s.creates++
-	u.ID = int64(s.creates)
-	u.CreadoEn = time.Now().UTC()
-	s.usuarios[u.NombreNormalizado] = u
-	return u, nil
+	c.hashes["sin cuenta"] = ""
+	return c
 }
 
 func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
@@ -138,9 +142,9 @@ func nuevoProjectHandlerDePrueba() (*ProjectHandler, *stubProjectRepository) {
 
 func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepository, *repository.SprintRepositoryEnMemoria) {
 	proyectos := &stubProjectRepository{}
-	usuarios := &stubUserRepository{}
+	usuarios := credencialesDePrueba()
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	crear := service.NewCrearProyecto(proyectos, usuarios)
+	crear := service.NewCrearProyecto(proyectos)
 	obtener := service.NewObtenerProyecto(proyectos)
 	editar := service.NewEditarProyecto(proyectos)
 	asignar := service.NewAsignarIntegrante(proyectos, usuarios)
@@ -155,9 +159,9 @@ func crearProyectoViaHTTP(t *testing.T, handler *ProjectHandler, nombre string) 
 	t.Helper()
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"`+nombre+`","creador":"Ana"}`,
+		`{"nombre":"`+nombre+`"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("no se pudo preparar el proyecto: %d (%s)", rec.Code, rec.Body.String())
 	}
@@ -173,9 +177,9 @@ func TestProjectHandler_Crear_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"Software Metrics & Estimation","descripcion":"Sistema","creador":"Ana","fecha_inicio":"2026-03-01","fecha_fin":"2026-11-30"}`,
+		`{"nombre":"Software Metrics & Estimation","descripcion":"Sistema","fecha_inicio":"2026-03-01","fecha_fin":"2026-11-30"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -190,8 +194,42 @@ func TestProjectHandler_Crear_Exitosa(t *testing.T) {
 	if resp.FechaInicio == nil || *resp.FechaInicio != "2026-03-01" {
 		t.Errorf("fecha_inicio inesperada: %v", resp.FechaInicio)
 	}
-	if len(repo.miembros) != 1 || repo.miembros[0].Role != domain.RolScrumMaster {
-		t.Errorf("se esperaba el creador como scrum_master")
+	if resp.Rol != "scrum_master" {
+		t.Errorf("rol = %q, se esperaba scrum_master", resp.Rol)
+	}
+	if len(repo.miembros) != 1 || repo.miembros[0].Role != domain.RolScrumMaster || repo.miembros[0].UserID != anaDePrueba.ID {
+		t.Errorf("se esperaba a la persona de la sesión como scrum_master, se obtuvo %+v", repo.miembros)
+	}
+}
+
+// Escenario 7 de HU-21: quien crea el proyecto sale de la sesión; un creador
+// en el cuerpo se ignora.
+func TestProjectHandler_Crear_IgnoraElCreadorDelCuerpo(t *testing.T) {
+	handler, repo := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"P","creador":"bruno"}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if len(repo.miembros) != 1 || repo.miembros[0].UserID != anaDePrueba.ID {
+		t.Errorf("el Scrum Master debía ser la persona de la sesión, se obtuvo %+v", repo.miembros)
+	}
+}
+
+func TestProjectHandler_Crear_SinSesionResponde401(t *testing.T) {
+	handler, repo := nuevoProjectHandlerDePrueba()
+	rec := httptest.NewRecorder()
+
+	handler.Crear(rec, httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"P"}`)))
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("se esperaba 401, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if repo.creates != 0 {
+		t.Error("no se debía persistir el proyecto sin sesión")
 	}
 }
 
@@ -199,8 +237,8 @@ func TestProjectHandler_Crear_NombreVacio(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"","creador":"Ana"}`))
-	handler.Crear(rec, req)
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":""}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -220,9 +258,9 @@ func TestProjectHandler_Crear_FechaInvalida(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(
-		`{"nombre":"Proyecto","creador":"Ana","fecha_inicio":"2026-11-30","fecha_fin":"2026-03-01"}`,
+		`{"nombre":"Proyecto","fecha_inicio":"2026-11-30","fecha_fin":"2026-03-01"}`,
 	))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -239,7 +277,7 @@ func TestProjectHandler_Crear_JSONInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 
 	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{no-es-json`))
-	handler.Crear(rec, req)
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -263,8 +301,8 @@ func TestProjectHandler_Crear_ErrorPersistencia(t *testing.T) {
 	repo.err = errPersistencia
 	rec := httptest.NewRecorder()
 
-	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Proyecto","creador":"Ana"}`))
-	handler.Crear(rec, req)
+	req := httptest.NewRequest(http.MethodPost, "/projects", bytes.NewBufferString(`{"nombre":"Proyecto"}`))
+	handler.Crear(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("se esperaba 500, se obtuvo %d", rec.Code)
@@ -279,7 +317,7 @@ func TestProjectHandler_Obtener_Existente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr, nil)
 	req.SetPathValue("id", idStr)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d", rec.Code)
@@ -296,7 +334,7 @@ func TestProjectHandler_Obtener_Inexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/999", nil)
 	req.SetPathValue("id", "999")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -309,7 +347,7 @@ func TestProjectHandler_Obtener_IDNoNumerico(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/abc", nil)
 	req.SetPathValue("id", "abc")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -326,7 +364,7 @@ func TestProjectHandler_Obtener_IDNoPositivo(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/0", nil)
 	req.SetPathValue("id", "0")
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -346,7 +384,7 @@ func TestProjectHandler_Editar_SinClavesObligatorias(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"X"}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -373,7 +411,7 @@ func TestProjectHandler_Editar_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"Corregido","descripcion":"nueva","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -393,7 +431,7 @@ func TestProjectHandler_Editar_NombreVacio(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/"+idStr, bytes.NewBufferString(`{"nombre":"","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", idStr)
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -410,7 +448,7 @@ func TestProjectHandler_Editar_Inexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X","descripcion":"","fecha_inicio":null,"fecha_fin":null}`))
 	req.SetPathValue("id", "999")
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -422,7 +460,7 @@ func TestProjectHandler_Editar_InexistenteConCuerpoInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPut, "/projects/999", bytes.NewBufferString(`{"nombre":"X"}`))
 	req.SetPathValue("id", "999")
-	handler.Editar(rec, req)
+	handler.Editar(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre cuerpo inválido), se obtuvo %d", rec.Code)
@@ -437,7 +475,7 @@ func TestProjectHandler_AsignarIntegrante_Exitosa(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -457,7 +495,7 @@ func TestProjectHandler_AsignarIntegrante_RolInvalido(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"Product Owner"}`))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -477,12 +515,12 @@ func TestProjectHandler_AsignarIntegrante_Duplicado(t *testing.T) {
 	cuerpo := `{"nombre":"Jimena","rol":"product_builder"}`
 	req1 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req1.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(httptest.NewRecorder(), req1)
+	handler.AsignarIntegrante(httptest.NewRecorder(), conSesionDe(req1, anaDePrueba))
 
 	rec := httptest.NewRecorder()
 	req2 := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req2.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req2)
+	handler.AsignarIntegrante(rec, conSesionDe(req2, anaDePrueba))
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)
@@ -499,7 +537,7 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{"nombre":"Jimena","rol":"product_builder"}`))
 	req.SetPathValue("id", "999")
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -511,7 +549,7 @@ func TestProjectHandler_AsignarIntegrante_ProyectoInexistenteConCuerpoInvalido(t
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/999/members", bytes.NewBufferString(`{nombre:`))
 	req.SetPathValue("id", "999")
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404 (proyecto inexistente domina sobre JSON inválido), se obtuvo %d", rec.Code)
@@ -522,7 +560,7 @@ func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	handler, repo := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	repo.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	repo.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/members", nil)
@@ -604,7 +642,7 @@ func asignarViaHTTP(handler *ProjectHandler, idStr, cuerpo string) *httptest.Res
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/members", bytes.NewBufferString(cuerpo))
 	req.SetPathValue("id", idStr)
-	handler.AsignarIntegrante(rec, req)
+	handler.AsignarIntegrante(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -612,7 +650,7 @@ func TestProjectHandler_AsignarIntegrante_SegundoScrumMasterEs409(t *testing.T) 
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"scrum_master"}`)
 
@@ -630,7 +668,7 @@ func TestProjectHandler_AsignarIntegrante_ScrumMasterQueYaEsIntegranteSigueSiend
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Ana","rol":"scrum_master"}`)
 
@@ -648,11 +686,45 @@ func TestProjectHandler_AsignarIntegrante_ProductBuilderConScrumMasterEs201(t *t
 	handler, proyectos := nuevoProjectHandlerDePrueba()
 	id := crearProyectoViaHTTP(t, handler, "Proyecto")
 	idStr := strconv.FormatInt(id, 10)
-	proyectos.listaMiembros = []domain.Member{{UserID: 1, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
+	proyectos.listaMiembros = []domain.Member{{UserID: anaDePrueba.ID, ProjectID: id, Nombre: "Ana", Role: domain.RolScrumMaster}}
 
 	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Jimena","rol":"product_builder"}`)
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+}
+
+// HU-21, escenario 8: sin rol, el usuario registrado entra como Product Builder.
+func TestProjectHandler_AsignarIntegrante_SinRolEntraComoProductBuilder(t *testing.T) {
+	handler, _ := nuevoProjectHandlerDePrueba()
+	idStr := strconv.FormatInt(crearProyectoViaHTTP(t, handler, "Proyecto"), 10)
+
+	rec := asignarViaHTTP(handler, idStr, `{"nombre":"Carlos"}`)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp integranteResponse
+	_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+	if resp.Nombre != "Carlos" || resp.Rol != "product_builder" {
+		t.Errorf("integrante inesperado: %+v", resp)
+	}
+}
+
+// HU-21, escenario 8: quien no existe o no tiene cuenta da 404 «usuario no encontrado».
+func TestProjectHandler_AsignarIntegrante_UsuarioNoRegistradoEs404(t *testing.T) {
+	for _, nombre := range []string{"Nadie", "Sin Cuenta"} {
+		handler, proyectos := nuevoProjectHandlerDePrueba()
+		idStr := strconv.FormatInt(crearProyectoViaHTTP(t, handler, "Proyecto"), 10)
+
+		rec := asignarViaHTTP(handler, idStr, `{"nombre":"`+nombre+`","rol":"product_builder"}`)
+
+		if body := strings.TrimSpace(rec.Body.String()); rec.Code != http.StatusNotFound || body != `{"mensaje":"usuario no encontrado"}` {
+			t.Errorf("%s: se esperaba 404 «usuario no encontrado», se obtuvo %d %s", nombre, rec.Code, body)
+		}
+		if len(proyectos.miembros) != 1 {
+			t.Errorf("%s: no se debía agregar integrante", nombre)
+		}
 	}
 }

@@ -37,7 +37,7 @@ func (p *pasosEstado) preparar() {
 	p.proyectos = repository.NewSQLiteProjectRepository(p.base.db)
 	p.crear = service.NewCrearSprint(p.proyectos, p.sprints)
 	p.iniciar = service.NewIniciarSprint(p.sprints, p.proyectos)
-	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog)
+	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, p.proyectos)
 	p.consulta = service.NewObtenerEstadoProyecto(p.proyectos, p.sprints)
 	p.sprint, p.estado, p.err = domain.Sprint{}, "", nil
 }
@@ -128,7 +128,7 @@ func (p *pasosEstado) crearActivo() error {
 	if err != nil {
 		return err
 	}
-	pendiente, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	pendiente, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return err
 	}
@@ -137,6 +137,7 @@ func (p *pasosEstado) crearActivo() error {
 		SprintGoal:  "Goal del Sprint",
 		FechaInicio: inicio,
 		FechaFin:    fin,
+		UsuarioID:   scrumMasterDelSprint(p.base.db, pendiente.ID),
 	})
 	if err != nil {
 		return err
@@ -153,7 +154,7 @@ func (p *pasosEstado) todosFinalizados() error {
 	if err := p.crearActivo(); err != nil {
 		return err
 	}
-	_, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID)
+	_, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID, scrumMasterDelSprint(p.base.db, p.sprint.ID))
 	return err
 }
 
@@ -163,10 +164,10 @@ func (p *pasosEstado) finalizadoYPendiente() error {
 	if err := p.crearActivo(); err != nil {
 		return err
 	}
-	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID); err != nil {
+	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID, scrumMasterDelSprint(p.base.db, p.sprint.ID)); err != nil {
 		return err
 	}
-	_, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID)
+	_, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	return err
 }
 
@@ -208,7 +209,7 @@ func (p *pasosEstado) inicioSprintYConsulto() error {
 }
 
 func (p *pasosEstado) cierroUltimoYConsulto() error {
-	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID); err != nil {
+	if _, err := p.cerrar.Ejecutar(context.Background(), p.sprint.ID, scrumMasterDelSprint(p.base.db, p.sprint.ID)); err != nil {
 		return err
 	}
 	return p.consultoEstado()

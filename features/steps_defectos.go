@@ -44,12 +44,12 @@ func (p *pasosDefectos) preparar() {
 	sprints := repository.NewSQLiteSprintRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.obtenerProyecto = service.NewObtenerProyecto(proyectos)
-	p.registrar = service.NewRegistrarDefecto(sprints, p.historias, p.defectos)
-	p.resolver = service.NewResolverDefecto(p.defectos, sprints)
+	p.registrar = service.NewRegistrarDefecto(sprints, p.historias, p.defectos, repository.NewSQLiteProjectRepository(p.base.db))
+	p.resolver = service.NewResolverDefecto(p.defectos, sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.listar = service.NewListarDefectos(proyectos, p.defectos)
 	p.crearSprint = service.NewCrearSprint(proyectos, sprints)
 	p.iniciarSprint = service.NewIniciarSprint(sprints, proyectos)
-	p.cerrarSprint = service.NewCerrarSprint(sprints, p.historias)
+	p.cerrarSprint = service.NewCerrarSprint(sprints, p.historias, proyectos)
 	p.sprints, p.historiasPorTitulo, p.defectosPorDescripcion = map[string]int64{}, map[string]int64{}, map[string]int64{}
 	p.otroProyecto, p.ultimo, p.listado, p.err = 0, domain.DefectoDetalle{}, nil, nil
 }
@@ -73,18 +73,19 @@ func (p *pasosDefectos) tieneHistoria(titulo string) error {
 // los casos de uso de HU-05.
 func (p *pasosDefectos) sprintEn(proyectoID int64, estado string) (int64, error) {
 	ctx := context.Background()
-	sprint, err := p.crearSprint.Ejecutar(ctx, proyectoID)
+	sprint, err := p.crearSprint.Ejecutar(ctx, proyectoID, scrumMasterDelProyecto(p.base.db, proyectoID))
 	if err != nil || estado == string(domain.SprintPendiente) {
 		return sprint.ID, err
 	}
 	if _, err := p.iniciarSprint.Ejecutar(ctx, service.IniciarSprintInput{
 		SprintID: sprint.ID, SprintGoal: "Objetivo",
 		FechaInicio: p.hoy.AddDate(0, 0, -7), FechaFin: p.hoy.AddDate(0, 0, 7),
+		UsuarioID: scrumMasterDelSprint(p.base.db, sprint.ID),
 	}); err != nil {
 		return 0, err
 	}
 	if estado == string(domain.SprintFinalizado) {
-		_, err = p.cerrarSprint.Ejecutar(ctx, sprint.ID)
+		_, err = p.cerrarSprint.Ejecutar(ctx, sprint.ID, scrumMasterDelSprint(p.base.db, sprint.ID))
 	}
 	return sprint.ID, err
 }
@@ -96,7 +97,7 @@ func (p *pasosDefectos) tieneSprint(nombre, estado string) error {
 }
 
 func (p *pasosDefectos) cerroSprint(nombre string) error {
-	_, err := p.cerrarSprint.Ejecutar(context.Background(), p.sprints[nombre])
+	_, err := p.cerrarSprint.Ejecutar(context.Background(), p.sprints[nombre], scrumMasterDelSprint(p.base.db, p.sprints[nombre]))
 	return err
 }
 
@@ -135,6 +136,9 @@ func (p *pasosDefectos) noTieneSprints() error { return nil }
 // el resto de las validaciones.
 func (p *pasosDefectos) registrarEn(in service.RegistrarDefectoInput) {
 	if _, p.err = p.obtenerProyecto.Ejecutar(context.Background(), in.ProyectoID); p.err != nil {
+		return
+	}
+	if in.UsuarioID, p.err = integranteDelProyecto(p.base.db, in.ProyectoID); p.err != nil {
 		return
 	}
 	p.ultimo, p.err = p.registrar.Ejecutar(context.Background(), in)
@@ -229,15 +233,23 @@ func (p *pasosDefectos) otroProyectoConDefecto() error {
 	if err != nil {
 		return err
 	}
+	actor, err := integranteDelProyecto(p.base.db, p.otroProyecto)
+	if err != nil {
+		return err
+	}
 	_, err = p.registrar.Ejecutar(context.Background(), service.RegistrarDefectoInput{
-		ProyectoID: p.otroProyecto, HistoriaID: historiaID, Descripcion: "Defecto ajeno", Severidad: "Baja",
+		ProyectoID: p.otroProyecto, HistoriaID: historiaID, Descripcion: "Defecto ajeno", Severidad: "Baja", UsuarioID: actor,
 	})
 	return err
 }
 
 func (p *pasosDefectos) resolverDefecto(id int64) {
 	var resuelto domain.DefectoDetalle
-	resuelto, p.err = p.resolver.Ejecutar(context.Background(), id)
+	var actor int64
+	if actor, p.err = integranteDelDefecto(p.base.db, id); p.err != nil {
+		return
+	}
+	resuelto, p.err = p.resolver.Ejecutar(context.Background(), id, actor)
 	if p.err == nil {
 		p.ultimo = resuelto
 	}

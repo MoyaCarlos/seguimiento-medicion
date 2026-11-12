@@ -19,6 +19,8 @@ type EditarProyectoInput struct {
 	// enviarlo sin valor (HorasPorSP nil, lo borra).
 	HorasPorSPEnviadas bool
 	HorasPorSP         *string
+	// UsuarioID es quien edita (la sesión, HU-21); debe ser el Scrum Master.
+	UsuarioID int64
 }
 
 // EditarProyecto aplica una edición simple reutilizando las validaciones del alta.
@@ -30,9 +32,29 @@ func NewEditarProyecto(proyectos repository.ProjectRepository) *EditarProyecto {
 	return &EditarProyecto{proyectos: proyectos}
 }
 
-// Ejecutar carga el proyecto, valida los datos y persiste los cambios.
+// Autorizar devuelve ErrProyectoNoEncontrado (404) o el error de permisos (403)
+// sin tocar nada: el handler lo llama antes de leer el cuerpo, así un Product
+// Builder recibe 403 aunque mande datos inválidos (HU-21, FR-006).
+func (s *EditarProyecto) Autorizar(ctx context.Context, proyectoID, usuarioID int64) error {
+	_, err := s.proyectoDelScrumMaster(ctx, proyectoID, usuarioID)
+	return err
+}
+
+func (s *EditarProyecto) proyectoDelScrumMaster(ctx context.Context, proyectoID, usuarioID int64) (domain.Project, error) {
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
+	if err != nil {
+		return domain.Project{}, err
+	}
+	if err := exigirScrumMaster(ctx, s.proyectos, proyectoID, usuarioID); err != nil {
+		return domain.Project{}, err
+	}
+	return proyecto, nil
+}
+
+// Ejecutar carga el proyecto, exige que quien edita sea su Scrum Master, valida
+// los datos y persiste los cambios.
 func (s *EditarProyecto) Ejecutar(ctx context.Context, input EditarProyectoInput) (domain.Project, error) {
-	actual, err := s.proyectos.ObtenerPorID(ctx, input.ID)
+	actual, err := s.proyectoDelScrumMaster(ctx, input.ID, input.UsuarioID)
 	if err != nil {
 		return domain.Project{}, err
 	}

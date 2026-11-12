@@ -140,6 +140,7 @@ Entonces el sistema debe mostrar el valor elegido por cada uno y calcular el pro
 HU-04 (integrantes que votan), HU-01 (historia a estimar).
 ### Notas
 El modelo de votación debe contemplar rondas desde el inicio (cada voto pertenece a una ronda), porque la historia de consenso (HU-14) agrega nuevas rondas y conserva el historial.
+Desde HU-21 (escenario 4) quien no integra el proyecto recibe 403 «No sos integrante de este proyecto» antes que el error de rol, al votar o consultar la votación (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 S (Should have) 
 ### Estado
@@ -311,6 +312,7 @@ HU-04 (integrantes), HU-06 (historia dentro de un Sprint), HU-05 (Sprint activo)
 ### Notas
 Las horas se guardan como minutos enteros y se convierten a horas solo al mostrarlas. El tope de horas por carga lo define la especificación de esta historia.
 El escenario 1 («selecciono mi nombre») cambia con HU-21 (escenario 7): las horas quedan a nombre de la persona con sesión iniciada y ya no se elige el integrante.
+En el escenario 2, desde HU-21 (escenario 4) la carga de quien no integra el proyecto pasa de un 400 sobre `integrante_id` a 403 «No sos integrante de este proyecto», antes que cualquier otro error de validación (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 M (Must have) - Fundamental para que luego se puedan calcular las métricas de desviación de esfuerzo. 
 ### Estado
@@ -535,6 +537,7 @@ HU-02 (votos y revelación), HU-01 (campo de Story Points de la historia).
 ### Notas
 No bloquea al cálculo de métricas ni al reporte: los Story Points también se cargan de forma directa al editar el Product Backlog (HU-15).
 Planificación (2026-11-03): el backend va en el Sprint 4 (ya mergeado en el PR #237); el frontend (#93) queda en el Sprint 5.
+Desde HU-21 (escenario 4) quien no integra el proyecto recibe 403 «No sos integrante de este proyecto» antes que el error de rol; las acciones del Scrum Master (nueva ronda, registrar la estimación) dan 403 «Solo el Scrum Master puede…» a un Product Builder (cambio confirmado por el equipo el 2026-11-11, spec 042, sección Clarifications).
 ### Prioridad
 S (Should have) - Completa el requisito de Planning Poker del enunciado (punto 4).
 ### Estado

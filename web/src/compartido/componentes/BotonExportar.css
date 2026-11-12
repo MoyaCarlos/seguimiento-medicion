@@ -1,0 +1,11 @@
+.reporte-exportar {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reporte-exportar .message {
+  flex-basis: 100%;
+  margin: 0;
+}

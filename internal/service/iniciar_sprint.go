@@ -14,6 +14,8 @@ type IniciarSprintInput struct {
 	SprintGoal  string
 	FechaInicio time.Time
 	FechaFin    time.Time
+	// UsuarioID es quien inicia (la sesión, HU-21); debe ser el Scrum Master.
+	UsuarioID int64
 }
 
 // IniciarSprint pasa un Sprint Pendiente a Activo, garantizando que el
@@ -24,12 +26,33 @@ type IniciarSprint struct {
 	proyectos repository.ProjectRepository
 }
 
+// NewIniciarSprint recibe el repositorio de proyectos para los permisos de
+// HU-21 (sus integrantes) y para el plazo del proyecto (#168).
 func NewIniciarSprint(sprints repository.SprintRepository, proyectos repository.ProjectRepository) *IniciarSprint {
 	return &IniciarSprint{sprints: sprints, proyectos: proyectos}
 }
 
+// Autorizar devuelve el error de ErrSprintNoEncontrado (404) o de permisos
+// (403) sin tocar nada: el handler lo llama antes de leer el cuerpo, así un
+// Product Builder recibe 403 aunque mande fechas inválidas (HU-21, FR-006).
+func (s *IniciarSprint) Autorizar(ctx context.Context, sprintID, usuarioID int64) error {
+	_, err := s.sprintDelScrumMaster(ctx, sprintID, usuarioID)
+	return err
+}
+
+func (s *IniciarSprint) sprintDelScrumMaster(ctx context.Context, sprintID, usuarioID int64) (domain.Sprint, error) {
+	sprint, err := s.sprints.ObtenerPorID(ctx, sprintID)
+	if err != nil {
+		return domain.Sprint{}, err
+	}
+	if err := exigirScrumMaster(ctx, s.proyectos, sprint.ProyectoID, usuarioID); err != nil {
+		return domain.Sprint{}, err
+	}
+	return sprint, nil
+}
+
 func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) (domain.Sprint, error) {
-	sprint, err := s.sprints.ObtenerPorID(ctx, input.SprintID)
+	sprint, err := s.sprintDelScrumMaster(ctx, input.SprintID, input.UsuarioID)
 	if err != nil {
 		return domain.Sprint{}, err
 	}

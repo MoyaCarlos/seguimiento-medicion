@@ -32,7 +32,7 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 	handler := NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprints),
 		service.NewIniciarSprint(sprints, proyectos),
-		service.NewCerrarSprint(sprints, sinHistorias{}),
+		service.NewCerrarSprint(sprints, sinHistorias{}, proyectos),
 		service.NewConsultarSprints(proyectos, sprints),
 		nil,
 		sprints,
@@ -40,18 +40,21 @@ func nuevoSprintHandlerConProyectos(t *testing.T) (*SprintHandler, *repository.S
 	return handler, sprints, proyectos
 }
 
+// nuevoSprintHandlerDePrueba siembra el proyecto 1, con anaDePrueba como
+// Scrum Master, donde sembrarPendiente crea los Sprints.
 func nuevoSprintHandlerDePrueba(t *testing.T) (*SprintHandler, *repository.SprintRepositoryEnMemoria) {
 	t.Helper()
 	handler, sprints, proyectos := nuevoSprintHandlerConProyectos(t)
-	// sembrarPendiente crea los Sprints del proyecto 1: el primero del repositorio.
-	sembrarProyectoParaSprints(t, proyectos)
+	if id := sembrarProyectoParaSprints(t, proyectos); id != 1 {
+		t.Fatalf("se esperaba sembrar el proyecto 1, se obtuvo %d", id)
+	}
 	return handler, sprints
 }
 
 func sembrarProyectoParaSprints(t *testing.T, repo *repository.ProjectRepositoryEnMemoria) int64 {
 	t.Helper()
 	p, _ := domain.NewProject("Software Metrics & Estimation", "", nil, nil)
-	g, err := repo.Guardar(context.Background(), p)
+	g, err := repo.GuardarConScrumMaster(context.Background(), p, anaDePrueba.ID)
 	if err != nil {
 		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
 	}
@@ -61,7 +64,7 @@ func sembrarProyectoParaSprints(t *testing.T, repo *repository.ProjectRepository
 func peticionCrearSprint(cuerpo string) *nethttp.Request {
 	req := httptest.NewRequest(nethttp.MethodPost, "/sprints", bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
-	return req
+	return conSesionDe(req, anaDePrueba)
 }
 
 func cuerpoCrearSprint(proyectoID int64) string {
@@ -188,7 +191,7 @@ func peticionSprint(id, accion, cuerpo string) *nethttp.Request {
 	req := httptest.NewRequest(nethttp.MethodPost, "/sprints/"+id+"/"+accion, bytes.NewBufferString(cuerpo))
 	req.Header.Set("Content-Type", "application/json")
 	req.SetPathValue("id", id)
-	return req
+	return conSesionDe(req, anaDePrueba)
 }
 
 func decodificarError(t *testing.T, rec *httptest.ResponseRecorder) errorResponse {

@@ -22,6 +22,17 @@ type scenarioContext struct {
 	err        error
 }
 
+// crearComoIntegrante crea la historia a nombre de la persona de escenario,
+// integrante del proyecto (HU-21).
+func (s *scenarioContext) crearComoIntegrante(in service.CrearHistoriaInput) (domain.BacklogItem, error) {
+	actor, err := integranteDelProyecto(s.db, in.ProyectoID)
+	if err != nil {
+		return domain.BacklogItem{}, err
+	}
+	in.UsuarioID = actor
+	return s.servicio.Ejecutar(context.Background(), in)
+}
+
 func (s *scenarioContext) reset() {
 	if s.db != nil {
 		_ = s.db.Close()
@@ -82,7 +93,7 @@ func (s *scenarioContext) sistemaRespondeProyectoNoEncontrado() error {
 }
 
 func (s *scenarioContext) ingresoValido() error {
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:  s.proyectoID,
 		Titulo:      "Como usuario quiero iniciar sesión",
 		Descripcion: "Autenticación con email y contraseña",
@@ -92,7 +103,7 @@ func (s *scenarioContext) ingresoValido() error {
 }
 
 func (s *scenarioContext) tituloEnBlanco() error {
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:  s.proyectoID,
 		Titulo:      "",
 		Descripcion: "Descripción válida",
@@ -102,7 +113,7 @@ func (s *scenarioContext) tituloEnBlanco() error {
 }
 
 func (s *scenarioContext) prioridadInvalida() error {
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:  s.proyectoID,
 		Titulo:      "Historia con prioridad inválida",
 		Descripcion: "Descripción válida",
@@ -112,7 +123,7 @@ func (s *scenarioContext) prioridadInvalida() error {
 }
 
 func (s *scenarioContext) ingresoConCriterios(criterios string) error {
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:          s.proyectoID,
 		Titulo:              "Como usuario quiero iniciar sesión",
 		Descripcion:         "Autenticación con email y contraseña",
@@ -123,7 +134,7 @@ func (s *scenarioContext) ingresoConCriterios(criterios string) error {
 }
 
 func (s *scenarioContext) ingresoSinCriterios() error {
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:  s.proyectoID,
 		Titulo:      "Como usuario quiero iniciar sesión",
 		Descripcion: "Autenticación con email y contraseña",
@@ -134,7 +145,7 @@ func (s *scenarioContext) ingresoSinCriterios() error {
 
 func (s *scenarioContext) ingresoConCriteriosDeLongitud(cantidad int) error {
 	criterios := strings.Repeat("a", cantidad)
-	s.creada, s.err = s.servicio.Ejecutar(context.Background(), service.CrearHistoriaInput{
+	s.creada, s.err = s.crearComoIntegrante(service.CrearHistoriaInput{
 		ProyectoID:          s.proyectoID,
 		Titulo:              "Como usuario quiero iniciar sesión",
 		Descripcion:         "Autenticación con email y contraseña",

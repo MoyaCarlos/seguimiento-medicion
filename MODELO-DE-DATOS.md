@@ -193,7 +193,7 @@ Restricciones de base:
 | `id` | PK | |
 | `nombre` | TEXT NOT NULL | |
 | `nombre_normalizado` | TEXT NOT NULL **UK** | minúsculas y sin espacios externos; es la identidad del usuario |
-| `contrasena_hash` | TEXT? | **Nueva** (HU-20, migración 006). `pbkdf2-sha256$<iter>$<sal>$<hash>`. `NULL` = usuario previo o creado por HU-04: no puede ingresar. Nunca se devuelve. |
+| `contrasena_hash` | TEXT? | **Nueva** (HU-20, migración 006). `pbkdf2-sha256$<iter>$<sal>$<hash>`. `NULL` = usuario previo (creado por HU-04 antes de HU-21): no puede ingresar. Desde HU-21 ninguna ruta crea usuarios sin contraseña: solo `POST /auth/registro` crea usuarios, y configurar el equipo exige un usuario registrado. Nunca se devuelve. |
 | `creado_en` | TEXT NOT NULL | |
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
@@ -501,6 +501,7 @@ pendientes D15 a D17, que surgieron del beta testing del
 | HU-07 Horas | `registros_horas` | `integrantes`, `historias`, `sprints` | 004 |
 | HU-08 Defectos | `defectos` | `historias`, `sprints` | 005 |
 | HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
+| HU-21 Permisos por rol | — | `integrantes`, `usuarios`, `sesiones` | sin migración |
 | HU-03 Métricas | `proyectos.horas_por_story_point` | todo lo anterior | 001 |
 | HU-09 / HU-10 / HU-12 | — | solo lectura | — |
 

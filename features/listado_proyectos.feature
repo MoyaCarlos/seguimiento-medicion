@@ -3,12 +3,15 @@
 @HU-04
 Característica: Listado de proyectos
 
-  Como Scrum Master
-  Quiero obtener todos los proyectos existentes
+  Como integrante de proyectos
+  Quiero obtener los proyectos que integro
   Para poder elegir cuál consultar o editar sin conocer su identificador
 
+  Antecedentes:
+    Dado que inicié sesión como "Ana Valentina"
+
   Escenario: Listado ordenado por identificador
-    Dado que existen proyectos guardados con identificadores 9 y 2
+    Dado que integro proyectos guardados con identificadores 9 y 2
     Cuando consulto el listado de proyectos
     Entonces recibo los proyectos con identificadores 2 y 9 en ese orden
     Y cada proyecto del listado tiene los mismos campos que su consulta individual

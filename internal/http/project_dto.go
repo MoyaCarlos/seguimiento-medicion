@@ -13,7 +13,6 @@ const formatoFecha = "2006-01-02"
 type crearProyectoRequest struct {
 	Nombre      string  `json:"nombre"`
 	Descripcion string  `json:"descripcion"`
-	Creador     string  `json:"creador"`
 	FechaInicio *string `json:"fecha_inicio"`
 	FechaFin    *string `json:"fecha_fin"`
 }
@@ -27,6 +26,9 @@ type proyectoResponse struct {
 	CreadoEn    string  `json:"creado_en"`
 
 	HorasPorStoryPoint *float64 `json:"horas_por_story_point"`
+
+	// Rol es el de quien consulta en el proyecto (HU-21); vacío si no aplica.
+	Rol string `json:"rol,omitempty"`
 }
 
 // horasPorStoryPointEnviadas distingue un campo ausente de uno en null. El valor

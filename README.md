@@ -94,6 +94,20 @@ en [`docs/GUIA-IA-TERMINAL.md`](./docs/GUIA-IA-TERMINAL.md).
 Metodología, arquitectura, patrones de diseño y principios aplicados están
 documentados en [`AGENTS.md`](./AGENTS.md).
 
+## Permisos por rol (HU-21)
+
+Todas las rutas de la API, salvo el registro, el ingreso, la salud y la demo, piden
+sesión (`Authorization: Bearer <token>`); la identidad sale siempre de la sesión. Las
+acciones de gestión (Sprints, votación, editar el proyecto y configurar el equipo) son
+del Scrum Master, y las escrituras del resto exigen integrar el proyecto. El detalle
+está en [`specs/042-hu-21-permisos-por-rol/`](./specs/042-hu-21-permisos-por-rol/).
+
+- **Límite conocido de lectura:** con sesión, una persona que no integra un proyecto
+  todavía puede leer sus historias, Sprints, horas, defectos, métricas, historial y
+  reportes si conoce sus identificadores. La pertenencia solo se exige al leer el panel
+  del proyecto (`GET /projects/{id}`) y la votación (`GET /backlog/{id}/votacion`).
+- **Fuera de alcance:** el traspaso del rol de Scrum Master a otra persona.
+
 ## Documentación del proyecto
 
 - [`docs/PRODUCT-BACKLOG.md`](./docs/PRODUCT-BACKLOG.md) — las 21 historias de usuario.
