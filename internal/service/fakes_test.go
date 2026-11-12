@@ -104,6 +104,24 @@ func (f *fakeProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
+// Cerrar guarda la fecha de cierre si el proyecto existe y está abierto (#300).
+// Como el repositorio en memoria, no conoce los Sprints.
+func (f *fakeProjectRepository) Cerrar(_ context.Context, id int64, fecha time.Time) error {
+	if f.err != nil {
+		return f.err
+	}
+	p, ok := f.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	p.FechaCierre = &fecha
+	f.proyectos[id] = p
+	return nil
+}
+
 // ListarIntegrantes devuelve listaMiembros si el test la fijó; si no, deriva la
 // lista de las membresías guardadas (sin nombre: el fake no conoce a los usuarios).
 func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {

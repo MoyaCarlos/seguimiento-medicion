@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 )
@@ -109,5 +110,65 @@ func TestProjectRepositoryEnMemoria_AgregarIntegrante_ProductBuildersYScrumMaste
 		if _, err := repo.AgregarIntegrante(context.Background(), m); err != nil {
 			t.Fatalf("no se esperaba error para %+v: %v", m, err)
 		}
+	}
+}
+
+// Spec 044 (#300). El repositorio en memoria no conoce los Sprints: la regla
+// del Sprint Activo la da el dominio (Project.Cerrar).
+func TestProjectRepositoryEnMemoria_Cerrar(t *testing.T) {
+	ctx := context.Background()
+	hoy := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+
+	t.Run("abierto guarda la fecha", func(t *testing.T) {
+		repo := NewProjectRepositoryEnMemoria()
+		p, _ := repo.Guardar(ctx, domain.Project{Nombre: "Tienda"})
+
+		if err := repo.Cerrar(ctx, p.ID, hoy); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, p.ID)
+		if leido.FechaCierre == nil || !leido.FechaCierre.Equal(hoy) {
+			t.Errorf("se esperaba la fecha de cierre %v, se obtuvo %v", hoy, leido.FechaCierre)
+		}
+	})
+
+	t.Run("dos cierres seguidos: el segundo informa que ya está cerrado", func(t *testing.T) {
+		repo := NewProjectRepositoryEnMemoria()
+		p, _ := repo.Guardar(ctx, domain.Project{Nombre: "Tienda"})
+		_ = repo.Cerrar(ctx, p.ID, hoy)
+
+		if err := repo.Cerrar(ctx, p.ID, hoy.AddDate(0, 0, 1)); !errors.Is(err, domain.ErrProyectoYaCerrado) {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, p.ID)
+		if !leido.FechaCierre.Equal(hoy) {
+			t.Errorf("la fecha del primer cierre no debe cambiar, se obtuvo %v", *leido.FechaCierre)
+		}
+	})
+
+	t.Run("inexistente", func(t *testing.T) {
+		if err := NewProjectRepositoryEnMemoria().Cerrar(ctx, 99, hoy); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+			t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+		}
+	})
+}
+
+// Como en SQLite, editar el proyecto no toca la fecha de cierre.
+func TestProjectRepositoryEnMemoria_ActualizarNoPisaLaFechaDeCierre(t *testing.T) {
+	ctx := context.Background()
+	repo := NewProjectRepositoryEnMemoria()
+	p, _ := repo.Guardar(ctx, domain.Project{Nombre: "Tienda"})
+	hoy := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+	_ = repo.Cerrar(ctx, p.ID, hoy)
+
+	p.Nombre = "Otro nombre"
+	p.FechaCierre = nil
+	if err := repo.Actualizar(ctx, p); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	leido, _ := repo.ObtenerPorID(ctx, p.ID)
+	if leido.Nombre != "Otro nombre" || leido.FechaCierre == nil {
+		t.Errorf("se esperaba el nombre editado y la fecha de cierre intacta, se obtuvo %+v", leido)
 	}
 }

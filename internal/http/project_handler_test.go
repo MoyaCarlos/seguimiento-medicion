@@ -101,6 +101,19 @@ func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
+func (s *stubProjectRepository) Cerrar(_ context.Context, id int64, fecha time.Time) error {
+	p, ok := s.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	p.FechaCierre = &fecha
+	s.proyectos[id] = p
+	return nil
+}
+
 func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
