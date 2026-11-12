@@ -168,3 +168,48 @@ describe('pantalla de registro', () => {
     expect(screen.getByRole('heading', { name: 'Ingresar' })).toBeTruthy()
   })
 })
+
+describe('pantalla de registro: campos vacíos', () => {
+  it('Given los campos vacíos, When envío, Then cada campo muestra el mensaje de su regla y no se llama al servidor', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(descripcion(screen.getByLabelText('Nombre de usuario'))).toBe(
+      'el nombre de usuario debe tener entre 3 y 30 caracteres',
+    )
+    expect(descripcion(screen.getByLabelText('Contraseña'))).toBe('la contraseña debe tener entre 8 y 128 caracteres')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Given un nombre de solo espacios, When envío, Then cuenta como vacío', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+    const usuario = userEvent.setup()
+
+    await usuario.type(screen.getByLabelText('Nombre de usuario'), '   ')
+    await usuario.type(screen.getByLabelText('Contraseña'), 'una-clave-larga')
+    await usuario.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(descripcion(screen.getByLabelText('Nombre de usuario'))).toBe(
+      'el nombre de usuario debe tener entre 3 y 30 caracteres',
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Given solo la contraseña vacía, When envío, Then el mensaje aparece solo junto a la contraseña', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+    const usuario = userEvent.setup()
+
+    await usuario.type(screen.getByLabelText('Nombre de usuario'), 'ana.perez')
+    await usuario.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(descripcion(screen.getByLabelText('Contraseña'))).toBe('la contraseña debe tener entre 8 y 128 caracteres')
+    expect(descripcion(screen.getByLabelText('Nombre de usuario'))).not.toBe(
+      'el nombre de usuario debe tener entre 3 y 30 caracteres',
+    )
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
