@@ -21,8 +21,18 @@ func rolEnProyecto(ctx context.Context, integrantes repository.IntegrantesReposi
 	return "", false, nil
 }
 
-// exigirIntegrante devuelve ErrNoEsIntegrante si el usuario no integra el proyecto.
+// exigirIntegrante es el guardia de las escrituras de un integrante (HU-21).
 func exigirIntegrante(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
+	return verificarIntegrante(ctx, integrantes, proyectoID, usuarioID)
+}
+
+// exigirScrumMaster es el guardia de las acciones de gestión (HU-21).
+func exigirScrumMaster(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
+	return verificarScrumMaster(ctx, integrantes, proyectoID, usuarioID)
+}
+
+// verificarIntegrante devuelve ErrNoEsIntegrante si el usuario no integra el proyecto.
+func verificarIntegrante(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
 	_, integra, err := rolEnProyecto(ctx, integrantes, proyectoID, usuarioID)
 	if err != nil {
 		return err
@@ -33,9 +43,9 @@ func exigirIntegrante(ctx context.Context, integrantes repository.IntegrantesRep
 	return nil
 }
 
-// exigirScrumMaster devuelve ErrNoEsIntegrante si el usuario no integra el
+// verificarScrumMaster devuelve ErrNoEsIntegrante si el usuario no integra el
 // proyecto y ErrNoEsScrumMaster si lo integra con otro rol.
-func exigirScrumMaster(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
+func verificarScrumMaster(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
 	rol, integra, err := rolEnProyecto(ctx, integrantes, proyectoID, usuarioID)
 	if err != nil {
 		return err

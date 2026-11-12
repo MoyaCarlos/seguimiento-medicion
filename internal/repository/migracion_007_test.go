@@ -10,8 +10,8 @@ import (
 
 type clave struct{ proyecto, usuario int }
 
-// baseAntesDeLa007 migra una base en memoria con todas las migraciones
-// embebidas salvo la 007, para sembrar datos con el esquema anterior.
+// baseAntesDeLa007 migra una base en memoria con las migraciones embebidas
+// anteriores a la 007, para sembrar datos con el esquema de ese momento.
 func baseAntesDeLa007(t *testing.T) *sql.DB {
 	t.Helper()
 	return baseSinLaMigracion(t, "007_")
