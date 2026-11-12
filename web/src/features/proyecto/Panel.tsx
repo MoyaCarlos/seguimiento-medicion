@@ -62,7 +62,6 @@ export function Panel() {
     <section className="hu04-panel" aria-labelledby="panel-title">
       <div className="hu04-encabezado">
         <div>
-          <p className="eyebrow">Panel principal</p>
           <p className="hu04-referencia">
             Proyecto <strong>{id}</strong>
           </p>
