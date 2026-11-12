@@ -595,6 +595,21 @@ describe('armazón (spec 046)', () => {
   })
 
   it('Given la votación de una historia, When se muestra la ruta de navegación, Then la sección actual es «Historias»', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            url.includes('/auth/yo')
+              ? JSON.stringify(USUARIO)
+              : url.includes('/votacion')
+                ? JSON.stringify({ historia_id: 3, ronda: 1, revelada_en: null, integrantes: [], promedio: null })
+                : '[]',
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
     abrir('/projects/42/votacion/3')
     await screen.findByRole('heading', { name: 'Votación de la historia #3' }, { timeout: 5000 })
 
