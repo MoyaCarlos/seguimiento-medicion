@@ -204,6 +204,7 @@ func TestProjectHandler_Reabrir_Errores(t *testing.T) {
 	}{
 		{"abierto", false, "", anaDePrueba, http.StatusConflict, "El proyecto no está cerrado"},
 		{"Product Builder", true, "", domain.User{ID: productBuilderHTTP}, http.StatusForbidden, "Solo el Scrum Master puede realizar esta acción"},
+		{"no integrante", true, "", domain.User{ID: 99}, http.StatusForbidden, "No sos integrante de este proyecto"},
 		{"proyecto inexistente", true, "999", anaDePrueba, http.StatusNotFound, "proyecto no encontrado"},
 	}
 	for _, c := range casos {
