@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, type RouteObject } from 'react-router'
@@ -568,5 +568,60 @@ describe('rutas protegidas', () => {
 
     expect(screen.getAllByRole('link', { name: 'Ingresar' }).length).toBeGreaterThan(0)
     expect(screen.getAllByRole('link', { name: 'Registrarse' }).length).toBeGreaterThan(0)
+  })
+})
+
+describe('armazón (spec 046)', () => {
+  it('Given una sesión iniciada y una pantalla de un proyecto, When se muestra, Then la barra lateral ofrece «Proyectos», el selector y las secciones', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
+    expect(barra).not.toBeNull()
+    const lateral = within(barra!)
+    expect(lateral.getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(lateral.getByRole('combobox', { name: 'Proyecto' })).toBeTruthy()
+    expect(lateral.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+    expect(within(lateral.getByRole('navigation', { name: 'Secciones del proyecto' })).getAllByRole('link')).toHaveLength(7)
+  })
+
+  it('Given una pantalla de un proyecto, When se muestra la barra superior, Then la ruta de navegación enlaza «Proyectos» y marca la sección actual', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const ruta = screen.queryByRole('navigation', { name: 'Ruta de navegación' })
+    expect(ruta).not.toBeNull()
+    expect(within(ruta!).getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given la votación de una historia, When se muestra la ruta de navegación, Then la sección actual es «Historias»', async () => {
+    abrir('/projects/42/votacion/3')
+    await screen.findByRole('heading', { name: 'Votación de la historia #3' }, { timeout: 5000 })
+
+    const ruta = screen.queryByRole('navigation', { name: 'Ruta de navegación' })
+    expect(ruta).not.toBeNull()
+    expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given una sesión iniciada en el inicio, When se muestra, Then la barra lateral no tiene selector ni secciones y la ruta marca «Proyectos»', async () => {
+    abrir('/')
+    await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
+    expect(barra).not.toBeNull()
+    expect(within(barra!).getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.queryByRole('combobox', { name: 'Proyecto' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Secciones del proyecto' })).toBeNull()
+    const ruta = screen.getByRole('navigation', { name: 'Ruta de navegación' })
+    expect(within(ruta).getByText('Proyectos').getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given una persona sin sesión, When abre /ingresar, Then no ve la barra lateral', async () => {
+    borrarToken()
+    abrir('/ingresar')
+    await screen.findByRole('heading', { name: 'Ingresar' })
+
+    expect(screen.queryByRole('complementary', { name: 'Navegación principal' })).toBeNull()
   })
 })
