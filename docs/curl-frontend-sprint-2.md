@@ -67,6 +67,19 @@ curl http://localhost:8080/projects/1/members \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+### Quitar y volver a sumar a un integrante (opcional, HU-16)
+
+Solo el Scrum Master quita integrantes. La ruta lleva el `id` de la persona que
+devuelve el listado del equipo (en una base vacía, `1` para Carlos, que se
+registró primero). Responde `204` sin cuerpo; al Scrum Master no se lo puede
+quitar (`409`). Para volver a sumarlo se usa el mismo `POST /projects/1/members`
+de arriba. No lo quites si vas a seguir con los pasos siguientes.
+
+```bash
+curl -X DELETE http://localhost:8080/projects/1/members/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
 ### Crear un Sprint
 
 ```bash
@@ -227,6 +240,16 @@ curl -X POST http://localhost:8080/projects/1/members ^
 
 ```bat
 curl http://localhost:8080/projects/1/members ^
+  -H "Authorization: Bearer %TOKEN%"
+```
+
+### Quitar y volver a sumar a un integrante (opcional, HU-16)
+
+Igual que en la versión bash: el `id` de la persona sale del listado del equipo, y
+para volver a sumarlo se usa el mismo alta de arriba.
+
+```bat
+curl -X DELETE http://localhost:8080/projects/1/members/1 ^
   -H "Authorization: Bearer %TOKEN%"
 ```
 
