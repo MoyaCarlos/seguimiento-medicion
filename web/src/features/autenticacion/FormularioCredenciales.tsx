@@ -104,6 +104,7 @@ export function FormularioCredenciales({
         <Field
           name="nombre"
           label="Nombre de usuario"
+          autoFocus
           autoComplete="username"
           ayuda={contrasenaNueva ? 'De 3 a 30 caracteres: letras sin tildes, números, punto, guion y guion bajo.' : undefined}
           value={nombre}

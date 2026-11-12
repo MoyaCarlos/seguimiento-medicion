@@ -12,13 +12,13 @@ export function Ingresar() {
   const vencida = Boolean((state as { vencida?: boolean } | null)?.vencida)
 
   return (
-    <PantallaAcceso>
+    <PantallaAcceso titulo="Iniciar sesión">
       <FormularioCredenciales
         titulo="Ingresar"
         sobretitulo="Bienvenido"
         accion="Ingresar"
         bajada="Ingresá con tu cuenta para ver tus proyectos."
-        aviso={vencida ? 'Tu sesión venció' : undefined}
+        aviso={vencida ? 'Tu sesión venció. Volvé a ingresar para continuar.' : undefined}
         enviar={ingresar}
         relleno={relleno}
         pie={

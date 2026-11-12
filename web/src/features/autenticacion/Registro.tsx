@@ -8,7 +8,7 @@ export function Registro() {
   const { state } = useLocation()
 
   return (
-    <PantallaAcceso>
+    <PantallaAcceso titulo="Crear cuenta">
       <FormularioCredenciales
         titulo="Crear cuenta"
         sobretitulo="Nueva cuenta"

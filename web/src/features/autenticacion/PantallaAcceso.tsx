@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Icono } from '../../compartido/componentes/Icono'
 import { Marca } from '../../compartido/componentes/Marca'
@@ -10,7 +11,15 @@ const PUNTOS: { icono: NombreIcono; texto: string }[] = [
   { icono: 'equipo', texto: 'Equipo con roles: Scrum Master y Product Builder' },
 ]
 
-export function PantallaAcceso({ children }: { children: ReactNode }) {
+export function PantallaAcceso({ titulo, children }: { titulo: string; children: ReactNode }) {
+  useEffect(() => {
+    const anterior = document.title
+    document.title = `Métrica · ${titulo}`
+    return () => {
+      document.title = anterior
+    }
+  }, [titulo])
+
   return (
     <div className="pantalla-acceso">
       <section className="pantalla-acceso__presentacion" aria-labelledby="presentacion-title">
