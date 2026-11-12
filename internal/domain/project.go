@@ -88,6 +88,16 @@ func (p Project) Cerrar(ahora time.Time, sprints []Sprint) (Project, error) {
 	return p, nil
 }
 
+// Reabrir devuelve una copia del proyecto sin fecha de cierre (#300): su estado
+// vuelve a calcularse con las reglas de HU-13. Solo se reabre uno cerrado.
+func (p Project) Reabrir() (Project, error) {
+	if p.FechaCierre == nil {
+		return Project{}, ErrProyectoNoCerrado
+	}
+	p.FechaCierre = nil
+	return p, nil
+}
+
 // ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
 // indicado. valor es el número en texto; nil lo deja sin definir.
 func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {

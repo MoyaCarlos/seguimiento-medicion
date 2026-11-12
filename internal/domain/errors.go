@@ -39,6 +39,8 @@ var (
 	// ErrProyectoCerrado indica una escritura sobre un proyecto cerrado, que es
 	// de solo lectura.
 	ErrProyectoCerrado = errors.New("El proyecto está cerrado")
+	// ErrProyectoNoCerrado indica que se quiso reabrir un proyecto abierto.
+	ErrProyectoNoCerrado = errors.New("El proyecto no está cerrado")
 )
 
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
