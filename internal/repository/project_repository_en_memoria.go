@@ -15,19 +15,32 @@ import (
 // existencia de proyecto al vincular, rechaza duplicados y devuelve el nombre
 // del integrante al listar.
 type ProjectRepositoryEnMemoria struct {
-	mu               sync.Mutex
-	proyectos        map[int64]domain.Project
-	usuarios         map[int64]domain.User
-	miembros         []domain.Membership
+	mu        sync.Mutex
+	proyectos map[int64]domain.Project
+	usuarios  map[int64]domain.User
+	miembros  []domain.Membership
+	// bajas guarda la fecha de baja de cada vínculo dado de baja (HU-16); sin
+	// entrada, el integrante está activo. No se toca domain.Membership.
+	bajas            map[claveIntegrante]time.Time
 	siguiente        int64
 	siguienteUsuario int64
 }
+
+// claveIntegrante identifica el vínculo de un usuario con un proyecto.
+type claveIntegrante struct{ proyecto, usuario int64 }
 
 func NewProjectRepositoryEnMemoria() *ProjectRepositoryEnMemoria {
 	return &ProjectRepositoryEnMemoria{
 		proyectos: map[int64]domain.Project{},
 		usuarios:  map[int64]domain.User{},
+		bajas:     map[claveIntegrante]time.Time{},
 	}
+}
+
+// activo informa si el vínculo no tiene fecha de baja.
+func (r *ProjectRepositoryEnMemoria) activo(m domain.Membership) bool {
+	_, dadoDeBaja := r.bajas[claveIntegrante{proyecto: m.ProjectID, usuario: m.UserID}]
+	return !dadoDeBaja
 }
 
 // GuardarUsuario registra un integrante con su ID asignado, para que las
@@ -87,7 +100,7 @@ func (r *ProjectRepositoryEnMemoria) ListarPorIntegrante(_ context.Context, usua
 	defer r.mu.Unlock()
 	proyectos := make([]domain.ProyectoConRol, 0)
 	for _, m := range r.miembros {
-		if m.UserID == usuarioID {
+		if m.UserID == usuarioID && r.activo(m) {
 			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: r.proyectos[m.ProjectID], Rol: m.Role})
 		}
 	}
@@ -172,12 +185,25 @@ func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (dom
 	return m, nil
 }
 
+// ListarIntegrantes devuelve los integrantes activos del proyecto (HU-16).
 func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.listarIntegrantes(proyectoID, true), nil
+}
+
+// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados de
+// baja del proyecto, en orden de alta (HU-16).
+func (r *ProjectRepositoryEnMemoria) ListarIntegrantesHistoricos(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.listarIntegrantes(proyectoID, false), nil
+}
+
+func (r *ProjectRepositoryEnMemoria) listarIntegrantes(proyectoID int64, soloActivos bool) []domain.Member {
 	var out []domain.Member
 	for _, m := range r.miembros {
-		if m.ProjectID == proyectoID {
+		if m.ProjectID == proyectoID && (!soloActivos || r.activo(m)) {
 			u := r.usuarios[m.UserID]
 			out = append(out, domain.Member{
 				UserID:    m.UserID,
@@ -188,12 +214,7 @@ func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyec
 			})
 		}
 	}
-	return out, nil
-}
-
-// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
-func (r *ProjectRepositoryEnMemoria) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
-	return nil, errors.New("no implementado")
+	return out
 }
 
 // DarDeBajaIntegrante: pendiente de implementar (HU-16).

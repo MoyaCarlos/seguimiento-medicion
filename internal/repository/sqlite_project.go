@@ -92,13 +92,14 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 }
 
 // ListarPorIntegrante devuelve los proyectos que integra usuarioID con el rol
-// de su fila en integrantes, ordenados por id.
+// de su fila en integrantes, ordenados por id. Solo cuenta donde la persona es
+// integrante activo (HU-16).
 func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	filas, err := r.db.QueryContext(ctx,
 		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, p.fecha_cierre, i.rol
 		 FROM proyectos p
 		 JOIN integrantes i ON i.proyecto_id = p.id
-		 WHERE i.usuario_id = ?
+		 WHERE i.usuario_id = ? AND i.fecha_baja IS NULL
 		 ORDER BY p.id`,
 		usuarioID,
 	)
@@ -246,15 +247,26 @@ func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domai
 	return m, nil
 }
 
-// ListarIntegrantes devuelve los integrantes del proyecto con su nombre y rol.
+// ListarIntegrantes devuelve los integrantes activos del proyecto con su
+// nombre y rol, en orden de alta (HU-16: los dados de baja no figuran).
 func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return r.listarIntegrantes(ctx, proyectoID, true)
+}
+
+// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados de
+// baja del proyecto, en orden de alta (HU-16).
+func (r *SQLiteProjectRepository) ListarIntegrantesHistoricos(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return r.listarIntegrantes(ctx, proyectoID, false)
+}
+
+func (r *SQLiteProjectRepository) listarIntegrantes(ctx context.Context, proyectoID int64, soloActivos bool) ([]domain.Member, error) {
 	filas, err := r.db.QueryContext(ctx,
 		`SELECT i.usuario_id, i.proyecto_id, u.nombre, i.rol, i.creado_en
 		 FROM integrantes i
 		 JOIN usuarios u ON u.id = i.usuario_id
-		 WHERE i.proyecto_id = ?
+		 WHERE i.proyecto_id = ? AND (NOT ? OR i.fecha_baja IS NULL)
 		 ORDER BY i.rowid`,
-		proyectoID,
+		proyectoID, soloActivos,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("listar integrantes: %w", err)
@@ -317,11 +329,6 @@ func valorATiempoOpcional(v sql.NullString) *time.Time {
 		return nil
 	}
 	return &t
-}
-
-// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
-func (r *SQLiteProjectRepository) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
-	return nil, errors.New("no implementado")
 }
 
 // DarDeBajaIntegrante: pendiente de implementar (HU-16).
