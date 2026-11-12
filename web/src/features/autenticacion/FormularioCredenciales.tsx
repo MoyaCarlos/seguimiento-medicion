@@ -5,18 +5,29 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { CampoContrasena } from './CampoContrasena'
 import './estilos.css'
 
-type Campo = 'nombre' | 'contrasena'
+type Campo = 'nombre' | 'contrasena' | 'repeticion'
 
 type Props = {
   titulo: string
+  sobretitulo: string
   accion: string
+  bajada?: string
   contrasenaNueva?: boolean
   aviso?: string
   pie: ReactNode
   relleno?: { nombre: string; contrasena: string }
   enviar(nombre: string, contrasena: string): Promise<void>
+}
+
+const MENSAJES_VACIO: Record<'ingreso' | 'registro', Record<'nombre' | 'contrasena', string>> = {
+  ingreso: { nombre: 'Ingresá tu nombre de usuario.', contrasena: 'Ingresá tu contraseña.' },
+  registro: {
+    nombre: 'el nombre de usuario debe tener entre 3 y 30 caracteres',
+    contrasena: 'la contraseña debe tener entre 8 y 128 caracteres',
+  },
 }
 
 function mensajeDeError(error: unknown): string {
@@ -33,7 +44,9 @@ function campoDeError(error: unknown): Campo | undefined {
 
 export function FormularioCredenciales({
   titulo,
+  sobretitulo,
   accion,
+  bajada,
   contrasenaNueva = false,
   aviso,
   pie,
@@ -42,6 +55,7 @@ export function FormularioCredenciales({
 }: Props) {
   const [nombre, setNombre] = useState('')
   const [contrasena, setContrasena] = useState('')
+  const [repeticion, setRepeticion] = useState('')
   const [errores, setErrores] = useState<Partial<Record<Campo, string>>>({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -57,8 +71,15 @@ export function FormularioCredenciales({
 
   async function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    setErrores({})
     setErrorGeneral('')
+    const mensajes = MENSAJES_VACIO[contrasenaNueva ? 'registro' : 'ingreso']
+    const invalidos: Partial<Record<Campo, string>> = {}
+    if (!nombre.trim()) invalidos.nombre = mensajes.nombre
+    if (!contrasena) invalidos.contrasena = mensajes.contrasena
+    if (contrasenaNueva && !repeticion) invalidos.repeticion = 'Repetí la contraseña.'
+    else if (contrasenaNueva && repeticion !== contrasena) invalidos.repeticion = 'Las contraseñas no coinciden.'
+    setErrores(invalidos)
+    if (Object.keys(invalidos).length > 0) return
     setEnviando(true)
     try {
       await enviar(nombre, contrasena)
@@ -72,7 +93,9 @@ export function FormularioCredenciales({
 
   return (
     <section className="auth-pantalla" aria-labelledby="credenciales-title">
+      <p className="auth-sobretitulo">{sobretitulo}</p>
       <h1 id="credenciales-title">{titulo}</h1>
+      {bajada && <p className="auth-bajada">{bajada}</p>}
       {aviso && <p className="message auth-aviso" role="status">{aviso}</p>}
 
       <form onSubmit={alEnviar} noValidate aria-label={titulo}>
@@ -82,19 +105,31 @@ export function FormularioCredenciales({
           name="nombre"
           label="Nombre de usuario"
           autoComplete="username"
+          ayuda={contrasenaNueva ? 'De 3 a 30 caracteres: letras sin tildes, números, punto, guion y guion bajo.' : undefined}
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
           error={errores.nombre}
         />
-        <Field
+        <CampoContrasena
           name="contrasena"
-          type="password"
           label="Contraseña"
           autoComplete={contrasenaNueva ? 'new-password' : 'current-password'}
+          ayuda={contrasenaNueva ? 'De 8 a 128 caracteres.' : undefined}
           value={contrasena}
           onChange={(evento) => setContrasena(evento.target.value)}
           error={errores.contrasena}
         />
+        {contrasenaNueva && (
+          <CampoContrasena
+            name="repeticion"
+            label="Repetir contraseña"
+            etiquetaVer="Mostrar la repetición de la contraseña"
+            autoComplete="new-password"
+            value={repeticion}
+            onChange={(evento) => setRepeticion(evento.target.value)}
+            error={errores.repeticion}
+          />
+        )}
 
         {enviando && <LoadingIndicator />}
 
