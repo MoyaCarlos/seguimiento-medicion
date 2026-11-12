@@ -1,15 +1,21 @@
 .pantalla-acceso {
-  align-items: start;
   display: grid;
-  gap: 2rem;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 100vh;
 }
 
 .pantalla-acceso__formulario {
-  align-content: center;
+  background: var(--background);
   display: grid;
-  gap: 1.5rem;
   min-width: 0;
+  padding: 2rem 1.5rem;
+  place-items: center;
+}
+
+.pantalla-acceso__contenido {
+  display: grid;
+  gap: 1.4rem;
+  width: min(420px, 100%);
 }
 
 .pantalla-acceso__presentacion {
@@ -17,26 +23,30 @@
     radial-gradient(700px 420px at 0% 0%, rgb(13 148 136 / 55%), transparent 65%),
     radial-gradient(600px 400px at 100% 100%, rgb(45 212 191 / 14%), transparent 60%),
     linear-gradient(160deg, #0b1626, #0f2a3d);
-  border-radius: var(--radius);
   color: #fff;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
   justify-content: space-between;
-  min-height: 480px;
-  padding: 2.5rem;
+  padding: 2.75rem 3.25rem;
+}
+
+.pantalla-acceso__presentacion .marca {
+  color: #fff;
+  font-size: 1.25rem;
 }
 
 .pantalla-acceso__presentacion h2 {
-  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-size: clamp(1.9rem, 3.6vw, 2.75rem);
   letter-spacing: -0.035em;
-  line-height: 1.1;
+  line-height: 1.08;
   margin: 0;
   max-width: 15ch;
 }
 
 .pantalla-acceso__presentacion p {
   color: #b8c4d6;
+  font-size: 1rem;
   margin: 0.9rem 0 0;
   max-width: 44ch;
 }
@@ -74,17 +84,20 @@
 }
 
 .auth-pantalla {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  margin: 0 auto;
-  max-width: 440px;
-  padding: 2rem;
   width: 100%;
 }
 
+.auth-sobretitulo {
+  color: var(--brand-dark);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.4rem;
+  text-transform: uppercase;
+}
+
 .auth-pantalla h1 {
+  font-size: clamp(1.75rem, 3vw, 1.95rem);
   letter-spacing: -0.03em;
   margin: 0 0 0.5rem;
 }
@@ -97,10 +110,18 @@
 .auth-pantalla > p {
   color: var(--muted);
   margin: 1.25rem 0 0;
+  text-align: center;
+}
+
+.auth-pantalla > .auth-sobretitulo {
+  color: var(--brand-dark);
+  margin: 0 0 0.4rem;
+  text-align: left;
 }
 
 .auth-pantalla > .auth-bajada {
-  margin: 0 0 1.25rem;
+  margin: 0 0 1.5rem;
+  text-align: left;
 }
 
 .auth-aviso {
@@ -234,10 +255,29 @@
 @media (max-width: 860px) {
   .pantalla-acceso {
     grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
   }
 
   .pantalla-acceso__presentacion {
+    gap: 0.9rem;
+    justify-content: flex-start;
+    padding: 1.5rem;
+  }
+
+  .pantalla-acceso__presentacion h2 {
+    font-size: 1.6rem;
+    max-width: none;
+  }
+
+  .pantalla-acceso__presentacion p,
+  .pantalla-acceso__presentacion ul,
+  .pantalla-acceso__presentacion small {
     display: none;
+  }
+
+  .pantalla-acceso__formulario {
+    padding: 1.75rem 1.25rem 3rem;
+    place-items: start center;
   }
 }
 
@@ -247,54 +287,8 @@
   }
 }
 
-.auth-demo {
-  background: var(--surface);
-  border: 1px dashed var(--line-strong);
-  border-radius: 12px;
-  font-size: 0.875rem;
-  margin: 0 auto;
-  max-width: 440px;
-  padding: 1rem;
-  width: 100%;
-}
-
-.auth-demo > div {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.auth-demo > div > p {
-  margin: 0;
-}
-
 .auth-pantalla a,
-.auth-demo a {
+.demo-tarjeta a {
   color: var(--brand-dark);
   font-weight: 600;
-}
-
-.auth-demo > div > button {
-  justify-self: start;
-}
-
-.auth-demo .demo-credenciales {
-  font-size: 0.8125rem;
-}
-
-.auth-demo .demo-credenciales th {
-  letter-spacing: 0.02em;
-}
-
-.auth-demo .demo-credenciales th,
-.auth-demo .demo-credenciales td {
-  padding: 0.4rem 0.25rem;
-}
-
-.auth-demo .demo-credenciales .button {
-  padding: 0.25rem 0.5rem;
-  white-space: nowrap;
-}
-
-.auth-demo .demo-credenciales td:last-child {
-  white-space: nowrap;
 }

@@ -11,6 +11,7 @@ export function Registro() {
     <PantallaAcceso>
       <FormularioCredenciales
         titulo="Crear cuenta"
+        sobretitulo="Nueva cuenta"
         accion="Crear cuenta"
         bajada="Elegí un nombre de usuario y una contraseña. Con tu cuenta vas a poder crear proyectos y sumarte a equipos."
         contrasenaNueva

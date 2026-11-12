@@ -42,7 +42,13 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
   if (!habilitado) return null
 
   return (
-    <div>
+    <div className="demo-tarjeta">
+      <h2>Datos de prueba</h2>
+      <p>
+        Crea cuatro usuarios y el proyecto #{PROYECTO_DE_PRUEBA} «Licencia de conducir (datos de prueba)»: 4 Sprints
+        (dos finalizados, uno activo y uno pendiente), 12 historias, 20 registros de horas, 2 votaciones y 5 defectos.
+        Si algún usuario ya existe, no se carga nada.
+      </p>
       {resultado?.tipo === 'error' && <ErrorMessage message={resultado.mensaje} />}
       {resultado?.tipo === 'aviso' && (
         <p className="message" role="status">

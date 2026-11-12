@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { Icono } from './compartido/componentes/Icono'
+import { Marca } from './compartido/componentes/Marca'
 import { ProveedorRecargaProyectos } from './compartido/proyectos/recargaProyectos'
 import { SelectorProyecto } from './compartido/proyectos/SelectorProyecto'
 import { MenuUsuario } from './features/autenticacion/MenuUsuario'
@@ -12,15 +13,6 @@ const SECCION_DE_VOTACION = 'backlog'
 
 const claseDeEnlace = ({ isActive }: { isActive: boolean }) =>
   `barra-lateral__enlace${isActive ? ' barra-lateral__enlace--activo' : ''}`
-
-function Marca() {
-  return (
-    <Link className="marca" to="/">
-      <span className="marca__logo"><Icono nombre="marca" /></span>
-      Métrica
-    </Link>
-  )
-}
 
 function RutaDeNavegacion({ pathname, enProyecto }: { pathname: string; enProyecto: boolean }) {
   const tramo = pathname.split('/')[3]
@@ -51,15 +43,9 @@ function Armazon() {
 
   if (estado !== 'autenticado') {
     return (
-      <div className="acceso">
-        <header className="acceso__barra">
-          <Marca />
-          <MenuUsuario />
-        </header>
-        <main className="acceso__contenido">
-          <Outlet />
-        </main>
-      </div>
+      <main className="acceso">
+        <Outlet />
+      </main>
     )
   }
 

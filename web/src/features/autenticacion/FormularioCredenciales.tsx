@@ -12,6 +12,7 @@ type Campo = 'nombre' | 'contrasena'
 
 type Props = {
   titulo: string
+  sobretitulo: string
   accion: string
   bajada?: string
   contrasenaNueva?: boolean
@@ -35,6 +36,7 @@ function campoDeError(error: unknown): Campo | undefined {
 
 export function FormularioCredenciales({
   titulo,
+  sobretitulo,
   accion,
   bajada,
   contrasenaNueva = false,
@@ -75,6 +77,7 @@ export function FormularioCredenciales({
 
   return (
     <section className="auth-pantalla" aria-labelledby="credenciales-title">
+      <p className="auth-sobretitulo">{sobretitulo}</p>
       <h1 id="credenciales-title">{titulo}</h1>
       {bajada && <p className="auth-bajada">{bajada}</p>}
       {aviso && <p className="message auth-aviso" role="status">{aviso}</p>}

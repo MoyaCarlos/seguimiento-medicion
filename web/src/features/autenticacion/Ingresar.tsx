@@ -15,6 +15,7 @@ export function Ingresar() {
     <PantallaAcceso>
       <FormularioCredenciales
         titulo="Ingresar"
+        sobretitulo="Bienvenido"
         accion="Ingresar"
         bajada="Ingresá con tu cuenta para ver tus proyectos."
         aviso={vencida ? 'Tu sesión venció' : undefined}
@@ -26,9 +27,7 @@ export function Ingresar() {
           </>
         }
       />
-      <div className="auth-demo">
-        <BotonDatosDePrueba alUsar={(nombre, contrasena) => setRelleno({ nombre, contrasena })} />
-      </div>
+      <BotonDatosDePrueba alUsar={(nombre, contrasena) => setRelleno({ nombre, contrasena })} />
     </PantallaAcceso>
   )
 }
