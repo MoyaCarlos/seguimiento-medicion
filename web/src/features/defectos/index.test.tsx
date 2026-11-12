@@ -185,12 +185,12 @@ describe('pantalla de defectos', () => {
 
     expect(await screen.findByText('El total no se actualiza')).toBeTruthy()
     expect(screen.getByText('El botón no responde')).toBeTruthy()
-    expect(screen.getAllByText('Alta').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Severidad Alta').length).toBeGreaterThan(0)
     expect(screen.getByText('Pendiente')).toBeTruthy()
     expect(screen.getAllByText('Resuelto').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Carrito de compras/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Sprint 1/).length).toBeGreaterThan(0)
-    expect(screen.getByText('Registrado: 04/11/2026')).toBeTruthy()
+    expect(screen.getByText('Detectado en Sprint 1 · Registrado: 04/11/2026')).toBeTruthy()
   })
 
   it('US2.1 — Dado un defecto pendiente y un Sprint activo, cuando lo marco como resuelto, entonces pasa a Resuelto', async () => {
@@ -409,5 +409,45 @@ describe('pantalla de defectos', () => {
     await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
 
     expect(await screen.findByText('violación de integridad referencial')).toBeTruthy()
+  })
+})
+
+describe('listado de defectos como el prototipo', () => {
+  const ambos = { defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO], sprints: [SPRINT_ACTIVO, SPRINT_FINALIZADO], sprintsBacklog: { 2: [HISTORIA_SPRINT], 4: [] } }
+
+  it('Dado un defecto, cuando se lista, entonces su título es «Defecto #N · historia» en un encabezado de nivel 3', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByRole('heading', { level: 3, name: 'Defecto #7 · Carrito de compras' })).toBeTruthy()
+  })
+
+  it('Dados dos defectos, cuando se lista, entonces va primero el más nuevo', async () => {
+    abrir(ambos)
+
+    const titulos = (await screen.findAllByRole('heading', { level: 3 })).map((titulo) => titulo.textContent)
+    expect(titulos).toEqual(['Defecto #8 · Carrito de compras', 'Defecto #7 · Carrito de compras'])
+  })
+
+  it('Dado un defecto pendiente, cuando se lista, entonces «Resolver» va antes de la descripción', async () => {
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+
+    const boton = await screen.findByRole('button', { name: 'Resolver' })
+    const descripcion = screen.getByText('El total no se actualiza')
+    expect(boton.compareDocumentPosition(descripcion) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('Dado un defecto resuelto, cuando se lista, entonces los sprints y la fecha van en una sola línea separada por «·»', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByText('Detectado en Sprint 1 · Resuelto en Sprint 1 · Registrado: 03/11/2026')).toBeTruthy()
+  })
+
+  it('Dado un defecto, cuando se lista, entonces muestra «Severidad X» y el estado como etiquetas', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByText('Severidad Alta')).toBeTruthy()
+    expect(screen.getByText('Severidad Baja')).toBeTruthy()
+    expect(screen.getByText('Pendiente')).toBeTruthy()
+    expect(screen.getByText('Resuelto')).toBeTruthy()
   })
 })
