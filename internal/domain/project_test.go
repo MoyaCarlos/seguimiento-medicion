@@ -184,3 +184,47 @@ func TestProject_ConHorasPorStoryPoint_Invalidas(t *testing.T) {
 		})
 	}
 }
+
+func TestProject_AdmiteSprint(t *testing.T) {
+	inicioProyecto, finProyecto := dia(2026, 10, 31), dia(2026, 11, 16)
+	const (
+		mensajeInicio = "el Sprint no puede empezar antes del inicio del proyecto (2026-10-31)"
+		mensajeFin    = "el Sprint no puede terminar después del fin del proyecto (2026-11-16)"
+	)
+	casos := map[string]struct {
+		inicioProyecto, finProyecto *time.Time
+		inicio, fin                 time.Time
+		campo, mensaje              string
+	}{
+		"proyecto sin fechas":                  {nil, nil, dia(2026, 1, 1), dia(2027, 1, 1), "", ""},
+		"solo inicio: Sprint empieza antes":    {&inicioProyecto, nil, dia(2026, 10, 30), dia(2026, 11, 6), "fecha_inicio", mensajeInicio},
+		"solo inicio: Sprint empieza el mismo": {&inicioProyecto, nil, dia(2026, 10, 31), dia(2027, 3, 1), "", ""},
+		"solo inicio: Sprint empieza después":  {&inicioProyecto, nil, dia(2026, 12, 1), dia(2027, 3, 1), "", ""},
+		"solo fin: Sprint termina antes":       {nil, &finProyecto, dia(2026, 1, 1), dia(2026, 1, 15), "", ""},
+		"solo fin: Sprint termina el mismo":    {nil, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 16), "", ""},
+		"solo fin: Sprint termina después":     {nil, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 20), "fecha_fin", mensajeFin},
+		"ambas: Sprint dentro":                 {&inicioProyecto, &finProyecto, dia(2026, 11, 1), dia(2026, 11, 10), "", ""},
+		"ambas: Sprint en los dos bordes":      {&inicioProyecto, &finProyecto, dia(2026, 10, 31), dia(2026, 11, 16), "", ""},
+		"ambas: Sprint empieza antes":          {&inicioProyecto, &finProyecto, dia(2026, 10, 30), dia(2026, 11, 6), "fecha_inicio", mensajeInicio},
+		"ambas: Sprint termina después":        {&inicioProyecto, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 17), "fecha_fin", mensajeFin},
+		"ambas: Sprint afuera por los dos":     {&inicioProyecto, &finProyecto, dia(2026, 10, 1), dia(2026, 12, 1), "fecha_inicio", mensajeInicio},
+	}
+	for nombre, caso := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			proyecto := Project{Nombre: "Proyecto", FechaInicio: caso.inicioProyecto, FechaFin: caso.finProyecto}
+
+			err := proyecto.AdmiteSprint(caso.inicio, caso.fin)
+
+			if caso.campo == "" {
+				if err != nil {
+					t.Fatalf("no se esperaba error: %v", err)
+				}
+				return
+			}
+			verr, ok := err.(ValidationError)
+			if !ok || verr.Campo != caso.campo || verr.Mensaje != caso.mensaje {
+				t.Fatalf("se esperaba ValidationError{%q, %q}, se obtuvo %v", caso.campo, caso.mensaje, err)
+			}
+		})
+	}
+}

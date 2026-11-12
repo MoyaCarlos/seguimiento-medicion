@@ -56,4 +56,35 @@ describe('Markdown', () => {
 
     expect(enlace?.getAttribute('href') ?? '').not.toMatch(/^javascript:/i)
   })
+
+  it.each([
+    ['data:text/html,<script>alert(1)</script>'],
+    ['vbscript:msgbox(1)'],
+    ['JAVASCRIPT:alert(1)'],
+  ])('Escenario 6: no deja un enlace con protocolo inseguro (%s)', (url) => {
+    const contenedor = renderizar(`[peligroso](${url})`)
+    const enlace = contenedor.querySelector('a')
+
+    expect(enlace).not.toBeNull()
+    expect(enlace?.getAttribute('href') ?? '').not.toMatch(/^(javascript|data|vbscript):/i)
+  })
+
+  it.each([
+    ['javascript:alert(1)'],
+    ['data:image/svg+xml,<svg/onload=alert(1)>'],
+  ])('Caso límite: una imagen con protocolo inseguro no conserva ese src (%s)', (url) => {
+    const contenedor = renderizar(`![x](${url})`)
+    const imagen = contenedor.querySelector('img')
+
+    expect(imagen).not.toBeNull()
+    expect(imagen?.getAttribute('src') ?? '').not.toMatch(/^(javascript|data|vbscript):/i)
+  })
+
+  it('Caso límite: una imagen con URL https externa se muestra con ese src', () => {
+    const contenedor = renderizar('![logo](https://example.com/logo.png)')
+    const imagen = contenedor.querySelector('img')
+
+    expect(imagen).not.toBeNull()
+    expect(imagen?.getAttribute('src')).toBe('https://example.com/logo.png')
+  })
 })

@@ -19,14 +19,17 @@ type IniciarSprintInput struct {
 }
 
 // IniciarSprint pasa un Sprint Pendiente a Activo, garantizando que el
-// proyecto no tenga otro Sprint Activo.
+// proyecto no tenga otro Sprint Activo y que las fechas del Sprint caigan
+// dentro del plazo del proyecto (#168).
 type IniciarSprint struct {
-	sprints     repository.SprintRepository
-	integrantes repository.IntegrantesRepository
+	sprints   repository.SprintRepository
+	proyectos repository.ProjectRepository
 }
 
-func NewIniciarSprint(sprints repository.SprintRepository, integrantes repository.IntegrantesRepository) *IniciarSprint {
-	return &IniciarSprint{sprints: sprints, integrantes: integrantes}
+// NewIniciarSprint recibe el repositorio de proyectos para los permisos de
+// HU-21 (sus integrantes) y para el plazo del proyecto (#168).
+func NewIniciarSprint(sprints repository.SprintRepository, proyectos repository.ProjectRepository) *IniciarSprint {
+	return &IniciarSprint{sprints: sprints, proyectos: proyectos}
 }
 
 // Autorizar devuelve el error de ErrSprintNoEncontrado (404) o de permisos
@@ -42,7 +45,7 @@ func (s *IniciarSprint) sprintDelScrumMaster(ctx context.Context, sprintID, usua
 	if err != nil {
 		return domain.Sprint{}, err
 	}
-	if err := exigirScrumMaster(ctx, s.integrantes, sprint.ProyectoID, usuarioID); err != nil {
+	if err := exigirScrumMaster(ctx, s.proyectos, sprint.ProyectoID, usuarioID); err != nil {
 		return domain.Sprint{}, err
 	}
 	return sprint, nil
@@ -68,6 +71,13 @@ func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) 
 	}
 
 	if err := sprint.Iniciar(input.SprintGoal, input.FechaInicio, input.FechaFin); err != nil {
+		return domain.Sprint{}, err
+	}
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, sprint.ProyectoID)
+	if err != nil {
+		return domain.Sprint{}, err
+	}
+	if err := proyecto.AdmiteSprint(sprint.FechaInicio, sprint.FechaFin); err != nil {
 		return domain.Sprint{}, err
 	}
 	if err := s.sprints.Actualizar(ctx, sprint); err != nil {
