@@ -36,6 +36,9 @@ var (
 	// ErrSprintActivoAlCerrarProyecto indica que el proyecto tiene un Sprint Activo
 	// y por eso no se puede cerrar.
 	ErrSprintActivoAlCerrarProyecto = errors.New("Cerrá el Sprint activo antes de cerrar el proyecto")
+	// ErrProyectoCerrado indica una escritura sobre un proyecto cerrado, que es
+	// de solo lectura.
+	ErrProyectoCerrado = errors.New("El proyecto está cerrado")
 )
 
 // ErrHistoriaNoEncontrada indica que la historia solicitada no existe.
