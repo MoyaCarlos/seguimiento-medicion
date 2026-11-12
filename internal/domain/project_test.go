@@ -257,3 +257,56 @@ func TestProject_Cerrar(t *testing.T) {
 		}
 	})
 }
+
+// Spec 044 (#300): reabrir deja vacía la fecha de cierre.
+func TestProject_Reabrir(t *testing.T) {
+	cierre := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+
+	t.Run("cerrado vuelve a estar abierto", func(t *testing.T) {
+		cerrado := Project{ID: 1, Nombre: "Tienda", FechaCierre: &cierre}
+
+		abierto, err := cerrado.Reabrir()
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if abierto.FechaCierre != nil {
+			t.Errorf("se esperaba sin fecha de cierre, se obtuvo %v", *abierto.FechaCierre)
+		}
+		if abierto.ID != 1 || abierto.Nombre != "Tienda" {
+			t.Errorf("reabrir no debe cambiar los demás datos: %+v", abierto)
+		}
+		if cerrado.FechaCierre == nil {
+			t.Error("reabrir debe devolver una copia y no modificar el proyecto original")
+		}
+	})
+
+	t.Run("abierto se rechaza", func(t *testing.T) {
+		_, err := Project{}.Reabrir()
+
+		if err != ErrProyectoNoCerrado {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+		if err.Error() != "El proyecto no está cerrado" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+	})
+
+	t.Run("reabierto con la fecha de fin vencida vuelve a las reglas de HU-13", func(t *testing.T) {
+		inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+		fin := time.Date(2026, 6, 30, 0, 0, 0, 0, time.UTC)
+		cerrado := Project{FechaInicio: &inicio, FechaFin: &fin, FechaCierre: &cierre}
+
+		abierto, err := cerrado.Reabrir()
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if got := CalcularEstadoProyecto(abierto, nil, civilLocal(2026, 11, 11)); got != ProyectoFinalizado {
+			t.Errorf("con la fecha de fin vencida se esperaba %q, se obtuvo %q", ProyectoFinalizado, got)
+		}
+		if got := CalcularEstadoProyecto(abierto, []Sprint{{Estado: SprintActivo}}, civilLocal(2026, 11, 11)); got != ProyectoEnCurso {
+			t.Errorf("ya no está cerrado: con un Sprint activo se esperaba %q, se obtuvo %q", ProyectoEnCurso, got)
+		}
+	})
+}
