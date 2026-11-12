@@ -42,7 +42,7 @@ No quedaron `NEEDS CLARIFICATION` en el contexto técnico: las decisiones de pro
 
 ## 7. Impacto sobre pruebas y datos existentes
 
-- **Escenarios BDD**: todos los proyectos de `/features` se crean sin fechas (`domain.NewProject(..., nil, nil)`), así que ningún escenario existente cambia de resultado. Solo hay que pasar el `ProjectRepository` a los `NewIniciarSprint` de los pasos (5 archivos).
+- **Escenarios BDD**: los proyectos de `/features` se crean sin fechas (`domain.NewProject(..., nil, nil)`), y hay que pasar el `ProjectRepository` a los `NewIniciarSprint` de los pasos (5 archivos). **Corrección (implementación, 2026-11-11):** los pasos de HU-13 (`features/steps_estado_proyecto.go`) sí cargan fechas al proyecto con un `UPDATE` y luego iniciaban un Sprint de hoy a hoy+14 fuera de ese plazo; 3 escenarios de `estado_proyecto.feature` quedaron en rojo y se ajustaron para iniciar el Sprint dentro del plazo (ver tasks.md, notas de la fase 3).
 - **Tests unitarios del servicio y del handler**: hoy siembran Sprints de proyectos que no existen en el repositorio de proyectos (`proyectoID` 1 sin alta). Con la nueva lectura del proyecto darían 404; hay que sembrar el proyecto (sin fechas) en esos tests. Es un ajuste de arreglo (Arrange), no de comportamiento.
 - **Datos de prueba v2 (`internal/demo`)**: proyecto de −30 a +45 días y Sprints entre −28 y +6: quedan dentro del plazo. Además la carga usa `Sprint.Iniciar` directo, no el servicio.
 

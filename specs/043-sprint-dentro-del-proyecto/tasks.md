@@ -61,7 +61,7 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
 
 **Independent Test**: `go test ./internal/service/ -run IniciarSprint -v`.
 
-- [ ] T006 [US1][US2][US3] RED, con **todo** el código de test que pide la nueva firma `NewIniciarSprint(sprints, proyectos)`:
+- [x] T006 [US1][US2][US3] RED, con **todo** el código de test que pide la nueva firma `NewIniciarSprint(sprints, proyectos)`:
   - En `internal/service/iniciar_sprint_test.go`, agregar el helper `sembrarProyectoConPlazo(t *testing.T, repo repository.ProjectRepository, inicio, fin *time.Time) int64`, que guarda `domain.NewProject("Software Metrics & Estimation", "", inicio, fin)` y devuelve su ID. **No** se llama `sembrarProyecto`: ese nombre ya existe en `internal/service/crear_sprint_test.go:12` (sin fechas, devuelve `domain.Project`) y se reutiliza para los casos sin fechas.
   - Casos nuevos en `internal/service/iniciar_sprint_test.go`, con un `repository.NewProjectRepositoryEnMemoria()` y un proyecto del 2026-10-31 al 2026-11-16:
     - US1: Sprint 2026-10-30 a 2026-11-06 → `ValidationError` en `fecha_inicio` (el caso del beta testing de Render) y, releyendo el repositorio, el Sprint sigue `Pendiente` con `SprintGoal` vacío y fechas cero (FR-007);
@@ -77,13 +77,18 @@ Sin tareas: la rama `feature/168-sprint-dentro-del-proyecto` ya existe, sale de 
     - `internal/http/sprint_handler_test.go`: `nuevoSprintHandlerConProyectos` pasa su `proyectos` a `service.NewIniciarSprint(sprints, proyectos)`, y `nuevoSprintHandlerDePrueba` siembra un proyecto sin fechas con `sembrarProyectoParaSprints` antes de devolver, porque `sembrarPendiente` crea los Sprints con `domain.NewSprint(1)` (el primer proyecto del repositorio en memoria tiene ID 1).
     - Pasos BDD: pasar un `repository.NewSQLiteProjectRepository(p.base.db)` a `NewIniciarSprint` en `features/steps_asignacion.go:47`, `features/steps_defectos.go:51` (ya tiene `proyectos` en la línea 45), `features/steps_estado_historia.go:42`, `features/steps_estado_proyecto.go:38` y `features/steps_sprints.go:45`.
   - Correr `go test ./...` y confirmar que FALLA (no compila: `NewIniciarSprint` todavía recibe un solo argumento).
-- [ ] T007 COMMIT `RED: agregar tests de IniciarSprint con el plazo del proyecto (falla)` (solo archivos `_test.go` y `features/steps_*.go`)
-- [ ] T008 [US1][US2][US3] GREEN, solo código de producción:
+- [x] T007 COMMIT `RED: agregar tests de IniciarSprint con el plazo del proyecto (falla)` (solo archivos `_test.go` y `features/steps_*.go`)
+- [x] T008 [US1][US2][US3] GREEN, solo código de producción:
   - `internal/service/iniciar_sprint.go`: campo `proyectos repository.ProjectRepository`; `NewIniciarSprint(sprints repository.SprintRepository, proyectos repository.ProjectRepository)`. En `Ejecutar`, después de `sprint.Iniciar(...)` y antes de `s.sprints.Actualizar(...)`: `proyecto, err := s.proyectos.ObtenerPorID(ctx, sprint.ProyectoID)` (propagar el error) y `if err := proyecto.AdmiteSprint(sprint.FechaInicio, sprint.FechaFin); err != nil { return domain.Sprint{}, err }`. Actualizar el comentario del tipo ("…y que sus fechas caigan dentro del plazo del proyecto, #168").
   - Cableado `cmd/api/main.go:57`: `service.NewIniciarSprint(sprintRepo, proyectos)` (la variable `proyectos` ya existe en la línea 34).
   - `gofmt -l .` sin salida y `go test ./...` en verde (incluye Godog). Si algún test existente queda en rojo por un proyecto no sembrado, el ajuste es de test: volver a T006 con un commit `test: sembrar el proyecto en <test>` aparte, nunca dentro del `GREEN:`.
-- [ ] T009 COMMIT `GREEN: IniciarSprint rechaza fechas fuera del plazo del proyecto, test en verde` (solo `internal/service/iniciar_sprint.go` y `cmd/api/main.go`)
-- [ ] T010 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [x] T009 COMMIT `GREEN: IniciarSprint rechaza fechas fuera del plazo del proyecto, test en verde` (solo `internal/service/iniciar_sprint.go` y `cmd/api/main.go`)
+- [x] T010 (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>` — no hizo falta.
+
+**Notas de la fase 3 (desvíos respecto de lo planeado):**
+
+- Los tests viejos de `internal/service/iniciar_sprint_test.go` usan el fake `proyectosSinFechas` (definido en ese archivo, no en `cerrar_sprint_test.go`) en lugar de sembrar proyectos: mismo resultado, sin tocar los IDs `1`/`2`. Los casos nuevos sí usan `ProjectRepositoryEnMemoria` con `sembrarProyectoConPlazo`.
+- El `GREEN:` dejó en rojo 3 escenarios de `features/estado_proyecto.feature` (HU-13): sus pasos cargan fechas al proyecto y luego iniciaban siempre un Sprint de hoy a hoy+14, fuera de ese plazo. Contradice research.md §7 ("todos los proyectos de `/features` se crean sin fechas"), que pasaba por alto los `UPDATE` de fechas de `steps_estado_proyecto.go`. Se corrigió en un commit `test:` aparte, antes del `GREEN:` (`e408ad1`): `crearActivo` recorta el Sprint al plazo del proyecto. Lo que verifica cada escenario no cambia.
 
 **Checkpoint**: la regla rige en la API. El caso de Render (proyecto desde 31/10, Sprint desde 30/10) da 400 en `fecha_inicio`.
 
