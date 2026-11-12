@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Icono } from '../../compartido/componentes/Icono'
 import { useSesion } from './SesionContext'
 import './estilos.css'
 
@@ -8,8 +9,12 @@ export function MenuUsuario() {
   if (estado === 'autenticado' && usuario) {
     return (
       <div className="menu-usuario">
+        <span className="menu-usuario-avatar" aria-hidden="true">{usuario.nombre?.charAt(0).toUpperCase()}</span>
         <span className="menu-usuario-nombre">{usuario.nombre}</span>
-        <button type="button" onClick={() => void salir()}>Cerrar sesión</button>
+        <button type="button" onClick={() => void salir()}>
+          <Icono nombre="salir" />
+          <span className="menu-usuario-accion">Cerrar sesión</span>
+        </button>
       </div>
     )
   }
