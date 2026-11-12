@@ -331,7 +331,67 @@ func valorATiempoOpcional(v sql.NullString) *time.Time {
 	return &t
 }
 
-// DarDeBajaIntegrante: pendiente de implementar (HU-16).
-func (r *SQLiteProjectRepository) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
-	return errors.New("no implementado")
+// DarDeBajaIntegrante da de baja a un integrante activo que no es el Scrum
+// Master y descarta sus votos de rondas no reveladas del proyecto, en una sola
+// transacción (HU-16, FR-014, FR-018). La regla del Scrum Master y «no dos
+// bajas» viven en el WHERE del UPDATE condicional, así dos pedidos simultáneos
+// aplican uno solo. Si no dio de baja, explica por qué.
+func (r *SQLiteProjectRepository) DarDeBajaIntegrante(ctx context.Context, proyectoID, usuarioID int64, fecha time.Time) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("iniciar transacción: %w", err)
+	}
+	defer tx.Rollback()
+
+	resultado, err := tx.ExecContext(ctx,
+		`UPDATE integrantes SET fecha_baja = ?
+		 WHERE proyecto_id = ? AND usuario_id = ? AND fecha_baja IS NULL AND rol <> 'scrum_master'`,
+		tiempoOpcionalAValor(&fecha), proyectoID, usuarioID,
+	)
+	if err != nil {
+		return fmt.Errorf("dar de baja integrante: %w", errorDeEscritura(err))
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dar de baja integrante: %w", err)
+	}
+	if afectadas == 0 {
+		return motivoDeNoDarDeBaja(ctx, tx, proyectoID, usuarioID)
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`DELETE FROM votos
+		 WHERE usuario_id = ?
+		   AND ronda_id IN (SELECT r.id FROM rondas_votacion r
+		                    JOIN historias h ON h.id = r.historia_id
+		                    WHERE h.proyecto_id = ? AND r.revelada_en IS NULL)`,
+		usuarioID, proyectoID,
+	); err != nil {
+		return fmt.Errorf("descartar votos no revelados: %w", errorDeEscritura(err))
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("confirmar transacción: %w", err)
+	}
+	return nil
+}
+
+// motivoDeNoDarDeBaja distingue al Scrum Master activo (409) de quien no es
+// integrante activo: no existe, nunca integró o ya fue dado de baja (404).
+func motivoDeNoDarDeBaja(ctx context.Context, tx *sql.Tx, proyectoID, usuarioID int64) error {
+	var esScrumMasterActivo bool
+	err := tx.QueryRowContext(ctx,
+		`SELECT rol = 'scrum_master' AND fecha_baja IS NULL FROM integrantes WHERE proyecto_id = ? AND usuario_id = ?`,
+		proyectoID, usuarioID,
+	).Scan(&esScrumMasterActivo)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrIntegranteNoEncontrado
+	}
+	if err != nil {
+		return fmt.Errorf("leer integrante: %w", err)
+	}
+	if esScrumMasterActivo {
+		return domain.ErrScrumMasterNoSeQuita
+	}
+	return domain.ErrIntegranteNoEncontrado
 }
