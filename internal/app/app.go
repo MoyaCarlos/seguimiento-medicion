@@ -49,6 +49,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		service.NewListarIntegrantes(proyectos),
 		service.NewObtenerEstadoProyecto(proyectos, sprintRepo),
 		service.NewCerrarProyecto(proyectos, sprintRepo, op.Ahora),
+		service.NewReabrirProyecto(proyectos),
 	)
 
 	sprintHandler := apihttp.NewSprintHandler(
