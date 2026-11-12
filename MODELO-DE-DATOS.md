@@ -423,6 +423,8 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
+| Cerrar un proyecto solo sin Sprint `Activo`, y no dos veces (#300) | `UPDATE` condicional (`fecha_cierre IS NULL AND NOT EXISTS` un Sprint `Activo`): cubre dos cierres simultáneos y un Sprint iniciado mientras tanto | `Project.Cerrar` da el mensaje (409) |
+| Proyecto cerrado = solo lectura (#300) | — | Guardia `exigirProyectoAbierto`, dentro de `exigirIntegrante`/`exigirScrumMaster` (control de acceso de HU-21): toda escritura responde 409 «El proyecto está cerrado» después de los 403. **Límite declarado:** el chequeo y la escritura son sentencias distintas, así que una escritura que llega en el mismo instante que el cierre puede completarse (spec 044, research §6) |
 
 ### Traducción de violaciones a errores
 

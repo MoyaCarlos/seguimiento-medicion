@@ -16,8 +16,11 @@ type RegistroHorasRepository interface {
 	ListarPorHistoria(ctx context.Context, historiaID int64) ([]domain.RegistroHorasDetalle, error)
 }
 
-// IntegrantesRepository es el puerto que usa la imputación de horas para
-// verificar que quien carga es integrante del proyecto.
+// IntegrantesRepository es el puerto del control de acceso de HU-21: quiénes
+// integran el proyecto, con qué rol, y si el proyecto está cerrado (#300).
 type IntegrantesRepository interface {
 	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)
+	// ProyectoCerrado informa si el proyecto tiene fecha de cierre; false si no
+	// existe (el 404 lo resuelve el servicio antes).
+	ProyectoCerrado(ctx context.Context, proyectoID int64) (bool, error)
 }

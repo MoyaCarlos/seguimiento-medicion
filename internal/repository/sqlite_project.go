@@ -176,6 +176,19 @@ func (r *SQLiteProjectRepository) Cerrar(ctx context.Context, id int64, fecha ti
 	return r.motivoDeNoCerrar(ctx, id)
 }
 
+// ProyectoCerrado informa si el proyecto tiene fecha de cierre (#300).
+func (r *SQLiteProjectRepository) ProyectoCerrado(ctx context.Context, id int64) (bool, error) {
+	var cerrado bool
+	err := r.db.QueryRowContext(ctx, `SELECT fecha_cierre IS NOT NULL FROM proyectos WHERE id = ?`, id).Scan(&cerrado)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("consultar cierre del proyecto: %w", err)
+	}
+	return cerrado, nil
+}
+
 func (r *SQLiteProjectRepository) motivoDeNoCerrar(ctx context.Context, id int64) error {
 	proyecto, err := r.ObtenerPorID(ctx, id)
 	if err != nil {

@@ -106,6 +106,13 @@ func (r *ProjectRepositoryEnMemoria) Actualizar(_ context.Context, p domain.Proj
 	return nil
 }
 
+// ProyectoCerrado informa si el proyecto tiene fecha de cierre (#300).
+func (r *ProjectRepositoryEnMemoria) ProyectoCerrado(_ context.Context, id int64) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.proyectos[id].FechaCierre != nil, nil
+}
+
 // Cerrar guarda la fecha de cierre si el proyecto está abierto (#300). No
 // conoce los Sprints: la regla del Sprint Activo la da Project.Cerrar.
 func (r *ProjectRepositoryEnMemoria) Cerrar(_ context.Context, id int64, fecha time.Time) error {
