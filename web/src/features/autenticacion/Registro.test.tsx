@@ -152,6 +152,13 @@ describe('pantalla de registro', () => {
     expect(boton!.getAttribute('aria-pressed')).toBe('false')
   })
 
+  it('Given la pantalla de registro, When se muestra, Then el panel de presentación lleva la marca «Métrica» y el formulario el sobretítulo «Nueva cuenta»', () => {
+    montar()
+
+    expect(screen.queryByRole('link', { name: 'Métrica' })?.getAttribute('href')).toBe('/')
+    expect(screen.queryByText('Nueva cuenta')).not.toBeNull()
+  })
+
   it('tiene un enlace a la pantalla de ingreso', async () => {
     montar()
     const usuario = userEvent.setup()

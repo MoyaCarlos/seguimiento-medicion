@@ -560,13 +560,22 @@ describe('rutas protegidas', () => {
     expect(router.state.location.pathname).toBe('/projects/42/backlog')
   })
 
-  it('el encabezado ofrece ingresar y registrarse a quien no tiene sesión', async () => {
+  it('Given una persona sin sesión, When abre /ingresar, Then no hay cabecera con «Registrarse» y el formulario ofrece «Registrate»', async () => {
     borrarToken()
     abrir('/ingresar')
     await screen.findByRole('heading', { name: 'Ingresar' })
 
-    expect(screen.getAllByRole('link', { name: 'Ingresar' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: 'Registrarse' }).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('link', { name: 'Registrarse' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Registrate' })).not.toBeNull()
+  })
+
+  it('Given una persona sin sesión, When abre /registro, Then no hay cabecera con «Ingresar» y el formulario ofrece «Ingresá»', async () => {
+    borrarToken()
+    abrir('/registro')
+    await screen.findByRole('heading', { name: 'Crear cuenta' })
+
+    expect(screen.queryByRole('link', { name: 'Ingresar' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Ingresá' })).not.toBeNull()
   })
 })
 

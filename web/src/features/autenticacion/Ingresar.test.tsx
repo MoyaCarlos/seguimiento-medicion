@@ -133,6 +133,13 @@ describe('pantalla de ingreso', () => {
     expect(boton!.getAttribute('aria-pressed')).toBe('false')
   })
 
+  it('Given la pantalla de ingreso, When se muestra, Then el panel de presentación lleva la marca «Métrica» y el formulario el sobretítulo «Bienvenido»', () => {
+    montar()
+
+    expect(screen.queryByRole('link', { name: 'Métrica' })?.getAttribute('href')).toBe('/')
+    expect(screen.queryByText('Bienvenido')).not.toBeNull()
+  })
+
   it('tiene un enlace a la pantalla de registro', async () => {
     montar()
     const usuario = userEvent.setup()
@@ -149,6 +156,16 @@ describe('pantalla de ingreso', () => {
     expect(await screen.findByRole('button', { name: 'Cargar datos de prueba' })).toBeTruthy()
   })
 
+  it('Dado que /demo/estado responde 200, cuando se muestra /ingresar, entonces la tarjeta «Datos de prueba» explica qué se carga', async () => {
+    simularFetch(() => json({}, 401), { estado: () => json({ habilitado: true }, 200) })
+    montar()
+
+    await screen.findByRole('button', { name: 'Cargar datos de prueba' })
+
+    expect(screen.queryByRole('heading', { name: 'Datos de prueba' })).not.toBeNull()
+    expect(screen.queryByText(/Crea cuatro usuarios y el proyecto #25/)).not.toBeNull()
+  })
+
   it('Dado que /demo/estado responde 404, cuando se muestra /ingresar, entonces no aparece el botón ni la tabla', async () => {
     const fetchMock = simularFetch(() => json({}, 401))
     montar()
@@ -156,6 +173,7 @@ describe('pantalla de ingreso', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/demo/estado', expect.anything()))
     await Promise.resolve()
     expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Datos de prueba' })).toBeNull()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
