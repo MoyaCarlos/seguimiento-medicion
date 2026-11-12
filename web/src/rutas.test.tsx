@@ -624,3 +624,57 @@ describe('armazón (spec 046)', () => {
     expect(screen.queryByRole('complementary', { name: 'Navegación principal' })).toBeNull()
   })
 })
+
+describe('cajón de navegación en pantallas angostas (spec 046)', () => {
+  async function abrirBacklog() {
+    const router = abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+    return router
+  }
+
+  const estaAbierto = () => screen.queryByRole('button', { name: 'Abrir menú' })?.getAttribute('aria-expanded')
+
+  it('Given el cajón cerrado, When presiono «Abrir menú», Then el cajón se abre', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    expect(estaAbierto()).toBe('true')
+  })
+
+  it('Given el cajón abierto, When presiono Escape, Then el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.keyboard('{Escape}')
+
+    expect(estaAbierto()).toBe('false')
+  })
+
+  it('Given el cajón abierto, When presiono «Cerrar menú», Then el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar menú' }))
+
+    expect(estaAbierto()).toBe('false')
+  })
+
+  it('Given el cajón abierto, When elijo una sección, Then navega y el cajón se cierra', async () => {
+    const usuario = userEvent.setup()
+    const router = await abrirBacklog()
+    expect(estaAbierto()).toBe('false')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+
+    await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/sprints')
+    expect(estaAbierto()).toBe('false')
+  })
+})
