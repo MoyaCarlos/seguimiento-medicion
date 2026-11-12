@@ -133,6 +133,23 @@ func (f *fakeProjectRepository) Cerrar(_ context.Context, id int64, fecha time.T
 	return nil
 }
 
+// Reabrir deja sin fecha de cierre un proyecto cerrado (#300).
+func (f *fakeProjectRepository) Reabrir(_ context.Context, id int64) error {
+	if f.err != nil {
+		return f.err
+	}
+	p, ok := f.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre == nil {
+		return domain.ErrProyectoNoCerrado
+	}
+	p.FechaCierre = nil
+	f.proyectos[id] = p
+	return nil
+}
+
 // ListarIntegrantes devuelve listaMiembros si el test la fijó; si no, deriva la
 // lista de las membresías guardadas (sin nombre: el fake no conoce a los usuarios).
 func (f *fakeProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {

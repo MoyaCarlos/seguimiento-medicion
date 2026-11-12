@@ -703,3 +703,55 @@ func TestSQLiteProjectRepository_ProyectoCerrado(t *testing.T) {
 		})
 	}
 }
+
+// Spec 044 (#300): Reabrir es un UPDATE condicional (solo si está cerrado).
+func TestSQLiteProjectRepository_Reabrir(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("cerrado queda sin fecha de cierre", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		sembrarFechaCierre(t, db, id, "2026-11-11")
+
+		if err := repo.Reabrir(ctx, id); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, id)
+		if leido.FechaCierre != nil {
+			t.Errorf("se esperaba sin fecha de cierre, se obtuvo %v", *leido.FechaCierre)
+		}
+	})
+
+	t.Run("abierto se rechaza", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+
+		if err := repo.Reabrir(ctx, id); !errors.Is(err, domain.ErrProyectoNoCerrado) {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+	})
+
+	t.Run("inexistente", func(t *testing.T) {
+		repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
+
+		if err := repo.Reabrir(ctx, 99); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+			t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+		}
+	})
+
+	t.Run("dos reaperturas seguidas: la segunda informa que no está cerrado", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		sembrarFechaCierre(t, db, id, "2026-11-11")
+
+		if err := repo.Reabrir(ctx, id); err != nil {
+			t.Fatalf("no se esperaba error en la primera reapertura: %v", err)
+		}
+		if err := repo.Reabrir(ctx, id); !errors.Is(err, domain.ErrProyectoNoCerrado) {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+	})
+}

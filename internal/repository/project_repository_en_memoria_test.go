@@ -190,3 +190,23 @@ func TestProjectRepositoryEnMemoria_ProyectoCerrado(t *testing.T) {
 		}
 	}
 }
+
+func TestProjectRepositoryEnMemoria_Reabrir(t *testing.T) {
+	ctx := context.Background()
+	repo := NewProjectRepositoryEnMemoria()
+	p, _ := repo.Guardar(ctx, domain.Project{Nombre: "Tienda"})
+
+	if err := repo.Reabrir(ctx, p.ID); !errors.Is(err, domain.ErrProyectoNoCerrado) {
+		t.Fatalf("abierto: se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+	}
+	_ = repo.Cerrar(ctx, p.ID, time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC))
+	if err := repo.Reabrir(ctx, p.ID); err != nil {
+		t.Fatalf("cerrado: no se esperaba error: %v", err)
+	}
+	if leido, _ := repo.ObtenerPorID(ctx, p.ID); leido.FechaCierre != nil {
+		t.Errorf("se esperaba sin fecha de cierre, se obtuvo %v", *leido.FechaCierre)
+	}
+	if err := repo.Reabrir(ctx, 99); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+		t.Fatalf("inexistente: se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+	}
+}
