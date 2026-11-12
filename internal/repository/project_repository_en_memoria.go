@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"sort"
 	"sync"
 	"time"
@@ -217,7 +216,21 @@ func (r *ProjectRepositoryEnMemoria) listarIntegrantes(proyectoID int64, soloAct
 	return out
 }
 
-// DarDeBajaIntegrante: pendiente de implementar (HU-16).
-func (r *ProjectRepositoryEnMemoria) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
-	return errors.New("no implementado")
+// DarDeBajaIntegrante guarda la fecha de baja de un integrante activo que no
+// es el Scrum Master (HU-16). No descarta votos: viven en otro repositorio; esa
+// garantía la cubre el repositorio SQLite.
+func (r *ProjectRepositoryEnMemoria) DarDeBajaIntegrante(_ context.Context, proyectoID, usuarioID int64, fecha time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, m := range r.miembros {
+		if m.ProjectID != proyectoID || m.UserID != usuarioID || !r.activo(m) {
+			continue
+		}
+		if m.Role == domain.RolScrumMaster {
+			return domain.ErrScrumMasterNoSeQuita
+		}
+		r.bajas[claveIntegrante{proyecto: proyectoID, usuario: usuarioID}] = fecha
+		return nil
+	}
+	return domain.ErrIntegranteNoEncontrado
 }
