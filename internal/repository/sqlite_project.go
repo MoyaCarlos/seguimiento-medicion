@@ -318,3 +318,13 @@ func valorATiempoOpcional(v sql.NullString) *time.Time {
 	}
 	return &t
 }
+
+// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
+func (r *SQLiteProjectRepository) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
+	return nil, errors.New("no implementado")
+}
+
+// DarDeBajaIntegrante: pendiente de implementar (HU-16).
+func (r *SQLiteProjectRepository) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
+	return errors.New("no implementado")
+}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"sort"
 	"sync"
@@ -764,4 +765,14 @@ type fakeAvanceHistoriasRepository struct {
 func (f *fakeAvanceHistoriasRepository) ListarPorProyecto(_ context.Context, _ int64) ([]domain.BacklogItem, error) {
 	f.llamadas++
 	return f.historias, f.err
+}
+
+// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
+func (f *fakeProjectRepository) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
+	return nil, errors.New("no implementado")
+}
+
+// DarDeBajaIntegrante: pendiente de implementar (HU-16).
+func (f *fakeProjectRepository) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
+	return errors.New("no implementado")
 }

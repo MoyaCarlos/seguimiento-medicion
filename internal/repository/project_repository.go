@@ -17,10 +17,22 @@ type ProjectRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.Project, error)
 	// ListarPorIntegrante devuelve los proyectos que integra usuarioID, con su
 	// rol en cada uno, ordenados por id; arreglo vacío si no integra ninguno.
+	// Solo cuenta donde la persona es integrante activo (fecha_baja IS NULL, HU-16).
 	ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error)
 	Actualizar(ctx context.Context, p domain.Project) error
 	AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error)
+	// ListarIntegrantes devuelve solo los integrantes activos
+	// (fecha_baja IS NULL, HU-16): es la lectura de todas las reglas de
+	// pertenencia y rol.
 	ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error)
+	// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados
+	// de baja, en orden de alta, para mostrar aportes pasados con su nombre (HU-16).
+	ListarIntegrantesHistoricos(ctx context.Context, proyectoID int64) ([]domain.Member, error)
+	// DarDeBajaIntegrante guarda la fecha de baja de un integrante activo que no
+	// es el Scrum Master y descarta sus votos de rondas no reveladas del proyecto,
+	// en una sola operación (HU-16). Si no lo da de baja, devuelve
+	// ErrIntegranteNoEncontrado o ErrScrumMasterNoSeQuita.
+	DarDeBajaIntegrante(ctx context.Context, proyectoID, usuarioID int64, fecha time.Time) error
 	// ProyectoCerrado completa el puerto IntegrantesRepository, que los
 	// servicios reciben como su ProjectRepository (#300).
 	ProyectoCerrado(ctx context.Context, proyectoID int64) (bool, error)

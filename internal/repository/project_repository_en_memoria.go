@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"sync"
 	"time"
@@ -188,4 +189,14 @@ func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyec
 		}
 	}
 	return out, nil
+}
+
+// ListarIntegrantesHistoricos: pendiente de implementar (HU-16).
+func (r *ProjectRepositoryEnMemoria) ListarIntegrantesHistoricos(_ context.Context, _ int64) ([]domain.Member, error) {
+	return nil, errors.New("no implementado")
+}
+
+// DarDeBajaIntegrante: pendiente de implementar (HU-16).
+func (r *ProjectRepositoryEnMemoria) DarDeBajaIntegrante(_ context.Context, _, _ int64, _ time.Time) error {
+	return errors.New("no implementado")
 }
