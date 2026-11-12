@@ -69,6 +69,19 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 	return nombre, descripcion, nil
 }
 
+// AdmiteSprint verifica que un Sprint de inicio a fin caiga dentro del plazo
+// del proyecto, con los bordes incluidos. Solo se compara contra las fechas
+// que el proyecto tenga (#168).
+func (p Project) AdmiteSprint(inicio, fin time.Time) error {
+	if p.FechaInicio != nil && inicio.Before(*p.FechaInicio) {
+		return ValidationError{Campo: "fecha_inicio", Mensaje: "el Sprint no puede empezar antes del inicio del proyecto (" + p.FechaInicio.Format(time.DateOnly) + ")"}
+	}
+	if p.FechaFin != nil && fin.After(*p.FechaFin) {
+		return ValidationError{Campo: "fecha_fin", Mensaje: "el Sprint no puede terminar después del fin del proyecto (" + p.FechaFin.Format(time.DateOnly) + ")"}
+	}
+	return nil
+}
+
 // ConHorasPorStoryPoint devuelve una copia del proyecto con el parámetro
 // indicado. valor es el número en texto; nil lo deja sin definir.
 func (p Project) ConHorasPorStoryPoint(valor *string) (Project, error) {

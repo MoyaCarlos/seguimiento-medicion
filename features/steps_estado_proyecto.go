@@ -16,28 +16,29 @@ import (
 // pasosEstado guarda el estado de los escenarios de HU-13. Reutiliza la base y
 // el proyecto reales del Background de HU-01 (no redefine ese paso).
 type pasosEstado struct {
-	base     *scenarioContext
-	sprints  *repository.SQLiteSprintRepository
-	backlog  *repository.SQLiteBacklogRepository
-	crear    *service.CrearSprint
-	iniciar  *service.IniciarSprint
-	cerrar   *service.CerrarSprint
-	consulta *service.ObtenerEstadoProyecto
-	hoy      time.Time
-	sprint   domain.Sprint
-	estado   domain.EstadoProyecto
-	err      error
+	base      *scenarioContext
+	sprints   *repository.SQLiteSprintRepository
+	backlog   *repository.SQLiteBacklogRepository
+	proyectos *repository.SQLiteProjectRepository
+	crear     *service.CrearSprint
+	iniciar   *service.IniciarSprint
+	cerrar    *service.CerrarSprint
+	consulta  *service.ObtenerEstadoProyecto
+	hoy       time.Time
+	sprint    domain.Sprint
+	estado    domain.EstadoProyecto
+	err       error
 }
 
 func (p *pasosEstado) preparar() {
 	p.hoy = hoyCivil()
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
 	p.backlog = repository.NewSQLiteBacklogRepository(p.base.db)
-	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
-	p.crear = service.NewCrearSprint(proyectos, p.sprints)
-	p.iniciar = service.NewIniciarSprint(p.sprints, proyectos)
-	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, proyectos)
-	p.consulta = service.NewObtenerEstadoProyecto(proyectos, p.sprints)
+	p.proyectos = repository.NewSQLiteProjectRepository(p.base.db)
+	p.crear = service.NewCrearSprint(p.proyectos, p.sprints)
+	p.iniciar = service.NewIniciarSprint(p.sprints, p.proyectos)
+	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, p.proyectos)
+	p.consulta = service.NewObtenerEstadoProyecto(p.proyectos, p.sprints)
 	p.sprint, p.estado, p.err = domain.Sprint{}, "", nil
 }
 
@@ -104,7 +105,29 @@ func (p *pasosEstado) fechaFinVencida() error {
 	return p.fijarFechas(&inicio, &fin)
 }
 
+// plazoDelSprint arma un Sprint de hasta dos semanas desde hoy, recortado al
+// plazo del proyecto: un Sprint no puede salirse de él (#168).
+func (p *pasosEstado) plazoDelSprint() (time.Time, time.Time, error) {
+	proyecto, err := p.proyectos.ObtenerPorID(context.Background(), p.base.proyectoID)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	inicio := p.hoy
+	if proyecto.FechaInicio != nil {
+		inicio = *proyecto.FechaInicio
+	}
+	fin := inicio.AddDate(0, 0, 14)
+	if proyecto.FechaFin != nil && fin.After(*proyecto.FechaFin) {
+		fin = *proyecto.FechaFin
+	}
+	return inicio, fin, nil
+}
+
 func (p *pasosEstado) crearActivo() error {
+	inicio, fin, err := p.plazoDelSprint()
+	if err != nil {
+		return err
+	}
 	pendiente, err := p.crear.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return err
@@ -112,8 +135,8 @@ func (p *pasosEstado) crearActivo() error {
 	activo, err := p.iniciar.Ejecutar(context.Background(), service.IniciarSprintInput{
 		SprintID:    pendiente.ID,
 		SprintGoal:  "Goal del Sprint",
-		FechaInicio: p.hoy,
-		FechaFin:    p.hoy.AddDate(0, 0, 14),
+		FechaInicio: inicio,
+		FechaFin:    fin,
 		UsuarioID:   scrumMasterDelSprint(p.base.db, pendiente.ID),
 	})
 	if err != nil {
