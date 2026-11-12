@@ -92,6 +92,21 @@
   .menu-usuario-nombre {
     max-width: 8ch;
   }
+
+  .menu-usuario button {
+    justify-content: center;
+    padding: 0;
+    width: 36px;
+  }
+
+  .menu-usuario-accion {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
 }
 
 @media (max-width: 600px) {

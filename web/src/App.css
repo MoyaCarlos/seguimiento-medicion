@@ -249,6 +249,7 @@ select {
   align-items: center;
   color: var(--muted);
   display: flex;
+  flex: 1;
   font-size: 0.8125rem;
   gap: 8px;
   min-width: 0;
@@ -758,6 +759,12 @@ h1 {
 
   .contenido {
     padding: 20px 16px 64px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ruta > :not([aria-current]) {
+    display: none;
   }
 }
 

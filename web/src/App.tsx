@@ -46,6 +46,8 @@ function Armazon() {
   const { id } = useParams()
   const { pathname } = useLocation()
   const [recargas, setRecargas] = useState(0)
+  const [menuAbierto, setMenuAbierto] = useState(false)
+  const cerrarMenu = () => setMenuAbierto(false)
 
   if (estado !== 'autenticado') {
     return (
@@ -62,8 +64,23 @@ function Armazon() {
   }
 
   return (
-    <div className="armazon">
-      <aside className="barra-lateral" aria-label="Navegación principal">
+    <div
+      className={`armazon${menuAbierto ? ' armazon--menu-abierto' : ''}`}
+      onKeyDown={(evento) => {
+        if (evento.key === 'Escape') cerrarMenu()
+      }}
+    >
+      <aside
+        id="barra-lateral"
+        className="barra-lateral"
+        aria-label="Navegación principal"
+        onClick={(evento) => {
+          if ((evento.target as HTMLElement).closest('a')) cerrarMenu()
+        }}
+      >
+        <button type="button" className="barra-lateral__cerrar" aria-label="Cerrar menú" onClick={cerrarMenu}>
+          <Icono nombre="cerrar" />
+        </button>
         <Marca />
         <NavLink className={claseDeEnlace} to="/" end>
           <Icono nombre="carpeta" />
@@ -84,8 +101,19 @@ function Armazon() {
           </>
         )}
       </aside>
+      <div className="armazon__fondo" onClick={cerrarMenu} />
       <div className="armazon__columna">
         <header className="barra-superior">
+          <button
+            type="button"
+            className="barra-superior__menu"
+            aria-label="Abrir menú"
+            aria-expanded={menuAbierto}
+            aria-controls="barra-lateral"
+            onClick={() => setMenuAbierto(true)}
+          >
+            <Icono nombre="menu" />
+          </button>
           <RutaDeNavegacion pathname={pathname} enProyecto={Boolean(id)} />
           <MenuUsuario />
         </header>

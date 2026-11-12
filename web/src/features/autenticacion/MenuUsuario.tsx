@@ -13,7 +13,7 @@ export function MenuUsuario() {
         <span className="menu-usuario-nombre">{usuario.nombre}</span>
         <button type="button" onClick={() => void salir()}>
           <Icono nombre="salir" />
-          Cerrar sesión
+          <span className="menu-usuario-accion">Cerrar sesión</span>
         </button>
       </div>
     )
