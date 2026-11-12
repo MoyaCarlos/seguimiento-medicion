@@ -1,0 +1,46 @@
+package service
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+)
+
+// darDeBaja quita a un Product Builder del proyecto 1 del fake (HU-16).
+func darDeBaja(t *testing.T, equipo *fakeProjectRepository, usuarioID int64) {
+	t.Helper()
+	if err := equipo.DarDeBajaIntegrante(context.Background(), 1, usuarioID, time.Date(2026, 11, 12, 12, 0, 0, 0, time.UTC)); err != nil {
+		t.Fatalf("no se pudo dar de baja a %d: %v", usuarioID, err)
+	}
+}
+
+// HU-16, FR-007: revelar una ronda exige solo los votos de los activos, así
+// que no se espera a quien fue dado de baja sin votar.
+func TestRevelarVotacion_NoEsperaAUnIntegranteDadoDeBaja(t *testing.T) {
+	equipo := equipoDelProyecto()
+	darDeBaja(t, equipo, jimena)
+	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3}, domain.Voto{UsuarioID: candela, Valor: 5})
+	servicio := NewRevelarVotacion(historias(historiaDelBacklog()), equipo, votaciones)
+
+	if _, err := servicio.Ejecutar(context.Background(), 3, carlos, momentoDeRevelar); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if votaciones.rondas[3].ReveladaEn == nil {
+		t.Error("la ronda debía quedar revelada")
+	}
+}
+
+// HU-16: en una ronda abierta, quien fue dado de baja sin votar no figura
+// entre los que faltan votar.
+func TestConsultarVotacion_Abierta_NoListaAUnDadoDeBajaQueNoVoto(t *testing.T) {
+	equipo := equipoDelProyecto()
+	darDeBaja(t, equipo, jimena)
+	votaciones := votacionAbierta(domain.Voto{UsuarioID: carlos, Valor: 3})
+	servicio := NewConsultarVotacion(historias(historiaDelBacklog()), equipo, votaciones, domain.CoincidenciaExacta{})
+
+	vista := consultar(t, servicio, carlos)
+
+	esperarVotosVistos(t, vista, []votoVisto{{carlos, true, 3}, {candela, false, 0}})
+}
