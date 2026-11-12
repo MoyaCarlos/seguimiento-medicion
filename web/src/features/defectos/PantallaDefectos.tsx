@@ -104,28 +104,30 @@ export function PantallaDefectos({ proyectoId }: Props) {
         </p>
       )}
 
-      {sprints && activo && historias && historias.length > 0 && (
-        <section className="defectos-registro" aria-labelledby="registrar-defecto-title">
-          <h2 id="registrar-defecto-title">Registrar defecto</h2>
-          <FormularioDefecto
-            proyectoId={proyectoId}
-            historias={historias}
-            alRegistrar={recargarDefectos}
+      <div className="defectos-columnas">
+        {sprints && activo && historias && historias.length > 0 && (
+          <section className="defectos-registro" aria-labelledby="registrar-defecto-title">
+            <h2 id="registrar-defecto-title">Registrar defecto</h2>
+            <FormularioDefecto
+              proyectoId={proyectoId}
+              historias={historias}
+              alRegistrar={recargarDefectos}
+            />
+          </section>
+        )}
+
+        <section className="defectos-listado" aria-labelledby="defectos-listado-title">
+          <h2 id="defectos-listado-title">Defectos registrados</h2>
+          <ListadoDefectos
+            defectos={defectos}
+            cargando={cargandoDefectos}
+            error={errorDefectos}
+            haySprintActivo={Boolean(activo)}
+            sprints={sprints ?? []}
+            alResolver={recargarDefectos}
           />
         </section>
-      )}
-
-      <section className="defectos-listado" aria-labelledby="defectos-listado-title">
-        <h2 id="defectos-listado-title">Defectos registrados</h2>
-        <ListadoDefectos
-          defectos={defectos}
-          cargando={cargandoDefectos}
-          error={errorDefectos}
-          haySprintActivo={Boolean(activo)}
-          sprints={sprints ?? []}
-          alResolver={recargarDefectos}
-        />
-      </section>
+      </div>
     </section>
   )
 }

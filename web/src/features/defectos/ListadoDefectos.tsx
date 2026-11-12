@@ -47,39 +47,40 @@ export function ListadoDefectos({
     <div className="defectos-resultado">
       {errorResolucion && <ErrorMessage message={errorResolucion} />}
       <ul className="defectos-lista">
-        {defectos.map((defecto) => (
+        {[...defectos].sort((a, b) => b.id - a.id).map((defecto) => (
           <li key={defecto.id} className="defecto">
             <div className="defecto__cabecera">
-              <div>
-                <p className="defecto__meta">Defecto #{defecto.id} · {defecto.historia}</p>
-                <p className="defecto__descripcion">{defecto.descripcion}</p>
-              </div>
-              <div className="defecto__etiquetas">
-                <span className={`defecto__severidad defecto__severidad--${defecto.severidad.toLowerCase()}`}>
-                  {defecto.severidad}
-                </span>
-                <span className={`defecto__estado defecto__estado--${defecto.estado.toLowerCase()}`}>
-                  {defecto.estado}
-                </span>
-              </div>
-            </div>
-            <p className="defecto__datos">
-              <span>Detectado en {etiquetaSprint(defecto.sprint_deteccion_id, sprints)}</span>
-              {defecto.sprint_resolucion_id !== null && (
-                <span>Resuelto en {etiquetaSprint(defecto.sprint_resolucion_id, sprints)}</span>
+              <h3>Defecto #{defecto.id} · {defecto.historia}</h3>
+              {defecto.estado === 'Pendiente' && haySprintActivo && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="defecto__resolver"
+                  onClick={() => resolver(defecto.id)}
+                  disabled={resolviendo !== null}
+                >
+                  {resolviendo === defecto.id ? 'Resolviendo…' : 'Resolver'}
+                </Button>
               )}
-              <span>Registrado: {formatearFecha(defecto.creado_en)}</span>
+            </div>
+            <p className="defecto__descripcion">{defecto.descripcion}</p>
+            <ul className="defecto__etiquetas">
+              <li className={`defecto__etiqueta defecto__etiqueta--${defecto.severidad.toLowerCase()}`}>
+                Severidad {defecto.severidad}
+              </li>
+              <li className={`defecto__etiqueta defecto__etiqueta--${defecto.estado.toLowerCase()}`}>
+                {defecto.estado}
+              </li>
+            </ul>
+            <p className="defecto__datos">
+              {[
+                `Detectado en ${etiquetaSprint(defecto.sprint_deteccion_id, sprints)}`,
+                defecto.sprint_resolucion_id !== null && `Resuelto en ${etiquetaSprint(defecto.sprint_resolucion_id, sprints)}`,
+                `Registrado: ${formatearFecha(defecto.creado_en)}`,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
-            {defecto.estado === 'Pendiente' && haySprintActivo && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => resolver(defecto.id)}
-                disabled={resolviendo !== null}
-              >
-                {resolviendo === defecto.id ? 'Resolviendo…' : 'Resolver'}
-              </Button>
-            )}
           </li>
         ))}
       </ul>
