@@ -95,6 +95,7 @@ var esquemaEsperado = map[string]tablaEsperada{
 			{nombre: "usuario_id", tipo: "INTEGER", notNull: true, pk: 2},
 			{nombre: "rol", tipo: "TEXT", notNull: true},
 			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+			{nombre: "fecha_baja", tipo: "TEXT"},
 		},
 		fks: []string{
 			"proyecto_id -> proyectos(id)",
@@ -489,7 +490,11 @@ const (
 	insertarHistoria = "INSERT INTO historias (proyecto_id, titulo, descripcion, prioridad, estado, sprint_id, fecha_finalizacion) VALUES "
 	insertarArrastre = "INSERT INTO historias_arrastradas (sprint_id, historia_id, proyecto_id, estimacion_sp) VALUES "
 	insertarHoras    = "INSERT INTO registros_horas (proyecto_id, historia_id, usuario_id, sprint_id, fecha, actividad, minutos, creado_en) VALUES "
-	insertarDefecto  = "INSERT INTO defectos (proyecto_id, historia_id, descripcion, severidad, estado, sprint_deteccion_id, sprint_resolucion_id, creado_en) VALUES "
+	// insertarIntegranteConBaja suma al usuario 2 como Product Builder del proyecto 1
+	// con la fecha_baja que completa cada caso (HU-16, spec 045).
+	insertarIntegranteConBaja = "INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (2, 'Beto', 'beto', " + ahora + ");" +
+		"INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en, fecha_baja) VALUES (1, 2, 'product_builder', " + ahora + ", "
+	insertarDefecto = "INSERT INTO defectos (proyecto_id, historia_id, descripcion, severidad, estado, sprint_deteccion_id, sprint_resolucion_id, creado_en) VALUES "
 )
 
 // Datos base de cada caso: proyectos 1 y 2, usuario 1 (Scrum Master del 1),
@@ -584,6 +589,11 @@ func TestEsquema_Filas(t *testing.T) {
 		{"proyecto fecha_cierre inexistente", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', '2026-02-30', " + ahora + ")", violaCheck},
 		{"proyecto fecha_cierre válida", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', '2026-10-09', " + ahora + ")", aceptada},
 		{"proyecto fecha_cierre NULL", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', NULL, " + ahora + ")", aceptada},
+		{"integrante fecha_baja sin cero", insertarIntegranteConBaja + "'2026-11-1')", violaCheck},
+		{"integrante fecha_baja basura", insertarIntegranteConBaja + "'basura')", violaCheck},
+		{"integrante fecha_baja inexistente", insertarIntegranteConBaja + "'2026-02-30')", violaCheck},
+		{"integrante fecha_baja válida", insertarIntegranteConBaja + "'2026-11-12')", aceptada},
+		{"integrante fecha_baja NULL", insertarIntegranteConBaja + "NULL)", aceptada},
 		{"Sprint fecha_inicio sin cero", insertarSprint + "(1, 'g', '2026-10-9', '2026-11-01', 'Finalizado')", violaCheck},
 		{"Sprint fecha_inicio basura", insertarSprint + "(1, 'g', 'basura', '2026-11-01', 'Finalizado')", violaCheck},
 		{"Sprint fecha_inicio inexistente", insertarSprint + "(1, 'g', '2026-02-30', '2026-03-01', 'Finalizado')", violaCheck},
