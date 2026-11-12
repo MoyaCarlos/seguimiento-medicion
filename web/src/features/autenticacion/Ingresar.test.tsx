@@ -74,16 +74,16 @@ describe('pantalla de ingreso', () => {
     expect((screen.getByLabelText('Contraseña') as HTMLInputElement).value).toBe('clave-equivocada')
   })
 
-  it('Escenario 6: con state.vencida se muestra “Tu sesión venció”', () => {
+  it('Escenario 6: con state.vencida se muestra “Tu sesión venció. Volvé a ingresar para continuar.” como estado', () => {
     montar({ pathname: '/ingresar', state: { desde: '/backlog', vencida: true } })
 
-    expect(screen.getByText('Tu sesión venció')).toBeTruthy()
+    expect(screen.getByRole('status').textContent).toBe('Tu sesión venció. Volvé a ingresar para continuar.')
   })
 
   it('Escenario 6: sin state.vencida no se muestra “Tu sesión venció”', () => {
     montar()
 
-    expect(screen.queryByText('Tu sesión venció')).toBeNull()
+    expect(screen.queryByText(/Tu sesión venció/)).toBeNull()
   })
 
   it('Escenario 4: ingresar con datos válidos navega a la pantalla de origen', async () => {
@@ -328,5 +328,35 @@ describe('pantalla de ingreso: sin repetición de contraseña', () => {
     montar()
 
     expect(screen.queryByLabelText('Repetir contraseña')).toBeNull()
+  })
+})
+
+describe('pantalla de ingreso: foco y título', () => {
+  afterEach(() => {
+    document.title = ''
+  })
+
+  it('Given la pantalla de ingreso, When se muestra, Then el foco queda en «Nombre de usuario»', () => {
+    montar()
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Nombre de usuario'))
+  })
+
+  it('Given la pantalla de ingreso, When se muestra, Then la pestaña dice «Métrica · Iniciar sesión» y al salir vuelve el título anterior', () => {
+    document.title = 'Métrica · Seguimiento de proyectos'
+
+    const { unmount } = montar()
+
+    expect(document.title).toBe('Métrica · Iniciar sesión')
+    unmount()
+    expect(document.title).toBe('Métrica · Seguimiento de proyectos')
+  })
+
+  it('Given la pantalla de ingreso, When voy a «Registrate», Then la pestaña pasa a «Métrica · Crear cuenta»', async () => {
+    montar()
+
+    await userEvent.setup().click(screen.getByRole('link', { name: 'Registrate' }))
+
+    expect(document.title).toBe('Métrica · Crear cuenta')
   })
 })

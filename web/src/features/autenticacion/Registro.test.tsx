@@ -307,3 +307,25 @@ describe('pantalla de registro: repetir contraseña', () => {
     await waitFor(() => expect(screen.getAllByRole('alert').map((aviso) => aviso.textContent)).toEqual(['Ese nombre de usuario ya existe']))
   })
 })
+
+describe('pantalla de registro: foco y título', () => {
+  afterEach(() => {
+    document.title = ''
+  })
+
+  it('Given la pantalla de registro, When se muestra, Then el foco queda en «Nombre de usuario»', () => {
+    montar()
+
+    expect(document.activeElement).toBe(screen.getByLabelText('Nombre de usuario'))
+  })
+
+  it('Given la pantalla de registro, When se muestra, Then la pestaña dice «Métrica · Crear cuenta» y al salir vuelve el título anterior', () => {
+    document.title = 'Métrica · Seguimiento de proyectos'
+
+    const { unmount } = montar()
+
+    expect(document.title).toBe('Métrica · Crear cuenta')
+    unmount()
+    expect(document.title).toBe('Métrica · Seguimiento de proyectos')
+  })
+})
