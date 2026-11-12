@@ -51,6 +51,7 @@ async function completarYEnviar(nombre: string, contrasena: string) {
   const usuario = userEvent.setup()
   await usuario.type(screen.getByLabelText('Nombre de usuario'), nombre)
   await usuario.type(screen.getByLabelText('Contraseña'), contrasena)
+  await usuario.type(screen.getByLabelText('Repetir contraseña'), contrasena)
   await usuario.click(screen.getByRole('button', { name: 'Crear cuenta' }))
 }
 
@@ -211,5 +212,98 @@ describe('pantalla de registro: campos vacíos', () => {
       'el nombre de usuario debe tener entre 3 y 30 caracteres',
     )
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('pantalla de registro: repetir contraseña', () => {
+  async function enviarCon(nombre: string, contrasena: string, repeticion: string) {
+    const usuario = userEvent.setup()
+    await usuario.type(screen.getByLabelText('Nombre de usuario'), nombre)
+    await usuario.type(screen.getByLabelText('Contraseña'), contrasena)
+    if (repeticion) await usuario.type(screen.getByLabelText('Repetir contraseña'), repeticion)
+    await usuario.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+  }
+
+  it('Given la pantalla de registro, When se muestra, Then hay un campo «Repetir contraseña» oculto y sin texto de ayuda', () => {
+    montar()
+
+    const campo = screen.getByLabelText('Repetir contraseña')
+    expect(campo.getAttribute('type')).toBe('password')
+    expect(campo.getAttribute('aria-describedby')).toBeNull()
+  })
+
+  it('Given la pantalla de registro, When se muestra, Then no lleva ninguna etiqueta de propuesta del prototipo', () => {
+    montar()
+
+    expect(screen.queryByText(/Propuesta/)).toBeNull()
+    expect(screen.queryByText(/La app real todavía/)).toBeNull()
+  })
+
+  it('Given la repetición oculta, When presiono «Mostrar la repetición de la contraseña», Then solo ese campo se ve como texto', async () => {
+    montar()
+    const usuario = userEvent.setup()
+    const boton = screen.getByRole('button', { name: 'Mostrar la repetición de la contraseña' })
+    expect(boton.getAttribute('aria-pressed')).toBe('false')
+
+    await usuario.click(boton)
+
+    expect(screen.getByLabelText('Repetir contraseña').getAttribute('type')).toBe('text')
+    expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('password')
+    expect(boton.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('Given los campos vacíos, When envío, Then también pide repetir la contraseña', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    expect(descripcion(screen.getByLabelText('Repetir contraseña'))).toBe('Repetí la contraseña.')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Given la contraseña escrita y la repetición vacía, When envío, Then pide repetirla y no se llama al servidor', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+
+    await enviarCon('ana.perez', 'una-clave-larga', '')
+
+    expect(descripcion(screen.getByLabelText('Repetir contraseña'))).toBe('Repetí la contraseña.')
+    expect(descripcion(screen.getByLabelText('Contraseña'))).not.toBe('Repetí la contraseña.')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Given una repetición distinta, When envío, Then avisa que no coinciden y no se llama al servidor', async () => {
+    const fetchMock = simularFetch(() => json(RESPUESTA_SESION, 201))
+    montar()
+
+    await enviarCon('ana.perez', 'una-clave-larga', 'una-clave-larga-distinta')
+
+    expect(descripcion(screen.getByLabelText('Repetir contraseña'))).toBe('Las contraseñas no coinciden.')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Given una repetición igual, When envío, Then viajan solo el nombre y la contraseña', async () => {
+    const fetchMock = vi.fn(async (_ruta: string, _opciones?: RequestInit) => json(RESPUESTA_SESION, 201))
+    vi.stubGlobal('fetch', fetchMock)
+    montar()
+
+    await enviarCon('ana.perez', 'una-clave-larga', 'una-clave-larga')
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ nombre: 'ana.perez', contrasena: 'una-clave-larga' })
+  })
+
+  it('Given «no coinciden», When corrijo la repetición y el servidor rechaza el nombre, Then solo queda el error del servidor', async () => {
+    simularFetch(() => json({ campo: 'nombre', mensaje: 'Ese nombre de usuario ya existe' }, 409))
+    montar()
+    const usuario = userEvent.setup()
+    await enviarCon('ana.perez', 'una-clave-larga', 'otra')
+
+    await usuario.clear(screen.getByLabelText('Repetir contraseña'))
+    await usuario.type(screen.getByLabelText('Repetir contraseña'), 'una-clave-larga')
+    await usuario.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+
+    await waitFor(() => expect(screen.getAllByRole('alert').map((aviso) => aviso.textContent)).toEqual(['Ese nombre de usuario ya existe']))
   })
 })

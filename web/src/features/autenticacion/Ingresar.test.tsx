@@ -322,3 +322,11 @@ describe('pantalla de ingreso: campos vacíos', () => {
     await waitFor(() => expect(screen.getAllByRole('alert').map((aviso) => aviso.textContent)).toEqual(['Usuario o contraseña incorrectos']))
   })
 })
+
+describe('pantalla de ingreso: sin repetición de contraseña', () => {
+  it('Given la pantalla de ingreso, When se muestra, Then no pide repetir la contraseña', () => {
+    montar()
+
+    expect(screen.queryByLabelText('Repetir contraseña')).toBeNull()
+  })
+})
