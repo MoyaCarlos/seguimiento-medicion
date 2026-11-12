@@ -1,0 +1,34 @@
+# Cambio de contrato de la spec 043: POST /sprints/{id}/iniciar suma dos causas al 400.
+# Se aplica sobre specs/003-apertura-cierre-sprints/contracts/openapi.yaml
+# (responses de /sprints/{id}/iniciar). El esquema del cuerpo (Error, con `campo`
+# y `mensaje`) y los demás códigos no cambian.
+paths:
+  /sprints/{id}/iniciar:
+    post:
+      responses:
+        '400':
+          description: >-
+            Datos inválidos (sin cambios: Sprint Goal vacío, fecha de inicio
+            faltante, fin no posterior al inicio, Sprint no Pendiente) o, desde
+            la spec 043, fechas fuera del plazo del proyecto: inicio anterior a
+            la fecha de inicio del proyecto (campo fecha_inicio) o fin posterior
+            a la fecha de fin del proyecto (campo fecha_fin). Solo se valida
+            contra las fechas que el proyecto tenga; los bordes se aceptan. Si
+            las dos quedan afuera, se informa fecha_inicio. El Sprint sigue
+            Pendiente, sin Goal ni fechas.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                empiezaAntesDelProyecto:
+                  value:
+                    campo: fecha_inicio
+                    mensaje: el Sprint no puede empezar antes del inicio del proyecto (2026-10-31)
+                terminaDespuesDelProyecto:
+                  value:
+                    campo: fecha_fin
+                    mensaje: el Sprint no puede terminar después del fin del proyecto (2026-11-16)
+# Orden de errores: 404 Sprint inexistente, 409 otro Sprint Activo, 400 de las
+# validaciones propias del Sprint y, por último, 400 del plazo del proyecto.
+# Con HU-21 (#301) mergeada, su 403 se ubica según esa spec; esta regla sigue al final.

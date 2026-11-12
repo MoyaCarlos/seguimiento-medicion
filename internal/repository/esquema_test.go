@@ -61,6 +61,7 @@ var esquemaEsperado = map[string]tablaEsperada{
 			{nombre: "fecha_fin", tipo: "TEXT"},
 			{nombre: "horas_por_story_point", tipo: "REAL"},
 			{nombre: "creado_en", tipo: "TEXT", notNull: true},
+			{nombre: "fecha_cierre", tipo: "TEXT"},
 		},
 	},
 	// §4.2 usuarios
@@ -256,8 +257,8 @@ func TestEsquema_Estructura(t *testing.T) {
 		})
 	}
 
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7}) {
-		t.Errorf("se esperaban las versiones 1, 2, 3, 4, 5, 6 y 7 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8}) {
+		t.Errorf("se esperaban las versiones 1 a 8 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -309,8 +310,8 @@ func TestEsquema_MigracionDeAutenticacion_ConUsuariosPrevios(t *testing.T) {
 	if contrasenaHash.Valid {
 		t.Errorf("el usuario previo debe quedar sin contraseña (NULL), se obtuvo %q", contrasenaHash.String)
 	}
-	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7}) {
-		t.Errorf("se esperaban las versiones 1 a 7 registradas, se obtuvo %v", got)
+	if got := versionesAplicadas(t, db); !slices.Equal(got, []int{1, 2, 3, 4, 5, 6, 7, 8}) {
+		t.Errorf("se esperaban las versiones 1 a 8 registradas, se obtuvo %v", got)
 	}
 }
 
@@ -578,6 +579,11 @@ func TestEsquema_Filas(t *testing.T) {
 		{"proyecto fecha_fin basura", "INSERT INTO proyectos (nombre, fecha_fin, creado_en) VALUES ('x', 'basura', " + ahora + ")", violaCheck},
 		{"proyecto fecha_fin inexistente", "INSERT INTO proyectos (nombre, fecha_fin, creado_en) VALUES ('x', '2026-02-30', " + ahora + ")", violaCheck},
 		{"proyecto fecha_fin válida", "INSERT INTO proyectos (nombre, fecha_fin, creado_en) VALUES ('x', '2026-10-09', " + ahora + ")", aceptada},
+		{"proyecto fecha_cierre sin cero", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', '2026-10-9', " + ahora + ")", violaCheck},
+		{"proyecto fecha_cierre basura", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', 'basura', " + ahora + ")", violaCheck},
+		{"proyecto fecha_cierre inexistente", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', '2026-02-30', " + ahora + ")", violaCheck},
+		{"proyecto fecha_cierre válida", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', '2026-10-09', " + ahora + ")", aceptada},
+		{"proyecto fecha_cierre NULL", "INSERT INTO proyectos (nombre, fecha_cierre, creado_en) VALUES ('x', NULL, " + ahora + ")", aceptada},
 		{"Sprint fecha_inicio sin cero", insertarSprint + "(1, 'g', '2026-10-9', '2026-11-01', 'Finalizado')", violaCheck},
 		{"Sprint fecha_inicio basura", insertarSprint + "(1, 'g', 'basura', '2026-11-01', 'Finalizado')", violaCheck},
 		{"Sprint fecha_inicio inexistente", insertarSprint + "(1, 'g', '2026-02-30', '2026-03-01', 'Finalizado')", violaCheck},

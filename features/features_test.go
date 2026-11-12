@@ -15,7 +15,8 @@ func TestFeatures(t *testing.T) {
 			proyecto := InitializeScenarioProyecto(ctx, sesion) // HU-04
 			InitializeScenarioScrumMasterUnico(ctx, proyecto)   // #236
 			InitializeScenarioListado(ctx, sesion)              // HU-04 (listado)
-			InitializeScenarioPermisos(ctx, sesion)             // HU-21 (permisos por rol)
+			permisos := InitializeScenarioPermisos(ctx, sesion) // HU-21 (permisos por rol)
+			InitializeScenarioCierreProyecto(ctx, permisos)     // #300
 			InitializeScenarioEstado(ctx, sc)                   // HU-13
 			InitializeScenarioBacklog(ctx, sc)                  // HU-15
 			InitializeScenarioConsultarSprints(ctx)             // HU-05 (consulta)
@@ -32,6 +33,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioHistorial(ctx)                    // HU-12
 			InitializeScenarioAvance(ctx, sc)                   // HU-18
 			InitializeScenarioObtenerHistoria(ctx)              // Issue #222
+			InitializeScenarioSprintDentroDelProyecto(ctx, sc)  // #168
 		},
 		Options: &godog.Options{
 			Format:   "pretty",

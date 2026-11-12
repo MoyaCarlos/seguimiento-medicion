@@ -184,3 +184,173 @@ func TestProject_ConHorasPorStoryPoint_Invalidas(t *testing.T) {
 		})
 	}
 }
+
+// Spec 044 (#300): reglas del cierre del proyecto.
+func TestProject_Cerrar(t *testing.T) {
+	ahora := time.Date(2026, 11, 11, 15, 30, 0, 0, time.Local)
+	hoy := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+	cierrePrevio := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	sprint := func(e EstadoSprint) Sprint { return Sprint{Estado: e} }
+
+	t.Run("abierto sin Sprints se cierra con el día civil de hoy", func(t *testing.T) {
+		abierto := Project{ID: 1, Nombre: "Tienda"}
+
+		cerrado, err := abierto.Cerrar(ahora, nil)
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if cerrado.FechaCierre == nil || !cerrado.FechaCierre.Equal(hoy) {
+			t.Errorf("se esperaba la fecha de cierre %v, se obtuvo %v", hoy, cerrado.FechaCierre)
+		}
+		if cerrado.ID != 1 || cerrado.Nombre != "Tienda" {
+			t.Errorf("cerrar no debe cambiar los demás datos: %+v", cerrado)
+		}
+		if abierto.FechaCierre != nil {
+			t.Error("cerrar debe devolver una copia y no modificar el proyecto original")
+		}
+	})
+
+	t.Run("abierto con Sprints pendientes y finalizados se cierra", func(t *testing.T) {
+		cerrado, err := Project{}.Cerrar(ahora, []Sprint{sprint(SprintFinalizado), sprint(SprintPendiente)})
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if cerrado.FechaCierre == nil {
+			t.Error("se esperaba el proyecto cerrado")
+		}
+	})
+
+	t.Run("con un Sprint activo se rechaza", func(t *testing.T) {
+		_, err := Project{}.Cerrar(ahora, []Sprint{sprint(SprintFinalizado), sprint(SprintActivo)})
+
+		if err != ErrSprintActivoAlCerrarProyecto {
+			t.Fatalf("se esperaba ErrSprintActivoAlCerrarProyecto, se obtuvo %v", err)
+		}
+		if err.Error() != "Cerrá el Sprint activo antes de cerrar el proyecto" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+	})
+
+	t.Run("ya cerrado se rechaza y conserva la fecha original", func(t *testing.T) {
+		yaCerrado := Project{FechaCierre: &cierrePrevio}
+
+		_, err := yaCerrado.Cerrar(ahora, nil)
+
+		if err != ErrProyectoYaCerrado {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+		if err.Error() != "El proyecto ya está cerrado" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+		if !yaCerrado.FechaCierre.Equal(cierrePrevio) {
+			t.Errorf("la fecha de cierre original no debe cambiar, se obtuvo %v", *yaCerrado.FechaCierre)
+		}
+	})
+
+	t.Run("ya cerrado con un Sprint activo informa primero que ya está cerrado", func(t *testing.T) {
+		_, err := Project{FechaCierre: &cierrePrevio}.Cerrar(ahora, []Sprint{sprint(SprintActivo)})
+
+		if err != ErrProyectoYaCerrado {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+	})
+}
+
+// Spec 044 (#300): reabrir deja vacía la fecha de cierre.
+func TestProject_Reabrir(t *testing.T) {
+	cierre := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+
+	t.Run("cerrado vuelve a estar abierto", func(t *testing.T) {
+		cerrado := Project{ID: 1, Nombre: "Tienda", FechaCierre: &cierre}
+
+		abierto, err := cerrado.Reabrir()
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if abierto.FechaCierre != nil {
+			t.Errorf("se esperaba sin fecha de cierre, se obtuvo %v", *abierto.FechaCierre)
+		}
+		if abierto.ID != 1 || abierto.Nombre != "Tienda" {
+			t.Errorf("reabrir no debe cambiar los demás datos: %+v", abierto)
+		}
+		if cerrado.FechaCierre == nil {
+			t.Error("reabrir debe devolver una copia y no modificar el proyecto original")
+		}
+	})
+
+	t.Run("abierto se rechaza", func(t *testing.T) {
+		_, err := Project{}.Reabrir()
+
+		if err != ErrProyectoNoCerrado {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+		if err.Error() != "El proyecto no está cerrado" {
+			t.Errorf("mensaje inesperado: %q", err.Error())
+		}
+	})
+
+	t.Run("reabierto con la fecha de fin vencida vuelve a las reglas de HU-13", func(t *testing.T) {
+		inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+		fin := time.Date(2026, 6, 30, 0, 0, 0, 0, time.UTC)
+		cerrado := Project{FechaInicio: &inicio, FechaFin: &fin, FechaCierre: &cierre}
+
+		abierto, err := cerrado.Reabrir()
+
+		if err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		if got := CalcularEstadoProyecto(abierto, nil, civilLocal(2026, 11, 11)); got != ProyectoFinalizado {
+			t.Errorf("con la fecha de fin vencida se esperaba %q, se obtuvo %q", ProyectoFinalizado, got)
+		}
+		if got := CalcularEstadoProyecto(abierto, []Sprint{{Estado: SprintActivo}}, civilLocal(2026, 11, 11)); got != ProyectoEnCurso {
+			t.Errorf("ya no está cerrado: con un Sprint activo se esperaba %q, se obtuvo %q", ProyectoEnCurso, got)
+		}
+	})
+}
+
+func TestProject_AdmiteSprint(t *testing.T) {
+	inicioProyecto, finProyecto := dia(2026, 10, 31), dia(2026, 11, 16)
+	const (
+		mensajeInicio = "el Sprint no puede empezar antes del inicio del proyecto (2026-10-31)"
+		mensajeFin    = "el Sprint no puede terminar después del fin del proyecto (2026-11-16)"
+	)
+	casos := map[string]struct {
+		inicioProyecto, finProyecto *time.Time
+		inicio, fin                 time.Time
+		campo, mensaje              string
+	}{
+		"proyecto sin fechas":                  {nil, nil, dia(2026, 1, 1), dia(2027, 1, 1), "", ""},
+		"solo inicio: Sprint empieza antes":    {&inicioProyecto, nil, dia(2026, 10, 30), dia(2026, 11, 6), "fecha_inicio", mensajeInicio},
+		"solo inicio: Sprint empieza el mismo": {&inicioProyecto, nil, dia(2026, 10, 31), dia(2027, 3, 1), "", ""},
+		"solo inicio: Sprint empieza después":  {&inicioProyecto, nil, dia(2026, 12, 1), dia(2027, 3, 1), "", ""},
+		"solo fin: Sprint termina antes":       {nil, &finProyecto, dia(2026, 1, 1), dia(2026, 1, 15), "", ""},
+		"solo fin: Sprint termina el mismo":    {nil, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 16), "", ""},
+		"solo fin: Sprint termina después":     {nil, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 20), "fecha_fin", mensajeFin},
+		"ambas: Sprint dentro":                 {&inicioProyecto, &finProyecto, dia(2026, 11, 1), dia(2026, 11, 10), "", ""},
+		"ambas: Sprint en los dos bordes":      {&inicioProyecto, &finProyecto, dia(2026, 10, 31), dia(2026, 11, 16), "", ""},
+		"ambas: Sprint empieza antes":          {&inicioProyecto, &finProyecto, dia(2026, 10, 30), dia(2026, 11, 6), "fecha_inicio", mensajeInicio},
+		"ambas: Sprint termina después":        {&inicioProyecto, &finProyecto, dia(2026, 11, 10), dia(2026, 11, 17), "fecha_fin", mensajeFin},
+		"ambas: Sprint afuera por los dos":     {&inicioProyecto, &finProyecto, dia(2026, 10, 1), dia(2026, 12, 1), "fecha_inicio", mensajeInicio},
+	}
+	for nombre, caso := range casos {
+		t.Run(nombre, func(t *testing.T) {
+			proyecto := Project{Nombre: "Proyecto", FechaInicio: caso.inicioProyecto, FechaFin: caso.finProyecto}
+
+			err := proyecto.AdmiteSprint(caso.inicio, caso.fin)
+
+			if caso.campo == "" {
+				if err != nil {
+					t.Fatalf("no se esperaba error: %v", err)
+				}
+				return
+			}
+			verr, ok := err.(ValidationError)
+			if !ok || verr.Campo != caso.campo || verr.Mensaje != caso.mensaje {
+				t.Fatalf("se esperaba ValidationError{%q, %q}, se obtuvo %v", caso.campo, caso.mensaje, err)
+			}
+		})
+	}
+}
