@@ -30,7 +30,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
 
 **Goal**: la rama tiene la migración 008 de #300 antes de agregar la 009 ([research.md §8](research.md)).
 
-- [ ] T001 Verificar que el PR #311 (#300, migración `008_cierre_proyecto.sql`) está mergeado en `origin/main` (`git fetch` y `git ls-tree origin/main internal/repository/migraciones/`). **Si no lo está, frenar y avisar**: no se renumera ni se apila sobre `feature/300-cerrar-reabrir-proyecto` por cuenta propia.
+- [ ] T001 Confirmar con `git fetch` que `origin/main` tiene `internal/repository/migraciones/008_cierre_proyecto.sql` (PR #311, mergeado el 2026-11-12) y que no apareció otra `009_` en `main` mientras tanto. Si apareció, frenar y avisar: no se renumera por cuenta propia.
 - [ ] T002 Mergear `origin/main` en `feature/175-gestion-equipo` (`git merge origin/main`, merge commit) y correr `go test ./...` en verde.
 
 ---
@@ -76,7 +76,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
   - `ListarIntegrantesHistoricos(ctx, proyectoID int64) ([]domain.Member, error)` — activos y dados de baja, orden de alta.
   - `DarDeBajaIntegrante(ctx, proyectoID, usuarioID int64, fecha time.Time) error`.
   - Comentario de `ListarIntegrantes` y `ListarPorIntegrante`: «solo integrantes activos (`fecha_baja IS NULL`)».
-  - Agregar los dos métodos a todos los que implementan el puerto, devolviendo lo mínimo para compilar (`nil`/`errors.New("no implementado")` en los repos reales hasta su GREEN): `internal/repository/project_repository_en_memoria.go`, `internal/repository/sqlite_project.go`, `internal/service/fakes_test.go`, `internal/service/iniciar_sprint_test.go`, `internal/http/project_handler_test.go`. `go build ./... && go vet ./...` sin errores.
+  - Agregar los dos métodos a todos los que implementan el puerto, devolviendo lo mínimo para compilar (`nil`/`errors.New("no implementado")` en los repos reales hasta su GREEN). La lista sale de buscar `func (.*) ListarIntegrantes(` **después del merge de T002** (el #311 sumó `ProyectoCerrado`, `Cerrar` y `Reabrir` al puerto y pudo agregar stubs); antes del #311 eran `internal/repository/project_repository_en_memoria.go`, `internal/repository/sqlite_project.go`, `internal/service/fakes_test.go`, `internal/service/iniciar_sprint_test.go` e `internal/http/project_handler_test.go`. `go build ./... && go vet ./...` sin errores.
 - [ ] T014 COMMIT `Agregar ListarIntegrantesHistoricos y DarDeBajaIntegrante al puerto ProjectRepository`
 - [ ] T015 RED: lecturas de activos en el fake y en SQLite.
   - `internal/repository/project_repository_en_memoria_test.go` y `internal/repository/sqlite_project_test.go`: con un Product Builder marcado como dado de baja (en SQLite, `UPDATE integrantes SET fecha_baja = '2026-11-12'` directo; en memoria, con `DarDeBajaIntegrante` una vez implementado o un helper de test sobre el estado interno), verificar que `ListarIntegrantes` no lo devuelve y `ListarIntegrantesHistoricos` sí (con nombre y rol).
@@ -112,7 +112,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
   - Mismos cuatro casos que T020; la fila queda con `fecha_baja = '2026-11-12'` (formato `YYYY-MM-DD`) y no se borra.
   - Votos: con una historia del proyecto, una ronda **revelada** y otra **no revelada** donde votó el Product Builder (y votó también otra persona), después de la baja el voto de la ronda no revelada no existe y el de la revelada sigue igual; el voto de la otra persona sigue en las dos. Un voto del mismo usuario en una ronda no revelada de **otro** proyecto no se toca.
   - Atomicidad: la baja del Scrum Master no borra sus votos de rondas abiertas.
-  - Horas: un `registros_horas` del Product Builder sigue existiendo (la FK a `integrantes` no se rompe).
+  - Horas: un `registros_horas` del Product Builder sigue existiendo (la FK a `integrantes` no se rompe), y `ListarDatosSprintsFinalizados` del proyecto devuelve las mismas horas antes y después de la baja (SC-002).
   - Confirmar que FALLA.
 - [ ] T025 [US1] COMMIT `RED: agregar tests de DarDeBajaIntegrante en SQLite (falla)`
 - [ ] T026 [US1] GREEN: `DarDeBajaIntegrante` en `internal/repository/sqlite_project.go`, en una transacción ([research.md §4](research.md)):
@@ -131,7 +131,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
   - Usuario que no integra / ya dado de baja → `ErrIntegranteNoEncontrado` (US4).
   - Scrum Master se quita a sí mismo → `ErrScrumMasterNoSeQuita` y el equipo no cambia (US2).
   - Orden de errores (FR-013): con proyecto inexistente **y** actor no integrante, gana 404; con actor Product Builder **y** objetivo inexistente, gana 403.
-  - Si el repositorio tiene la guardia de proyecto cerrado (#300 mergeado): proyecto cerrado → `ErrProyectoCerrado`, después de los 403 y antes del 404 de integrante.
+  - Proyecto cerrado (guardia `exigirProyectoAbierto` de #300, que llama `exigirScrumMaster`) → `ErrProyectoCerrado`, después de los 403 y antes del 404 de integrante.
   - Confirmar que FALLA (no compila).
 - [ ] T029 [US1] COMMIT `RED: agregar tests de QuitarIntegrante (falla)`
 - [ ] T030 [US1] GREEN: nuevo `internal/service/quitar_integrante.go`:
@@ -142,10 +142,12 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
 
 ### Votación e historial con los dados de baja
 
-- [ ] T032 [P] [US1] RED: en `internal/service/consultar_historial_rondas_test.go`, una ronda revelada con el voto de un Product Builder que después se dio de baja: el historial lo sigue mostrando con su nombre y rol. En `internal/service/consultar_votacion_test.go`: ronda revelada con su voto y baja posterior → la vista lo incluye (con valor) y el promedio coincide; ronda abierta donde no votó → la vista no lo lista. En `internal/service/revelar_votacion_test.go`: con un integrante dado de baja que no votó, la ronda se revela. Confirmar que FALLA lo que corresponda (historial y vista; revelar ya pasa por el filtro de T017 — si pasa al escribirlo, dejarlo como test de regresión en el mismo commit RED y anotarlo).
+- [ ] T032 [P] [US1] RED: en `internal/service/consultar_historial_rondas_test.go`, una ronda revelada con el voto de un Product Builder que después se dio de baja: el historial lo sigue mostrando con su nombre y rol. En `internal/service/consultar_votacion_test.go`: ronda revelada con su voto y baja posterior → la vista lo incluye (con valor) y el promedio coincide; ronda abierta donde no votó → la vista no lo lista. Solo los casos de historial y de vista: correr y confirmar que FALLAN.
+- [ ] T032b [US1] Test de regresión en `internal/service/revelar_votacion_test.go`: con un integrante dado de baja que no votó, la ronda se revela (ya pasa por el filtro de T017, así que no es un RED). COMMIT `test: revelar una ronda sin esperar a un integrante dado de baja (Refs #175)`.
 - [ ] T033 [US1] COMMIT `RED: agregar tests de votación e historial con integrantes dados de baja (falla)`
 - [ ] T034 [US1] GREEN: `internal/service/consultar_historial_rondas.go` usa `ListarIntegrantesHistoricos` para resolver nombres; `internal/service/consultar_votacion.go` lista a los activos más quien tenga voto en la ronda actual (nombre y rol desde `ListarIntegrantesHistoricos`), ordenados por id como hoy. `go test ./...` en verde.
 - [ ] T035 [US1] COMMIT `GREEN: conservar a los dados de baja en el historial y la vista de votación, test en verde`
+- [ ] T035b [US1] Test de regresión en `internal/service/generar_reporte_test.go`: con un Product Builder dado de baja que imputó horas en un Sprint finalizado, `EjecutarProyecto` no lo incluye en `Integrantes` y las horas y métricas del reporte son las mismas que antes de la baja (spec US1 esc. 4, FR-001, SC-002). Ya pasa por el filtro de T017. COMMIT `test: el reporte excluye a los integrantes dados de baja sin cambiar sus horas (Refs #175)`.
 
 ### HTTP `DELETE /projects/{id}/members/{usuario_id}`
 
@@ -178,7 +180,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
 - [ ] T042 [US3] COMMIT `RED: agregar tests de reactivación de integrantes (falla)`
 - [ ] T043 [US3] GREEN: `AgregarIntegrante` en `internal/repository/sqlite_project.go` pasa a `INSERT INTO integrantes (...) VALUES (...) ON CONFLICT (proyecto_id, usuario_id) DO UPDATE SET fecha_baja = NULL, rol = excluded.rol WHERE integrantes.fecha_baja IS NOT NULL`; `RowsAffected` 0 → `ErrMiembroDuplicado`; devolver la membresía con el `creado_en` guardado (leerlo si se reactivó). Mantener la traducción de `SQLITE_CONSTRAINT_UNIQUE` → `ErrScrumMasterYaExiste`. Mismo comportamiento en `project_repository_en_memoria.go`. `go test ./...` en verde.
 - [ ] T044 [US3] COMMIT `GREEN: reactivar al integrante dado de baja en AgregarIntegrante, test en verde`
-- [ ] T045 [US3] RED: en `internal/service/asignar_integrante_test.go`: (a) alta de un dado de baja sin rol → reactivado como Product Builder; (b) dado de baja con `rol: scrum_master` → `ErrScrumMasterYaExiste` (409) y no se reactiva; (c) el Scrum Master agregándose de nuevo como `product_builder` y como `scrum_master` → error de integrante duplicado (400) y el equipo no cambia (US2, Clarification Q2). Confirmar que FALLA lo que corresponda; los casos que ya pasan por el GREEN de T043 quedan como regresión en el mismo commit y se anota.
+- [ ] T045 [US3] RED: en `internal/service/asignar_integrante_test.go`: (a) alta de un dado de baja sin rol → reactivado como Product Builder; (b) dado de baja con `rol: scrum_master` → `ErrScrumMasterYaExiste` (409) y no se reactiva; (c) el Scrum Master agregándose de nuevo como `product_builder` y como `scrum_master` → error de integrante duplicado (400) y el equipo no cambia (US2, Clarification Q2). Escribir los tres casos, correrlos y separarlos: los que fallan van en el commit RED (T046); los que ya pasan por el GREEN de T043 van en un commit aparte `test: casos de AsignarIntegrante con integrantes dados de baja (Refs #175)`. Si ninguno falla, no hay RED/GREEN: solo ese commit `test:`, y se saltean T046–T048.
 - [ ] T046 [US3] COMMIT `RED: agregar tests de AsignarIntegrante con integrantes dados de baja (falla)`
 - [ ] T047 [US3] GREEN: ajustar `internal/service/asignar_integrante.go` solo si T045 lo pide (p. ej. `verificarScrumMasterLibre` con un dado de baja). `go test ./...` en verde. Si no hace falta código, saltear este GREEN y su commit y anotarlo en el PR.
 - [ ] T048 [US3] COMMIT `GREEN: <ajuste> en AsignarIntegrante, test en verde` (solo si hubo T047)
@@ -191,7 +193,7 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
 
 - [ ] T049 Completar `MODELO-DE-DATOS.md` §5 (dónde vive cada regla): «integrante = activo» (consultas de `ListarIntegrantes`/`ListarPorIntegrante`); «al Scrum Master no se lo quita» (`Member.ValidarBaja` + `UPDATE` condicional, 409); «una baja no se aplica dos veces» (`UPDATE` condicional, 404); «la reactivación reutiliza la fila» (`ON CONFLICT ... WHERE fecha_baja IS NOT NULL`); «al dar de baja se descartan sus votos no revelados» (misma transacción). COMMIT `docs: reglas de la baja de integrantes en MODELO-DE-DATOS.md §5 (Refs #175)`.
 - [ ] T050 Escribir `features/gestion_equipo.feature` (Gherkin en español, `@HU-16`, Característica con el Como/Quiero/Para de la spec, Antecedentes con «Dado que inicié sesión como …» y un proyecto con Scrum Master y un Product Builder) con un escenario por criterio de aceptación de la spec, sin inventar casos:
-  - Escenario 2 (normal): quitar a un integrante que votó una ronda revelada e imputó horas → no figura en el equipo, una ronda nueva se revela sin su voto, el historial y las horas lo siguen mostrando.
+  - Escenario 2 (normal): quitar a un integrante que votó una ronda revelada e imputó horas → no figura en el equipo, una ronda nueva se revela sin su voto, el historial y las horas lo siguen mostrando, y las métricas del proyecto son las mismas antes y después de la baja (reutilizar «Cuando consulto las métricas del proyecto» / «Entonces el Sprint "S1" informa estas métricas:» de `calculo_metricas.feature`; SC-002).
   - Escenario 2 (alternativo): el integrante quitado intenta abrir el proyecto → 403.
   - Edge case (límite): baja con una ronda abierta donde ya votó → al revelar, su voto no está.
   - Escenario 3 (alternativo): reactivarlo → figura una sola vez como Product Builder.
