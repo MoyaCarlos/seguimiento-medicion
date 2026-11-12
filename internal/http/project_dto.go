@@ -27,8 +27,17 @@ type proyectoResponse struct {
 
 	HorasPorStoryPoint *float64 `json:"horas_por_story_point"`
 
+	// FechaCierre es null mientras el proyecto está abierto (#300).
+	FechaCierre *string `json:"fecha_cierre"`
+
 	// Rol es el de quien consulta en el proyecto (HU-21); vacío si no aplica.
 	Rol string `json:"rol,omitempty"`
+}
+
+// proyectoConEstadoResponse es la respuesta de cerrar y reabrir (#300).
+type proyectoConEstadoResponse struct {
+	proyectoResponse
+	Estado string `json:"estado"`
 }
 
 // horasPorStoryPointEnviadas distingue un campo ausente de uno en null. El valor
@@ -96,6 +105,7 @@ func aProyectoResponse(p domain.Project) proyectoResponse {
 		CreadoEn:    p.CreadoEn.Format(time.RFC3339),
 
 		HorasPorStoryPoint: p.HorasPorStoryPoint,
+		FechaCierre:        formatearFecha(p.FechaCierre),
 	}
 }
 

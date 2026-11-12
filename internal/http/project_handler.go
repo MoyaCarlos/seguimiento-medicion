@@ -20,6 +20,7 @@ type ProjectHandler struct {
 	asignar           *service.AsignarIntegrante
 	listarIntegrantes *service.ListarIntegrantes
 	estado            *service.ObtenerEstadoProyecto
+	cerrar            *service.CerrarProyecto
 }
 
 func NewProjectHandler(
@@ -30,6 +31,7 @@ func NewProjectHandler(
 	asignar *service.AsignarIntegrante,
 	listarIntegrantes *service.ListarIntegrantes,
 	estado *service.ObtenerEstadoProyecto,
+	cerrar *service.CerrarProyecto,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		crear:             crear,
@@ -39,7 +41,29 @@ func NewProjectHandler(
 		asignar:           asignar,
 		listarIntegrantes: listarIntegrantes,
 		estado:            estado,
+		cerrar:            cerrar,
 	}
+}
+
+// Cerrar atiende POST /projects/{id}/cerrar (#300): responde el proyecto
+// cerrado, que siempre está «Finalizado».
+func (h *ProjectHandler) Cerrar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	proyecto, err := h.cerrar.Ejecutar(r.Context(), id, actor)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	estado := domain.CalcularEstadoProyecto(proyecto, nil, time.Now())
+	escribirJSON(w, nethttp.StatusOK, proyectoConEstadoResponse{proyectoResponse: aProyectoResponse(proyecto), Estado: string(estado)})
 }
 
 // Listar atiende GET /projects: los proyectos de la sesión, con su rol (HU-21).
