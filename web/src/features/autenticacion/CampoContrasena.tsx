@@ -7,9 +7,10 @@ type Props = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> & {
   label: string
   error?: string
   ayuda?: string
+  etiquetaVer?: string
 }
 
-export function CampoContrasena(props: Props) {
+export function CampoContrasena({ etiquetaVer = 'Mostrar contraseña', ...props }: Props) {
   const [visible, setVisible] = useState(false)
 
   return (
@@ -20,7 +21,7 @@ export function CampoContrasena(props: Props) {
         <button
           type="button"
           className="campo-contrasena__ver"
-          aria-label="Mostrar contraseña"
+          aria-label={etiquetaVer}
           aria-pressed={visible}
           onClick={() => setVisible((actual) => !actual)}
         >

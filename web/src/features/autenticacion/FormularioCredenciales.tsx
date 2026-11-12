@@ -8,7 +8,7 @@ import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { CampoContrasena } from './CampoContrasena'
 import './estilos.css'
 
-type Campo = 'nombre' | 'contrasena'
+type Campo = 'nombre' | 'contrasena' | 'repeticion'
 
 type Props = {
   titulo: string
@@ -22,7 +22,7 @@ type Props = {
   enviar(nombre: string, contrasena: string): Promise<void>
 }
 
-const MENSAJES_VACIO: Record<'ingreso' | 'registro', Record<Campo, string>> = {
+const MENSAJES_VACIO: Record<'ingreso' | 'registro', Record<'nombre' | 'contrasena', string>> = {
   ingreso: { nombre: 'Ingresá tu nombre de usuario.', contrasena: 'Ingresá tu contraseña.' },
   registro: {
     nombre: 'el nombre de usuario debe tener entre 3 y 30 caracteres',
@@ -55,6 +55,7 @@ export function FormularioCredenciales({
 }: Props) {
   const [nombre, setNombre] = useState('')
   const [contrasena, setContrasena] = useState('')
+  const [repeticion, setRepeticion] = useState('')
   const [errores, setErrores] = useState<Partial<Record<Campo, string>>>({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -72,11 +73,13 @@ export function FormularioCredenciales({
     evento.preventDefault()
     setErrorGeneral('')
     const mensajes = MENSAJES_VACIO[contrasenaNueva ? 'registro' : 'ingreso']
-    const vacios: Partial<Record<Campo, string>> = {}
-    if (!nombre.trim()) vacios.nombre = mensajes.nombre
-    if (!contrasena) vacios.contrasena = mensajes.contrasena
-    setErrores(vacios)
-    if (Object.keys(vacios).length > 0) return
+    const invalidos: Partial<Record<Campo, string>> = {}
+    if (!nombre.trim()) invalidos.nombre = mensajes.nombre
+    if (!contrasena) invalidos.contrasena = mensajes.contrasena
+    if (contrasenaNueva && !repeticion) invalidos.repeticion = 'Repetí la contraseña.'
+    else if (contrasenaNueva && repeticion !== contrasena) invalidos.repeticion = 'Las contraseñas no coinciden.'
+    setErrores(invalidos)
+    if (Object.keys(invalidos).length > 0) return
     setEnviando(true)
     try {
       await enviar(nombre, contrasena)
@@ -116,6 +119,17 @@ export function FormularioCredenciales({
           onChange={(evento) => setContrasena(evento.target.value)}
           error={errores.contrasena}
         />
+        {contrasenaNueva && (
+          <CampoContrasena
+            name="repeticion"
+            label="Repetir contraseña"
+            etiquetaVer="Mostrar la repetición de la contraseña"
+            autoComplete="new-password"
+            value={repeticion}
+            onChange={(evento) => setRepeticion(evento.target.value)}
+            error={errores.repeticion}
+          />
+        )}
 
         {enviando && <LoadingIndicator />}
 
