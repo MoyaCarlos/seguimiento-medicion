@@ -25,8 +25,8 @@ responder «no encontrado». Decisión D15 confirmada por el equipo: columna anu
 
 ### Session 2026-11-12
 
-- Q: Si se quita a un integrante que ya votó en una ronda todavía abierta, ¿su voto cuenta en esa ronda? → A: No. El voto queda guardado, pero no cuenta en el promedio ni en las diferencias de esa ronda ni se muestra en ella; las rondas ya reveladas no cambian.
-- Q: ¿Cómo se cubre «cambiarle el rol» al Scrum Master (Escenario 4) si no hay una acción de cambio de rol? → A: No se agrega una acción nueva (YAGNI). Se prueba con los caminos existentes (agregar de nuevo al Scrum Master con cualquier rol responde 409 sin cambiar el equipo) y se declara que no hay cambio de rol.
+- Q: Si se quita a un integrante que ya votó en una ronda todavía abierta, ¿su voto cuenta en esa ronda? → A: No. Al dar de baja se descartan sus votos de las rondas no reveladas (eran secretos y nadie los vio), así no cuentan en el promedio ni en las diferencias; las rondas ya reveladas no cambian. Se eligió descartar en vez de marcar el voto porque el resultado de una ronda se recalcula siempre desde los votos guardados y marcarlo exigiría otro cambio de esquema (decidido en `/speckit.plan`, 2026-11-12).
+- Q: ¿Cómo se cubre «cambiarle el rol» al Scrum Master (Escenario 4) si no hay una acción de cambio de rol? → A: No se agrega una acción nueva (YAGNI). Se prueba con los caminos existentes (agregar de nuevo al Scrum Master con cualquier rol responde 400 «el integrante ya pertenece al proyecto» sin cambiar el equipo; corregido en `/speckit.plan`: la regla de duplicado existente responde 400, no 409) y se declara que no hay cambio de rol.
 
 ## Objetivo
 
@@ -53,8 +53,9 @@ aportó, para poder mantener el equipo al día sin perder el historial del proye
 - Reactivación exitosa: el integrante vuelve al equipo como Product Builder; la respuesta es
   la misma que la de un alta.
 - Rechazos: 404 «no encontrado» (proyecto o integrante inexistentes), 403 (no Scrum
-  Master, no integrante; HU-21), 409 con un mensaje claro (quitar o cambiar de rol al
-  Scrum Master).
+  Master, no integrante; HU-21), 409 con un mensaje claro (quitar al Scrum Master), 400
+  «el integrante ya pertenece al proyecto» (agregar de nuevo a un integrante activo,
+  incluido el Scrum Master con otro rol).
 
 ## Fuera de alcance
 
@@ -104,8 +105,9 @@ historial de rondas, las horas y las métricas siguen mostrando sus aportes con 
 **Why this priority**: sin esta regla el proyecto puede quedar sin Scrum Master y nadie
 podría gestionarlo (HU-21).
 
-**Independent Test**: el Scrum Master intenta quitarse a sí mismo y cambiar su rol; ambos
-pedidos se rechazan con 409 y el equipo queda igual.
+**Independent Test**: el Scrum Master intenta quitarse a sí mismo (409) y agregarse de nuevo
+como Product Builder (400, integrante duplicado); los dos pedidos se rechazan con un mensaje
+claro y el equipo queda igual.
 
 **Acceptance Scenarios**:
 
@@ -132,7 +134,8 @@ siguen a su nombre.
 2. **Given** que reactivé a un integrante, **When** consulta «Mis proyectos», **Then** el
    proyecto vuelve a aparecer con el rol Product Builder.
 3. **Given** un integrante activo, **When** intento agregarlo otra vez, **Then** se aplica la
-   regla de integrante duplicado que ya existe (409).
+   regla de integrante duplicado que ya existe (400 «el integrante ya pertenece al
+   proyecto»).
 
 ---
 
@@ -175,9 +178,10 @@ se verifica que siga en verde.
 ### Edge Cases
 
 - Ronda de votación abierta al momento de la baja: si el integrante no votó, la ronda se
-  revela sin esperarlo; si ya votó, su voto queda guardado pero no cuenta en el resultado de
-  esa ronda (promedio y diferencias) ni se muestra en ella (FR-018). Las rondas ya
-  reveladas antes de la baja no cambian.
+  revela sin esperarlo; si ya votó, su voto se descarta y no cuenta en el resultado de esa
+  ronda (promedio y diferencias) ni se muestra en ella (FR-018). Las rondas ya reveladas
+  antes de la baja no cambian. Si se lo reactiva con la ronda todavía abierta, puede volver
+  a votar.
 - Baja y reactivación el mismo día: se permite; la fila vuelve a quedar activa.
 - Proyecto cerrado (#300): quitar o reactivar es una escritura y responde 409 «El proyecto
   está cerrado», por la guardia de proyecto cerrado que ya llaman los chequeos de Scrum
@@ -218,20 +222,21 @@ se verifica que siga en verde.
 
 - **FR-008**: WHILE un integrante está dado de baja, el sistema SHALL responderle 403 «No sos
   integrante de este proyecto» en toda ruta que exige pertenencia (HU-21).
-- **FR-018**: WHILE una ronda de votación no fue revelada, el sistema SHALL calcular su
-  resultado (promedio y diferencias) y mostrar sus votos solo de los integrantes activos al
-  momento de revelarla; el voto de quien fue dado de baja antes queda guardado sin contar.
+- **FR-018**: WHEN el Scrum Master quita a un integrante, el sistema SHALL descartar, en la
+  misma operación, los votos de esa persona en las rondas del proyecto que todavía no se
+  revelaron (votos secretos que nadie vio); los votos de rondas ya reveladas SHALL
+  conservarse sin cambios.
 
 **No deseadas**
 
 - **FR-009**: IF se intenta quitar al Scrum Master del proyecto, THEN el sistema SHALL
   responder 409 con un mensaje claro (por ejemplo, «No se puede quitar al Scrum Master del
   proyecto») y no modificar el equipo.
-- **FR-010**: IF se intenta cambiar el rol del Scrum Master, THEN el sistema SHALL responder
-  409 con un mensaje claro y no modificar el equipo. No se agrega una acción para cambiar
-  roles: el escenario se cubre con los caminos que existen (agregar de nuevo al Scrum Master,
-  con cualquier rol, responde 409 y el equipo no cambia), y se declara que el sistema no
-  ofrece cambio de rol.
+- **FR-010**: IF se intenta cambiar el rol del Scrum Master, THEN el sistema SHALL rechazarlo
+  con un mensaje claro y no modificar el equipo. No se agrega una acción para cambiar roles:
+  el escenario se cubre con los caminos que existen (agregar de nuevo al Scrum Master, con
+  cualquier rol, responde 400 «el integrante ya pertenece al proyecto» y el equipo no
+  cambia), y se declara que el sistema no ofrece cambio de rol.
 - **FR-011**: IF el proyecto no existe, o el usuario no es integrante activo del proyecto,
   THEN el sistema SHALL responder 404 «no encontrado» sin modificar nada.
 - **FR-012**: IF quien pide la baja no es el Scrum Master del proyecto, THEN el sistema SHALL
