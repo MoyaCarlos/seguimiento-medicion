@@ -100,9 +100,9 @@ internal/service/
 ├── cerrar_proyecto.go               # nuevo (+ _test)
 ├── reabrir_proyecto.go              # nuevo (+ _test)
 ├── consultar_votacion.go            # usa verificarIntegrante (lectura)
-├── votar.go, imputar_horas.go       # pasan a exigirIntegrante
-├── proyecto_cerrado_test.go         # nuevo: cada servicio de escritura devuelve ErrProyectoCerrado
-└── fakes_test.go                    # fakes con ProyectoCerrado
+├── votar.go, imputar_horas.go       # pasan a exigirIntegrante (+ casos en votar_test, imputar_horas_test)
+├── integrantes_test.go              # + guardia: ErrProyectoCerrado en exigir*, no en verificar*
+└── fakes_test.go                    # fakes con ProyectoCerrado, Cerrar y Reabrir
 internal/http/
 ├── project_dto.go                   # proyectoResponse + fecha_cierre; respuesta con estado
 ├── project_handler.go               # handlers Cerrar y Reabrir (+ _test); NewProjectHandler recibe los 2 servicios
