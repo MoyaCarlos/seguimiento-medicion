@@ -3,6 +3,7 @@ package domain
 import (
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -37,11 +38,40 @@ const (
 // (1/2) y notación exponencial (1e1), que se rechazan a propósito (R2).
 var formatoHoras = regexp.MustCompile(`^-?\d+(\.\d+)?$`)
 
-// MinutosDesdeHoras convierte una cantidad de horas en texto decimal a minutos
-// enteros. Usa big.Rat para que la conversión sea exacta (0,1 h = 6 min).
+// formatoHorasMinutos es el formato h:mm: horas sin signo y minutos de dos
+// dígitos (issue #228).
+var formatoHorasMinutos = regexp.MustCompile(`^(\d+):(\d{2})$`)
+
+// minutosDesdeHorasMinutos convierte "h:mm" a minutos. Aplica las mismas
+// reglas de cero y tope que el decimal, y exige mm entre 00 y 59.
+func minutosDesdeHorasMinutos(partes []string) (int, error) {
+	h, errH := strconv.Atoi(partes[1])
+	m, _ := strconv.Atoi(partes[2])
+	if errH != nil || h > 24 {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas no pueden superar 24 por carga"}
+	}
+	if m > 59 {
+		return 0, ValidationError{Campo: "horas", Mensaje: "los minutos deben estar entre 00 y 59"}
+	}
+	minutos := h*60 + m
+	if minutos == 0 {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben ser mayores que cero"}
+	}
+	if minutos > minutosMaximosPorCarga {
+		return 0, ValidationError{Campo: "horas", Mensaje: "las horas no pueden superar 24 por carga"}
+	}
+	return minutos, nil
+}
+
+// MinutosDesdeHoras convierte una cantidad de horas a minutos enteros. Acepta
+// decimal ("1.5") o h:mm ("1:30"). El decimal usa big.Rat para que la
+// conversión sea exacta (0,1 h = 6 min).
 func MinutosDesdeHoras(horas string) (int, error) {
 	if horas == "" {
 		return 0, ValidationError{Campo: "horas", Mensaje: "las horas son obligatorias"}
+	}
+	if partes := formatoHorasMinutos.FindStringSubmatch(horas); partes != nil {
+		return minutosDesdeHorasMinutos(partes)
 	}
 	if !formatoHoras.MatchString(horas) {
 		return 0, ValidationError{Campo: "horas", Mensaje: "las horas deben ser un número"}
