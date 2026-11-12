@@ -162,3 +162,72 @@ func TestProjectHandler_ConsultasIncluyenFechaDeCierre(t *testing.T) {
 		t.Errorf("cerrado: se esperaba fecha_cierre 2026-11-11 en Mis proyectos, se obtuvo %v", lista)
 	}
 }
+
+func reabrirProyectoHTTP(handler *ProjectHandler, idStr string, actor domain.User) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/projects/"+idStr+"/reabrir", nil)
+	req.SetPathValue("id", idStr)
+	handler.Reabrir(rec, conSesionDe(req, actor))
+	return rec
+}
+
+func TestProjectHandler_Reabrir_ElScrumMasterReabre(t *testing.T) {
+	handler, proyectos := nuevoProjectHandlerDePrueba()
+	idStr := proyectoDeAnaConBuilder(t, handler, proyectos)
+	cerrarProyectoHTTP(handler, idStr, anaDePrueba)
+
+	rec := reabrirProyectoHTTP(handler, idStr, anaDePrueba)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if valor, ok := resp["fecha_cierre"]; !ok || valor != nil {
+		t.Errorf("se esperaba \"fecha_cierre\": null, se obtuvo %v (presente: %v)", valor, ok)
+	}
+	if resp["estado"] != string(domain.ProyectoPlanificado) {
+		t.Errorf("sin fechas ni Sprints se esperaba el estado %q, se obtuvo %v", domain.ProyectoPlanificado, resp["estado"])
+	}
+}
+
+func TestProjectHandler_Reabrir_Errores(t *testing.T) {
+	casos := []struct {
+		nombre  string
+		cerrar  bool
+		id      string
+		actor   domain.User
+		codigo  int
+		mensaje string
+	}{
+		{"abierto", false, "", anaDePrueba, http.StatusConflict, "El proyecto no está cerrado"},
+		{"Product Builder", true, "", domain.User{ID: productBuilderHTTP}, http.StatusForbidden, "Solo el Scrum Master puede realizar esta acción"},
+		{"proyecto inexistente", true, "999", anaDePrueba, http.StatusNotFound, "proyecto no encontrado"},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			handler, proyectos := nuevoProjectHandlerDePrueba()
+			idStr := proyectoDeAnaConBuilder(t, handler, proyectos)
+			if c.cerrar {
+				cerrarProyectoHTTP(handler, idStr, anaDePrueba)
+			}
+			objetivo := idStr
+			if c.id != "" {
+				objetivo = c.id
+			}
+
+			rec := reabrirProyectoHTTP(handler, objetivo, c.actor)
+
+			if rec.Code != c.codigo {
+				t.Fatalf("se esperaba %d, se obtuvo %d (%s)", c.codigo, rec.Code, rec.Body.String())
+			}
+			var resp errorResponse
+			_ = json.Unmarshal(rec.Body.Bytes(), &resp)
+			if resp.Mensaje != c.mensaje {
+				t.Errorf("se esperaba el mensaje %q, se obtuvo %q", c.mensaje, resp.Mensaje)
+			}
+		})
+	}
+}

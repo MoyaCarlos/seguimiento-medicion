@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 )
@@ -142,5 +143,41 @@ func TestProyectoCerrado_LasLecturasSiguen(t *testing.T) {
 	}
 	if rec := c.esperar("ana", http.MethodGet, "/projects/1/backlog", "", http.StatusOK); !strings.Contains(rec.Body.String(), "Carrito") {
 		t.Errorf("el backlog debe seguir legible: %s", rec.Body.String())
+	}
+}
+
+func TestProyectoCerrado_AlReabrirVuelveAAceptarEscrituras(t *testing.T) {
+	c := proyectoConDatosDeAna(t)
+	c.esperar("ana", http.MethodPost, "/projects/1/cerrar", ``, http.StatusOK)
+	c.esperar("ana", http.MethodPost, "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`, http.StatusConflict)
+
+	c.esperar("ana", http.MethodPost, "/projects/1/reabrir", ``, http.StatusOK)
+
+	c.esperar("ana", http.MethodPost, "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`, http.StatusCreated)
+}
+
+// SC-003: tras cerrar y reabrir, el estado es el mismo que antes del cierre.
+func TestProyectoCerrado_ReabrirDevuelveElEstadoPrevio(t *testing.T) {
+	c := nuevoClienteDePrueba(t)
+	c.registrar("ana")
+	hoy := time.Now()
+	inicio, fin := hoy.AddDate(0, 0, -7).Format(time.DateOnly), hoy.AddDate(0, 0, 30).Format(time.DateOnly)
+	c.esperar("ana", http.MethodPost, "/projects", `{"nombre":"Tienda","fecha_inicio":"`+inicio+`","fecha_fin":"`+fin+`"}`, http.StatusCreated)
+	estado := func() string {
+		return strings.TrimSpace(c.esperar("ana", http.MethodGet, "/projects/1/status", "", http.StatusOK).Body.String())
+	}
+	antes := estado()
+	if antes != `{"estado":"En curso"}` {
+		t.Fatalf("el proyecto debía empezar En curso, se obtuvo %s", antes)
+	}
+
+	c.esperar("ana", http.MethodPost, "/projects/1/cerrar", ``, http.StatusOK)
+	if cerrado := estado(); cerrado != `{"estado":"Finalizado"}` {
+		t.Fatalf("cerrado debía estar Finalizado, se obtuvo %s", cerrado)
+	}
+	c.esperar("ana", http.MethodPost, "/projects/1/reabrir", ``, http.StatusOK)
+
+	if despues := estado(); despues != antes {
+		t.Errorf("tras reabrir se esperaba %s, se obtuvo %s", antes, despues)
 	}
 }

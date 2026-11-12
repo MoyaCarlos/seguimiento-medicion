@@ -182,7 +182,8 @@ func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepos
 	listarProyectos := service.NewListarProyectos(proyectos)
 	estado := service.NewObtenerEstadoProyecto(proyectos, sprints)
 	cerrar := service.NewCerrarProyecto(proyectos, sprints, relojDeCierreHTTP)
-	return NewProjectHandler(crear, obtener, listarProyectos, editar, asignar, listarIntegrantes, estado, cerrar), proyectos, sprints
+	reabrir := service.NewReabrirProyecto(proyectos)
+	return NewProjectHandler(crear, obtener, listarProyectos, editar, asignar, listarIntegrantes, estado, cerrar, reabrir), proyectos, sprints
 }
 
 // crearProyectoViaHTTP usa el propio handler (y sus repos) para preparar un proyecto.
