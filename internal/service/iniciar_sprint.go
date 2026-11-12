@@ -17,13 +17,15 @@ type IniciarSprintInput struct {
 }
 
 // IniciarSprint pasa un Sprint Pendiente a Activo, garantizando que el
-// proyecto no tenga otro Sprint Activo.
+// proyecto no tenga otro Sprint Activo y que las fechas del Sprint caigan
+// dentro del plazo del proyecto (#168).
 type IniciarSprint struct {
-	sprints repository.SprintRepository
+	sprints   repository.SprintRepository
+	proyectos repository.ProjectRepository
 }
 
-func NewIniciarSprint(sprints repository.SprintRepository) *IniciarSprint {
-	return &IniciarSprint{sprints: sprints}
+func NewIniciarSprint(sprints repository.SprintRepository, proyectos repository.ProjectRepository) *IniciarSprint {
+	return &IniciarSprint{sprints: sprints, proyectos: proyectos}
 }
 
 func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) (domain.Sprint, error) {
@@ -46,6 +48,13 @@ func (s *IniciarSprint) Ejecutar(ctx context.Context, input IniciarSprintInput) 
 	}
 
 	if err := sprint.Iniciar(input.SprintGoal, input.FechaInicio, input.FechaFin); err != nil {
+		return domain.Sprint{}, err
+	}
+	proyecto, err := s.proyectos.ObtenerPorID(ctx, sprint.ProyectoID)
+	if err != nil {
+		return domain.Sprint{}, err
+	}
+	if err := proyecto.AdmiteSprint(sprint.FechaInicio, sprint.FechaFin); err != nil {
 		return domain.Sprint{}, err
 	}
 	if err := s.sprints.Actualizar(ctx, sprint); err != nil {

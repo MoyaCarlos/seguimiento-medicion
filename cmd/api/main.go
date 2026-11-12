@@ -54,7 +54,7 @@ func main() {
 
 	sprintHandler := apihttp.NewSprintHandler(
 		service.NewCrearSprint(proyectos, sprintRepo),
-		service.NewIniciarSprint(sprintRepo),
+		service.NewIniciarSprint(sprintRepo, proyectos),
 		service.NewCerrarSprint(sprintRepo, backlogRepo),
 		service.NewConsultarSprints(proyectos, sprintRepo),
 		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
