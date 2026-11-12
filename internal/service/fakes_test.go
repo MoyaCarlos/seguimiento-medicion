@@ -19,6 +19,17 @@ type fakeProjectRepository struct {
 	errAgregar    error
 	creates       int
 	updates       int
+	// cerrados marca proyectos cerrados sin necesidad de guardarlos (#300).
+	cerrados map[int64]bool
+}
+
+// ProyectoCerrado da por cerrado un proyecto marcado en cerrados o guardado
+// con fecha de cierre (#300).
+func (f *fakeProjectRepository) ProyectoCerrado(_ context.Context, id int64) (bool, error) {
+	if f.err != nil {
+		return false, f.err
+	}
+	return f.cerrados[id] || f.proyectos[id].FechaCierre != nil, nil
 }
 
 func (f *fakeProjectRepository) Guardar(_ context.Context, p domain.Project) (domain.Project, error) {
@@ -213,6 +224,8 @@ func (integrantesConActor) ListarIntegrantes(_ context.Context, proyectoID int64
 	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolProductBuilder}}, nil
 }
 
+func (integrantesConActor) ProyectoCerrado(context.Context, int64) (bool, error) { return false, nil }
+
 // actorScrumMasterDe devuelve la membresía del actor de prueba como Scrum Master.
 func actorScrumMasterDe(proyectoID int64) []domain.Membership {
 	return []domain.Membership{{ProjectID: proyectoID, UserID: actorDePrueba, Role: domain.RolScrumMaster}}
@@ -225,8 +238,15 @@ func (scrumMasterConActor) ListarIntegrantes(_ context.Context, proyectoID int64
 	return []domain.Member{{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolScrumMaster}}, nil
 }
 
+func (scrumMasterConActor) ProyectoCerrado(context.Context, int64) (bool, error) { return false, nil }
+
 type fakeIntegrantesRepository struct {
 	miembros []domain.Member
+	cerrados map[int64]bool
+}
+
+func (f *fakeIntegrantesRepository) ProyectoCerrado(_ context.Context, id int64) (bool, error) {
+	return f.cerrados[id], nil
 }
 
 func (f *fakeIntegrantesRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {

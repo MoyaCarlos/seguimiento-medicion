@@ -672,3 +672,34 @@ func TestSQLiteProjectRepository_Cerrar(t *testing.T) {
 		}
 	})
 }
+
+// Spec 044 (#300): el guardia de escritura pregunta si el proyecto está cerrado.
+func TestSQLiteProjectRepository_ProyectoCerrado(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	abierto := guardarProyecto(t, db)
+	cerrado := guardarProyecto(t, db)
+	sembrarFechaCierre(t, db, cerrado, "2026-11-11")
+
+	casos := []struct {
+		nombre   string
+		id       int64
+		esperado bool
+	}{
+		{"abierto", abierto, false},
+		{"cerrado", cerrado, true},
+		{"inexistente (el 404 lo resuelve el servicio antes)", 99, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			got, err := repo.ProyectoCerrado(ctx, c.id)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if got != c.esperado {
+				t.Errorf("se esperaba %v, se obtuvo %v", c.esperado, got)
+			}
+		})
+	}
+}

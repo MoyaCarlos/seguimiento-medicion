@@ -172,3 +172,21 @@ func TestProjectRepositoryEnMemoria_ActualizarNoPisaLaFechaDeCierre(t *testing.T
 		t.Errorf("se esperaba el nombre editado y la fecha de cierre intacta, se obtuvo %+v", leido)
 	}
 }
+
+func TestProjectRepositoryEnMemoria_ProyectoCerrado(t *testing.T) {
+	ctx := context.Background()
+	repo := NewProjectRepositoryEnMemoria()
+	abierto, _ := repo.Guardar(ctx, domain.Project{Nombre: "Abierto"})
+	cerrado, _ := repo.Guardar(ctx, domain.Project{Nombre: "Cerrado"})
+	_ = repo.Cerrar(ctx, cerrado.ID, time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC))
+
+	for id, esperado := range map[int64]bool{abierto.ID: false, cerrado.ID: true, 99: false} {
+		got, err := repo.ProyectoCerrado(ctx, id)
+		if err != nil {
+			t.Fatalf("proyecto %d: no se esperaba error: %v", id, err)
+		}
+		if got != esperado {
+			t.Errorf("proyecto %d: se esperaba %v, se obtuvo %v", id, esperado, got)
+		}
+	}
+}
