@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { ApiError, ConnectionError } from '../api/client'
 import { listarProyectos } from './api'
 import type { ProyectoResumen } from './api'
@@ -16,10 +16,13 @@ function mensajeDeError(error: unknown): string {
   return MENSAJE_NO_INTERPRETABLE
 }
 
-export function useProyectos(): EstadoProyectos {
+export const ContextoProyectos = createContext<EstadoProyectos | null>(null)
+
+export function useCargaDeProyectos(habilitado: boolean, recarga = 0): EstadoProyectos {
   const [estado, setEstado] = useState<EstadoProyectos>({ estado: 'cargando' })
 
   useEffect(() => {
+    if (!habilitado) return
     let vigente = true
 
     listarProyectos()
@@ -38,7 +41,14 @@ export function useProyectos(): EstadoProyectos {
     return () => {
       vigente = false
     }
-  }, [])
+  }, [habilitado, recarga])
 
   return estado
+}
+
+export function useProyectos(): EstadoProyectos {
+  const compartido = useContext(ContextoProyectos)
+  const propio = useCargaDeProyectos(compartido === null)
+
+  return compartido ?? propio
 }

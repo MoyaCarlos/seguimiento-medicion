@@ -412,9 +412,17 @@ select {
   color: var(--muted);
   display: flex;
   flex: 1;
-  font-size: 0.8125rem;
-  gap: 8px;
+  font-size: 13px;
+  gap: 6px;
   min-width: 0;
+}
+
+.ruta a,
+.ruta [aria-current] {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ruta a {
@@ -424,15 +432,23 @@ select {
 
 .ruta a:hover {
   color: var(--ink);
-  text-decoration: underline;
 }
 
 .ruta [aria-current] {
   color: var(--ink);
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.ruta__separador {
+  display: inline-flex;
+  flex: none;
+}
+
+.ruta svg {
+  flex: none;
+  height: 14px;
+  opacity: 0.6;
+  width: 14px;
 }
 
 .contenido {
@@ -979,12 +995,6 @@ h1 {
 
   .armazon--con-pestanas .contenido {
     padding-bottom: 96px;
-  }
-}
-
-@media (max-width: 480px) {
-  .ruta > :not([aria-current]) {
-    display: none;
   }
 }
 

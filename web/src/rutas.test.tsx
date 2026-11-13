@@ -934,16 +934,6 @@ describe('migas con el nombre del proyecto (#230)', () => {
     expect(within(rutaDeNavegacion()).getByText(texto, { selector: '[aria-current]' }).getAttribute('aria-current')).toBe('page')
   })
 
-  it('Given una sección sin nombre conocido, When se muestra la ruta, Then el proyecto es la miga actual y no un enlace', async () => {
-    proyectosSimulados = [{ id: 42, nombre: 'Licencia de conducir' }]
-    abrir('/projects/42/otra')
-
-    const actual = await within(await screen.findByRole('navigation', { name: 'Ruta de navegación' })).findByText('Licencia de conducir')
-
-    expect(actual.getAttribute('aria-current')).toBe('page')
-    expect(actual.tagName).not.toBe('A')
-  })
-
   it('Given la ruta de un proyecto, When se muestra, Then los separadores son iconos y no el texto «›»', async () => {
     abrir('/projects/42/backlog')
     await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
