@@ -338,3 +338,44 @@ describe('pantalla de Sprints: registro de horas', () => {
     expect(screen.queryByRole('button', { name: 'Registrar horas' })).toBeNull()
   })
 })
+
+describe('pantalla de Sprints - acciones de gestión según el rol (HU-21)', () => {
+  const activo: Sprint = { ...pendiente(2), estado: 'Activo', sprint_goal: 'Meta' }
+
+  const conRol = (rol: 'scrum_master' | 'product_builder') =>
+    simularApi(conSprints(pendiente(1), activo), (ruta) =>
+      ruta === '/projects/42' ? respuesta(200, { id: 42, rol }) : respuesta(404, { mensaje: 'no encontrado' }),
+    )
+
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  it('Escenario 2: como Product Builder veo crear, iniciar y cerrar Sprint deshabilitados con la nota «Solo el Scrum Master puede …»', async () => {
+    conRol('product_builder')
+    abrir()
+
+    const crearBoton = await screen.findByRole('button', { name: 'Crear Sprint' })
+    const iniciar = await screen.findByRole('button', { name: 'Iniciar Sprint' })
+    const cerrar = await screen.findByRole('button', { name: 'Cerrar Sprint' })
+    await waitFor(() => expect(crearBoton.hasAttribute('disabled')).toBe(true))
+    expect(iniciar.hasAttribute('disabled')).toBe(true)
+    expect(cerrar.hasAttribute('disabled')).toBe(true)
+    expect(nota(crearBoton)).toBe('Solo el Scrum Master puede crear un Sprint')
+    expect(nota(iniciar)).toBe('Solo el Scrum Master puede iniciar un Sprint')
+    expect(nota(cerrar)).toBe('Solo el Scrum Master puede cerrar un Sprint')
+  })
+
+  it('Escenario 1: como Scrum Master crear, iniciar y cerrar Sprint están habilitados', async () => {
+    const simulado = conRol('scrum_master')
+    abrir()
+
+    const crearBoton = await screen.findByRole('button', { name: 'Crear Sprint' })
+    const iniciar = await screen.findByRole('button', { name: 'Iniciar Sprint' })
+    const cerrar = await screen.findByRole('button', { name: 'Cerrar Sprint' })
+    await waitFor(() => expect(simulado).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    expect(crearBoton.hasAttribute('disabled')).toBe(false)
+    expect(iniciar.hasAttribute('disabled')).toBe(false)
+    expect(cerrar.hasAttribute('disabled')).toBe(false)
+    expect(crearBoton.hasAttribute('aria-describedby')).toBe(false)
+  })
+})

@@ -92,3 +92,39 @@ describe('pantalla de configuración del equipo', () => {
     })
   })
 })
+
+describe('configuración del equipo - rol (HU-21)', () => {
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  function responderConRol(rol: 'scrum_master' | 'product_builder') {
+    const fetchMock = vi.fn((url: string) =>
+      Promise.resolve(
+        new Response(JSON.stringify(url === '/projects/3' ? { id: 3, rol } : integrantes), { status: 200 }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('Escenario 2: como Product Builder veo «Asignar integrante» deshabilitado con la nota «Solo el Scrum Master puede agregar integrantes»', async () => {
+    responderConRol('product_builder')
+    abrir()
+
+    await screen.findByText('Ana')
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede agregar integrantes')
+  })
+
+  it('Escenario 1: como Scrum Master «Asignar integrante» está habilitado', async () => {
+    const fetchMock = responderConRol('scrum_master')
+    abrir()
+
+    await screen.findByText('Ana')
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/projects/3', expect.anything()))
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+  })
+})

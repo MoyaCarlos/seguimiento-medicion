@@ -935,3 +935,87 @@ describe('Pantalla de votación - teclado', () => {
     expect(votarMock).toHaveBeenCalledWith(3, 2, 2)
   })
 })
+
+describe('Pantalla de votación - acciones de gestión según el rol (HU-21)', () => {
+  function simularRol(rol: 'scrum_master' | 'product_builder') {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(JSON.stringify({ id: 25, rol }), { status: 200 }))),
+    )
+  }
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const sinVotacionIniciada = () =>
+    consultarMock.mockRejectedValue(new ApiError(404, 'la historia no tiene votación iniciada'))
+
+  it('Escenario 2: como Product Builder veo «Iniciar votación» deshabilitada con la nota «Solo el Scrum Master puede iniciar la votación»', async () => {
+    simularRol('product_builder')
+    sinVotacionIniciada()
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Iniciar votación' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede iniciar la votación')
+  })
+
+  it('Escenario 1: como Scrum Master «Iniciar votación» está habilitada', async () => {
+    simularRol('scrum_master')
+    sinVotacionIniciada()
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const boton = await screen.findByRole('button', { name: 'Iniciar votación' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+  })
+
+  it('Escenario 2: como Product Builder veo «Revelar» deshabilitada con la nota «Solo el Scrum Master puede revelar los votos»', async () => {
+    simularRol('product_builder')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Revelar' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede revelar los votos')
+  })
+
+  it('Escenario 1: como Scrum Master «Revelar» está habilitada', async () => {
+    simularRol('scrum_master')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const boton = await screen.findByRole('button', { name: 'Revelar' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+  })
+
+  it('Escenario 2: como Product Builder veo «Registrar estimación» y «Nueva ronda» deshabilitadas con sus notas', async () => {
+    simularRol('product_builder')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    abrir()
+
+    const registrar = await screen.findByRole('button', { name: 'Registrar estimación' })
+    const nuevaRonda = screen.getByRole('button', { name: 'Nueva ronda' })
+    await waitFor(() => expect(registrar.hasAttribute('disabled')).toBe(true))
+    expect(nuevaRonda.hasAttribute('disabled')).toBe(true)
+    expect(nota(registrar)).toBe('Solo el Scrum Master puede registrar la estimación')
+    expect(nota(nuevaRonda)).toBe('Solo el Scrum Master puede abrir una nueva ronda')
+  })
+
+  it('Escenario 1: como Scrum Master «Registrar estimación» y «Nueva ronda» están habilitadas', async () => {
+    simularRol('scrum_master')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const registrar = await screen.findByRole('button', { name: 'Registrar estimación' })
+    expect(registrar.hasAttribute('disabled')).toBe(false)
+    expect(screen.getByRole('button', { name: 'Nueva ronda' }).hasAttribute('disabled')).toBe(false)
+  })
+})
