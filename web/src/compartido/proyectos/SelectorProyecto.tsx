@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
+import { AvatarProyecto } from '../componentes/AvatarProyecto'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { Icono } from '../componentes/Icono'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
@@ -8,8 +9,6 @@ import { etiquetaProyecto, rutaDeSeccion } from './ruta'
 import { useProyectos } from './useProyectos'
 
 type Entrada = { valor: string; etiqueta: string }
-
-const inicial = (nombre: string) => (nombre.trim().charAt(0) || '?').toUpperCase()
 
 export function SelectorProyecto() {
   const { id = '' } = useParams()
@@ -115,11 +114,7 @@ export function SelectorProyecto() {
           }
         }}
       >
-        <span
-          className={`selector-proyecto__avatar selector-proyecto__avatar--${Number(id) % 5}`}
-          data-inicial={inicial(nombreActual)}
-          aria-hidden="true"
-        />
+        <AvatarProyecto id={id} nombre={nombreActual} />
         <span className="selector-proyecto__texto">
           <strong>{nombreActual}</strong>
           <small>#{id}</small>
@@ -146,11 +141,7 @@ export function SelectorProyecto() {
               onClick={() => elegir(entrada)}
               onMouseEnter={() => setResaltada(indice)}
             >
-              <span
-                className={`selector-proyecto__avatar selector-proyecto__avatar--chico selector-proyecto__avatar--${Number(entrada.valor) % 5}`}
-                data-inicial={inicial(entrada.etiqueta)}
-                aria-hidden="true"
-              />
+              <AvatarProyecto id={entrada.valor} nombre={entrada.etiqueta} chico />
               <span className="selector-proyecto__nombre">{entrada.etiqueta}</span>
             </li>
           ))}

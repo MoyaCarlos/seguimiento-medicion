@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import { AvatarProyecto } from '../componentes/AvatarProyecto'
 import { Button } from '../componentes/Button'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { Icono } from '../componentes/Icono'
@@ -21,11 +22,7 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
       aria-describedby={idDetalle}
     >
       <span className="tarjeta-proyecto__cabecera">
-        <span
-          className={`tarjeta-proyecto__avatar tarjeta-proyecto__avatar--${proyecto.id % 5}`}
-          data-inicial={(proyecto.nombre.trim().charAt(0) || '?').toUpperCase()}
-          aria-hidden="true"
-        />
+        <AvatarProyecto id={proyecto.id} nombre={proyecto.nombre} />
       </span>
       <span className="tarjeta-proyecto__nombre" title={proyecto.nombre}>{proyecto.nombre}</span>
       <span id={idDetalle} className="tarjeta-proyecto__detalle">

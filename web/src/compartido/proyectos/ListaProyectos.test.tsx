@@ -319,7 +319,7 @@ describe('ListaProyectos', () => {
 
       const tarjeta = await screen.findByRole('link', { name: 'Beta (#7)' })
 
-      expect(tarjeta.querySelector('.tarjeta-proyecto__avatar')?.getAttribute('data-inicial')).toBe('B')
+      expect(tarjeta.querySelector('.avatar-proyecto')?.getAttribute('data-inicial')).toBe('B')
       expect(tarjeta.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
       expect(within(tarjeta).getByText('14/10/2026 → 28/12/2026')).toBeTruthy()
       expect(within(tarjeta).getByText('#7').closest('.tarjeta-proyecto__pie')).not.toBeNull()

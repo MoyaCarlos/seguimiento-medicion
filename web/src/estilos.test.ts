@@ -94,7 +94,7 @@ it('Given el selector de proyecto, When se estiliza, Then el resaltado del tecla
   expect(resaltada).toMatch(/box-shadow:\s*inset 0 0 0 2px var\(--brand\)/)
   expect(contraste('#0d9488', '#ffffff')).toBeGreaterThanOrEqual(3)
   for (const n of [0, 1, 2, 3, 4]) {
-    const avatar = bloque(`.selector-proyecto__avatar--${n}`)
+    const avatar = bloque(`.avatar-proyecto--${n}`)
     const fondo = avatar.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
     const texto = avatar.match(/\bcolor:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
     expect(contraste(texto, fondo)).toBeGreaterThanOrEqual(4.5)
