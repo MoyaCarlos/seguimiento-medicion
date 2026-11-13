@@ -409,6 +409,21 @@ describe('pantalla Estado como el prototipo', () => {
   })
 })
 
+describe('encabezado de Estado', () => {
+  it('Given un proyecto, When ingreso a Estado, Then pretítulo, título y línea del proyecto forman un solo bloque', async () => {
+    simularApi(() => respuesta(200, avance))
+
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Estado del proyecto' })
+    const bloque = titulo.closest('.estado-cabecera')
+    expect(bloque).not.toBeNull()
+    expect(bloque?.contains(screen.getByText('Proyecto #7'))).toBe(true)
+    expect(bloque?.contains(screen.getByText('Proyecto actual:'))).toBe(true)
+    expect(bloque?.contains(screen.queryByRole('region', { name: 'Total del proyecto' }))).toBe(false)
+  })
+})
+
 describe('estilos de la pantalla Estado', () => {
   const estilos = readFileSync('src/features/estado/estado.css', 'utf8')
 
