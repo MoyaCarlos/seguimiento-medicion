@@ -207,6 +207,63 @@ func TestHorasHandler_Imputar_HorasComoTextoNumerico(t *testing.T) {
 	}
 }
 
+func TestHorasHandler_Imputar_HorasEnFormatoHmm(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	hoy := hoyCivil().Format(time.DateOnly)
+
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Revisar", "horas": "0:20"}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp registroHorasResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Minutos != 20 {
+		t.Errorf("se esperaban 20 minutos, se obtuvo %d", resp.Minutos)
+	}
+}
+
+func TestHorasHandler_Imputar_MinutosFueraDeRangoEnFormatoHmm(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	hoy := hoyCivil().Format(time.DateOnly)
+
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Revisar", "horas": "1:60"}`)
+
+	if rec.Code != nethttp.StatusBadRequest {
+		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp errorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Campo != "horas" || resp.Mensaje != "los minutos deben estar entre 00 y 59" {
+		t.Errorf("se esperaba campo horas y el mensaje de minutos, se obtuvo %+v", resp)
+	}
+	if len(e.horas.registros) != 0 {
+		t.Errorf("no se debía registrar ninguna carga, hay %d", len(e.horas.registros))
+	}
+}
+
+func TestHorasHandler_Imputar_HorasNumericasSiguenFuncionando(t *testing.T) {
+	e := nuevoEscenarioHorasHTTP(t)
+	hoy := hoyCivil().Format(time.DateOnly)
+
+	rec := e.imputar("3", 2, `{"fecha": "`+hoy+`", "actividad": "Revisar", "horas": 1.5}`)
+
+	if rec.Code != nethttp.StatusCreated {
+		t.Fatalf("se esperaba 201, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	var resp registroHorasResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta JSON inválida: %v", err)
+	}
+	if resp.Minutos != 90 {
+		t.Errorf("se esperaban 90 minutos, se obtuvo %d", resp.Minutos)
+	}
+}
+
 func (e escenarioHorasHTTP) consultar(id string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/horas", nil)
 	req.SetPathValue("id", id)

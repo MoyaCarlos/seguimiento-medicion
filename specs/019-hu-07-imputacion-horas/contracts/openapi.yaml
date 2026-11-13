@@ -4,7 +4,8 @@ info:
   version: 1.0.0
   description: >-
     Contrato de la imputación de horas a una historia del Sprint activo y de la
-    consulta de su esfuerzo real. Las horas se reciben en horas decimales, se
+    consulta de su esfuerzo real. Las horas se reciben como decimales (1.5) o
+    como h:mm (0:20), se
     guardan como minutos enteros y se devuelven en las dos unidades. Las cargas
     no se editan ni se borran.
 paths:
@@ -39,6 +40,12 @@ paths:
                   fecha: '2026-10-27'
                   actividad: Revisión del PR
                   horas: 1.5
+              formatoHMM:
+                value:
+                  integrante_id: 2
+                  fecha: '2026-10-28'
+                  actividad: Revisión del PR
+                  horas: '0:20'
       responses:
         '201':
           description: Carga registrada.
@@ -182,9 +189,11 @@ components:
           description: Obligatoria; se recortan los espacios externos.
         horas:
           description: >-
-            Horas trabajadas, con decimales (1.5 = 90 minutos). Mayor que 0, a
-            lo sumo 24, y deben dar un número entero de minutos. Un string no
-            numérico se rechaza con un error sobre `horas`.
+            Horas trabajadas, como decimales (`1.5` = 90 minutos) o como `h:mm`
+            (`"0:20"` = 20 minutos; `mm` de 00 a 59, si no se rechaza con
+            "los minutos deben estar entre 00 y 59"). Mayor que 0, a lo sumo 24,
+            y deben dar un número entero de minutos. Un string que no sea ni
+            decimal ni `h:mm` se rechaza con un error sobre `horas`.
           oneOf:
             - type: number
             - type: string
