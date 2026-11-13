@@ -522,7 +522,7 @@ describe('registro de rutas', () => {
     abrir('/')
 
     expect(await screen.findByText('ana.perez', {}, { timeout: 5000 })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Menú de usuario' })).toBeTruthy()
   })
 })
 
