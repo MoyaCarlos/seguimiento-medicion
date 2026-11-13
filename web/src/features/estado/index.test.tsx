@@ -48,12 +48,17 @@ const respuesta = (status: number, cuerpo: unknown) => new Response(JSON.stringi
 
 function simularApi(...respuestas: (() => Response | Promise<Response>)[]) {
   let llamada = 0
-  const simulado = vi.fn(() => {
+  const simulado = vi.fn((..._args: unknown[]) => {
     const responder = respuestas[Math.min(llamada, respuestas.length - 1)]
     llamada += 1
     return Promise.resolve(responder())
   })
-  vi.stubGlobal('fetch', simulado)
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string, init?: RequestInit) =>
+      url.endsWith('/status') ? Promise.resolve(respuesta(200, { estado: 'En curso' })) : simulado(url, init),
+    ),
+  )
   return simulado
 }
 
@@ -66,6 +71,9 @@ function abrir(ruta = '/projects/7/status') {
 }
 
 const region = (nombre: string) => screen.getByRole('region', { name: nombre })
+
+const chipsDe = (grupo: HTMLElement) =>
+  Array.from(grupo.querySelectorAll('.estado-columna__chips span')).map((chip) => chip.textContent)
 
 function valorDe(contenedor: HTMLElement, etiqueta: string): string | null {
   const termino = within(contenedor).getByText(etiqueta, { selector: 'dt' })
@@ -105,7 +113,7 @@ describe('pantalla Estado', () => {
 
     await screen.findByRole('region', { name: 'Nueva' })
     const encabezados = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
-    expect(encabezados).toEqual(['Nueva', 'En progreso', 'Completada', 'Total del proyecto'])
+    expect(encabezados).toEqual(['Nueva', 'En progreso', 'Completada'])
   })
 
   it('US1.2: Given historias agrupadas, When ingreso a Estado, Then cada grupo informa su cantidad de historias y de Story Points', async () => {
@@ -114,9 +122,9 @@ describe('pantalla Estado', () => {
     abrir()
 
     await screen.findByRole('region', { name: 'Nueva' })
-    expect([valorDe(region('Nueva'), 'Historias'), valorDe(region('Nueva'), 'Story Points')]).toEqual(['1', '3'])
-    expect([valorDe(region('En progreso'), 'Historias'), valorDe(region('En progreso'), 'Story Points')]).toEqual(['1', '5'])
-    expect([valorDe(region('Completada'), 'Historias'), valorDe(region('Completada'), 'Story Points')]).toEqual(['2', '10'])
+    expect(chipsDe(region('Nueva'))).toEqual(['1 historia', '3 SP'])
+    expect(chipsDe(region('En progreso'))).toEqual(['1 historia', '5 SP'])
+    expect(chipsDe(region('Completada'))).toEqual(['2 historias', '10 SP'])
   })
 
   it('US1.2: Given historias agrupadas, When ingreso a Estado, Then veo el total del proyecto', async () => {
@@ -142,8 +150,7 @@ describe('pantalla Estado', () => {
     abrir()
 
     const nueva = await screen.findByRole('region', { name: 'Nueva' })
-    expect(valorDe(nueva, 'Historias')).toBe('2')
-    expect(valorDe(nueva, 'Story Points')).toBe('3')
+    expect(chipsDe(nueva)).toEqual(['2 historias', '3 SP'])
     const sinEstimar = within(nueva).getAllByRole('listitem')[1]
     expect(sinEstimar?.textContent).toContain('Story Points: sin estimar')
   })
@@ -158,8 +165,7 @@ describe('pantalla Estado', () => {
     abrir()
 
     const completada = await screen.findByRole('region', { name: 'Completada' })
-    expect(valorDe(completada, 'Historias')).toBe('0')
-    expect(valorDe(completada, 'Story Points')).toBe('0')
+    expect(chipsDe(completada)).toEqual(['0 historias', '0 SP'])
     expect(within(completada).getByText('No hay historias en este grupo.')).toBeTruthy()
     expect(screen.getByRole('region', { name: 'En progreso' })).toBeTruthy()
   })
@@ -186,8 +192,7 @@ describe('pantalla Estado', () => {
     abrir()
 
     const nueva = await screen.findByRole('region', { name: 'Nueva' })
-    expect(valorDe(nueva, 'Historias')).toBe('42')
-    expect(valorDe(nueva, 'Story Points')).toBe('55')
+    expect(chipsDe(nueva)).toEqual(['42 historias', '55 SP'])
     expect(valorDe(region('Total del proyecto'), 'Historias')).toBe('99')
     expect(within(nueva).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual([
       'Segunda por id',
@@ -223,7 +228,7 @@ describe('pantalla Estado', () => {
     expect(await screen.findByText('El proyecto todavía no tiene historias.')).toBeTruthy()
     for (const estado of ['Nueva', 'En progreso', 'Completada']) {
       const grupo = region(estado)
-      expect([valorDe(grupo, 'Historias'), valorDe(grupo, 'Story Points')]).toEqual(['0', '0'])
+      expect(chipsDe(grupo)).toEqual(['0 historias', '0 SP'])
       expect(within(grupo).getByText('No hay historias en este grupo.')).toBeTruthy()
     }
     const total = region('Total del proyecto')
@@ -344,6 +349,66 @@ describe('pantalla Estado', () => {
   })
 })
 
+describe('pantalla Estado como el prototipo', () => {
+  it('Given un proyecto, When ingreso a Estado, Then el pretítulo «Proyecto #7» va encima del título y la insignia muestra el estado del proyecto', async () => {
+    simularApi(() => respuesta(200, avance))
+
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Estado del proyecto' })
+    expect(screen.getByText('Proyecto #7').compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(await screen.findByText('En curso')).toBeTruthy()
+  })
+
+  it('Given que falla la consulta del estado del proyecto, When ingreso a Estado, Then no hay insignia pero el avance se ve igual', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(url.endsWith('/status') ? respuesta(500, { mensaje: 'error interno' }) : respuesta(200, avance)),
+      ),
+    )
+
+    abrir()
+
+    await screen.findByRole('region', { name: 'Nueva' })
+    expect(screen.queryByText('En curso')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Given historias en tres estados, When ingreso a Estado, Then la barra del resumen reparte los tramos según la cantidad y omite los grupos vacíos', async () => {
+    const sinCompletadas: Avance = {
+      total: { historias: 3, story_points: 8 },
+      grupos: [{ ...avance.grupos[0]!, cantidad: 2 }, { ...avance.grupos[1]! }, { ...sinHistorias.grupos[2]! }],
+    }
+    simularApi(() => respuesta(200, sinCompletadas))
+
+    abrir()
+
+    const barra = await screen.findByRole('img', { name: 'Nueva: 2, En progreso: 1, Completada: 0' })
+    const tramos = Array.from(barra.querySelectorAll<HTMLElement>('i')).map((tramo) => tramo.style.flexGrow)
+    expect(tramos).toEqual(['2', '1'])
+  })
+
+  it('Given el resumen, When ingreso a Estado, Then muestra el total de historias y de Story Points sobre su etiqueta', async () => {
+    simularApi(() => respuesta(200, avance))
+
+    abrir()
+
+    const total = await screen.findByRole('region', { name: 'Total del proyecto' })
+    expect(valorDe(total, 'Historias')).toBe('4')
+    expect(valorDe(total, 'Story Points')).toBe('18')
+    expect(screen.getAllByRole('region')[0]).toBe(total)
+  })
+
+  it('Given un proyecto con una sola historia, When ingreso a Estado, Then el resumen dice «Historia» en singular', async () => {
+    simularApi(() => respuesta(200, { ...sinHistorias, total: { historias: 1, story_points: 3 } }))
+
+    abrir()
+
+    expect(valorDe(await screen.findByRole('region', { name: 'Total del proyecto' }), 'Historia')).toBe('1')
+  })
+})
+
 describe('estilos de la pantalla Estado', () => {
   const estilos = readFileSync('src/features/estado/estado.css', 'utf8')
 
@@ -354,5 +419,15 @@ describe('estilos de la pantalla Estado', () => {
   it('Dado un celular de 320 px, When se muestra la pantalla, Then las columnas pueden achicarse sin scroll horizontal', () => {
     expect(estilos).toMatch(/min-width:\s*0/)
     expect(estilos).toMatch(/minmax\(0,\s*1fr\)/)
+  })
+
+  it('Dado un tablero, When hay lugar, Then va en tres columnas y en una sola por debajo de 1100px', () => {
+    expect(estilos).toMatch(/\.estado-tablero\s*\{[^}]*grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\)/)
+    expect(estilos).toMatch(/@media \(max-width: 1100px\)\s*\{\s*\.estado-tablero\s*\{[^}]*grid-template-columns:\s*1fr/)
+  })
+
+  it('Dado el tag de Sprint, When se estiliza, Then el Product Backlog va en gris y el Sprint en verde con cuadradito', () => {
+    expect(estilos).toMatch(/\.estado-historia__sprint\s*\{[^}]*color:\s*var\(--brand-dark\)/)
+    expect(estilos).toMatch(/\.estado-historia__sprint--backlog\s*\{[^}]*color:\s*var\(--muted\)/)
   })
 })
