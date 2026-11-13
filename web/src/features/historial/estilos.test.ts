@@ -47,3 +47,10 @@ it('Given una tarjeta con el foco del teclado, When se dibuja, Then el contorno 
 it('Given una tarjeta, When se pasa el mouse, Then el borde pasa al acento', () => {
   expect(regla('.historial-sprint:hover')).toMatch(/border-color:\s*var\(--brand\)/)
 })
+
+it('Given una pantalla angosta, When se muestran las métricas, Then no se les agrega relleno ni ancho propio', () => {
+  const angosto = css.slice(css.indexOf('@media (max-width: 600px)'), css.indexOf('@media (max-width: 640px)'))
+
+  expect(angosto).not.toMatch(/\.historial-metrica\s*\{/)
+  expect(angosto).toMatch(/\.historial-tarjeta:not\(\.historial-sprint\)/)
+})
