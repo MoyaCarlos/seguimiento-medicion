@@ -127,6 +127,43 @@ describe('FormularioHoras: registrar horas', () => {
     expect(imputarMock.mock.calls[0][1].horas).toBe('1.5')
   })
 
+  it('formato h:mm: se muestra la ayuda y el campo de horas está asociado a ella', async () => {
+    abrir()
+    await lista()
+
+    const ayuda = screen.getByText('Ej.: 1,5 o 1:30 (horas:minutos)')
+    expect(ayuda.id).not.toBe('')
+    expect(horas().getAttribute('aria-describedby')).toContain(ayuda.id)
+  })
+
+  it('formato h:mm: el campo de horas no usa el teclado decimal, que no tiene el signo ":"', async () => {
+    abrir()
+    await lista()
+
+    expect(horas().getAttribute('inputmode')).not.toBe('decimal')
+    expect(horas().getAttribute('inputmode')).toBe('text')
+  })
+
+  it('formato h:mm: las horas escritas como 0:20 se envían sin cambios', async () => {
+    abrir()
+    const user = await completar('0:20')
+
+    await user.click(guardar())
+
+    await screen.findByText('Horas registradas')
+    expect(imputarMock.mock.calls[0][1].horas).toBe('0:20')
+  })
+
+  it('formato h:mm: las horas escritas con coma siguen enviándose con punto', async () => {
+    abrir()
+    const user = await completar('1,5')
+
+    await user.click(guardar())
+
+    await screen.findByText('Horas registradas')
+    expect(imputarMock.mock.calls[0][1].horas).toBe('1.5')
+  })
+
   it('US1.5: mientras envía deshabilita el guardado, lo indica y no manda una segunda carga', async () => {
     imputarMock.mockReturnValue(new Promise(() => {}))
     abrir()
@@ -284,7 +321,7 @@ describe('FormularioHoras: errores', () => {
     expect(error.textContent).toBe(mensaje)
     const control = screen.getByLabelText(etiqueta)
     expect(control.getAttribute('aria-invalid')).toBe('true')
-    expect(control.getAttribute('aria-describedby')).toBe(error.id)
+    expect(control.getAttribute('aria-describedby')?.split(' ')).toContain(error.id)
   })
 
   it('US2.6: si el Sprint ya se cerró, el mensaje es un aviso general', async () => {
