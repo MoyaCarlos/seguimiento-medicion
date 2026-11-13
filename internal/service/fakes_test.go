@@ -344,12 +344,12 @@ func (f *fakeVotacionRepository) ObtenerRondaActual(_ context.Context, historiaI
 	return copiaDeRonda(r), nil
 }
 
-func (f *fakeVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error) {
+func (f *fakeVotacionRepository) RondaActualRevelada(ctx context.Context, historiaID int64) (int64, bool, error) {
 	r, err := f.ObtenerRondaActual(ctx, historiaID)
 	if err != nil {
-		return false, err
+		return 0, false, err
 	}
-	return r.Revelada(), nil
+	return r.ID, r.Revelada(), nil
 }
 
 func (f *fakeVotacionRepository) GuardarVoto(_ context.Context, rondaID int64, v domain.Voto) error {
@@ -665,6 +665,7 @@ func (f *fakeContrasenas) llamadasAVerificar() int {
 type fakeEstimacionRepository struct {
 	historias  map[int64]domain.BacklogItem
 	escrituras int
+	errGuardar error
 }
 
 func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (domain.BacklogItem, error) {
@@ -675,7 +676,10 @@ func (f *fakeEstimacionRepository) ObtenerPorID(_ context.Context, id int64) (do
 	return h, nil
 }
 
-func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int) error {
+func (f *fakeEstimacionRepository) GuardarEstimacion(_ context.Context, id int64, sp int, _ int64) error {
+	if f.errGuardar != nil {
+		return f.errGuardar
+	}
 	h, ok := f.historias[id]
 	if !ok {
 		return domain.ErrHistoriaNoEncontrada

@@ -94,6 +94,17 @@ func TestEditarHistoria_PropagaErrorDeActualizar(t *testing.T) {
 	}
 }
 
+func TestEditarHistoria_PropagaElConflictoConElEstadoDelSprint(t *testing.T) {
+	servicio, repo, _ := nuevoEditarHistoria(historiaDelBacklog())
+	repo.errActualizar = domain.ErrEdicionDesactualizada
+
+	_, err := servicio.Ejecutar(context.Background(), edicionValida(3))
+
+	if !errors.Is(err, domain.ErrEdicionDesactualizada) {
+		t.Fatalf("se esperaba domain.ErrEdicionDesactualizada, se obtuvo %v", err)
+	}
+}
+
 func TestEditarHistoria_StoryPointsSegunEstadoDelSprint(t *testing.T) {
 	casos := []struct {
 		nombre       string

@@ -649,12 +649,33 @@ func TestSQLiteBacklogRepository_ObtenerPorID_SinFechaDevuelveNil(t *testing.T) 
 	}
 }
 
+func punteroInt(v int) *int { return &v }
+
+func rondaDePrueba(t *testing.T, repo *SQLiteBacklogRepository, historiaID int64, numero int, revelada bool) int64 {
+	t.Helper()
+	var reveladaEn any
+	if revelada {
+		reveladaEn = "2026-10-27T15:04:05Z"
+	}
+	resultado, err := repo.db.Exec(
+		"INSERT INTO rondas_votacion (historia_id, numero, revelada_en) VALUES (?, ?, ?)", historiaID, numero, reveladaEn)
+	if err != nil {
+		t.Fatalf("no se pudo sembrar la ronda: %v", err)
+	}
+	id, err := resultado.LastInsertId()
+	if err != nil {
+		t.Fatalf("no se pudo obtener el id de la ronda: %v", err)
+	}
+	return id
+}
+
 func TestSQLiteBacklogRepository_GuardarEstimacion_EscribeSoloLosStoryPoints(t *testing.T) {
 	ctx := context.Background()
 	repo := nuevaBDDePrueba(t)
 	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	rondaID := rondaDePrueba(t, repo, historia.ID, 1, true)
 
-	if err := repo.GuardarEstimacion(ctx, historia.ID, 8); err != nil {
+	if err := repo.GuardarEstimacion(ctx, historia.ID, 8, rondaID); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
@@ -673,7 +694,7 @@ func TestSQLiteBacklogRepository_GuardarEstimacion_EscribeSoloLosStoryPoints(t *
 func TestSQLiteBacklogRepository_GuardarEstimacion_HistoriaInexistente(t *testing.T) {
 	repo := nuevaBDDePrueba(t)
 
-	err := repo.GuardarEstimacion(context.Background(), 999, 8)
+	err := repo.GuardarEstimacion(context.Background(), 999, 8, 0)
 
 	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Errorf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)
@@ -685,11 +706,13 @@ func TestSQLiteBacklogRepository_GuardarEstimacion_NoTocaOtrasHistorias(t *testi
 	repo := nuevaBDDePrueba(t)
 	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
 	otra := guardarHistoria(t, repo, 1, "Otra", domain.PrioridadMust)
-	if err := repo.GuardarEstimacion(ctx, otra.ID, 3); err != nil {
+	rondaOtra := rondaDePrueba(t, repo, otra.ID, 1, true)
+	rondaHistoria := rondaDePrueba(t, repo, historia.ID, 1, true)
+	if err := repo.GuardarEstimacion(ctx, otra.ID, 3, rondaOtra); err != nil {
 		t.Fatalf("no se esperaba error al cargar la otra historia: %v", err)
 	}
 
-	if err := repo.GuardarEstimacion(ctx, historia.ID, 8); err != nil {
+	if err := repo.GuardarEstimacion(ctx, historia.ID, 8, rondaHistoria); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 
@@ -699,6 +722,156 @@ func TestSQLiteBacklogRepository_GuardarEstimacion_NoTocaOtrasHistorias(t *testi
 	}
 	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 3 {
 		t.Errorf("la otra historia debía seguir con 3 Story Points, tiene %v", guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_Actualizar_RechazaSiElSprintSeIniciaAntesDeEscribir(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	sprints := NewSQLiteSprintRepository(repo.db)
+	pendiente := guardarSprint(t, sprints, 1)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET sprint_id = ?, estimacion_sp = 3 WHERE id = ?", pendiente.ID, historia.ID)
+	mustExec(t, repo.db,
+		"UPDATE sprints SET estado = 'Activo', sprint_goal = 'g', fecha_inicio = '2026-10-01', fecha_fin = '2026-10-15' WHERE id = ?",
+		pendiente.ID)
+	leida := 3
+	editada := historia
+	editada.Titulo = "Cambiada"
+	editada.EstimacionSP = punteroInt(8)
+
+	err := repo.Actualizar(ctx, editada)
+
+	if !errors.Is(err, domain.ErrEdicionDesactualizada) {
+		t.Fatalf("se esperaba ErrEdicionDesactualizada, se obtuvo %v", err)
+	}
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.Titulo == "Cambiada" || guardada.EstimacionSP == nil || *guardada.EstimacionSP != leida {
+		t.Errorf("la edición no debía persistirse: título %q, estimación %v", guardada.Titulo, guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_Actualizar_RechazaLaCargaInicialSiElSprintSeFinalizaAntesDeEscribir(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	sprints := NewSQLiteSprintRepository(repo.db)
+	pendiente := guardarSprint(t, sprints, 1)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET sprint_id = ? WHERE id = ?", pendiente.ID, historia.ID)
+	mustExec(t, repo.db,
+		"UPDATE sprints SET estado = 'Finalizado', sprint_goal = 'g', fecha_inicio = '2026-10-01', fecha_fin = '2026-10-15' WHERE id = ?",
+		pendiente.ID)
+	editada := historia
+	editada.EstimacionSP = punteroInt(5)
+
+	err := repo.Actualizar(ctx, editada)
+
+	if !errors.Is(err, domain.ErrEdicionDesactualizada) {
+		t.Fatalf("se esperaba ErrEdicionDesactualizada, se obtuvo %v", err)
+	}
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.EstimacionSP != nil {
+		t.Errorf("la historia debía quedar sin estimar, se obtuvo %v", guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_Actualizar_PermiteReenviarLaMismaEstimacionConSprintActivo(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, punteroInt(3))
+	editada := historia
+	editada.Titulo = "Cambiada"
+
+	if err := repo.Actualizar(ctx, editada); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.Titulo != "Cambiada" || guardada.EstimacionSP == nil || *guardada.EstimacionSP != 3 {
+		t.Errorf("se esperaba el título nuevo y 3 Story Points, se obtuvo %+v", guardada)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_RechazaSiElSprintSeIniciaAntesDeEscribir(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	sprints := NewSQLiteSprintRepository(repo.db)
+	pendiente := guardarSprint(t, sprints, 1)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET sprint_id = ?, estimacion_sp = 3 WHERE id = ?", pendiente.ID, historia.ID)
+	rondaID := rondaDePrueba(t, repo, historia.ID, 1, true)
+	mustExec(t, repo.db,
+		"UPDATE sprints SET estado = 'Activo', sprint_goal = 'g', fecha_inicio = '2026-10-01', fecha_fin = '2026-10-15' WHERE id = ?",
+		pendiente.ID)
+
+	err := repo.GuardarEstimacion(ctx, historia.ID, 8, rondaID)
+
+	if !errors.Is(err, domain.ErrRegistroEstimacionDesactualizado) {
+		t.Fatalf("se esperaba ErrRegistroEstimacionDesactualizado, se obtuvo %v", err)
+	}
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 3 {
+		t.Errorf("la historia debía conservar 3 Story Points, se obtuvo %v", guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_RechazaLaCargaInicialSiElSprintSeFinalizaAntesDeEscribir(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	sprints := NewSQLiteSprintRepository(repo.db)
+	pendiente := guardarSprint(t, sprints, 1)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET sprint_id = ? WHERE id = ?", pendiente.ID, historia.ID)
+	rondaID := rondaDePrueba(t, repo, historia.ID, 1, true)
+	mustExec(t, repo.db,
+		"UPDATE sprints SET estado = 'Finalizado', sprint_goal = 'g', fecha_inicio = '2026-10-01', fecha_fin = '2026-10-15' WHERE id = ?",
+		pendiente.ID)
+
+	err := repo.GuardarEstimacion(ctx, historia.ID, 5, rondaID)
+
+	if !errors.Is(err, domain.ErrRegistroEstimacionDesactualizado) {
+		t.Fatalf("se esperaba ErrRegistroEstimacionDesactualizado, se obtuvo %v", err)
+	}
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.EstimacionSP != nil {
+		t.Errorf("la historia debía quedar sin estimar, se obtuvo %v", guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_RechazaSiSeAbreOtraRonda(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	historia := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	mustExec(t, repo.db, "UPDATE historias SET estimacion_sp = 3 WHERE id = ?", historia.ID)
+	rondaUno := rondaDePrueba(t, repo, historia.ID, 1, true)
+	rondaDePrueba(t, repo, historia.ID, 2, false)
+
+	err := repo.GuardarEstimacion(ctx, historia.ID, 8, rondaUno)
+
+	if !errors.Is(err, domain.ErrRegistroEstimacionDesactualizado) {
+		t.Fatalf("se esperaba ErrRegistroEstimacionDesactualizado, se obtuvo %v", err)
+	}
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 3 {
+		t.Errorf("la historia debía conservar 3 Story Points, se obtuvo %v", guardada.EstimacionSP)
+	}
+}
+
+func TestSQLiteBacklogRepository_GuardarEstimacion_PermiteLaCargaInicialConSprintActivo(t *testing.T) {
+	ctx := context.Background()
+	repo := nuevaBDDePrueba(t)
+	activo, _ := sprintsDePrueba(t, repo, 1)
+	historia := historiaEnSprint(t, repo.db, 1, activo.ID, domain.EstadoNueva, nil)
+	rondaID := rondaDePrueba(t, repo, historia.ID, 1, true)
+
+	if err := repo.GuardarEstimacion(ctx, historia.ID, 5, rondaID); err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	guardada, _ := repo.ObtenerPorID(ctx, historia.ID)
+	if guardada.EstimacionSP == nil || *guardada.EstimacionSP != 5 {
+		t.Errorf("se esperaban 5 Story Points, se obtuvo %v", guardada.EstimacionSP)
 	}
 }
 

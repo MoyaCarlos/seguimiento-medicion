@@ -21,6 +21,9 @@ type ProductBacklogRepository interface {
 
 // HistoriaRepository es el puerto que usa la edición de una historia.
 // ObtenerPorID devuelve domain.ErrHistoriaNoEncontrada si la historia no existe.
+// Actualizar aplica D2b en el mismo UPDATE: si el Sprint cambió a un estado que
+// congela la estimación entre la validación y la escritura, devuelve
+// domain.ErrEdicionDesactualizada (#249).
 type HistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
 	Actualizar(ctx context.Context, item domain.BacklogItem) error
@@ -28,11 +31,13 @@ type HistoriaRepository interface {
 
 // EstimacionHistoriaRepository es el puerto que usa el registro de la estimación
 // acordada. Separado de HistoriaRepository (ISP): escribe solo los Story Points,
-// así no pisa una edición simultánea. GuardarEstimacion devuelve
-// domain.ErrHistoriaNoEncontrada si no afectó ninguna fila.
+// así no pisa una edición simultánea. GuardarEstimacion aplica en el mismo
+// UPDATE la regla D2b y la ronda revelada; si no afecta filas devuelve
+// domain.ErrRegistroEstimacionDesactualizado (#249) o
+// domain.ErrHistoriaNoEncontrada si la historia no existe.
 type EstimacionHistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
-	GuardarEstimacion(ctx context.Context, id int64, sp int) error
+	GuardarEstimacion(ctx context.Context, id int64, sp int, rondaID int64) error
 }
 
 // AsignacionHistoriaRepository es el puerto que usa la asignación de una
