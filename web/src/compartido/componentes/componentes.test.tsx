@@ -62,6 +62,30 @@ describe('Field', () => {
   })
 })
 
+describe('Field: texto de ayuda', () => {
+  it('muestra la ayuda y la asocia al campo', () => {
+    render(<Field name="horas" label="Horas" help="Ej.: 1,5" />)
+
+    const ayuda = screen.getByText('Ej.: 1,5')
+
+    expect(screen.getByLabelText('Horas').getAttribute('aria-describedby')).toBe(ayuda.id)
+  })
+
+  it('con ayuda y error, el campo queda asociado a los dos', () => {
+    render(<Field name="horas" label="Horas" help="Ej.: 1,5" error="inválido" />)
+
+    const descripcion = screen.getByLabelText('Horas').getAttribute('aria-describedby')
+
+    expect(descripcion).toBe(`${screen.getByText('Ej.: 1,5').id} ${screen.getByRole('alert').id}`)
+  })
+
+  it('sin ayuda no agrega descripción', () => {
+    render(<Field name="horas" label="Horas" />)
+
+    expect(screen.getByLabelText('Horas').hasAttribute('aria-describedby')).toBe(false)
+  })
+})
+
 describe('Button', () => {
   it('queda deshabilitado cuando se lo indica', () => {
     render(<Button disabled>Crear</Button>)

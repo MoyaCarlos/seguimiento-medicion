@@ -48,6 +48,16 @@ Característica: Imputación de horas trabajadas
       | -2    |
       | 0     |
 
+  Escenario: Carga de 20 minutos con el formato h:mm
+    Cuando "Ana" imputa el valor "0:20" a la historia con la fecha de hoy y la actividad "Revisar el PR"
+    Entonces la carga queda registrada con integrante "Ana", la fecha de hoy, la actividad "Revisar el PR", 20 minutos y el Sprint activo
+    Y el esfuerzo acumulado de la historia es de 0.33 horas
+
+  Escenario: Minutos fuera de rango en el formato h:mm
+    Cuando "Ana" intenta imputar "1:60" horas a la historia
+    Entonces la carga se rechaza con un error sobre el campo "horas"
+    Y la carga se rechaza con el mensaje "los minutos deben estar entre 00 y 59"
+
   Escenario: Horas no numéricas
     Cuando "Ana" intenta imputar "cuatro" horas a la historia
     Entonces la carga se rechaza con un error sobre el campo "horas"
