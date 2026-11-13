@@ -78,6 +78,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHILE** una historia está asignada a un Sprint `Pendiente`, el sistema **shall** permitir cambiar sus Story Points como si estuviera en el Product Backlog.
 - **WHEN** se edita una historia, **THEN** el sistema **shall** conservar su identificador, proyecto, estado y Sprint asignado.
 - **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial, mismo criterio que HU-04).
+- **IF** entre la lectura de la historia y la escritura de la edición el Sprint se inicia o se finaliza, y eso congela la estimación, **THEN** el sistema **shall** rechazar la edición con 409, sin modificar ningún campo, e informar que hay que recargar (#249, D19). La condición de D2b se evalúa en el mismo `UPDATE`.
 
 ## Requirements *(mandatory)*
 
@@ -98,6 +99,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-013**: Los cambios de una edición válida MUST persistir y seguir disponibles después de cerrar y volver a abrir la aplicación.
 - **FR-014**: Las historias creadas antes de esta funcionalidad MUST aparecer en el listado con los criterios de aceptación vacíos.
 - **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse, salvo con un Sprint `Finalizado`, donde MUST rechazarse (decisión D2b del equipo, spec 032).
+- **FR-016**: La edición MUST evaluar D2b en el mismo `UPDATE` que escribe los campos editables. Si el Sprint cambió a un estado que congela la estimación entre la validación y la escritura, el sistema MUST responder 409 y MUST NOT modificar la historia (#249, D19).
 
 ### Key Entities *(include if feature involves data)*
 

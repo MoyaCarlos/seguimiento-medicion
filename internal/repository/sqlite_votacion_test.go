@@ -180,7 +180,7 @@ func TestSQLiteVotacionRepository_ObtenerRondaActual_EsLaDeMayorNumero(t *testin
 func TestSQLiteVotacionRepository_RondaActualRevelada_SinRondas(t *testing.T) {
 	e := nuevoEscenarioVotacion(t)
 
-	_, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
+	_, _, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
 
 	if !errors.Is(err, domain.ErrVotacionNoIniciada) {
 		t.Errorf("se esperaba ErrVotacionNoIniciada, se obtuvo %v", err)
@@ -201,11 +201,14 @@ func TestSQLiteVotacionRepository_RondaActualRevelada_MiraLaDeMayorNumero(t *tes
 			mustExec(t, e.db, "INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (10, ?, 1, '2026-10-27T15:04:05Z')", e.historiaID)
 			mustExec(t, e.db, "INSERT INTO rondas_votacion (id, historia_id, numero, revelada_en) VALUES (11, ?, 2, ?)", e.historiaID, c.reveladaRondaDos)
 
-			revelada, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
+			rondaID, revelada, err := e.repo.RondaActualRevelada(context.Background(), e.historiaID)
 			if err != nil {
 				t.Fatalf("no se esperaba error: %v", err)
 			}
 
+			if rondaID != 11 {
+				t.Errorf("se esperaba la ronda actual 11, se obtuvo %d", rondaID)
+			}
 			if revelada != c.esperado {
 				t.Errorf("se esperaba revelada = %v, se obtuvo %v", c.esperado, revelada)
 			}

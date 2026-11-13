@@ -34,7 +34,7 @@ func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historiaID, usuarioI
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
-	revelada, err := s.votaciones.RondaActualRevelada(ctx, historia.ID)
+	rondaID, revelada, err := s.votaciones.RondaActualRevelada(ctx, historia.ID)
 	if err != nil {
 		return domain.BacklogItem{}, err
 	}
@@ -48,7 +48,7 @@ func (s *RegistrarEstimacion) Ejecutar(ctx context.Context, historiaID, usuarioI
 	if historia.EstimacionSP != nil && *historia.EstimacionSP == valor {
 		return historia, nil
 	}
-	if err := s.historias.GuardarEstimacion(ctx, historia.ID, valor); err != nil {
+	if err := s.historias.GuardarEstimacion(ctx, historia.ID, valor, rondaID); err != nil {
 		return domain.BacklogItem{}, err
 	}
 	return conEstimacion, nil

@@ -46,6 +46,8 @@ func TestEscribirError_LosErroresPreviosMantienenSuCodigo(t *testing.T) {
 		{"sprint no encontrado", domain.ErrSprintNoEncontrado, nethttp.StatusNotFound},
 		{"no es scrum master", domain.ErrNoEsScrumMaster, nethttp.StatusForbidden},
 		{"votación ya iniciada", domain.ErrVotacionYaIniciada, nethttp.StatusConflict},
+		{"edición desactualizada", domain.ErrEdicionDesactualizada, nethttp.StatusConflict},
+		{"registro de estimación desactualizado", domain.ErrRegistroEstimacionDesactualizado, nethttp.StatusConflict},
 		{"error desconocido", fmt.Errorf("boom"), nethttp.StatusInternalServerError},
 	}
 	for _, c := range casos {

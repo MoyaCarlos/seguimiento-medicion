@@ -119,3 +119,14 @@ var ErrHorasPorStoryPointInvalidas = ValidationError{Campo: "horas_por_story_poi
 // ErrCargaEnSprintFinalizado indica una carga de Story Points en una historia
 // sin estimar de un Sprint Finalizado (decisión D2b, reabierta en HU-03).
 var ErrCargaEnSprintFinalizado = ValidationError{Campo: "estimacion_sp", Mensaje: "no se pueden cargar Story Points en un Sprint Finalizado"}
+
+// ErrEdicionDesactualizada indica que el Sprint cambió entre la validación de
+// D2b y la escritura de la edición (#249). El repositorio la devuelve si el
+// UPDATE condicional no encuentra la fila.
+var ErrEdicionDesactualizada = errors.New("la historia cambió mientras la editabas: recargá y volvé a intentar")
+
+// ErrRegistroEstimacionDesactualizado indica que la historia o la ronda
+// cambiaron entre la validación y la escritura del registro de la estimación
+// acordada (#249). El repositorio lo devuelve si el UPDATE condicional no
+// afecta ninguna fila.
+var ErrRegistroEstimacionDesactualizado = errors.New("la historia o la ronda cambiaron mientras se registraba la estimación: recargá y volvé a intentar")

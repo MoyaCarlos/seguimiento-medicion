@@ -91,8 +91,8 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 ## R9. Concurrencia
 
-- **Decision**: `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido.
-- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04).
+- **Decision**: `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido, salvo la condición de D2b que se evalúa en el mismo `UPDATE` (#249, R11). Si el Sprint cambió a un estado que congela la estimación, la edición responde 409.
+- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04). D2b se exceptúa porque las métricas de un Sprint cerrado no guardan una foto de las historias completadas.
 
 ## R10. Story Points congelados en Sprints Activo o Finalizado (D2b)
 
@@ -110,3 +110,18 @@ documento registra las decisiones técnicas tomadas para el diseño.
   `EditarHistoria` depende de la interfaz `repository.SprintRepository` ya existente (DIP).
 - **Alternatives considered**: ponerla en el dominio (`ConDatosEditados`); el modelo de datos la
   asigna al servicio porque necesita el estado del Sprint, que no es parte de la historia.
+
+## R11. D2b atómica en la edición (#249)
+
+- **Decision**: `SQLiteBacklogRepository.Actualizar` escribe con un `UPDATE` condicional que
+  evalúa D2b contra el Sprint actual y la estimación nueva: si la estimación no cambia, el
+  `UPDATE` pasa; si cambia, rechaza cuando el Sprint actual es `Activo` o `Finalizado` (o
+  `Finalizado` en la carga inicial). La fila se devuelve con `RETURNING id`; si no hay fila,
+  devuelve `domain.ErrEdicionDesactualizada` (409) y no modifica nada.
+- **Rationale**: `EditarHistoria` validaba D2b con una lectura previa del Sprint y escribía en
+  otro paso; entre ambos el Sprint podía iniciarse o finalizarse y los Story Points cambiaban
+  igual. La condición en el `UPDATE` cierra esa ventana sin transacciones en el servicio y sin
+  repetir la regla en Go. Es el mismo criterio que #249 aplica a `RegistrarEstimacion`.
+- **Alternatives considered**: aceptar la ventana de milisegundos (descartado en #249);
+  transacción en el servicio (el servicio no conoce transacciones). No cambia el esquema ni
+  agrega migración.

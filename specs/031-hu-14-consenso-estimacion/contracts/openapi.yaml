@@ -98,7 +98,9 @@ paths:
       summary: Registrar la estimación acordada
       description: >-
         Solo el Scrum Master, con la ronda actual revelada. El valor puede ser cualquier carta de la
-        baraja, aunque nadie la haya votado. Se puede repetir: no cierra la votación.
+        baraja, aunque nadie la haya votado. Se puede repetir: no cierra la votación. D2b y que la
+        ronda siga siendo la actual y revelada se evalúan en el mismo UPDATE que escribe; si el estado
+        cambió entre la validación y la escritura, responde 409.
       operationId: registrarEstimacion
       parameters:
         - $ref: '#/components/parameters/ID'
@@ -131,6 +133,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '409':
+          description: >-
+            El Sprint se inició o finalizó, o la ronda dejó de ser la actual o revelada, entre la
+            validación y la escritura; no se modifica la historia (#249).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                mensaje: "la historia o la ronda cambiaron mientras se registraba la estimación: recargá y volvé a intentar"
         '404':
           description: La historia no existe (domina sobre cualquier otro error) o no tiene votación iniciada.
           content:
