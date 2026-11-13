@@ -30,3 +30,20 @@ it('Given el mensaje de datos de prueba cargados, When se estiliza, Then es una 
   const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
   expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
 })
+
+const bloque = (selector: string) =>
+  estilos.match(new RegExp(`^${selector.replace(/[.:]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? ''
+
+it('Given el encabezado de una pantalla, When se estiliza globalmente, Then h1 no lleva margen, el pretítulo queda a 6px y la línea del proyecto a 6px del título', () => {
+  expect(bloque('h1')).toMatch(/margin:\s*0\s*;/)
+  expect(bloque('.eyebrow')).toMatch(/margin:\s*0 0 6px/)
+  expect(bloque('.project-context')).toMatch(/margin:\s*6px 0 0/)
+  expect(bloque('.project-context')).toMatch(/font-size:\s*14\.5px/)
+  expect(estilos).not.toMatch(/\.page-header \.eyebrow\s*\{/)
+})
+
+it('Given Estado y Dashboard, When el encabezado ya tiene su separación global, Then no compensan el margen del pretítulo con márgenes negativos', () => {
+  const estado = readFileSync('src/features/estado/estado.css', 'utf8')
+
+  expect(estado).not.toMatch(/margin-bottom:\s*-/)
+})
