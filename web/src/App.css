@@ -663,7 +663,7 @@ select {
   color: var(--muted);
   display: flex;
   font-size: 12.5px;
-  justify-content: space-between;
+  justify-content: flex-end;
   margin-top: auto;
   padding-top: 12px;
 }
@@ -1091,4 +1091,20 @@ h1 {
   .ventana-fondo {
     animation: none;
   }
+}
+
+.lista-proyectos__acciones .button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.lista-proyectos__vacio .button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.proyecto-crear textarea {
+  min-height: 92px;
 }
