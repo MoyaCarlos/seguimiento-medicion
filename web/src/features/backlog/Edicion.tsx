@@ -114,14 +114,17 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
           onChange={(evento) => actualizar('criterios', evento.target.value)}
           disabled={enviando}
           aria-invalid={Boolean(errores.criterios)}
-          aria-describedby={errores.criterios ? `${id('criterios')}-error` : undefined}
+          aria-describedby={errores.criterios ? `${id('criterios')}-error` : `${id('criterios')}-ayuda`}
         />
+        <p id={`${id('criterios')}-ayuda`} className="field__ayuda">
+          Hasta 2000 caracteres. Admite Markdown.
+        </p>
         {errores.criterios && (
           <ErrorMessage id={`${id('criterios')}-error`} message={errores.criterios} />
         )}
       </div>
 
-      <div className="field">
+      <div className="field backlog-campo--corto">
         <label htmlFor={id('estimacion')}>Story Points</label>
         <select
           id={id('estimacion')}
@@ -146,8 +149,8 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
 
       {enviando && <LoadingIndicator />}
 
-      <div className="backlog-acciones">
-        <Button type="button" variant="secondary" onClick={onCancelar} disabled={enviando}>
+      <div className="backlog-panel__acciones">
+        <Button type="button" variant="quiet" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
         <Button type="submit" disabled={enviando}>

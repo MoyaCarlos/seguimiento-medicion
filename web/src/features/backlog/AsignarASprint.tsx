@@ -91,8 +91,8 @@ export function AsignarASprint({ historia, sprints, errorSprints, onAsignada, on
       {contenido()}
       {error && <ErrorMessage message={error} />}
       {enviando && <LoadingIndicator />}
-      <div className="backlog-acciones">
-        <Button type="button" variant="secondary" onClick={onCancelar} disabled={enviando}>
+      <div className="backlog-panel__acciones">
+        <Button type="button" variant="quiet" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
         {puedeAsignar && (

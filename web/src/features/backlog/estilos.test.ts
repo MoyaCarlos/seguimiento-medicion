@@ -169,8 +169,9 @@ it('Given los paneles de Editar y Asignar dentro de la tarjeta, When se estiliza
 })
 
 it('Given los campos de los paneles, When se estilizan, Then miden como los del prototipo y «Story Points» es un campo corto', () => {
+  expect(regla('.backlog-edicion .field input')).toMatch(/min-height:\s*42px/)
   for (const base of ['.backlog-edicion', '.backlog-asignacion']) {
-    expect(regla(`${base} .field input`), base).toMatch(/min-height:\s*42px/)
+    expect(regla(`${base} .field select`), base).toMatch(/min-height:\s*42px/)
     expect(regla(`${base} .field select`), base).toMatch(/font-size:\s*14\.5px/)
     expect(regla(`${base} .field label`), base).toMatch(/font-size:\s*13px/)
   }
