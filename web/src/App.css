@@ -159,6 +159,7 @@ select {
   gap: 11px;
   min-height: 40px;
   padding: 0 12px;
+  position: relative;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
@@ -169,9 +170,19 @@ select {
 }
 
 .barra-lateral__enlace--activo {
-  background: rgb(255 255 255 / 10%);
-  box-shadow: inset 3px 0 0 var(--accent);
+  background: rgb(255 255 255 / 9%);
   color: #fff;
+}
+
+.barra-lateral__enlace--activo::before {
+  background: var(--accent);
+  border-radius: 0 3px 3px 0;
+  bottom: 9px;
+  content: '';
+  left: -14px;
+  position: absolute;
+  top: 9px;
+  width: 3px;
 }
 
 .barra-lateral__enlace--activo .icono {
