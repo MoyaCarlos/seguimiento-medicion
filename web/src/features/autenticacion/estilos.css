@@ -252,28 +252,61 @@
 }
 
 .menu-usuario {
-  align-items: center;
-  display: flex;
   flex: none;
-  gap: 0.6rem;
   min-width: 0;
+  position: relative;
 }
 
-.menu-usuario-avatar {
+.menu-usuario--anonimo {
+  align-items: center;
+  display: flex;
+  gap: 0.6rem;
+}
+
+.menu-usuario--anonimo a {
+  color: var(--brand-dark);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.menu-usuario__boton {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  height: 40px;
+  padding: 0 10px 0 5px;
+}
+
+.menu-usuario__boton:hover {
+  background: #eef2f6;
+}
+
+.menu-usuario__boton svg {
+  color: var(--muted);
+  height: 15px;
+  width: 15px;
+}
+
+.menu-usuario__avatar {
   background: var(--nav);
   border-radius: 50%;
   color: #fff;
   display: grid;
   flex: none;
-  font-size: 0.75rem;
+  font-size: 12px;
   font-weight: 800;
   height: 30px;
   place-items: center;
   width: 30px;
 }
 
-.menu-usuario-nombre {
-  font-size: 0.85rem;
+.menu-usuario__nombre {
+  font-size: 13.5px;
   font-weight: 700;
   max-width: 14ch;
   overflow: hidden;
@@ -281,53 +314,90 @@
   white-space: nowrap;
 }
 
-.menu-usuario a {
-  color: var(--brand-dark);
-  font-weight: 600;
-  text-decoration: none;
+.menu-usuario__panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgb(15 27 45 / 18%);
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: 268px;
+  z-index: 30;
 }
 
-.menu-usuario button {
+.menu-usuario__cabecera {
   align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  color: var(--ink);
-  cursor: pointer;
-  display: inline-flex;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  gap: 0.4rem;
-  min-height: 36px;
-  padding: 0 0.75rem;
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px;
+}
+
+.menu-usuario__cabecera > div {
+  min-width: 0;
+}
+
+.menu-usuario__cabecera strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.menu-usuario button:hover {
-  background: var(--background);
+.menu-usuario__cabecera small {
+  color: #606f86;
+  display: block;
+  font-size: 12.5px;
 }
 
-@media (max-width: 480px) {
-  .menu-usuario-nombre {
-    max-width: 8ch;
-  }
-
-  .menu-usuario button {
-    justify-content: center;
-    padding: 0;
-    width: 36px;
-  }
-
-  .menu-usuario-accion {
-    clip: rect(0 0 0 0);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
-  }
+.menu-usuario__panel hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 6px 0;
 }
 
+.menu-usuario__item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 10px;
+  padding: 9px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.menu-usuario__item svg {
+  height: 17px;
+  width: 17px;
+}
+
+.menu-usuario__item--peligro {
+  color: #be123c;
+}
+
+.menu-usuario__item--peligro:hover {
+  background: #fde8ee;
+}
+
+@media (max-width: 640px) {
+  .menu-usuario__nombre {
+    display: none;
+  }
+
+  .menu-usuario__boton {
+    padding: 0 8px 0 4px;
+  }
+}
 
 @media (max-width: 860px) {
   .pantalla-acceso {
