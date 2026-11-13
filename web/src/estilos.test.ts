@@ -47,3 +47,14 @@ it('Given Estado y Dashboard, When el encabezado ya tiene su separación global,
 
   expect(estado).not.toMatch(/margin-bottom:\s*-/)
 })
+
+it('Given el ítem activo de la barra lateral, When se estiliza, Then la barra de acento va pegada al borde de la barra lateral y no dentro del ítem', () => {
+  const activo = bloque('.barra-lateral__enlace--activo')
+  const barra = bloque('.barra-lateral__enlace--activo::before')
+
+  expect(activo).not.toMatch(/box-shadow:\s*inset/)
+  expect(barra).toMatch(/left:\s*-14px/)
+  expect(barra).toMatch(/width:\s*3px/)
+  expect(barra).toMatch(/background:\s*var\(--accent\)/)
+  expect(bloque('.barra-lateral__enlace')).toMatch(/position:\s*relative/)
+})
