@@ -95,3 +95,16 @@ it('Given el foco visible, When se dibuja, Then el contorno es sólido y se dist
   expect(contraste(contorno, FONDO_PAGINA)).toBeGreaterThanOrEqual(3)
   expect(contraste(contorno, BLANCO)).toBeGreaterThanOrEqual(3)
 })
+
+it('Given el foco en la barra lateral, When se dibuja, Then el aro es de 2px, se distingue 3:1 del fondo oscuro y rodea solo el control', () => {
+  const aro = bloque('.barra-lateral :focus-visible')
+  const marca = bloque('.barra-lateral .marca')
+  const activo = bloque('.barra-lateral__enlace--activo:focus-visible')
+
+  expect(aro).toMatch(/outline-width:\s*2px/)
+  expect(aro).toMatch(/outline-offset:\s*2px/)
+  expect(contraste(resolver(aro.match(/outline-color:\s*([^;]+);/)?.[1].trim() ?? ''), token('--nav'))).toBeGreaterThanOrEqual(3)
+  expect(marca).not.toMatch(/padding:\s*4px 8px 16px/)
+  expect(marca).toMatch(/margin-bottom:\s*12px/)
+  expect(activo).toMatch(/box-shadow:\s*none/)
+})
