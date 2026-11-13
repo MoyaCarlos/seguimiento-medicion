@@ -95,14 +95,17 @@ describe('GraficoVelocidad', () => {
   })
 
   it.each([
-    [3, ['0', '2', '4']],
-    [40, ['0', '20', '40']],
-    [16, ['0', '8', '16']],
-  ])('Given un máximo de %d Story Points, When veo el eje, Then las marcas se calculan con ese máximo', (maximo, marcas) => {
+    [3, 0.75],
+    [40, 1],
+    [16, 1],
+  ])('Given un máximo de %d Story Points, When veo el gráfico, Then la barra más alta ocupa %d del alto según el techo del eje', (maximo, proporcion) => {
     const { container } = render(<GraficoVelocidad sprints={[sprint(1, maximo, 1)]} />)
 
-    const textos = Array.from(container.querySelectorAll('.recharts-yAxis .recharts-cartesian-axis-tick-value')).map((t) => t.textContent)
-    expect(textos).toEqual(marcas)
+    const lineas = Array.from(container.querySelectorAll('.recharts-cartesian-grid-horizontal line')).map((linea) => Number(linea.getAttribute('y1')))
+    const alto = Math.max(...lineas) - Math.min(...lineas)
+    const barra = container.querySelector('.recharts-bar-rectangle path')
+    expect(lineas).toHaveLength(3)
+    expect(Number(barra?.getAttribute('height')) / alto).toBeCloseTo(proporcion, 1)
   })
 
   it('Given un Sprint, When veo el gráfico, Then cada barra muestra su valor y el eje no tiene título', () => {

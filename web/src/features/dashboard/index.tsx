@@ -42,7 +42,11 @@ function PantallaDashboard({ id }: { id: string }) {
 
   return (
     <div className="dashboard-pantalla">
-      <h1>Dashboard</h1>
+      <div>
+        <p className="eyebrow">Proyecto #{id}</p>
+        <h1>Dashboard</h1>
+        <p className="project-context">Proyecto actual: <strong>{id}</strong></p>
+      </div>
       {error && <ErrorMessage message={error} />}
       {!metricas && !error && <LoadingIndicator />}
       {metricas && metricas.sprints.length === 0 && <EstadoVacio proyectoId={id} />}

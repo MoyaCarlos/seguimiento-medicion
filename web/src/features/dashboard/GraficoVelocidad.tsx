@@ -1,16 +1,18 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { datosDelGrafico, type MetricasDeSprint } from './metricas'
+import { Bar, BarChart, CartesianGrid, LabelList, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { datosDelGrafico, ejeDelGrafico, type MetricasDeSprint } from './metricas'
 
-const ALTO = 320
-const ANCHO_POR_SPRINT = 72
-const ANCHO_DEL_EJE_Y = 56
-const COLOR_COMPROMETIDOS = 'var(--dashboard-comprometidos)'
-const COLOR_COMPLETADOS = 'var(--lilac-dark)'
+const ALTO = 230
+const ANCHO_MINIMO = 520
+const ANCHO_POR_SPRINT = 120
+const COLOR_COMPROMETIDOS = '#64748b'
+const COLOR_COMPLETADOS = '#0d9488'
 const RAYADO = 'dashboard-comprometidos-rayado'
+const TEXTO_DEL_EJE = { fill: '#64748b', fontSize: 11.5 }
 
 export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
   const filas = datosDelGrafico(sprints)
-  const anchoMinimo = ANCHO_DEL_EJE_Y + filas.length * ANCHO_POR_SPRINT
+  const anchoMinimo = Math.max(ANCHO_MINIMO, filas.length * ANCHO_POR_SPRINT)
+  const marcas = ejeDelGrafico(Math.max(0, ...filas.flatMap((fila) => [fila.comprometidos, fila.completados])))
 
   return (
     <figure className="dashboard-tarjeta dashboard-grafico" aria-labelledby="dashboard-grafico-titulo">
@@ -35,45 +37,45 @@ export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
       >
         <div style={{ minWidth: anchoMinimo }}>
           <ResponsiveContainer width="100%" height={ALTO} initialDimension={{ width: anchoMinimo, height: ALTO }}>
-            <BarChart data={filas} barGap={2} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
+            <BarChart data={filas} barGap={8} margin={{ top: 26, right: 10, bottom: 8, left: 0 }}>
               <defs>
                 <pattern id={RAYADO} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                  <rect width="6" height="6" fill="var(--surface)" />
-                  <rect width="3" height="6" fill={COLOR_COMPROMETIDOS} />
+                  <rect width="6" height="6" fill="#eef2f6" />
+                  <rect width="2.5" height="6" fill="#94a3b8" />
                 </pattern>
               </defs>
-              <CartesianGrid vertical={false} stroke="var(--line)" />
-              <XAxis dataKey="sprint" interval={0} tickLine={false} stroke="var(--muted)" />
+              <CartesianGrid vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="sprint" interval={0} tickLine={false} axisLine={false} tick={TEXTO_DEL_EJE} />
               <YAxis
-                allowDecimals={false}
-                width={48}
+                domain={[0, marcas[2]]}
+                ticks={marcas}
+                width={44}
                 tickLine={false}
                 axisLine={false}
-                stroke="var(--muted)"
-                label={{ value: 'Story Points', angle: -90, position: 'insideLeft', fill: 'var(--muted)' }}
-              />
-              <Tooltip
-                itemSorter={(serie) => (serie.dataKey === 'comprometidos' ? 0 : 1)}
-                itemStyle={{ color: 'var(--ink)' }}
-                cursor={{ fill: 'rgb(96 68 147 / 8%)' }}
+                tick={TEXTO_DEL_EJE}
               />
               <Bar
                 dataKey="comprometidos"
                 name="Comprometidos"
                 fill={`url(#${RAYADO})`}
                 stroke={COLOR_COMPROMETIDOS}
-                radius={[4, 4, 0, 0]}
-                maxBarSize={32}
+                strokeWidth={1.2}
+                radius={3}
+                barSize={34}
                 isAnimationActive={false}
-              />
+              >
+                <LabelList dataKey="comprometidos" position="top" fill="#0f1b2d" fontSize={12} fontWeight={700} />
+              </Bar>
               <Bar
                 dataKey="completados"
                 name="Completados"
                 fill={COLOR_COMPLETADOS}
-                radius={[4, 4, 0, 0]}
-                maxBarSize={32}
+                radius={3}
+                barSize={34}
                 isAnimationActive={false}
-              />
+              >
+                <LabelList dataKey="completados" position="top" fill="#0f1b2d" fontSize={12} fontWeight={700} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
