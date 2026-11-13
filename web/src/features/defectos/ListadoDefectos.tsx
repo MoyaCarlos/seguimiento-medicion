@@ -11,7 +11,7 @@ type Props = {
   error: string
   haySprintActivo: boolean
   sprints: SprintResumen[]
-  alResolver: () => void
+  alResolver: (mensaje: string) => void
 }
 
 export function ListadoDefectos({
@@ -30,8 +30,8 @@ export function ListadoDefectos({
     setErrorResolucion('')
     setResolviendo(id)
     try {
-      await resolverDefecto(id)
-      alResolver()
+      const resuelto = await resolverDefecto(id)
+      alResolver(`Defecto #${id} resuelto en el ${etiquetaSprint(resuelto.sprint_resolucion_id ?? 0, sprints)}`)
     } catch (causa) {
       setErrorResolucion(mensajeDeError(causa))
     } finally {

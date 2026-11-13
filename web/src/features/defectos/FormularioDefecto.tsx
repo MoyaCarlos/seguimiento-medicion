@@ -18,7 +18,6 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
   const [severidad, setSeveridad] = useState('')
   const [historiaId, setHistoriaId] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [confirmado, setConfirmado] = useState(false)
   const [aviso, setAviso] = useState('')
   const [errores, setErrores] = useState<Record<string, string>>({})
 
@@ -27,7 +26,6 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (enviando) return
-    setConfirmado(false)
     setAviso('')
 
     const validacion: Record<string, string> = {}
@@ -47,7 +45,6 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
       setDescripcion('')
       setSeveridad('')
       setHistoriaId('')
-      setConfirmado(true)
       alRegistrar()
     } catch (error) {
       const clasificado = clasificarError(error)
@@ -61,13 +58,11 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
   function limpiar(campo: string) {
     setErrores((actuales) => ({ ...actuales, [campo]: '' }))
     setAviso('')
-    setConfirmado(false)
   }
 
   return (
     <form onSubmit={guardar} noValidate aria-label="Registrar defecto">
       {aviso && <ErrorMessage message={aviso} />}
-      {confirmado && <p className="message" role="status">Defecto registrado</p>}
 
       <div className="field">
         <label htmlFor="descripcion">Descripción</label>

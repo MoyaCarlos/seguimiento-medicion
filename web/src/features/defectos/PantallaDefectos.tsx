@@ -26,6 +26,7 @@ export function PantallaDefectos({ proyectoId }: Props) {
   const [historias, setHistorias] = useState<HistoriaDeProyecto[] | null>(null)
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [errorDatos, setErrorDatos] = useState('')
+  const [exito, setExito] = useState('')
 
   function recargarDefectos() {
     setCargandoDefectos(true)
@@ -91,6 +92,11 @@ export function PantallaDefectos({ proyectoId }: Props) {
         </div>
       </div>
 
+      {exito && (
+        <p className="defectos-exito" role="status">
+          {exito}
+        </p>
+      )}
       {cargandoDatos && <LoadingIndicator />}
       {errorDatos && <ErrorMessage message={errorDatos} />}
       {sinSprintActivo && (
@@ -111,7 +117,10 @@ export function PantallaDefectos({ proyectoId }: Props) {
             <FormularioDefecto
               proyectoId={proyectoId}
               historias={historias}
-              alRegistrar={recargarDefectos}
+              alRegistrar={() => {
+              recargarDefectos()
+              setExito('Defecto registrado')
+            }}
             />
           </section>
         )}
@@ -124,7 +133,10 @@ export function PantallaDefectos({ proyectoId }: Props) {
             error={errorDefectos}
             haySprintActivo={Boolean(activo)}
             sprints={sprints ?? []}
-            alResolver={recargarDefectos}
+            alResolver={(mensaje) => {
+            recargarDefectos()
+            setExito(mensaje)
+          }}
           />
         </section>
       </div>
