@@ -319,10 +319,6 @@ select {
   justify-content: space-between;
 }
 
-.page-header .eyebrow {
-  margin-bottom: 0.35rem;
-}
-
 .visually-hidden {
   border: 0;
   clip: rect(0 0 0 0);
@@ -556,7 +552,9 @@ select {
 }
 
 .project-context {
-  margin: 0;
+  color: var(--muted);
+  font-size: 14.5px;
+  margin: 6px 0 0;
 }
 
 .project-context strong {
@@ -568,7 +566,7 @@ select {
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.13em;
-  margin: 0 0 0.8rem;
+  margin: 0 0 6px;
   text-transform: uppercase;
 }
 
@@ -577,7 +575,7 @@ h1 {
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.15;
-  margin: 0 0 1rem;
+  margin: 0;
 }
 
 .placeholder p:not(.eyebrow) {

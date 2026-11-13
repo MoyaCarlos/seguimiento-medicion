@@ -14,7 +14,7 @@ export function Component() {
 
   return (
     <div className="estado-pantalla">
-      {esIdValido(id) && <p className="eyebrow estado-pretitulo">Proyecto #{id}</p>}
+      {esIdValido(id) && <p className="eyebrow">Proyecto #{id}</p>}
       <div className="estado-titulo">
         <h1>Estado del proyecto</h1>
         {esIdValido(id) && <InsigniaDeEstado key={id} id={id} />}
