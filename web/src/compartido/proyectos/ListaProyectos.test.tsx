@@ -7,6 +7,7 @@ import type { ProyectoResumen } from './api'
 import { ListaProyectos } from './ListaProyectos'
 
 function p(id: number, nombre: string, resto: Partial<ProyectoResumen> = {}): ProyectoResumen {
+  // `rol` es opcional en ProyectoResumen; sin él la tarjeta no muestra etiqueta.
   return { id, nombre, descripcion: '', fecha_inicio: null, fecha_fin: null, ...resto }
 }
 
@@ -63,6 +64,26 @@ describe('ListaProyectos', () => {
     expect(await screen.findByText(/Todavía no hay proyectos/)).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+
+  it('Escenario 5: veo solo mis proyectos con mi rol', async () => {
+    abrir([p(1, 'Alfa', { rol: 'scrum_master' }), p(2, 'Beta', { rol: 'product_builder' })])
+
+    const alfa = await screen.findByRole('link', { name: 'Alfa (#1)' })
+    const beta = screen.getByRole('link', { name: 'Beta (#2)' })
+
+    expect(within(alfa).getByText('Scrum Master')).toBeTruthy()
+    expect(within(alfa).queryByText('Product Builder')).toBeNull()
+    expect(within(beta).getByText('Product Builder')).toBeTruthy()
+    expect(within(beta).queryByText('Scrum Master')).toBeNull()
+  })
+
+  it('Escenario 9: sin proyectos veo el mensaje y puedo crear uno', async () => {
+    abrir([])
+
+    expect(await screen.findByText(/No integrás ningún proyecto/)).toBeTruthy()
+    expect(screen.getByText(/Creá uno con el formulario/)).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   describe('tarjetas y contador', () => {
