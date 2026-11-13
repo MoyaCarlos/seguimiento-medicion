@@ -983,6 +983,17 @@ describe('Pantalla de votación - acciones de gestión según el rol (HU-21)', (
     expect(nota(boton)).toBe('Solo el Scrum Master puede revelar los votos')
   })
 
+  it('Escenario 2: como Product Builder del proyecto, «Revelar» sigue deshabilitada aunque el actor elegido sea Scrum Master, con la nota "Solo el Scrum Master puede revelar los votos"', async () => {
+    simularRol('product_builder')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+    await elegirActor('Beta Uno')
+
+    const boton = await screen.findByRole('button', { name: 'Revelar' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede revelar los votos')
+  })
+
   it('Escenario 1: como Scrum Master «Revelar» está habilitada', async () => {
     simularRol('scrum_master')
     servidor.votos = { 1: 5, 2: 5, 3: 5 }
