@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import { Icono } from './Icono'
 
-type Props = { children: ReactNode; alCerrar(): void }
+type Props = { children: ReactNode; alCerrar(): void; lado?: 'derecha' }
 
 const FOCALIZABLES =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export function VentanaModal({ children, alCerrar }: Props) {
+export function VentanaModal({ children, alCerrar, lado }: Props) {
   const dialogo = useRef<HTMLDivElement>(null)
   const empezoEnElFondo = useRef(false)
   // Se toma al renderizar: los hijos con autoFocus ya habrían movido el foco cuando corre el efecto.
@@ -67,7 +67,7 @@ export function VentanaModal({ children, alCerrar }: Props) {
 
   return (
     <div
-      className="ventana-fondo"
+      className={`ventana-fondo${lado ? ' ventana-fondo--lateral' : ''}`}
       onMouseDown={(evento) => {
         empezoEnElFondo.current = evento.target === evento.currentTarget
       }}
@@ -76,7 +76,7 @@ export function VentanaModal({ children, alCerrar }: Props) {
       }}
       onKeyDown={alTeclear}
     >
-      <div ref={dialogo} role="dialog" aria-modal="true" className="ventana" tabIndex={-1}>
+      <div ref={dialogo} role="dialog" aria-modal="true" className={`ventana${lado ? ' ventana--lateral' : ''}`} tabIndex={-1}>
         {children}
         <button type="button" className="ventana__cerrar" aria-label="Cerrar" data-cerrar onClick={alCerrar}>
           <Icono nombre="cerrar" />

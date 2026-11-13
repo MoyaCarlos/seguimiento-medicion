@@ -19,9 +19,76 @@
   outline: none;
 }
 
+.backlog-crear {
+  display: grid;
+  gap: 18px;
+}
+
+.backlog-crear__cabecera {
+  padding-right: 48px;
+}
+
+.backlog-crear__cabecera h2 {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.backlog-crear__cabecera .project-context {
+  margin: 4px 0 0;
+}
+
+.backlog-form fieldset {
+  border: 0;
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.backlog-form__fila {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.backlog-crear__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .backlog-confirmacion p,
 .backlog-confirmacion dd {
   overflow-wrap: anywhere;
+}
+
+.backlog-resumen {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.backlog-resumen div {
+  display: grid;
+  gap: 2px;
+}
+
+.backlog-resumen dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.backlog-resumen dd {
+  margin: 0;
+}
+
+.backlog-resumen em {
+  color: var(--muted);
 }
 
 .backlog-encabezado {
@@ -321,6 +388,10 @@
 }
 
 @media (max-width: 640px) {
+  .backlog-form__fila {
+    grid-template-columns: 1fr;
+  }
+
   .backlog-encabezado {
     align-items: flex-start;
     flex-direction: column;
