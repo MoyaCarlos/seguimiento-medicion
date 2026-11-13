@@ -250,6 +250,7 @@ describe('edición de una historia (US2)', () => {
       criterios_aceptacion:
         'Dado que tengo cuenta de Google, cuando ingreso, entonces veo el tablero',
       estimacion_sp: 8,
+      estimacion_sp_leida: 5,
     })
 
     const actualizado = articuloDe(actualizada.titulo)
@@ -275,6 +276,7 @@ describe('edición de una historia (US2)', () => {
     await screen.findByText('Historia actualizada')
     expect(cuerpoEnviado(fetchSimulado).criterios_aceptacion).toBeNull()
     expect(cuerpoEnviado(fetchSimulado).estimacion_sp).toBeNull()
+    expect(cuerpoEnviado(fetchSimulado).estimacion_sp_leida).toBe(5)
   })
 
   it('US2.2: sin título advierte junto al campo y no llama a la API', async () => {
@@ -344,6 +346,32 @@ describe('edición de una historia (US2)', () => {
     expect(storyPoints.getAttribute('aria-invalid')).toBe('true')
     expect(mensajeDe(storyPoints)).toBe(mensaje)
     expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Título conservado')
+    expect(screen.queryByText('Historia actualizada')).toBeNull()
+  })
+
+  it('US2.7: si la estimación cambió mientras editaba, muestra el 409 junto a Story Points y conserva los datos', async () => {
+    const mensaje = 'la estimación cambió mientras editabas: recargá la historia y volvé a intentar'
+    const fetchSimulado = simularApi(conHistorias(MUST), () =>
+      respuesta(409, { campo: 'estimacion_sp', mensaje }),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirEdicion(MUST.titulo)
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Título conservado')
+    await user.click(botonGuardar())
+
+    expect(await screen.findByText(mensaje)).toBeTruthy()
+    const storyPoints = screen.getByLabelText('Story Points')
+    expect(storyPoints.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(storyPoints)).toBe(mensaje)
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Título conservado')
+    expect(cuerpoEnviado(fetchSimulado)).toMatchObject({
+      estimacion_sp: 5,
+      estimacion_sp_leida: 5,
+    })
     expect(screen.queryByText('Historia actualizada')).toBeNull()
   })
 
