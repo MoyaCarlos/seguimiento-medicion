@@ -239,6 +239,17 @@ describe('panel del proyecto', () => {
     expect(await descarga.crear.mock.calls[0][0].text()).toBe('%PDF-1.4 contenido')
   })
 
+  it('Given el resumen de un proyecto, When se muestra, Then "Exportar reporte del proyecto" es el botón compartido de exportar, con su flecha', async () => {
+    responderPanelYReporte(respuestaPdf())
+    abrir()
+    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+
+    const boton = screen.getByRole('button', { name: 'Exportar reporte del proyecto' })
+
+    expect(boton.className).toContain('reporte-exportar__boton')
+    expect(boton.querySelector('svg')).toBeTruthy()
+  })
+
   it('US5.3: Given que el backend informa un error de generación, When presiono "Exportar reporte del proyecto", Then veo el mensaje y no se descarga un archivo', async () => {
     const usuario = userEvent.setup()
     const descarga = simularDescarga()

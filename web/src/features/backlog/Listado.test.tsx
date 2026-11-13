@@ -139,7 +139,7 @@ describe('listado del Product Backlog (US1)', () => {
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/backlog')
 
     const must = articuloDe(MUST.titulo)
-    expect(within(must).getByText('Historia #3')).toBeTruthy()
+    expect(within(must).getByText('#3')).toBeTruthy()
     expect(within(must).getByText('Must have')).toBeTruthy()
     expect(within(must).getByText('Nueva')).toBeTruthy()
     expect(within(must).getByText('5 Story Points')).toBeTruthy()
@@ -150,7 +150,7 @@ describe('listado del Product Backlog (US1)', () => {
 
     const should = articuloDe(SHOULD.titulo)
     expect(within(should).getByText('Sin estimar')).toBeTruthy()
-    expect(within(should).getByText('Valor de negocio: Sin valor de negocio')).toBeTruthy()
+    expect(within(should).getByText('Sin valor de negocio')).toBeTruthy()
     expect(within(should).getByText('Sin criterios de aceptación')).toBeTruthy()
   })
 
@@ -162,7 +162,7 @@ describe('listado del Product Backlog (US1)', () => {
     const articulo = articuloDe(MARKDOWN.titulo)
 
     expect(articulo.querySelector('strong')?.textContent).toBe('Importante:')
-    expect(articulo.querySelectorAll('li')).toHaveLength(4)
+    expect(articulo.querySelectorAll('.markdown li')).toHaveLength(4)
     expect(within(articulo).getByText('primer paso')).toBeTruthy()
     expect(within(articulo).getByText('caso dos')).toBeTruthy()
   })
@@ -253,7 +253,7 @@ describe('edición de una historia (US2)', () => {
     })
 
     const actualizado = articuloDe(actualizada.titulo)
-    expect(within(actualizado).getByText('Historia #3')).toBeTruthy()
+    expect(within(actualizado).getByText('#3')).toBeTruthy()
     expect(within(actualizado).getByText('Nueva')).toBeTruthy()
     expect(within(actualizado).getByText('8 Story Points')).toBeTruthy()
     expect(screen.queryByLabelText('Título')).toBeNull()
@@ -590,6 +590,113 @@ describe('acceso a la votación de Planning Poker (HU-02, US4.1)', () => {
     const enlaceShould = within(articuloDe(SHOULD.titulo)).getByRole('link', { name: 'Votar' })
     expect(enlaceMust.getAttribute('href')).toBe('/projects/42/votacion/3')
     expect(enlaceShould.getAttribute('href')).toBe('/projects/42/votacion/1')
+  })
+})
+
+describe('presentación de la lista según el prototipo (#230)', () => {
+  const WONT: Historia = { ...SHOULD, id: 9, titulo: 'Como usuario quiero algo descartado', prioridad: 'W' }
+  const COULD: Historia = { ...SHOULD, id: 8, titulo: 'Como usuario quiero algo opcional', prioridad: 'C' }
+
+  it('Given el proyecto 42 con 2 historias, When se abre, Then el pretítulo es "Proyecto #42" y la bajada cuenta las historias sin Sprint', async () => {
+    simularApi(conHistorias(MUST, SHOULD))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    expect(screen.getByText('Proyecto #42')).toBeTruthy()
+    expect(screen.getByText('2 historias sin Sprint')).toBeTruthy()
+    expect(screen.queryByText(/Proyecto actual/)).toBeNull()
+  })
+
+  it('Given una sola historia, When se abre, Then la bajada va en singular', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+
+    expect(await screen.findByText('1 historia sin Sprint')).toBeTruthy()
+  })
+
+  it('Given 2 historias, When asigno una a un Sprint, Then la bajada pasa a "1 historia sin Sprint"', async () => {
+    simularApi(conHistorias(MUST, SHOULD), undefined, conSprints(...SPRINTS), () =>
+      respuesta(200, { ...MUST, sprint_id: 12 }),
+    )
+    abrir()
+    await screen.findByText('2 historias sin Sprint')
+
+    await abrirAsignacion(MUST.titulo)
+    await userEvent.selectOptions(await screen.findByLabelText('Sprint'), '12')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect(await screen.findByText('1 historia sin Sprint')).toBeTruthy()
+  })
+
+  it('Given el listado, When se muestra, Then "Nueva historia" es un enlace con icono a la pantalla de creación', async () => {
+    simularApi(conHistorias())
+    abrir()
+
+    const enlace = await screen.findByRole('link', { name: 'Nueva historia' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/42/backlog/nueva')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given una historia, When se muestra, Then el número va junto al título y el título es el h2', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(MUST.titulo)
+
+    expect(within(articulo).getByRole('heading', { level: 2 }).textContent).toBe(MUST.titulo)
+    expect(within(articulo).getByText('#3').nextElementSibling?.tagName).toBe('H2')
+  })
+
+  it('Given historias de las cuatro prioridades, When se muestran, Then cada tarjeta lleva el marcador de su prioridad', async () => {
+    simularApi(conHistorias(MUST, SHOULD, COULD, WONT))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    expect(articuloDe(MUST.titulo).className).toContain('backlog-item--must')
+    expect(articuloDe(SHOULD.titulo).className).toContain('backlog-item--should')
+    expect(articuloDe(COULD.titulo).className).toContain('backlog-item--could')
+    expect(articuloDe(WONT.titulo).className).toContain('backlog-item--wont')
+  })
+
+  it('Given una historia, When se muestra, Then prioridad, estado, puntos y valor son una lista de etiquetas', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const etiquetas = within(articuloDe(MUST.titulo)).getByRole('list')
+
+    expect(within(etiquetas).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Must have',
+      'Nueva',
+      '5 Story Points',
+      'Valor de negocio: 13',
+    ])
+  })
+
+  it('Given una historia sin estimar y sin valor, When se muestra, Then esas dos etiquetas llevan el estilo de "ninguno"', async () => {
+    simularApi(conHistorias(SHOULD))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(SHOULD.titulo)
+
+    expect(within(articulo).getByText('Sin estimar').className).toContain('backlog-chip--ninguno')
+    expect(within(articulo).getByText('Sin valor de negocio').className).toContain('backlog-chip--ninguno')
+    expect(within(articulo).getByText('Should have').className).not.toContain('backlog-chip--ninguno')
+  })
+
+  it('Given una historia, When se muestra, Then "Editar" lleva un icono y "Votar" es el enlace de contorno', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(MUST.titulo)
+
+    expect(within(articulo).getByRole('button', { name: 'Editar' }).querySelector('svg')).toBeTruthy()
+    expect(within(articulo).getByRole('link', { name: 'Votar' }).className).toContain('backlog-votar')
   })
 })
 
