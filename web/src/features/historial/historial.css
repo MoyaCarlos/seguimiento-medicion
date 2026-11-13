@@ -365,13 +365,8 @@
 }
 
 @media (max-width: 600px) {
-  .historial-tarjeta {
+  .historial-tarjeta:not(.historial-sprint) {
     padding: 1.1rem;
-  }
-
-  .historial-metrica {
-    flex-basis: 40%;
-    padding: 0.7rem 0.75rem;
   }
 }
 
