@@ -105,6 +105,8 @@ describe('MenuUsuario', () => {
 
   it('Escape lo cierra y devuelve el foco al botón', async () => {
     const { usuario, boton } = await abrirMenu()
+    await usuario.tab()
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cerrar sesión' }))
 
     await usuario.keyboard('{Escape}')
 
