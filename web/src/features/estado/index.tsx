@@ -14,16 +14,16 @@ export function Component() {
 
   return (
     <div className="estado-pantalla">
-      {esIdValido(id) && <p className="eyebrow">Proyecto #{id}</p>}
-      <div className="estado-titulo">
-        <h1>Estado del proyecto</h1>
-        {esIdValido(id) && <InsigniaDeEstado key={id} id={id} />}
+      <div className="estado-cabecera">
+        {esIdValido(id) && <p className="eyebrow">Proyecto #{id}</p>}
+        <div className="estado-titulo">
+          <h1>Estado del proyecto</h1>
+          {esIdValido(id) && <InsigniaDeEstado key={id} id={id} />}
+        </div>
+        {esIdValido(id) && <p className="project-context">Proyecto actual: <strong>{id}</strong></p>}
       </div>
       {esIdValido(id) ? (
-        <>
-          <p className="project-context">Proyecto actual: <strong>{id}</strong></p>
-          <AvanceDelProyecto key={id} id={id} />
-        </>
+        <AvanceDelProyecto key={id} id={id} />
       ) : (
         <ErrorMessage message={`El proyecto "${id}" no es válido`} />
       )}
