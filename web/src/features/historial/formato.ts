@@ -1,17 +1,7 @@
-export const SIN_DATOS = 'sin datos'
-
-export function numero(valor: number | null): string {
-  if (valor === null) return SIN_DATOS
-  return valor.toLocaleString('es-AR', { maximumFractionDigits: 2 })
-}
+import { formatoNumero } from '../../compartido/formato/numeros'
 
 export function conUnidad(valor: number | null, unidad: string): string {
-  return valor === null ? SIN_DATOS : `${numero(valor)}${unidad}`
-}
-
-export function desviacion(horas: number | null, porcentaje: number | null): string {
-  if (horas === null) return SIN_DATOS
-  return `${conUnidad(horas, ' h')} (${conUnidad(porcentaje, '%')})`
+  return valor === null ? formatoNumero(valor) : `${formatoNumero(valor)}${unidad}`
 }
 
 export function fecha(iso: string): string {

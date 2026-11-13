@@ -4,7 +4,8 @@ import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { descargarReporteSprint, obtenerDetalleSprint } from './api'
-import { conUnidad, desviacion, numero, periodo } from './formato'
+import { formatoNumero as numero, textoDeDesviacion } from '../../compartido/formato/numeros'
+import { conUnidad, periodo } from './formato'
 import { BarraAvance, Chip, Metrica } from './Piezas'
 import type { DefectoDeSprint, DetalleSprint, HistoriaComprometida } from './tipos'
 import { useConsulta } from './useConsulta'
@@ -52,10 +53,10 @@ function Contenido({ sprint, proyectoId }: { sprint: DetalleSprint; proyectoId: 
           <Metrica nombre="Story Points planificados" valor={numero(metricas.story_points_planificados)} />
           <Metrica nombre="Story Points completados" valor={numero(metricas.story_points_completados)} />
           <Metrica nombre="Velocidad" valor={numero(metricas.velocidad)} />
-          <Metrica nombre="Historias completadas" valor={conUnidad(metricas.porcentaje_historias_completadas, '%')} />
+          <Metrica nombre="Historias completadas" valor={conUnidad(metricas.porcentaje_historias_completadas, ' %')} />
           <Metrica nombre="Horas estimadas" valor={conUnidad(metricas.horas_estimadas, ' h')} />
           <Metrica nombre="Horas reales" valor={conUnidad(metricas.horas_reales, ' h')} />
-          <Metrica nombre="Desviación" valor={desviacion(metricas.desviacion_horas, metricas.desviacion_porcentaje)} />
+          <Metrica nombre="Desviación" valor={textoDeDesviacion(metricas.desviacion_horas, metricas.desviacion_porcentaje)} />
           <Metrica nombre="Defectos detectados" valor={numero(metricas.defectos_detectados)} />
           <Metrica nombre="Defectos resueltos" valor={numero(metricas.defectos_resueltos)} />
         </dl>

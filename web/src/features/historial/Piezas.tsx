@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { SIN_DATOS } from './formato'
+const SIN_DATOS = 'sin datos'
 
 export function Metrica({ nombre, valor }: { nombre: string; valor: string }) {
   return (
