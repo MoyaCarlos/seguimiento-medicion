@@ -795,3 +795,24 @@ describe('pestañas inferiores en pantallas angostas', () => {
     expect(screen.queryByRole('navigation', { name: 'Pestañas del proyecto' })).toBeNull()
   })
 })
+
+describe('menú lateral y selector de proyecto', () => {
+  it('Given el menú lateral abierto en una pantalla angosta, When elijo otro proyecto o «Nuevo proyecto», Then el menú se cierra', async () => {
+    proyectosSimulados = [{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }]
+    const usuario = userEvent.setup()
+    abrir('/projects/1/backlog')
+    await esperarProyectoEnSelector('Alfa')
+    const armazon = () => document.querySelector('.armazon')
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    await abrirSelector(usuario)
+    expect(armazon()?.classList.contains('armazon--menu-abierto')).toBe(true)
+
+    await usuario.click(screen.getByRole('option', { name: 'Beta (#2)' }))
+    expect(armazon()?.classList.contains('armazon--menu-abierto')).toBe(false)
+
+    await usuario.click(screen.getByRole('button', { name: 'Abrir menú' }))
+    await abrirSelector(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Nuevo proyecto' }))
+    expect(armazon()?.classList.contains('armazon--menu-abierto')).toBe(false)
+  })
+})
