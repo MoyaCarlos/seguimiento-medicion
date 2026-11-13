@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useParams } from 'react-router'
 import { Icono } from './compartido/componentes/Icono'
 import { Marca } from './compartido/componentes/Marca'
@@ -10,6 +10,23 @@ import { ajustes, navegacion } from './navegacion'
 import './App.css'
 
 const SECCION_DE_VOTACION = 'backlog'
+
+const PANTALLA_ANGOSTA = '(max-width: 900px)'
+
+function usePantallaAngosta(): boolean {
+  const consulta = () => window.matchMedia?.(PANTALLA_ANGOSTA).matches ?? false
+  const [angosta, setAngosta] = useState(consulta)
+
+  useEffect(() => {
+    const lista = window.matchMedia?.(PANTALLA_ANGOSTA)
+    if (!lista) return
+    const alCambiar = () => setAngosta(lista.matches)
+    lista.addEventListener('change', alCambiar)
+    return () => lista.removeEventListener('change', alCambiar)
+  }, [])
+
+  return angosta
+}
 
 const claseDeEnlace = ({ isActive }: { isActive: boolean }) =>
   `barra-lateral__enlace${isActive ? ' barra-lateral__enlace--activo' : ''}`
@@ -40,6 +57,7 @@ function Armazon() {
   const [recargas, setRecargas] = useState(0)
   const [menuAbierto, setMenuAbierto] = useState(false)
   const cerrarMenu = () => setMenuAbierto(false)
+  const conPestanas = usePantallaAngosta() && Boolean(id)
 
   if (estado !== 'autenticado') {
     return (
@@ -51,7 +69,7 @@ function Armazon() {
 
   return (
     <div
-      className={`armazon${menuAbierto ? ' armazon--menu-abierto' : ''}`}
+      className={`armazon${menuAbierto ? ' armazon--menu-abierto' : ''}${conPestanas ? ' armazon--con-pestanas' : ''}`}
       onKeyDown={(evento) => {
         if (evento.key === 'Escape') cerrarMenu()
       }}
@@ -118,6 +136,22 @@ function Armazon() {
           </ProveedorRecargaProyectos>
         </main>
       </div>
+      {conPestanas && (
+        <nav className="pestanas" aria-label="Pestañas del proyecto">
+          {navegacion.map(({ ruta, texto, icono }) => (
+            <NavLink
+              key={ruta}
+              className={({ isActive }) => `pestanas__enlace${isActive ? ' pestanas__enlace--activa' : ''}`}
+              to={`/projects/${id}/${ruta}`}
+              end={ruta === 'proyecto'}
+              aria-label={texto}
+            >
+              <Icono nombre={icono} />
+              <span>{texto === 'Historial de Sprints' ? 'Historial' : texto}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }

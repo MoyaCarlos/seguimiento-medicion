@@ -782,6 +782,51 @@ h1 {
   }
 }
 
+@media (max-width: 900px) {
+  .pestanas {
+    background: #fff;
+    border-top: 1px solid var(--line);
+    bottom: 0;
+    display: flex;
+    gap: 2px;
+    left: 0;
+    overflow-x: auto;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    position: fixed;
+    right: 0;
+    scrollbar-width: thin;
+    z-index: 20;
+  }
+
+  .pestanas__enlace {
+    border-radius: 10px;
+    color: var(--muted);
+    display: grid;
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 700;
+    gap: 2px;
+    justify-items: center;
+    min-width: 74px;
+    padding: 6px 4px;
+    text-decoration: none;
+  }
+
+  .pestanas__enlace .icono {
+    height: 20px;
+    width: 20px;
+  }
+
+  .pestanas__enlace--activa {
+    background: #dcf3ef;
+    color: #0b5f58;
+  }
+
+  .armazon--con-pestanas .contenido {
+    padding-bottom: 96px;
+  }
+}
+
 @media (max-width: 480px) {
   .ruta > :not([aria-current]) {
     display: none;
