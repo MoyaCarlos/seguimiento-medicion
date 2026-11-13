@@ -5,8 +5,9 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarAvance } from './api'
 import { esIdValido, type Avance } from './avance'
-import { Cifras } from './Cifras'
 import { GrupoHistorias } from './GrupoHistorias'
+import { Resumen } from './Resumen'
+import { obtenerEstadoProyecto, type EstadoProyecto } from '../proyecto/api'
 import './estado.css'
 
 export function Component() {
@@ -14,7 +15,11 @@ export function Component() {
 
   return (
     <div className="estado-pantalla">
-      <h1>Estado del proyecto</h1>
+      {esIdValido(id) && <p className="eyebrow estado-pretitulo">Proyecto #{id}</p>}
+      <div className="estado-titulo">
+        <h1>Estado del proyecto</h1>
+        {esIdValido(id) && <InsigniaDeEstado key={id} id={id} />}
+      </div>
       {esIdValido(id) ? (
         <>
           <p className="project-context">Proyecto actual: <strong>{id}</strong></p>
@@ -25,6 +30,25 @@ export function Component() {
       )}
     </div>
   )
+}
+
+function InsigniaDeEstado({ id }: { id: string }) {
+  const [estado, setEstado] = useState<EstadoProyecto>()
+
+  useEffect(() => {
+    let vigente = true
+    obtenerEstadoProyecto(id)
+      .then((obtenido) => {
+        if (vigente) setEstado(obtenido.estado)
+      })
+      .catch(() => {})
+    return () => {
+      vigente = false
+    }
+  }, [id])
+
+  if (!estado) return null
+  return <span className={`estado-insignia estado-insignia--${estado.toLowerCase()}`}>{estado}</span>
 }
 
 function mensajeDeError(causa: unknown): string {
@@ -59,11 +83,10 @@ function AvanceDelProyecto({ id }: { id: string }) {
   return (
     <>
       {avance.total.historias === 0 && <p className="estado-vacio">El proyecto todavía no tiene historias.</p>}
-      {avance.grupos.map((grupo) => <GrupoHistorias key={grupo.estado} grupo={grupo} />)}
-      <section className="estado-tarjeta" aria-labelledby="estado-total">
-        <h2 id="estado-total">Total del proyecto</h2>
-        <Cifras historias={avance.total.historias} storyPoints={avance.total.story_points} />
-      </section>
+      <Resumen avance={avance} />
+      <div className="estado-tablero">
+        {avance.grupos.map((grupo) => <GrupoHistorias key={grupo.estado} grupo={grupo} />)}
+      </div>
     </>
   )
 }
