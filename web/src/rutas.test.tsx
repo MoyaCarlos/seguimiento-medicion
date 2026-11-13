@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, type RouteObject } from 'react-router'
@@ -299,10 +299,33 @@ describe('registro de rutas', () => {
   })
 
   it('mantiene activo el enlace de la feature en sus sub-rutas', async () => {
-    abrir('/projects/1/proyecto/edit')
+    abrir('/projects/1/backlog/nueva')
+    await screen.findByRole('heading', { name: 'Nueva historia' }, { timeout: 5000 })
+
+    expect(screen.getByRole('link', { name: 'Historias' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('en «Editar proyecto» y «Equipo» se marca el ajuste y no «Proyecto»', async () => {
+    const router = abrir('/projects/1/proyecto/edit')
     await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })
 
-    expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('link', { name: 'Editar proyecto' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBeNull()
+    await act(() => router.navigate('/projects/1/proyecto/settings'))
+    expect(screen.getByRole('link', { name: 'Equipo' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBeNull()
+  })
+
+  it('el menú de ajustes del proyecto lista «Equipo» y «Editar proyecto» y no cuenta entre las secciones', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const ajustes = screen.getByRole('navigation', { name: 'Ajustes del proyecto' })
+    expect(within(ajustes).getAllByRole('link').map((enlace) => [enlace.textContent, enlace.getAttribute('href')])).toEqual([
+      ['Equipo', '/projects/42/proyecto/settings'],
+      ['Editar proyecto', '/projects/42/proyecto/edit'],
+    ])
+    expect(within(screen.getByRole('navigation', { name: 'Secciones del proyecto' })).getAllByRole('link')).toHaveLength(7)
   })
 
   it('cambiar el id de la URL cambia el proyecto mostrado, sin estado compartido', async () => {
@@ -636,6 +659,7 @@ describe('armazón (spec 046)', () => {
     expect(within(barra!).getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBe('page')
     expect(screen.queryByRole('combobox', { name: 'Proyecto' })).toBeNull()
     expect(screen.queryByRole('navigation', { name: 'Secciones del proyecto' })).toBeNull()
+    expect(screen.queryByRole('navigation', { name: 'Ajustes del proyecto' })).toBeNull()
     const ruta = screen.getByRole('navigation', { name: 'Ruta de navegación' })
     expect(within(ruta).getByText('Proyectos').getAttribute('aria-current')).toBe('page')
   })
