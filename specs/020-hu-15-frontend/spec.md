@@ -9,9 +9,9 @@
 **Status**: Implementada (pendiente de PR y review)
 
 **Dependencia**: el backend de HU-15 ya está en `main` (PR #135). Esta spec solo cubre
-la pantalla: consume `GET /projects/{id}/backlog` y `PUT /backlog/{id}` sin cambiar el
-contrato. La pantalla de creación de historias de HU-01 se conserva, movida a la
-sub-ruta `backlog/nueva`.
+la pantalla: consume `GET /projects/{id}/backlog` y `PUT /backlog/{id}` tal como los define
+la spec 009 (incluido `estimacion_sp_leida` desde el fix #248). La pantalla de creación de
+historias de HU-01 se conserva, movida a la sub-ruta `backlog/nueva`.
 
 ## Objetivo
 
@@ -27,8 +27,10 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
   `titulo`, `descripcion`, `criterios_aceptacion`, `prioridad`, `estado`,
   `valor_negocio`, `estimacion_sp` y `sprint_id`.
 - **Entrada (edición)**: `PUT /backlog/{id}` con
-  `{ titulo, descripcion, criterios_aceptacion, estimacion_sp }`. Los cuatro campos son
-  obligatorios como claves; `criterios_aceptacion` y `estimacion_sp` aceptan `null`.
+  `{ titulo, descripcion, criterios_aceptacion, estimacion_sp, estimacion_sp_leida }`.
+  Las cinco claves son obligatorias; `criterios_aceptacion`, `estimacion_sp` y
+  `estimacion_sp_leida` aceptan `null`. `estimacion_sp_leida` es la estimación que la
+  historia tenía al abrir el formulario, y no se edita.
 - **Salida en pantalla**: el listado del backlog con todos sus datos y, al elegir una
   historia, un formulario de edición con los cuatro campos editables. Al guardar, la
   historia actualizada se refleja en el listado y se muestra una confirmación.
@@ -49,8 +51,12 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
   edición con los valores actuales de título, descripción, criterios de aceptación y
   Story Points.
 - **WHEN** se guarda una edición con datos válidos, **THEN** el sistema **shall** enviar
-  los cuatro campos juntos con `PUT /backlog/{id}` y **shall** reemplazar la historia
-  del listado por la que devuelve la API.
+  los cuatro campos editables junto con `estimacion_sp_leida` (la estimación que tenía la
+  historia al abrir el formulario) en `PUT /backlog/{id}`, y **shall** reemplazar la
+  historia del listado por la que devuelve la API.
+- **IF** la API responde 409 porque la estimación cambió mientras editaba, **THEN** la
+  pantalla **shall** mostrar el mensaje junto al selector de Story Points y **shall**
+  conservar los datos escritos y el formulario abierto (#248).
 - **WHEN** una edición se guarda correctamente, **THEN** la pantalla **shall** conservar
   visible el identificador y el estado de la historia y mostrar una confirmación.
 - **WHEN** se guardan los criterios de aceptación vacíos o compuestos solo por espacios,
@@ -86,7 +92,8 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
   (`web/src/compartido/api/client.ts`) para todas las llamadas HTTP.
 - La pantalla **shall** seguir el patrón de `web/src/features/` (feature aislada, sin
   importar otras features).
-- La pantalla **shall not** agregar dependencias nuevas ni cambiar el contrato de la API.
+- La pantalla **shall not** agregar dependencias nuevas ni cambiar el contrato de la API:
+  consume el de la spec 009, que desde #248 incluye `estimacion_sp_leida`.
 - La creación de historias de HU-01 **shall** seguir disponible en
   `/projects/:id/backlog/nueva`; el listado de HU-15 vive en `/projects/:id/backlog`.
 - La pantalla **shall not** editar prioridad, valor de negocio, estado ni Sprint: quedan
@@ -103,7 +110,8 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 - **WHEN** una historia tiene un Story Point de la escala Fibonacci, **THEN** el selector
   **shall** mostrarlo seleccionado.
 - **WHEN** dos personas editan la misma historia, **THEN** la pantalla **shall** mostrar
-  el último guardado válido que devuelva la API, sin versionado propio.
+  el último guardado válido que devuelva la API para los campos de texto, sin versionado
+  propio, y **shall** mostrar el 409 si la estimación cambió desde que abrió el formulario.
 - **WHEN** se edita una historia y luego otra, **THEN** la pantalla **shall** mantener el
   listado actualizado y no mezclar los errores de una con la otra.
 
@@ -114,6 +122,9 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 - **IF** la API responde 400 por Story Points fuera de escala o por la regla D2b,
   **THEN** la pantalla **shall** mostrar el mensaje junto al selector de Story Points y
   **shall** conservar los demás valores del formulario.
+- **IF** la API responde 409 por estimación desactualizada, **THEN** la pantalla **shall**
+  mostrar el mensaje junto al selector de Story Points, **shall** conservar los demás
+  valores y **shall** dejar el formulario abierto para recargar y volver a intentar.
 - **IF** la API responde 404 al guardar, **THEN** la pantalla **shall** mostrar "historia
   no encontrada" como aviso general y **shall not** cerrar el formulario.
 - **IF** la API responde un error de campo desconocido, **THEN** la pantalla **shall**
@@ -129,8 +140,8 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 3. **Given** un proyecto inexistente, **When** abro su Product Backlog, **Then** veo el
    mensaje de error de la API.
 4. **Given** una historia del listado, **When** abro su edición y guardo cambios válidos,
-   **Then** se envía `PUT /backlog/{id}` con los cuatro campos, la historia se actualiza
-   en el listado y veo una confirmación.
+   **Then** se envía `PUT /backlog/{id}` con los cuatro campos y `estimacion_sp_leida`,
+   la historia se actualiza en el listado y veo una confirmación.
 5. **Given** el formulario de edición, **When** dejo el título vacío, **Then** veo una
    advertencia junto al campo y no se llama a la API.
 6. **Given** el formulario de edición, **When** ingreso criterios de más de 2000
@@ -144,6 +155,9 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
    **Then** no veo las historias del anterior.
 10. **Given** la pantalla del listado, **When** elijo "Nueva historia", **Then** llego a
     la pantalla de creación de HU-01.
+11. **Given** una historia cuya estimación cambió mientras el formulario estaba abierto,
+    **When** guardo, **Then** veo el 409 junto a Story Points, conservo lo escrito y el
+    formulario sigue abierto (#248).
 
 ## Fuera de alcance
 
@@ -164,6 +178,7 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 | Título y descripción obligatorios | `validarEdicion` | `US2.2`, `US2.3` y `edicion.test.ts` |
 | Criterios de hasta 2000 | `validarEdicion` | `US2.4` y `edicion.test.ts` |
 | Error de campo de la API | `Edicion` | `US2.5` de `Listado.test.tsx` |
+| Estimación desactualizada (409) | `Edicion` + `armarCuerpoEdicion` | `US2.7` y `edicionHistoria.test.ts` |
 | Error general / 404 al guardar | `Edicion` | `US2.6` de `Listado.test.tsx` |
 | Cambio de proyecto | `Listado` (`useEffect` por `id`) | caso de cambio de proyecto |
 | Creación de HU-01 conservada | ruta `backlog/nueva` | `rutas.test.tsx` |

@@ -76,7 +76,7 @@ documento registra las decisiones técnicas tomadas para el diseño.
 - **Decision**: dos interfaces nuevas en `internal/repository/backlog_repository.go`, sin
   tocar `BacklogRepository` (crear):
   - `ProductBacklogRepository { ListarSinSprint(ctx, proyectoID) ([]domain.BacklogItem, error) }` (ya ordenado, R2)
-  - `HistoriaRepository { ObtenerPorID(ctx, id) (domain.BacklogItem, error); Actualizar(ctx, item) error }`
+  - `HistoriaRepository { ObtenerPorID(ctx, id) (domain.BacklogItem, error); ActualizarSiEstimacionSigueSiendo(ctx, item, estimacionLeida *int) error }`
   `SQLiteBacklogRepository` implementa las tres.
 - **Rationale**: mismo criterio que `HistoriasDeSprintRepository` (ISP): los stubs existentes
   de crear historia no tienen que implementar métodos que no usan.
@@ -91,8 +91,8 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 ## R9. Concurrencia
 
-- **Decision**: `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido.
-- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04).
+- **Decision**: para título, descripción y criterios, `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido. Para la estimación, el `UPDATE` agrega `AND estimacion_sp IS ?` con la estimación leída (R11).
+- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04). La estimación se exceptúa porque perderla sin aviso afecta las métricas de HU-03 y la acordada en HU-14 (#248).
 
 ## R10. Story Points congelados en Sprints Activo o Finalizado (D2b)
 
@@ -110,3 +110,23 @@ documento registra las decisiones técnicas tomadas para el diseño.
   `EditarHistoria` depende de la interfaz `repository.SprintRepository` ya existente (DIP).
 - **Alternatives considered**: ponerla en el dominio (`ConDatosEditados`); el modelo de datos la
   asigna al servicio porque necesita el estado del Sprint, que no es parte de la historia.
+
+## R11. Estimación desactualizada en la edición (#248)
+
+- **Decision**: el `PUT /backlog/{id}` recibe `estimacion_sp_leida` (obligatoria como clave,
+  `null` permitido) con el valor que el formulario leyó al abrirse. `EditarHistoria` compara
+  esa estimación con la actual después de validar los campos y antes de D2b; si difieren,
+  devuelve `domain.ErrEstimacionDesactualizada` (409, campo `estimacion_sp`). Además, el
+  repositorio escribe con `UPDATE ... WHERE id = ? AND estimacion_sp IS ?` usando la
+  estimación leída; si no afecta ninguna fila, devuelve el mismo error. El handler parsea
+  `estimacion_sp_leida` como `*json.Number` y valida que sea `null` o un valor de la escala.
+- **Rationale**: el formulario puede haber quedado abierto mientras el Scrum Master registraba
+  la estimación acordada (HU-14). Sin la condición, el `PUT` pisa el valor nuevo sin aviso,
+  sobre todo si la historia no tiene Sprint o está en uno `Pendiente`, donde D2b no aplica. La
+  comparación en el `UPDATE` cubre la ventana entre la lectura del service y la escritura. No
+  se necesita una columna de versión: el único dato que no puede pisarse es la estimación, y
+  el resto mantiene el criterio de "gana el último guardado". No hay migración (D18).
+- **Alternatives considered**: versión de fila o `updated_at` con migración (rechazada por el
+  equipo: más superficie para un problema acotado); que el `PUT` no toque la estimación si no
+  cambió (no avisa cuando el usuario sí cambió un valor viejo); aceptar el riesgo y
+  documentarlo (rechazada porque pierde la estimación acordada).

@@ -223,7 +223,7 @@ Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Un proyecto tiene
 | `prioridad` | TEXT NOT NULL | `CHECK IN ('M','S','C','W')` |
 | `estado` | TEXT NOT NULL | `CHECK IN ('Nueva','En progreso','Completada')` |
 | `valor_negocio` | INTEGER? | Escala Fibonacci `{1,2,3,5,8,13,21}`, validada por el dominio |
-| `estimacion_sp` | INTEGER? | Story Points, misma escala. Los escriben HU-15 (directo) y HU-14 (acordada). `NULL` = sin estimar. **Decidido (D2b, 2026-10-13; reabierta el 2026-11-03):** ya cargada no se edita si la historia tiene un Sprint `Activo` o `Finalizado`, y sin estimar no se carga con Sprint `Finalizado` (regla de servicio, §5). |
+| `estimacion_sp` | INTEGER? | Story Points, misma escala. Los escriben HU-15 (directo) y HU-14 (acordada). `NULL` = sin estimar. **Decidido (D2b, 2026-10-13; reabierta el 2026-11-03):** ya cargada no se edita si la historia tiene un Sprint `Activo` o `Finalizado`, y sin estimar no se carga con Sprint `Finalizado` (regla de servicio, §5). La edición de HU-15 recibe la estimación leída y responde 409 si cambió mientras tanto (#248, D18). |
 | `sprint_id` | INTEGER? | `NULL` = está en el Product Backlog. Si no, el Sprint **actual o en el que se completó**. |
 | `fecha_finalizacion` | TEXT? | **Nueva.** HU-11. `CHECK (date(fecha_finalizacion) IS fecha_finalizacion)` (D12) |
 
@@ -421,6 +421,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Al imputar horas, la historia pertenece al Sprint activo y `registros_horas.sprint_id` es ese Sprint | — | Servicio (HU-07) |
 | `sprint_deteccion_id` y `sprint_resolucion_id` de un defecto son el Sprint `Activo` en ese momento | — | Servicio (HU-08) |
 | `estimacion_sp` ya cargada no se modifica con Sprint `Activo` o `Finalizado` (cargarla desde `NULL` se permite, salvo con Sprint `Finalizado`) — **Decidido (D2b, 2026-10-13; reabierta el 2026-11-03)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
+| La edición no pisa una estimación que cambió desde que se abrió el formulario (#248, D18) | `UPDATE` condicional (`WHERE id = ? AND estimacion_sp IS ?`): compare-and-set con la estimación leída | Servicio y repositorio (HU-15) |
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
@@ -486,6 +487,7 @@ pendientes D15 y D17, que surgieron del beta testing del
 | **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
 | **D16** | **Cerrada el 2026-11-11** (#300, spec 044, confirmada por el equipo). Cierre manual del proyecto (#173): hasta entonces el estado era solo derivado y no se guardaba nada. | Columna anulable `proyectos.fecha_cierre` (`YYYY-MM-DD`, `CHECK` D12, migración 008). El Scrum Master cierra (sin Sprint `Activo`) y reabre. Un proyecto cerrado es «Finalizado» **con prioridad** sobre las reglas de HU-13 y queda de solo lectura; uno abierto sigue las reglas de HU-13 **sin cambios**. Se descartó la propuesta original («sin cierre manual, el proyecto no pasa a Finalizado») porque cambiaba HU-13 y sus escenarios. | HU-13 |
 | **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
+| **D18** | **Aprobada el 2026-11-13** (issue #248). La edición de una historia podía pisar la estimación acordada por HU-14 si el formulario estaba desactualizado, sobre todo sin Sprint o con Sprint `Pendiente`, donde D2b no la frena. | El formulario envía `estimacion_sp_leida` y el `PUT` solo escribe si la estimación actual coincide con la leída (compare-and-set); si no, responde 409 y no modifica nada. No cambia el esquema ni agrega migración. Alternativa descartada: versión de fila + migración, porque el problema es solo la estimación y el resto conserva "gana el último guardado". | HU-15, HU-14 |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
 
