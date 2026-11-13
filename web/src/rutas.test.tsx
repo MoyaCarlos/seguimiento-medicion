@@ -66,6 +66,13 @@ function abrir(url: string) {
   return router
 }
 
+const botonDelSelector = () => screen.getByRole('button', { name: /^Proyecto actual/ })
+const esperarProyectoEnSelector = (nombre: string) =>
+  waitFor(() => expect(botonDelSelector().textContent).toContain(nombre), { timeout: 5000 })
+async function abrirSelector(usuario: ReturnType<typeof userEvent.setup>) {
+  if (botonDelSelector().getAttribute('aria-expanded') !== 'true') await usuario.click(botonDelSelector())
+}
+
 describe('registro de rutas', () => {
   it.each([
     ['/projects/42/proyecto', 'Panel del proyecto'],
@@ -232,7 +239,8 @@ describe('registro de rutas', () => {
       await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
 
       expect(router.state.location.pathname).toBe('/projects/42/sprints')
-      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).disabled).toBe(true)
+      await abrirSelector(usuario)
+      expect(screen.getAllByRole('option').map((opcion) => opcion.textContent)).toEqual(['Proyecto 42'])
     })
 
     it('US3.4 y US4.4: en el inicio el aviso no impide crear un proyecto', async () => {
@@ -351,20 +359,23 @@ describe('registro de rutas', () => {
       proyectosSimulados = DOS_PROYECTOS
       const usuario = userEvent.setup()
       const router = abrir('/projects/1/backlog')
-      await screen.findByRole('option', { name: 'Beta (#2)' }, { timeout: 5000 })
+      await esperarProyectoEnSelector('Alfa')
+      await abrirSelector(usuario)
 
-      await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
+      await usuario.click(screen.getByRole('option', { name: 'Beta (#2)' }))
 
       expect(router.state.location.pathname).toBe('/projects/2/backlog')
       expect(await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })).toBeTruthy()
-      expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('2')
+      await esperarProyectoEnSelector('Beta')
     })
 
     it('US2.1: "Nuevo proyecto" abre la pantalla de creación desde una pantalla de proyecto', async () => {
       const usuario = userEvent.setup()
       const router = abrir('/projects/1/backlog')
 
-      await usuario.click(await screen.findByRole('link', { name: 'Nuevo proyecto' }, { timeout: 5000 }))
+      await esperarProyectoEnSelector('Proyecto 1')
+      await abrirSelector(usuario)
+      await usuario.click(screen.getByRole('button', { name: 'Nuevo proyecto' }))
 
       expect(router.state.location.pathname).toBe('/')
       expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
@@ -374,7 +385,7 @@ describe('registro de rutas', () => {
       proyectosSimulados = DOS_PROYECTOS
       const usuario = userEvent.setup()
       abrir('/projects/1/backlog')
-      await screen.findByRole('option', { name: 'Beta (#2)' }, { timeout: 5000 })
+      await esperarProyectoEnSelector('Alfa')
 
       await usuario.click(screen.getByRole('link', { name: 'Sprints' }))
       await screen.findByRole('heading', { name: 'Sprints' }, { timeout: 5000 })
@@ -386,7 +397,7 @@ describe('registro de rutas', () => {
       async function abrirEdicionDeBeta(usuario: ReturnType<typeof userEvent.setup>) {
         proyectosSimulados = [{ id: 27, nombre: 'Beta' }]
         const router = abrir('/projects/27/proyecto/edit')
-        await screen.findByRole('option', { name: 'Beta (#27)' }, { timeout: 5000 })
+        await esperarProyectoEnSelector('Beta')
         const nombre = await screen.findByLabelText('Nombre del proyecto', {}, { timeout: 5000 })
         await usuario.clear(nombre)
         await usuario.type(nombre, 'Beta Renombrado')
@@ -400,9 +411,10 @@ describe('registro de rutas', () => {
 
         await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
-        expect(await screen.findByRole('option', { name: 'Beta Renombrado (#27)' }, { timeout: 5000 })).toBeTruthy()
+        await esperarProyectoEnSelector('Beta Renombrado')
+        await abrirSelector(usuario)
+        expect(screen.getByRole('option', { name: 'Beta Renombrado (#27)' }).getAttribute('aria-selected')).toBe('true')
         expect(screen.queryByRole('option', { name: 'Beta (#27)' })).toBeNull()
-        expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Proyecto' }).value).toBe('27')
         expect(router.state.location.pathname).toBe('/projects/27/proyecto')
       })
 
@@ -413,7 +425,7 @@ describe('registro de rutas', () => {
         await usuario.click(screen.getByRole('link', { name: 'Cancelar' }))
 
         expect(router.state.location.pathname).toBe('/projects/27/proyecto')
-        expect(await screen.findByRole('option', { name: 'Beta (#27)' }, { timeout: 5000 })).toBeTruthy()
+        await esperarProyectoEnSelector('Beta')
         expect(llamadasAlListado()).toBe(1)
       })
 
@@ -433,6 +445,7 @@ describe('registro de rutas', () => {
         await usuario.click(screen.getByRole('button', { name: 'Guardar cambios' }))
 
         expect(await screen.findByText('No se pudo guardar')).toBeTruthy()
+        await abrirSelector(usuario)
         expect(screen.getByRole('option', { name: 'Beta (#27)' })).toBeTruthy()
         expect(llamadasPrevias).toBe(1)
         expect(llamadasAlListado()).toBe(0)
@@ -468,7 +481,8 @@ describe('registro de rutas', () => {
       abrir('/projects/1/backlog')
       await screen.findByText('Historia del proyecto uno', {}, { timeout: 5000 })
 
-      await usuario.selectOptions(screen.getByRole('combobox', { name: 'Proyecto' }), '2')
+      await abrirSelector(usuario)
+      await usuario.click(screen.getByRole('option', { name: 'Beta (#2)' }))
 
       expect(screen.queryByText('Historia del proyecto uno')).toBeNull()
     })
@@ -611,8 +625,9 @@ describe('armazón (spec 046)', () => {
     expect(barra).not.toBeNull()
     const lateral = within(barra!)
     expect(lateral.getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
-    expect(lateral.getByRole('combobox', { name: 'Proyecto' })).toBeTruthy()
-    expect(lateral.getByRole('link', { name: 'Nuevo proyecto' })).toBeTruthy()
+    expect(lateral.getByRole('button', { name: /^Proyecto actual/ })).toBeTruthy()
+    await abrirSelector(userEvent.setup())
+    expect(lateral.getByRole('button', { name: 'Nuevo proyecto' })).toBeTruthy()
     expect(within(lateral.getByRole('navigation', { name: 'Secciones del proyecto' })).getAllByRole('link')).toHaveLength(7)
   })
 
@@ -657,7 +672,7 @@ describe('armazón (spec 046)', () => {
     const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
     expect(barra).not.toBeNull()
     expect(within(barra!).getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBe('page')
-    expect(screen.queryByRole('combobox', { name: 'Proyecto' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Proyecto actual/ })).toBeNull()
     expect(screen.queryByRole('navigation', { name: 'Secciones del proyecto' })).toBeNull()
     expect(screen.queryByRole('navigation', { name: 'Ajustes del proyecto' })).toBeNull()
     const ruta = screen.getByRole('navigation', { name: 'Ruta de navegación' })
