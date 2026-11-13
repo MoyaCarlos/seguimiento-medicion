@@ -21,7 +21,7 @@ const contraste = (a: string, b: string) => {
   return (claro + 0.05) / (oscuro + 0.05)
 }
 const color = (bloque: string, propiedad: string) =>
-  bloque.match(new RegExp(`(?:^|[\\s;])${propiedad}:\\s*(#[0-9a-f]{6})`))?.[1] ?? ''
+  [...bloque.matchAll(new RegExp(`(?:^|[\\s;])${propiedad}:\\s*(#[0-9a-f]{6})`, 'g'))].at(-1)?.[1] ?? ''
 
 it('Given la tarjeta de una historia, When se estiliza, Then tiene radio 14, relleno 18/20 y borde izquierdo de 4px', () => {
   const bloque = regla('.backlog-item')
