@@ -149,3 +149,8 @@ it('Given el cajón, When se estiliza, Then el título es de 22px y los botones 
 it('Given los criterios del resumen en Markdown, When se muestran, Then sus párrafos no suman margen', () => {
   expect(regla('.backlog-resumen .markdown p')).toMatch(/margin:\s*0/)
 })
+
+it('Given el cajón, When se estiliza, Then separa la cabecera del formulario 22px y «Cancelar» va en gris como en el prototipo', () => {
+  expect(regla('.backlog-crear')).toMatch(/gap:\s*22px/)
+  expect(regla('.backlog-crear__acciones .button--quiet')).toMatch(/color:\s*var\(--muted\)/)
+})
