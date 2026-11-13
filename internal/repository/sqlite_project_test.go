@@ -404,6 +404,77 @@ func TestSQLiteProjectRepository_ActualizarLasHorasPorStoryPoint(t *testing.T) {
 	}
 }
 
+func sembrarFechaCierre(t *testing.T, db *sql.DB, proyectoID int64, fecha string) {
+	t.Helper()
+	if _, err := db.Exec("UPDATE proyectos SET fecha_cierre = ? WHERE id = ?", fecha, proyectoID); err != nil {
+		t.Fatalf("no se pudo sembrar la fecha de cierre: %v", err)
+	}
+}
+
+// Spec 044 (#300): el repositorio lee proyectos.fecha_cierre como día (00:00 UTC).
+func TestSQLiteProjectRepository_LeeLaFechaDeCierre(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	cerrado := guardarProyecto(t, db)
+	abierto := guardarProyecto(t, db)
+	sembrarFechaCierre(t, db, cerrado, "2026-11-11")
+	dia := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+
+	leido, err := repo.ObtenerPorID(ctx, cerrado)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if leido.FechaCierre == nil || !leido.FechaCierre.Equal(dia) {
+		t.Errorf("se esperaba la fecha de cierre %v, se obtuvo %v", dia, leido.FechaCierre)
+	}
+	sinCierre, err := repo.ObtenerPorID(ctx, abierto)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if sinCierre.FechaCierre != nil {
+		t.Errorf("un proyecto abierto no debe tener fecha de cierre, se obtuvo %v", *sinCierre.FechaCierre)
+	}
+
+	mustExec(t, db, `INSERT INTO usuarios (id, nombre, nombre_normalizado, creado_en) VALUES (1, 'Ana', 'ana', '2026-10-23T00:00:00Z')`)
+	mustExec(t, db, fmt.Sprintf(`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES
+		(%d, 1, 'scrum_master', '2026-10-23T00:00:00Z'), (%d, 1, 'scrum_master', '2026-10-23T00:00:00Z')`, cerrado, abierto))
+	listados, err := repo.ListarPorIntegrante(ctx, 1)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+	if len(listados) != 2 || listados[0].Proyecto.FechaCierre == nil || !listados[0].Proyecto.FechaCierre.Equal(dia) || listados[1].Proyecto.FechaCierre != nil {
+		t.Errorf("el listado no trae la fecha de cierre: %+v", listados)
+	}
+}
+
+// Editar el proyecto no toca fecha_cierre: solo la escriben cerrar y reabrir.
+func TestSQLiteProjectRepository_ActualizarNoPisaLaFechaDeCierre(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	id := guardarProyecto(t, db)
+	sembrarFechaCierre(t, db, id, "2026-11-11")
+	proyecto, err := repo.ObtenerPorID(ctx, id)
+	if err != nil {
+		t.Fatalf("no se esperaba error: %v", err)
+	}
+
+	proyecto.Nombre = "Otro nombre"
+	proyecto.FechaCierre = nil
+	if err := repo.Actualizar(ctx, proyecto); err != nil {
+		t.Fatalf("no se esperaba error al editar: %v", err)
+	}
+
+	editado, _ := repo.ObtenerPorID(ctx, id)
+	if editado.Nombre != "Otro nombre" {
+		t.Errorf("se esperaba el nombre editado, se obtuvo %q", editado.Nombre)
+	}
+	if editado.FechaCierre == nil {
+		t.Error("editar el proyecto no debe borrar la fecha de cierre")
+	}
+}
+
 // proyectoConUsuarios crea un proyecto sin integrantes y un usuario por nombre.
 func proyectoConUsuarios(t *testing.T, db *sql.DB, nombres ...string) (int64, []int64) {
 	t.Helper()
@@ -512,4 +583,175 @@ func TestSQLiteProjectRepository_AgregarIntegrante_DosAltasSimultaneasDeScrumMas
 	if aceptadas != 1 || conflictos != 1 {
 		t.Fatalf("se esperaba 1 alta aceptada y 1 conflicto, se obtuvo %d y %d", aceptadas, conflictos)
 	}
+}
+
+// Spec 044 (#300): Cerrar es un UPDATE condicional (sin cierre previo y sin Sprint Activo).
+func TestSQLiteProjectRepository_Cerrar(t *testing.T) {
+	ctx := context.Background()
+	hoy := time.Date(2026, 11, 11, 0, 0, 0, 0, time.UTC)
+
+	t.Run("abierto sin Sprint activo guarda la fecha", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		mustExec(t, db, `INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (?, 'g', '2026-10-01', '2026-10-15', 'Finalizado'), (?, NULL, NULL, NULL, 'Pendiente')`, id, id)
+
+		if err := repo.Cerrar(ctx, id, hoy); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+
+		var guardada string
+		if err := db.QueryRow("SELECT fecha_cierre FROM proyectos WHERE id = ?", id).Scan(&guardada); err != nil {
+			t.Fatalf("no se pudo leer la fecha de cierre: %v", err)
+		}
+		if guardada != "2026-11-11" {
+			t.Errorf("se esperaba '2026-11-11', se obtuvo %q", guardada)
+		}
+	})
+
+	t.Run("ya cerrado se rechaza y conserva la fecha", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		sembrarFechaCierre(t, db, id, "2026-10-01")
+
+		if err := repo.Cerrar(ctx, id, hoy); !errors.Is(err, domain.ErrProyectoYaCerrado) {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, id)
+		if leido.FechaCierre == nil || leido.FechaCierre.Format(time.DateOnly) != "2026-10-01" {
+			t.Errorf("la fecha de cierre previa no debe cambiar, se obtuvo %v", leido.FechaCierre)
+		}
+	})
+
+	t.Run("con un Sprint activo se rechaza sin cerrar", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		mustExec(t, db, `INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (?, 'g', '2026-11-01', '2026-11-15', 'Activo')`, id)
+
+		if err := repo.Cerrar(ctx, id, hoy); !errors.Is(err, domain.ErrSprintActivoAlCerrarProyecto) {
+			t.Fatalf("se esperaba ErrSprintActivoAlCerrarProyecto, se obtuvo %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, id)
+		if leido.FechaCierre != nil {
+			t.Errorf("el proyecto debe seguir abierto, se obtuvo %v", *leido.FechaCierre)
+		}
+	})
+
+	t.Run("el Sprint activo de otro proyecto no impide cerrar", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		otro := guardarProyecto(t, db)
+		mustExec(t, db, `INSERT INTO sprints (proyecto_id, sprint_goal, fecha_inicio, fecha_fin, estado) VALUES (?, 'g', '2026-11-01', '2026-11-15', 'Activo')`, otro)
+
+		if err := repo.Cerrar(ctx, id, hoy); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+	})
+
+	t.Run("inexistente", func(t *testing.T) {
+		repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
+
+		if err := repo.Cerrar(ctx, 99, hoy); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+			t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+		}
+	})
+
+	t.Run("dos cierres seguidos: el segundo informa que ya está cerrado", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+
+		if err := repo.Cerrar(ctx, id, hoy); err != nil {
+			t.Fatalf("no se esperaba error en el primer cierre: %v", err)
+		}
+		if err := repo.Cerrar(ctx, id, hoy.AddDate(0, 0, 1)); !errors.Is(err, domain.ErrProyectoYaCerrado) {
+			t.Fatalf("se esperaba ErrProyectoYaCerrado, se obtuvo %v", err)
+		}
+	})
+}
+
+// Spec 044 (#300): el guardia de escritura pregunta si el proyecto está cerrado.
+func TestSQLiteProjectRepository_ProyectoCerrado(t *testing.T) {
+	ctx := context.Background()
+	db := nuevaBDMigrada(t)
+	repo := NewSQLiteProjectRepository(db)
+	abierto := guardarProyecto(t, db)
+	cerrado := guardarProyecto(t, db)
+	sembrarFechaCierre(t, db, cerrado, "2026-11-11")
+
+	casos := []struct {
+		nombre   string
+		id       int64
+		esperado bool
+	}{
+		{"abierto", abierto, false},
+		{"cerrado", cerrado, true},
+		{"inexistente (el 404 lo resuelve el servicio antes)", 99, false},
+	}
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			got, err := repo.ProyectoCerrado(ctx, c.id)
+			if err != nil {
+				t.Fatalf("no se esperaba error: %v", err)
+			}
+			if got != c.esperado {
+				t.Errorf("se esperaba %v, se obtuvo %v", c.esperado, got)
+			}
+		})
+	}
+}
+
+// Spec 044 (#300): Reabrir es un UPDATE condicional (solo si está cerrado).
+func TestSQLiteProjectRepository_Reabrir(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("cerrado queda sin fecha de cierre", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		sembrarFechaCierre(t, db, id, "2026-11-11")
+
+		if err := repo.Reabrir(ctx, id); err != nil {
+			t.Fatalf("no se esperaba error: %v", err)
+		}
+		leido, _ := repo.ObtenerPorID(ctx, id)
+		if leido.FechaCierre != nil {
+			t.Errorf("se esperaba sin fecha de cierre, se obtuvo %v", *leido.FechaCierre)
+		}
+	})
+
+	t.Run("abierto se rechaza", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+
+		if err := repo.Reabrir(ctx, id); !errors.Is(err, domain.ErrProyectoNoCerrado) {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+	})
+
+	t.Run("inexistente", func(t *testing.T) {
+		repo := NewSQLiteProjectRepository(nuevaBDMigrada(t))
+
+		if err := repo.Reabrir(ctx, 99); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+			t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
+		}
+	})
+
+	t.Run("dos reaperturas seguidas: la segunda informa que no está cerrado", func(t *testing.T) {
+		db := nuevaBDMigrada(t)
+		repo := NewSQLiteProjectRepository(db)
+		id := guardarProyecto(t, db)
+		sembrarFechaCierre(t, db, id, "2026-11-11")
+
+		if err := repo.Reabrir(ctx, id); err != nil {
+			t.Fatalf("no se esperaba error en la primera reapertura: %v", err)
+		}
+		if err := repo.Reabrir(ctx, id); !errors.Is(err, domain.ErrProyectoNoCerrado) {
+			t.Fatalf("se esperaba ErrProyectoNoCerrado, se obtuvo %v", err)
+		}
+	})
 }

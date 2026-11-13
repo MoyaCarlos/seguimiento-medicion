@@ -20,6 +20,8 @@ type ProjectHandler struct {
 	asignar           *service.AsignarIntegrante
 	listarIntegrantes *service.ListarIntegrantes
 	estado            *service.ObtenerEstadoProyecto
+	cerrar            *service.CerrarProyecto
+	reabrir           *service.ReabrirProyecto
 }
 
 func NewProjectHandler(
@@ -30,6 +32,8 @@ func NewProjectHandler(
 	asignar *service.AsignarIntegrante,
 	listarIntegrantes *service.ListarIntegrantes,
 	estado *service.ObtenerEstadoProyecto,
+	cerrar *service.CerrarProyecto,
+	reabrir *service.ReabrirProyecto,
 ) *ProjectHandler {
 	return &ProjectHandler{
 		crear:             crear,
@@ -39,7 +43,55 @@ func NewProjectHandler(
 		asignar:           asignar,
 		listarIntegrantes: listarIntegrantes,
 		estado:            estado,
+		cerrar:            cerrar,
+		reabrir:           reabrir,
 	}
+}
+
+// Reabrir atiende POST /projects/{id}/reabrir (#300): responde el proyecto
+// abierto con su estado recalculado según HU-13.
+func (h *ProjectHandler) Reabrir(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	proyecto, err := h.reabrir.Ejecutar(r.Context(), id, actor)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	estado, err := h.estado.Ejecutar(r.Context(), id, time.Now())
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, proyectoConEstadoResponse{proyectoResponse: aProyectoResponse(proyecto), Estado: string(estado)})
+}
+
+// Cerrar atiende POST /projects/{id}/cerrar (#300): responde el proyecto
+// cerrado, que siempre está «Finalizado».
+func (h *ProjectHandler) Cerrar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
+	id, err := parsearID(r.PathValue("id"))
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	proyecto, err := h.cerrar.Ejecutar(r.Context(), id, actor)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	estado := domain.CalcularEstadoProyecto(proyecto, nil, time.Now())
+	escribirJSON(w, nethttp.StatusOK, proyectoConEstadoResponse{proyectoResponse: aProyectoResponse(proyecto), Estado: string(estado)})
 }
 
 // Listar atiende GET /projects: los proyectos de la sesión, con su rol (HU-21).

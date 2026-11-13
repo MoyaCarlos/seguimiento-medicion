@@ -101,6 +101,36 @@ func (s *stubProjectRepository) AgregarIntegrante(_ context.Context, m domain.Me
 	return m, nil
 }
 
+func (s *stubProjectRepository) ProyectoCerrado(_ context.Context, id int64) (bool, error) {
+	return s.proyectos[id].FechaCierre != nil, nil
+}
+
+func (s *stubProjectRepository) Cerrar(_ context.Context, id int64, fecha time.Time) error {
+	p, ok := s.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre != nil {
+		return domain.ErrProyectoYaCerrado
+	}
+	p.FechaCierre = &fecha
+	s.proyectos[id] = p
+	return nil
+}
+
+func (s *stubProjectRepository) Reabrir(_ context.Context, id int64) error {
+	p, ok := s.proyectos[id]
+	if !ok {
+		return domain.ErrProyectoNoEncontrado
+	}
+	if p.FechaCierre == nil {
+		return domain.ErrProyectoNoCerrado
+	}
+	p.FechaCierre = nil
+	s.proyectos[id] = p
+	return nil
+}
+
 func (s *stubProjectRepository) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	if s.err != nil {
 		return nil, s.err
@@ -151,7 +181,9 @@ func nuevoProjectHandlerDePruebaConSprints() (*ProjectHandler, *stubProjectRepos
 	listarIntegrantes := service.NewListarIntegrantes(proyectos)
 	listarProyectos := service.NewListarProyectos(proyectos)
 	estado := service.NewObtenerEstadoProyecto(proyectos, sprints)
-	return NewProjectHandler(crear, obtener, listarProyectos, editar, asignar, listarIntegrantes, estado), proyectos, sprints
+	cerrar := service.NewCerrarProyecto(proyectos, sprints, relojDeCierreHTTP)
+	reabrir := service.NewReabrirProyecto(proyectos)
+	return NewProjectHandler(crear, obtener, listarProyectos, editar, asignar, listarIntegrantes, estado, cerrar, reabrir), proyectos, sprints
 }
 
 // crearProyectoViaHTTP usa el propio handler (y sus repos) para preparar un proyecto.

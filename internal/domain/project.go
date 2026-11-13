@@ -19,6 +19,8 @@ type Project struct {
 	CreadoEn    time.Time
 	// HorasPorStoryPoint es nil mientras no esté definido (HU-03).
 	HorasPorStoryPoint *float64
+	// FechaCierre es nil mientras el proyecto está abierto (#300).
+	FechaCierre *time.Time
 }
 
 const (
@@ -67,6 +69,33 @@ func validarProyecto(name, description string, start, end *time.Time) (string, s
 		return "", "", ValidationError{Campo: "fecha_fin", Mensaje: "la fecha de fin debe ser posterior a la de inicio"}
 	}
 	return nombre, descripcion, nil
+}
+
+// Cerrar devuelve una copia del proyecto cerrado con el día civil de ahora
+// como fecha de cierre (#300). Un proyecto ya cerrado, o con un Sprint Activo,
+// no se puede cerrar.
+func (p Project) Cerrar(ahora time.Time, sprints []Sprint) (Project, error) {
+	if p.FechaCierre != nil {
+		return Project{}, ErrProyectoYaCerrado
+	}
+	for _, s := range sprints {
+		if s.Estado == SprintActivo {
+			return Project{}, ErrSprintActivoAlCerrarProyecto
+		}
+	}
+	hoy := inicioDelDiaCivil(ahora)
+	p.FechaCierre = &hoy
+	return p, nil
+}
+
+// Reabrir devuelve una copia del proyecto sin fecha de cierre (#300): su estado
+// vuelve a calcularse con las reglas de HU-13. Solo se reabre uno cerrado.
+func (p Project) Reabrir() (Project, error) {
+	if p.FechaCierre == nil {
+		return Project{}, ErrProyectoNoCerrado
+	}
+	p.FechaCierre = nil
+	return p, nil
 }
 
 // AdmiteSprint verifica que un Sprint de inicio a fin caiga dentro del plazo
