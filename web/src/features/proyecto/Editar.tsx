@@ -21,7 +21,6 @@ const FORMULARIO_VACIO: DatosProyecto = {
   descripcion: '',
   fecha_inicio: '',
   fecha_fin: '',
-  creador: '',
   horas_por_story_point: '',
 }
 
@@ -53,7 +52,6 @@ export function Editar() {
           descripcion: proyecto.descripcion,
           fecha_inicio: proyecto.fecha_inicio ?? '',
           fecha_fin: proyecto.fecha_fin ?? '',
-          creador: '',
           horas_por_story_point: proyecto.horas_por_story_point?.toString() ?? '',
         })
       })

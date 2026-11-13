@@ -17,7 +17,6 @@ const FORMULARIO_INICIAL: DatosProyecto = {
   descripcion: '',
   fecha_inicio: '',
   fecha_fin: '',
-  creador: '',
   horas_por_story_point: '',
 }
 
@@ -104,15 +103,6 @@ export function Component() {
             error={errores.fecha_fin}
           />
         </div>
-
-        <Field
-          id="creador"
-          name="creador"
-          label="Tu nombre (Scrum Master)"
-          value={datos.creador}
-          onChange={(evento) => actualizar('creador', evento.target.value)}
-          error={errores.creador}
-        />
 
         {enviando && <LoadingIndicator />}
 

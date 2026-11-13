@@ -1,10 +1,9 @@
 import { Button } from '../../compartido/componentes/Button'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
-import { faltanPorVotar, puedeRevelar, type Integrante, type Votacion } from './votacion'
+import { faltanPorVotar, puedeRevelar, type Votacion } from './votacion'
 
 type Props = {
   votacion: Votacion
-  scrumMaster?: Integrante
   deshabilitado: boolean
   alRevelar: () => void
   puedeGestionar?: boolean
@@ -12,7 +11,6 @@ type Props = {
 
 export function AccionesScrumMaster({
   votacion,
-  scrumMaster,
   deshabilitado,
   alRevelar,
   puedeGestionar = true,
@@ -23,7 +21,7 @@ export function AccionesScrumMaster({
     <div className="votacion-acciones">
       <Button
         type="button"
-        disabled={deshabilitado || !puedeGestionar || !puedeRevelar(votacion, scrumMaster)}
+        disabled={deshabilitado || !puedeGestionar || !puedeRevelar(votacion)}
         aria-describedby={puedeGestionar ? undefined : 'votacion-nota-revelar'}
         onClick={alRevelar}
       >

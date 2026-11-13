@@ -222,10 +222,10 @@ El texto de la feature se redacta en el paso BDD del flujo (después de `/specki
 
 ### Identidad sin selectores
 
-- [ ] T068 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
-- [ ] T069 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
-- [ ] T070 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
-- [ ] T071 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
+- [x] T068 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
+- [x] T069 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
+- [x] T070 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
+- [x] T071 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
 
 ### Acciones de gestión deshabilitadas
 
