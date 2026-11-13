@@ -62,6 +62,7 @@ it.each([
   ['.historial-chip--apagado'],
   ['.historial-chip--ok'],
   ['.historial-chip--fuerte'],
+  ['.historial-chip--ninguno'],
 ])('Given la etiqueta %s del detalle, When se estiliza, Then su texto cumple 4,5:1 sobre su fondo', (selector) => {
   const bloque = regla(selector)
   const fondo = color(bloque, 'background') || '#ffffff'
@@ -87,4 +88,10 @@ it('Given el botón «Exportar a PDF», When se estiliza, Then es blanco con bor
   expect(bloque).toMatch(/border-color:\s*var\(--brand\)/)
   expect(contraste('#0b7a70', '#ffffff')).toBeGreaterThanOrEqual(4.5)
   expect(bloque).toMatch(/background:\s*var\(--surface\)/)
+})
+
+it('Given un defecto del detalle, When se estiliza, Then va en una caja con borde y 12px de radio, separadas entre sí', () => {
+  expect(regla('.historial-item--caja')).toMatch(/border:\s*1px solid/)
+  expect(regla('.historial-item--caja')).toMatch(/border-radius:\s*12px/)
+  expect(regla('.historial-items--cajas')).toMatch(/gap:\s*14px/)
 })

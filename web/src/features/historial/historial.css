@@ -327,20 +327,6 @@
   width: 6px;
 }
 
-.historial-total {
-  border-top: 1px solid var(--line);
-  margin: 0;
-  padding-top: 0.85rem;
-}
-
-.historial-total .historial-metrica {
-  align-items: baseline;
-  background: var(--historial-panel);
-  border-radius: 0.6rem;
-  display: flex;
-  justify-content: space-between;
-}
-
 .historial-vacio,
 .historial-vacio-corto {
   color: var(--muted);
