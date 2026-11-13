@@ -21,7 +21,11 @@
 
 .backlog-crear {
   display: grid;
-  gap: 18px;
+  gap: 22px;
+}
+
+.backlog-crear__acciones .button--quiet {
+  color: var(--muted);
 }
 
 .backlog-crear__cabecera {
