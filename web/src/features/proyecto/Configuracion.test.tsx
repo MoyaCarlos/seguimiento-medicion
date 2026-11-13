@@ -93,6 +93,91 @@ describe('pantalla de configuración del equipo', () => {
   })
 })
 
+describe('configuración del equipo - elegir de la lista de usuarios (HU-21)', () => {
+  const usuarios = [
+    { id: 1, nombre: 'Ana' },
+    { id: 2, nombre: 'Bruno' },
+    { id: 3, nombre: 'Carla' },
+  ]
+
+  function responderUsuarios(alta: Response) {
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') return Promise.resolve(alta)
+      if (url === '/users') return Promise.resolve(new Response(JSON.stringify(usuarios)))
+      if (url === '/projects/3') {
+        return Promise.resolve(new Response(JSON.stringify({ id: 3, rol: 'scrum_master' })))
+      }
+      return Promise.resolve(new Response(JSON.stringify(integrantes)))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('Escenario 8: elijo de la lista un usuario registrado y entra como Product Builder', async () => {
+    const fetchMock = responderUsuarios(
+      new Response(
+        JSON.stringify({
+          id: 2,
+          proyecto_id: 3,
+          nombre: 'Bruno',
+          rol: 'product_builder',
+          vinculado_en: '2026-09-02T00:00:00Z',
+        }),
+        { status: 201 },
+      ),
+    )
+    abrir()
+
+    await screen.findByText('Ana')
+    const selector = await screen.findByLabelText('Usuario')
+    expect(fetchMock).toHaveBeenCalledWith('/users', expect.anything())
+    expect(screen.queryByLabelText('Rol')).toBeNull()
+
+    // Ana ya integra el proyecto: no se ofrece
+    const opciones = Array.from(selector.querySelectorAll('option')).map((o) => o.textContent)
+    expect(opciones).toContain('Bruno')
+    expect(opciones).toContain('Carla')
+    expect(opciones).not.toContain('Ana')
+
+    await userEvent.selectOptions(selector, 'Bruno')
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
+
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(true),
+    )
+    const llamada = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')
+    expect(llamada?.[0]).toBe('/projects/3/members')
+    expect(JSON.parse(String(llamada?.[1]?.body))).toEqual({ nombre: 'Bruno' })
+    expect(await screen.findByText('Product Builder')).toBeTruthy()
+  })
+
+  it('muestra el error del servidor si el usuario no existe', async () => {
+    responderUsuarios(
+      new Response(JSON.stringify({ mensaje: 'usuario no encontrado' }), { status: 404 }),
+    )
+    abrir()
+
+    await userEvent.selectOptions(await screen.findByLabelText('Usuario'), 'Bruno')
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
+
+    expect(await screen.findByText('usuario no encontrado')).toBeTruthy()
+  })
+
+  it('avisa cuando no hay usuarios registrados para agregar', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(JSON.stringify(url === '/users' ? [] : integrantes)),
+        ),
+      ),
+    )
+    abrir()
+
+    expect(await screen.findByText('No hay usuarios registrados para agregar')).toBeTruthy()
+  })
+})
+
 describe('configuración del equipo - rol (HU-21)', () => {
   const nota = (boton: HTMLElement) =>
     document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
