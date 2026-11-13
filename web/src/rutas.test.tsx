@@ -75,17 +75,17 @@ async function abrirSelector(usuario: ReturnType<typeof userEvent.setup>) {
 
 describe('registro de rutas', () => {
   it.each([
-    ['/projects/42/proyecto', 'Panel del proyecto'],
-    ['/projects/42/backlog', 'Product Backlog'],
-    ['/projects/42/backlog/nueva', 'Nueva historia'],
-    ['/projects/42/sprints', 'Sprints'],
-    ['/projects/42/defectos', 'Defectos'],
-    ['/projects/42/status', 'Estado del proyecto'],
-  ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo) => {
+    ['/projects/42/proyecto', 'Panel del proyecto', '42'],
+    ['/projects/42/backlog', 'Product Backlog', 'Proyecto #42'],
+    ['/projects/42/backlog/nueva', 'Nueva historia', '42'],
+    ['/projects/42/sprints', 'Sprints', '42'],
+    ['/projects/42/defectos', 'Defectos', '42'],
+    ['/projects/42/status', 'Estado del proyecto', '42'],
+  ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo, texto) => {
     abrir(url)
 
     expect(await screen.findByRole('heading', { name: titulo }, { timeout: 5000 })).toBeTruthy()
-    expect(screen.getByText('42')).toBeTruthy()
+    expect(screen.getByText(texto)).toBeTruthy()
   })
 
   it('/projects/:id/votacion/:historiaId muestra la votación de la historia', async () => {
@@ -345,11 +345,11 @@ describe('registro de rutas', () => {
 
   it('cambiar el id de la URL cambia el proyecto mostrado, sin estado compartido', async () => {
     const router = abrir('/projects/1/backlog')
-    expect(await screen.findByText('1', { selector: 'strong' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByText('Proyecto #1', {}, { timeout: 5000 })).toBeTruthy()
 
     await router.navigate('/projects/2/backlog')
 
-    expect(await screen.findByText('2', { selector: 'strong' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByText('Proyecto #2', {}, { timeout: 5000 })).toBeTruthy()
   })
 
   describe('selector de proyecto en el encabezado', () => {
