@@ -3,11 +3,10 @@ import { useParams } from 'react-router'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { consultarAvance } from './api'
+import { consultarAvance, consultarEstadoDelProyecto, type EstadoDelProyecto } from './api'
 import { esIdValido, type Avance } from './avance'
 import { GrupoHistorias } from './GrupoHistorias'
 import { Resumen } from './Resumen'
-import { obtenerEstadoProyecto, type EstadoProyecto } from '../proyecto/api'
 import './estado.css'
 
 export function Component() {
@@ -33,11 +32,11 @@ export function Component() {
 }
 
 function InsigniaDeEstado({ id }: { id: string }) {
-  const [estado, setEstado] = useState<EstadoProyecto>()
+  const [estado, setEstado] = useState<EstadoDelProyecto>()
 
   useEffect(() => {
     let vigente = true
-    obtenerEstadoProyecto(id)
+    consultarEstadoDelProyecto(id)
       .then((obtenido) => {
         if (vigente) setEstado(obtenido.estado)
       })

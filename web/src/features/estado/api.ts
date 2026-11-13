@@ -19,3 +19,8 @@ export async function consultarAvance(proyectoId: string): Promise<Avance> {
   if (!esAvanceCompleto(avance)) throw new Error('La respuesta no trae el avance')
   return avance
 }
+
+export type EstadoDelProyecto = 'Planificado' | 'En curso' | 'Finalizado'
+
+export const consultarEstadoDelProyecto = (proyectoId: string) =>
+  get<{ estado: EstadoDelProyecto }>(`/projects/${proyectoId}/status`)
