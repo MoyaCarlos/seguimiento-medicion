@@ -4,11 +4,14 @@ import { ErrorMessage } from './ErrorMessage'
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string
   error?: string
+  help?: string
 }
 
-export function Field({ label, error, id, ...props }: FieldProps) {
+export function Field({ label, error, help, id, ...props }: FieldProps) {
   const fieldId = id ?? props.name
   const errorId = error && fieldId ? `${fieldId}-error` : undefined
+  const helpId = help && fieldId ? `${fieldId}-help` : undefined
+  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined
 
   return (
     <div className="field">
@@ -16,9 +19,10 @@ export function Field({ label, error, id, ...props }: FieldProps) {
       <input
         id={fieldId}
         aria-invalid={Boolean(error)}
-        aria-describedby={errorId}
+        aria-describedby={describedBy}
         {...props}
       />
+      {help && <p id={helpId} className="message">{help}</p>}
       {error && <ErrorMessage id={errorId} message={error} />}
     </div>
   )

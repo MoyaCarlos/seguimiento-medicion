@@ -84,6 +84,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** la cantidad de horas es cero, negativa, no numérica o no se informa, **THEN** el sistema **shall** rechazar la carga con un error sobre las horas.
 - **IF** la cantidad de horas supera 24 horas (el tope por carga), **THEN** el sistema **shall** rechazar la carga con un error sobre las horas que indique el tope. Exactamente 24 horas se acepta.
 - **WHERE** la cantidad de horas tiene decimales, el sistema **shall** convertirla a minutos (1,5 h = 90 min; 0,25 h = 15 min).
+- **WHERE** la cantidad de horas se informa en formato `h:mm` (por ejemplo, `"0:20"` = 20 minutos), el sistema **shall** convertirla a minutos; `mm` va de 00 a 59 y, si queda fuera de ese rango (`"1:60"`), el sistema **shall** rechazar la carga con un error sobre las horas ("los minutos deben estar entre 00 y 59"). Las horas se aceptan entonces como decimales (`"1.5"`) o como `h:mm`.
 - **IF** la cantidad de horas no se puede expresar en minutos enteros (por ejemplo, 0,01 h = 0,6 min), **THEN** el sistema **shall** rechazar la carga con un error sobre las horas. La carga mínima válida es 1 minuto.
 - **IF** la actividad está vacía, compuesta solo por espacios o supera los 500 caracteres, **THEN** el sistema **shall** rechazar la carga con un error sobre la actividad.
 - **IF** la fecha falta, no tiene el formato `AAAA-MM-DD` o no es una fecha real (por ejemplo, 2026-02-30), **THEN** el sistema **shall** rechazar la carga con un error sobre la fecha.

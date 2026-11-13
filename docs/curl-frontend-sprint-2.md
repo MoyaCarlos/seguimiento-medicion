@@ -187,6 +187,19 @@ La respuesta es la historia con su `estado` y, al completarla, su
 `fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
 `404` si la historia no existe y `409` si otro cambio la modificó antes.
 
+### Cargar horas en una historia
+
+La historia debe estar en el Sprint activo. `horas` acepta decimales (`"1.5"`) o el
+formato `h:mm` (`"0:20"`, con `mm` de 00 a 59). `integrante_id` es el id de un
+integrante del proyecto.
+
+```bash
+curl -X POST http://localhost:8080/backlog/1/horas   -H "Authorization: Bearer $TOKEN"   -H 'Content-Type: application/json'   -d '{"integrante_id":2,"fecha":"2026-10-28","actividad":"Revisar el PR","horas":"0:20"}'
+```
+
+Responde 201 con la carga: `minutos` es `20` y `horas` es `0.33`. Con `"horas":"1:60"` responde
+400 con `{"campo":"horas","mensaje":"los minutos deben estar entre 00 y 59"}`.
+
 ### Consultar y actualizar el proyecto
 
 ```bash
@@ -365,6 +378,22 @@ curl -X PUT http://localhost:8080/backlog/1/estado ^
 La respuesta es la historia con su `estado` y, al completarla, su
 `fecha_finalizacion`. Los rechazos son `400` con `{"campo":"estado","mensaje":...}`,
 `404` si la historia no existe y `409` si otro cambio la modificó antes.
+
+### Cargar horas en una historia
+
+La historia debe estar en el Sprint activo. `horas` acepta decimales (`"1.5"`) o el
+formato `h:mm` (`"0:20"`, con `mm` de 00 a 59). `integrante_id` es el id de un
+integrante del proyecto.
+
+```bat
+curl -X POST http://localhost:8080/backlog/1/horas ^
+  -H "Authorization: Bearer %TOKEN%" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"integrante_id\":2,\"fecha\":\"2026-10-28\",\"actividad\":\"Revisar el PR\",\"horas\":\"0:20\"}"
+```
+
+Responde 201 con la carga: `minutos` es `20` y `horas` es `0.33`. Con `"horas":"1:60"` responde
+400 con `{"campo":"horas","mensaje":"los minutos deben estar entre 00 y 59"}`.
 
 ### Consultar y actualizar el proyecto
 
