@@ -210,15 +210,15 @@ El texto de la feature se redacta en el paso BDD del flujo (después de `/specki
 
 - [ ] T060 [P] [US7] RED: web/src/compartido/api/client.test.ts — un 403 con mensaje «No sos integrante de este proyecto» se distingue (por ejemplo `error.tipo === 'no_integrante'`) de cualquier otro 403 (`'sin_permiso'`, conserva el mensaje del servidor); web/src/compartido/permisos/permisos.test.tsx (nuevo) — `NoIntegrante` muestra «No sos integrante de este proyecto» con enlace a «Mis proyectos»; `AvisoSinPermiso` muestra «No tenés permiso» y el mensaje; `useEsScrumMaster(proyecto)` según `proyecto.rol` — confirmar que FALLA
 - [ ] T061 [US7] COMMIT `RED: 403 de pertenencia y de rol en la interfaz (falla)`
-- [ ] T062 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
-- [ ] T063 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
+- [x] T062 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
+- [x] T063 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
 
 ### Mis proyectos
 
-- [ ] T064 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
-- [ ] T065 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
-- [ ] T066 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
-- [ ] T067 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
+- [x] T064 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
+- [x] T065 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
+- [x] T066 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
+- [x] T067 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
 
 ### Identidad sin selectores
 
