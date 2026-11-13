@@ -1,6 +1,7 @@
 import { useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
 import { AccionesScrumMaster } from './AccionesScrumMaster'
 import { Consenso } from './Consenso'
 import { Encabezado } from './Encabezado'
@@ -25,6 +26,7 @@ type Props = { proyectoId: string; historiaId: number }
 
 function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const estado = useVotacion(proyectoId, historiaId)
+  const puedeGestionar = useEsScrumMaster(Number(proyectoId))
   const { integrantes, actor, scrumMaster, votacion, enviando } = estado
 
   return (
@@ -60,6 +62,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           hayIntegrantes={Boolean(integrantes?.length)}
           deshabilitado={enviando}
           alIniciar={estado.iniciar}
+          puedeGestionar={puedeGestionar}
         />
       )}
 
@@ -74,13 +77,14 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           {estaRevelada(votacion) && (
             <>
               <Resultado promedio={votacion.promedio} diferencias={votacion.diferencias} />
-              {scrumMaster ? (
+              {scrumMaster || !puedeGestionar ? (
                 <Consenso
                   key={votacion.ronda}
                   votacion={votacion}
                   deshabilitado={enviando}
                   alRegistrar={estado.registrarEstimacion}
                   alAbrirRonda={estado.abrirNuevaRonda}
+                  puedeGestionar={puedeGestionar}
                 />
               ) : (
                 <p className="votacion-nota">El Scrum Master registra la estimación acordada o abre una nueva ronda.</p>
@@ -92,12 +96,13 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               )}
             </>
           )}
-          {scrumMaster && !estaRevelada(votacion) && (
+          {(scrumMaster || !puedeGestionar) && !estaRevelada(votacion) && (
             <AccionesScrumMaster
               votacion={votacion}
               scrumMaster={scrumMaster}
               deshabilitado={enviando}
               alRevelar={estado.revelar}
+              puedeGestionar={puedeGestionar}
             />
           )}
         </>

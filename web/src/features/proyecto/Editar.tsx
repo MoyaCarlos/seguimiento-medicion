@@ -5,6 +5,10 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { ApiError } from '../../compartido/api/client'
+import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
+import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
 import { useRecargarProyectos } from '../../compartido/proyectos/recargaProyectos'
 import { aProyectoEditado, editarProyecto, obtenerProyecto } from './api'
 import { CampoDescripcion } from './Campos'
@@ -35,6 +39,7 @@ export function Editar() {
   const [errorCarga, setErrorCarga] = useState('')
   const [cargando, setCargando] = useState(true)
   const [enviando, setEnviando] = useState(false)
+  const [sinPermiso, setSinPermiso] = useState('')
 
   useEffect(() => {
     let vigente = true
@@ -64,6 +69,9 @@ export function Editar() {
     }
   }, [id])
 
+  // Va después de la carga del proyecto para que esa sea la primera petición de la pantalla.
+  const puedeGestionar = useEsScrumMaster(Number(id))
+
   function actualizar(campo: keyof DatosProyecto, valor: string) {
     setDatos((actuales) => ({ ...actuales, [campo]: valor }))
     setErrores((actuales) => ({ ...actuales, [campo]: undefined }))
@@ -73,6 +81,7 @@ export function Editar() {
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErrorGeneral('')
+    setSinPermiso('')
 
     const validacion = validarEdicion(datos)
     setErrores(validacion)
@@ -85,7 +94,9 @@ export function Editar() {
       navegar(`/projects/${id}/proyecto`)
     } catch (error) {
       const campo = campoDeError(error)
-      if (campo && esCampoDeProyecto(campo)) {
+      if (error instanceof ApiError && error.tipo === 'sin_permiso') {
+        setSinPermiso(error.message)
+      } else if (campo && esCampoDeProyecto(campo)) {
         setErrores((actuales) => ({ ...actuales, [campo]: mensajeDeError(error) }))
       } else {
         setErrorGeneral(mensajeDeError(error))
@@ -110,6 +121,7 @@ export function Editar() {
       {!cargando && !errorCarga && (
         <form onSubmit={guardar} noValidate aria-label="Editar proyecto">
           {errorGeneral && <ErrorMessage message={errorGeneral} />}
+          {sinPermiso && <AvisoSinPermiso mensaje={sinPermiso} />}
 
           <Field
             id="nombre"
@@ -163,10 +175,17 @@ export function Editar() {
             <Link className="button button--quiet" to={`/projects/${id}/proyecto`}>
               Cancelar
             </Link>
-            <Button type="submit" disabled={enviando || cargando}>
+            <Button
+              type="submit"
+              disabled={enviando || cargando || !puedeGestionar}
+              aria-describedby={puedeGestionar ? undefined : 'editar-nota-guardar'}
+            >
               Guardar cambios
             </Button>
           </div>
+          {!puedeGestionar && (
+            <NotaGestion id="editar-nota-guardar" texto="Solo el Scrum Master puede guardar el proyecto" />
+          )}
         </form>
       )}
     </section>

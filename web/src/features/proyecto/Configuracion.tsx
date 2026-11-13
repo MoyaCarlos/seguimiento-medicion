@@ -5,6 +5,10 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { ApiError } from '../../compartido/api/client'
+import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
+import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
 import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes } from './api'
 import type { Integrante, Rol } from './api'
 import { CampoSelect } from './Campos'
@@ -27,6 +31,8 @@ export function Configuracion() {
   const [errores, setErrores] = useState<ErroresIntegrante>({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [sinPermiso, setSinPermiso] = useState('')
+  const puedeGestionar = useEsScrumMaster(Number(id))
 
   useEffect(() => {
     let vigente = true
@@ -50,6 +56,7 @@ export function Configuracion() {
   async function agregar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErrorGeneral('')
+    setSinPermiso('')
 
     const validacion = validarIntegrante({ nombre, rol })
     setErrores(validacion)
@@ -66,7 +73,9 @@ export function Configuracion() {
       setRol('')
     } catch (error) {
       const campo = campoDeError(error)
-      if (campo === 'nombre' || campo === 'rol') {
+      if (error instanceof ApiError && error.tipo === 'sin_permiso') {
+        setSinPermiso(error.message)
+      } else if (campo === 'nombre' || campo === 'rol') {
         setErrores({ [campo]: mensajeDeError(error) })
       } else {
         setErrorGeneral(mensajeDeError(error))
@@ -96,6 +105,7 @@ export function Configuracion() {
           <h2>Asignar integrante</h2>
           <form onSubmit={agregar} noValidate aria-label="Asignar integrante">
             {errorGeneral && <ErrorMessage message={errorGeneral} />}
+            {sinPermiso && <AvisoSinPermiso mensaje={sinPermiso} />}
 
             <Field
               id="integrante"
@@ -125,9 +135,19 @@ export function Configuracion() {
 
             {enviando && <LoadingIndicator />}
 
-            <Button type="submit" disabled={enviando}>
+            <Button
+              type="submit"
+              disabled={enviando || !puedeGestionar}
+              aria-describedby={puedeGestionar ? undefined : 'configuracion-nota-agregar'}
+            >
               Asignar integrante
             </Button>
+            {!puedeGestionar && (
+              <NotaGestion
+                id="configuracion-nota-agregar"
+                texto="Solo el Scrum Master puede agregar integrantes"
+              />
+            )}
           </form>
         </article>
 

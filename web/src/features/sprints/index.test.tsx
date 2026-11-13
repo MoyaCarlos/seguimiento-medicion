@@ -232,9 +232,11 @@ describe('pantalla de Sprints', () => {
   it('el error de un Sprint no aparece en otro', async () => {
     const respuestas = [respuesta(201, pendiente(1)), respuesta(201, pendiente(2))]
     simularApi(conSprints(), (ruta) =>
-      ruta === '/sprints/1/iniciar'
-        ? respuesta(400, { campo: 'estado', mensaje: 'error del Sprint 1' })
-        : (respuestas.shift() as Response),
+      ruta === '/projects/42'
+        ? respuesta(200, { id: 42, rol: 'scrum_master' })
+        : ruta === '/sprints/1/iniciar'
+          ? respuesta(400, { campo: 'estado', mensaje: 'error del Sprint 1' })
+          : (respuestas.shift() as Response),
     )
     const user = userEvent.setup()
     abrir()
