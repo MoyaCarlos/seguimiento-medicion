@@ -96,3 +96,10 @@ it('Given un celular de 640px o menos, When se dibuja la tarjeta y la cabecera, 
   expect(movil).toMatch(/\.backlog-item__cabecera\s*\{[^}]*flex-direction:\s*column/)
   expect(movil).toMatch(/\.backlog-encabezado\s*\{[^}]*flex-direction:\s*column/)
 })
+
+it('Given la pantalla de Historias, When se estiliza, Then separa cabecera, aviso y lista 24px como el contenido del prototipo', () => {
+  const bloque = regla('.backlog')
+
+  expect(bloque).toMatch(/display:\s*grid/)
+  expect(bloque).toMatch(/gap:\s*24px/)
+})

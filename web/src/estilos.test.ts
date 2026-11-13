@@ -101,3 +101,8 @@ it('Given el selector de proyecto, When se estiliza, Then el resaltado del tecla
   }
   expect(bloque('.selector-proyecto__popup[hidden]')).toMatch(/display:\s*none/)
 })
+
+it('Given el texto en cursiva del prototipo, When se estiliza, Then el navegador puede dibujarla (Inter no trae cursiva propia)', () => {
+  expect(estilos).not.toMatch(/font-synthesis:\s*none/)
+  expect(estilos).toMatch(/font-synthesis:\s*style/)
+})
