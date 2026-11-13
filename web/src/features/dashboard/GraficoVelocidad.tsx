@@ -35,7 +35,7 @@ export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
         aria-label="Gráfico por Sprint, desplazable"
         tabIndex={0}
       >
-        <div style={{ minWidth: anchoMinimo }}>
+        <div style={{ width: anchoMinimo }}>
           <ResponsiveContainer width="100%" height={ALTO} initialDimension={{ width: anchoMinimo, height: ALTO }}>
             <BarChart data={filas} barGap={8} margin={{ top: 26, right: 10, bottom: 8, left: 0 }}>
               <defs>

@@ -42,7 +42,7 @@ function PantallaDashboard({ id }: { id: string }) {
 
   return (
     <div className="dashboard-pantalla">
-      <div>
+      <div className="dashboard-cabecera">
         <p className="eyebrow">Proyecto #{id}</p>
         <h1>Dashboard</h1>
         <p className="project-context">Proyecto actual: <strong>{id}</strong></p>

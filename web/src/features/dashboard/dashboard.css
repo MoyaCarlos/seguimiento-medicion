@@ -11,6 +11,10 @@
   margin: 0;
 }
 
+.dashboard-cabecera {
+  margin-bottom: 18px;
+}
+
 .dashboard-tarjeta {
   background: var(--surface);
   border: 1px solid #e2e8f0;
