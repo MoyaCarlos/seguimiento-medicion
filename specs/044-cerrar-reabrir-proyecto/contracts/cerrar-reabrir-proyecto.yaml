@@ -1,0 +1,138 @@
+# Contrato de la spec 044 (#300): cerrar y reabrir un proyecto, y solo lectura.
+# Se suma a la API existente. El esquema Error ({campo?, mensaje}) es el de siempre.
+# Orden de errores (FR-006 de HU-21, extendido): 401 → 404 → 403 no integrante →
+# 403 no Scrum Master → 409 proyecto cerrado → 400/409 del caso de uso.
+openapi: 3.0.3
+info:
+  title: Cerrar y reabrir un proyecto (spec 044)
+  version: "044"
+paths:
+  /projects/{id}/cerrar:
+    post:
+      summary: Cierra el proyecto (solo el Scrum Master). Sin cuerpo.
+      parameters:
+        - $ref: "#/components/parameters/ProyectoID"
+      responses:
+        "200":
+          description: Proyecto cerrado, «Finalizado», con la fecha de cierre de hoy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProyectoConEstado" }
+              example:
+                id: 7
+                nombre: Tienda
+                descripcion: ""
+                fecha_inicio: "2026-10-01"
+                fecha_fin: "2026-12-15"
+                fecha_cierre: "2026-11-11"
+                creado_en: "2026-10-01T12:00:00Z"
+                horas_por_story_point: null
+                estado: Finalizado
+        "401": { $ref: "#/components/responses/SinSesion" }
+        "403": { $ref: "#/components/responses/SinPermiso" }
+        "404": { $ref: "#/components/responses/ProyectoNoEncontrado" }
+        "409":
+          description: Ya cerrado, o con un Sprint Activo. No cambia nada.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              examples:
+                yaCerrado:
+                  value: { mensaje: El proyecto ya está cerrado }
+                sprintActivo:
+                  value: { mensaje: Cerrá el Sprint activo antes de cerrar el proyecto }
+  /projects/{id}/reabrir:
+    post:
+      summary: Reabre el proyecto (solo el Scrum Master). Sin cuerpo.
+      parameters:
+        - $ref: "#/components/parameters/ProyectoID"
+      responses:
+        "200":
+          description: >-
+            Proyecto abierto, fecha de cierre vacía y estado recalculado con las reglas
+            de HU-13 (puede seguir «Finalizado» por fechas o Sprints, pero acepta escrituras).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProyectoConEstado" }
+              example:
+                id: 7
+                nombre: Tienda
+                descripcion: ""
+                fecha_inicio: "2026-10-01"
+                fecha_fin: "2026-12-15"
+                fecha_cierre: null
+                creado_en: "2026-10-01T12:00:00Z"
+                horas_por_story_point: null
+                estado: En curso
+        "401": { $ref: "#/components/responses/SinSesion" }
+        "403": { $ref: "#/components/responses/SinPermiso" }
+        "404": { $ref: "#/components/responses/ProyectoNoEncontrado" }
+        "409":
+          description: El proyecto no está cerrado. No cambia nada.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+              example: { mensaje: El proyecto no está cerrado }
+
+# Cambios sobre rutas existentes:
+# - GET /projects, GET /projects/{id}, POST /projects y PUT /projects/{id}: el proyecto
+#   suma `fecha_cierre` (string YYYY-MM-DD o null).
+# - GET /projects/{id}/status: misma forma; con el proyecto cerrado, estado = Finalizado.
+# - Toda ruta de nivel «Sesión e integrante» o «Sesión y Scrum Master» (HU-21) que escribe
+#   sobre un proyecto cerrado, salvo /reabrir, responde:
+x-escrituras-proyecto-cerrado:
+  "409":
+    description: El proyecto está cerrado. No cambia nada.
+    content:
+      application/json:
+        schema: { $ref: "#/components/schemas/Error" }
+        example: { mensaje: El proyecto está cerrado }
+
+components:
+  parameters:
+    ProyectoID:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+  responses:
+    SinSesion:
+      description: Sin sesión válida (HU-20).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { mensaje: Tu sesión no es válida }
+    SinPermiso:
+      description: No integra el proyecto, o no es su Scrum Master (HU-21).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          examples:
+            noIntegrante: { value: { mensaje: No sos integrante de este proyecto } }
+            noScrumMaster: { value: { mensaje: Solo el Scrum Master puede realizar esta acción } }
+    ProyectoNoEncontrado:
+      description: El proyecto no existe.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example: { mensaje: proyecto no encontrado }
+  schemas:
+    Error:
+      type: object
+      required: [mensaje]
+      properties:
+        campo: { type: string }
+        mensaje: { type: string }
+    ProyectoConEstado:
+      type: object
+      required: [id, nombre, descripcion, fecha_cierre, creado_en, estado]
+      properties:
+        id: { type: integer, format: int64 }
+        nombre: { type: string }
+        descripcion: { type: string }
+        fecha_inicio: { type: string, format: date, nullable: true }
+        fecha_fin: { type: string, format: date, nullable: true }
+        fecha_cierre: { type: string, format: date, nullable: true }
+        creado_en: { type: string, format: date-time }
+        horas_por_story_point: { type: number, nullable: true }
+        estado: { type: string, enum: [Planificado, En curso, Finalizado] }

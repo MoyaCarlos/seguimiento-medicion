@@ -49,7 +49,7 @@ func (s *ConsultarVotacion) Ejecutar(ctx context.Context, historiaID, consultant
 	if err != nil {
 		return VistaVotacion{}, err
 	}
-	if err := exigirIntegrante(ctx, s.proyectos, historia.ProyectoID, consultanteID); err != nil {
+	if err := verificarIntegrante(ctx, s.proyectos, historia.ProyectoID, consultanteID); err != nil {
 		return VistaVotacion{}, err
 	}
 	ronda, err := s.votaciones.ObtenerRondaActual(ctx, historia.ID)

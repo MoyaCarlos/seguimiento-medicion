@@ -39,7 +39,7 @@ Además hay un hueco de diseño que ninguna historia nota por separado: ver
 |---|---|
 | Idioma | Tablas y columnas en **español**, `snake_case`, tablas en plural. Los valores de los enums son los del dominio, tal cual (`Nueva`, `En progreso`, `M`, `scrum_master`); no se traducen ni se renombran. |
 | Identificadores | `id INTEGER PRIMARY KEY AUTOINCREMENT` (int64). Toda referencia se llama `<entidad>_id`; si hay dos a la misma tabla, `<rol>_<entidad>_id` (`sprint_deteccion_id`). |
-| Fechas de calendario | `TEXT` `YYYY-MM-DD` (`time.DateOnly`). Aplica a `fecha_inicio`, `fecha_fin`, `fecha` y `fecha_finalizacion`. |
+| Fechas de calendario | `TEXT` `YYYY-MM-DD` (`time.DateOnly`). Aplica a `fecha_inicio`, `fecha_fin`, `fecha`, `fecha_finalizacion` y `fecha_cierre`. |
 | Instantes | `TEXT` RFC 3339 en UTC, columna `creado_en` (nunca `created_at`). Solo auditoría; no se usa en reglas de negocio. Excepción (HU-20, `sesiones`): `vence_en` entra en una regla de negocio (una sesión vencida no es vigente) y `cerrada_en` registra el cierre de sesión sin borrar la fila, porque ninguna historia borra datos. |
 | Obligatoriedad | Se declara `NOT NULL` todo lo que el dominio exige siempre. `NULL` significa "todavía no definido", nunca "cero" ni "vacío". |
 | Borrado | Ninguna historia borra datos. **Sin `ON DELETE CASCADE`**: se deja el comportamiento por defecto de SQLite, `NO ACTION`, que rechaza borrar (o cambiar el id de) un padre con hijos con `SQLITE_CONSTRAINT_FOREIGNKEY`. **No** se declara `ON DELETE RESTRICT`: rechaza igual pero con otro código (`SQLITE_CONSTRAINT_TRIGGER`), y rompería la traducción de errores de §5. Si algún día hace falta borrar, es una historia nueva con su propia decisión. |
@@ -80,6 +80,7 @@ erDiagram
         text fecha_fin
         real horas_por_story_point
         text creado_en
+        text fecha_cierre
     }
     usuarios {
         int id PK
@@ -180,10 +181,11 @@ Notación: **PK** clave primaria, **UK** única, **FK** clave foránea, `?` admi
 | `fecha_fin` | TEXT? | `YYYY-MM-DD` |
 | `horas_por_story_point` | REAL? | **Nueva.** HU-03 Esc. 3. `NULL` = no definido → horas estimadas y desviación se informan "sin datos". |
 | `creado_en` | TEXT NOT NULL | |
+| `fecha_cierre` | TEXT? | **Nueva** (migración 008, #300, D16). `YYYY-MM-DD`, la fecha en que el Scrum Master cerró el proyecto. `NULL` ⇔ proyecto abierto. Va al final de la tabla porque la agrega un `ALTER TABLE … ADD COLUMN`. |
 
 Restricciones de base:
 - `CHECK (horas_por_story_point IS NULL OR (typeof(horas_por_story_point) IN ('real','integer') AND horas_por_story_point > 0))` — sin el `typeof`, `'abc'` pasaba (ver §2).
-- `CHECK (date(fecha_inicio) IS fecha_inicio)` y `CHECK (date(fecha_fin) IS fecha_fin)` (D12)
+- `CHECK (date(fecha_inicio) IS fecha_inicio)`, `CHECK (date(fecha_fin) IS fecha_fin)` y `CHECK (date(fecha_cierre) IS fecha_cierre)` (D12). `fecha_cierre` no se compara con `fecha_inicio`/`fecha_fin`: el cierre es una decisión del Scrum Master, no una fecha del plan.
 - `CHECK (fecha_inicio IS NULL OR fecha_fin IS NULL OR fecha_fin > fecha_inicio)` — fin **estrictamente** posterior (#100). Los bordes inclusivos de HU-13 son una regla de *consulta*, no de almacenamiento.
 
 ### 4.2 `usuarios` — HU-04, HU-20 (antes `users`)
@@ -374,7 +376,7 @@ En SQL, un `CHECK` que evalúa a `NULL` **no falla**. Por eso, en toda columna q
 | `integrantes`, `historias`, `sprints`, `defectos` | enums (`rol`, `prioridad`, `estado`, `severidad`) | ninguna (todas `NOT NULL`) | No: lo rechaza `NOT NULL` |
 | `registros_horas` | `typeof(minutos) = 'integer' AND minutos > 0` | ninguna (`NOT NULL`) | No |
 | `proyectos` | `horas_por_story_point IS NULL OR (typeof(…) IN ('real','integer') AND … > 0)` | `horas_por_story_point` | No: `NULL` se maneja a propósito |
-| `proyectos`, `sprints`, `historias`, `registros_horas` | `date(col) IS col` (D12) | `fecha_inicio`, `fecha_fin`, `fecha_finalizacion` | No: con `NULL`, `date(NULL) IS NULL` es verdadero a propósito; `IS` (no `=`) evita que un texto inválido pase |
+| `proyectos`, `sprints`, `historias`, `registros_horas` | `date(col) IS col` (D12) | `fecha_inicio`, `fecha_fin`, `fecha_finalizacion`, `fecha_cierre` | No: con `NULL`, `date(NULL) IS NULL` es verdadero a propósito; `IS` (no `=`) evita que un texto inválido pase |
 
 Cada caso con `NULL` figura en el test de esquema (§9, punto 6). Un hueco **distinto** de los `NULL` —el formato de las fechas— se cubre con el `CHECK` de D12 (§2).
 
@@ -422,6 +424,8 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
+| Cerrar un proyecto solo sin Sprint `Activo`, y no dos veces (#300) | `UPDATE` condicional (`fecha_cierre IS NULL AND NOT EXISTS` un Sprint `Activo`): cubre dos cierres simultáneos y un Sprint iniciado mientras tanto | `Project.Cerrar` da el mensaje (409) |
+| Proyecto cerrado = solo lectura (#300) | — | Guardia `exigirProyectoAbierto`, que llaman `exigirIntegrante`/`exigirScrumMaster` (control de acceso de HU-21) y, directo después de verificar al integrante, `ImputarHoras` (para no listar los integrantes dos veces): toda escritura responde 409 «El proyecto está cerrado» después de los 403. **Límite declarado:** el chequeo y la escritura son sentencias distintas, así que una escritura que llega en el mismo instante que el cierre puede completarse (spec 044, research §6) |
 
 ### Traducción de violaciones a errores
 
@@ -443,7 +447,7 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 
 | Dato | Fuente |
 |---|---|
-| Estado del proyecto (HU-13) | `proyectos.fecha_*` + `sprints.estado` |
+| Estado del proyecto (HU-13) | `proyectos.fecha_cierre` (si no es `NULL`, «Finalizado» con prioridad; #300) + `proyectos.fecha_*` + `sprints.estado` |
 | SP planificados de un Sprint (usar `COALESCE(SUM(...), 0)`: el `SUM` de solo `NULL` da `NULL`) | completadas (`historias`) + arrastradas (`historias_arrastradas.estimacion_sp`), §4.6. **Decidido (D2b, D2c, 2026-10-13)** |
 | SP completados / velocidad | `COALESCE(SUM(estimacion_sp), 0)` de `historias WHERE sprint_id = S AND estado = 'Completada'` |
 | % de historias completadas | completadas / comprometidas |
@@ -458,7 +462,7 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
 requiere confirmación del equipo o del profesor; este documento no la decide. Hoy están
-pendientes D15 a D17, que surgieron del beta testing del
+pendientes D15 y D17, que surgieron del beta testing del
 2026-10-30; las demás están cerradas.
 
 | # | Tema | Recomendación | Afecta |
@@ -480,7 +484,7 @@ pendientes D15 a D17, que surgieron del beta testing del
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
 | **D14** | **No necesaria** (2026-11-03). Dónde se guarda el dueño de un proyecto (HU-19). | El dueño es el Scrum Master del proyecto, que es quien lo creó y es único (D4): no se guarda aparte ni hay cambio de esquema. | HU-19 |
 | **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
-| **D16** | **PENDIENTE.** Cierre manual del proyecto (#173): hoy el estado es derivado y no se guarda. | Guardar la fecha de cierre en `proyectos`; sin cierre manual, el proyecto no pasa a Finalizado. Cambio de esquema. | HU-13 |
+| **D16** | **Cerrada el 2026-11-11** (#300, spec 044, confirmada por el equipo). Cierre manual del proyecto (#173): hasta entonces el estado era solo derivado y no se guardaba nada. | Columna anulable `proyectos.fecha_cierre` (`YYYY-MM-DD`, `CHECK` D12, migración 008). El Scrum Master cierra (sin Sprint `Activo`) y reabre. Un proyecto cerrado es «Finalizado» **con prioridad** sobre las reglas de HU-13 y queda de solo lectura; uno abierto sigue las reglas de HU-13 **sin cambios**. Se descartó la propuesta original («sin cierre manual, el proyecto no pasa a Finalizado») porque cambiaba HU-13 y sus escenarios. | HU-13 |
 | **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
@@ -502,6 +506,7 @@ pendientes D15 a D17, que surgieron del beta testing del
 | HU-08 Defectos | `defectos` | `historias`, `sprints` | 005 |
 | HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
 | HU-21 Permisos por rol | — | `integrantes`, `usuarios`, `sesiones` | sin migración |
+| #300 Cerrar y reabrir un proyecto | `proyectos.fecha_cierre` | `integrantes`, `sprints` | 008 |
 | HU-03 Métricas | `proyectos.horas_por_story_point` | todo lo anterior | 001 |
 | HU-09 / HU-10 / HU-12 | — | solo lectura | — |
 
@@ -540,6 +545,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 005 | `defectos` | HU-08 |
    | 006 | `usuarios.contrasena_hash`, `sesiones` | HU-20 |
    | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 040) |
+   | 008 | `proyectos.fecha_cierre` (`ALTER TABLE … ADD COLUMN` con el `CHECK` de D12; los proyectos existentes quedan abiertos) | #300 (spec 044) |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
 4. **SQLite no altera restricciones.** Cambiar un `CHECK`, una FK o una columna
@@ -572,7 +578,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    - Índices parciales: segundo Activo y segundo Pendiente, por `INSERT` y por `UPDATE`; varios Finalizado (válidos).
    - `integrantes` (D4): segundo `scrum_master` en el mismo proyecto, por `INSERT` y por `UPDATE` (rechazados); varios `product_builder` en un proyecto y un `scrum_master` en cada proyecto distinto (válidos).
    - Migración 007, sobre una base sembrada antes de migrar: proyecto con 2 o más Scrum Master (queda el de `creado_en` más antiguo y los demás pasan a `product_builder`, sin borrar filas), empate de `creado_en` (queda el de menor `usuario_id`), proyecto sin Scrum Master y proyecto con uno solo (sin tocar).
-   - Fechas (D12), en `proyectos`, `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
+   - Migración 008, sobre una base sembrada antes de migrar: los proyectos existentes siguen ahí con `fecha_cierre NULL`.
+   - Fechas (D12), en `proyectos` (incluida `fecha_cierre`), `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
    - `registros_horas`: `minutos` 0, negativos, `NULL`, `1.5` y `'abc'` (rechazados) y `60` (válido); historia, Sprint o usuario de otro proyecto, o usuario que no es integrante.
    - `defectos`: `Resuelto` sin `sprint_resolucion_id` y `Pendiente` con él; `sprint_resolucion_id NULL` (válido).
    - `historias_arrastradas`: Sprint e historia de proyectos distintos, con ambos valores de `proyecto_id`.

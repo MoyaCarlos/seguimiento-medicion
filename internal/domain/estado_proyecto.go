@@ -12,12 +12,17 @@ const (
 	ProyectoFinalizado  EstadoProyecto = "Finalizado"
 )
 
-// CalcularEstadoProyecto deriva el estado del proyecto dando prioridad a los
-// Sprints sobre las fechas: un Sprint Activo mantiene el proyecto "En curso";
-// todos Finalizado ⇒ "Finalizado"; un Finalizado junto a un Pendiente ⇒ "En
-// curso" (FR-016); sin ejecución iniciada, deciden las fechas del proyecto,
-// comparadas por día calendario (los bordes [inicio, fin] son inclusivos).
+// CalcularEstadoProyecto deriva el estado del proyecto. Un proyecto cerrado por
+// el Scrum Master es "Finalizado" sin mirar nada más (#300). Si está abierto,
+// los Sprints tienen prioridad sobre las fechas: un Sprint Activo mantiene el
+// proyecto "En curso"; todos Finalizado ⇒ "Finalizado"; un Finalizado junto a
+// un Pendiente ⇒ "En curso" (FR-016); sin ejecución iniciada, deciden las
+// fechas del proyecto, comparadas por día calendario (los bordes [inicio, fin]
+// son inclusivos).
 func CalcularEstadoProyecto(p Project, sprints []Sprint, ahora time.Time) EstadoProyecto {
+	if p.FechaCierre != nil {
+		return ProyectoFinalizado
+	}
 	for _, s := range sprints {
 		if s.Estado == SprintActivo {
 			return ProyectoEnCurso

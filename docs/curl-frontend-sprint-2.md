@@ -14,11 +14,14 @@ Hay dos versiones con los mismos datos: la de **bash** (Linux, macOS y Git Bash
 en Windows) y la de **cmd** (Windows). Usá la que corresponda a tu terminal;
 solo cambia la forma de escribir los comandos.
 
-Los ids que devuelve la API se pierden al recargar una pantalla, porque todavía
-no existe un listado de proyectos ni de Sprints. **Anotá el `id` de cada
-respuesta**: lo necesitás para abrir la pantalla en
-`http://localhost:5173/projects/<id>` y para los comandos siguientes, donde el
-ejemplo usa `1`.
+El frontend lista los proyectos de la sesión: la lista de «Mis proyectos» en
+`/` y el selector de la barra lateral salen de `GET /projects`. Los `id` de las
+respuestas sirven para los comandos `curl` de esta guía y para armar URLs a mano,
+como `http://localhost:5173/projects/<id>`. **Anotá el `id` de cada respuesta**
+(o consultalo con los comandos de la sección «Recuperar los ids»): lo necesitás
+para los comandos siguientes, donde el ejemplo usa `1`. La pantalla de Sprints
+carga los Sprints del proyecto al abrirse, y `GET /projects/{id}/sprints`
+devuelve esos ids.
 
 ## Versión bash (Linux, macOS y Git Bash)
 
@@ -84,6 +87,22 @@ curl -X POST http://localhost:8080/sprints/1/iniciar \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"sprint_goal":"Validar el seguimiento","fecha_inicio":"2026-10-20","fecha_fin":"2026-11-03"}'
+```
+
+### Recuperar los ids
+
+`GET /projects` devuelve los proyectos de la sesión, con el rol de quien
+consulta. `GET /projects/{id}/sprints` devuelve los Sprints de un proyecto;
+reemplazá `1` por el id real.
+
+```bash
+curl http://localhost:8080/projects \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+```bash
+curl http://localhost:8080/projects/1/sprints \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ### Cerrar un Sprint
@@ -260,6 +279,22 @@ curl -X POST http://localhost:8080/sprints/1/iniciar ^
   -H "Authorization: Bearer %TOKEN%" ^
   -H "Content-Type: application/json" ^
   -d "{\"sprint_goal\":\"Validar el seguimiento\",\"fecha_inicio\":\"2026-10-20\",\"fecha_fin\":\"2026-11-03\"}"
+```
+
+### Recuperar los ids
+
+`GET /projects` devuelve los proyectos de la sesión, con el rol de quien
+consulta. `GET /projects/{id}/sprints` devuelve los Sprints de un proyecto;
+reemplazá `1` por el id real.
+
+```bat
+curl http://localhost:8080/projects ^
+  -H "Authorization: Bearer %TOKEN%"
+```
+
+```bat
+curl http://localhost:8080/projects/1/sprints ^
+  -H "Authorization: Bearer %TOKEN%"
 ```
 
 ### Cerrar un Sprint

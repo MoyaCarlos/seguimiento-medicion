@@ -13,6 +13,37 @@ func civilLocal(y int, m time.Month, d int) time.Time {
 	return time.Date(y, m, d, 0, 0, 0, 0, time.Local)
 }
 
+// Spec 044 (#300): el cierre manual tiene prioridad sobre todas las reglas de HU-13.
+func TestCalcularEstadoProyecto_ProyectoCerrado(t *testing.T) {
+	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
+	cierre := time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC)
+	antes := civilLocal(2026, 2, 28)
+	enRango := civilLocal(2026, 6, 15)
+	sprint := func(e EstadoSprint) Sprint { return Sprint{Estado: e} }
+
+	casos := []struct {
+		nombre   string
+		proyecto Project
+		sprints  []Sprint
+		ahora    time.Time
+	}{
+		{"cerrado con un Sprint activo", Project{FechaInicio: tiempoPtr(inicio), FechaFin: tiempoPtr(fin), FechaCierre: tiempoPtr(cierre)}, []Sprint{sprint(SprintActivo)}, enRango},
+		{"cerrado antes de la fecha de inicio (sería planificado)", Project{FechaInicio: tiempoPtr(inicio), FechaCierre: tiempoPtr(cierre)}, nil, antes},
+		{"cerrado dentro del rango de fechas (sería en curso)", Project{FechaInicio: tiempoPtr(inicio), FechaFin: tiempoPtr(fin), FechaCierre: tiempoPtr(cierre)}, nil, enRango},
+		{"cerrado con un Sprint finalizado y otro pendiente (sería en curso)", Project{FechaCierre: tiempoPtr(cierre)}, []Sprint{sprint(SprintFinalizado), sprint(SprintPendiente)}, enRango},
+		{"cerrado sin Sprints ni fechas (sería planificado)", Project{FechaCierre: tiempoPtr(cierre)}, nil, enRango},
+	}
+
+	for _, c := range casos {
+		t.Run(c.nombre, func(t *testing.T) {
+			if got := CalcularEstadoProyecto(c.proyecto, c.sprints, c.ahora); got != ProyectoFinalizado {
+				t.Errorf("CalcularEstadoProyecto() = %q, se esperaba %q", got, ProyectoFinalizado)
+			}
+		})
+	}
+}
+
 func TestCalcularEstadoProyecto_TablaDeDecision(t *testing.T) {
 	// Fechas del proyecto: se persisten como día UTC (00:00), igual que HU-04.
 	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
