@@ -106,3 +106,19 @@ it('Given el texto en cursiva del prototipo, When se estiliza, Then el navegador
   expect(estilos).not.toMatch(/font-synthesis:\s*none/)
   expect(estilos).toMatch(/font-synthesis:\s*style/)
 })
+
+it('Given la ruta de navegación, When se estiliza, Then las migas truncan a 24ch con puntos suspensivos y se ven también en pantallas angostas', () => {
+  const miga = estilos.match(/^\.ruta a,\s*\.ruta \[aria-current\]\s*\{([^}]*)\}/m)?.[1] ?? ''
+
+  expect(miga).toMatch(/max-width:\s*24ch/)
+  expect(miga).toMatch(/text-overflow:\s*ellipsis/)
+  expect(estilos).not.toMatch(/\.ruta > :not\(\[aria-current\]\)/)
+})
+
+it('Given los separadores de la ruta, When se estilizan, Then son iconos de 14px algo transparentes', () => {
+  const separador = estilos.match(/^\.ruta svg\s*\{([^}]*)\}/m)?.[1] ?? ''
+
+  expect(separador).toMatch(/height:\s*14px/)
+  expect(separador).toMatch(/width:\s*14px/)
+  expect(separador).toMatch(/opacity:\s*0?\.6/)
+})

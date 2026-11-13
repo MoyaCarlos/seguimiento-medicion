@@ -649,7 +649,7 @@ describe('armazón (spec 046)', () => {
     expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
   })
 
-  it('Given la votación de una historia, When se muestra la ruta de navegación, Then la sección actual es «Historias»', async () => {
+  it('Given la votación de una historia, When se muestra la ruta de navegación, Then la sección actual es «Planning Poker»', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) =>
@@ -670,7 +670,7 @@ describe('armazón (spec 046)', () => {
 
     const ruta = screen.queryByRole('navigation', { name: 'Ruta de navegación' })
     expect(ruta).not.toBeNull()
-    expect(within(ruta!).getByText('Historias').getAttribute('aria-current')).toBe('page')
+    expect(within(ruta!).getByText('Planning Poker').getAttribute('aria-current')).toBe('page')
   })
 
   it('Given una sesión iniciada en el inicio, When se muestra, Then la barra lateral no tiene selector ni secciones y la ruta marca «Proyectos»', async () => {
@@ -896,5 +896,59 @@ describe('armazón en /projects/new', () => {
     const enlace = within(barra).getByRole('link', { name: 'Proyectos' })
     expect(enlace.getAttribute('aria-current')).toBe('page')
     expect(enlace.classList.contains('barra-lateral__enlace--activo')).toBe(true)
+  })
+})
+
+describe('migas con el nombre del proyecto (#230)', () => {
+  const rutaDeNavegacion = () => screen.getByRole('navigation', { name: 'Ruta de navegación' })
+
+  it('Given el proyecto «Licencia de conducir», When abro Historias, Then la ruta es Proyectos › nombre (enlace al panel) › Historias', async () => {
+    proyectosSimulados = [{ id: 42, nombre: 'Licencia de conducir' }]
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    const enlace = await within(rutaDeNavegacion()).findByRole('link', { name: 'Licencia de conducir' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/42/proyecto')
+    expect(within(rutaDeNavegacion()).getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(within(rutaDeNavegacion()).getByText('Historias').getAttribute('aria-current')).toBe('page')
+    expect(within(rutaDeNavegacion()).getAllByRole('link')).toHaveLength(2)
+  })
+
+  it('Given un proyecto que no está en la lista, When abro una sección, Then la miga dice «Proyecto 42»', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    expect(within(rutaDeNavegacion()).getByRole('link', { name: 'Proyecto 42' })).toBeTruthy()
+  })
+
+  it.each([
+    ['/projects/42/proyecto', 'Proyecto'],
+    ['/projects/42/proyecto/settings', 'Equipo'],
+    ['/projects/42/proyecto/edit', 'Editar proyecto'],
+    ['/projects/42/backlog/nueva', 'Nueva historia'],
+  ])('Given %s, When se muestra la ruta, Then la sección actual es «%s»', async (url, texto) => {
+    abrir(url)
+    await screen.findByRole('navigation', { name: 'Secciones del proyecto' }, { timeout: 5000 })
+
+    expect(within(rutaDeNavegacion()).getByText(texto, { selector: '[aria-current]' }).getAttribute('aria-current')).toBe('page')
+  })
+
+  it('Given una sección sin nombre conocido, When se muestra la ruta, Then el proyecto es la miga actual y no un enlace', async () => {
+    proyectosSimulados = [{ id: 42, nombre: 'Licencia de conducir' }]
+    abrir('/projects/42/otra')
+
+    const actual = await within(await screen.findByRole('navigation', { name: 'Ruta de navegación' })).findByText('Licencia de conducir')
+
+    expect(actual.getAttribute('aria-current')).toBe('page')
+    expect(actual.tagName).not.toBe('A')
+  })
+
+  it('Given la ruta de un proyecto, When se muestra, Then los separadores son iconos y no el texto «›»', async () => {
+    abrir('/projects/42/backlog')
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    expect(rutaDeNavegacion().textContent).not.toContain('›')
+    expect(rutaDeNavegacion().querySelectorAll('svg')).toHaveLength(2)
   })
 })
