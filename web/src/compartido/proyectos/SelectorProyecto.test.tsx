@@ -166,7 +166,7 @@ describe('SelectorProyecto', () => {
     expect(botonDelSelector().getAttribute('aria-expanded')).toBe('false')
   })
 
-  it('US2.1: «Nuevo proyecto» es un botón aparte, fuera de la lista de opciones, que lleva a la pantalla de creación', async () => {
+  it('US2.1: «Nuevo proyecto» es un botón aparte, fuera de la lista de opciones, que abre la ventana de creación', async () => {
     const usuario = userEvent.setup()
     const router = abrir('/projects/1/backlog')
     await screen.findByText('Alfa')
@@ -177,7 +177,7 @@ describe('SelectorProyecto', () => {
     expect(lista().contains(nuevo)).toBe(false)
     expect(screen.queryByRole('option', { name: 'Nuevo proyecto' })).toBeNull()
     await usuario.click(nuevo)
-    expect(router.state.location.pathname).toBe('/')
+    expect(router.state.location.pathname).toBe('/projects/new')
   })
 
   it('US2.2: «Nuevo proyecto» está disponible mientras el listado carga', async () => {

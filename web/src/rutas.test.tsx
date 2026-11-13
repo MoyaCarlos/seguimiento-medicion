@@ -193,10 +193,16 @@ describe('registro de rutas', () => {
     expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
   })
 
-  it('la pantalla principal permite crear un proyecto', async () => {
-    abrir('/')
+  it('la pantalla principal lista los proyectos y «Nuevo proyecto» abre la ventana de creación', async () => {
+    const usuario = userEvent.setup()
+    const router = abrir('/')
 
-    expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Proyectos' }, { timeout: 5000 })).toBeTruthy()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await usuario.click(screen.getAllByRole('button', { name: 'Nuevo proyecto' })[0])
+
+    expect(router.state.location.pathname).toBe('/projects/new')
+    expect(await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
   })
 
   describe('inicio con datos de prueba', () => {
@@ -207,7 +213,7 @@ describe('registro de rutas', () => {
         return Promise.resolve(respuestaBase(url, init))
       })
       vi.stubGlobal('fetch', fetchMock)
-      abrir('/')
+      abrir('/projects/new')
 
       await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
       await new Promise((resolver) => setTimeout(resolver, 50))
@@ -249,7 +255,7 @@ describe('registro de rutas', () => {
           ? new Response(JSON.stringify({ ...PROYECTO, id: 77 }), { status: 201 })
           : undefined)
       const usuario = userEvent.setup()
-      const router = abrir('/')
+      const router = abrir('/projects/new')
 
       expect(await screen.findByText('Listado caído', {}, { timeout: 5000 })).toBeTruthy()
       await usuario.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
@@ -262,13 +268,14 @@ describe('registro de rutas', () => {
   })
 
   describe('inicio con lista de proyectos', () => {
-    it('US3.1: el inicio muestra el formulario de creación y la lista de proyectos', async () => {
+    it('US3.1: el inicio muestra la lista de proyectos y no el formulario de creación', async () => {
       proyectosSimulados = [{ id: 1, nombre: 'Alfa' }, { id: 2, nombre: 'Beta' }]
       abrir('/')
 
-      expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
       expect(await screen.findByRole('link', { name: 'Alfa (#1)' }, { timeout: 5000 })).toBeTruthy()
       expect(screen.getByRole('link', { name: 'Beta (#2)' })).toBeTruthy()
+      expect(screen.queryByRole('heading', { name: 'Crear proyecto' })).toBeNull()
+      expect(screen.queryByRole('dialog')).toBeNull()
     })
 
     it('US3.2: un enlace de la lista abre el panel del proyecto', async () => {
@@ -377,8 +384,8 @@ describe('registro de rutas', () => {
       await abrirSelector(usuario)
       await usuario.click(screen.getByRole('button', { name: 'Nuevo proyecto' }))
 
-      expect(router.state.location.pathname).toBe('/')
-      expect(await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
+      expect(router.state.location.pathname).toBe('/projects/new')
+      expect(await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
     })
 
     it('GET /projects se pide una sola vez al montar y no al cambiar de sección del mismo proyecto', async () => {
@@ -523,6 +530,7 @@ describe('rutas protegidas', () => {
   // Todas las rutas que declara rutas.tsx, con una URL concreta de cada una.
   const protegidas = [
     '/',
+    '/projects/new',
     '/projects/42',
     '/projects/42/proyecto',
     '/projects/42/proyecto/settings',
@@ -667,7 +675,7 @@ describe('armazón (spec 046)', () => {
 
   it('Given una sesión iniciada en el inicio, When se muestra, Then la barra lateral no tiene selector ni secciones y la ruta marca «Proyectos»', async () => {
     abrir('/')
-    await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+    await screen.findByRole('heading', { level: 1, name: 'Proyectos' }, { timeout: 5000 })
 
     const barra = screen.queryByRole('complementary', { name: 'Navegación principal' })
     expect(barra).not.toBeNull()
@@ -790,7 +798,7 @@ describe('pestañas inferiores en pantallas angostas', () => {
   it('Given una pantalla angosta fuera de un proyecto, When se muestra el inicio, Then no hay pestañas inferiores', async () => {
     simularPantallaAngosta(true)
     abrir('/')
-    await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+    await screen.findByRole('heading', { level: 1, name: 'Proyectos' }, { timeout: 5000 })
 
     expect(screen.queryByRole('navigation', { name: 'Pestañas del proyecto' })).toBeNull()
   })
@@ -814,5 +822,64 @@ describe('menú lateral y selector de proyecto', () => {
     await abrirSelector(usuario)
     await usuario.click(screen.getByRole('button', { name: 'Nuevo proyecto' }))
     expect(armazon()?.classList.contains('armazon--menu-abierto')).toBe(false)
+  })
+})
+
+describe('ventana «Nuevo proyecto» en /projects/new', () => {
+  it('/projects/new abre la ventana sobre la lista y no se confunde con /projects/:id', async () => {
+    proyectosSimulados = [{ id: 1, nombre: 'Alfa' }]
+    abrir('/projects/new')
+
+    expect(await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
+    const pedidos = vi.mocked(fetch).mock.calls.map(([url]) => String(url))
+    expect(pedidos.some((url) => url.startsWith('/projects/new'))).toBe(false)
+  })
+
+  it('/projects/12 sigue abriendo el panel del proyecto 12', async () => {
+    const router = abrir('/projects/12')
+
+    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(router.state.location.pathname).toBe('/projects/12/proyecto')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it.each([
+    ['Escape', async (usuario: ReturnType<typeof userEvent.setup>) => usuario.keyboard('{Escape}')],
+    ['el botón «×»', async (usuario: ReturnType<typeof userEvent.setup>) => usuario.click(screen.getByRole('button', { name: 'Cerrar' }))],
+    ['«Cancelar»', async (usuario: ReturnType<typeof userEvent.setup>) => usuario.click(screen.getByRole('button', { name: 'Cancelar' }))],
+    ['el fondo', async (usuario: ReturnType<typeof userEvent.setup>) => usuario.click(screen.getByRole('dialog').parentElement as HTMLElement)],
+  ])('%s cierra la ventana y vuelve a /', async (_nombre, cerrar) => {
+    const usuario = userEvent.setup()
+    const router = abrir('/projects/new')
+    await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    await cerrar(usuario)
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeTruthy()
+  })
+
+  it('al cerrarse, el foco vuelve al botón «Nuevo proyecto» que la abrió', async () => {
+    const usuario = userEvent.setup()
+    abrir('/')
+    const boton = (await screen.findAllByRole('button', { name: 'Nuevo proyecto' }, { timeout: 5000 }))[0]
+    await usuario.click(boton)
+    await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    await usuario.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(document.activeElement).toBe(boton)
+  })
+
+  it('al abrirse, el foco queda en el campo «Nombre del proyecto»', async () => {
+    abrir('/projects/new')
+
+    const nombre = await screen.findByLabelText('Nombre del proyecto', {}, { timeout: 5000 })
+
+    await waitFor(() => expect(document.activeElement).toBe(nombre))
   })
 })
