@@ -27,6 +27,10 @@ otra sub-issue (#93)."
 - Q: ¿Se puede registrar la estimación acordada de una historia "Completada"? → A: Sí, sujeto solo a D2b: se permite si no tenía estimación, o si no está en un Sprint `Activo` o `Finalizado`. **Actualizado por la spec 032 (HU-03, 2026-11-03):** con un Sprint `Finalizado` tampoco se permite si no tenía estimación.
 - Q: Después de registrar la estimación, ¿se puede abrir otra ronda y registrar otro valor? → A: Sí; registrar no cierra la votación y siguen valiendo las mismas reglas, incluida D2b.
 
+### Session 2026-11-13
+
+- Q: ¿Qué pasa si el Sprint se inicia o finaliza, o se abre otra ronda, entre la validación y la escritura de la estimación? → A: La escritura aplica D2b y la ronda revelada en el mismo `UPDATE`; si ya no se cumplen, responde 409, no modifica la historia y pide recargar (#249, D19). No se acepta más la ventana de milisegundos.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Detectar diferencias entre los votos (Priority: P1)
@@ -164,6 +168,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** el valor acordado es igual a la estimación cargada, **THEN** el sistema **shall**
   aceptar la operación sin cambiar la historia, también con un Sprint `Activo` o `Finalizado`
   (mismo criterio que la edición de HU-15).
+- **IF** entre la validación y la escritura el Sprint se inicia o se finaliza, o se abre otra
+  ronda, **THEN** el sistema **shall** rechazar el registro con 409, no modificar la historia y
+  pedir que se recargue (#249, D19). Las condiciones se evalúan en el mismo `UPDATE`.
 - **IF** quien registra la estimación o inicia una nueva ronda no es integrante del proyecto
   con rol Scrum Master, **THEN** el sistema **shall** rechazar la operación sin modificar nada.
 - **IF** la historia indicada no existe, **THEN** el sistema **shall** responder "historia no
@@ -211,6 +218,10 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   una historia inexistente, antes de validar el resto de los datos.
 - **FR-013**: La estimación registrada MUST ser la misma que usan el Product Backlog (HU-15) y las
   métricas: no se crea un segundo dato de estimación.
+- **FR-014**: La escritura de la estimación MUST evaluar D2b y la ronda revelada en el mismo `UPDATE`
+  que la escribe. Si entre la validación y la escritura el Sprint se inicia o se finaliza, o la ronda
+  deja de ser la actual o revelada, el sistema MUST responder 409, MUST NOT modificar la historia y
+  MUST pedir que se recargue (#249, D19).
 
 ### Key Entities
 
@@ -251,6 +262,8 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
   en HU-02. Registrar la estimación no mira ese estado: alcanza con la regla D2b.
 - No se guarda qué ronda originó la estimación: §4.7 no prevé ese dato y la historia no lo pide.
 - La carga directa de Story Points desde HU-15 sigue funcionando igual, también durante una votación.
+- La escritura de la estimación es atómica con D2b y la ronda: si el estado cambió entre la validación
+  y el `UPDATE`, la respuesta es 409 (`ErrRegistroEstimacionDesactualizado`) y no se modifica nada (#249).
 - El historial lo puede consultar cualquiera, sin indicar quién consulta: solo muestra rondas
   reveladas, cuyos votos ya son visibles para todo el equipo.
 - La pantalla es otra sub-issue (#93) y queda fuera de alcance, incluida la vista del historial.

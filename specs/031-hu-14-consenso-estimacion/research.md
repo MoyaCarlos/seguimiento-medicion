@@ -71,8 +71,8 @@ documento registra las decisiones técnicas del diseño.
 ## R7. Escritura de la estimación
 
 - **Decision**: puerto nuevo `EstimacionHistoriaRepository` con `ObtenerPorID` y
-  `GuardarEstimacion(ctx, id, sp)`, implementado en `SQLiteBacklogRepository` con
-  `UPDATE historias SET estimacion_sp = ? WHERE id = ?`.
+  `GuardarEstimacion(ctx, id, sp, rondaID)`, implementado en `SQLiteBacklogRepository` con un
+  `UPDATE` condicional que evalúa D2b y que la ronda siga siendo la actual y revelada (R12).
 - **Rationale**: `HistoriaRepository.Actualizar` también reescribe título, descripción y criterios, y
   pisaría una edición simultánea de HU-15. La separación sigue el patrón de
   `AsignacionHistoriaRepository` y `CambioEstadoHistoriaRepository` (ISP).
@@ -86,12 +86,14 @@ documento registra las decisiones técnicas del diseño.
     "la historia ya tiene una votación" no describe lo que pasó.
   - **Dos registros simultáneos**: queda el último y las dos peticiones responden 200. Se acepta: el valor
     final es una carta válida, el Scrum Master lo ve en la respuesta y lo puede volver a registrar.
-  - **Registrar estimación**: chequeo y escritura separados, igual que `EditarHistoria`. Se acepta la
-    ventana de milisegundos en la que un Sprint se inicia entre el chequeo de D2b y la escritura, o se
-    abre una ronda entre el chequeo de revelación y la escritura.
+  - **Registrar estimación**: corregido en #249 (R12). D2b y la ronda revelada se evalúan en el mismo
+    `UPDATE`; si entre la validación y la escritura el Sprint se inicia o se finaliza, o se abre otra
+    ronda, no afecta filas y responde 409. `EditarHistoria` aplica el mismo criterio para D2b.
 - **Rationale**: es el mismo criterio que la edición de HU-15 y que R6 de la spec 012 (equipo chico). Un
-  `UPDATE` condicional repetiría la regla D2b en SQL, y se escribe un solo campo.
-- **Alternatives considered**: transacción en el servicio (el servicio no conoce transacciones).
+  `UPDATE` condicional repite la regla D2b en SQL, pero evita que un Sprint cerrado cambie sus Story
+  Points sin aviso, que es lo que rompe la reproducibilidad de las métricas (D2b).
+- **Alternatives considered**: transacción en el servicio (el servicio no conoce transacciones); aceptar
+  la ventana de milisegundos (descartado en #249).
 
 ## R9. Historial de rondas
 
@@ -116,6 +118,7 @@ documento registra las decisiones técnicas del diseño.
 | `ErrRondaEnHistoriaCompletada` (**nuevo**) | `ValidationError{estado}` | 400 | abrir ronda en una historia `Completada` |
 | `ErrEstimacionInvalida` (existente) | `ValidationError{estimacion_sp}` | 400 | valor fuera de la baraja o que no es un entero (decimal, entre comillas, `null`, ausente) |
 | `ErrEstimacionCongelada` (existente) | `ValidationError{estimacion_sp}` | 400 | D2b |
+| `ErrRegistroEstimacionDesactualizado` (**nuevo**, #249) | sentinel | 409 | el Sprint o la ronda cambiaron entre la validación y el `UPDATE` |
 
 - **Rationale**: se reutilizan los errores existentes y `escribirError` suma solo el 409 de `ErrRondaYaAbierta`. `estimacion_sp` se
   lee como `json.RawMessage`: lo que no es un entero llega al service como 0, así un Product Builder recibe 403 también con
@@ -128,3 +131,19 @@ documento registra las decisiones técnicas del diseño.
 - **Decision**: sin migración y sin cambios en `MODELO-DE-DATOS.md`.
 - **Rationale**: §4.4 y §4.7 ya cubren todo: las rondas anteriores son el historial, la acordada se escribe
   en `historias.estimacion_sp`, y §5 asigna las reglas a HU-14.
+
+## R12. Escritura atómica de la estimación (#249)
+
+- **Decision**: `GuardarEstimacion` recibe el `rondaID` que el service validó y escribe con un `UPDATE`
+  condicional que exige: el `rondaID` sigue siendo la ronda de mayor número y está revelada; y D2b se
+  cumple en el estado actual del Sprint (`NULL` + `Finalizado` rechaza la primera carga; ya cargada +
+  `Activo`/`Finalizado` rechaza el cambio). Un valor igual al actual se acepta sin restricción de D2b.
+  Si no afecta filas devuelve `ErrRegistroEstimacionDesactualizado` (409) sin modificar nada. En
+  `EditarHistoria` el mismo `UPDATE` de #248 suma la condición de D2b; si el Sprint cambió, devuelve
+  409 `ErrEstimacionDesactualizada`.
+- **Rationale**: la validación en el service y la escritura eran dos pasos; entre ellos otra petición
+  podía iniciar o finalizar el Sprint, o abrir otra ronda, y la respuesta seguía siendo 200. El `UPDATE`
+  condicional cierra la ventana sin transacciones en el service y sin repetir la regla en Go. D2b es
+  crítica para la reproducibilidad de las métricas de un Sprint cerrado (§4.6).
+- **Alternatives considered**: aceptar el riesgo de milisegundos (descartado en #249); transacción en el
+  service (el service no conoce transacciones). No se agrega una columna de versión ni migración.
