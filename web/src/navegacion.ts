@@ -9,3 +9,8 @@ export const navegacion: { ruta: string; texto: string; icono: NombreIcono }[] =
   { ruta: 'dashboard', texto: 'Dashboard', icono: 'barras' },
   { ruta: 'historial', texto: 'Historial de Sprints', icono: 'historial' },
 ]
+
+export const ajustes: { ruta: string; texto: string; icono: NombreIcono }[] = [
+  { ruta: 'proyecto/settings', texto: 'Equipo', icono: 'equipo' },
+  { ruta: 'proyecto/edit', texto: 'Editar proyecto', icono: 'editar' },
+]

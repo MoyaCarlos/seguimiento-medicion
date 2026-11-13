@@ -6,7 +6,7 @@ import { ProveedorRecargaProyectos } from './compartido/proyectos/recargaProyect
 import { SelectorProyecto } from './compartido/proyectos/SelectorProyecto'
 import { MenuUsuario } from './features/autenticacion/MenuUsuario'
 import { SesionProvider, useSesion } from './features/autenticacion/SesionContext'
-import { navegacion } from './navegacion'
+import { ajustes, navegacion } from './navegacion'
 import './App.css'
 
 const SECCION_DE_VOTACION = 'backlog'
@@ -78,6 +78,15 @@ function Armazon() {
             <p className="barra-lateral__rotulo" aria-hidden="true">Seguimiento</p>
             <nav className="barra-lateral__secciones" aria-label="Secciones del proyecto">
               {navegacion.map(({ ruta, texto, icono }) => (
+                <NavLink key={ruta} className={claseDeEnlace} to={`/projects/${id}/${ruta}`} end={ruta === 'proyecto'}>
+                  <Icono nombre={icono} />
+                  {texto}
+                </NavLink>
+              ))}
+            </nav>
+            <p className="barra-lateral__rotulo" aria-hidden="true">Ajustes</p>
+            <nav className="barra-lateral__secciones" aria-label="Ajustes del proyecto">
+              {ajustes.map(({ ruta, texto, icono }) => (
                 <NavLink key={ruta} className={claseDeEnlace} to={`/projects/${id}/${ruta}`}>
                   <Icono nombre={icono} />
                   {texto}
