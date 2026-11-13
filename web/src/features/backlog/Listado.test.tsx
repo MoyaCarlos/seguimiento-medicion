@@ -4,6 +4,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Historia } from './historia'
+import { Component as Crear } from './crear'
 import { Listado } from './Listado'
 
 const respuesta = (status: number, cuerpo: unknown) =>
@@ -92,10 +93,8 @@ function abrir(url = '/projects/42/backlog') {
     [
       {
         path: '/projects/:id/backlog',
-        children: [
-          { index: true, element: <Listado /> },
-          { path: 'nueva', element: <p>Nueva historia</p> },
-        ],
+        element: <Listado />,
+        children: [{ index: true }, { path: 'nueva', element: <Crear /> }],
       },
     ],
     { initialEntries: [url] },
@@ -202,7 +201,7 @@ describe('listado del Product Backlog (US1)', () => {
     await screen.findByText('No hay historias en el backlog')
     await userEvent.click(screen.getByRole('link', { name: 'Nueva historia' }))
 
-    expect(await screen.findByText('Nueva historia')).toBeTruthy()
+    expect(await screen.findByRole('dialog', { name: 'Nueva historia' })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/42/backlog/nueva')
   })
 })
@@ -697,6 +696,98 @@ describe('presentación de la lista según el prototipo (#230)', () => {
 
     expect(within(articulo).getByRole('button', { name: 'Editar' }).querySelector('svg')).toBeTruthy()
     expect(within(articulo).getByRole('link', { name: 'Votar' }).className).toContain('backlog-votar')
+  })
+})
+
+describe('«Nueva historia» como cajón lateral sobre la lista (#230)', () => {
+  const NUEVA: Historia = {
+    ...SHOULD,
+    id: 20,
+    titulo: 'Como usuario quiero una historia nueva',
+    descripcion: 'Descripción de la nueva',
+  }
+
+  function simularConCreacion() {
+    let creada = false
+    const fetchSimulado = vi.fn((ruta: string, opciones?: RequestInit) => {
+      if (ruta === '/backlog' && opciones?.method === 'POST') {
+        creada = true
+        return Promise.resolve(respuesta(201, NUEVA))
+      }
+      if (RUTA_LISTADO.test(ruta)) return Promise.resolve(respuesta(200, creada ? [MUST, NUEVA] : [MUST]))
+      return Promise.resolve(respuesta(404, { mensaje: 'no encontrado' }))
+    })
+    vi.stubGlobal('fetch', fetchSimulado)
+    return fetchSimulado
+  }
+
+  it('Given la URL /backlog/nueva, When se abre, Then el cajón aparece sobre la lista, que sigue ahí', async () => {
+    simularApi(conHistorias(MUST))
+    abrir('/projects/42/backlog/nueva')
+
+    const cajon = await screen.findByRole('dialog', { name: 'Nueva historia' })
+
+    expect(cajon.className).toContain('ventana--lateral')
+    expect(await screen.findByRole('heading', { name: MUST.titulo })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Product Backlog', level: 1 })).toBeTruthy()
+    expect(within(cajon).getByText('Se agrega al Product Backlog del proyecto #42.')).toBeTruthy()
+  })
+
+  it('Given el cajón abierto con el botón, When presiono Escape, Then vuelve a /backlog y el foco vuelve a «Nueva historia»', async () => {
+    simularApi(conHistorias(MUST))
+    const router = abrir()
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await usuario.click(screen.getByRole('link', { name: 'Nueva historia' }))
+    await screen.findByRole('dialog', { name: 'Nueva historia' })
+    await usuario.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Nueva historia' }))
+  })
+
+  it.each([['Cancelar'], ['Cerrar']])('Given el cajón abierto, When presiono «%s», Then se cierra y vuelve a /backlog', async (nombre) => {
+    simularApi(conHistorias(MUST))
+    const router = abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: nombre }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+
+  it('Given el cajón abierto, When creo una historia, Then veo «Historia creada» y la lista de atrás ya la incluye', async () => {
+    simularConCreacion()
+    abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await usuario.type(screen.getByLabelText('Título'), NUEVA.titulo)
+    await usuario.type(screen.getByLabelText('Descripción'), NUEVA.descripcion)
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    const cajon = await screen.findByRole('dialog', { name: 'Historia creada' })
+    expect(within(cajon).getByText(NUEVA.titulo)).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: NUEVA.titulo, level: 2 })).toBeTruthy()
+    expect(screen.getByText('2 historias sin Sprint')).toBeTruthy()
+  })
+
+  it('Given «Historia creada», When presiono «Ver Product Backlog», Then se cierra el cajón', async () => {
+    simularConCreacion()
+    const router = abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await usuario.type(screen.getByLabelText('Título'), NUEVA.titulo)
+    await usuario.type(screen.getByLabelText('Descripción'), NUEVA.descripcion)
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await usuario.click(await screen.findByRole('button', { name: 'Ver Product Backlog' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
   })
 })
 

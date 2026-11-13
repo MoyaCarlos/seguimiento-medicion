@@ -117,19 +117,22 @@ describe('creación de historias de US1', () => {
     expect(within(confirmacion).getByText(/sin estimación/i)).toBeTruthy()
   })
 
-  it('US1.2: restablece el formulario y conserva el proyecto para otra historia', async () => {
+  it('US1.2: tras crear, «Crear otra historia» vuelve al formulario en blanco y conserva el proyecto', async () => {
     const fetchMock = responderCreada()
     abrir()
     const user = await completarFormulario({ prioridad: 'S' })
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
+    expect(screen.queryByLabelText('Título')).toBeNull()
 
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
+
+    expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
     expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('')
     expect((screen.getByLabelText('Descripción') as HTMLTextAreaElement).value).toBe('')
     expect((screen.getByLabelText('Prioridad') as HTMLSelectElement).value).toBe('M')
     expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
-    expect(screen.getByRole('region', { name: 'Historia creada' })).toBeTruthy()
 
     await user.type(screen.getByLabelText('Título'), 'Otra historia')
     await user.type(screen.getByLabelText('Descripción'), 'Otra descripción')
@@ -205,6 +208,7 @@ describe('casos límite de creación', () => {
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
 
     await user.type(screen.getByLabelText('Título'), 'Historia repetida')
     await user.type(screen.getByLabelText('Descripción'), 'Otra descripción')
@@ -321,14 +325,14 @@ describe('validación de US2', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('US2.6: un intento inválido reemplaza la confirmación anterior', async () => {
+  it('US2.6: al volver con «Crear otra historia» la confirmación anterior desaparece y un intento inválido no llama a la API', async () => {
     const fetchMock = responderCreada()
     abrir()
     const user = await completarFormulario()
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
-
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     await user.click(botonGuardar())
 
     expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
@@ -426,6 +430,8 @@ describe('errores del servidor de US3', () => {
     await user.click(botonGuardar())
 
     expect(await screen.findByRole('region', { name: 'Historia creada' })).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     expect(mensajeDe(screen.getByLabelText('Título'))).toBeNull()
     expect(screen.getByLabelText('Título').getAttribute('aria-invalid')).toBe('false')
   })
@@ -487,6 +493,7 @@ describe('valor de negocio de US4', () => {
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).valor_negocio).toBe(13)
     expect(within(confirmacion).getByText('13')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
   })
 })
@@ -508,7 +515,7 @@ describe('criterios de aceptación de #174', () => {
 
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).criterios_aceptacion).toBe(criterios)
-    expect(within(confirmacion).getByRole('heading', { name: 'Criterios de aceptación' })).toBeTruthy()
+    expect(within(confirmacion).getByText('Criterios de aceptación')).toBeTruthy()
     expect(within(confirmacion).getByText('Dado')).toBeTruthy()
   })
 
@@ -586,5 +593,56 @@ describe('prioridad MoSCoW', () => {
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).prioridad).toBe(codigo)
     expect(within(confirmacion).getByText(etiqueta)).toBeTruthy()
+  })
+})
+
+describe('presentación del cajón según el prototipo (#230)', () => {
+  it('Given el cajón, When se abre, Then dice «Nueva historia» y a qué proyecto se agrega', () => {
+    abrir()
+
+    expect(screen.getByRole('heading', { name: 'Nueva historia', level: 2 })).toBeTruthy()
+    expect(screen.getByText('Se agrega al Product Backlog del proyecto #42.')).toBeTruthy()
+  })
+
+  it('Given el campo de criterios, When se muestra, Then explica que es opcional, el límite y que admite Markdown', () => {
+    abrir()
+
+    expect(screen.getByText('Opcional. Hasta 2000 caracteres. Admite Markdown.')).toBeTruthy()
+  })
+
+  it('Given el formulario, When se muestra, Then «Cancelar» lo cierra volviendo a /backlog', async () => {
+    const router = abrir()
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+
+  it('Given una historia creada, When se muestra el resumen, Then el título del cajón pasa a «Historia creada» con su bajada y el formulario ya no está', async () => {
+    responderCreada({ valor_negocio: 5, estimacion_sp: 3 })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const resumen = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(within(resumen).getByRole('heading', { name: 'Historia creada', level: 2 })).toBeTruthy()
+    expect(within(resumen).getByText('Se agregó al Product Backlog del proyecto #42.')).toBeTruthy()
+    expect(within(resumen).getByText('3 Story Points')).toBeTruthy()
+    expect(within(resumen).getByText('Valor de negocio')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Nueva historia' })).toBeNull()
+    expect(screen.queryByLabelText('Título')).toBeNull()
+  })
+
+  it('Given el resumen, When presiono «Ver Product Backlog», Then vuelve a /backlog', async () => {
+    responderCreada()
+    const router = abrir()
+    const user = await completarFormulario()
+    await user.click(botonGuardar())
+
+    await user.click(await screen.findByRole('button', { name: 'Ver Product Backlog' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
   })
 })

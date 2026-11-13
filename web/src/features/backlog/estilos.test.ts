@@ -103,3 +103,31 @@ it('Given la pantalla de Historias, When se estiliza, Then separa cabecera, avis
   expect(bloque).toMatch(/display:\s*grid/)
   expect(bloque).toMatch(/gap:\s*24px/)
 })
+
+const app = readFileSync('src/App.css', 'utf8')
+const reglaApp = (selector: string) =>
+  [...app.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+    .filter(([, lista]) => lista.split(',').some((parte) => parte.trim() === selector))
+    .map(([, , cuerpo]) => cuerpo)
+    .join('\n')
+
+it('Given el cajón lateral, When se estiliza, Then es una columna de 480px pegada a la derecha, de alto completo y sin bordes redondeados', () => {
+  expect(reglaApp('.ventana-fondo--lateral')).toMatch(/justify-items:\s*end/)
+  expect(reglaApp('.ventana-fondo--lateral')).toMatch(/padding:\s*0/)
+  const caja = reglaApp('.ventana--lateral')
+  expect(caja).toMatch(/width:\s*min\(480px, 100%\)/)
+  expect(caja).toMatch(/height:\s*100%/)
+  expect(caja).toMatch(/border-radius:\s*0/)
+  expect(caja).toMatch(/padding:\s*26px/)
+})
+
+it('Given el resumen «Historia creada», When se estiliza, Then es una lista de datos en grilla con los rótulos en mayúsculas de 12px', () => {
+  expect(regla('.backlog-resumen')).toMatch(/display:\s*grid/)
+  const rotulo = regla('.backlog-resumen dt')
+  expect(rotulo).toMatch(/font-size:\s*12px/)
+  expect(rotulo).toMatch(/text-transform:\s*uppercase/)
+})
+
+it('Given prioridad y valor de negocio, When se estilizan en el cajón, Then van en dos columnas', () => {
+  expect(regla('.backlog-form__fila')).toMatch(/grid-template-columns:\s*1fr 1fr/)
+})

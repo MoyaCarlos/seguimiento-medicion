@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { VentanaModal } from './VentanaModal'
 
-function Escena({ alCerrar = vi.fn() }: { alCerrar?: () => void }) {
+function Escena({ alCerrar = vi.fn(), lado }: { alCerrar?: () => void; lado?: 'derecha' }) {
   const [abierta, setAbierta] = useState(false)
 
   return (
@@ -12,6 +12,7 @@ function Escena({ alCerrar = vi.fn() }: { alCerrar?: () => void }) {
       <button type="button" onClick={() => setAbierta(true)}>Abrir</button>
       {abierta && (
         <VentanaModal
+          lado={lado}
           alCerrar={() => {
             alCerrar()
             setAbierta(false)
@@ -26,9 +27,9 @@ function Escena({ alCerrar = vi.fn() }: { alCerrar?: () => void }) {
   )
 }
 
-async function abrir(alCerrar?: () => void) {
+async function abrir(alCerrar?: () => void, lado?: 'derecha') {
   const usuario = userEvent.setup()
-  render(<Escena alCerrar={alCerrar} />)
+  render(<Escena alCerrar={alCerrar} lado={lado} />)
   await usuario.click(screen.getByRole('button', { name: 'Abrir' }))
   return usuario
 }
@@ -107,5 +108,25 @@ describe('VentanaModal', () => {
     await usuario.keyboard('{Escape}')
 
     expect(document.body.style.overflow).toBe('')
+  })
+
+  it('con lado="derecha" es un cajón lateral: marca el fondo y el diálogo, y se cierra con la ×', async () => {
+    const alCerrar = vi.fn()
+    const usuario = await abrir(alCerrar, 'derecha')
+
+    const dialogo = screen.getByRole('dialog', { name: 'Crear algo' })
+    expect(dialogo.className).toContain('ventana--lateral')
+    expect(dialogo.parentElement?.className).toContain('ventana-fondo--lateral')
+
+    await usuario.click(screen.getByRole('button', { name: 'Cerrar' }))
+    expect(alCerrar).toHaveBeenCalledTimes(1)
+  })
+
+  it('sin lado es una ventana centrada, sin las marcas laterales', async () => {
+    await abrir()
+
+    const dialogo = screen.getByRole('dialog', { name: 'Crear algo' })
+    expect(dialogo.className).not.toContain('ventana--lateral')
+    expect(dialogo.parentElement?.className).not.toContain('ventana-fondo--lateral')
   })
 })
