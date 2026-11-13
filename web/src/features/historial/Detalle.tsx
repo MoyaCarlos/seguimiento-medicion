@@ -5,7 +5,8 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { descargarReporteSprint, obtenerDetalleSprint } from './api'
 import { formatoNumero as numero, textoDeDesviacion } from '../../compartido/formato/numeros'
-import { conUnidad, periodo } from './formato'
+import { periodoCorto } from '../../compartido/formato/fechas'
+import { conUnidad } from './formato'
 import { Chip, Metrica } from './Piezas'
 import type { DefectoDeSprint, DetalleSprint, HistoriaComprometida } from './tipos'
 import { useConsulta } from './useConsulta'
@@ -40,7 +41,7 @@ function Contenido({ sprint, proyectoId }: { sprint: DetalleSprint; proyectoId: 
           <h1>Sprint {sprint.numero}</h1>
           <p className="historial-bajada">
             {sprint.sprint_goal ? `${sprint.sprint_goal} · ` : ''}
-            {periodo(sprint.fecha_inicio, sprint.fecha_fin)}
+            {periodoCorto(sprint.fecha_inicio, sprint.fecha_fin)}
           </p>
         </div>
         <BotonExportar descargar={() => descargarReporteSprint(String(sprint.id))}>

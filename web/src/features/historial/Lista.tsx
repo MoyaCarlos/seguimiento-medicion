@@ -4,7 +4,8 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { listarHistorial } from './api'
 import { formatoNumero as numero, textoDeDesviacion } from '../../compartido/formato/numeros'
-import { conUnidad, periodo } from './formato'
+import { periodoCorto } from '../../compartido/formato/fechas'
+import { conUnidad } from './formato'
 import { BarraAvance, Metrica } from './Piezas'
 import type { SprintHistorial } from './tipos'
 import { useConsulta } from './useConsulta'
@@ -55,7 +56,7 @@ function TarjetaSprint({ sprint, proyectoId }: { sprint: SprintHistorial; proyec
             <rect x="3" y="4" width="18" height="18" rx="2" />
             <path d="M16 2v4M8 2v4M3 10h18" />
           </svg>
-          {periodo(sprint.fecha_inicio, sprint.fecha_fin)}
+          {periodoCorto(sprint.fecha_inicio, sprint.fecha_fin)}
         </p>
       </div>
       {sprint.sprint_goal && <p className="historial-goal">{sprint.sprint_goal}</p>}
