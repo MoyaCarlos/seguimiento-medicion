@@ -138,10 +138,10 @@ describe('detalle de un Sprint del historial', () => {
     expect(metrica(metricas, 'Story Points planificados')).toBe('8')
     expect(metrica(metricas, 'Story Points completados')).toBe('5')
     expect(metrica(metricas, 'Velocidad')).toBe('5')
-    expect(metrica(metricas, 'Historias completadas')).toBe('50%')
+    expect(metrica(metricas, 'Historias completadas')).toBe('50 %')
     expect(metrica(metricas, 'Horas estimadas')).toBe('32 h')
-    expect(metrica(metricas, 'Horas reales')).toBe('4,33 h')
-    expect(metrica(metricas, 'Desviación')).toBe('-27,67 h (-86,47%)')
+    expect(metrica(metricas, 'Horas reales')).toBe('4,3 h')
+    expect(metrica(metricas, 'Desviación')).toBe('-27,7 h (-86,5 %)')
     expect(metrica(metricas, 'Defectos detectados')).toBe('2')
     expect(metrica(metricas, 'Defectos resueltos')).toBe('1')
   })
@@ -155,7 +155,7 @@ describe('detalle de un Sprint del historial', () => {
     const completada = historia(historias, 'Solicitar turno para el examen')
     expect(within(completada).getByText('Completada')).toBeTruthy()
     expect(within(completada).getByText('5 SP')).toBeTruthy()
-    expect(within(completada).getByText('4,33 h')).toBeTruthy()
+    expect(within(completada).getByText('4,3 h')).toBeTruthy()
 
     const arrastrada = historia(historias, 'Validar el certificado psicofísico')
     expect(within(arrastrada).getByText('No completada')).toBeTruthy()
@@ -179,7 +179,7 @@ describe('detalle de un Sprint del historial', () => {
     abrir()
 
     const historias = await seccion('Historias comprometidas')
-    expect(metrica(historias, 'Esfuerzo total del Sprint')).toBe('4,33 h')
+    expect(metrica(historias, 'Esfuerzo total del Sprint')).toBe('4,3 h')
   })
 
   it('US4.2: Given defectos del Sprint, When veo el detalle, Then cada uno indica si se detectó o resolvió acá y su estado actual', async () => {
