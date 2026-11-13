@@ -3,6 +3,7 @@ import { avisarNoAutenticado, tokenActual } from './sesionHttp'
 export class ApiError extends Error {
   readonly status: number
   readonly field?: string
+  readonly tipo?: 'no_integrante' | 'sin_permiso'
 
   constructor(
     status: number,
