@@ -38,12 +38,6 @@ export function datosDelGrafico(sprints: MetricasDeSprint[]): FilaDelGrafico[] {
   }))
 }
 
-export function formatoNumero(valor: number | null): string {
-  if (valor === null) return 'sin datos'
-  const texto = valor.toLocaleString('es-AR', { maximumFractionDigits: 1 })
-  return texto === '-0' ? '0' : texto
-}
-
 export function textoDesviacion(horas: number | null): string | null {
   if (horas === null) return null
   if (horas > 0) return 'Se trabajó más de lo estimado'
@@ -59,15 +53,4 @@ export function proporcion(valor: number | null, maximo: number): number {
 export function ejeDelGrafico(maximo: number): number[] {
   const techo = Math.max(2, Math.ceil(maximo / 2) * 2)
   return [0, techo / 2, techo]
-}
-
-function conSigno(valor: number): string {
-  const texto = formatoNumero(valor)
-  return valor > 0 && texto !== '0' ? `+${texto}` : texto
-}
-
-export function textoDeDesviacion(horas: number | null, porcentaje: number | null): string {
-  if (horas === null) return 'sin datos'
-  const relativa = porcentaje === null ? 'sin datos' : `${conSigno(porcentaje)} %`
-  return `${conSigno(horas)} h (${relativa})`
 }

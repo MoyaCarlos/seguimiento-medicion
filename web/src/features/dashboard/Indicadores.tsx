@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { formatoNumero, proporcion, textoDesviacion, textoDeDesviacion, type Metricas } from './metricas'
+import { formatoNumero, textoDeDesviacion } from '../../compartido/formato/numeros'
+import { proporcion, textoDesviacion, type Metricas } from './metricas'
 
 type IndicadoresProps = {
   metricas: Metricas
