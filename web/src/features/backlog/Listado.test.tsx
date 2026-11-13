@@ -849,3 +849,29 @@ describe('respuesta tardía de una carga vieja al cambiar de proyecto', () => {
     ])
   })
 })
+
+describe('paneles de Editar y Asignar según el prototipo (#230)', () => {
+  it('Given una historia en edición, When se abre el panel, Then los criterios explican el límite y el Markdown, y «Cancelar» es el botón discreto', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirEdicion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Editar ${MUST.titulo}` })
+    expect(within(panel).getByText('Hasta 2000 caracteres. Admite Markdown.')).toBeTruthy()
+    expect(within(panel).getByLabelText('Story Points').closest('.field')?.className).toContain('backlog-campo--corto')
+    expect(within(panel).getByRole('button', { name: 'Cancelar' }).className).toContain('button--quiet')
+  })
+
+  it('Given una historia por asignar, When se abre el panel, Then «Cancelar» es el botón discreto', async () => {
+    simularApi(conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirAsignacion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Asignar ${MUST.titulo} a un Sprint` })
+    expect(within(panel).getByRole('button', { name: 'Cancelar' }).className).toContain('button--quiet')
+  })
+})

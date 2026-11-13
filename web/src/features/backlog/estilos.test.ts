@@ -154,3 +154,32 @@ it('Given el cajón, When se estiliza, Then separa la cabecera del formulario 22
   expect(regla('.backlog-crear')).toMatch(/gap:\s*22px/)
   expect(regla('.backlog-crear__acciones .button--quiet')).toMatch(/color:\s*var\(--muted\)/)
 })
+
+it('Given los paneles de Editar y Asignar dentro de la tarjeta, When se estilizan, Then son una caja gris con borde, radio 12 y relleno 18', () => {
+  for (const selector of ['.backlog-edicion', '.backlog-asignacion']) {
+    const bloque = regla(selector)
+    expect(bloque, selector).toMatch(/background:\s*#f8fafc/)
+    expect(bloque, selector).toMatch(/border:\s*1px solid/)
+    expect(bloque, selector).toMatch(/border-radius:\s*12px/)
+    expect(bloque, selector).toMatch(/padding:\s*18px/)
+    expect(bloque, selector).toMatch(/gap:\s*14px/)
+  }
+  expect(regla('.backlog-edicion h3')).toMatch(/font-size:\s*15px/)
+  expect(regla('.backlog-asignacion h3')).toMatch(/font-size:\s*15px/)
+})
+
+it('Given los campos de los paneles, When se estilizan, Then miden como los del prototipo y «Story Points» es un campo corto', () => {
+  for (const base of ['.backlog-edicion', '.backlog-asignacion']) {
+    expect(regla(`${base} .field input`), base).toMatch(/min-height:\s*42px/)
+    expect(regla(`${base} .field select`), base).toMatch(/font-size:\s*14\.5px/)
+    expect(regla(`${base} .field label`), base).toMatch(/font-size:\s*13px/)
+  }
+  expect(regla('.backlog-edicion textarea')).toMatch(/min-height:\s*92px/)
+  expect(regla('.backlog-campo--corto')).toMatch(/max-width:\s*14rem/)
+})
+
+it('Given los botones de un panel, When se estilizan, Then van a la derecha, de 40px, y «Cancelar» en gris', () => {
+  expect(regla('.backlog-panel__acciones')).toMatch(/justify-content:\s*flex-end/)
+  expect(regla('.backlog-panel__acciones .button')).toMatch(/height:\s*40px/)
+  expect(regla('.backlog-panel__acciones .button--quiet')).toMatch(/color:\s*var\(--muted\)/)
+})
