@@ -32,7 +32,7 @@ it('Given el mensaje de datos de prueba cargados, When se estiliza, Then es una 
 })
 
 const bloque = (selector: string) =>
-  estilos.match(new RegExp(`^${selector.replace(/[.:]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? ''
+  estilos.match(new RegExp(`^${selector.replace(/[.:[\]]/g, '\\$&')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? ''
 
 it('Given el encabezado de una pantalla, When se estiliza globalmente, Then h1 no lleva margen, el pretítulo queda a 6px y la línea del proyecto a 6px del título', () => {
   expect(bloque('h1')).toMatch(/margin:\s*0\s*;/)
@@ -79,4 +79,25 @@ it('Given las pestañas inferiores, When se estilizan, Then van fijas abajo, no 
   expect(Number(contenido.match(/padding-bottom:\s*(\d+)px/)?.[1])).toBeGreaterThanOrEqual(96)
   expect(contraste(texto, fondo)).toBeGreaterThanOrEqual(4.5)
   expect(contraste('#606f86', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given el selector de proyecto, When se estiliza, Then el resaltado del teclado es un contorno de 2px que se distingue 3:1 del fondo y las iniciales cumplen 4,5:1', () => {
+  const resaltada = bloque('.selector-proyecto__lista:focus-visible .selector-proyecto__opcion--resaltada')
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+  const contraste = (x: string, y: string) => {
+    const [a, b] = [luz(x), luz(y)].sort((p, q) => q - p)
+    return (a + 0.05) / (b + 0.05)
+  }
+
+  expect(resaltada).toMatch(/box-shadow:\s*inset 0 0 0 2px var\(--brand\)/)
+  expect(contraste('#0d9488', '#ffffff')).toBeGreaterThanOrEqual(3)
+  for (const n of [0, 1, 2, 3, 4]) {
+    const avatar = bloque(`.selector-proyecto__avatar--${n}`)
+    const fondo = avatar.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    const texto = avatar.match(/\bcolor:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    expect(contraste(texto, fondo)).toBeGreaterThanOrEqual(4.5)
+  }
+  expect(bloque('.selector-proyecto__popup[hidden]')).toMatch(/display:\s*none/)
 })

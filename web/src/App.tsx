@@ -79,7 +79,7 @@ function Armazon() {
         className="barra-lateral"
         aria-label="Navegación principal"
         onClick={(evento) => {
-          if ((evento.target as HTMLElement).closest('a')) cerrarMenu()
+          if ((evento.target as HTMLElement).closest('a, [role="option"], .selector-proyecto__nuevo')) cerrarMenu()
         }}
       >
         <button type="button" className="barra-lateral__cerrar" aria-label="Cerrar menú" onClick={cerrarMenu}>
