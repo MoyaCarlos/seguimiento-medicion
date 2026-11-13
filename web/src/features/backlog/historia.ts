@@ -58,6 +58,7 @@ export type CuerpoEditarHistoria = {
   descripcion: string
   criterios_aceptacion: string | null
   estimacion_sp: ValorNegocio | null
+  estimacion_sp_leida: ValorNegocio | null
 }
 
 export type ErrorEdicion = Partial<

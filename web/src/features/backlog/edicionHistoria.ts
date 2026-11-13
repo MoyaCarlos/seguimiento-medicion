@@ -51,7 +51,10 @@ export function validarEdicion(formulario: FormularioEdicion): ErrorEdicion {
   return errores
 }
 
-export function armarCuerpoEdicion(formulario: FormularioEdicion): CuerpoEditarHistoria {
+export function armarCuerpoEdicion(
+  formulario: FormularioEdicion,
+  estimacionLeida: number | null,
+): CuerpoEditarHistoria {
   const criterios = formulario.criterios.trim()
   return {
     titulo: formulario.titulo.trim(),
@@ -59,6 +62,7 @@ export function armarCuerpoEdicion(formulario: FormularioEdicion): CuerpoEditarH
     criterios_aceptacion: criterios === '' ? null : criterios,
     estimacion_sp:
       formulario.estimacion === '' ? null : (Number(formulario.estimacion) as CuerpoEditarHistoria['estimacion_sp']),
+    estimacion_sp_leida: estimacionLeida as CuerpoEditarHistoria['estimacion_sp_leida'],
   }
 }
 

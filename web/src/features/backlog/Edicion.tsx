@@ -48,7 +48,10 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
 
     setEnviando(true)
     try {
-      const actualizada = await editarHistoria(historia.id, armarCuerpoEdicion(formulario))
+      const actualizada = await editarHistoria(
+        historia.id,
+        armarCuerpoEdicion(formulario, historia.estimacion_sp),
+      )
       onGuardada(actualizada)
     } catch (error) {
       const campo = campoDeError(error)
