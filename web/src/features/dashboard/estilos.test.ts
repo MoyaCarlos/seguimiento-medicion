@@ -23,3 +23,7 @@ it('Given el rótulo de un indicador, When se estiliza, Then va en mayúscula ch
 it('Given una tarjeta, When se estiliza, Then tiene el radio de 14px y el relleno del prototipo', () => {
   expect(regla('.dashboard-tarjeta')).toMatch(/border-radius:\s*14px/)
 })
+
+it('Given el enlace al historial en una pantalla angosta, When el texto se parte, Then la flecha queda pegada a la última línea', () => {
+  expect(regla('.dashboard-enlace-historial')).toMatch(/display:\s*inline-flex/)
+})

@@ -47,7 +47,6 @@ export function GraficoVelocidad({ sprints }: { sprints: MetricasDeSprint[] }) {
               <CartesianGrid vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="sprint" interval={0} tickLine={false} axisLine={false} tick={TEXTO_DEL_EJE} />
               <YAxis
-                domain={[0, marcas[2]]}
                 ticks={marcas}
                 width={44}
                 tickLine={false}
