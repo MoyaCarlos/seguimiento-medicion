@@ -9,11 +9,13 @@ export class ApiError extends Error {
     status: number,
     message: string,
     field?: string,
+    tipo?: 'no_integrante' | 'sin_permiso',
   ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.field = field
+    this.tipo = tipo
   }
 }
 
@@ -103,16 +105,28 @@ function parseJson(text: string): unknown {
   }
 }
 
+const MENSAJE_NO_INTEGRANTE = 'No sos integrante de este proyecto'
+
+function tipoDe(status: number, mensaje?: string): ApiError['tipo'] {
+  if (status !== 403) return undefined
+  return mensaje === MENSAJE_NO_INTEGRANTE ? 'no_integrante' : 'sin_permiso'
+}
+
 function errorFrom(status: number, data: unknown): ApiError {
   if (typeof data !== 'object' || data === null) return genericError(status)
 
   const { mensaje, campo } = data as { mensaje?: unknown; campo?: unknown }
   if (typeof mensaje !== 'string' || !mensaje) return genericError(status)
-  return new ApiError(status, mensaje, typeof campo === 'string' && campo ? campo : undefined)
+  return new ApiError(
+    status,
+    mensaje,
+    typeof campo === 'string' && campo ? campo : undefined,
+    tipoDe(status, mensaje),
+  )
 }
 
 function genericError(status: number): ApiError {
-  return new ApiError(status, `La API respondió con estado ${status}`)
+  return new ApiError(status, `La API respondió con estado ${status}`, undefined, tipoDe(status))
 }
 
 function nombreDeArchivo(response: Response): string {
