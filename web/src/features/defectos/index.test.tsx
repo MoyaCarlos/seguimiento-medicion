@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -449,5 +451,45 @@ describe('listado de defectos como el prototipo', () => {
     expect(screen.getByText('Severidad Baja')).toBeTruthy()
     expect(screen.getByText('Pendiente')).toBeTruthy()
     expect(screen.getByText('Resuelto')).toBeTruthy()
+  })
+})
+
+describe('avisos de éxito como el prototipo', () => {
+  it('Dado un defecto pendiente, cuando lo resuelvo, entonces aparece el aviso «Defecto #7 resuelto en el Sprint 1»', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
+
+    const aviso = await screen.findByText('Defecto #7 resuelto en el Sprint 1')
+    expect(aviso.closest('.defectos-exito')?.getAttribute('role')).toBe('status')
+  })
+
+  it('Dado que registro un defecto, cuando se guarda, entonces el aviso «Defecto registrado» va arriba, antes del formulario', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [] })
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    const aviso = await screen.findByText('Defecto registrado')
+    const formulario = screen.getByRole('heading', { name: 'Registrar defecto' })
+    expect(aviso.compareDocumentPosition(formulario) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(aviso.closest('form')).toBeNull()
+  })
+
+  it('Dado un aviso de éxito, cuando se estiliza, entonces es una caja verde con texto que cumple 4,5:1', () => {
+    const css = readFileSync('src/features/defectos/defectos.css', 'utf8')
+    const regla = css.match(/^\.defectos-exito\s*\{([^}]*)\}/m)?.[1] ?? ''
+    const fondo = regla.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    const texto = regla.match(/\bcolor:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    const luz = (h: string) =>
+      [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+        .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+    expect(fondo).toBe('#dcf5e4')
+    const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
+    expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
   })
 })
