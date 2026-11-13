@@ -54,3 +54,37 @@ it('Given una pantalla angosta, When se muestran las métricas, Then no se les a
   expect(angosto).not.toMatch(/\.historial-metrica\s*\{/)
   expect(angosto).toMatch(/\.historial-tarjeta:not\(\.historial-sprint\)/)
 })
+
+it.each([
+  ['.historial-chip--alerta'],
+  ['.historial-chip--media'],
+  ['.historial-chip--baja'],
+  ['.historial-chip--apagado'],
+  ['.historial-chip--ok'],
+  ['.historial-chip--fuerte'],
+])('Given la etiqueta %s del detalle, When se estiliza, Then su texto cumple 4,5:1 sobre su fondo', (selector) => {
+  const bloque = regla(selector)
+  const fondo = color(bloque, 'background') || '#ffffff'
+
+  expect(contraste(color(bloque, 'color'), fondo)).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given una etiqueta del detalle, When se estiliza, Then es un rectángulo chico de 7px', () => {
+  const bloque = regla('.historial-chip')
+
+  expect(bloque).toMatch(/border-radius:\s*7px/)
+  expect(bloque).toMatch(/padding:\s*2px 9px/)
+})
+
+it('Given las métricas del detalle, When se estilizan, Then la cifra es de 19px', () => {
+  expect(regla('.historial-detalle .historial-metrica dd')).toMatch(/font-size:\s*19px/)
+})
+
+it('Given el botón «Exportar a PDF», When se estiliza, Then es blanco con borde del acento y texto verde oscuro con contraste 4,5:1', () => {
+  const boton = readFileSync('src/compartido/componentes/BotonExportar.css', 'utf8')
+  const bloque = boton.match(/\.reporte-exportar__boton\s*\{([^}]*)\}/)?.[1] ?? ''
+
+  expect(bloque).toMatch(/border-color:\s*var\(--brand\)/)
+  expect(contraste('#0b7a70', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+  expect(bloque).toMatch(/background:\s*var\(--surface\)/)
+})

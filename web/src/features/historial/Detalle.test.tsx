@@ -124,8 +124,7 @@ describe('detalle de un Sprint del historial', () => {
     abrir()
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Sprint 1' })).toBeTruthy()
-    expect(screen.getByText('Gestión inicial del trámite')).toBeTruthy()
-    expect(screen.getByText('20/10/2026 → 26/10/2026')).toBeTruthy()
+    expect(screen.getByText('Gestión inicial del trámite · 20/10/2026 → 26/10/2026')).toBeTruthy()
     expect(api).toHaveBeenCalledWith('/projects/7/historial/71', expect.objectContaining({ method: 'GET' }))
   })
 
@@ -154,13 +153,13 @@ describe('detalle de un Sprint del historial', () => {
     const historias = await seccion('Historias comprometidas')
     const completada = historia(historias, 'Solicitar turno para el examen')
     expect(within(completada).getByText('Completada')).toBeTruthy()
-    expect(within(completada).getByText('5 SP')).toBeTruthy()
+    expect(within(completada).getByText('5 Story Points')).toBeTruthy()
     expect(within(completada).getByText('4,3 h')).toBeTruthy()
 
     const arrastrada = historia(historias, 'Validar el certificado psicofísico')
     expect(within(arrastrada).getByText('No completada')).toBeTruthy()
-    expect(within(arrastrada).getByText('3 SP')).toBeTruthy()
-    expect(within(arrastrada).getByText('0 h')).toBeTruthy()
+    expect(within(arrastrada).getByText('3 Story Points')).toBeTruthy()
+    expect(within(arrastrada).queryByText('0 h')).toBeNull()
   })
 
   it('US4.4: Given una historia sin Story Points, When veo el detalle, Then dice sin estimar y nunca 0 SP', async () => {
@@ -170,7 +169,7 @@ describe('detalle de un Sprint del historial', () => {
 
     const sinEstimar = historia(await seccion('Historias comprometidas'), 'Avisar el vencimiento')
     expect(within(sinEstimar).getByText(/sin estimar/i)).toBeTruthy()
-    expect(within(sinEstimar).queryByText('0 SP')).toBeNull()
+    expect(within(sinEstimar).queryByText(/^0 (SP|Story Points)$/)).toBeNull()
   })
 
   it('US4.2: Given horas imputadas, When veo el detalle, Then el esfuerzo total coincide con las horas reales del Sprint', async () => {
@@ -179,7 +178,8 @@ describe('detalle de un Sprint del historial', () => {
     abrir()
 
     const historias = await seccion('Historias comprometidas')
-    expect(metrica(historias, 'Esfuerzo total del Sprint')).toBe('4,3 h')
+    const total = within(historias).getByText('4,3 h', { selector: 'strong' })
+    expect(total.parentElement?.textContent).toBe('Esfuerzo total del Sprint: 4,3 h')
   })
 
   it('US4.2: Given defectos del Sprint, When veo el detalle, Then cada uno indica si se detectó o resolvió acá y su estado actual', async () => {
@@ -189,7 +189,7 @@ describe('detalle de un Sprint del historial', () => {
 
     const defectos = await seccion('Defectos')
     const detectado = defectoEn(defectos, 'Defecto 10')
-    expect(within(detectado).getByText('Alta')).toBeTruthy()
+    expect(within(detectado).getByText('Severidad Alta')).toBeTruthy()
     expect(within(detectado).getByText('Pendiente')).toBeTruthy()
     expect(within(detectado).getByText('Detectado en este Sprint')).toBeTruthy()
     expect(within(detectado).queryByText('Resuelto en este Sprint')).toBeNull()
@@ -305,5 +305,63 @@ describe('detalle de un Sprint del historial', () => {
       'el Sprint todavía no está finalizado',
     )
     expect(screen.queryByRole('button', { name: 'Exportar a PDF' })).toBeNull()
+  })
+
+  it('Given el detalle, When lo veo, Then el Sprint Goal y las fechas van en una sola línea bajo el título y «Exportar a PDF» a la derecha', async () => {
+    simularApi(() => respuesta(200, detalle))
+
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Sprint 1' })
+    const subtitulo = screen.getByText('Gestión inicial del trámite · 20/10/2026 → 26/10/2026')
+    expect(titulo.parentElement).toBe(subtitulo.parentElement)
+    expect(screen.getByRole('button', { name: 'Exportar a PDF' }).closest('header')).toBe(titulo.closest('header'))
+  })
+
+  it('Given las métricas del Sprint, When las leo, Then empiezan por la velocidad y no hay barra de avance decorativa', async () => {
+    simularApi(() => respuesta(200, detalle))
+
+    abrir()
+
+    const metricas = await seccion('Métricas del Sprint')
+    const nombres = within(metricas).getAllByText(/./, { selector: 'dt' }).map((termino) => termino.textContent)
+    expect(nombres).toEqual([
+      'Velocidad', 'Story Points planificados', 'Story Points completados', 'Historias completadas',
+      'Horas estimadas', 'Horas reales', 'Desviación', 'Defectos detectados', 'Defectos resueltos',
+    ])
+    expect(within(metricas).queryByRole('meter')).toBeNull()
+  })
+
+  it('Given historias y defectos, When veo el detalle, Then van en tarjetas a todo el ancho, una debajo de la otra', async () => {
+    simularApi(() => respuesta(200, detalle))
+
+    abrir()
+
+    const historias = await seccion('Historias comprometidas')
+    const defectos = await seccion('Defectos')
+    expect(historias.parentElement).toBe(defectos.parentElement)
+    expect(historias.parentElement?.classList.contains('historial-columnas')).toBe(false)
+    expect(historias.compareDocumentPosition(defectos) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('Given una historia con horas, When veo el detalle, Then las horas son una etiqueta y «Completada» lleva punto', async () => {
+    simularApi(() => respuesta(200, detalle))
+
+    abrir()
+
+    const completada = historia(await seccion('Historias comprometidas'), 'Solicitar turno para el examen')
+    expect(within(completada).getByText('4,3 h').classList.contains('historial-chip')).toBe(true)
+    expect(within(completada).getByText('Completada').classList.contains('historial-chip--ok')).toBe(true)
+  })
+
+  it('Given un defecto, When veo sus etiquetas, Then la severidad usa el tono de su nivel', async () => {
+    simularApi(() => respuesta(200, detalle))
+
+    abrir()
+
+    const defectos = await seccion('Defectos')
+    expect(within(defectoEn(defectos, 'Defecto 10')).getByText('Severidad Alta').classList.contains('historial-chip--alerta')).toBe(true)
+    expect(within(defectoEn(defectos, 'Defecto 12')).getByText('Severidad Media').classList.contains('historial-chip--media')).toBe(true)
+    expect(within(defectoEn(defectos, 'Defecto 11')).getByText('Severidad Baja').classList.contains('historial-chip--baja')).toBe(true)
   })
 })
