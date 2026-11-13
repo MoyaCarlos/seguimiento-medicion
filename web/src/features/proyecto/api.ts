@@ -42,7 +42,7 @@ export type ProyectoEditado = {
 
 export type NuevoIntegrante = {
   nombre: string
-  rol: Rol
+  rol?: Rol
 }
 
 export const crearProyecto = (datos: NuevoProyecto) =>

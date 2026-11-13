@@ -3,32 +3,26 @@ import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
-import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { ApiError } from '../../compartido/api/client'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
-import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes } from './api'
-import type { Integrante, Rol } from './api'
+import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes, listarUsuarios } from './api'
+import type { Integrante, UsuarioRegistrado } from './api'
 import { CampoSelect } from './Campos'
-import { campoDeError, mensajeDeError } from './errores'
-import { validarIntegrante } from './validacion'
-import type { ErroresIntegrante } from './validacion'
-
-const OPCIONES_ROL = [
-  { valor: 'scrum_master', etiqueta: ETIQUETAS_ROL.scrum_master },
-  { valor: 'product_builder', etiqueta: ETIQUETAS_ROL.product_builder },
-]
+import { mensajeDeError } from './errores'
 
 export function Configuracion() {
   const { id = '' } = useParams()
   const [integrantes, setIntegrantes] = useState<Integrante[]>([])
   const [cargando, setCargando] = useState(true)
   const [errorLista, setErrorLista] = useState('')
+  const [usuarios, setUsuarios] = useState<UsuarioRegistrado[]>([])
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(true)
+  const [errorUsuarios, setErrorUsuarios] = useState('')
   const [nombre, setNombre] = useState('')
-  const [rol, setRol] = useState('')
-  const [errores, setErrores] = useState<ErroresIntegrante>({})
+  const [errorNombre, setErrorNombre] = useState('')
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [sinPermiso, setSinPermiso] = useState('')
@@ -53,30 +47,47 @@ export function Configuracion() {
     }
   }, [id])
 
+  useEffect(() => {
+    let vigente = true
+
+    listarUsuarios()
+      .then((datos) => {
+        if (vigente) setUsuarios(datos)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setErrorUsuarios(mensajeDeError(causa))
+      })
+      .finally(() => {
+        if (vigente) setCargandoUsuarios(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [])
+
+  const yaIntegran = new Set(integrantes.map((integrante) => integrante.nombre))
+  const disponibles = usuarios.filter((usuario) => !yaIntegran.has(usuario.nombre))
+  const sinUsuarios = !cargandoUsuarios && !errorUsuarios && disponibles.length === 0
+
   async function agregar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     setErrorGeneral('')
     setSinPermiso('')
 
-    const validacion = validarIntegrante({ nombre, rol })
-    setErrores(validacion)
-    if (Object.keys(validacion).length > 0) return
+    if (!nombre) {
+      setErrorNombre('Elegí un usuario de la lista')
+      return
+    }
 
     setEnviando(true)
     try {
-      const integrante = await asignarIntegrante(id, {
-        nombre: nombre.trim(),
-        rol: rol as Rol,
-      })
+      const integrante = await asignarIntegrante(id, { nombre })
       setIntegrantes((actuales) => [...actuales, integrante])
       setNombre('')
-      setRol('')
     } catch (error) {
-      const campo = campoDeError(error)
       if (error instanceof ApiError && error.tipo === 'sin_permiso') {
         setSinPermiso(error.message)
-      } else if (campo === 'nombre' || campo === 'rol') {
-        setErrores({ [campo]: mensajeDeError(error) })
       } else {
         setErrorGeneral(mensajeDeError(error))
       }
@@ -107,31 +118,29 @@ export function Configuracion() {
             {errorGeneral && <ErrorMessage message={errorGeneral} />}
             {sinPermiso && <AvisoSinPermiso mensaje={sinPermiso} />}
 
-            <Field
-              id="integrante"
-              name="nombre"
-              label="Nombre del integrante"
-              value={nombre}
-              onChange={(evento) => {
-                setNombre(evento.target.value)
-                setErrores((actuales) => ({ ...actuales, nombre: undefined }))
-                setErrorGeneral('')
-              }}
-              error={errores.nombre}
-            />
-
-            <CampoSelect
-              id="rol"
-              label="Rol"
-              value={rol}
-              opciones={OPCIONES_ROL}
-              onChange={(valor) => {
-                setRol(valor)
-                setErrores((actuales) => ({ ...actuales, rol: undefined }))
-                setErrorGeneral('')
-              }}
-              error={errores.rol}
-            />
+            {cargandoUsuarios && <LoadingIndicator />}
+            {errorUsuarios && <ErrorMessage message={errorUsuarios} />}
+            {sinUsuarios && (
+              <p className="hu04-intro">No hay usuarios registrados para agregar</p>
+            )}
+            {!cargandoUsuarios && !errorUsuarios && !sinUsuarios && (
+              <CampoSelect
+                id="usuario"
+                label="Usuario"
+                placeholder="Elegí un usuario"
+                value={nombre}
+                opciones={disponibles.map((usuario) => ({
+                  valor: usuario.nombre,
+                  etiqueta: usuario.nombre,
+                }))}
+                onChange={(valor) => {
+                  setNombre(valor)
+                  setErrorNombre('')
+                  setErrorGeneral('')
+                }}
+                error={errorNombre}
+              />
+            )}
 
             {enviando && <LoadingIndicator />}
 

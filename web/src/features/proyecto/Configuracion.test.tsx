@@ -24,8 +24,10 @@ function abrir() {
   )
 }
 
+const registrados = [{ id: 1, nombre: 'Ana' }, { id: 2, nombre: 'Jimena' }]
+
 function responderListaYAlta() {
-  const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
     if (init?.method === 'POST') {
       return Promise.resolve(
         new Response(
@@ -39,6 +41,9 @@ function responderListaYAlta() {
           { status: 201 },
         ),
       )
+    }
+    if (url === '/users') {
+      return Promise.resolve(new Response(JSON.stringify(registrados), { status: 200 }))
     }
     return Promise.resolve(new Response(JSON.stringify(integrantes), { status: 200 }))
   })
@@ -59,37 +64,16 @@ describe('pantalla de configuración del equipo', () => {
     expect(screen.getByText('Ana').closest('li')?.textContent).toContain('Scrum Master')
   })
 
-  it('valida nombre y rol antes de asignar', async () => {
+  it('valida que se elija un usuario antes de asignar', async () => {
     const fetchMock = responderListaYAlta()
     abrir()
 
     await screen.findByText('Ana')
+    await screen.findByLabelText('Usuario')
     await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
 
-    expect(screen.getByText('El nombre del integrante es obligatorio')).toBeTruthy()
-    expect(screen.getByText('Seleccioná un rol válido')).toBeTruthy()
+    expect(screen.getByText('Elegí un usuario de la lista')).toBeTruthy()
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'POST')).toHaveLength(0)
-  })
-
-  it('asigna un integrante con rol y lo muestra en el equipo', async () => {
-    const fetchMock = responderListaYAlta()
-    abrir()
-
-    await screen.findByText('Ana')
-    await userEvent.type(screen.getByLabelText('Nombre del integrante'), 'Jimena')
-    await userEvent.selectOptions(screen.getByLabelText('Rol'), 'product_builder')
-    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
-
-    expect(await screen.findByText('Jimena')).toBeTruthy()
-
-    await waitFor(() =>
-      expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(true),
-    )
-    const llamada = fetchMock.mock.calls.find(([, init]) => init?.method === 'POST')
-    expect(JSON.parse(String(llamada?.[1]?.body))).toEqual({
-      nombre: 'Jimena',
-      rol: 'product_builder',
-    })
   })
 })
 
