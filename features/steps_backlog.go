@@ -173,6 +173,22 @@ func (p *pasosBacklog) existeHistoriaEnSprint(estimacion *int, estado string) er
 	return err
 }
 
+func (p *pasosBacklog) existeHistoriaEnBacklogConSP(sp int) error {
+	if err := p.existeHistoriaEnBacklog(); err != nil {
+		return err
+	}
+	if _, err := p.base.db.Exec("UPDATE historias SET estimacion_sp = ? WHERE id = ?", sp, p.historia.ID); err != nil {
+		return err
+	}
+	p.historia.EstimacionSP = &sp
+	return nil
+}
+
+func (p *pasosBacklog) otraPersonaCambiaLaEstimacion(sp int) error {
+	_, err := p.base.db.Exec("UPDATE historias SET estimacion_sp = ? WHERE id = ?", sp, p.historia.ID)
+	return err
+}
+
 func (p *pasosBacklog) existeHistoriaConSPEnSprint(sp int, estado string) error {
 	return p.existeHistoriaEnSprint(&sp, estado)
 }
@@ -190,6 +206,7 @@ func (p *pasosBacklog) guardar(cambios func(*service.EditarHistoriaInput)) error
 		Descripcion:         p.historia.Descripcion,
 		CriteriosAceptacion: p.historia.CriteriosAceptacion,
 		EstimacionSP:        p.historia.EstimacionSP,
+		EstimacionLeida:     p.historia.EstimacionSP,
 	}
 	cambios(&input)
 	p.enviado = input
@@ -215,6 +232,28 @@ func (p *pasosBacklog) cambioTitulo(titulo string) error {
 
 func (p *pasosBacklog) cambioStoryPoints(sp int) error {
 	return p.guardar(func(in *service.EditarHistoriaInput) { in.EstimacionSP = &sp })
+}
+
+func (p *pasosBacklog) guardoSinCambiarLaEstimacion() error {
+	return p.guardar(func(_ *service.EditarHistoriaInput) {})
+}
+
+func (p *pasosBacklog) conservaStoryPoints(sp int) error {
+	var actual *int
+	if err := p.base.db.QueryRow("SELECT estimacion_sp FROM historias WHERE id = ?", p.historia.ID).Scan(&actual); err != nil {
+		return err
+	}
+	if actual == nil || *actual != sp {
+		return fmt.Errorf("se esperaban %d Story Points en la historia, se obtuvo %v", sp, actual)
+	}
+	return nil
+}
+
+func (p *pasosBacklog) rechazadaPorEstimacionDesactualizada() error {
+	if !errors.Is(p.err, domain.ErrEstimacionDesactualizada) {
+		return fmt.Errorf("se esperaba la estimación desactualizada, se obtuvo %v", p.err)
+	}
+	return nil
 }
 
 func (p *pasosBacklog) intentoEditarInexistente(identificador int) error {
@@ -329,16 +368,21 @@ func InitializeScenarioBacklog(ctx *godog.ScenarioContext, base *scenarioContext
 	ctx.Step(`^veo un Product Backlog vacío, sin error$`, p.veoBacklogVacio)
 	ctx.Step(`^la consulta se rechaza con error "proyecto no encontrado"$`, p.consultaRechazadaProyectoNoEncontrado)
 	ctx.Step(`^que existe una historia en el Product Backlog del proyecto$`, p.existeHistoriaEnBacklog)
+	ctx.Step(`^que existe una historia en el Product Backlog del proyecto con (\d+) Story Points$`, p.existeHistoriaEnBacklogConSP)
+	ctx.Step(`^que mientras tengo el formulario abierto otra persona cambia su estimación a (\d+) Story Points$`, p.otraPersonaCambiaLaEstimacion)
 	ctx.Step(`^que existe una historia con (\d+) Story Points asignada a un Sprint en estado "([^"]*)"$`, p.existeHistoriaConSPEnSprint)
 	ctx.Step(`^que existe una historia sin estimar asignada a un Sprint en estado "([^"]*)"$`, p.existeHistoriaSinEstimarEnSprint)
 	ctx.Step(`^cambio su título a "([^"]*)", su descripción, sus criterios de aceptación y sus Story Points a (\d+), y guardo$`, p.cambioTodo)
 	ctx.Step(`^cambio su título a "([^"]*)" y guardo$`, p.cambioTitulo)
 	ctx.Step(`^cambio sus Story Points a (\d+) y guardo$`, p.cambioStoryPoints)
+	ctx.Step(`^guardo la edición sin cambiar la estimación$`, p.guardoSinCambiarLaEstimacion)
 	ctx.Step(`^intento editar la historia con identificador (\d+), que no existe, dejando su título en blanco$`, p.intentoEditarInexistente)
 	ctx.Step(`^la historia queda guardada con los datos nuevos$`, p.quedaConDatosNuevos)
 	ctx.Step(`^conserva su identificador y su estado "([^"]*)"$`, p.conservaIdentificadorYEstado)
 	ctx.Step(`^la historia queda guardada con (\d+) Story Points$`, p.quedaConStoryPoints)
+	ctx.Step(`^la historia conserva sus Story Points en (\d+)$`, p.conservaStoryPoints)
 	ctx.Step(`^la edición se rechaza con una advertencia sobre el campo "([^"]*)"$`, p.rechazadaConAdvertenciaSobre)
 	ctx.Step(`^la historia queda sin modificaciones$`, p.quedaSinModificaciones)
 	ctx.Step(`^la edición se rechaza con error "historia no encontrada"$`, p.rechazadaHistoriaNoEncontrada)
+	ctx.Step(`^la edición se rechaza por estimación desactualizada$`, p.rechazadaPorEstimacionDesactualizada)
 }

@@ -49,7 +49,7 @@ func (s *stubBacklogRepository) ObtenerPorID(_ context.Context, id int64) (domai
 	return h, nil
 }
 
-func (s *stubBacklogRepository) Actualizar(_ context.Context, item domain.BacklogItem) error {
+func (s *stubBacklogRepository) ActualizarSiEstimacionSigueSiendo(_ context.Context, item domain.BacklogItem, _ *int) error {
 	s.actualizaciones = append(s.actualizaciones, item)
 	s.historias[item.ID] = item
 	return nil
@@ -601,7 +601,7 @@ func TestBacklogHandler_ConsultarBacklog_ErrorDePersistencia(t *testing.T) {
 	}
 }
 
-const edicionValidaJSON = `{"titulo":"Iniciar sesión con Google","descripcion":"Con OAuth","criterios_aceptacion":"Dado, cuando, entonces","estimacion_sp":8}`
+const edicionValidaJSON = `{"titulo":"Iniciar sesión con Google","descripcion":"Con OAuth","criterios_aceptacion":"Dado, cuando, entonces","estimacion_sp":8,"estimacion_sp_leida":null}`
 
 func sembrarHistoria(repo *stubBacklogRepository) domain.BacklogItem {
 	h := domain.BacklogItem{ID: 3, ProyectoID: 1, Titulo: "Original", Descripcion: "Descripción",
@@ -682,13 +682,15 @@ func TestBacklogHandler_Editar_Validaciones(t *testing.T) {
 		campo   string
 		mensaje string
 	}{
-		{"titulo en blanco", `{"titulo":"   ","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`, "titulo", "el título es obligatorio"},
-		{"story points fuera de la escala", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":4}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
-		{"story points no enteros", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":2.5}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
-		{"falta titulo", `{"descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`, "titulo", "el campo es obligatorio"},
-		{"falta descripcion", `{"titulo":"t","criterios_aceptacion":null,"estimacion_sp":null}`, "descripcion", "el campo es obligatorio"},
-		{"faltan criterios", `{"titulo":"t","descripcion":"d","estimacion_sp":null}`, "criterios_aceptacion", "el campo es obligatorio"},
-		{"falta estimacion", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null}`, "estimacion_sp", "el campo es obligatorio"},
+		{"titulo en blanco", `{"titulo":"   ","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`, "titulo", "el título es obligatorio"},
+		{"story points fuera de la escala", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":4,"estimacion_sp_leida":null}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
+		{"story points no enteros", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":2.5,"estimacion_sp_leida":null}`, "estimacion_sp", domain.ErrEstimacionInvalida.Mensaje},
+		{"estimacion leida fuera de la escala", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5,"estimacion_sp_leida":4}`, "estimacion_sp_leida", domain.ErrEstimacionInvalida.Mensaje},
+		{"falta titulo", `{"descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`, "titulo", "el campo es obligatorio"},
+		{"falta descripcion", `{"titulo":"t","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`, "descripcion", "el campo es obligatorio"},
+		{"faltan criterios", `{"titulo":"t","descripcion":"d","estimacion_sp":null,"estimacion_sp_leida":null}`, "criterios_aceptacion", "el campo es obligatorio"},
+		{"falta estimacion", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp_leida":null}`, "estimacion_sp", "el campo es obligatorio"},
+		{"falta estimacion leida", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`, "estimacion_sp_leida", "el campo es obligatorio"},
 	}
 	for _, tc := range casos {
 		t.Run(tc.nombre, func(t *testing.T) {
@@ -714,7 +716,7 @@ func TestBacklogHandler_Editar_CamposOpcionalesNull(t *testing.T) {
 	handler, repo := nuevoHandlerDePrueba()
 	sembrarHistoria(repo)
 
-	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`)
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`)
 
 	if rec.Code != nethttp.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -734,12 +736,32 @@ func TestBacklogHandler_Editar_StoryPointsCongelados(t *testing.T) {
 	h.SprintID, h.EstimacionSP = &sprint.ID, &sp
 	repo.historias[h.ID] = h
 
-	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5}`)
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5,"estimacion_sp_leida":3}`)
 
 	if rec.Code != nethttp.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())
 	}
 	if resp := leerError(t, rec); resp.Campo != "estimacion_sp" || resp.Mensaje != domain.ErrEstimacionCongelada.Mensaje {
+		t.Errorf("error inesperado: %+v", resp)
+	}
+	if len(repo.actualizaciones) != 0 {
+		t.Errorf("no se esperaba persistir la edición")
+	}
+}
+
+func TestBacklogHandler_Editar_EstimacionDesactualizada(t *testing.T) {
+	handler, repo := nuevoHandlerDePrueba()
+	h := sembrarHistoria(repo)
+	sp := 8
+	h.EstimacionSP = &sp
+	repo.historias[h.ID] = h
+
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`)
+
+	if rec.Code != nethttp.StatusConflict {
+		t.Fatalf("se esperaba 409, se obtuvo %d (%s)", rec.Code, rec.Body.String())
+	}
+	if resp := leerError(t, rec); resp.Campo != "estimacion_sp" || resp.Mensaje != domain.ErrEstimacionDesactualizada.Error() {
 		t.Errorf("error inesperado: %+v", resp)
 	}
 	if len(repo.actualizaciones) != 0 {
@@ -1110,7 +1132,7 @@ func TestBacklogHandler_Editar_CargaConSprintFinalizado(t *testing.T) {
 	h.SprintID, h.EstimacionSP = &sprint.ID, nil
 	repo.historias[h.ID] = h
 
-	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5}`)
+	rec := editarHistoria(handler, "3", `{"titulo":"t","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":5,"estimacion_sp_leida":null}`)
 
 	if rec.Code != nethttp.StatusBadRequest {
 		t.Fatalf("se esperaba 400, se obtuvo %d (%s)", rec.Code, rec.Body.String())

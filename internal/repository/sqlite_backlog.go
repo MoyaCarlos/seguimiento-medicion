@@ -150,9 +150,11 @@ func escanearHistoria(fila escaneable) (domain.BacklogItem, error) {
 	return h, nil
 }
 
-// Actualizar persiste los campos editables de la historia: título, descripción,
-// criterios de aceptación y Story Points.
-func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.BacklogItem) error {
+// ActualizarSiEstimacionSigueSiendo persiste los campos editables de la
+// historia: título, descripción, criterios de aceptación y Story Points. La
+// estimación solo se escribe si la actual sigue siendo la que leyó el
+// formulario (#248): el compare-and-set cubre la carrera con HU-14.
+func (r *SQLiteBacklogRepository) ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, _ *int) error {
 	if _, err := r.db.ExecContext(ctx,
 		"UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ? WHERE id = ?",
 		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP), item.ID,
