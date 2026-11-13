@@ -131,3 +131,21 @@ it('Given el resumen «Historia creada», When se estiliza, Then es una lista de
 it('Given prioridad y valor de negocio, When se estilizan en el cajón, Then van en dos columnas', () => {
   expect(regla('.backlog-form__fila')).toMatch(/grid-template-columns:\s*1fr 1fr/)
 })
+
+it('Given los campos del cajón, When se estilizan, Then miden como los del prototipo: letra 14,5px, alto 42px, descripción de 92px y rótulo de 13px', () => {
+  const campo = regla('.backlog-crear .field input')
+  expect(campo).toMatch(/font-size:\s*14\.5px/)
+  expect(campo).toMatch(/min-height:\s*42px/)
+  expect(campo).toMatch(/padding:\s*10px 12px/)
+  expect(regla('.backlog-crear .field textarea')).toMatch(/min-height:\s*92px/)
+  expect(regla('.backlog-crear .field label')).toMatch(/font-size:\s*13px/)
+})
+
+it('Given el cajón, When se estiliza, Then el título es de 22px y los botones de 40px', () => {
+  expect(regla('.backlog-crear__cabecera h2')).toMatch(/font-size:\s*22px/)
+  expect(regla('.backlog-crear__acciones .button')).toMatch(/height:\s*40px/)
+})
+
+it('Given los criterios del resumen en Markdown, When se muestran, Then sus párrafos no suman margen', () => {
+  expect(regla('.backlog-resumen .markdown p')).toMatch(/margin:\s*0/)
+})
