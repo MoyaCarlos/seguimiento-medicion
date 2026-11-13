@@ -58,3 +58,25 @@ it('Given el ítem activo de la barra lateral, When se estiliza, Then la barra d
   expect(barra).toMatch(/background:\s*var\(--accent\)/)
   expect(bloque('.barra-lateral__enlace')).toMatch(/position:\s*relative/)
 })
+
+it('Given las pestañas inferiores, When se estilizan, Then van fijas abajo, no tapan el final del contenido y su texto cumple 4,5:1', () => {
+  const angosto = estilos.slice(estilos.indexOf('@media (max-width: 900px)'))
+  const pestanas = angosto.match(/\.pestanas\s*\{([^}]*)\}/)?.[1] ?? ''
+  const activa = angosto.match(/\.pestanas__enlace--activa\s*\{([^}]*)\}/)?.[1] ?? ''
+  const contenido = angosto.match(/\.armazon--con-pestanas \.contenido\s*\{([^}]*)\}/)?.[1] ?? ''
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+  const contraste = (x: string, y: string) => {
+    const [a, b] = [luz(x), luz(y)].sort((p, q) => q - p)
+    return (a + 0.05) / (b + 0.05)
+  }
+  const fondo = activa.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const texto = activa.match(/\bcolor:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+
+  expect(pestanas).toMatch(/position:\s*fixed/)
+  expect(pestanas).toMatch(/bottom:\s*0/)
+  expect(Number(contenido.match(/padding-bottom:\s*(\d+)px/)?.[1])).toBeGreaterThanOrEqual(96)
+  expect(contraste(texto, fondo)).toBeGreaterThanOrEqual(4.5)
+  expect(contraste('#606f86', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})

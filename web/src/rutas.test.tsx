@@ -726,3 +726,57 @@ describe('cajón de navegación en pantallas angostas (spec 046)', () => {
     expect(estaAbierto()).toBe('false')
   })
 })
+
+describe('pestañas inferiores en pantallas angostas', () => {
+  function simularPantallaAngosta(angosta: boolean) {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((consulta: string) => ({
+        matches: angosta && consulta.includes('max-width: 900px'),
+        media: consulta,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    )
+  }
+
+  it('Given una pantalla angosta y un proyecto, When se muestra, Then hay una navegación con las 7 secciones y la actual con aria-current', async () => {
+    simularPantallaAngosta(true)
+    abrir('/projects/42/defectos')
+    await screen.findByRole('heading', { name: 'Defectos' }, { timeout: 5000 })
+
+    const pestanas = screen.getByRole('navigation', { name: 'Pestañas del proyecto' })
+    const enlaces = within(pestanas).getAllByRole('link')
+    expect(enlaces.map((enlace) => enlace.textContent)).toEqual([
+      'Proyecto', 'Historias', 'Sprints', 'Defectos', 'Estado', 'Dashboard', 'Historial',
+    ])
+    expect(within(pestanas).getByRole('link', { name: 'Historial de Sprints' })).toBeTruthy()
+    expect(enlaces.map((enlace) => enlace.getAttribute('aria-current'))).toEqual([null, null, null, 'page', null, null, null])
+    expect(enlaces.every((enlace) => enlace.getAttribute('href')?.startsWith('/projects/42/'))).toBe(true)
+  })
+
+  it('Given una pantalla angosta, When recorro con el teclado, Then cada pestaña es un enlace alcanzable', async () => {
+    simularPantallaAngosta(true)
+    abrir('/projects/42/defectos')
+    await screen.findByRole('heading', { name: 'Defectos' }, { timeout: 5000 })
+
+    const pestanas = within(screen.getByRole('navigation', { name: 'Pestañas del proyecto' }))
+    expect(pestanas.getAllByRole('link').every((enlace) => enlace.tabIndex === 0)).toBe(true)
+  })
+
+  it('Given una pantalla ancha, When se muestra un proyecto, Then no hay pestañas inferiores', async () => {
+    simularPantallaAngosta(false)
+    abrir('/projects/42/defectos')
+    await screen.findByRole('heading', { name: 'Defectos' }, { timeout: 5000 })
+
+    expect(screen.queryByRole('navigation', { name: 'Pestañas del proyecto' })).toBeNull()
+  })
+
+  it('Given una pantalla angosta fuera de un proyecto, When se muestra el inicio, Then no hay pestañas inferiores', async () => {
+    simularPantallaAngosta(true)
+    abrir('/')
+    await screen.findByRole('heading', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    expect(screen.queryByRole('navigation', { name: 'Pestañas del proyecto' })).toBeNull()
+  })
+})
