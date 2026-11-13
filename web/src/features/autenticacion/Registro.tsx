@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router'
 import { FormularioCredenciales } from './FormularioCredenciales'
+import { PantallaAcceso } from './PantallaAcceso'
 import { useSesion } from './SesionContext'
 
 export function Registro() {
@@ -7,16 +8,20 @@ export function Registro() {
   const { state } = useLocation()
 
   return (
-    <FormularioCredenciales
-      titulo="Crear cuenta"
-      accion="Crear cuenta"
-      contrasenaNueva
-      enviar={registrar}
-      pie={
-        <>
-          ¿Ya tenés cuenta? <Link to="/ingresar" state={state}>Ingresá</Link>
-        </>
-      }
-    />
+    <PantallaAcceso>
+      <FormularioCredenciales
+        titulo="Crear cuenta"
+        sobretitulo="Nueva cuenta"
+        accion="Crear cuenta"
+        bajada="Elegí un nombre de usuario y una contraseña. Con tu cuenta vas a poder crear proyectos y sumarte a equipos."
+        contrasenaNueva
+        enviar={registrar}
+        pie={
+          <>
+            ¿Ya tenés cuenta? <Link to="/ingresar" state={state}>Ingresá</Link>
+          </>
+        }
+      />
+    </PantallaAcceso>
   )
 }

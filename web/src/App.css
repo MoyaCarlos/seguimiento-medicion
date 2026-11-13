@@ -284,21 +284,11 @@ select {
   min-height: 100vh;
 }
 
-.acceso__barra {
-  align-items: center;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  justify-content: space-between;
-  padding: 0.9rem 1.5rem;
-}
-
-.acceso__contenido {
-  margin: 0 auto;
+/* «Cargando…» y «Reintentar» de RutaProtegida se muestran sin armazón. */
+.acceso > :not(.pantalla-acceso) {
+  margin: 3rem auto;
   max-width: 1180px;
-  padding: 3rem 1.5rem;
+  padding: 0 1.5rem;
 }
 
 .page-header {

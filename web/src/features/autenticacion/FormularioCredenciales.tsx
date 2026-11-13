@@ -5,13 +5,16 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { CampoContrasena } from './CampoContrasena'
 import './estilos.css'
 
 type Campo = 'nombre' | 'contrasena'
 
 type Props = {
   titulo: string
+  sobretitulo: string
   accion: string
+  bajada?: string
   contrasenaNueva?: boolean
   aviso?: string
   pie: ReactNode
@@ -33,7 +36,9 @@ function campoDeError(error: unknown): Campo | undefined {
 
 export function FormularioCredenciales({
   titulo,
+  sobretitulo,
   accion,
+  bajada,
   contrasenaNueva = false,
   aviso,
   pie,
@@ -72,7 +77,9 @@ export function FormularioCredenciales({
 
   return (
     <section className="auth-pantalla" aria-labelledby="credenciales-title">
+      <p className="auth-sobretitulo">{sobretitulo}</p>
       <h1 id="credenciales-title">{titulo}</h1>
+      {bajada && <p className="auth-bajada">{bajada}</p>}
       {aviso && <p className="message auth-aviso" role="status">{aviso}</p>}
 
       <form onSubmit={alEnviar} noValidate aria-label={titulo}>
@@ -82,15 +89,16 @@ export function FormularioCredenciales({
           name="nombre"
           label="Nombre de usuario"
           autoComplete="username"
+          ayuda={contrasenaNueva ? 'De 3 a 30 caracteres: letras sin tildes, números, punto, guion y guion bajo.' : undefined}
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
           error={errores.nombre}
         />
-        <Field
+        <CampoContrasena
           name="contrasena"
-          type="password"
           label="Contraseña"
           autoComplete={contrasenaNueva ? 'new-password' : 'current-password'}
+          ayuda={contrasenaNueva ? 'De 8 a 128 caracteres.' : undefined}
           value={contrasena}
           onChange={(evento) => setContrasena(evento.target.value)}
           error={errores.contrasena}

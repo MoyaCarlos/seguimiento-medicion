@@ -105,6 +105,41 @@ describe('pantalla de ingreso', () => {
     expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('password')
   })
 
+  it('Given la contraseña oculta, When presiono «Mostrar contraseña», Then se ve como texto y el botón queda presionado sin cambiar de nombre', async () => {
+    montar()
+    const usuario = userEvent.setup()
+    const campo = screen.getByLabelText('Contraseña')
+    const boton = screen.queryByRole('button', { name: 'Mostrar contraseña' })
+    expect(boton).not.toBeNull()
+    expect(boton!.getAttribute('aria-pressed')).toBe('false')
+
+    await usuario.click(boton!)
+
+    expect(campo.getAttribute('type')).toBe('text')
+    expect(screen.getByRole('button', { name: 'Mostrar contraseña' }).getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('Given la contraseña visible, When presiono de nuevo «Mostrar contraseña», Then vuelve a ocultarse', async () => {
+    montar()
+    const usuario = userEvent.setup()
+    const boton = screen.queryByRole('button', { name: 'Mostrar contraseña' })
+    expect(boton).not.toBeNull()
+    await usuario.click(boton!)
+    expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('text')
+
+    await usuario.click(boton!)
+
+    expect(screen.getByLabelText('Contraseña').getAttribute('type')).toBe('password')
+    expect(boton!.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('Given la pantalla de ingreso, When se muestra, Then el panel de presentación lleva la marca «Métrica» y el formulario el sobretítulo «Bienvenido»', () => {
+    montar()
+
+    expect(screen.queryByRole('link', { name: 'Métrica' })?.getAttribute('href')).toBe('/')
+    expect(screen.queryByText('Bienvenido')).not.toBeNull()
+  })
+
   it('tiene un enlace a la pantalla de registro', async () => {
     montar()
     const usuario = userEvent.setup()
@@ -121,6 +156,16 @@ describe('pantalla de ingreso', () => {
     expect(await screen.findByRole('button', { name: 'Cargar datos de prueba' })).toBeTruthy()
   })
 
+  it('Dado que /demo/estado responde 200, cuando se muestra /ingresar, entonces la tarjeta «Datos de prueba» explica qué se carga', async () => {
+    simularFetch(() => json({}, 401), { estado: () => json({ habilitado: true }, 200) })
+    montar()
+
+    await screen.findByRole('button', { name: 'Cargar datos de prueba' })
+
+    expect(screen.queryByRole('heading', { name: 'Datos de prueba' })).not.toBeNull()
+    expect(screen.queryByText(/Crea cuatro usuarios y el proyecto #25/)).not.toBeNull()
+  })
+
   it('Dado que /demo/estado responde 404, cuando se muestra /ingresar, entonces no aparece el botón ni la tabla', async () => {
     const fetchMock = simularFetch(() => json({}, 401))
     montar()
@@ -128,6 +173,7 @@ describe('pantalla de ingreso', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/demo/estado', expect.anything()))
     await Promise.resolve()
     expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Datos de prueba' })).toBeNull()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
