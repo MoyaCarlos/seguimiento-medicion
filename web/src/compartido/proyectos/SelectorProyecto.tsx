@@ -62,7 +62,7 @@ export function SelectorProyecto() {
 
   function irANuevo() {
     cerrar()
-    navegar('/')
+    navegar('/projects/new')
   }
 
   function alTeclearEnLaLista(evento: KeyboardEvent<HTMLUListElement>) {

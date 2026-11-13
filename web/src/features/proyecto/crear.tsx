@@ -59,12 +59,9 @@ export function Component() {
   }
 
   return (
-    <section className="hu04-tarjeta hu04-tarjeta--angosta" aria-labelledby="crear-title">
-      <p className="eyebrow">Métrica · Scrum Master</p>
-      <h1 id="crear-title">Crear proyecto</h1>
-      <p className="hu04-intro">
-        Definí los datos iniciales del proyecto para comenzar a hacerle seguimiento.
-      </p>
+    <section className="proyecto-crear" aria-labelledby="crear-title">
+      <h2 id="crear-title">Crear proyecto</h2>
+      <p className="hu04-intro">Definí los datos iniciales para comenzar a hacerle seguimiento.</p>
 
       <form onSubmit={enviar} noValidate aria-label="Crear proyecto">
         {errorGeneral && <ErrorMessage message={errorGeneral} />}
@@ -73,6 +70,7 @@ export function Component() {
           id="nombre"
           name="nombre"
           label="Nombre del proyecto"
+          autoFocus
           value={datos.nombre}
           onChange={(evento) => actualizar('nombre', evento.target.value)}
           error={errores.nombre}
@@ -116,9 +114,14 @@ export function Component() {
 
         {enviando && <LoadingIndicator />}
 
-        <Button type="submit" disabled={enviando}>
-          Crear proyecto
-        </Button>
+        <div className="proyecto-crear__acciones">
+          <Button type="submit" disabled={enviando}>
+            Crear proyecto
+          </Button>
+          <Button type="button" variant="quiet" onClick={() => navegar('/')}>
+            Cancelar
+          </Button>
+        </div>
       </form>
     </section>
   )

@@ -40,6 +40,12 @@ function RutaDeNavegacion({ pathname, enProyecto }: { pathname: string; enProyec
   return (
     <nav className="ruta" aria-label="Ruta de navegación">
       {pathname === '/' ? <span aria-current="page">Proyectos</span> : <Link to="/">Proyectos</Link>}
+      {pathname === '/projects/new' && (
+        <>
+          <span aria-hidden="true">›</span>
+          <span aria-current="page">Nuevo proyecto</span>
+        </>
+      )}
       {seccion && (
         <>
           <span aria-hidden="true">›</span>
@@ -86,10 +92,14 @@ function Armazon() {
           <Icono nombre="cerrar" />
         </button>
         <Marca />
-        <NavLink className={claseDeEnlace} to="/" end>
+        <Link
+          className={claseDeEnlace({ isActive: pathname === '/' || pathname === '/projects/new' })}
+          to="/"
+          aria-current={pathname === '/' || pathname === '/projects/new' ? 'page' : undefined}
+        >
           <Icono nombre="carpeta" />
           Proyectos
-        </NavLink>
+        </Link>
         {id && (
           <>
             <SelectorProyecto key={recargas} />

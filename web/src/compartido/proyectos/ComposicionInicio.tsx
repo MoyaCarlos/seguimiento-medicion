@@ -1,11 +1,19 @@
-import { Outlet } from 'react-router'
+import { Outlet, useMatch, useNavigate } from 'react-router'
+import { VentanaModal } from '../componentes/VentanaModal'
 import { ListaProyectos } from './ListaProyectos'
 
 export function ComposicionInicio() {
+  const navegar = useNavigate()
+  const ventanaAbierta = Boolean(useMatch('/projects/new'))
+
   return (
-    <div className="inicio-composicion">
-      <Outlet />
+    <>
       <ListaProyectos />
-    </div>
+      {ventanaAbierta && (
+        <VentanaModal alCerrar={() => navegar('/')}>
+          <Outlet />
+        </VentanaModal>
+      )}
+    </>
   )
 }
