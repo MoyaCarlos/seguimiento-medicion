@@ -4,9 +4,9 @@ Esta carpeta es la parte visual del proyecto: lo que se abre en el navegador.
 Habla con el backend (la API que corre en el puerto 8080) para leer y guardar
 datos.
 
-Esta base deja todo listo para que las cuatro pantallas del Sprint 2 (HU-04,
-HU-01, HU-05 y HU-13) se hagan **en paralelo**, cada una en su propia carpeta,
-sin pisarse.
+El código está organizado por historia: cada pantalla vive en su carpeta dentro
+de `src/features/` y lo común en `src/compartido/`, para que las historias se
+desarrollen en paralelo sin pisarse.
 
 ## Cómo correrlo
 
@@ -47,9 +47,9 @@ Con Node 24 listo:
 
    La terminal muestra la dirección, normalmente `http://localhost:5173`.
 
-3. Abrir `http://localhost:5173/projects/<id>` con el `id` del proyecto que
-   cargaste. La API todavía no tiene un listado de proyectos, así que hay que
-   conocer el `id`. La página `/` solo explica esto.
+3. Abrir `http://localhost:5173`. La página `/` lista «Mis proyectos» y el
+   selector de la barra lateral permite cambiar de proyecto. También podés
+   entrar directo a `http://localhost:5173/projects/<id>` si conocés el `id`.
 
 ### Otros comandos
 
@@ -93,19 +93,24 @@ src/
   navegacion.ts         Registro del menú: una línea por pantalla
   compartido/           Código común. Solo lo modifica esta base
     api/                Cliente de la API (client.ts) y sus pruebas
-    componentes/        Button, Field, ErrorMessage, LoadingIndicator
-    router/             Marco del proyecto (menú), "página no encontrada" e inicio
+    componentes/        Button, Field, ErrorMessage, LoadingIndicator, ...
+    demo/               Datos de demostración
+    proyectos/          Listado de proyectos, contexto y selector
+    router/             Marco del proyecto (menú) y "página no encontrada"
   features/             Una carpeta por historia
-    proyecto/           HU-04 (hoy solo un marcador de lugar)
+    autenticacion/      Ingreso, registro y ruta protegida
+    proyecto/           HU-04 (crear y ver proyecto)
     backlog/            HU-01
+    votacion/           HU-02
     sprints/            HU-05
+    defectos/           HU-08
     estado/             HU-13
+    dashboard/          HU-09
+    historial/          HU-12
   setupTests.ts         Limpia la pantalla entre pruebas
 ```
 
-Hoy cada carpeta de `features/` tiene un `index.tsx` que solo muestra un
-marcador de lugar con el título y el proyecto actual. Cada historia lo
-reemplaza por su pantalla real.
+Cada carpeta de `features/` contiene la pantalla de su historia y sus pruebas.
 
 ### Las reglas que evitan los choques
 
@@ -145,9 +150,10 @@ export function Component() {
 ```
 
 **2. Agregar una línea en `src/rutas.tsx`**, dentro de la lista `children` de la
-ruta `projects/:id` (la que contiene `proyecto/*`, `backlog/*`, `sprints/*` y
-`status/*`; el archivo tiene otra lista `children` más afuera, que no es esa),
-**después de la línea de `status/*`**:
+ruta `projects/:id` (la que contiene las secciones del proyecto, como
+`proyecto/*`, `backlog/*`, `sprints/*` y `status/*`; el archivo tiene otra
+lista `children` más afuera, que no es esa), **después de la línea de
+`status/*`**:
 
 ```tsx
 { path: 'ejemplo/*', lazy: () => import('./features/ejemplo') },
@@ -201,11 +207,10 @@ export const obtenerProyecto = (id: string) => get(`/projects/${id}`)
 ```
 
 Las rutas son relativas, como `/projects/42` (sin `http://localhost:8080`); el
-proxy se ocupa del resto. Los endpoints que existen hoy son:
-`POST /backlog`, `POST /projects`, `GET` y `PUT /projects/{id}`,
-`GET /projects/{id}/status`, `POST` y `GET /projects/{id}/members`,
-`POST /sprints`, `POST /sprints/{id}/iniciar` y `POST /sprints/{id}/cerrar`.
-**No existen** el listado de proyectos, el de Sprints ni el del backlog.
+proxy se ocupa del resto. La tabla completa y vigente de endpoints está en
+[`internal/http/rutas.go`](../internal/http/rutas.go). Por ejemplo, el frontend
+usa `GET /projects` para listar los proyectos de la sesión y
+`GET /projects/{id}/sprints` para los Sprints del proyecto.
 
 ### Qué pasa cuando algo sale mal
 
@@ -257,9 +262,8 @@ Ese ejemplo guarda el error en una variable de estado y la borra al empezar
 cada envío. Está pensado para `ApiError`; si tu pantalla también quiere
 mostrar un `ConnectionError`, agregá esa comprobación con `instanceof`.
 
-## Qué queda fuera de esta base
+## Estado de la base
 
-Esta base no incluye las pantallas reales, autenticación ni estilos
-elaborados. Tampoco las llamadas que hoy no existen en la API (listados de
-proyectos, Sprints y backlog); cuando existan, se suman dentro de la carpeta de
-la pantalla correspondiente, sin cambiar el código compartido.
+La base ya incluye las pantallas de las historias, la autenticación y el
+listado de proyectos de la sesión. Los cambios de una pantalla se hacen dentro
+de su carpeta en `src/features/`; el código común vive en `src/compartido/`.
