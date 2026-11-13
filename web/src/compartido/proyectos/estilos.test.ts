@@ -29,3 +29,15 @@ it('Given la tarjeta «Nuevo proyecto», When se estiliza, Then tiene borde punt
 it('Given una tarjeta con el foco del teclado, When se dibuja, Then el contorno es sólido y se distingue 3:1', () => {
   expect(bloque('.tarjeta-proyecto:focus-visible')).toMatch(/outline:\s*3px solid var\(--brand\)/)
 })
+
+it('Given una tarjeta de proyecto, When se muestra el pie, Then el #id queda a la derecha', () => {
+  expect(bloque('.tarjeta-proyecto__pie')).toMatch(/justify-content:\s*flex-end/)
+})
+
+it('Given los botones de la pantalla Proyectos, When llevan ícono, Then el ícono y el texto van separados 8px', () => {
+  expect(bloque('.lista-proyectos__acciones .button')).toMatch(/gap:\s*8px/)
+})
+
+it('Given el formulario de la ventana, When se muestra la descripción, Then el área de texto mide al menos 92px', () => {
+  expect(bloque('.proyecto-crear textarea')).toMatch(/min-height:\s*92px/)
+})
