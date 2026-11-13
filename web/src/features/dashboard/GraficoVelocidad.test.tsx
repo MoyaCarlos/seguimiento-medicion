@@ -93,4 +93,23 @@ describe('GraficoVelocidad', () => {
 
     expect(filasDeLaTabla().map((fila) => fila[2])).toEqual(['Sprint 1', 'Sprint 4'])
   })
+
+  it.each([
+    [3, ['0', '2', '4']],
+    [40, ['0', '20', '40']],
+    [16, ['0', '8', '16']],
+  ])('Given un máximo de %d Story Points, When veo el eje, Then las marcas se calculan con ese máximo', (maximo, marcas) => {
+    const { container } = render(<GraficoVelocidad sprints={[sprint(1, maximo, 1)]} />)
+
+    const textos = Array.from(container.querySelectorAll('.recharts-yAxis .recharts-cartesian-axis-tick-value')).map((t) => t.textContent)
+    expect(textos).toEqual(marcas)
+  })
+
+  it('Given un Sprint, When veo el gráfico, Then cada barra muestra su valor y el eje no tiene título', () => {
+    const { container } = render(<GraficoVelocidad sprints={[sprint(1, 8, 5)]} />)
+
+    const valores = Array.from(container.querySelectorAll('.recharts-label-list text')).map((t) => t.textContent)
+    expect(valores).toEqual(['8', '5'])
+    expect(container.querySelector('.recharts-yAxis .recharts-label')).toBeNull()
+  })
 })

@@ -54,3 +54,7 @@ export function proporcion(valor: number | null, maximo: number): number {
   if (valor === null || maximo <= 0) return 0
   return Math.min((valor / maximo) * 100, 100)
 }
+
+export const ejeDelGrafico = (_maximo: number): number[] => []
+
+export const textoDeDesviacion = (_horas: number | null, _porcentaje: number | null): string => ''

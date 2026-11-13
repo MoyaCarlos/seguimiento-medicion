@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   datosDelGrafico,
+  ejeDelGrafico,
+  textoDeDesviacion,
   formatoNumero,
   proporcion,
   textoDesviacion,
@@ -59,7 +61,9 @@ describe('datosDelGrafico', () => {
 
 describe('formatoNumero', () => {
   it.each([
-    [-6.25, '-6,25'],
+    [-6.25, '-6,3'],
+    [83.33, '83,3'],
+    [-0.04, '0'],
     [4, '4'],
     [0, '0'],
     [1.5, '1,5'],
@@ -105,5 +109,33 @@ describe('proporcion', () => {
 
   it('nunca pasa de 100', () => {
     expect(proporcion(15, 10)).toBe(100)
+  })
+})
+
+describe('ejeDelGrafico', () => {
+  it.each([
+    [16, [0, 8, 16]],
+    [3, [0, 2, 4]],
+    [40, [0, 20, 40]],
+    [13, [0, 7, 14]],
+    [0, [0, 1, 2]],
+  ])('con un máximo de %d las marcas son %j', (maximo, esperado) => {
+    expect(ejeDelGrafico(maximo)).toEqual(esperado)
+  })
+})
+
+describe('textoDeDesviacion', () => {
+  it.each([
+    [-32, -27.6, '-32 h (-27,6 %)'],
+    [2, 5, '+2 h (+5 %)'],
+    [0, 0, '0 h (0 %)'],
+    [-0.04, -0.04, '0 h (0 %)'],
+    [3, null, '+3 h (sin datos)'],
+  ])('%d h y %s %% se muestran como %s', (horas, porcentaje, esperado) => {
+    expect(textoDeDesviacion(horas, porcentaje)).toBe(esperado)
+  })
+
+  it('sin horas dice sin datos', () => {
+    expect(textoDeDesviacion(null, null)).toBe('sin datos')
   })
 })

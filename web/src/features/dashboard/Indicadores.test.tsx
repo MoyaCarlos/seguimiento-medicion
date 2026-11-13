@@ -33,12 +33,12 @@ describe('Indicadores', () => {
     mostrar()
 
     expect(within(indicador('Velocidad')).getByText('5,5')).toBeTruthy()
-    expect(within(indicador('Historias completadas')).getByText('50%')).toBeTruthy()
+    expect(within(indicador('Historias completadas')).getByText('50 %')).toBeTruthy()
     expect(within(indicador('Horas')).getByText('Horas estimadas')).toBeTruthy()
     expect(within(indicador('Horas')).getByText('Horas reales')).toBeTruthy()
     expect(indicador('Desviación')).toBeTruthy()
-    expect(within(indicador('Defectos')).getByText('Defectos detectados')).toBeTruthy()
-    expect(within(indicador('Defectos')).getByText('Defectos resueltos')).toBeTruthy()
+    expect(within(indicador('Defectos')).getByText('Detectados')).toBeTruthy()
+    expect(within(indicador('Defectos')).getByText('Resueltos')).toBeTruthy()
   })
 
   it('US2.2: Given 50% de historias completadas, When veo su indicador, Then se lee como proporción de un total', () => {
@@ -50,15 +50,11 @@ describe('Indicadores', () => {
     expect(proporcion.querySelector<HTMLElement>('span')?.style.width).toBe('50%')
   })
 
-  it('US2.3: Given 32 horas estimadas y 30 reales, When las veo, Then se comparan en una misma escala', () => {
+  it('US2.3: Given 32 horas estimadas y 30 reales, When las veo, Then se muestran los dos valores sin barras', () => {
     mostrar()
 
-    const estimadas = barra('Horas estimadas')
-    const reales = barra('Horas reales')
-    expect(estimadas.getAttribute('aria-valuemax')).toBe('32')
-    expect(reales.getAttribute('aria-valuemax')).toBe('32')
-    expect(estimadas.querySelector<HTMLElement>('span')?.style.width).toBe('100%')
-    expect(reales.querySelector<HTMLElement>('span')?.style.width).toBe('93.75%')
+    expect(screen.queryByRole('meter', { name: 'Horas estimadas' })).toBeNull()
+    expect(screen.queryByRole('meter', { name: 'Horas reales' })).toBeNull()
     expect(within(indicador('Horas')).getByText('32 h')).toBeTruthy()
     expect(within(indicador('Horas')).getByText('30 h')).toBeTruthy()
   })
@@ -67,17 +63,17 @@ describe('Indicadores', () => {
     mostrar()
 
     const desviacion = within(indicador('Desviación'))
-    expect(desviacion.getByText('-2 h')).toBeTruthy()
-    expect(desviacion.getByText('-6,25%')).toBeTruthy()
+    expect(desviacion.getByText('-2 h (-6,3 %)')).toBeTruthy()
     expect(desviacion.getByText('Se trabajó menos de lo estimado')).toBeTruthy()
   })
 
-  it('US2.5: Given 2 defectos detectados y 1 resuelto, When los veo, Then se comparan en una misma escala', () => {
+  it('US2.5: Given 2 defectos detectados y 1 resuelto, When los veo, Then se muestran los dos valores sin barras', () => {
     mostrar()
 
-    expect(barra('Defectos detectados').getAttribute('aria-valuemax')).toBe('2')
-    expect(barra('Defectos resueltos').getAttribute('aria-valuemax')).toBe('2')
-    expect(barra('Defectos resueltos').querySelector<HTMLElement>('span')?.style.width).toBe('50%')
+    const defectos = within(indicador('Defectos'))
+    expect(defectos.getByText('Detectados').nextElementSibling?.textContent).toBe('2')
+    expect(defectos.getByText('Resueltos').nextElementSibling?.textContent).toBe('1')
+    expect(screen.queryByRole('meter', { name: /Defectos/ })).toBeNull()
   })
 
   it('US2.6: Given un proyecto sin horas por Story Point, When veo los indicadores, Then lo que falta dice sin datos y se indica dónde definirlo', () => {
@@ -88,9 +84,16 @@ describe('Indicadores', () => {
     expect(screen.queryByRole('meter', { name: 'Horas estimadas' })).toBeNull()
     expect(horas.getByText('30 h')).toBeTruthy()
     expect(screen.queryByRole('meter', { name: 'Horas reales' })).toBeNull()
-    expect(within(indicador('Desviación')).getAllByText('sin datos')).toHaveLength(2)
+    expect(within(indicador('Desviación')).getAllByText('sin datos')).toHaveLength(1)
     expect(within(indicador('Desviación')).queryByText(/Se trabajó|Sin desviación/)).toBeNull()
     expect(screen.getByRole('link', { name: /editar el proyecto/i }).getAttribute('href')).toBe('/projects/7/proyecto/edit')
+  })
+
+  it('Given una desviación tan chica que se redondea a cero, When veo el indicador, Then no muestra un cero negativo', () => {
+    mostrar({ desviacion_horas: -0.04, desviacion_porcentaje: -0.04 })
+
+    const texto = within(indicador('Desviación')).getByText(/ h \(/).textContent
+    expect(texto).toBe('0 h (0 %)')
   })
 
   it('Given un proyecto con horas por Story Point, When veo los indicadores, Then no hay aviso', () => {
@@ -103,12 +106,11 @@ describe('Indicadores', () => {
     mostrar({ horas_estimadas: 0, horas_reales: 3, desviacion_horas: 3, desviacion_porcentaje: null })
 
     const desviacion = within(indicador('Desviación'))
-    expect(desviacion.getByText('3 h')).toBeTruthy()
-    expect(desviacion.getByText('sin datos')).toBeTruthy()
+    expect(desviacion.getByText('+3 h (sin datos)')).toBeTruthy()
     expect(desviacion.getByText('Se trabajó más de lo estimado')).toBeTruthy()
   })
 
-  it('Caso límite: Given horas y defectos en cero, When los veo, Then muestran 0, sin barras rotas', () => {
+  it('Caso límite: Given horas y defectos en cero, When los veo, Then muestran 0', () => {
     mostrar({
       horas_estimadas: 0,
       horas_reales: 0,
@@ -120,10 +122,6 @@ describe('Indicadores', () => {
 
     expect(within(indicador('Horas')).getAllByText('0 h').length).toBeGreaterThan(0)
     expect(within(indicador('Defectos')).getAllByText('0')).toHaveLength(2)
-    expect(barra('Horas reales').querySelector<HTMLElement>('span')?.style.width).toBe('0%')
-    expect(barra('Defectos resueltos').querySelector<HTMLElement>('span')?.style.width).toBe('0%')
-    expect(barra('Defectos resueltos').getAttribute('aria-valuemax')).toBe('1')
-    expect(barra('Horas reales').getAttribute('aria-valuemax')).toBe('1')
     expect(within(indicador('Desviación')).getByText('Sin desviación: se trabajó lo estimado')).toBeTruthy()
   })
 })
