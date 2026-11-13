@@ -883,3 +883,16 @@ describe('ventana «Nuevo proyecto» en /projects/new', () => {
     await waitFor(() => expect(document.activeElement).toBe(nombre))
   })
 })
+
+describe('armazón en /projects/new', () => {
+  it('Given la ventana «Nuevo proyecto», When se muestra, Then la ruta dice «Proyectos › Nuevo proyecto» y «Proyectos» sigue marcado en la barra lateral', async () => {
+    abrir('/projects/new')
+    await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })
+
+    const ruta = screen.getByRole('navigation', { name: 'Ruta de navegación' })
+    expect(within(ruta).getByRole('link', { name: 'Proyectos' }).getAttribute('href')).toBe('/')
+    expect(within(ruta).getByText('Nuevo proyecto').getAttribute('aria-current')).toBe('page')
+    const barra = screen.getByRole('complementary', { name: 'Navegación principal' })
+    expect(within(barra).getByRole('link', { name: 'Proyectos' }).getAttribute('aria-current')).toBe('page')
+  })
+})
