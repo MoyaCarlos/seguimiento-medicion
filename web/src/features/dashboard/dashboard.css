@@ -196,6 +196,9 @@
 }
 
 .dashboard-enlace-historial {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 6px;
   color: var(--brand-dark);
   font-size: 14px;
   font-weight: 700;
