@@ -27,7 +27,7 @@ export function BarraAvance({ completados, planificados }: { completados: number
   )
 }
 
-type Tono = 'neutro' | 'ok' | 'apagado' | 'fuerte' | 'alerta'
+type Tono = 'neutro' | 'ok' | 'apagado' | 'fuerte' | 'alerta' | 'media' | 'baja' | 'ninguno'
 
 export function Chip({ tono = 'neutro', children }: { tono?: Tono; children: ReactNode }) {
   return <li className={`historial-chip historial-chip--${tono}`}>{children}</li>

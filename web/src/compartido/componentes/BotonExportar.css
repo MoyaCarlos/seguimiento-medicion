@@ -9,3 +9,16 @@
   flex-basis: 100%;
   margin: 0;
 }
+
+.reporte-exportar__boton {
+  align-items: center;
+  background: var(--surface);
+  border-color: var(--brand);
+  color: var(--brand-dark);
+  display: inline-flex;
+  gap: 8px;
+}
+
+.reporte-exportar__boton:hover:not(:disabled) {
+  background: var(--brand-soft);
+}
