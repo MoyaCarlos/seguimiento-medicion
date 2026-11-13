@@ -400,3 +400,25 @@ describe('FormularioHoras: errores', () => {
     expect(screen.queryByText('Cargando…')).toBeNull()
   })
 })
+
+describe('FormularioHoras: la sesión es quien registra (HU-21 Escenario 7)', () => {
+  it('Escenario 7: horas sin elegir integrante, sin selector «Integrante» y sin integrante_id en el pedido', async () => {
+    abrir()
+    const user = userEvent.setup()
+
+    await screen.findByLabelText('Horas')
+    expect(screen.queryByLabelText('Integrante')).toBeNull()
+
+    await user.type(actividad(), 'Revisión del PR')
+    await user.type(horas(), '1:30')
+    await user.click(guardar())
+
+    await waitFor(() =>
+      expect(imputarMock).toHaveBeenCalledWith(12, {
+        fecha: fechaPropuesta(new Date()),
+        actividad: 'Revisión del PR',
+        horas: '1:30',
+      }),
+    )
+  })
+})

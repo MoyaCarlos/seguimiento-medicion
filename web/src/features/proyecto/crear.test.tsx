@@ -83,3 +83,30 @@ describe('pantalla de creación de proyecto', () => {
     expect(nombre.getAttribute('aria-describedby')).toBeNull()
   })
 })
+
+describe('pantalla de creación de proyecto: la sesión es quien crea (HU-21 Escenario 7)', () => {
+  it('Escenario 7: crear proyecto sin campo «Tu nombre (Scrum Master)» y sin creador en el pedido', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ id: 7, nombre: 'Proyecto Alfa', descripcion: '', fecha_inicio: null, fecha_fin: null }),
+        { status: 201 },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+
+    expect(screen.queryByLabelText('Tu nombre (Scrum Master)')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
+    await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ nombre: 'Proyecto Alfa', descripcion: '', fecha_inicio: null, fecha_fin: null }),
+      }),
+    )
+  })
+})

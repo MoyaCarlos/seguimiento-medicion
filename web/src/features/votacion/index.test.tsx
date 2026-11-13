@@ -1030,3 +1030,39 @@ describe('Pantalla de votación - acciones de gestión según el rol (HU-21)', (
     expect(screen.getByRole('button', { name: 'Nueva ronda' }).hasAttribute('disabled')).toBe(false)
   })
 })
+
+describe('Pantalla de votación - la sesión es quien actúa (HU-21 Escenario 7)', () => {
+  type ApiReal = Record<string, (...argumentos: number[]) => Promise<unknown>>
+
+  it('Escenario 7: voto sin elegir quién actúa', async () => {
+    servidor.votos = { 3: 5 }
+    abrir()
+
+    await screen.findByText('Ronda 1')
+    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
+    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+
+    await userEvent.click(await screen.findByRole('button', { name: '8' }))
+
+    await waitFor(() => expect(votarMock).toHaveBeenCalledWith(3, 8))
+    expect(consultarMock.mock.calls.every((llamada) => llamada.length === 1)).toBe(true)
+  })
+
+  it('Escenario 7: el pedido de voto no lleva usuario_id y la consulta no lleva ?usuario_id', async () => {
+    const real = await vi.importActual<ApiReal>('./api')
+    const fetchSimulado = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 })))
+    vi.stubGlobal('fetch', fetchSimulado)
+
+    await real.votar(3, 8)
+    await real.consultarVotacion(3)
+
+    const [[urlVoto, pedidoVoto], [urlConsulta]] = fetchSimulado.mock.calls as unknown as [
+      [string, { body: string }],
+      [string],
+    ]
+    expect(urlVoto).toBe('/backlog/3/votacion/votos')
+    expect(JSON.parse(pedidoVoto.body)).toEqual({ valor: 8 })
+    expect(urlConsulta).toBe('/backlog/3/votacion')
+    vi.unstubAllGlobals()
+  })
+})
