@@ -29,13 +29,46 @@
 }
 
 .backlog-crear__cabecera h2 {
-  font-size: 20px;
+  font-size: 22px;
   letter-spacing: -0.01em;
   margin: 0;
 }
 
 .backlog-crear__cabecera .project-context {
   margin: 4px 0 0;
+}
+
+.backlog-crear .field {
+  gap: 6px;
+}
+
+.backlog-crear .field label {
+  font-size: 13px;
+}
+
+.backlog-crear .field input,
+.backlog-crear .field select,
+.backlog-crear .field textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14.5px;
+  min-height: 42px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.backlog-crear .field textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.backlog-crear__acciones .button {
+  height: 40px;
+  padding: 0 16px;
+}
+
+.backlog-resumen .markdown p {
+  margin: 0;
 }
 
 .backlog-form fieldset {
