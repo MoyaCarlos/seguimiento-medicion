@@ -48,6 +48,10 @@ func (s *EditarHistoria) Ejecutar(ctx context.Context, input EditarHistoriaInput
 		return domain.BacklogItem{}, err
 	}
 
+	if !mismaEstimacion(actual.EstimacionSP, input.EstimacionLeida) {
+		return domain.BacklogItem{}, domain.ErrEstimacionDesactualizada
+	}
+
 	if err := validarEstimacionCongelada(ctx, s.sprints, actual, editada.EstimacionSP); err != nil {
 		return domain.BacklogItem{}, err
 	}

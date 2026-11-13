@@ -189,6 +189,8 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrConflictoEstadoHistoria):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: "la historia cambió de estado mientras tanto: recargá y volvé a intentar"})
+	case errors.Is(err, domain.ErrEstimacionDesactualizada):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "estimacion_sp", Mensaje: domain.ErrEstimacionDesactualizada.Error()})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrHistoriaFueraDelSprint.Error()})
 	case errors.Is(err, domain.ErrReporteNoGenerado):

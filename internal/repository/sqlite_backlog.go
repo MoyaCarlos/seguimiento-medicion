@@ -154,12 +154,20 @@ func escanearHistoria(fila escaneable) (domain.BacklogItem, error) {
 // historia: título, descripción, criterios de aceptación y Story Points. La
 // estimación solo se escribe si la actual sigue siendo la que leyó el
 // formulario (#248): el compare-and-set cubre la carrera con HU-14.
-func (r *SQLiteBacklogRepository) ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, _ *int) error {
-	if _, err := r.db.ExecContext(ctx,
-		"UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ? WHERE id = ?",
-		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP), item.ID,
-	); err != nil {
+func (r *SQLiteBacklogRepository) ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, estimacionLeida *int) error {
+	resultado, err := r.db.ExecContext(ctx,
+		"UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ? WHERE id = ? AND estimacion_sp IS ?",
+		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP), item.ID, punteroAValorSQL(estimacionLeida),
+	)
+	if err != nil {
 		return fmt.Errorf("actualizar historia %d: %w", item.ID, err)
+	}
+	filas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("actualizar historia %d: %w", item.ID, err)
+	}
+	if filas == 0 {
+		return domain.ErrEstimacionDesactualizada
 	}
 	return nil
 }

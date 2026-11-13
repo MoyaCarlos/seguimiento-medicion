@@ -69,7 +69,7 @@ func TestPertenencia_UnNoIntegranteRecibe403EnElPanelLaVotacionYLasEscrituras(t 
 		{http.MethodGet, "/projects/1", ""},
 		{http.MethodGet, "/backlog/1/votacion", ""},
 		{http.MethodPost, "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`},
-		{http.MethodPut, "/backlog/1", `{"titulo":"Cambiada","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`},
+		{http.MethodPut, "/backlog/1", `{"titulo":"Cambiada","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`},
 		{http.MethodPut, "/backlog/1/estado", `{"estado":"En Progreso"}`},
 		{http.MethodPut, "/backlog/1/sprint", `{"sprint_id":1}`},
 		{http.MethodPost, "/backlog/1/horas", `{"fecha":"2026-11-11","actividad":"x","horas":1}`},

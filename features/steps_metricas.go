@@ -305,12 +305,17 @@ func (p *pasosMetricas) rondaRevelada(nombre string) error {
 }
 
 func (p *pasosMetricas) editarHistoria(nombre, titulo string, puntos *int) error {
+	actual, err := p.historiasBD.ObtenerPorID(context.Background(), p.historias[nombre])
+	if err != nil {
+		return err
+	}
 	actor, err := integranteDeLaHistoria(p.db, p.historias[nombre])
 	if err != nil {
 		return err
 	}
 	_, err = p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
-		ID: p.historias[nombre], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: puntos, UsuarioID: actor,
+		ID: p.historias[nombre], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: puntos,
+		EstimacionLeida: actual.EstimacionSP, UsuarioID: actor,
 	})
 	return err
 }

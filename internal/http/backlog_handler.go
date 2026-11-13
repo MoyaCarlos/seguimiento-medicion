@@ -129,7 +129,7 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
 		return
 	}
-	for _, campo := range []string{"titulo", "descripcion", "criterios_aceptacion", "estimacion_sp"} {
+	for _, campo := range []string{"titulo", "descripcion", "criterios_aceptacion", "estimacion_sp", "estimacion_sp_leida"} {
 		if _, ok := claves[campo]; !ok {
 			escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: campo, Mensaje: "el campo es obligatorio"})
 			return
@@ -146,6 +146,11 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escribirError(w, err)
 		return
 	}
+	estimacionLeida, err := parsearEstimacionLeida(req.EstimacionSPLeida)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
 
 	item, err := h.editarHistoria.Ejecutar(r.Context(), service.EditarHistoriaInput{
 		UsuarioID:           actor,
@@ -154,6 +159,7 @@ func (h *BacklogHandler) Editar(w nethttp.ResponseWriter, r *nethttp.Request) {
 		Descripcion:         req.Descripcion,
 		CriteriosAceptacion: req.CriteriosAceptacion,
 		EstimacionSP:        estimacion,
+		EstimacionLeida:     estimacionLeida,
 	})
 	if err != nil {
 		escribirError(w, err)
@@ -246,6 +252,16 @@ func parsearEstimacion(valor *json.Number) (*int, error) {
 	}
 	estimacion := int(n)
 	return &estimacion, nil
+}
+
+// parsearEstimacionLeida valida la estimación que leyó el formulario como una
+// estimación previa, para no confundir un valor corrupto con un conflicto.
+func parsearEstimacionLeida(valor *json.Number) (*int, error) {
+	estimacion, err := parsearEstimacion(valor)
+	if err != nil || (estimacion != nil && !domain.EsEstimacionValida(*estimacion)) {
+		return nil, domain.ValidationError{Campo: "estimacion_sp_leida", Mensaje: domain.ErrEstimacionInvalida.Mensaje}
+	}
+	return estimacion, nil
 }
 
 func escribirJSON(w nethttp.ResponseWriter, status int, payload any) {
