@@ -21,6 +21,7 @@ type editarHistoriaRequest struct {
 	Descripcion         string       `json:"descripcion"`
 	CriteriosAceptacion *string      `json:"criterios_aceptacion"`
 	EstimacionSP        *json.Number `json:"estimacion_sp"`
+	EstimacionSPLeida   *json.Number `json:"estimacion_sp_leida"`
 }
 
 type asignarSprintRequest struct {

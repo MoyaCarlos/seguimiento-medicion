@@ -24,7 +24,7 @@ type escrituraDeProyecto struct {
 // «Sesión y Scrum Master» de HU-21, salvo cerrar y reabrir el proyecto.
 var escriturasDeProyecto = []escrituraDeProyecto{
 	{"POST /backlog", "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`},
-	{"PUT /backlog/{id}", "/backlog/1", `{"titulo":"Cambiada","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null}`},
+	{"PUT /backlog/{id}", "/backlog/1", `{"titulo":"Cambiada","descripcion":"d","criterios_aceptacion":null,"estimacion_sp":null,"estimacion_sp_leida":null}`},
 	{"PUT /backlog/{id}/estado", "/backlog/1/estado", `{"estado":"En progreso"}`},
 	{"PUT /backlog/{id}/sprint", "/backlog/1/sprint", `{"sprint_id":2}`},
 	{"POST /backlog/{id}/horas", "/backlog/1/horas", `{"fecha":"2026-11-11","actividad":"x","horas":1}`},

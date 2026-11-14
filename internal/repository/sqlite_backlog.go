@@ -150,16 +150,18 @@ func escanearHistoria(fila escaneable) (domain.BacklogItem, error) {
 	return h, nil
 }
 
-// Actualizar persiste los campos editables de la historia: título, descripción,
-// criterios de aceptación y Story Points. La condición de D2b va en el mismo
-// UPDATE (#249): si el Sprint se inició o finalizó entre la validación y la
-// escritura y la estimación cambia, no afecta filas y devuelve
-// domain.ErrEdicionDesactualizada.
-func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.BacklogItem) error {
+// ActualizarSiEstimacionSigueSiendo persiste los campos editables de la
+// historia: título, descripción, criterios de aceptación y Story Points. La
+// estimación solo se escribe si la actual sigue siendo la que leyó el
+// formulario (#248) y D2b se cumple con el estado actual del Sprint (#249). Si
+// el UPDATE condicional no afecta filas, distingue si la estimación cambió
+// desde que se leyó o si fue el Sprint el que cambió.
+func (r *SQLiteBacklogRepository) ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, estimacionLeida *int) error {
 	var id int64
 	err := r.db.QueryRowContext(ctx, `
 		UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ?
 		 WHERE id = ?
+		   AND estimacion_sp IS ?
 		   AND (estimacion_sp IS ? OR NOT EXISTS (
 		         SELECT 1 FROM sprints s
 		          WHERE s.id = historias.sprint_id
@@ -168,15 +170,37 @@ func (r *SQLiteBacklogRepository) Actualizar(ctx context.Context, item domain.Ba
 		       ))
 		 RETURNING id`,
 		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP),
-		item.ID, punteroAValorSQL(item.EstimacionSP),
+		item.ID, punteroAValorSQL(estimacionLeida), punteroAValorSQL(item.EstimacionSP),
 	).Scan(&id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ErrEdicionDesactualizada
+		return r.motivoDeEdicionNoAplicada(ctx, item.ID, estimacionLeida)
 	}
 	if err != nil {
 		return fmt.Errorf("actualizar historia %d: %w", item.ID, err)
 	}
 	return nil
+}
+
+func (r *SQLiteBacklogRepository) motivoDeEdicionNoAplicada(ctx context.Context, id int64, estimacionLeida *int) error {
+	var actual *int
+	err := r.db.QueryRowContext(ctx, "SELECT estimacion_sp FROM historias WHERE id = ?", id).Scan(&actual)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrEdicionDesactualizada
+	}
+	if err != nil {
+		return fmt.Errorf("leer la estimación de la historia %d: %w", id, err)
+	}
+	if !mismaEstimacion(actual, estimacionLeida) {
+		return domain.ErrEstimacionDesactualizada
+	}
+	return domain.ErrEdicionDesactualizada
+}
+
+func mismaEstimacion(actual, otra *int) bool {
+	if actual == nil || otra == nil {
+		return actual == nil && otra == nil
+	}
+	return *actual == *otra
 }
 
 // GuardarEstimacion escribe solo los Story Points de la historia. La regla D2b
