@@ -30,7 +30,10 @@ const proyectoAbierto: RespuestaProyecto = () =>
  * va a `backlog`, así los casos siguen contando solo los pedidos del backlog.
  * Devuelve el simulado de toda la pantalla.
  */
-function simularFetch(backlog: ReturnType<typeof vi.fn>, proyecto: RespuestaProyecto = proyectoAbierto) {
+function simularFetch(
+  backlog: (ruta: string, opciones?: RequestInit) => Promise<Response>,
+  proyecto: RespuestaProyecto = proyectoAbierto,
+) {
   const pantalla = vi.fn((ruta: string, opciones?: RequestInit) =>
     /^\/projects\/[^/]+$/.test(ruta) ? Promise.resolve(proyecto()) : backlog(ruta, opciones),
   )
