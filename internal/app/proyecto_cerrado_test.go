@@ -97,6 +97,28 @@ func TestProyectoCerrado_TodaEscrituraResponde409SinCambios(t *testing.T) {
 	}
 }
 
+// Con el proyecto cerrado, quien no tiene permiso recibe primero el 403 de
+// HU-21 y no el 409 del cierre.
+func TestProyectoCerrado_El403VaAntesQueEl409(t *testing.T) {
+	c := proyectoConDatosDeAna(t)
+	c.registrar("bruno")
+	c.esperar("ana", http.MethodPost, "/projects/1/members", `{"nombre":"bruno","rol":"product_builder"}`, http.StatusCreated)
+	c.esperar("ana", http.MethodPost, "/projects/1/cerrar", ``, http.StatusOK)
+
+	pedidos := []struct{ nombre, quien, metodo, ruta, cuerpo, cuerpoEsperado string }{
+		{"un no integrante en una ruta de integrante", "diego", http.MethodPost, "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`, noSosIntegrante},
+		{"un Product Builder en una ruta de Scrum Master", "bruno", http.MethodPost, "/sprints", `{"proyecto_id":1}`, soloScrumMaster},
+	}
+	for _, p := range pedidos {
+		t.Run(p.nombre, func(t *testing.T) {
+			rec := c.esperar(p.quien, p.metodo, p.ruta, p.cuerpo, http.StatusForbidden)
+			if strings.TrimSpace(rec.Body.String()) != p.cuerpoEsperado {
+				t.Errorf("cuerpo = %s, se esperaba %s", rec.Body.String(), p.cuerpoEsperado)
+			}
+		})
+	}
+}
+
 // Si se agrega una ruta de escritura, tiene que sumarse a escriturasDeProyecto.
 func TestProyectoCerrado_LaTablaCubreTodasLasEscrituras(t *testing.T) {
 	var deLaAPI, deLaTabla []string
