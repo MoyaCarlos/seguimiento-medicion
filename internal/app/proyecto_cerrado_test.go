@@ -40,6 +40,7 @@ var escriturasDeProyecto = []escrituraDeProyecto{
 	{"POST /backlog/{id}/votacion/estimacion", "/backlog/2/votacion/estimacion", `{"estimacion_sp":5}`},
 	{"PUT /projects/{id}", "/projects/1", `{"nombre":"Otro","descripcion":"","fecha_inicio":null,"fecha_fin":null}`},
 	{"POST /projects/{id}/members", "/projects/1/members", `{"nombre":"diego"}`},
+	{"DELETE /projects/{id}/members/{usuario_id}", "/projects/1/members/2", ``},
 }
 
 // rutasDelCierre no son escrituras sobre los datos del proyecto: lo cierran o reabren.
@@ -93,6 +94,28 @@ func TestProyectoCerrado_TodaEscrituraResponde409SinCambios(t *testing.T) {
 
 	if despues := fotoDelProyecto(c); despues != antes {
 		t.Errorf("las escrituras rechazadas cambiaron datos:\nantes:   %s\ndespués: %s", antes, despues)
+	}
+}
+
+// Con el proyecto cerrado, quien no tiene permiso recibe primero el 403 de
+// HU-21 y no el 409 del cierre.
+func TestProyectoCerrado_El403VaAntesQueEl409(t *testing.T) {
+	c := proyectoConDatosDeAna(t)
+	c.registrar("bruno")
+	c.esperar("ana", http.MethodPost, "/projects/1/members", `{"nombre":"bruno","rol":"product_builder"}`, http.StatusCreated)
+	c.esperar("ana", http.MethodPost, "/projects/1/cerrar", ``, http.StatusOK)
+
+	pedidos := []struct{ nombre, quien, metodo, ruta, cuerpo, cuerpoEsperado string }{
+		{"un no integrante en una ruta de integrante", "diego", http.MethodPost, "/backlog", `{"proyecto_id":1,"titulo":"Otra","descripcion":"d","prioridad":"M"}`, noSosIntegrante},
+		{"un Product Builder en una ruta de Scrum Master", "bruno", http.MethodPost, "/sprints", `{"proyecto_id":1}`, soloScrumMaster},
+	}
+	for _, p := range pedidos {
+		t.Run(p.nombre, func(t *testing.T) {
+			rec := c.esperar(p.quien, p.metodo, p.ruta, p.cuerpo, http.StatusForbidden)
+			if strings.TrimSpace(rec.Body.String()) != p.cuerpoEsperado {
+				t.Errorf("cuerpo = %s, se esperaba %s", rec.Body.String(), p.cuerpoEsperado)
+			}
+		})
 	}
 }
 

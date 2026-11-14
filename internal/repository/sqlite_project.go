@@ -92,13 +92,14 @@ func (r *SQLiteProjectRepository) ObtenerPorID(ctx context.Context, id int64) (d
 }
 
 // ListarPorIntegrante devuelve los proyectos que integra usuarioID con el rol
-// de su fila en integrantes, ordenados por id.
+// de su fila en integrantes, ordenados por id. Solo cuenta donde la persona es
+// integrante activo (HU-16).
 func (r *SQLiteProjectRepository) ListarPorIntegrante(ctx context.Context, usuarioID int64) ([]domain.ProyectoConRol, error) {
 	filas, err := r.db.QueryContext(ctx,
 		`SELECT p.id, p.nombre, p.descripcion, p.fecha_inicio, p.fecha_fin, p.creado_en, p.horas_por_story_point, p.fecha_cierre, i.rol
 		 FROM proyectos p
 		 JOIN integrantes i ON i.proyecto_id = p.id
-		 WHERE i.usuario_id = ?
+		 WHERE i.usuario_id = ? AND i.fecha_baja IS NULL
 		 ORDER BY p.id`,
 		usuarioID,
 	)
@@ -222,39 +223,56 @@ func (r *SQLiteProjectRepository) motivoDeNoCerrar(ctx context.Context, id int64
 }
 
 // AgregarIntegrante vincula un integrante con un rol al proyecto y devuelve la
-// membresía guardada (con su CreadoEn asignado).
+// membresía guardada (con su CreadoEn). Si la persona fue dada de baja, la
+// reactiva en la misma fila con el rol pedido y conserva su CreadoEn original
+// (HU-16, D15); si ya es integrante activo, devuelve ErrMiembroDuplicado. El
+// upsert lo decide en una sola sentencia: sin fila devuelta, era un activo.
 func (r *SQLiteProjectRepository) AgregarIntegrante(ctx context.Context, m domain.Membership) (domain.Membership, error) {
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
 	}
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)`,
+	var creadoEn string
+	err := r.db.QueryRowContext(ctx,
+		`INSERT INTO integrantes (proyecto_id, usuario_id, rol, creado_en) VALUES (?, ?, ?, ?)
+		 ON CONFLICT (proyecto_id, usuario_id) DO UPDATE SET fecha_baja = NULL, rol = excluded.rol
+		 WHERE integrantes.fecha_baja IS NOT NULL
+		 RETURNING creado_en`,
 		m.ProjectID, m.UserID, string(m.Role), m.CreadoEn.Format(time.RFC3339),
-	)
+	).Scan(&creadoEn)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Membership{}, ErrMiembroDuplicado
+	}
 	if err != nil {
 		var sqliteErr *sqlite.Error
-		if errors.As(err, &sqliteErr) {
-			switch sqliteErr.Code() {
-			case sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
-				return domain.Membership{}, ErrMiembroDuplicado
-			case sqlite3.SQLITE_CONSTRAINT_UNIQUE:
-				return domain.Membership{}, domain.ErrScrumMasterYaExiste
-			}
+		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+			return domain.Membership{}, domain.ErrScrumMasterYaExiste
 		}
 		return domain.Membership{}, fmt.Errorf("agregar integrante: %w", errorDeEscritura(err))
 	}
+	m.CreadoEn = parsearTiempo(creadoEn)
 	return m, nil
 }
 
-// ListarIntegrantes devuelve los integrantes del proyecto con su nombre y rol.
+// ListarIntegrantes devuelve los integrantes activos del proyecto con su
+// nombre y rol, en orden de alta (HU-16: los dados de baja no figuran).
 func (r *SQLiteProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return r.listarIntegrantes(ctx, proyectoID, true)
+}
+
+// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados de
+// baja del proyecto, en orden de alta (HU-16).
+func (r *SQLiteProjectRepository) ListarIntegrantesHistoricos(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return r.listarIntegrantes(ctx, proyectoID, false)
+}
+
+func (r *SQLiteProjectRepository) listarIntegrantes(ctx context.Context, proyectoID int64, soloActivos bool) ([]domain.Member, error) {
 	filas, err := r.db.QueryContext(ctx,
 		`SELECT i.usuario_id, i.proyecto_id, u.nombre, i.rol, i.creado_en
 		 FROM integrantes i
 		 JOIN usuarios u ON u.id = i.usuario_id
-		 WHERE i.proyecto_id = ?
+		 WHERE i.proyecto_id = ? AND (NOT ? OR i.fecha_baja IS NULL)
 		 ORDER BY i.rowid`,
-		proyectoID,
+		proyectoID, soloActivos,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("listar integrantes: %w", err)
@@ -317,4 +335,69 @@ func valorATiempoOpcional(v sql.NullString) *time.Time {
 		return nil
 	}
 	return &t
+}
+
+// DarDeBajaIntegrante da de baja a un integrante activo que no es el Scrum
+// Master y descarta sus votos de rondas no reveladas del proyecto, en una sola
+// transacción (HU-16, FR-014, FR-018). La regla del Scrum Master y «no dos
+// bajas» viven en el WHERE del UPDATE condicional, así dos pedidos simultáneos
+// aplican uno solo. Si no dio de baja, explica por qué.
+func (r *SQLiteProjectRepository) DarDeBajaIntegrante(ctx context.Context, proyectoID, usuarioID int64, fecha time.Time) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("iniciar transacción: %w", err)
+	}
+	defer tx.Rollback()
+
+	resultado, err := tx.ExecContext(ctx,
+		`UPDATE integrantes SET fecha_baja = ?
+		 WHERE proyecto_id = ? AND usuario_id = ? AND fecha_baja IS NULL AND rol <> 'scrum_master'`,
+		tiempoOpcionalAValor(&fecha), proyectoID, usuarioID,
+	)
+	if err != nil {
+		return fmt.Errorf("dar de baja integrante: %w", errorDeEscritura(err))
+	}
+	afectadas, err := resultado.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("dar de baja integrante: %w", err)
+	}
+	if afectadas == 0 {
+		return motivoDeNoDarDeBaja(ctx, tx, proyectoID, usuarioID)
+	}
+
+	if _, err := tx.ExecContext(ctx,
+		`DELETE FROM votos
+		 WHERE usuario_id = ?
+		   AND ronda_id IN (SELECT r.id FROM rondas_votacion r
+		                    JOIN historias h ON h.id = r.historia_id
+		                    WHERE h.proyecto_id = ? AND r.revelada_en IS NULL)`,
+		usuarioID, proyectoID,
+	); err != nil {
+		return fmt.Errorf("descartar votos no revelados: %w", errorDeEscritura(err))
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("confirmar transacción: %w", err)
+	}
+	return nil
+}
+
+// motivoDeNoDarDeBaja distingue al Scrum Master activo (409) de quien no es
+// integrante activo: no existe, nunca integró o ya fue dado de baja (404).
+func motivoDeNoDarDeBaja(ctx context.Context, tx *sql.Tx, proyectoID, usuarioID int64) error {
+	var esScrumMasterActivo bool
+	err := tx.QueryRowContext(ctx,
+		`SELECT rol = 'scrum_master' AND fecha_baja IS NULL FROM integrantes WHERE proyecto_id = ? AND usuario_id = ?`,
+		proyectoID, usuarioID,
+	).Scan(&esScrumMasterActivo)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrIntegranteNoEncontrado
+	}
+	if err != nil {
+		return fmt.Errorf("leer integrante: %w", err)
+	}
+	if esScrumMasterActivo {
+		return domain.ErrScrumMasterNoSeQuita
+	}
+	return domain.ErrIntegranteNoEncontrado
 }

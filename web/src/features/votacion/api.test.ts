@@ -31,21 +31,10 @@ afterEach(() => {
 })
 
 describe('cliente de la votación', () => {
-  it('consultarVotacion hace GET /backlog/{id}/votacion con usuario_id cuando hay quien consulta', async () => {
+  it('consultarVotacion hace GET /backlog/{id}/votacion sin usuario_id: la identidad sale de la sesión', async () => {
     const fetchMock = responder(VOTACION)
 
-    await expect(consultarVotacion(3, 7)).resolves.toEqual(VOTACION)
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      '/backlog/3/votacion?usuario_id=7',
-      expect.objectContaining({ method: 'GET' }),
-    )
-  })
-
-  it('consultarVotacion sin usuario no envía usuario_id', async () => {
-    const fetchMock = responder(VOTACION)
-
-    await consultarVotacion(3)
+    await expect(consultarVotacion(3)).resolves.toEqual(VOTACION)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion',
@@ -53,60 +42,60 @@ describe('cliente de la votación', () => {
     )
   })
 
-  it('iniciarVotacion hace POST /backlog/{id}/votacion con usuario_id', async () => {
+  it('iniciarVotacion hace POST /backlog/{id}/votacion sin usuario_id', async () => {
     const fetchMock = responder(VOTACION, 201)
 
-    await expect(iniciarVotacion(3, 1)).resolves.toEqual(VOTACION)
+    await expect(iniciarVotacion(3)).resolves.toEqual(VOTACION)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1 }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({}) }),
     )
   })
 
-  it('votar hace POST /backlog/{id}/votacion/votos con usuario_id y valor', async () => {
+  it('votar hace POST /backlog/{id}/votacion/votos solo con el valor', async () => {
     const fetchMock = responder(VOTACION)
 
-    await votar(3, 2, 8)
+    await votar(3, 8)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion/votos',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 2, valor: 8 }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ valor: 8 }) }),
     )
   })
 
-  it('revelarVotacion hace POST /backlog/{id}/votacion/revelar con usuario_id', async () => {
+  it('revelarVotacion hace POST /backlog/{id}/votacion/revelar sin usuario_id', async () => {
     const fetchMock = responder(VOTACION)
 
-    await revelarVotacion(3, 1)
+    await revelarVotacion(3)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion/revelar',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1 }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({}) }),
     )
   })
 
-  it('abrirNuevaRonda hace POST /backlog/{id}/votacion/rondas con usuario_id y devuelve la nueva ronda', async () => {
+  it('abrirNuevaRonda hace POST /backlog/{id}/votacion/rondas sin usuario_id y devuelve la nueva ronda', async () => {
     const nuevaRonda: Votacion = { ...VOTACION, ronda: 2 }
     const fetchMock = responder(nuevaRonda, 201)
 
-    await expect(abrirNuevaRonda(3, 1)).resolves.toEqual(nuevaRonda)
+    await expect(abrirNuevaRonda(3)).resolves.toEqual(nuevaRonda)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion/rondas',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1 }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({}) }),
     )
   })
 
-  it('registrarEstimacion hace POST /backlog/{id}/votacion/estimacion con usuario_id y estimacion_sp y devuelve la historia', async () => {
+  it('registrarEstimacion hace POST /backlog/{id}/votacion/estimacion solo con estimacion_sp y devuelve la historia', async () => {
     const historia = { id: 3, titulo: 'Pagar la tasa', descripcion: 'x', prioridad: 'M', estimacion_sp: 5 }
     const fetchMock = responder(historia)
 
-    await expect(registrarEstimacion(3, 1, 5)).resolves.toMatchObject(historia)
+    await expect(registrarEstimacion(3, 5)).resolves.toMatchObject(historia)
 
     expect(fetchMock).toHaveBeenCalledWith(
       '/backlog/3/votacion/estimacion',
-      expect.objectContaining({ method: 'POST', body: JSON.stringify({ usuario_id: 1, estimacion_sp: 5 }) }),
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ estimacion_sp: 5 }) }),
     )
   })
 
@@ -114,7 +103,7 @@ describe('cliente de la votación', () => {
     const mensaje = 'los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado'
     responder({ campo: 'estimacion_sp', mensaje }, 400)
 
-    await expect(registrarEstimacion(3, 1, 8)).rejects.toMatchObject({ status: 400, message: mensaje })
+    await expect(registrarEstimacion(3, 8)).rejects.toMatchObject({ status: 400, message: mensaje })
   })
 
   it('listarIntegrantes hace GET /projects/{id}/members y devuelve id, nombre y rol', async () => {
@@ -135,7 +124,7 @@ describe('cliente de la votación', () => {
   it('un 403 del servidor rechaza con ApiError y su mensaje', async () => {
     responder({ mensaje: 'solo el Scrum Master del proyecto puede hacerlo' }, 403)
 
-    await expect(revelarVotacion(3, 2)).rejects.toMatchObject({
+    await expect(revelarVotacion(3)).rejects.toMatchObject({
       status: 403,
       message: 'solo el Scrum Master del proyecto puede hacerlo',
     })

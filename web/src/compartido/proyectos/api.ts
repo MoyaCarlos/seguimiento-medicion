@@ -1,6 +1,9 @@
 import { get } from '../api/client'
 
+export type RolEnProyecto = 'scrum_master' | 'product_builder'
+
 export type ProyectoResumen = {
+  rol?: RolEnProyecto
   id: number
   nombre: string
   descripcion: string

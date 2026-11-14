@@ -50,7 +50,9 @@ func (s *ConsultarHistorialRondas) Ejecutar(ctx context.Context, historiaID int6
 	if err != nil {
 		return HistorialRondas{}, err
 	}
-	integrantes, err := s.proyectos.ListarIntegrantes(ctx, historia.ProyectoID)
+	// Históricos: un voto revelado conserva el nombre de quien después fue
+	// dado de baja (HU-16, FR-002).
+	integrantes, err := s.proyectos.ListarIntegrantesHistoricos(ctx, historia.ProyectoID)
 	if err != nil {
 		return HistorialRondas{}, err
 	}
