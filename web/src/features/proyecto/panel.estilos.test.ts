@@ -130,3 +130,7 @@ it('Given el enlace «Ver estado del proyecto», When se estiliza, Then no va su
 it('Given el cronograma en pantallas angostas, When las fechas no entran, Then cada columna puede encogerse en vez de salirse de la tarjeta', () => {
   expect(regla('.cronograma__fechas div')).toMatch(/min-width:\s*0/)
 })
+
+it('Given las tres fechas del cronograma, When no entran en una fila, Then bajan de renglón en vez de pisarse', () => {
+  expect(regla('.cronograma__fechas')).toMatch(/flex-wrap:\s*wrap/)
+})
