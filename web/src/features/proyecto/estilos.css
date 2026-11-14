@@ -311,6 +311,7 @@
 
 .enlace {
   align-items: center;
+  text-decoration: none;
   color: var(--brand-dark);
   display: inline-flex;
   font-size: 14px;
@@ -393,5 +394,22 @@
   margin: -8px 0 0 -8px;
   position: absolute;
   top: 50%;
+  width: 16px;
+}
+
+.hu04-panel .page-header {
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.hu04-acciones .button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.hu04-acciones .button svg {
+  flex: none;
+  height: 16px;
   width: 16px;
 }
