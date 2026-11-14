@@ -134,10 +134,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 **Independent Test**: proyecto cerrado, como Scrum Master: reabrir; el aviso desaparece y Guardar se habilita.
 
-- [ ] T028 [US3] RED: casos nuevos en `ZonaCierreProyecto.test.tsx`: (a) cerrado y Scrum Master → se ve «Proyecto cerrado el AAAA-MM-DD» y el botón «Reabrir proyecto» habilitado, sin botón «Cerrar proyecto»; (b) pulsarlo hace un `POST /projects/7/reabrir` SIN confirmación previa, llama `onCambio(null)` y muestra el estado devuelto; (c) botón deshabilitado mientras se envía; (d) 409 «El proyecto no está cerrado» → mensaje tal cual y no se llama `onCambio`; (e) 403 y 404 → avisos estándar; (f) conexión caída → error y sin cambio. Casos nuevos en `Editar.test.tsx`: (g) tras reabrir, el aviso desaparece y «Guardar cambios» se habilita sin recargar (SC-005). Confirmar que FALLA.
-- [ ] T029 [US3] COMMIT `RED: reabrir proyecto desde la zona de cierre (falla)`
-- [ ] T030 [US3] GREEN: completar `ZonaCierreProyecto.tsx` con la rama «cerrado» (reabrir sin confirmación, mismo manejo de errores) y verificar que `Editar.tsx` refleja la respuesta vía `aplicarCierre`. Tests en verde.
-- [ ] T031 [US3] COMMIT `GREEN: reabrir proyecto desde la zona de cierre, test en verde`
+- [x] T028 [US3] RED: casos nuevos en `ZonaCierreProyecto.test.tsx`: (a) cerrado y Scrum Master → se ve «Proyecto cerrado el AAAA-MM-DD» y el botón «Reabrir proyecto» habilitado, sin botón «Cerrar proyecto»; (b) pulsarlo hace un `POST /projects/7/reabrir` SIN confirmación previa, llama `onCambio(null)` y muestra el estado devuelto; (c) botón deshabilitado mientras se envía; (d) 409 «El proyecto no está cerrado» → mensaje tal cual y no se llama `onCambio`; (e) 403 y 404 → avisos estándar; (f) conexión caída → error y sin cambio. Casos nuevos en `Editar.test.tsx`: (g) tras reabrir, el aviso desaparece y «Guardar cambios» se habilita sin recargar (SC-005). Confirmar que FALLA.
+- [x] T029 [US3] COMMIT `RED: reabrir proyecto desde la zona de cierre (falla)`
+- [x] T030 [US3] GREEN: completar `ZonaCierreProyecto.tsx` con la rama «cerrado» (reabrir sin confirmación, mismo manejo de errores) y verificar que `Editar.tsx` refleja la respuesta vía `aplicarCierre`. Tests en verde.
+- [x] T031 [US3] COMMIT `GREEN: reabrir proyecto desde la zona de cierre, test en verde`
 
 **Checkpoint**: US1 y US3 funcionan.
 
@@ -149,10 +149,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 **Independent Test**: como Product Builder, Editar proyecto muestra la zona sin poder cerrar ni reabrir.
 
-- [ ] T032 [US4] RED: casos nuevos en `ZonaCierreProyecto.test.tsx`: (a) `rol: 'product_builder'` y abierto → «Cerrar proyecto» deshabilitado con `aria-describedby` hacia la nota «Solo el Scrum Master puede cerrar o reabrir el proyecto» y ningún pedido al hacer clic; (b) `product_builder` y cerrado → «Reabrir proyecto» deshabilitado con la misma nota; (c) `rol: null` (desconocido) → habilitado, decide el servidor; (d) un 403 del servidor muestra `AvisoSinPermiso`. Caso nuevo en `Editar.test.tsx`: (e) Product Builder ve la zona deshabilitada con la nota. Confirmar que FALLA.
-- [ ] T033 [US4] COMMIT `RED: la zona de cierre se deshabilita para el Product Builder (falla)`
-- [ ] T034 [US4] GREEN: en `ZonaCierreProyecto.tsx` deshabilitar los botones y mostrar `NotaGestion` con ese texto cuando `rol === 'product_builder'` (la zona decide por `rol`, no por `puedeGestionar`; ver research D3). Tests en verde.
-- [ ] T035 [US4] COMMIT `GREEN: zona de cierre deshabilitada para el Product Builder, test en verde`
+- [x] T032 [US4] RED: casos nuevos en `ZonaCierreProyecto.test.tsx`: (a) `rol: 'product_builder'` y abierto → «Cerrar proyecto» deshabilitado con `aria-describedby` hacia la nota «Solo el Scrum Master puede cerrar o reabrir el proyecto» y ningún pedido al hacer clic; (b) `product_builder` y cerrado → «Reabrir proyecto» deshabilitado con la misma nota; (c) `rol: null` (desconocido) → habilitado, decide el servidor; (d) un 403 del servidor muestra `AvisoSinPermiso`. Caso nuevo en `Editar.test.tsx`: (e) Product Builder ve la zona deshabilitada con la nota. Confirmar que FALLA.
+- [x] T033 [US4] COMMIT `RED: la zona de cierre se deshabilita para el Product Builder (falla)`
+- [x] T034 [US4] GREEN: en `ZonaCierreProyecto.tsx` deshabilitar los botones y mostrar `NotaGestion` con ese texto cuando `rol === 'product_builder'` (la zona decide por `rol`, no por `puedeGestionar`; ver research D3). Tests en verde.
+- [x] T035 [US4] COMMIT `GREEN: zona de cierre deshabilitada para el Product Builder, test en verde`
 
 ### Aviso en el Panel (Fase 1, US2.1; tareas agregadas en el análisis, IDs T063 a T066)
 
