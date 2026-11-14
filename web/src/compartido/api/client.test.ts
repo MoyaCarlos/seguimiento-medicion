@@ -180,6 +180,42 @@ describe('cliente de la API', () => {
   })
 })
 
+describe('403 de pertenencia y de rol', () => {
+  it('un 403 «No sos integrante de este proyecto» llega con tipo no_integrante', async () => {
+    respondWithJson({ mensaje: 'No sos integrante de este proyecto' }, 403)
+
+    await expect(get('/projects/1')).rejects.toMatchObject({
+      status: 403,
+      message: 'No sos integrante de este proyecto',
+      tipo: 'no_integrante',
+    })
+  })
+
+  it('un 403 de rol llega con tipo sin_permiso y conserva el mensaje del servidor', async () => {
+    respondWithJson({ mensaje: 'Solo el Scrum Master puede realizar esta acción' }, 403)
+
+    await expect(post('/projects/1/members', {})).rejects.toMatchObject({
+      status: 403,
+      message: 'Solo el Scrum Master puede realizar esta acción',
+      tipo: 'sin_permiso',
+    })
+  })
+
+  it('un 403 sin cuerpo interpretable llega con tipo sin_permiso', async () => {
+    respondWith('<html>Forbidden</html>', 403)
+
+    await expect(get('/projects/1')).rejects.toMatchObject({ status: 403, tipo: 'sin_permiso' })
+  })
+
+  it('un 404 y un 401 no llevan tipo', async () => {
+    respondWithJson({ mensaje: 'proyecto inexistente' }, 404)
+    await expect(get('/projects/1')).rejects.toMatchObject({ status: 404, tipo: undefined })
+
+    respondWithJson({ mensaje: 'sesión vencida' }, 401)
+    await expect(get('/projects/1')).rejects.toMatchObject({ status: 401, tipo: undefined })
+  })
+})
+
 describe('sesión en el cliente de la API', () => {
   function configurar(token: string | null) {
     const alNoAutenticado = vi.fn()

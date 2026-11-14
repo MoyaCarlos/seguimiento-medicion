@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { ApiError } from '../../compartido/api/client'
+import { NoIntegrante } from '../../compartido/permisos/NoIntegrante'
 import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
@@ -19,6 +21,7 @@ export function Panel() {
   const [estado, setEstado] = useState<EstadoProyecto>()
   const [errorEstado, setErrorEstado] = useState('')
   const [cargandoEstado, setCargandoEstado] = useState(true)
+  const [noIntegrante, setNoIntegrante] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -28,7 +31,9 @@ export function Panel() {
         if (vigente) setProyecto(datos)
       })
       .catch((causa: unknown) => {
-        if (vigente) setError(mensajeDeError(causa))
+        if (!vigente) return
+        if (causa instanceof ApiError && causa.tipo === 'no_integrante') setNoIntegrante(true)
+        else setError(mensajeDeError(causa))
       })
       .finally(() => {
         if (vigente) setCargando(false)
@@ -57,6 +62,8 @@ export function Panel() {
       vigente = false
     }
   }, [id])
+
+  if (noIntegrante) return <NoIntegrante />
 
   return (
     <section className="hu04-panel" aria-labelledby="panel-title">

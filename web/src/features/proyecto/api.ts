@@ -27,7 +27,6 @@ export type Integrante = {
 export type NuevoProyecto = {
   nombre: string
   descripcion: string
-  creador: string
   fecha_inicio: string | null
   fecha_fin: string | null
 }
@@ -42,7 +41,7 @@ export type ProyectoEditado = {
 
 export type NuevoIntegrante = {
   nombre: string
-  rol: Rol
+  rol?: Rol
 }
 
 export const crearProyecto = (datos: NuevoProyecto) =>
@@ -66,10 +65,16 @@ export const listarIntegrantes = (id: string) =>
 export const asignarIntegrante = (id: string, datos: NuevoIntegrante) =>
   post<Integrante>(`/projects/${id}/members`, datos)
 
-export const aNuevoProyecto = (datos: DatosProyecto): NuevoProyecto => ({
+export type UsuarioRegistrado = {
+  id: number
+  nombre: string
+}
+
+export const listarUsuarios = () => get<UsuarioRegistrado[]>('/users')
+
+export const aNuevoProyecto =(datos: DatosProyecto): NuevoProyecto => ({
   nombre: datos.nombre.trim(),
   descripcion: datos.descripcion.trim(),
-  creador: datos.creador.trim(),
   fecha_inicio: datos.fecha_inicio || null,
   fecha_fin: datos.fecha_fin || null,
 })
