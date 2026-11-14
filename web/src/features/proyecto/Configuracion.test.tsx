@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -196,4 +196,137 @@ describe('configuración del equipo - rol (HU-21)', () => {
     expect(boton.hasAttribute('disabled')).toBe(false)
     expect(boton.hasAttribute('aria-describedby')).toBe(false)
   })
+})
+
+describe('quitar integrante desde Configurar equipo (HU-16, #182)', () => {
+  const equipo = [
+    {
+      id: 1,
+      proyecto_id: 3,
+      nombre: 'Ana',
+      rol: 'scrum_master',
+      vinculado_en: '2026-09-01T00:00:00Z',
+    },
+    {
+      id: 2,
+      proyecto_id: 3,
+      nombre: 'Jimena',
+      rol: 'product_builder',
+      vinculado_en: '2026-09-02T00:00:00Z',
+    },
+  ]
+  const usuarios = [
+    { id: 1, nombre: 'Ana' },
+    { id: 2, nombre: 'Jimena' },
+  ]
+
+  function responderEquipo(quitar?: (id: number) => Response) {
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === '/projects/3' && (!init?.method || init.method === 'GET')) {
+        return Promise.resolve(new Response(JSON.stringify({ id: 3, rol: 'scrum_master' })))
+      }
+      if (url === '/users') {
+        return Promise.resolve(new Response(JSON.stringify(usuarios)))
+      }
+      if (url.startsWith('/projects/3/members/') && init?.method === 'DELETE') {
+        const id = Number(url.split('/').pop())
+        return Promise.resolve(quitar?.(id) ?? new Response(null, { status: 204 }))
+      }
+      if (url === '/projects/3/members' && init?.method === 'POST') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: 2,
+              proyecto_id: 3,
+              nombre: 'Jimena',
+              rol: 'product_builder',
+              vinculado_en: '2026-09-02T00:00:00Z',
+            }),
+            { status: 201 },
+          ),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify(equipo)))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  const filaDe = (nombre: string) => screen.getByText(nombre).closest('li') as HTMLElement
+
+  const pedirQuitar = (nombre: string) =>
+    userEvent.click(within(filaDe(nombre)).getByRole('button', { name: 'Quitar' }))
+
+  const confirmarQuitar = (nombre: string) =>
+    userEvent.click(within(filaDe(nombre)).getByRole('button', { name: 'Sí, quitar' }))
+
+  it('Given un equipo con Scrum Master y Product Builder, When se muestra, Then solo el Product Builder tiene «Quitar»', async () => {
+    responderEquipo()
+    abrir()
+
+    await screen.findByText('Ana')
+    expect(within(filaDe('Jimena')).getByRole('button', { name: 'Quitar' })).toBeTruthy()
+    expect(within(filaDe('Ana')).queryByRole('button', { name: 'Quitar' })).toBeNull()
+  })
+
+  it('Given un Product Builder, When pulso «Quitar» y cancelo, Then no se llama a DELETE y la fila sigue', async () => {
+    const fetchMock = responderEquipo()
+    abrir()
+    await screen.findByText('Jimena')
+
+    await pedirQuitar('Jimena')
+    expect(within(filaDe('Jimena')).getByText('¿Quitar a Jimena del equipo?')).toBeTruthy()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+
+    await userEvent.click(within(filaDe('Jimena')).getByRole('button', { name: 'Cancelar' }))
+
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    expect(screen.getByText('Jimena')).toBeTruthy()
+    expect(within(filaDe('Jimena')).queryByRole('button', { name: 'Sí, quitar' })).toBeNull()
+  })
+
+  it('Given un Product Builder, When confirmo «Quitar», Then se llama a DELETE, la fila desaparece y vuelve a estar disponible para el alta', async () => {
+    const fetchMock = responderEquipo()
+    abrir()
+    await screen.findByText('Jimena')
+
+    await pedirQuitar('Jimena')
+    await confirmarQuitar('Jimena')
+
+    await waitFor(() => expect(screen.queryByText('Jimena')).toBeNull())
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/3/members/2',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+
+    const selector = await screen.findByLabelText('Usuario')
+    await userEvent.selectOptions(selector, 'Jimena')
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
+
+    expect(await screen.findByText('Jimena')).toBeTruthy()
+    expect(filaDe('Jimena').textContent).toContain('Product Builder')
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/3/members',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it.each([
+    [409, 'No se puede quitar al Scrum Master del proyecto'],
+    [404, 'integrante no encontrado'],
+    [403, 'Solo el Scrum Master puede realizar esta acción'],
+  ])(
+    'Given el servidor responde %i, When confirmo «Quitar», Then se muestra «%s» y la fila sigue',
+    async (status, mensaje) => {
+      responderEquipo(() => new Response(JSON.stringify({ mensaje }), { status }))
+      abrir()
+      await screen.findByText('Jimena')
+
+      await pedirQuitar('Jimena')
+      await confirmarQuitar('Jimena')
+
+      expect(await screen.findByText(mensaje)).toBeTruthy()
+      expect(screen.getByText('Jimena')).toBeTruthy()
+    },
+  )
 })
