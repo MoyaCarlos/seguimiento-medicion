@@ -201,3 +201,7 @@ it('Given las historias dentro de un finalizado, When se estilizan, Then van en 
 it('Given el encabezado, When lleva ícono, Then el ícono se separa 8px del texto', () => {
   expect(regla('.sprints-encabezado .button')).toMatch(/gap:\s*8px/)
 })
+
+it('Given una columna con formularios anchos, When se estiliza, Then su única columna puede encogerse y no empuja a la tarjeta fuera de la columna', () => {
+  expect(regla('.sprints-carril')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/)
+})
