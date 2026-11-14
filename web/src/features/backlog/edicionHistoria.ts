@@ -82,6 +82,10 @@ export function campoDeError(error: unknown): string | undefined {
   return error instanceof ApiError ? error.field : undefined
 }
 
+export function esEstimacionDesactualizada(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 409 && error.field === 'estimacion_sp'
+}
+
 function esStoryPoint(valor: string): boolean {
   return STORY_POINTS.some((storyPoint) => `${storyPoint}` === valor)
 }

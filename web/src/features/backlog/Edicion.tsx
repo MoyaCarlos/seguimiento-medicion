@@ -4,11 +4,12 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { editarHistoria } from './api'
+import { editarHistoria, obtenerHistoria } from './api'
 import {
   armarCuerpoEdicion,
   campoDeEdicion,
   campoDeError,
+  esEstimacionDesactualizada,
   formularioDe,
   mensajeDeError,
   validarEdicion,
@@ -19,11 +20,18 @@ import { STORY_POINTS } from './opciones'
 type Props = {
   historia: Historia
   onGuardada: (historia: Historia) => void
+  onEstimacionActualizada: (estimacion: number | null) => void
   onCancelar: () => void
 }
 
-export function Edicion({ historia, onGuardada, onCancelar }: Props) {
+export function Edicion({
+  historia,
+  onGuardada,
+  onEstimacionActualizada,
+  onCancelar,
+}: Props) {
   const [formulario, setFormulario] = useState<FormularioEdicion>(() => formularioDe(historia))
+  const [estimacionLeida, setEstimacionLeida] = useState(historia.estimacion_sp)
   const [errores, setErrores] = useState<ErrorEdicion>({})
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -35,6 +43,16 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
     setFormulario((actual) => ({ ...actual, [campo]: valor }))
     setErrores((actual) => ({ ...actual, [campo]: undefined }))
     setErrorGeneral('')
+  }
+
+  async function recargarEstimacion() {
+    const actual = await obtenerHistoria(historia.id)
+    setEstimacionLeida(actual.estimacion_sp)
+    setFormulario((actualForm) => ({
+      ...actualForm,
+      estimacion: formularioDe(actual).estimacion,
+    }))
+    onEstimacionActualizada(actual.estimacion_sp)
   }
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
@@ -50,7 +68,7 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
     try {
       const actualizada = await editarHistoria(
         historia.id,
-        armarCuerpoEdicion(formulario, historia.estimacion_sp),
+        armarCuerpoEdicion(formulario, estimacionLeida),
       )
       onGuardada(actualizada)
     } catch (error) {
@@ -58,6 +76,9 @@ export function Edicion({ historia, onGuardada, onCancelar }: Props) {
       const campoEditable = campo ? campoDeEdicion(campo) : undefined
       if (campoEditable) {
         setErrores({ [campoEditable]: mensajeDeError(error) })
+        if (esEstimacionDesactualizada(error)) {
+          await recargarEstimacion().catch(() => undefined)
+        }
       } else {
         setErrorGeneral(mensajeDeError(error))
       }
