@@ -161,3 +161,167 @@
   padding-left: 1rem;
   overflow-wrap: anywhere;
 }
+
+.sprint-backlog {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sprint-historia {
+  background: #fbfcfd;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.sprint-historia__titulo {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sprint-historia__nota {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.sprint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sprint-chip {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 2px 9px;
+}
+
+.sprint-chip--must {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.sprint-chip--should {
+  background: var(--brand-soft);
+  color: #0b5f58;
+}
+
+.sprint-chip--could,
+.sprint-chip--nueva {
+  background: #eef2f6;
+  color: #475569;
+}
+
+.sprint-chip--sp,
+.sprint-chip--ninguno,
+.sprint-chip--wont {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #cbd5e1;
+  color: #475569;
+}
+
+.sprint-chip--ninguno,
+.sprint-chip--wont {
+  color: #606f86;
+}
+
+.sprint-chip--ninguno {
+  font-style: italic;
+}
+
+.sprint-chip--wont {
+  text-decoration: line-through;
+}
+
+.sprint-chip--progreso {
+  background: #fdf0d5;
+  color: #7a4408;
+}
+
+.sprint-chip--ok {
+  background: #dcf5e4;
+  color: #166534;
+}
+
+.sprint-chip--progreso::before,
+.sprint-chip--ok::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  width: 6px;
+}
+
+.sprint-esfuerzo {
+  color: #0b5f58;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sprint-detalle {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #0b5f58;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+  padding: 0;
+}
+
+.sprint-detalle::before {
+  content: '▸';
+  display: inline-block;
+  font-size: 11px;
+}
+
+.sprint-detalle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+.sprint-historia__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.sprint-boton {
+  align-items: center;
+  display: inline-flex;
+  font-size: 13px;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.sprint-boton svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-boton--contorno {
+  background: var(--surface);
+  border-color: var(--brand);
+  color: #0b5f58;
+}

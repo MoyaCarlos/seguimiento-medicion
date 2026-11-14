@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { fechaCorta } from '../../compartido/formato/fechas'
 import { consultarSprintBacklog } from './api'
 import { clasificarError } from './errores'
 import { EsfuerzoHistoria, type Imputacion } from './EsfuerzoHistoria'
 import { EstadoHistoria } from './EstadoHistoria'
 import { ETIQUETAS_PRIORIDAD, type HistoriaDeSprint } from './sprint'
+
+const CLASE_PRIORIDAD = { M: 'must', S: 'should', C: 'could', W: 'wont' } as const
+const CLASE_ESTADO = { Nueva: 'nueva', 'En progreso': 'progreso', Completada: 'ok' } as const
 
 type Props = { sprintId: number; permiteCambiarEstado?: boolean; imputacion?: Imputacion }
 
@@ -64,19 +68,29 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
   return (
     <ul className="sprint-backlog">
       {estado.historias.map((historia) => (
-        <li key={historia.id}>
-          <h4>{historia.titulo}</h4>
-          <p>{`${ETIQUETAS_PRIORIDAD[historia.prioridad]} (${historia.prioridad})`}</p>
-          <p>
-            {historia.estado === 'Completada' && historia.fecha_finalizacion
-              ? `Completada el ${historia.fecha_finalizacion}`
-              : historia.estado}
-          </p>
-          <p>{historia.estimacion_sp === null ? 'Sin estimar' : `${historia.estimacion_sp} SP`}</p>
-          {permiteCambiarEstado && (
-            <EstadoHistoria historia={historia} alCambiar={reemplazar} />
+        <li key={historia.id} className="sprint-historia">
+          <h4 className="sprint-historia__titulo">{historia.titulo}</h4>
+          <div className="sprint-chips">
+            <span className={`sprint-chip sprint-chip--${CLASE_PRIORIDAD[historia.prioridad]}`}>
+              {`${ETIQUETAS_PRIORIDAD[historia.prioridad]} (${historia.prioridad})`}
+            </span>
+            <span className={`sprint-chip sprint-chip--${CLASE_ESTADO[historia.estado]}`}>{historia.estado}</span>
+            {historia.estimacion_sp === null ? (
+              <span className="sprint-chip sprint-chip--ninguno">Sin estimar</span>
+            ) : (
+              <span className="sprint-chip sprint-chip--sp">{`${historia.estimacion_sp} SP`}</span>
+            )}
+          </div>
+          {historia.estado === 'Completada' && historia.fecha_finalizacion && (
+            <p className="sprint-historia__nota">{`Completada el ${fechaCorta(historia.fecha_finalizacion)}`}</p>
           )}
-          <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} />
+          <EsfuerzoHistoria
+            historiaId={historia.id}
+            imputacion={imputacion}
+            acciones={
+              permiteCambiarEstado ? <EstadoHistoria historia={historia} alCambiar={reemplazar} /> : undefined
+            }
+          />
         </li>
       ))}
     </ul>

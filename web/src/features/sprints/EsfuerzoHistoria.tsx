@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '../../compartido/componentes/Button'
+import { Icono } from '../../compartido/componentes/Icono'
+import { fechaCorta } from '../../compartido/formato/fechas'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { consultarEsfuerzo } from './api'
@@ -9,14 +11,14 @@ import { formatearHoras, type EsfuerzoReal } from './horas'
 
 export type Imputacion = { proyectoId: number; fechaFin?: string | null }
 
-type Props = { historiaId: number; imputacion?: Imputacion }
+type Props = { historiaId: number; imputacion?: Imputacion; acciones?: ReactNode }
 
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'listo'; esfuerzo: EsfuerzoReal }
   | { tipo: 'error'; mensaje: string }
 
-export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
+export function EsfuerzoHistoria({ historiaId, imputacion, acciones }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
   const [consulta, setConsulta] = useState(0)
   const [detalleAbierto, setDetalleAbierto] = useState(false)
@@ -50,22 +52,22 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
       {estado.tipo === 'error' && <ErrorMessage message={estado.mensaje} />}
       {estado.tipo === 'listo' && (
         <>
-          <p>{`Esfuerzo real: ${formatearHoras(estado.esfuerzo.total_horas)}`}</p>
+          <p className="sprint-esfuerzo">{`Esfuerzo real: ${formatearHoras(estado.esfuerzo.total_horas)}`}</p>
           {estado.esfuerzo.registros.length > 0 && (
-            <Button
+            <button
               type="button"
-              variant="quiet"
+              className="sprint-detalle"
               aria-expanded={detalleAbierto}
               onClick={() => setDetalleAbierto((actual) => !actual)}
             >
               Ver detalle
-            </Button>
+            </button>
           )}
           {detalleAbierto && estado.esfuerzo.registros.length > 0 && (
             <ul className="esfuerzo-detalle">
               {estado.esfuerzo.registros.map((registro) => (
                 <li key={registro.id}>
-                  {`${registro.fecha} · ${registro.integrante} · ${formatearHoras(registro.horas)}`}
+                  {`${fechaCorta(registro.fecha)} · ${registro.integrante} · ${formatearHoras(registro.horas)}`}
                   <br />
                   {registro.actividad}
                 </li>
@@ -74,16 +76,23 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
           )}
         </>
       )}
-      {imputacion && (
-        <Button
-          type="button"
-          variant="secondary"
-          aria-expanded={formularioAbierto}
-          disabled={enviando}
-          onClick={() => setFormularioAbierto((actual) => !actual)}
-        >
-          Registrar horas
-        </Button>
+      {(imputacion || acciones) && (
+        <div className="sprint-historia__acciones">
+          {imputacion && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="sprint-boton"
+              aria-expanded={formularioAbierto}
+              disabled={enviando}
+              onClick={() => setFormularioAbierto((actual) => !actual)}
+            >
+              <Icono nombre="reloj" />
+              Registrar horas
+            </Button>
+          )}
+          {acciones}
+        </div>
       )}
       {imputacion && formularioAbierto && (
         <FormularioHoras

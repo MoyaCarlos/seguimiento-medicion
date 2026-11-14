@@ -283,7 +283,7 @@ describe('SprintBacklog como el prototipo', () => {
     return screen.findAllByRole('listitem')
   }
   const chips = (item: HTMLElement) =>
-    [...item.querySelectorAll('.sprint-chips > li')].map((c) => [c.textContent, c.className])
+    [...item.querySelectorAll('.sprint-chips > span')].map((c) => [c.textContent, c.className])
 
   it('Given las historias, When se listan, Then cada una es una tarjeta con su título', async () => {
     const [primera] = await items()
@@ -322,7 +322,7 @@ describe('SprintBacklog como el prototipo', () => {
   it('Given el esfuerzo real, When se muestra, Then va en verde de marca en su propia línea', async () => {
     const [primera] = await items()
 
-    expect(within(primera).getByText('Esfuerzo real: 0 h').className).toBe('sprint-esfuerzo')
+    expect((await within(primera).findByText('Esfuerzo real: 0 h')).className).toBe('sprint-esfuerzo')
   })
 
   it('Given un Sprint activo, When se muestran las acciones, Then «Registrar horas» (con reloj) va antes que «Completar»/«Iniciar» (con ícono), alineadas en un pie', async () => {
