@@ -126,3 +126,7 @@ it('Given los botones de la cabecera, When llevan ícono, Then ícono y texto va
 it('Given el enlace «Ver estado del proyecto», When se estiliza, Then no va subrayado salvo al pasar el mouse', () => {
   expect(regla('.enlace')).toMatch(/text-decoration:\s*none/)
 })
+
+it('Given el cronograma en pantallas angostas, When las fechas no entran, Then cada columna puede encogerse en vez de salirse de la tarjeta', () => {
+  expect(regla('.cronograma__fechas div')).toMatch(/min-width:\s*0/)
+})
