@@ -40,6 +40,7 @@ var escriturasDeProyecto = []escrituraDeProyecto{
 	{"POST /backlog/{id}/votacion/estimacion", "/backlog/2/votacion/estimacion", `{"estimacion_sp":5}`},
 	{"PUT /projects/{id}", "/projects/1", `{"nombre":"Otro","descripcion":"","fecha_inicio":null,"fecha_fin":null}`},
 	{"POST /projects/{id}/members", "/projects/1/members", `{"nombre":"diego"}`},
+	{"DELETE /projects/{id}/members/{usuario_id}", "/projects/1/members/2", ``},
 }
 
 // rutasDelCierre no son escrituras sobre los datos del proyecto: lo cierran o reabren.

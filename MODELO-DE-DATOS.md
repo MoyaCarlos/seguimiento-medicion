@@ -39,7 +39,7 @@ Además hay un hueco de diseño que ninguna historia nota por separado: ver
 |---|---|
 | Idioma | Tablas y columnas en **español**, `snake_case`, tablas en plural. Los valores de los enums son los del dominio, tal cual (`Nueva`, `En progreso`, `M`, `scrum_master`); no se traducen ni se renombran. |
 | Identificadores | `id INTEGER PRIMARY KEY AUTOINCREMENT` (int64). Toda referencia se llama `<entidad>_id`; si hay dos a la misma tabla, `<rol>_<entidad>_id` (`sprint_deteccion_id`). |
-| Fechas de calendario | `TEXT` `YYYY-MM-DD` (`time.DateOnly`). Aplica a `fecha_inicio`, `fecha_fin`, `fecha`, `fecha_finalizacion` y `fecha_cierre`. |
+| Fechas de calendario | `TEXT` `YYYY-MM-DD` (`time.DateOnly`). Aplica a `fecha_inicio`, `fecha_fin`, `fecha`, `fecha_finalizacion`, `fecha_cierre` y `fecha_baja`. |
 | Instantes | `TEXT` RFC 3339 en UTC, columna `creado_en` (nunca `created_at`). Solo auditoría; no se usa en reglas de negocio. Excepción (HU-20, `sesiones`): `vence_en` entra en una regla de negocio (una sesión vencida no es vigente) y `cerrada_en` registra el cierre de sesión sin borrar la fila, porque ninguna historia borra datos. |
 | Obligatoriedad | Se declara `NOT NULL` todo lo que el dominio exige siempre. `NULL` significa "todavía no definido", nunca "cero" ni "vacío". |
 | Borrado | Ninguna historia borra datos. **Sin `ON DELETE CASCADE`**: se deja el comportamiento por defecto de SQLite, `NO ACTION`, que rechaza borrar (o cambiar el id de) un padre con hijos con `SQLITE_CONSTRAINT_FOREIGNKEY`. **No** se declara `ON DELETE RESTRICT`: rechaza igual pero con otro código (`SQLITE_CONSTRAINT_TRIGGER`), y rompería la traducción de errores de §5. Si algún día hace falta borrar, es una historia nueva con su propia decisión. |
@@ -94,6 +94,7 @@ erDiagram
         int usuario_id PK
         text rol
         text creado_en
+        text fecha_baja
     }
     historias {
         int id PK
@@ -208,6 +209,9 @@ Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 | `usuario_id` | FK → `usuarios(id)` NOT NULL | |
 | `rol` | TEXT NOT NULL | `CHECK IN ('scrum_master','product_builder')` |
 | `creado_en` | TEXT NOT NULL | |
+| `fecha_baja` | TEXT? | **Nueva** (migración 009, HU-16, #175, D15). `YYYY-MM-DD`, el día en que el Scrum Master quitó a la persona del equipo. `NULL` ⇔ integrante activo. `CHECK (fecha_baja IS NULL OR date(fecha_baja) IS fecha_baja)` (D12). Va al final de la tabla porque la agrega un `ALTER TABLE … ADD COLUMN`. |
+
+**Baja lógica (HU-16):** quitar a un integrante guarda `fecha_baja` en su fila; no se borra la fila ni sus aportes (votos, horas, defectos), y la FK de `registros_horas` hacia `integrantes` sigue válida. Volver a sumarlo reutiliza **la misma fila** con `fecha_baja = NULL` (conserva `creado_en`), así que una persona tiene un solo vínculo por proyecto también después de la baja. Al Scrum Master no se lo da de baja, por eso el índice `integrantes_un_scrum_master` no necesita filtrar por `fecha_baja`. En las reglas de negocio, «integrante» significa **integrante activo** (pertenencia, rol, equipo listado, «Mis proyectos», votación, horas y reporte).
 
 Un usuario tiene **un** rol por proyecto (lo garantiza la PK). Un proyecto tiene **a lo sumo un** Scrum Master (D4): lo impone el índice único parcial `integrantes_un_scrum_master`, `CREATE UNIQUE INDEX integrantes_un_scrum_master ON integrantes (proyecto_id) WHERE rol = 'scrum_master'` (migración 007), y el servicio lo comprueba antes de insertar. Puede haber varios `product_builder`, y la misma persona puede ser Scrum Master de proyectos distintos.
 
@@ -318,6 +322,7 @@ que HU-14 no tenga que reestructurar.
 - **Ronda actual** de una historia = la de mayor `numero`. Las anteriores son el historial (HU-14 Esc. 2); no se borra nada.
 - La **estimación acordada** no tiene tabla: se escribe en `historias.estimacion_sp` (HU-14 Esc. 3).
 - Ocultamiento: mientras `revelada_en IS NULL` la API **no devuelve** los valores, solo quién votó. Esa regla es del servicio/handler, no de la base.
+- Al dar de baja a un integrante (HU-16), en la misma transacción se **borran sus votos de las rondas no reveladas** de las historias del proyecto: eran secretos y nadie los vio, así no cuentan en el promedio ni en las diferencias. Los votos de rondas ya reveladas no se tocan. Es la única excepción a «no se borra nada» del modelo, y se acepta porque el resultado de una ronda se recalcula siempre desde `votos`.
 - Que el votante sea integrante del proyecto lo valida **solo el servicio**, a propósito: la base no puede hacerlo sin repetir `proyecto_id` en `rondas_votacion` y `votos`, y no se justifica (a diferencia de `registros_horas` y `defectos`, que ya lo llevan).
 
 ### 4.8 `registros_horas` — HU-07 (**tabla nueva**, migración 004)
@@ -376,7 +381,7 @@ En SQL, un `CHECK` que evalúa a `NULL` **no falla**. Por eso, en toda columna q
 | `integrantes`, `historias`, `sprints`, `defectos` | enums (`rol`, `prioridad`, `estado`, `severidad`) | ninguna (todas `NOT NULL`) | No: lo rechaza `NOT NULL` |
 | `registros_horas` | `typeof(minutos) = 'integer' AND minutos > 0` | ninguna (`NOT NULL`) | No |
 | `proyectos` | `horas_por_story_point IS NULL OR (typeof(…) IN ('real','integer') AND … > 0)` | `horas_por_story_point` | No: `NULL` se maneja a propósito |
-| `proyectos`, `sprints`, `historias`, `registros_horas` | `date(col) IS col` (D12) | `fecha_inicio`, `fecha_fin`, `fecha_finalizacion`, `fecha_cierre` | No: con `NULL`, `date(NULL) IS NULL` es verdadero a propósito; `IS` (no `=`) evita que un texto inválido pase |
+| `proyectos`, `sprints`, `historias`, `registros_horas`, `integrantes` | `date(col) IS col` (D12) | `fecha_inicio`, `fecha_fin`, `fecha_finalizacion`, `fecha_cierre`, `fecha_baja` | No: con `NULL`, `date(NULL) IS NULL` es verdadero a propósito; `IS` (no `=`) evita que un texto inválido pase |
 
 Cada caso con `NULL` figura en el test de esquema (§9, punto 6). Un hueco **distinto** de los `NULL` —el formato de las fechas— se cubre con el `CHECK` de D12 (§2).
 
@@ -426,6 +431,11 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
 | Cerrar un proyecto solo sin Sprint `Activo`, y no dos veces (#300) | `UPDATE` condicional (`fecha_cierre IS NULL AND NOT EXISTS` un Sprint `Activo`): cubre dos cierres simultáneos y un Sprint iniciado mientras tanto | `Project.Cerrar` da el mensaje (409) |
 | Proyecto cerrado = solo lectura (#300) | — | Guardia `exigirProyectoAbierto`, que llaman `exigirIntegrante`/`exigirScrumMaster` (control de acceso de HU-21) y, directo después de verificar al integrante, `ImputarHoras` (para no listar los integrantes dos veces): toda escritura responde 409 «El proyecto está cerrado» después de los 403. **Límite declarado:** el chequeo y la escritura son sentencias distintas, así que una escritura que llega en el mismo instante que el cierre puede completarse (spec 044, research §6) |
+| «Integrante» = integrante activo (HU-16) | `fecha_baja IS NULL` en las consultas de `ListarIntegrantes` y `ListarPorIntegrante` (un solo lugar) | Todas las reglas de pertenencia y rol, el equipo listado, «Mis proyectos», revelar la votación, imputar horas y el reporte leen esas consultas. El historial de rondas y la vista de votación usan `ListarIntegrantesHistoricos` para conservar el nombre de quien votó |
+| Al Scrum Master no se lo quita (HU-16) | `UPDATE` condicional de `DarDeBajaIntegrante` (`rol <> 'scrum_master'`) | `Member.ValidarBaja` da el mensaje: 409 «No se puede quitar al Scrum Master del proyecto» |
+| Una baja no se aplica dos veces (HU-16) | `UPDATE` condicional (`fecha_baja IS NULL`): de dos pedidos simultáneos, uno solo cambia la fila | El servicio busca al objetivo entre los activos: 404 «integrante no encontrado» |
+| La reactivación reutiliza la fila (HU-16, D15) | `INSERT … ON CONFLICT (proyecto_id, usuario_id) DO UPDATE … WHERE integrantes.fecha_baja IS NOT NULL RETURNING creado_en`: sin fila devuelta, la persona ya era activa | `AsignarIntegrante` responde 400 «el integrante ya pertenece al proyecto» si es activa, o la reactiva con su `creado_en` original |
+| Al dar de baja se descartan sus votos no revelados (HU-16, FR-018) | Misma transacción que el `UPDATE` de la baja (`DELETE` de sus votos en rondas con `revelada_en IS NULL` del proyecto) | — . **Límite declarado:** `Votar` comprueba la pertenencia y después llama a `GuardarVoto` en dos pasos separados. Si la baja borra los votos de la persona justo entre esos dos pasos, su voto queda guardado y cuenta en el promedio de esa ronda. FR-014 cubre solo dos bajas al mismo tiempo; se acepta por lo improbable (equipos chicos, un solo Scrum Master) |
 
 ### Traducción de violaciones a errores
 
@@ -461,8 +471,8 @@ no inventen cada una su fuente, esta es la tabla de verdad:
 
 Encontradas al armar el modelo. Cada una tiene una recomendación; hay que
 confirmarlas antes de que alguien implemente la historia afectada. **PENDIENTE** =
-requiere confirmación del equipo o del profesor; este documento no la decide. Hoy están
-pendientes D15 y D17, que surgieron del beta testing del
+requiere confirmación del equipo o del profesor; este documento no la decide. Hoy está
+pendiente D17, que surgió del beta testing del
 2026-10-30; las demás están cerradas.
 
 | # | Tema | Recomendación | Afecta |
@@ -483,7 +493,7 @@ pendientes D15 y D17, que surgieron del beta testing del
 | **D12** | **Cerrada el 2026-10-13: se agrega el `CHECK`.** Bloquea la 001. Formato de las fechas en la base. Hoy `fecha_fin > fecha_inicio` compara *texto*: `'2026-10-9'` pasa como menor que `'2026-10-10'` y `'basura'` pasa. El dominio ya parsea con `DateOnly`, así que solo entra por fuera del dominio. | Aplicado en §2, §4.1, §4.4, §4.5, §4.8 y §9: `CHECK (date(col) IS col)` a `fecha_inicio`/`fecha_fin` (proyectos y sprints), `registros_horas.fecha` y `fecha_finalizacion`. Verificado: rechaza `'2026-10-9'`, `'basura'` y `'2026-02-30'`, y acepta `NULL` y `'2026-10-09'`. Debe ser `IS`, no `=` (con `=` el `NULL` de `date('basura')` deja pasar). | HU-04, 05, 07, 11 |
 | **D13** | **Cerrada el 2026-10-13: 500.** Bloquea la 001. Código HTTP de una violación de `CHECK`/`NOT NULL` (§5). | 500: el cliente no pudo evitarlo, es un defecto del servidor. | transversal |
 | **D14** | **No necesaria** (2026-11-03). Dónde se guarda el dueño de un proyecto (HU-19). | El dueño es el Scrum Master del proyecto, que es quien lo creó y es único (D4): no se guarda aparte ni hay cambio de esquema. | HU-19 |
-| **D15** | **PENDIENTE.** Baja lógica de integrantes (HU-16): quitar a alguien conservando sus votos y horas. | Columna nueva en `integrantes` con la fecha de baja, vacía mientras está activo; la reactivación reutiliza la misma fila. Cambio de esquema. | HU-16 |
+| **D15** | **Cerrada el 2026-11-12** (HU-16, #175, spec 045, confirmada por el equipo). Baja lógica de integrantes: quitar a alguien conservando sus votos, horas y defectos. | Columna anulable `integrantes.fecha_baja` (`YYYY-MM-DD`, `CHECK` D12, migración 009), vacía mientras está activo; la reactivación reutiliza la misma fila. El Scrum Master no se da de baja (409). Al dar de baja se descartan sus votos de rondas no reveladas (§4.7). | HU-16 |
 | **D16** | **Cerrada el 2026-11-11** (#300, spec 044, confirmada por el equipo). Cierre manual del proyecto (#173): hasta entonces el estado era solo derivado y no se guardaba nada. | Columna anulable `proyectos.fecha_cierre` (`YYYY-MM-DD`, `CHECK` D12, migración 008). El Scrum Master cierra (sin Sprint `Activo`) y reabre. Un proyecto cerrado es «Finalizado» **con prioridad** sobre las reglas de HU-13 y queda de solo lectura; uno abierto sigue las reglas de HU-13 **sin cambios**. Se descartó la propuesta original («sin cierre manual, el proyecto no pasa a Finalizado») porque cambiaba HU-13 y sus escenarios. | HU-13 |
 | **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
 
@@ -507,6 +517,7 @@ pendientes D15 y D17, que surgieron del beta testing del
 | HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
 | HU-21 Permisos por rol | — | `integrantes`, `usuarios`, `sesiones` | sin migración |
 | #300 Cerrar y reabrir un proyecto | `proyectos.fecha_cierre` | `integrantes`, `sprints` | 008 |
+| HU-16 Gestión del equipo | `integrantes.fecha_baja`, `votos` (borra los de rondas no reveladas) | `integrantes`, `rondas_votacion`, `historias` | 009 |
 | HU-03 Métricas | `proyectos.horas_por_story_point` | todo lo anterior | 001 |
 | HU-09 / HU-10 / HU-12 | — | solo lectura | — |
 
@@ -546,6 +557,7 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    | 006 | `usuarios.contrasena_hash`, `sesiones` | HU-20 |
    | 007 | Índice único parcial `integrantes_un_scrum_master`, precedido por la corrección de proyectos con varios Scrum Master (queda el de `creado_en` más antiguo; si empatan, el de menor `usuario_id`; los demás pasan a `product_builder`) | #236 (spec 040) |
    | 008 | `proyectos.fecha_cierre` (`ALTER TABLE … ADD COLUMN` con el `CHECK` de D12; los proyectos existentes quedan abiertos) | #300 (spec 044) |
+   | 009 | `integrantes.fecha_baja` (`ALTER TABLE … ADD COLUMN` con el `CHECK` de D12; los integrantes existentes quedan activos) | HU-16 (spec 045) |
 
    Un cambio no previsto toma el siguiente número libre **y lo anota en esta tabla en el mismo PR**.
 4. **SQLite no altera restricciones.** Cambiar un `CHECK`, una FK o una columna
@@ -579,7 +591,8 @@ Reemplazan a `Migrar` con `CREATE TABLE IF NOT EXISTS`, `asegurarColumna` y
    - `integrantes` (D4): segundo `scrum_master` en el mismo proyecto, por `INSERT` y por `UPDATE` (rechazados); varios `product_builder` en un proyecto y un `scrum_master` en cada proyecto distinto (válidos).
    - Migración 007, sobre una base sembrada antes de migrar: proyecto con 2 o más Scrum Master (queda el de `creado_en` más antiguo y los demás pasan a `product_builder`, sin borrar filas), empate de `creado_en` (queda el de menor `usuario_id`), proyecto sin Scrum Master y proyecto con uno solo (sin tocar).
    - Migración 008, sobre una base sembrada antes de migrar: los proyectos existentes siguen ahí con `fecha_cierre NULL`.
-   - Fechas (D12), en `proyectos` (incluida `fecha_cierre`), `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
+   - Migración 009, sobre una base sembrada antes de migrar: los integrantes existentes siguen ahí con `fecha_baja NULL`.
+   - Fechas (D12), en `proyectos` (incluida `fecha_cierre`), `integrantes.fecha_baja`, `sprints`, `historias.fecha_finalizacion` y `registros_horas.fecha`: `'2026-10-9'`, `'basura'` y `'2026-02-30'` (rechazadas); `'2026-10-09'` (válida); `NULL` donde la columna lo admite (válido).
    - `registros_horas`: `minutos` 0, negativos, `NULL`, `1.5` y `'abc'` (rechazados) y `60` (válido); historia, Sprint o usuario de otro proyecto, o usuario que no es integrante.
    - `defectos`: `Resuelto` sin `sprint_resolucion_id` y `Pendiente` con él; `sprint_resolucion_id NULL` (válido).
    - `historias_arrastradas`: Sprint e historia de proyectos distintos, con ambos valores de `proyecto_id`.

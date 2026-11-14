@@ -42,8 +42,10 @@ func NewConsultarVotacion(historias repository.HistoriaRepository, proyectos rep
 	return &ConsultarVotacion{historias: historias, proyectos: proyectos, votaciones: votaciones, regla: regla}
 }
 
-// Ejecutar devuelve a todos los integrantes del proyecto ordenados por id, así
-// quien se sumó con la ronda abierta figura entre los que faltan votar.
+// Ejecutar devuelve a los integrantes activos del proyecto, más quien tenga un
+// voto en la ronda actual aunque después lo hayan dado de baja (HU-16), ordenados
+// por id: quien se sumó con la ronda abierta figura entre los que faltan votar,
+// y la lista mostrada coincide con los votos del promedio.
 func (s *ConsultarVotacion) Ejecutar(ctx context.Context, historiaID, consultanteID int64) (VistaVotacion, error) {
 	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
 	if err != nil {
@@ -56,7 +58,7 @@ func (s *ConsultarVotacion) Ejecutar(ctx context.Context, historiaID, consultant
 	if err != nil {
 		return VistaVotacion{}, err
 	}
-	integrantes, err := s.proyectos.ListarIntegrantes(ctx, historia.ProyectoID)
+	integrantes, err := s.participantes(ctx, historia.ProyectoID, ronda)
 	if err != nil {
 		return VistaVotacion{}, err
 	}
@@ -80,4 +82,26 @@ func (s *ConsultarVotacion) Ejecutar(ctx context.Context, historiaID, consultant
 		vista.Diferencias = &diferencias
 	}
 	return vista, nil
+}
+
+// participantes son los integrantes activos y quienes votaron en la ronda, con
+// nombre y rol tomados del equipo histórico.
+func (s *ConsultarVotacion) participantes(ctx context.Context, proyectoID int64, ronda domain.RondaVotacion) ([]domain.Member, error) {
+	activos, err := s.proyectos.ListarIntegrantes(ctx, proyectoID)
+	if err != nil {
+		return nil, err
+	}
+	historicos, err := s.proyectos.ListarIntegrantesHistoricos(ctx, proyectoID)
+	if err != nil {
+		return nil, err
+	}
+	participantes := activos
+	for _, m := range historicos {
+		votoEnLaRonda := slices.ContainsFunc(ronda.Votos, func(v domain.Voto) bool { return v.UsuarioID == m.UserID })
+		yaListado := slices.ContainsFunc(participantes, func(a domain.Member) bool { return a.UserID == m.UserID })
+		if votoEnLaRonda && !yaListado {
+			participantes = append(participantes, m)
+		}
+	}
+	return participantes, nil
 }

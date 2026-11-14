@@ -29,6 +29,16 @@ var ErrUsuarioNoEncontrado = errors.New("usuario no encontrado")
 // ErrProyectoNoEncontrado indica que el proyecto solicitado no existe.
 var ErrProyectoNoEncontrado = errors.New("proyecto no encontrado")
 
+// Errores de la gestión del equipo (HU-16, spec 045).
+var (
+	// ErrIntegranteNoEncontrado indica que el usuario no es integrante activo
+	// del proyecto: no existe, nunca lo integró o ya fue dado de baja.
+	ErrIntegranteNoEncontrado = errors.New("integrante no encontrado")
+	// ErrScrumMasterNoSeQuita indica que se quiso quitar al Scrum Master del
+	// proyecto, que debe conservar siempre uno activo.
+	ErrScrumMasterNoSeQuita = errors.New("No se puede quitar al Scrum Master del proyecto")
+)
+
 // Errores del cierre y la reapertura del proyecto (spec 044, #300).
 var (
 	// ErrProyectoYaCerrado indica que se quiso cerrar un proyecto que ya está cerrado.

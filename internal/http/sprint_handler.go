@@ -169,7 +169,8 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Campo: verr.Campo, Mensaje: verr.Mensaje})
 	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado),
 		errors.Is(err, domain.ErrHistoriaNoEncontrada), errors.Is(err, domain.ErrVotacionNoIniciada),
-		errors.Is(err, domain.ErrDefectoNoEncontrado), errors.Is(err, domain.ErrUsuarioNoEncontrado):
+		errors.Is(err, domain.ErrDefectoNoEncontrado), errors.Is(err, domain.ErrUsuarioNoEncontrado),
+		errors.Is(err, domain.ErrIntegranteNoEncontrado):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
@@ -182,7 +183,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	case errors.Is(err, repository.ErrIntegridadReferencial):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrIntegridadReferencial.Error()})
 	case errors.Is(err, domain.ErrVotacionYaIniciada), errors.Is(err, domain.ErrRondaYaAbierta),
-		errors.Is(err, domain.ErrScrumMasterYaExiste):
+		errors.Is(err, domain.ErrScrumMasterYaExiste), errors.Is(err, domain.ErrScrumMasterNoSeQuita):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrProyectoCerrado), errors.Is(err, domain.ErrProyectoYaCerrado),
 		errors.Is(err, domain.ErrSprintActivoAlCerrarProyecto), errors.Is(err, domain.ErrProyectoNoCerrado):
