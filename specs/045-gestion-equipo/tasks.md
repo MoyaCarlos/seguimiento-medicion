@@ -227,10 +227,12 @@ description: "Tareas de la spec 045: Gestión del equipo del proyecto (HU-16, #1
 
 **Fuera de esta rama (decisión del 2026-11-12)**: el frontend no entra en `feature/175-gestion-equipo`. T053–T056 pasan a la sub-issue #182, asignada a Ana Iriarte Lopez, que los hace en su propia rama. Según la Definition of Done, la sub-issue de Frontend no frena el cierre de #175.
 
-- [ ] T053 [US6] RED: en `web/src/features/proyecto/Configuracion.test.tsx` (escenario en el nombre de cada prueba): cada Product Builder tiene «Quitar»; el Scrum Master no; al confirmar, se llama a `quitarIntegrante` y la fila desaparece; al cancelar, no se llama; si el servidor responde error, se muestra su mensaje y la fila sigue. Confirmar que FALLA.
-- [ ] T054 [US6] COMMIT `RED: agregar pruebas de quitar integrante en Configurar equipo (falla)`
-- [ ] T055 [US6] GREEN: `quitarIntegrante(id, usuarioId)` (`DELETE /projects/${id}/members/${usuarioId}`) en `web/src/features/proyecto/api.ts` (con su prueba en `api.test.ts` si existe el patrón) y el botón con confirmación en `web/src/features/proyecto/Configuracion.tsx`. No se deshabilita el botón para los Product Builders: ese escenario quedó fuera de alcance (spec, «Fuera de alcance») y va con el frontend de HU-21 (#247). `npm test`, `npm run lint` y `npm run build` en verde.
-- [ ] T056 [US6] COMMIT `GREEN: quitar integrante desde Configurar equipo, test en verde`
+- [x] T053 [US6] RED: en `web/src/features/proyecto/Configuracion.test.tsx` (escenario en el nombre de cada prueba): cada Product Builder tiene «Quitar»; el Scrum Master no; al confirmar, se llama a `quitarIntegrante` y la fila desaparece; al cancelar, no se llama; si el servidor responde error, se muestra su mensaje y la fila sigue; tras la baja, la persona vuelve a estar disponible en el alta. Confirmar que FALLA.
+- [x] T054 [US6] COMMIT `RED: agregar pruebas de quitar integrante en Configurar equipo (falla)`
+- [x] T055 [US6] GREEN: `quitarIntegrante(id, usuarioId)` (`DELETE /projects/${id}/members/${usuarioId}`) en `web/src/features/proyecto/api.ts` (con su prueba en `api.test.ts` si existe el patrón) y el botón con confirmación en `web/src/features/proyecto/Configuracion.tsx`. No se deshabilita el botón para los Product Builders: ese escenario quedó fuera de alcance (spec, «Fuera de alcance») y va con el frontend de HU-21 (#247). `npm test`, `npm run lint` y `npm run build` en verde.
+- [x] T056 [US6] COMMIT `GREEN: quitar integrante desde Configurar equipo, test en verde`
+
+Hecho en `feature/HU-16-frontend` (issue #182). «Editar rol» queda fuera: la spec 045 no define cambio de rol y el backend de #317 no lo expone.
 
 ---
 
