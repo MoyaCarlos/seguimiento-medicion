@@ -20,6 +20,10 @@ describe('porcentajeTranscurrido', () => {
     expect(porcentajeTranscurrido('2026-10-01', '2026-10-31', local(2026, 10, 11))).toBe(33)
   })
 
+  it('Given dos tercios del período, When se calcula, Then redondea hacia arriba a 67 (no trunca)', () => {
+    expect(porcentajeTranscurrido('2026-10-01', '2026-10-31', local(2026, 10, 21))).toBe(67)
+  })
+
   it('Given el día de fin o uno posterior, When se calcula, Then es 100', () => {
     expect(porcentajeTranscurrido('2026-10-10', '2026-10-30', local(2026, 10, 30))).toBe(100)
     expect(porcentajeTranscurrido('2026-10-10', '2026-10-30', local(2026, 12, 1))).toBe(100)

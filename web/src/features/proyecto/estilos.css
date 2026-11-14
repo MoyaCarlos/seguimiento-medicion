@@ -369,3 +369,29 @@
   line-height: 1.6;
   margin: 0;
 }
+
+.cronograma__pista {
+  background: #eef2f6;
+  border-radius: 999px;
+  height: 8px;
+  position: relative;
+}
+
+.cronograma__pista i {
+  background: linear-gradient(90deg, #2dd4bf, #0d9488);
+  border-radius: 999px;
+  inset: 0 auto 0 0;
+  position: absolute;
+}
+
+.cronograma__pista b {
+  background: #fff;
+  border: 3px solid var(--brand);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 20%);
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  position: absolute;
+  top: 50%;
+  width: 16px;
+}

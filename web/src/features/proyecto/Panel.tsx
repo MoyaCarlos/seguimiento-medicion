@@ -12,6 +12,7 @@ import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { AvatarProyecto } from '../../compartido/componentes/AvatarProyecto'
 import { ETIQUETAS_ROL, descargarReporteProyecto, listarIntegrantes, obtenerEstadoProyecto, obtenerProyecto } from './api'
 import type { EstadoProyecto, Integrante, Proyecto } from './api'
+import { porcentajeTranscurrido } from './avance'
 import { mensajeDeError } from './errores'
 
 const ESTADOS_CON_INSIGNIA: string[] = ['Planificado', 'En curso', 'Finalizado']
@@ -20,7 +21,7 @@ const VARIANTE_INSIGNIA: Record<string, string> = {
   Finalizado: ' badge--finalizado',
 }
 
-export function Panel() {
+export function Panel({ hoy = () => new Date() }: { hoy?: () => Date }) {
   const { id = '' } = useParams()
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
@@ -95,6 +96,7 @@ export function Panel() {
   if (noIntegrante) return <NoIntegrante />
 
   const soloLectura = proyecto?.rol === 'product_builder'
+  const avance = proyecto ? porcentajeTranscurrido(proyecto.fecha_inicio, proyecto.fecha_fin, hoy()) : null
 
   return (
     <section className="hu04-panel" aria-labelledby="panel-title">
@@ -179,6 +181,12 @@ export function Panel() {
                 </dd>
               </div>
             </dl>
+            {avance !== null && (
+              <div className="cronograma__pista" role="img" aria-label={`Avance ${avance}%`}>
+                <i style={{ width: `${avance}%` }} />
+                <b style={{ left: `${avance}%` }} />
+              </div>
+            )}
             {errorEstado && <ErrorMessage message={errorEstado} />}
           </section>
           <p className="panel-tarjeta__pie">
