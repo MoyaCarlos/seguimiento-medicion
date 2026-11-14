@@ -205,3 +205,15 @@ it('Given el encabezado, When lleva ícono, Then el ícono se separa 8px del tex
 it('Given una columna con formularios anchos, When se estiliza, Then su única columna puede encogerse y no empuja a la tarjeta fuera de la columna', () => {
   expect(regla('.sprints-carril')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/)
 })
+
+it('Given una pantalla angosta, When se estiliza, Then «Crear Sprint» no se estira a todo el ancho', () => {
+  expect(regla('.sprints-encabezado .button')).toMatch(/align-self:\s*flex-start/)
+})
+
+it('Given una pantalla de 640px o menos, When se estiliza, Then «Completar»/«Iniciar» ocupa todo el ancho con 40px de alto', () => {
+  const movil = css.slice(css.indexOf('@media (max-width: 640px)'))
+
+  expect(movil).toMatch(/\.sprint-boton--contorno\s*\{[^}]*width:\s*100%/)
+  expect(movil).toMatch(/\.sprint-boton--contorno\s*\{[^}]*min-height:\s*40px/)
+  expect(movil).toMatch(/\.sprint-historia__acciones\s*\{[^}]*justify-content:\s*flex-start/)
+})
