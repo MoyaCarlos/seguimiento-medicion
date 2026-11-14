@@ -282,3 +282,67 @@ describe('zona de cierre del proyecto - reabrir', () => {
     expect(onCambio).not.toHaveBeenCalled()
   })
 })
+
+describe('zona de cierre del proyecto - rol (HU-21)', () => {
+  const NOTA = 'Solo el Scrum Master puede cerrar o reabrir el proyecto'
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  function abrirCon(rol: 'scrum_master' | 'product_builder' | null, fechaCierre: string | null) {
+    render(<ZonaCierreProyecto proyectoId="7" rol={rol} fechaCierre={fechaCierre} onCambio={vi.fn()} />)
+  }
+
+  it('US4.1: Product Builder con el proyecto abierto ve «Cerrar proyecto» deshabilitado con la nota y el clic no envía nada', async () => {
+    const fetchMock = responder(json(respuestaCierre))
+    abrirCon('product_builder', null)
+
+    const boton = screen.getByRole('button', { name: 'Cerrar proyecto' })
+    expect(boton.hasAttribute('disabled')).toBe(true)
+    expect(nota(boton)).toBe(NOTA)
+
+    await userEvent.click(boton)
+
+    expect(screen.queryByText('¿Cerrar el proyecto?')).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('US4.1: Product Builder con el proyecto cerrado ve «Reabrir proyecto» deshabilitado con la nota y el clic no envía nada', async () => {
+    const fetchMock = responder(json(respuestaReapertura))
+    abrirCon('product_builder', '2026-11-11')
+
+    const boton = screen.getByRole('button', { name: 'Reabrir proyecto' })
+    expect(boton.hasAttribute('disabled')).toBe(true)
+    expect(nota(boton)).toBe(NOTA)
+
+    await userEvent.click(boton)
+
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: con el rol desconocido los botones quedan habilitados y sin nota, decide el servidor', () => {
+    responder(json(respuestaCierre))
+    abrirCon(null, null)
+
+    const boton = screen.getByRole('button', { name: 'Cerrar proyecto' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(NOTA)).toBeNull()
+  })
+
+  it('Escenario: con el rol desconocido y el proyecto cerrado «Reabrir proyecto» queda habilitado', () => {
+    responder(json(respuestaReapertura))
+    abrirCon(null, '2026-11-11')
+
+    expect(screen.getByRole('button', { name: 'Reabrir proyecto' }).hasAttribute('disabled')).toBe(false)
+    expect(screen.queryByText(NOTA)).toBeNull()
+  })
+
+  it('US4.2: con el rol desconocido un 403 del servidor muestra el aviso «No tenés permiso»', async () => {
+    responder(json({ mensaje: 'Solo el Scrum Master puede realizar esta acción' }, 403))
+    abrirCon(null, '2026-11-11')
+
+    await reabrir()
+
+    expect(await screen.findByText('No tenés permiso')).toBeTruthy()
+  })
+})

@@ -375,4 +375,17 @@ describe('edición de proyecto - cierre (#312)', () => {
     expect(screen.getByRole('button', { name: 'Cerrar proyecto' })).toBeTruthy()
     expect(fetchMock.mock.calls.filter(([, init]) => init?.method !== 'POST')).toHaveLength(2)
   })
+
+  it('US4.1: como Product Builder la zona «Cerrar proyecto» se ve deshabilitada con la nota «Solo el Scrum Master puede cerrar o reabrir el proyecto»', async () => {
+    responderCierre({ fechaCierre: null, rol: 'product_builder' })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    const boton = await screen.findByRole('button', { name: 'Cerrar proyecto' })
+
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+      'Solo el Scrum Master puede cerrar o reabrir el proyecto',
+    )
+  })
 })
