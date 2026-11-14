@@ -14,19 +14,32 @@ import (
 // existencia de proyecto al vincular, rechaza duplicados y devuelve el nombre
 // del integrante al listar.
 type ProjectRepositoryEnMemoria struct {
-	mu               sync.Mutex
-	proyectos        map[int64]domain.Project
-	usuarios         map[int64]domain.User
-	miembros         []domain.Membership
+	mu        sync.Mutex
+	proyectos map[int64]domain.Project
+	usuarios  map[int64]domain.User
+	miembros  []domain.Membership
+	// bajas guarda la fecha de baja de cada vínculo dado de baja (HU-16); sin
+	// entrada, el integrante está activo. No se toca domain.Membership.
+	bajas            map[claveIntegrante]time.Time
 	siguiente        int64
 	siguienteUsuario int64
 }
+
+// claveIntegrante identifica el vínculo de un usuario con un proyecto.
+type claveIntegrante struct{ proyecto, usuario int64 }
 
 func NewProjectRepositoryEnMemoria() *ProjectRepositoryEnMemoria {
 	return &ProjectRepositoryEnMemoria{
 		proyectos: map[int64]domain.Project{},
 		usuarios:  map[int64]domain.User{},
+		bajas:     map[claveIntegrante]time.Time{},
 	}
+}
+
+// activo informa si el vínculo no tiene fecha de baja.
+func (r *ProjectRepositoryEnMemoria) activo(m domain.Membership) bool {
+	_, dadoDeBaja := r.bajas[claveIntegrante{proyecto: m.ProjectID, usuario: m.UserID}]
+	return !dadoDeBaja
 }
 
 // GuardarUsuario registra un integrante con su ID asignado, para que las
@@ -86,7 +99,7 @@ func (r *ProjectRepositoryEnMemoria) ListarPorIntegrante(_ context.Context, usua
 	defer r.mu.Unlock()
 	proyectos := make([]domain.ProyectoConRol, 0)
 	for _, m := range r.miembros {
-		if m.UserID == usuarioID {
+		if m.UserID == usuarioID && r.activo(m) {
 			proyectos = append(proyectos, domain.ProyectoConRol{Proyecto: r.proyectos[m.ProjectID], Rol: m.Role})
 		}
 	}
@@ -156,13 +169,24 @@ func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (dom
 	if _, ok := r.proyectos[m.ProjectID]; !ok {
 		return domain.Membership{}, domain.ErrProyectoNoEncontrado
 	}
-	for _, existente := range r.miembros {
+	dadoDeBaja := -1
+	for i, existente := range r.miembros {
 		if existente.ProjectID == m.ProjectID && existente.UserID == m.UserID {
-			return domain.Membership{}, ErrMiembroDuplicado
+			if r.activo(existente) {
+				return domain.Membership{}, ErrMiembroDuplicado
+			}
+			dadoDeBaja = i
+			continue
 		}
-		if m.Role == domain.RolScrumMaster && existente.ProjectID == m.ProjectID && existente.Role == domain.RolScrumMaster {
+		if m.Role == domain.RolScrumMaster && existente.ProjectID == m.ProjectID && existente.Role == domain.RolScrumMaster && r.activo(existente) {
 			return domain.Membership{}, domain.ErrScrumMasterYaExiste
 		}
+	}
+	if dadoDeBaja >= 0 {
+		// Reactivación (HU-16): mismo vínculo, rol pedido y CreadoEn original.
+		delete(r.bajas, claveIntegrante{proyecto: m.ProjectID, usuario: m.UserID})
+		r.miembros[dadoDeBaja].Role = m.Role
+		return r.miembros[dadoDeBaja], nil
 	}
 	if m.CreadoEn.IsZero() {
 		m.CreadoEn = time.Now().UTC()
@@ -171,12 +195,25 @@ func (r *ProjectRepositoryEnMemoria) agregarIntegrante(m domain.Membership) (dom
 	return m, nil
 }
 
+// ListarIntegrantes devuelve los integrantes activos del proyecto (HU-16).
 func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyectoID int64) ([]domain.Member, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	return r.listarIntegrantes(proyectoID, true), nil
+}
+
+// ListarIntegrantesHistoricos devuelve los integrantes activos y los dados de
+// baja del proyecto, en orden de alta (HU-16).
+func (r *ProjectRepositoryEnMemoria) ListarIntegrantesHistoricos(_ context.Context, proyectoID int64) ([]domain.Member, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.listarIntegrantes(proyectoID, false), nil
+}
+
+func (r *ProjectRepositoryEnMemoria) listarIntegrantes(proyectoID int64, soloActivos bool) []domain.Member {
 	var out []domain.Member
 	for _, m := range r.miembros {
-		if m.ProjectID == proyectoID {
+		if m.ProjectID == proyectoID && (!soloActivos || r.activo(m)) {
 			u := r.usuarios[m.UserID]
 			out = append(out, domain.Member{
 				UserID:    m.UserID,
@@ -187,5 +224,24 @@ func (r *ProjectRepositoryEnMemoria) ListarIntegrantes(_ context.Context, proyec
 			})
 		}
 	}
-	return out, nil
+	return out
+}
+
+// DarDeBajaIntegrante guarda la fecha de baja de un integrante activo que no
+// es el Scrum Master (HU-16). No descarta votos: viven en otro repositorio; esa
+// garantía la cubre el repositorio SQLite.
+func (r *ProjectRepositoryEnMemoria) DarDeBajaIntegrante(_ context.Context, proyectoID, usuarioID int64, fecha time.Time) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, m := range r.miembros {
+		if m.ProjectID != proyectoID || m.UserID != usuarioID || !r.activo(m) {
+			continue
+		}
+		if m.Role == domain.RolScrumMaster {
+			return domain.ErrScrumMasterNoSeQuita
+		}
+		r.bajas[claveIntegrante{proyecto: proyectoID, usuario: usuarioID}] = fecha
+		return nil
+	}
+	return domain.ErrIntegranteNoEncontrado
 }

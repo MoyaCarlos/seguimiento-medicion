@@ -43,6 +43,21 @@ const integrantesMock = vi.mocked(listarIntegrantes)
 
 type Servidor = { votos: Record<number, number>; revelada: boolean; ronda: number }
 let servidor: Servidor
+// Quién tiene la sesión: el servidor toma la identidad del token, no del pedido (HU-21).
+let sesion = 1
+
+function simularRol(rol: 'scrum_master' | 'product_builder') {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.resolve(new Response(JSON.stringify({ id: 25, rol }), { status: 200 }))),
+  )
+}
+
+function actuarComo(nombre: string) {
+  const integrante = INTEGRANTES.find((candidato) => candidato.nombre === nombre) as Integrante
+  sesion = integrante.id
+  simularRol(integrante.rol)
+}
 
 function vista(consultante?: number): Votacion {
   return {
@@ -85,12 +100,6 @@ function abrir() {
 const fila = (nombre: string) =>
   within(screen.getByRole('list')).getByText(nombre).closest('li') as HTMLElement
 
-async function elegirActor(nombre: string) {
-  const selector = await screen.findByLabelText('Quién actúa')
-  const opcion = within(selector).getByRole('option', { name: new RegExp(`^${nombre}`) })
-  await userEvent.selectOptions(selector, opcion)
-}
-
 async function actualizarSinServidor() {
   integrantesMock.mockRejectedValueOnce(new ConnectionError())
   historiaMock.mockRejectedValueOnce(new ConnectionError())
@@ -101,43 +110,44 @@ async function actualizarSinServidor() {
 
 beforeEach(() => {
   servidor = { votos: {}, revelada: false, ronda: 1 }
+  sesion = 1
   integrantesMock.mockResolvedValue(INTEGRANTES)
   historiaMock.mockResolvedValue(HISTORIA)
-  consultarMock.mockImplementation(async (_historia, consultante) => vista(consultante))
-  votarMock.mockImplementation(async (_historia, usuario, valor) => {
-    servidor.votos[usuario] = valor
-    return vista(usuario)
+  consultarMock.mockImplementation(async () => vista(sesion))
+  votarMock.mockImplementation(async (_historia, valor) => {
+    servidor.votos[sesion] = valor
+    return vista(sesion)
   })
-  revelarMock.mockImplementation(async (_historia, usuario) => {
+  revelarMock.mockImplementation(async () => {
     servidor.revelada = true
-    return vista(usuario)
+    return vista(sesion)
   })
 })
 
 afterEach(() => {
   vi.resetAllMocks()
+  vi.unstubAllGlobals()
 })
 
 describe('Pantalla de votación - votar en secreto (US1)', () => {
-  it('US1.0: Given integrantes del proyecto y una votación abierta, When se abre la pantalla, Then se pide elegir quién actúa y no hay cartas', async () => {
+  it('US1.0: Given integrantes del proyecto y una votación abierta, When se abre la pantalla, Then se ven los integrantes y las cartas, sin elegir quién actúa', async () => {
     abrir()
 
-    expect(await screen.findByText('Elegí quién actúa para votar')).toBeTruthy()
+    expect(await screen.findByRole('button', { name: '8' })).toBeTruthy()
     expect(fila('Beta Uno')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: '8' })).toBeNull()
     expect(integrantesMock).toHaveBeenCalledWith('25')
-    expect(consultarMock).toHaveBeenCalledWith(3, undefined)
+    expect(consultarMock).toHaveBeenCalledWith(3)
   })
 
-  it('US1.1: Given una votación abierta, When elijo a Beta Dos y la carta 8, Then se vota (3, 2, 8) y se ve mi voto y "Falta" en los demás', async () => {
+  it('US1.1: Given una votación abierta, When Beta Dos vota la carta 8, Then se vota (3, 8) y se ve mi voto y "Falta" en los demás', async () => {
     servidor.votos = { 3: 5 }
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     await userEvent.click(await screen.findByRole('button', { name: '8' }))
 
     await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
-    expect(votarMock).toHaveBeenCalledWith(3, 2, 8)
+    expect(votarMock).toHaveBeenCalledWith(3, 8)
     expect(within(fila('Beta Tres')).getByText('Oculto')).toBeTruthy()
     expect(within(fila('Beta Uno')).getByText('Falta')).toBeTruthy()
     expect(screen.getByRole('button', { name: '8' }).getAttribute('aria-pressed')).toBe('true')
@@ -145,33 +155,19 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
   it('US1.2: Given que ya voté 8, When elijo la carta 13, Then se muestra 13 como mi voto', async () => {
     servidor.votos = { 2: 8 }
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     await userEvent.click(await screen.findByRole('button', { name: '13' }))
 
     await waitFor(() => expect(within(fila('Beta Dos')).getByText('13')).toBeTruthy())
-    expect(votarMock).toHaveBeenCalledWith(3, 2, 13)
-  })
-
-  it('US1.3: Given que Beta Dos votó 8 y Beta Tres 5, When cambio de integrante, Then se consulta con el nuevo usuario y se ve su voto', async () => {
-    servidor.votos = { 2: 8, 3: 5 }
-    abrir()
-
-    await elegirActor('Beta Dos')
-    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
-    expect(within(fila('Beta Tres')).getByText('Oculto')).toBeTruthy()
-
-    await elegirActor('Beta Tres')
-    await waitFor(() => expect(within(fila('Beta Tres')).getByText('5')).toBeTruthy())
-    expect(consultarMock).toHaveBeenCalledWith(3, 3)
-    expect(within(fila('Beta Dos')).getByText('Oculto')).toBeTruthy()
+    expect(votarMock).toHaveBeenCalledWith(3, 13)
   })
 
   it('US1.4: Given un voto en curso, When pulso otra carta, Then se vota una sola vez y las cartas quedan deshabilitadas', async () => {
     votarMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     await userEvent.click(await screen.findByRole('button', { name: '8' }))
     await userEvent.click(screen.getByRole('button', { name: '13' }))
@@ -182,8 +178,8 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
   it('Given dos pulsaciones de carta en el mismo instante, When se procesan, Then se vota una sola vez', async () => {
     votarMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     const carta = await screen.findByRole('button', { name: '8' })
 
     act(() => {
@@ -196,8 +192,8 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
 
   it('US1.5: Given que el servidor rechaza el voto, When ocurre el error, Then se muestra su mensaje, se vuelve a consultar y las cartas siguen operables', async () => {
     votarMock.mockRejectedValue(new ApiError(400, 'la ronda ya fue revelada', 'estado'))
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('button', { name: '8' })
     const consultasAntes = consultarMock.mock.calls.length
 
@@ -208,12 +204,11 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
     expect((screen.getByRole('button', { name: '8' }) as HTMLButtonElement).disabled).toBe(false)
   })
 
-  it('Given un proyecto sin integrantes, When se abre la pantalla, Then se informa y no hay selector ni cartas', async () => {
+  it('Given un proyecto sin integrantes, When se abre la pantalla, Then se informa', async () => {
     integrantesMock.mockResolvedValue([])
     abrir()
 
     expect(await screen.findByText('El proyecto no tiene integrantes')).toBeTruthy()
-    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
   })
 
   it('US4.4: Given que el servidor no responde, When se abre la pantalla, Then se muestra el aviso de conexión', async () => {
@@ -242,39 +237,18 @@ describe('Pantalla de votación - votar en secreto (US1)', () => {
     expect(mensajes).toContain('no se pudieron listar los integrantes')
     expect(mensajes).toContain('no se pudo consultar la votación')
   })
-
-  it('Given que la respuesta de un integrante anterior llega tarde, When ya elegí a otro, Then se descarta y se ve la del actual', async () => {
-    servidor.votos = { 2: 8, 3: 5 }
-    let resolverTardia: (v: Votacion) => void = () => {}
-    abrir()
-    await elegirActor('Beta Dos')
-    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
-
-    consultarMock.mockImplementationOnce(() => new Promise((resolver) => (resolverTardia = resolver)))
-    await elegirActor('Beta Uno')
-    await elegirActor('Beta Tres')
-    await waitFor(() => expect(within(fila('Beta Tres')).getByText('5')).toBeTruthy())
-
-    resolverTardia(vista(1))
-
-    await waitFor(() => expect(within(fila('Beta Tres')).getByText('5')).toBeTruthy())
-    expect(within(fila('Beta Dos')).getByText('Oculto')).toBeTruthy()
-  })
 })
 
 describe('Pantalla de votación - recuperación y consistencia', () => {
-  it('Given que falló el listado de integrantes, When pulso Actualizar y el servidor responde, Then aparece el selector con los integrantes y desaparece el error', async () => {
+  it('Given que falló el listado de integrantes, When pulso Actualizar y el servidor responde, Then desaparece el error', async () => {
     integrantesMock.mockRejectedValueOnce(new ApiError(500, 'no se pudieron listar los integrantes'))
     abrir()
     await screen.findByText('no se pudieron listar los integrantes')
-    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
-    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
 
     await userEvent.click(screen.getByRole('button', { name: 'Actualizar' }))
 
-    expect(await screen.findByLabelText('Quién actúa')).toBeTruthy()
-    expect(screen.queryByText('no se pudieron listar los integrantes')).toBeNull()
-    expect(screen.getByText('Elegí quién actúa para votar')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByText('no se pudieron listar los integrantes')).toBeNull())
+    expect(integrantesMock).toHaveBeenCalledTimes(2)
   })
 
   it('Given que no cargó la historia, When pulso Actualizar y el servidor responde, Then se ve su resumen', async () => {
@@ -288,49 +262,9 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
     expect(await screen.findByText(HISTORIA.titulo)).toBeTruthy()
   })
 
-  it('US1.3: Given que Beta Dos votó 8 y la consulta de Beta Tres está en curso, When cambio de integrante, Then no se ve el 8 de Beta Dos', async () => {
-    servidor.votos = { 2: 8 }
-    abrir()
-    await elegirActor('Beta Dos')
-    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
-
-    consultarMock.mockReturnValueOnce(new Promise(() => {}))
-    await elegirActor('Beta Tres')
-
-    expect(within(fila('Beta Dos')).queryByText('8')).toBeNull()
-    expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
-  })
-
-  it('US1.3: Given que Beta Dos votó 8 y la consulta de Beta Tres falla, When cambio de integrante, Then el 8 de Beta Dos no queda en pantalla', async () => {
-    servidor.votos = { 2: 8 }
-    abrir()
-    await elegirActor('Beta Dos')
-    await waitFor(() => expect(within(fila('Beta Dos')).getByText('8')).toBeTruthy())
-
-    consultarMock.mockRejectedValueOnce(new ConnectionError())
-    await elegirActor('Beta Tres')
-    await screen.findByText('No se pudo conectar con el servidor')
-
-    expect(within(fila('Beta Dos')).queryByText('8')).toBeNull()
-  })
-
-  it('FR-001: Given integrantes con rol, When se abre el selector, Then cada opción muestra "Nombre (Rol)"', async () => {
-    abrir()
-
-    const selector = await screen.findByLabelText('Quién actúa')
-
-    const opciones = within(selector).getAllByRole('option').map((opcion) => opcion.textContent)
-    expect(opciones).toEqual([
-      'Elegí un integrante',
-      'Beta Uno (Scrum Master)',
-      'Beta Dos (Product Builder)',
-      'Beta Tres (Product Builder)',
-    ])
-  })
-
   it('Given un voto emitido mientras Actualizar consulta, When la consulta responde después, Then el voto sigue visible', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('list')
     let responder: (v: Votacion) => void = () => {}
     consultarMock.mockImplementationOnce(() => new Promise((resolver) => (responder = resolver)))
@@ -345,8 +279,8 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
   })
 
   it('Given una acción rechazada, When pulso Actualizar y el servidor responde, Then el mensaje de la acción desaparece', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('list')
     votarMock.mockRejectedValueOnce(new ApiError(409, 'la ronda ya fue revelada'))
     await userEvent.click(screen.getByRole('button', { name: '8' }))
@@ -358,20 +292,20 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
   })
 
   it('Given una acción rechazada, When se recarga sola la consulta, Then el mensaje de la acción sigue visible', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('list')
     votarMock.mockRejectedValueOnce(new ApiError(409, 'la ronda ya fue revelada'))
     await userEvent.click(screen.getByRole('button', { name: '8' }))
     await screen.findByText('la ronda ya fue revelada')
 
-    await waitFor(() => expect(consultarMock).toHaveBeenCalledTimes(3))
+    await waitFor(() => expect(consultarMock).toHaveBeenCalledTimes(2))
     expect(screen.getByText('la ronda ya fue revelada')).toBeTruthy()
   })
 
   it('Given que Actualizar falló sin servidor, When voto y el servidor responde bien, Then desaparecen los avisos de conexión y queda el voto registrado', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('button', { name: '8' })
     await actualizarSinServidor()
 
@@ -383,8 +317,8 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
 
   it('Given que Actualizar falló sin servidor, When revelo y el servidor responde bien, Then desaparecen los avisos de conexión y se ve el resultado', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByRole('button', { name: 'Revelar' })
     await actualizarSinServidor()
 
@@ -395,8 +329,8 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
   })
 
   it('Given que Actualizar falló sin servidor, When voto bien y los integrantes vuelven a fallar, Then queda el voto registrado y el aviso sigue visible', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     await screen.findByRole('button', { name: '8' })
     await actualizarSinServidor()
     integrantesMock.mockRejectedValueOnce(new ConnectionError())
@@ -409,8 +343,8 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
   })
 
   it('Given que los integrantes cargaron bien, When voto, Then no se vuelven a pedir', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     await userEvent.click(await screen.findByRole('button', { name: '8' }))
 
@@ -438,13 +372,13 @@ describe('Pantalla de votación - recuperación y consistencia', () => {
 describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
   it('US3.1: Given que votaron todos y soy Scrum Master, When pulso Revelar, Then se ven los valores, el promedio exacto y la carta sugerida, sin cartas', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
 
     await waitFor(() => expect(within(fila('Beta Tres')).getByText('8')).toBeTruthy())
-    expect(revelarMock).toHaveBeenCalledWith(3, 1)
+    expect(revelarMock).toHaveBeenCalledWith(3)
     expect(within(fila('Beta Uno')).getByText('3')).toBeTruthy()
     expect(within(fila('Beta Dos')).getByText('5')).toBeTruthy()
     expect(screen.getByText('Promedio exacto').nextSibling?.textContent).toBe('5,33')
@@ -455,8 +389,8 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
 
   it('US3.2: Given que falta votar a Beta Tres, When soy Scrum Master, Then Revelar está deshabilitado y se indica quién falta', async () => {
     servidor.votos = { 1: 3, 2: 5 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     const revelar = (await screen.findByRole('button', { name: 'Revelar' })) as HTMLButtonElement
 
@@ -464,21 +398,21 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
     expect(screen.getByText('Falta votar: Beta Tres')).toBeTruthy()
   })
 
-  it('US3.3: Given que soy Product Builder, When votaron todos, Then no hay botón Revelar', async () => {
+  it('US3.3: Given que soy Product Builder, When votaron todos, Then «Revelar» no se puede usar', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
-    await screen.findByRole('button', { name: '8' })
+    const revelar = await screen.findByRole('button', { name: 'Revelar' })
 
-    expect(screen.queryByRole('button', { name: 'Revelar' })).toBeNull()
+    await waitFor(() => expect(revelar.hasAttribute('disabled')).toBe(true))
   })
 
   it('US3.4: Given una revelación en curso, When pulso Revelar otra vez, Then se revela una sola vez', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     revelarMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Revelar' }))
@@ -490,8 +424,8 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
   it('US3.5: Given que el servidor rechaza revelar, When ocurre el error, Then se muestra su mensaje y la pantalla sigue operable', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     revelarMock.mockRejectedValue(new ApiError(403, 'solo el Scrum Master del proyecto puede hacerlo'))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
 
@@ -499,13 +433,13 @@ describe('Pantalla de votación - revelar y ver el resultado (US3)', () => {
     expect(fila('Beta Uno')).toBeTruthy()
   })
 
-  it('Given una ronda revelada y nadie elegido, When se muestra la pantalla, Then se aclara que el Scrum Master registra la estimación acordada', async () => {
+  it('Given una ronda revelada, When se muestra la pantalla, Then se ofrece registrar la estimación acordada sin pedir quién actúa', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     servidor.revelada = true
     abrir()
 
-    expect(await screen.findByText(/Scrum Master registra la estimación acordada/)).toBeTruthy()
-    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+    expect(await screen.findByRole('button', { name: 'Registrar estimación' })).toBeTruthy()
+    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
   })
 })
 
@@ -529,8 +463,8 @@ describe('Pantalla de votación - diferencias entre los votos (HU-14 US1)', () =
 
   it('US1.3: Given una ronda todavía no revelada, When se consulta la votación, Then no se informan diferencias, mínimo ni máximo', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await screen.findByRole('button', { name: 'Revelar' })
 
@@ -540,8 +474,8 @@ describe('Pantalla de votación - diferencias entre los votos (HU-14 US1)', () =
 
   it('Given que todos votaron y soy Scrum Master, When pulso Revelar, Then aparecen las diferencias de esa ronda', async () => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Revelar' }))
 
@@ -555,27 +489,27 @@ describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)'
   beforeEach(() => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     servidor.revelada = true
-    registrarMock.mockImplementation(async (_historia, _usuario, valor) => ({ ...HISTORIA, estimacion_sp: valor }))
+    registrarMock.mockImplementation(async (_historia, valor) => ({ ...HISTORIA, estimacion_sp: valor }))
   })
 
   const selectorEstimacion = async () =>
     (await screen.findByLabelText('Estimación acordada (Story Points)')) as HTMLSelectElement
 
   it('US2.1: Given una historia sin estimación y su ronda revelada, When el Scrum Master registra el valor acordado 5, Then la historia queda con 5 Story Points', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await userEvent.selectOptions(await selectorEstimacion(), '5')
 
     await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
 
     expect((await screen.findByRole('status')).textContent).toBe('Se registraron 5 Story Points en la historia')
-    expect(registrarMock).toHaveBeenCalledWith(3, 1, 5)
+    expect(registrarMock).toHaveBeenCalledWith(3, 5)
     expect(screen.getByText('5 SP')).toBeTruthy()
   })
 
   it('Given una ronda revelada con carta sugerida 5, When el Scrum Master ve el formulario, Then la carta sugerida viene elegida y se ofrece toda la baraja', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     const selector = await selectorEstimacion()
 
@@ -587,34 +521,34 @@ describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)'
 
   it('US2.2: Given una historia con 3 Story Points cargados de forma directa, When el Scrum Master registra el valor acordado 8, Then la historia queda con 8 Story Points', async () => {
     historiaMock.mockResolvedValue({ ...HISTORIA, estimacion_sp: 3 })
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByText('3 SP')
     await userEvent.selectOptions(await selectorEstimacion(), '8')
 
     await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
 
     await screen.findByText('8 SP')
-    expect(registrarMock).toHaveBeenCalledWith(3, 1, 8)
+    expect(registrarMock).toHaveBeenCalledWith(3, 8)
     expect(screen.queryByText('3 SP')).toBeNull()
   })
 
   it('US2.8: Given una ronda revelada con votos 3, 5 y 8, When el Scrum Master registra 13, Then se registra aunque nadie haya votado esa carta', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await userEvent.selectOptions(await selectorEstimacion(), '13')
 
     await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
 
     await screen.findByText('13 SP')
-    expect(registrarMock).toHaveBeenCalledWith(3, 1, 13)
+    expect(registrarMock).toHaveBeenCalledWith(3, 13)
   })
 
   it('US2.6: Given una historia con 3 SP en un Sprint Activo, When el Scrum Master registra 8 y el servidor lo rechaza, Then se muestra el mensaje y la historia mantiene su estimación anterior', async () => {
     historiaMock.mockResolvedValue({ ...HISTORIA, estimacion_sp: 3 })
     registrarMock.mockRejectedValue(new ApiError(400, CONGELADA, 'estimacion_sp'))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByText('3 SP')
     await userEvent.selectOptions(await selectorEstimacion(), '8')
 
@@ -627,8 +561,8 @@ describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)'
 
   it('US2.5: Given la ronda actual no fue revelada, When el Scrum Master mira la pantalla, Then no se ofrece registrar la estimación', async () => {
     servidor.revelada = false
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await screen.findByRole('button', { name: 'Revelar' })
 
@@ -637,17 +571,19 @@ describe('Pantalla de votación - registrar la estimación acordada (HU-14 US2)'
   })
 
   it('US2.7: Given una ronda revelada, When actúa un Product Builder, Then no puede registrar la estimación y se le indica que lo hace el Scrum Master', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
-    expect(await screen.findByText(/Scrum Master registra la estimación acordada/)).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Registrar estimación' })).toBeNull()
+    const registrar = await screen.findByRole('button', { name: 'Registrar estimación' })
+
+    await waitFor(() => expect(registrar.hasAttribute('disabled')).toBe(true))
+    expect(screen.getByText('Solo el Scrum Master puede registrar la estimación')).toBeTruthy()
   })
 
   it('Given un registro en curso, When pulso Registrar estimación otra vez, Then se registra una sola vez', async () => {
     registrarMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await selectorEstimacion()
 
     await userEvent.click(screen.getByRole('button', { name: 'Registrar estimación' }))
@@ -664,21 +600,21 @@ describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
   beforeEach(() => {
     servidor.votos = { 1: 3, 2: 5, 3: 8 }
     servidor.revelada = true
-    nuevaRondaMock.mockImplementation(async (_historia, usuario) => {
+    nuevaRondaMock.mockImplementation(async () => {
       servidor = { votos: {}, revelada: false, ronda: servidor.ronda + 1 }
-      return vista(usuario)
+      return vista(sesion)
     })
   })
 
   it('US3.1: Given la ronda 1 revelada con diferencias, When el Scrum Master inicia una nueva ronda, Then la ronda actual es la 2, abierta, sin votos y con las cartas', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
 
     await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
 
     expect(await screen.findByText('Ronda 2')).toBeTruthy()
-    expect(nuevaRondaMock).toHaveBeenCalledWith(3, 1)
+    expect(nuevaRondaMock).toHaveBeenCalledWith(3)
     expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy()
     expect(screen.getByRole('button', { name: '8' })).toBeTruthy()
     expect(screen.queryByText(/Hay diferencias/)).toBeNull()
@@ -688,8 +624,8 @@ describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
 
   it('US3.7: Given una ronda revelada sin diferencias, When el Scrum Master inicia una nueva ronda, Then la nueva ronda queda abierta y sin votos', async () => {
     servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByText('No hay diferencias: todos votaron lo mismo')
 
     await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
@@ -700,27 +636,28 @@ describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
 
   it('US3.3: Given la ronda actual todavía no fue revelada, When actúa el Scrum Master, Then no se ofrece iniciar una nueva ronda', async () => {
     servidor.revelada = false
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await screen.findByRole('button', { name: 'Revelar' })
 
     expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
   })
 
-  it('US3.4: Given una ronda revelada con diferencias, When actúa un Product Builder, Then no se ofrece iniciar una nueva ronda', async () => {
+  it('US3.4: Given una ronda revelada con diferencias, When actúa un Product Builder, Then no puede iniciar una nueva ronda', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     await screen.findByText('Hay diferencias: mínimo 3, máximo 8')
+    const nuevaRonda = screen.getByRole('button', { name: 'Nueva ronda' })
 
-    expect(screen.queryByRole('button', { name: 'Nueva ronda' })).toBeNull()
+    await waitFor(() => expect(nuevaRonda.hasAttribute('disabled')).toBe(true))
   })
 
   it('Given que otra persona ya abrió la ronda, When el Scrum Master inicia una nueva ronda, Then se muestra el mensaje del servidor', async () => {
     nuevaRondaMock.mockRejectedValue(new ApiError(409, YA_ABIERTA))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
 
@@ -729,8 +666,8 @@ describe('Pantalla de votación - nueva ronda (HU-14 US3)', () => {
 
   it('Given una apertura en curso, When pulso Nueva ronda otra vez, Then se abre una sola ronda', async () => {
     nuevaRondaMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Nueva ronda' }))
     await userEvent.click(screen.getByRole('button', { name: 'Nueva ronda' }))
@@ -746,13 +683,13 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
 
   beforeEach(() => {
     iniciada = false
-    consultarMock.mockImplementation(async (_historia, consultante) => {
+    consultarMock.mockImplementation(async () => {
       if (!iniciada) throw SIN_VOTACION
-      return vista(consultante)
+      return vista(sesion)
     })
-    iniciarMock.mockImplementation(async (_historia, usuario) => {
+    iniciarMock.mockImplementation(async () => {
       iniciada = true
-      return vista(usuario)
+      return vista(sesion)
     })
   })
 
@@ -765,31 +702,32 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
   })
 
   it('US2.1: Given el Scrum Master elegido, When pulso Iniciar votación, Then aparece la ronda 1 con todos los integrantes en "Falta"', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
 
     expect(await screen.findByText('Ronda 1')).toBeTruthy()
-    expect(iniciarMock).toHaveBeenCalledWith(3, 1)
+    expect(iniciarMock).toHaveBeenCalledWith(3)
     expect(within(fila('Beta Uno')).getByText('Falta')).toBeTruthy()
     expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy()
     expect(within(fila('Beta Tres')).getByText('Falta')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
   })
 
-  it('US2.2: Given un Product Builder elegido, When la historia no tiene votación, Then no hay botón Iniciar y se indica que solo lo hace el Scrum Master', async () => {
+  it('US2.2: Given un Product Builder, When la historia no tiene votación, Then «Iniciar votación» queda deshabilitada y se indica que solo lo hace el Scrum Master', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     expect(await screen.findByText('Solo el Scrum Master puede iniciar la votación')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
+    const boton = await screen.findByRole('button', { name: 'Iniciar votación' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
   })
 
   it('US2.4: Given un inicio en curso, When pulso Iniciar votación otra vez, Then se inicia una sola vez', async () => {
     iniciarMock.mockReturnValue(new Promise(() => {}))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar votación' }))
@@ -800,8 +738,8 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
 
   it('US2.5: Given que el servidor rechaza el inicio, When ocurre el error, Then se muestra su mensaje', async () => {
     iniciarMock.mockRejectedValue(new ApiError(409, 'la historia ya tiene una votación'))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     await userEvent.click(await screen.findByRole('button', { name: 'Iniciar votación' }))
 
@@ -809,8 +747,8 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
   })
 
   it('Given que Actualizar falló sin servidor, When inicio la votación y el servidor responde bien, Then desaparecen los avisos de conexión y aparece la ronda 1', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await screen.findByRole('button', { name: 'Iniciar votación' })
     await actualizarSinServidor()
 
@@ -822,8 +760,8 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
 
   it('Given una historia inexistente, When se abre la pantalla, Then se muestra "historia no encontrada" y no se ofrece iniciar', async () => {
     consultarMock.mockRejectedValue(new ApiError(404, 'historia no encontrada'))
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
 
     expect((await screen.findByRole('alert')).textContent).toBe('historia no encontrada')
     expect(screen.queryByRole('button', { name: 'Iniciar votación' })).toBeNull()
@@ -832,8 +770,8 @@ describe('Pantalla de votación - iniciar la votación (US2)', () => {
 
 describe('Pantalla de votación - mantenerla al día (US4)', () => {
   it('US4.2: Given que otro integrante votó, When pulso Actualizar, Then se vuelve a consultar y se refleja su voto', async () => {
+    actuarComo('Beta Uno')
     abrir()
-    await elegirActor('Beta Uno')
     await waitFor(() => expect(within(fila('Beta Dos')).getByText('Falta')).toBeTruthy())
 
     servidor.votos = { 2: 8 }
@@ -868,8 +806,8 @@ describe('Pantalla de votación - contexto de la historia', () => {
 
   it('Given que la historia no está en el listado, When se abre la pantalla, Then solo figura "Historia #3" y se puede votar', async () => {
     historiaMock.mockResolvedValue(null)
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     expect(await screen.findByRole('button', { name: '8' })).toBeTruthy()
     expect(screen.getAllByText('Historia #3').length).toBeGreaterThan(0)
@@ -878,8 +816,8 @@ describe('Pantalla de votación - contexto de la historia', () => {
 
   it('Given que falla la consulta de la historia, When se abre la pantalla, Then solo figura "Historia #3", sin error y se puede votar', async () => {
     historiaMock.mockRejectedValue(new ConnectionError())
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     expect(await screen.findByRole('button', { name: '8' })).toBeTruthy()
     expect(screen.getAllByText('Historia #3').length).toBeGreaterThan(0)
@@ -887,19 +825,12 @@ describe('Pantalla de votación - contexto de la historia', () => {
   })
 
   it('Given una votación abierta y un integrante elegido, When se muestra la pantalla, Then se ve la consigna de la votación', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
 
     expect(
       await screen.findByText('Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?'),
     ).toBeTruthy()
-  })
-
-  it('Given una votación abierta sin integrante elegido, When se muestra la pantalla, Then la consigna es elegir quién actúa', async () => {
-    abrir()
-
-    expect(await screen.findByText('Elegí quién actúa para votar')).toBeTruthy()
-    expect(screen.queryByText(/Elegí una carta/)).toBeNull()
   })
 
   it('Given una ronda revelada, When se muestra la pantalla, Then no se muestra la consigna de elegir carta', async () => {
@@ -907,7 +838,7 @@ describe('Pantalla de votación - contexto de la historia', () => {
     servidor.revelada = true
     abrir()
 
-    await screen.findByText(/Scrum Master registra la estimación acordada/)
+    await screen.findByRole('button', { name: 'Registrar estimación' })
 
     expect(screen.queryByText(/Elegí una carta/)).toBeNull()
   })
@@ -923,8 +854,8 @@ describe('Pantalla de votación - contexto de la historia', () => {
 
 describe('Pantalla de votación - teclado', () => {
   it('Given una carta enfocada con Tab, When se pulsa Enter, Then se vota esa carta', async () => {
+    actuarComo('Beta Dos')
     abrir()
-    await elegirActor('Beta Dos')
     const primera = await screen.findByRole('button', { name: '1' })
 
     await userEvent.tab()
@@ -932,6 +863,117 @@ describe('Pantalla de votación - teclado', () => {
     await userEvent.tab()
     await userEvent.keyboard('{Enter}')
 
-    expect(votarMock).toHaveBeenCalledWith(3, 2, 2)
+    expect(votarMock).toHaveBeenCalledWith(3, 2)
+  })
+})
+
+describe('Pantalla de votación - acciones de gestión según el rol (HU-21)', () => {
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const sinVotacionIniciada = () =>
+    consultarMock.mockRejectedValue(new ApiError(404, 'la historia no tiene votación iniciada'))
+
+  it('Escenario 2: como Product Builder veo «Iniciar votación» deshabilitada con la nota «Solo el Scrum Master puede iniciar la votación»', async () => {
+    simularRol('product_builder')
+    sinVotacionIniciada()
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Iniciar votación' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede iniciar la votación')
+  })
+
+  it('Escenario 1: como Scrum Master «Iniciar votación» está habilitada', async () => {
+    simularRol('scrum_master')
+    sinVotacionIniciada()
+    actuarComo('Beta Uno')
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Iniciar votación' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+  })
+
+  it('Escenario 2: como Product Builder veo «Revelar» deshabilitada con la nota «Solo el Scrum Master puede revelar los votos»', async () => {
+    simularRol('product_builder')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Revelar' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede revelar los votos')
+  })
+
+  it('Escenario 1: como Scrum Master «Revelar» está habilitada', async () => {
+    simularRol('scrum_master')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    actuarComo('Beta Uno')
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Revelar' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+  })
+
+  it('Escenario 2: como Product Builder veo «Registrar estimación» y «Nueva ronda» deshabilitadas con sus notas', async () => {
+    simularRol('product_builder')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    abrir()
+
+    const registrar = await screen.findByRole('button', { name: 'Registrar estimación' })
+    const nuevaRonda = screen.getByRole('button', { name: 'Nueva ronda' })
+    await waitFor(() => expect(registrar.hasAttribute('disabled')).toBe(true))
+    expect(nuevaRonda.hasAttribute('disabled')).toBe(true)
+    expect(nota(registrar)).toBe('Solo el Scrum Master puede registrar la estimación')
+    expect(nota(nuevaRonda)).toBe('Solo el Scrum Master puede abrir una nueva ronda')
+  })
+
+  it('Escenario 1: como Scrum Master «Registrar estimación» y «Nueva ronda» están habilitadas', async () => {
+    simularRol('scrum_master')
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    servidor.revelada = true
+    actuarComo('Beta Uno')
+    abrir()
+
+    const registrar = await screen.findByRole('button', { name: 'Registrar estimación' })
+    expect(registrar.hasAttribute('disabled')).toBe(false)
+    expect(screen.getByRole('button', { name: 'Nueva ronda' }).hasAttribute('disabled')).toBe(false)
+  })
+})
+
+describe('Pantalla de votación - la sesión es quien actúa (HU-21 Escenario 7)', () => {
+  type ApiReal = Record<string, (...argumentos: number[]) => Promise<unknown>>
+
+  it('Escenario 7: voto sin elegir quién actúa', async () => {
+    servidor.votos = { 3: 5 }
+    abrir()
+
+    await screen.findByText('Ronda 1')
+    expect(screen.queryByLabelText('Quién actúa')).toBeNull()
+    expect(screen.queryByText('Elegí quién actúa para votar')).toBeNull()
+
+    await userEvent.click(await screen.findByRole('button', { name: '8' }))
+
+    await waitFor(() => expect(votarMock).toHaveBeenCalledWith(3, 8))
+    expect(consultarMock.mock.calls.every((llamada) => llamada.length === 1)).toBe(true)
+  })
+
+  it('Escenario 7: el pedido de voto no lleva usuario_id y la consulta no lleva ?usuario_id', async () => {
+    const real = await vi.importActual<ApiReal>('./api')
+    const fetchSimulado = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 })))
+    vi.stubGlobal('fetch', fetchSimulado)
+
+    await real.votar(3, 8)
+    await real.consultarVotacion(3)
+
+    const [[urlVoto, pedidoVoto], [urlConsulta]] = fetchSimulado.mock.calls as unknown as [
+      [string, { body: string }],
+      [string],
+    ]
+    expect(urlVoto).toBe('/backlog/3/votacion/votos')
+    expect(JSON.parse(pedidoVoto.body)).toEqual({ valor: 8 })
+    expect(urlConsulta).toBe('/backlog/3/votacion')
+    vi.unstubAllGlobals()
   })
 })

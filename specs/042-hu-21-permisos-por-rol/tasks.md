@@ -208,39 +208,39 @@ El texto de la feature se redacta en el paso BDD del flujo (después de `/specki
 
 ### Cliente y permisos compartidos
 
-- [ ] T060 [P] [US7] RED: web/src/compartido/api/client.test.ts — un 403 con mensaje «No sos integrante de este proyecto» se distingue (por ejemplo `error.tipo === 'no_integrante'`) de cualquier otro 403 (`'sin_permiso'`, conserva el mensaje del servidor); web/src/compartido/permisos/permisos.test.tsx (nuevo) — `NoIntegrante` muestra «No sos integrante de este proyecto» con enlace a «Mis proyectos»; `AvisoSinPermiso` muestra «No tenés permiso» y el mensaje; `useEsScrumMaster(proyecto)` según `proyecto.rol` — confirmar que FALLA
-- [ ] T061 [US7] COMMIT `RED: 403 de pertenencia y de rol en la interfaz (falla)`
-- [ ] T062 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
-- [ ] T063 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
+- [X] T060 [P] [US7] RED: web/src/compartido/api/client.test.ts — un 403 con mensaje «No sos integrante de este proyecto» se distingue (por ejemplo `error.tipo === 'no_integrante'`) de cualquier otro 403 (`'sin_permiso'`, conserva el mensaje del servidor); web/src/compartido/permisos/permisos.test.tsx (nuevo) — `NoIntegrante` muestra «No sos integrante de este proyecto» con enlace a «Mis proyectos»; `AvisoSinPermiso` muestra «No tenés permiso» y el mensaje; `useEsScrumMaster(proyecto)` según `proyecto.rol` — confirmar que FALLA
+- [X] T061 [US7] COMMIT `RED: 403 de pertenencia y de rol en la interfaz (falla)`
+- [x] T062 [US7] GREEN: web/src/compartido/api/client.ts y web/src/compartido/permisos/ (NoIntegrante.tsx, AvisoSinPermiso.tsx, useEsScrumMaster.ts); el panel (web/src/features/proyecto/Panel.tsx) muestra `NoIntegrante` ante ese 403 — `npm test` en verde
+- [x] T063 [US7] COMMIT `GREEN: 403 de pertenencia y de rol en la interfaz, test en verde`
 
 ### Mis proyectos
 
-- [ ] T064 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
-- [ ] T065 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
-- [ ] T066 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
-- [ ] T067 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
+- [x] T064 [P] [US7] RED: web/src/compartido/proyectos/ListaProyectos.test.tsx — «Escenario 5: veo solo mis proyectos con mi rol» (muestra «Scrum Master» / «Product Builder»); «Escenario 9: sin proyectos veo el mensaje y puedo crear uno» — confirmar que FALLA
+- [x] T065 [US7] COMMIT `RED: «Mis proyectos» con rol y estado vacío (falla)`
+- [x] T066 [US7] GREEN: tipo de proyecto con `rol` en web/src/compartido/proyectos/api.ts; web/src/compartido/proyectos/ListaProyectos.tsx muestra el rol y el estado vacío con el botón de crear — `npm test` en verde
+- [x] T067 [US7] COMMIT `GREEN: «Mis proyectos» con rol y estado vacío, test en verde`
 
 ### Identidad sin selectores
 
-- [ ] T068 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
-- [ ] T069 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
-- [ ] T070 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
-- [ ] T071 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
+- [x] T068 [P] [US7] RED: web/src/features/votacion/index.test.tsx — «Escenario 7: voto sin elegir quién actúa» (no hay selector «Quién actúa», el pedido de voto no lleva `usuario_id`, la consulta no lleva `?usuario_id`); web/src/features/sprints/FormularioHoras.test.tsx — sin selector de integrante, el pedido no lleva `integrante_id`; web/src/features/proyecto/crear.test.tsx — el pedido no lleva `creador` y no hay campo «Creador» — confirmar que FALLA
+- [x] T069 [US7] COMMIT `RED: la interfaz no elige quién actúa (falla)`
+- [x] T070 [US7] GREEN: eliminar web/src/features/votacion/SelectorActor.tsx y su uso (index.tsx, useVotacion.ts, api.ts, votacion.ts, Integrantes.tsx, Ronda.tsx); quitar el integrante de web/src/features/sprints/FormularioHoras.tsx y horas.ts; quitar `creador` de web/src/features/proyecto/crear.tsx, api.ts y validacion.ts — `npm test` en verde
+- [x] T071 [US7] COMMIT `GREEN: la interfaz no elige quién actúa, test en verde`
 
 ### Acciones de gestión deshabilitadas
 
-- [ ] T072 [P] [US7] RED: pruebas «Escenario 2: como Product Builder veo la acción deshabilitada con la nota "Solo el Scrum Master puede…"» y «Escenario 1: como Scrum Master la acción está habilitada» en web/src/features/sprints/index.test.tsx (crear, iniciar — FormularioInicio — y cerrar — BotonCerrar), web/src/features/votacion/index.test.tsx (AccionesScrumMaster: iniciar, revelar, nueva ronda, registrar estimación), web/src/features/proyecto/Editar.test.tsx y Configuracion.test.tsx; y «un 403 de rol inesperado muestra "No tenés permiso" sin perder lo escrito» en Editar.test.tsx — confirmar que FALLA
-- [ ] T073 [US7] COMMIT `RED: acciones de gestión deshabilitadas para el Product Builder (falla)`
-- [ ] T074 [US7] GREEN: usar `useEsScrumMaster` y `AvisoSinPermiso` en web/src/features/sprints/ (SeccionSprints.tsx, FormularioInicio.tsx, BotonCerrar.tsx), web/src/features/votacion/AccionesScrumMaster.tsx, web/src/features/proyecto/Editar.tsx y Configuracion.tsx — `npm test` en verde
-- [ ] T075 [US7] COMMIT `GREEN: acciones de gestión deshabilitadas para el Product Builder, test en verde`
+- [X] T072 [P] [US7] RED: pruebas «Escenario 2: como Product Builder veo la acción deshabilitada con la nota "Solo el Scrum Master puede…"» y «Escenario 1: como Scrum Master la acción está habilitada» en web/src/features/sprints/index.test.tsx (crear, iniciar — FormularioInicio — y cerrar — BotonCerrar), web/src/features/votacion/index.test.tsx (AccionesScrumMaster: iniciar, revelar, nueva ronda, registrar estimación), web/src/features/proyecto/Editar.test.tsx y Configuracion.test.tsx; y «un 403 de rol inesperado muestra "No tenés permiso" sin perder lo escrito» en Editar.test.tsx — confirmar que FALLA
+- [X] T073 [US7] COMMIT `RED: acciones de gestión deshabilitadas para el Product Builder (falla)`
+- [X] T074 [US7] GREEN: usar `useEsScrumMaster` y `AvisoSinPermiso` en web/src/features/sprints/ (SeccionSprints.tsx, FormularioInicio.tsx, BotonCerrar.tsx), web/src/features/votacion/AccionesScrumMaster.tsx, web/src/features/proyecto/Editar.tsx y Configuracion.tsx — `npm test` en verde
+- [X] T075 [US7] COMMIT `GREEN: acciones de gestión deshabilitadas para el Product Builder, test en verde`
 
 ### Configurar el equipo
 
-- [ ] T076 [P] [US7] RED: web/src/features/proyecto/Configuracion.test.tsx — «Escenario 8: elijo de la lista un usuario registrado y entra como Product Builder» (carga `GET /users`, no hay selector de rol, el pedido manda `{"nombre"}`); muestra el error del servidor si el usuario no existe — confirmar que FALLA
-- [ ] T077 [US7] COMMIT `RED: configurar el equipo eligiendo de la lista de usuarios (falla)`
-- [ ] T078 [US7] GREEN: web/src/features/proyecto/Configuracion.tsx y api.ts (`listarUsuarios`) — `npm test` en verde
-- [ ] T079 [US7] COMMIT `GREEN: configurar el equipo eligiendo de la lista de usuarios, test en verde`
-- [ ] T080 [US7] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>`
+- [X] T076 [P] [US7] RED: web/src/features/proyecto/Configuracion.test.tsx — «Escenario 8: elijo de la lista un usuario registrado y entra como Product Builder» (carga `GET /users`, no hay selector de rol, el pedido manda `{"nombre"}`); muestra el error del servidor si el usuario no existe — confirmar que FALLA
+- [X] T077 [US7] COMMIT `RED: configurar el equipo eligiendo de la lista de usuarios (falla)`
+- [X] T078 [US7] GREEN: web/src/features/proyecto/Configuracion.tsx y api.ts (`listarUsuarios`) — `npm test` en verde
+- [X] T079 [US7] COMMIT `GREEN: configurar el equipo eligiendo de la lista de usuarios, test en verde`
+- [X] T080 [US7] (solo si hay algo que limpiar) REFACTOR + COMMIT `REFACTOR: <qué se limpió>` — sin cambios que limpiar
 
 ---
 
@@ -251,7 +251,7 @@ El texto de la feature se redacta en el paso BDD del flujo (después de `/specki
 - [X] T083 Declarar el **límite conocido** (con sesión, un no integrante puede leer historias, Sprints, horas, defectos, métricas, historial y reportes de un proyecto) y que el traspaso del Scrum Master queda fuera de alcance, en README.md o en la documentación de la API que corresponda; actualizar los `curl` de docs/ que manden `usuario_id`, `integrante_id` o `creador`; actualizar el paso 8 de specs/036-hu-10-reporte-pdf/quickstart.md (descargar el PDF navegando directo a la URL ya no funciona sin token: la descarga necesita la sesión) y dejar anotado en el issue #78 (frontend del PDF) que la descarga se hace con el cliente de la API (`fetch` + blob con `Authorization`), no con un enlace común. Estado: hecho; la nota en #78 se publicó el 2026-11-11
 - [X] T084 COMMIT `docs: permisos por rol en el modelo de datos, el backlog y el límite conocido de lectura (Refs #234)`
 - [X] T085 `gofmt -l .` vacío, `go build ./...`, `go vet ./...`, `go test ./...`; `cd web && npm run lint && npm test && npm run build` — todo en verde
-- [ ] T086 Recorrer [quickstart.md](quickstart.md) a mano (curl e interfaz) y anotar el resultado en el PR. Estado: parte de curl recorrida el 2026-11-11 contra una base vacía, todo según lo esperado; el paso 6 del quickstart usaba a Bruno, que ya integra el proyecto (da el 400 de duplicado), y pasó a usar a Carla (409). La parte de la interfaz queda para US7 (sub-issue de Frontend)
+- [X] T086 Recorrer [quickstart.md](quickstart.md) a mano (curl e interfaz) y anotar el resultado en el PR. Estado: parte de curl recorrida el 2026-11-11 contra una base vacía, todo según lo esperado; el paso 6 del quickstart usaba a Bruno, que ya integra el proyecto (da el 400 de duplicado), y pasó a usar a Carla (409). La parte de la interfaz queda para US7 (sub-issue de Frontend). Interfaz validada a mano con la API real y npm run dev, con tres cuentas (Scrum Master, Product Builder y una persona que no integra el proyecto): crear proyecto sin campo de Scrum Master, equipo elegido de la lista de usuarios sin rol, votación y horas sin selectores de actor, acciones de gestión deshabilitadas con la nota para el Product Builder, «No sos integrante de este proyecto» para quien no integra y «No integrás ningún proyecto» para una cuenta sin proyectos
 
 ---
 

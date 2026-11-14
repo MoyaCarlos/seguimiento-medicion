@@ -141,7 +141,7 @@ describe('cliente de horas', () => {
 
   it('US1.2: imputarHoras hace POST /backlog/{id}/horas con los datos de la carga', async () => {
     const fetchMock = respondWithJson({ id: 1 }, 201)
-    const datos = { integrante_id: 2, fecha: '2026-11-02', actividad: 'Revisión', horas: '1.5' }
+    const datos = { fecha: '2026-11-02', actividad: 'Revisión', horas: '1.5' }
 
     await imputarHoras(12, datos)
 
@@ -155,7 +155,7 @@ describe('cliente de horas', () => {
     respondWithJson({ campo: 'horas', mensaje: 'las horas deben ser un número' }, 400)
 
     await expect(
-      imputarHoras(12, { integrante_id: 2, fecha: '2026-11-02', actividad: 'Revisión', horas: 'abc' }),
+      imputarHoras(12, { fecha: '2026-11-02', actividad: 'Revisión', horas: 'abc' }),
     ).rejects.toEqual(new ApiError(400, 'las horas deben ser un número', 'horas'))
   })
 

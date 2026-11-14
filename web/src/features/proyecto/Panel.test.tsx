@@ -215,6 +215,23 @@ describe('panel del proyecto', () => {
     expect(screen.queryByText('Sin datos')).toBeNull()
   })
 
+  it('Escenario 4: el panel de un proyecto ajeno muestra No sos integrante', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ mensaje: 'No sos integrante de este proyecto' }), {
+            status: 403,
+          }),
+        ),
+      ),
+    )
+    abrir()
+
+    expect(await screen.findByRole('heading', { name: 'No sos integrante de este proyecto' })).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('muestra tal cual un estado fuera de los tres esperados', async () => {
     responderEstado('Suspendido')
     abrir()

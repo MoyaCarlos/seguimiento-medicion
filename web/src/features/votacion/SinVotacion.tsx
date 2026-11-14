@@ -1,25 +1,31 @@
 import { Button } from '../../compartido/componentes/Button'
-import type { Integrante } from './votacion'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 
 type Props = {
-  actor: Integrante | undefined
-  puedeIniciar: boolean
-  hayIntegrantes: boolean
   deshabilitado: boolean
   alIniciar: () => void
+  puedeGestionar?: boolean
 }
 
-export function SinVotacion({ actor, puedeIniciar, hayIntegrantes, deshabilitado, alIniciar }: Props) {
+export function SinVotacion({
+  deshabilitado,
+  alIniciar,
+  puedeGestionar = true,
+}: Props) {
   return (
     <div className="votacion-acciones">
       <p>La historia todavía no tiene votación</p>
-      {puedeIniciar && (
-        <Button type="button" disabled={deshabilitado} onClick={alIniciar}>
-          Iniciar votación
-        </Button>
+      <Button
+        type="button"
+        disabled={deshabilitado || !puedeGestionar}
+        aria-describedby={puedeGestionar ? undefined : 'votacion-nota-iniciar'}
+        onClick={alIniciar}
+      >
+        Iniciar votación
+      </Button>
+      {!puedeGestionar && (
+        <NotaGestion id="votacion-nota-iniciar" texto="Solo el Scrum Master puede iniciar la votación" />
       )}
-      {actor && !puedeIniciar && <p>Solo el Scrum Master puede iniciar la votación</p>}
-      {!actor && hayIntegrantes && <p>Elegí quién actúa para iniciar la votación</p>}
     </div>
   )
 }

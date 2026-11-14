@@ -3,28 +3,22 @@ import type { HistoriaResumen, Integrante, Rol, Votacion } from './votacion'
 
 type IntegranteDeApi = { id: number; nombre: string; rol: Rol }
 
-export const consultarVotacion = (historiaId: number, usuarioId?: number) => {
-  const consulta = usuarioId === undefined ? '' : `?usuario_id=${usuarioId}`
-  return get<Votacion>(`/backlog/${historiaId}/votacion${consulta}`)
-}
+// La identidad sale de la sesión (HU-21): ningún pedido lleva el usuario.
+export const consultarVotacion = (historiaId: number) => get<Votacion>(`/backlog/${historiaId}/votacion`)
 
-export const iniciarVotacion = (historiaId: number, usuarioId: number) =>
-  post<Votacion>(`/backlog/${historiaId}/votacion`, { usuario_id: usuarioId })
+export const iniciarVotacion = (historiaId: number) => post<Votacion>(`/backlog/${historiaId}/votacion`, {})
 
-export const votar = (historiaId: number, usuarioId: number, valor: number) =>
-  post<Votacion>(`/backlog/${historiaId}/votacion/votos`, { usuario_id: usuarioId, valor })
+export const votar = (historiaId: number, valor: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/votos`, { valor })
 
-export const revelarVotacion = (historiaId: number, usuarioId: number) =>
-  post<Votacion>(`/backlog/${historiaId}/votacion/revelar`, { usuario_id: usuarioId })
+export const revelarVotacion = (historiaId: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/revelar`, {})
 
-export const abrirNuevaRonda = (historiaId: number, usuarioId: number) =>
-  post<Votacion>(`/backlog/${historiaId}/votacion/rondas`, { usuario_id: usuarioId })
+export const abrirNuevaRonda = (historiaId: number) =>
+  post<Votacion>(`/backlog/${historiaId}/votacion/rondas`, {})
 
-export const registrarEstimacion = (historiaId: number, usuarioId: number, estimacionSp: number) =>
-  post<HistoriaResumen>(`/backlog/${historiaId}/votacion/estimacion`, {
-    usuario_id: usuarioId,
-    estimacion_sp: estimacionSp,
-  })
+export const registrarEstimacion = (historiaId: number, estimacionSp: number) =>
+  post<HistoriaResumen>(`/backlog/${historiaId}/votacion/estimacion`, { estimacion_sp: estimacionSp })
 
 export async function listarIntegrantes(proyectoId: string): Promise<Integrante[]> {
   const integrantes = await get<IntegranteDeApi[]>(`/projects/${proyectoId}/members`)

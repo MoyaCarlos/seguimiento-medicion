@@ -32,9 +32,18 @@ type CampoSelectProps = {
   opciones: { valor: string; etiqueta: string }[]
   onChange: (value: string) => void
   error?: string
+  placeholder?: string
 }
 
-export function CampoSelect({ id, label, value, opciones, onChange, error }: CampoSelectProps) {
+export function CampoSelect({
+  id,
+  label,
+  value,
+  opciones,
+  onChange,
+  error,
+  placeholder = 'Seleccioná un rol',
+}: CampoSelectProps) {
   return (
     <div className="field">
       <label htmlFor={id}>{label}</label>
@@ -45,7 +54,7 @@ export function CampoSelect({ id, label, value, opciones, onChange, error }: Cam
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
       >
-        <option value="">Seleccioná un rol</option>
+        <option value="">{placeholder}</option>
         {opciones.map((opcion) => (
           <option key={opcion.valor} value={opcion.valor}>
             {opcion.etiqueta}
