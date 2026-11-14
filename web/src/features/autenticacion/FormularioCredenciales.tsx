@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
@@ -62,7 +62,8 @@ export function FormularioCredenciales({
   const formulario = useRef<HTMLFormElement>(null)
   const fallo = useRef(false)
 
-  useEffect(() => {
+  // Layout effect: el foco vuelve en el mismo commit en que aparece el aviso, no un tick después.
+  useLayoutEffect(() => {
     if (enviando || !fallo.current) return
     fallo.current = false
     formulario.current?.querySelector<HTMLButtonElement>('button[type="submit"]')?.focus()
