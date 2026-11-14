@@ -68,7 +68,9 @@ func TestCalcularEstadoProyecto_TablaDeDecision(t *testing.T) {
 	}{
 		{"sprint activo => en curso aunque la fecha de fin esté vencida", conFechas, []Sprint{sprint(SprintActivo)}, despues, ProyectoEnCurso},
 		{"sprint activo dentro del rango => en curso", conFechas, []Sprint{sprint(SprintActivo)}, enRango, ProyectoEnCurso},
-		{"sin activos y todos finalizados => finalizado", conFechas, []Sprint{sprint(SprintFinalizado), sprint(SprintFinalizado)}, enRango, ProyectoFinalizado},
+		{"todos finalizados con fecha de fin futura => en curso", conFechas, []Sprint{sprint(SprintFinalizado), sprint(SprintFinalizado)}, enRango, ProyectoEnCurso},
+		{"todos finalizados el mismo día del fin (borde inclusivo) => en curso", conFechas, []Sprint{sprint(SprintFinalizado)}, finHoy, ProyectoEnCurso},
+		{"todos finalizados sin fecha de fin => en curso", Project{}, []Sprint{sprint(SprintFinalizado)}, enRango, ProyectoEnCurso},
 		{"todos finalizados con fecha de fin vencida => finalizado", conFechas, []Sprint{sprint(SprintFinalizado)}, despues, ProyectoFinalizado},
 		{"sin sprints iniciados, ahora antes del inicio => planificado", conFechas, nil, antes, ProyectoPlanificado},
 		{"sin sprints iniciados, ahora igual al inicio (borde inclusivo) => en curso", conFechas, nil, inicioHoy, ProyectoEnCurso},
@@ -91,6 +93,20 @@ func TestCalcularEstadoProyecto_TablaDeDecision(t *testing.T) {
 				t.Errorf("CalcularEstadoProyecto() = %q, se esperaba %q", got, c.esperado)
 			}
 		})
+	}
+}
+
+// #173: cerrar todos los Sprints no finaliza el proyecto si su fecha de fin
+// todavía no pasó (caso detectado en Render con fin 2027-10-01).
+func TestCalcularEstadoProyecto_FechaFinFuturaConSprintsFinalizados(t *testing.T) {
+	inicio := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	fin := time.Date(2027, 10, 1, 0, 0, 0, 0, time.UTC)
+	proyecto := Project{FechaInicio: tiempoPtr(inicio), FechaFin: tiempoPtr(fin)}
+	sprints := []Sprint{{Estado: SprintFinalizado}, {Estado: SprintFinalizado}}
+	ahora := civilLocal(2026, 10, 30)
+
+	if got := CalcularEstadoProyecto(proyecto, sprints, ahora); got != ProyectoEnCurso {
+		t.Errorf("CalcularEstadoProyecto() = %q, se esperaba %q", got, ProyectoEnCurso)
 	}
 }
 

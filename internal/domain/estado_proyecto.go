@@ -15,26 +15,30 @@ const (
 // CalcularEstadoProyecto deriva el estado del proyecto. Un proyecto cerrado por
 // el Scrum Master es "Finalizado" sin mirar nada más (#300). Si está abierto,
 // los Sprints tienen prioridad sobre las fechas: un Sprint Activo mantiene el
-// proyecto "En curso"; todos Finalizado ⇒ "Finalizado"; un Finalizado junto a
-// un Pendiente ⇒ "En curso" (FR-016); sin ejecución iniciada, deciden las
-// fechas del proyecto, comparadas por día calendario (los bordes [inicio, fin]
-// son inclusivos).
+// proyecto "En curso"; un Finalizado junto a un Pendiente también (FR-016).
+// Con todos los Sprints Finalizado, el proyecto recién es "Finalizado" cuando
+// su fecha de fin ya pasó (#173); sin fecha de fin o con fecha futura sigue
+// "En curso". Sin ejecución iniciada, deciden las fechas del proyecto,
+// comparadas por día calendario (los bordes [inicio, fin] son inclusivos).
 func CalcularEstadoProyecto(p Project, sprints []Sprint, ahora time.Time) EstadoProyecto {
 	if p.FechaCierre != nil {
 		return ProyectoFinalizado
 	}
+	ahora = inicioDelDiaCivil(ahora)
 	for _, s := range sprints {
 		if s.Estado == SprintActivo {
 			return ProyectoEnCurso
 		}
 	}
 	if len(sprints) > 0 && todosFinalizados(sprints) {
-		return ProyectoFinalizado
+		if p.FechaFin != nil && ahora.After(*p.FechaFin) {
+			return ProyectoFinalizado
+		}
+		return ProyectoEnCurso
 	}
 	if hayFinalizado(sprints) {
 		return ProyectoEnCurso
 	}
-	ahora = inicioDelDiaCivil(ahora)
 	if p.FechaInicio == nil || ahora.Before(*p.FechaInicio) {
 		return ProyectoPlanificado
 	}

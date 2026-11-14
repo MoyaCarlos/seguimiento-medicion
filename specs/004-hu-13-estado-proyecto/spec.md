@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-04
 
-**Status**: Implementada (US1 y US2), pendiente de revisión por PR.
+**Status**: Implementada (US1 y US2). Regla de finalización ajustada por #173 (2026-11-11).
 
 **Input**: User description: "HU-13: Fechas y Estado del Proyecto. Como Scrum Master quiero registrar la fecha de inicio y finalización de un proyecto y consultar su estado general para poder tener visibilidad del ciclo de vida completo del proyecto. El registro de fechas ya lo resuelve HU-04 (editar proyecto), así que esta historia cubre solo la consulta de estado: dado un proyecto con Sprints y fechas cargadas, al consultar su estado el sistema muestra si está "Planificado", "En curso" o "Finalizado" según la fecha actual y el estado de sus Sprints. Se apoya en Project (HU-04) y en el SprintRepository (HU-05), ya en main."
 
@@ -12,11 +12,15 @@
 
 ### Session 2026-10-04
 
-- Q: Cuando el estado de los Sprints y las fechas del proyecto se contradicen (p.ej. un Sprint "Activo" con la fecha de fin ya transcurrida), ¿qué señal manda para el estado? → A: Los Sprints mandan y las fechas son respaldo: cualquier Sprint "Activo" ⇒ "En curso" aunque la fecha de fin haya pasado; si no hay "Activo" y todos los Sprints están "Finalizado" ⇒ "Finalizado"; en el resto deciden las fechas.
+- Q: Cuando el estado de los Sprints y las fechas del proyecto se contradicen (p.ej. un Sprint "Activo" con la fecha de fin ya transcurrida), ¿qué señal manda para el estado? → A: Los Sprints mandan y las fechas son respaldo: cualquier Sprint "Activo" ⇒ "En curso" aunque la fecha de fin haya pasado; si no hay "Activo" y todos los Sprints están "Finalizado" ⇒ "Finalizado", siempre que la fecha de fin ya haya pasado (ajustado el 2026-11-11, ver Session 2026-11-11); en el resto deciden las fechas.
 
 ### Session 2026-10-05
 
 - Q: ¿Qué estado corresponde cuando el proyecto no tiene ningún Sprint "Activo" pero tiene al menos un Sprint "Finalizado" y al menos un "Pendiente" (y, por ejemplo, no tiene fecha de inicio alcanzada)? → A: Hueco de especificación detectado en la revisión externa (code review) y confirmado en esta sesión. Un Sprint "Finalizado" es evidencia de que hubo ejecución, pero el proyecto no terminó porque queda un Sprint "Pendiente". Regla: sin "Activo", con al menos un "Finalizado" y al menos un "Pendiente" ⇒ "En curso". Las fechas solo deciden cuando no hay Sprints iniciados (ninguno "Activo" ni "Finalizado").
+
+### Session 2026-11-11
+
+- Decisión del Scrum Master (#173): con todos los Sprints "Finalizado", el proyecto pasa a "Finalizado" solo cuando su fecha de fin ya pasó. Con fecha de fin futura o sin fecha de fin, sigue "En curso": cerrar un Sprint no finaliza el proyecto entre un Sprint y el siguiente. Un Sprint "Pendiente" junto a uno o más "Finalizado" sigue dando "En curso" (FR-016), aunque la fecha de fin haya pasado. Los bordes [inicio, fin] siguen siendo inclusivos.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -31,10 +35,11 @@ Como Scrum Master, desde el panel de un proyecto consulto su estado general y el
 **Acceptance Scenarios**:
 
 1. **Given** un proyecto con fecha de inicio y fecha de fin cargadas y al menos un Sprint en estado "Activo", **When** consulto su estado, **Then** el sistema muestra "En curso".
-2. **Given** un proyecto con al menos un Sprint y todos sus Sprints en estado "Finalizado", **When** consulto su estado, **Then** el sistema muestra "Finalizado".
-3. **Given** un proyecto con fecha de inicio futura y sin ningún Sprint iniciado (sin Sprints "Activo" ni "Finalizado"), **When** consulto su estado, **Then** el sistema muestra "Planificado".
-4. **Given** un proyecto sin Sprints iniciados y con la fecha actual dentro del rango [fecha_inicio, fecha_fin], **When** consulto su estado, **Then** el sistema muestra "En curso".
-5. **Given** un identificador de proyecto que no existe, **When** consulto su estado, **Then** el sistema responde "proyecto no encontrado".
+2. **Given** un proyecto con al menos un Sprint, todos sus Sprints en estado "Finalizado" y la fecha de fin ya pasada, **When** consulto su estado, **Then** el sistema muestra "Finalizado".
+3. **Given** un proyecto con al menos un Sprint y todos sus Sprints en estado "Finalizado" pero con fecha de fin futura o sin fecha de fin, **When** consulto su estado, **Then** el sistema muestra "En curso".
+4. **Given** un proyecto con fecha de inicio futura y sin ningún Sprint iniciado (sin Sprints "Activo" ni "Finalizado"), **When** consulto su estado, **Then** el sistema muestra "Planificado".
+5. **Given** un proyecto sin Sprints iniciados y con la fecha actual dentro del rango [fecha_inicio, fecha_fin], **When** consulto su estado, **Then** el sistema muestra "En curso".
+6. **Given** un identificador de proyecto que no existe, **When** consulto su estado, **Then** el sistema responde "proyecto no encontrado".
 
 ---
 
@@ -49,7 +54,8 @@ Como Scrum Master, cada vez que abro o refresco el panel del proyecto el estado 
 **Acceptance Scenarios**:
 
 1. **Given** un proyecto consultado cuyo estado era "Planificado", **When** se inicia un Sprint del proyecto y vuelvo a consultar su estado, **Then** el sistema muestra "En curso" sin haber ejecutado ninguna acción de recálculo manual.
-2. **Given** un proyecto consultado cuyo estado era "En curso", **When** se cierra su último Sprint y vuelvo a consultar su estado, **Then** el sistema muestra "Finalizado".
+2. **Given** un proyecto consultado cuyo estado era "En curso" y su fecha de fin ya pasó, **When** se cierra su último Sprint y vuelvo a consultar su estado, **Then** el sistema muestra "Finalizado".
+3. **Given** un proyecto consultado cuyo estado era "En curso" y su fecha de fin es futura o no está cargada, **When** se cierra su último Sprint y vuelvo a consultar su estado, **Then** el sistema muestra "En curso".
 
 ---
 
@@ -62,7 +68,10 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **IF** el proyecto no tiene ninguna fecha cargada y no tiene Sprints iniciados, **THEN** el sistema **shall** mostrar "Planificado".
 - **IF** el proyecto solo tiene Sprints en estado "Pendiente" y su fecha de inicio es futura, **THEN** el sistema **shall** mostrar "Planificado" (un Sprint pendiente no constituye ejecución).
 - **IF** el proyecto tiene un Sprint "Activo" pero la fecha de fin del proyecto ya pasó, **THEN** el sistema **shall** mostrar "En curso" (el Sprint "Activo" prevalece sobre la fecha vencida; el calendario solo es respaldo).
-- **IF** el proyecto no tiene ningún Sprint "Activo" pero tiene al menos un Sprint "Finalizado" y al menos un "Pendiente", **THEN** el sistema **shall** mostrar "En curso" (un Sprint cerrado prueba que hubo ejecución; el proyecto no ha terminado porque queda trabajo pendiente).
+- **IF** el proyecto no tiene ningún Sprint "Activo" pero tiene al menos un Sprint "Finalizado" y al menos un "Pendiente", **THEN** el sistema **shall** mostrar "En curso" (un Sprint cerrado prueba que hubo ejecución; el proyecto no ha terminado porque queda trabajo pendiente), aunque la fecha de fin del proyecto ya haya pasado.
+- **IF** todos los Sprints del proyecto están en estado "Finalizado" y la fecha de fin ya pasó, **THEN** el sistema **shall** mostrar "Finalizado".
+- **IF** todos los Sprints del proyecto están en estado "Finalizado" y la fecha de fin es futura o no está cargada, **THEN** el sistema **shall** mostrar "En curso" (cerrar el último Sprint no finaliza el proyecto si todavía le queda plazo; #173).
+- **WHEN** todos los Sprints están "Finalizado" y la fecha actual coincide exactamente con la fecha de fin del proyecto, **THEN** el sistema **shall** mostrar "En curso" (el borde de fin es inclusivo; recién finaliza al día siguiente).
 - **IF** el proyecto tiene fechas cargadas pero ningún Sprint, **THEN** el sistema **shall** derivar el estado únicamente a partir de la fecha actual y las fechas del proyecto.
 - **IF** existe una fecha de fin sin fecha de inicio, **THEN** el sistema **shall** manejarlo como un proyecto sin inicio definido (no puede estar "En curso" por fecha; el estado dependerá de sus Sprints).
 - **WHEN** se consulta el estado de un proyecto inexistente, **THEN** el sistema **shall** responder "proyecto no encontrado".
@@ -76,7 +85,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-001**: El sistema MUST calcular y mostrar el estado general de un proyecto al consultarlo, con un valor entre "Planificado", "En curso" y "Finalizado".
 - **FR-002**: El estado MUST derivarse, en cada consulta, de la fecha actual, de la fecha de inicio y la fecha de fin del proyecto y de los estados de los Sprints del proyecto.
 - **FR-003**: El sistema MUST mostrar "En curso" cuando el proyecto tenga al menos un Sprint en estado "Activo".
-- **FR-004**: El sistema MUST mostrar "Finalizado" cuando el proyecto tenga al menos un Sprint y todos sus Sprints estén en estado "Finalizado".
+- **FR-004**: El sistema MUST mostrar "Finalizado" cuando el proyecto tenga al menos un Sprint, todos sus Sprints estén en estado "Finalizado" y la fecha de fin ya haya pasado (comparación por día calendario, con el día de fin todavía "En curso"). Si la fecha de fin es futura o no está cargada, MUST mostrar "En curso".
 - **FR-005**: Cuando el proyecto no tenga Sprints iniciados (ninguno "Activo" ni "Finalizado"), el sistema MUST derivar el estado a partir de las fechas: "Planificado" si la fecha actual es anterior a la fecha de inicio; "En curso" si está dentro del rango de fechas; "Finalizado" si es posterior a la fecha de fin. Un Sprint "Finalizado" junto a un "Pendiente" no cuenta como "sin Sprints iniciados": ese caso se rige por FR-016.
 - **FR-006**: El sistema MUST tratar los límites del rango de fechas de forma inclusiva: en la fecha de inicio y en la fecha de fin el proyecto está "En curso".
 - **FR-007**: El sistema MUST mostrar "Planificado" cuando el proyecto no tenga ninguna ejecución registrada: sin Sprints iniciados y sin fecha de inicio alcanzada (incluidos los proyectos sin fechas cargadas). Un Sprint "Finalizado" sí registra ejecución, por lo que un proyecto con `[Finalizado, Pendiente]` queda excluido de este requisito (se rige por FR-016).
@@ -86,9 +95,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-011**: El sistema MUST recalcular el estado en cada consulta (on-demand), de modo que refleje la fecha actual y los Sprints vigentes sin persistir el estado ni requerir un recálculo manual.
 - **FR-012**: La consulta de estado MUST ser de solo lectura: MUST NOT modificar las fechas del proyecto ni el estado de sus Sprints.
 - **FR-013**: El registro y la edición de las fechas de inicio y fin del proyecto quedan cubiertos por HU-04 y MUST NOT formar parte del alcance de esta historia.
-- **FR-014**: Cuando la información de fechas y la de Sprints entren en conflicto (por ejemplo, un Sprint "Activo" con la fecha de fin del proyecto ya transcurrida), el sistema MUST dar prioridad a los Sprints sobre las fechas: un Sprint "Activo" implica "En curso" aunque la fecha de fin haya pasado, y las fechas del proyecto solo deciden cuando no hay Sprints iniciados.
+- **FR-014**: Cuando la información de fechas y la de Sprints entren en conflicto (por ejemplo, un Sprint "Activo" con la fecha de fin del proyecto ya transcurrida), el sistema MUST dar prioridad a los Sprints sobre las fechas: un Sprint "Activo" implica "En curso" aunque la fecha de fin haya pasado. Con todos los Sprints "Finalizado", la fecha de fin decide si el proyecto terminó: "Finalizado" solo si ya pasó; "En curso" si es futura o no está cargada. Las fechas del proyecto solo deciden cuando no hay Sprints iniciados.
 - **FR-015**: El sistema MUST devolver el estado usando las etiquetas visibles "Planificado", "En curso" y "Finalizado", con un valor canónico interno estable asociado a cada una.
-- **FR-016**: El sistema MUST mostrar "En curso" cuando el proyecto no tenga Sprints "Activo" pero tenga al menos un Sprint "Finalizado" y al menos un Sprint "Pendiente", sin recurrir a las fechas del proyecto.
+- **FR-016**: El sistema MUST mostrar "En curso" cuando el proyecto no tenga Sprints "Activo" pero tenga al menos un Sprint "Finalizado" y al menos un Sprint "Pendiente", sin recurrir a las fechas del proyecto, aunque la fecha de fin del proyecto ya haya pasado.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -114,9 +123,10 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - Las fechas del proyecto son opcionales (HU-04); esta historia define el comportamiento para proyectos sin fechas y sin Sprints iniciados: "Planificado".
 - Los bordes del rango de fechas se tratan de forma inclusiva (inicio y fin cuentan como "En curso"), consistente con el criterio laxo de HU-04, que permite fechas de proyecto iguales.
 - Un Sprint en estado "Activo" es evidencia de que el proyecto está "En curso"; un Sprint "Pendiente" no es evidencia de ejecución.
-- Precedencia acordada (2026-10-04): los Sprints mandan sobre las fechas. Un Sprint "Activo" mantiene el proyecto "En curso" aunque la fecha de fin haya pasado; las fechas del proyecto solo deciden cuando no hay Sprints iniciados (ninguno "Activo" ni "Finalizado").
+- Precedencia acordada (2026-10-04, ajustada el 2026-11-11): los Sprints mandan sobre las fechas. Un Sprint "Activo" mantiene el proyecto "En curso" aunque la fecha de fin haya pasado; con todos los Sprints "Finalizado", la fecha de fin decide si el proyecto terminó (#173); las fechas del proyecto solo deciden cuando no hay Sprints iniciados (ninguno "Activo" ni "Finalizado").
 - Se consideran iniciados los Sprints en estado "Activo" o "Finalizado"; "Pendiente" no cuenta como inicio.
-- Un Sprint "Finalizado" registra ejecución: si convive con un Sprint "Pendiente" (sin ningún "Activo"), el proyecto está "En curso" (FR-016) y las fechas no se consultan.
+- Un Sprint "Finalizado" registra ejecución: si convive con un Sprint "Pendiente" (sin ningún "Activo"), el proyecto está "En curso" (FR-016) y las fechas no se consultan, aunque la fecha de fin ya haya pasado.
+- Un proyecto con todos sus Sprints "Finalizado" y sin fecha de fin queda "En curso": nunca pasa a "Finalizado" por fecha mientras no tenga fecha de fin (#173).
 - Se asume la regla de HU-05 de a lo sumo un Sprint "Activo" y a lo sumo un Sprint "Pendiente" por proyecto a la vez.
 - El cálculo vive en la capa de dominio/servicio y se apoya en el `Project` de HU-04 y en el `SprintRepository` de HU-05, ambos ya en `main`; el detalle de implementación se define en `/speckit.plan`.
 - La presentación del estado en la interfaz (ubicación exacta en el panel del proyecto) queda fuera del alcance de esta historia; esta historia garantiza el valor devuelto por la consulta.
