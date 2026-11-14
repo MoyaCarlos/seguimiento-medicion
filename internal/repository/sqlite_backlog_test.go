@@ -464,6 +464,17 @@ func TestSQLiteBacklogRepository_ActualizarSiEstimacionSigueSiendo_RechazaLaCarg
 	}
 }
 
+func TestSQLiteBacklogRepository_ActualizarSiEstimacionSigueSiendo_HistoriaInexistente(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	editada := domain.BacklogItem{ID: 999, Titulo: "Nueva", Descripcion: "Descripción nueva"}
+
+	err := repo.ActualizarSiEstimacionSigueSiendo(context.Background(), editada, nil)
+
+	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
+		t.Fatalf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)
+	}
+}
+
 func TestSQLiteBacklogRepository_Guardar_PersisteCriterios(t *testing.T) {
 	repo := nuevaBDDePrueba(t)
 	ctx := context.Background()
