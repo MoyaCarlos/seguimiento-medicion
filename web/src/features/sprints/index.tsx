@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
+import { Icono } from '../../compartido/componentes/Icono'
+import { periodoCorto } from '../../compartido/formato/fechas'
+import { useProyectos } from '../../compartido/proyectos/useProyectos'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
@@ -63,27 +66,39 @@ function PantallaSprints({ id }: { id?: string }) {
   }
 
   const grupos = agruparPorEstado(sprints)
+  const proyectos = useProyectos()
+  const proyecto =
+    proyectos.estado === 'listo' ? proyectos.proyectos.find((p) => String(p.id) === id) : undefined
 
   return (
     <div className="sprints-pantalla">
-      <h1>Sprints</h1>
-      <p>Proyecto actual: <strong>{id}</strong></p>
-      {aviso && <ErrorMessage message={aviso} />}
-      {(cargando || creando) && <LoadingIndicator />}
-      <div>
+      <header className="page-header sprints-encabezado">
+        <div>
+          <p className="eyebrow">Proyecto #{id}</p>
+          <h1>Sprints</h1>
+        </div>
         <Button
           type="button"
           onClick={crear}
           disabled={creando || !puedeGestionar}
           aria-describedby={puedeGestionar ? undefined : 'sprints-nota-crear'}
         >
+          <Icono nombre="mas" />
           Crear Sprint
         </Button>
         {!puedeGestionar && (
           <NotaGestion id="sprints-nota-crear" texto="Solo el Scrum Master puede crear un Sprint" />
         )}
-      </div>
-      <div className="sprints-secciones">
+      </header>
+      {proyecto?.fecha_inicio && proyecto.fecha_fin && (
+        <p className="sprints-plazo">
+          <strong>Plazo del proyecto:</strong>{' '}
+          {`${periodoCorto(proyecto.fecha_inicio, proyecto.fecha_fin)}. Los Sprints tienen que quedar dentro de este rango.`}
+        </p>
+      )}
+      {aviso && <ErrorMessage message={aviso} />}
+      {(cargando || creando) && <LoadingIndicator />}
+      <div className="sprints-tablero">
         {ESTADOS.map((estado) => (
           <SeccionSprints
             key={estado}

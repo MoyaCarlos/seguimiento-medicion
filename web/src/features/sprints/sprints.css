@@ -3,29 +3,132 @@
   gap: 1rem;
 }
 
-.sprints-secciones {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+.sprints-encabezado {
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
 
-.sprints-seccion {
+.sprints-plazo {
+  color: #475569;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.sprints-tablero {
+  align-items: start;
   display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sprints-carril {
   align-content: start;
-  gap: 0.75rem;
+  background: rgb(15 27 45 / 3.5%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sprints-carril h2 {
+  align-items: center;
+  color: #475569;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.09em;
+  margin: 0;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.sprints-carril h2::before {
+  background: #94a3b8;
+  border-radius: 50%;
+  content: '';
+  height: 8px;
+  width: 8px;
+}
+
+.sprints-carril--activo h2 {
+  color: #0b5f58;
+}
+
+.sprints-carril--activo h2::before {
+  background: var(--brand);
+}
+
+.sprints-carril--fin h2 {
+  color: #166534;
+}
+
+.sprints-carril--fin h2::before {
+  background: #15803d;
+}
+
+.sprints-vacio {
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+  padding: 20px 14px;
+  text-align: center;
 }
 
 .sprint-tarjeta {
-  border: 1px solid #d0d5dd;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
   display: grid;
-  gap: 0.5rem;
+  gap: 14px;
+  padding: 16px;
+}
+
+.sprint-tarjeta h3 {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-goal {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 2px 0 0;
+}
+
+.sprint-fechas {
+  align-items: center;
+  background: #eef2f6;
+  border-radius: 7px;
+  color: #475569;
+  display: inline-flex;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  gap: 6px;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 2px 9px;
+}
+
+.sprint-fechas svg {
+  height: 13px;
+  width: 13px;
 }
 
 .sprint-tarjeta form {
   display: grid;
   gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  .sprints-tablero {
+    grid-template-columns: 1fr;
+  }
 }
 
 .esfuerzo-historia {
