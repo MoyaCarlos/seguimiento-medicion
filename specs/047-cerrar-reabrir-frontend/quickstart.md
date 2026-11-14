@@ -7,7 +7,7 @@
 ## Automatizado (en cada fase)
 ```bash
 cd web
-npm test        # Vitest: debe incluir permisos.test.tsx sin modificar (SC-006)
+npm test        # Vitest: debe incluir permisos.test.tsx, que solo suma fechaCierre: null a tres toEqual (SC-006)
 npm run lint
 npm run build
 ```

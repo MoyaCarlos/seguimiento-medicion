@@ -125,7 +125,7 @@ El Product Builder no ve la zona «Cerrar proyecto», o la ve con sus botones de
 - **SC-003**: El 100% de los mensajes 409 y de los avisos 403/404 de cerrar y reabrir se muestran con el texto del servidor o el aviso estándar, sin pantalla en blanco ni mensaje genérico.
 - **SC-004**: En un proyecto cerrado, el 100% de las acciones de escritura de las pantallas alcanzadas aparecen deshabilitadas con una nota, y el 0% de ellas provoca un 409 por acción del usuario.
 - **SC-005**: Tras reabrir, el 100% de esas acciones vuelve a estar habilitada sin recargar la página.
-- **SC-006**: Las pruebas de permisos existentes de HU-21 pasan sin modificarse.
+- **SC-006**: Las pruebas de permisos existentes de HU-21 pasan sin cambiar su comportamiento verificado: `permisos.test.tsx` solo se ajusta sumando `fechaCierre: null` a tres aserciones `toEqual` por el campo nuevo del tipo, sin cambiar ninguna aserción de comportamiento. El resto de las pruebas de HU-21 y de las pantallas no se modifica.
 - **SC-007**: Cada escenario normal, alternativo, límite y de error de esta spec tiene una prueba automatizada que lo cubre.
 
 ## Assumptions

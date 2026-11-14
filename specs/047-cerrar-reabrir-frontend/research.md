@@ -5,7 +5,7 @@ No quedaban `NEEDS CLARIFICATION`. Se verificó el código actual y el contrato 
 ## Hallazgos del código
 
 - `useRolEnProyecto` ya hace `GET /projects/{id}` y lee solo `rol`; la respuesta de la spec 044 incluye `fecha_cierre` (`internal/http/project_dto.go`). No hace falta ningún pedido nuevo.
-- `useEsScrumMaster` lo usan Editar, Configuracion, Sprints y Votación; `permisos.test.tsx` cubre ambos hooks y no se modifica (SC-006).
+- `useEsScrumMaster` lo usan Editar, Configuracion, Sprints y Votación; `permisos.test.tsx` cubre ambos hooks y solo se ajusta sumando `fechaCierre: null` a tres aserciones `toEqual` por el campo nuevo del tipo, sin cambiar ninguna aserción de comportamiento (SC-006).
 - Editar ya consulta el proyecto con `obtenerProyecto` y el hook hace su propio `GET` (dos `GET` iguales). Es el comportamiento de HU-21; no se cambia.
 - Backlog, Defectos y la pantalla de Equipo (Configuracion) todavía no consultan el rol en todas sus acciones: entran en la Fase 3 llamando al hook.
 

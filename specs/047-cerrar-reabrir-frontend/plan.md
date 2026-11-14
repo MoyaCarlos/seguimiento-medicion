@@ -24,7 +24,7 @@ Solo frontend. Se amplían los permisos compartidos de HU-21 (`web/src/compartid
 
 **Performance Goals**: sin pedidos nuevos: cada pantalla sigue haciendo el mismo `GET /projects/{id}` de HU-21 (FR-007a)
 
-**Constraints**: no tocar `App.tsx`, `App.css`, `rutas.tsx`, `LayoutProyecto.tsx` ni el backend; estilos solo en el CSS de cada feature; los usos y las pruebas de HU-21 no cambian (SC-006)
+**Constraints**: no tocar `App.tsx`, `App.css`, `rutas.tsx`, `LayoutProyecto.tsx` ni el backend; estilos solo en el CSS de cada feature; los usos y las pruebas de HU-21 no cambian de comportamiento (SC-006; `permisos.test.tsx` solo suma `fechaCierre: null` a tres aserciones `toEqual`)
 
 **Scale/Scope**: 3 fases; el Panel y 7 pantallas que escriben (Editar proyecto, Sprints, Historias —crear y listado—, Votación, Defectos, Equipo) y los componentes hijos que reciben las props
 
@@ -75,7 +75,7 @@ web/src/
 │   ├── useEsScrumMaster.ts          # envoltorio fino sobre usePermisosProyecto
 │   ├── AvisoProyectoCerrado.tsx     # nuevo
 │   ├── NotaCerrado.tsx              # nuevo (o NotaGestion con otro texto, ver research)
-│   └── permisos.test.tsx            # sin modificar; pruebas nuevas en archivos nuevos
+│   └── permisos.test.tsx            # solo suma fechaCierre: null a 3 toEqual; pruebas nuevas en archivos nuevos
 ├── features/proyecto/
 │   ├── api.ts                       # + cerrarProyecto, reabrirProyecto, fecha_cierre en Proyecto
 │   ├── ZonaCierreProyecto.tsx       # nuevo
