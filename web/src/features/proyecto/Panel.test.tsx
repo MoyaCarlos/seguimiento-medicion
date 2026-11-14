@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -147,8 +147,8 @@ describe('panel del proyecto', () => {
       const fetchMock = responderEstado(estado)
       abrir()
 
-      expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
-      expect(await screen.findByText(estado)).toBeTruthy()
+      expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+      expect(await screen.findAllByText(estado)).toHaveLength(2)
       expect(fetchMock.mock.calls.some(([url]) => url === '/projects/3/status')).toBe(true)
     },
   )
@@ -157,7 +157,7 @@ describe('panel del proyecto', () => {
     responderEstado(null)
     abrir()
 
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(await screen.findByText('no se pudo calcular el estado')).toBeTruthy()
     expect(await screen.findByText('Sin datos')).toBeTruthy()
   })
@@ -166,11 +166,11 @@ describe('panel del proyecto', () => {
     const fetchMock = responderCambio('En curso')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
-    expect(await screen.findByText('En curso')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
+    expect((await screen.findAllByText('En curso')).length).toBeGreaterThan(0)
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/projects/4/status')
   })
 
@@ -178,10 +178,10 @@ describe('panel del proyecto', () => {
     responderCambio('pendiente')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
     expect(screen.getByText('Consultando…')).toBeTruthy()
     expect(screen.queryByText('Planificado')).toBeNull()
   })
@@ -190,10 +190,10 @@ describe('panel del proyecto', () => {
     responderCambio('error')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
     expect(await screen.findByText('Sin datos')).toBeTruthy()
     expect(screen.getByText('no se pudo calcular el estado')).toBeTruthy()
     expect(screen.queryByText('Planificado')).toBeNull()
@@ -236,8 +236,9 @@ describe('panel del proyecto', () => {
     responderEstado('Suspendido')
     abrir()
 
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(await screen.findByText('Suspendido')).toBeTruthy()
+    expect(document.querySelector('.badge')).toBeNull()
   })
 
   it('US5.2: Given el resumen de un proyecto, When presiono "Exportar reporte del proyecto", Then se descarga el PDF del proyecto', async () => {
@@ -245,7 +246,7 @@ describe('panel del proyecto', () => {
     const descarga = simularDescarga()
     const api = responderPanelYReporte(respuestaPdf())
     abrir()
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
 
     await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
 
@@ -259,7 +260,7 @@ describe('panel del proyecto', () => {
   it('Given el resumen de un proyecto, When se muestra, Then "Exportar reporte del proyecto" es el botón compartido de exportar, con su flecha', async () => {
     responderPanelYReporte(respuestaPdf())
     abrir()
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
 
     const boton = screen.getByRole('button', { name: 'Exportar reporte del proyecto' })
 
@@ -274,7 +275,7 @@ describe('panel del proyecto', () => {
       new Response(JSON.stringify({ mensaje: 'no se pudo generar el reporte' }), { status: 500 }),
     )
     abrir()
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
 
     await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
 
@@ -322,15 +323,16 @@ describe('pretítulo del panel', () => {
     )
   }
 
-  it('Dado el panel principal, cuando se abre, entonces «Panel principal» va encima del título', async () => {
+  it('Dado el panel principal, cuando se abre, entonces «Panel principal · #3» va encima del título con el nombre del proyecto', async () => {
     responderTodo()
     abrirNavegable()
 
-    const titulo = await screen.findByRole('heading', { level: 1, name: 'Panel del proyecto' })
-    const pretitulo = screen.getByText('Panel principal')
+    const titulo = await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })
+    const pretitulo = screen.getByText('Panel principal · #3')
 
     expect(pretitulo.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getAllByText('Panel principal')).toHaveLength(1)
+    expect(screen.getAllByText(/Panel principal/)).toHaveLength(1)
+    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
   })
 
   it('Dado «Editar proyecto», cuando se abre, entonces no muestra «Panel principal»', async () => {
@@ -340,6 +342,119 @@ describe('pretítulo del panel', () => {
 
     await screen.findByRole('heading', { name: 'Editar proyecto' })
 
-    expect(screen.queryByText('Panel principal')).toBeNull()
+    expect(screen.queryByText(/Panel principal/)).toBeNull()
+  })
+})
+
+describe('cabecera y botones del panel como el prototipo', () => {
+  function responder(estado: string, rol?: string, extra: object = {}) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(url.endsWith('/status') ? { estado } : { ...proyecto, rol, ...extra }),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+
+  it.each([
+    ['Planificado', 'badge badge--planificado'],
+    ['En curso', 'badge'],
+    ['Finalizado', 'badge badge--finalizado'],
+  ])('Given el estado %s, When abre el panel, Then el título lleva la insignia «%s» con su variante', async (estado, clases) => {
+    responder(estado, 'scrum_master')
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: new RegExp(`Proyecto Alfa`) })
+    const insignia = titulo.parentElement?.querySelector('.badge')
+
+    expect(insignia?.textContent).toBe(estado)
+    expect(insignia?.className).toBe(clases)
+    expect(titulo.parentElement?.className).toBe('title-row')
+  })
+
+  it('Given que el estado todavía se consulta o falló, When abre el panel, Then el título no muestra insignia', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        url.endsWith('/status')
+          ? Promise.resolve(new Response(JSON.stringify({ mensaje: 'falló' }), { status: 500 }))
+          : Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol: 'scrum_master' }), { status: 200 })),
+      ),
+    )
+    abrir()
+
+    await screen.findByText('Sin datos')
+
+    expect(document.querySelector('.title-row .badge')).toBeNull()
+  })
+
+  it('Given el Scrum Master, When abre el panel, Then los botones van bajo el título en orden Exportar, Configurar equipo (con ícono) y Editar proyecto (principal, con ícono)', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const equipo = await screen.findByRole('link', { name: 'Configurar equipo' })
+    const editar = screen.getByRole('link', { name: 'Editar proyecto' })
+    const exportar = screen.getByRole('button', { name: 'Exportar reporte del proyecto' })
+
+    expect(equipo.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(editar.getAttribute('href')).toBe('/projects/3/proyecto/edit')
+    expect(equipo.className).toBe('button button--secondary')
+    expect(editar.className).toBe('button button--primary')
+    expect(equipo.querySelector('svg')).toBeTruthy()
+    expect(editar.querySelector('svg')).toBeTruthy()
+    expect(exportar.compareDocumentPosition(equipo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(equipo.compareDocumentPosition(editar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/Solo el Scrum Master puede editar/)).toBeNull()
+  })
+
+  it('Given un Product Builder, When abre el panel, Then «Configurar equipo» y «Editar proyecto» están deshabilitados y la nota explica por qué', async () => {
+    responder('En curso', 'product_builder')
+    abrir()
+
+    const equipo = await screen.findByRole('button', { name: 'Configurar equipo' })
+    const editar = screen.getByRole('button', { name: 'Editar proyecto' })
+    const nota = screen.getByText('Solo el Scrum Master puede editar el proyecto y configurar el equipo.')
+
+    expect((equipo as HTMLButtonElement).disabled).toBe(true)
+    expect((editar as HTMLButtonElement).disabled).toBe(true)
+    expect(equipo.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
+    expect(editar.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
+    expect(screen.queryByRole('link', { name: 'Editar proyecto' })).toBeNull()
+  })
+
+  it('Given la descripción del proyecto, When abre el panel, Then va en una tarjeta «Descripción» con el enlace «Ver estado del proyecto» y su flecha', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const tarjeta = (await screen.findByRole('heading', { level: 2, name: 'Descripción' })).closest('article')
+    const enlace = within(tarjeta as HTMLElement).getByRole('link', { name: 'Ver estado del proyecto' })
+
+    expect(within(tarjeta as HTMLElement).getByText('Descripción', { selector: 'p' })).toBeTruthy()
+    expect(enlace.getAttribute('href')).toBe('/projects/3/status')
+    expect(enlace.className).toBe('enlace')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un proyecto sin descripción, When abre el panel, Then la tarjeta dice «Sin descripción»', async () => {
+    responder('En curso', 'scrum_master', { descripcion: '' })
+    abrir()
+
+    expect(await screen.findByText('Sin descripción')).toBeTruthy()
+  })
+
+  it('Given las fechas del proyecto, When abre el panel, Then el cronograma las muestra como dd/mm/aaaa junto al estado', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const cronograma = (await screen.findByRole('heading', { level: 2, name: 'Cronograma' })).closest('section') as HTMLElement
+
+    expect(within(cronograma).getByText('01/10/2026')).toBeTruthy()
+    expect(within(cronograma).getByText('01/11/2026')).toBeTruthy()
+    expect(within(cronograma).getByText('En curso')).toBeTruthy()
   })
 })
