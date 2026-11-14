@@ -332,3 +332,40 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.panel-equipo {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.panel-equipo li {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+.panel-equipo__nombre {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel-equipo small {
+  color: var(--muted);
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.panel-ayuda {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}

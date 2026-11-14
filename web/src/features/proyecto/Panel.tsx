@@ -9,8 +9,9 @@ import { Icono } from '../../compartido/componentes/Icono'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { fechaCorta } from '../../compartido/formato/fechas'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
-import { descargarReporteProyecto, obtenerEstadoProyecto, obtenerProyecto } from './api'
-import type { EstadoProyecto, Proyecto } from './api'
+import { AvatarProyecto } from '../../compartido/componentes/AvatarProyecto'
+import { ETIQUETAS_ROL, descargarReporteProyecto, listarIntegrantes, obtenerEstadoProyecto, obtenerProyecto } from './api'
+import type { EstadoProyecto, Integrante, Proyecto } from './api'
 import { mensajeDeError } from './errores'
 
 const ESTADOS_CON_INSIGNIA: string[] = ['Planificado', 'En curso', 'Finalizado']
@@ -28,6 +29,9 @@ export function Panel() {
   const [errorEstado, setErrorEstado] = useState('')
   const [cargandoEstado, setCargandoEstado] = useState(true)
   const [noIntegrante, setNoIntegrante] = useState(false)
+  const [integrantes, setIntegrantes] = useState<Integrante[]>([])
+  const [errorEquipo, setErrorEquipo] = useState('')
+  const [cargandoEquipo, setCargandoEquipo] = useState(true)
 
   useEffect(() => {
     let vigente = true
@@ -62,6 +66,25 @@ export function Panel() {
       })
       .finally(() => {
         if (vigente) setCargandoEstado(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [id])
+
+  useEffect(() => {
+    let vigente = true
+
+    listarIntegrantes(id)
+      .then((datos) => {
+        if (vigente) setIntegrantes(datos)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setErrorEquipo(mensajeDeError(causa))
+      })
+      .finally(() => {
+        if (vigente) setCargandoEquipo(false)
       })
 
     return () => {
@@ -127,6 +150,7 @@ export function Panel() {
       {error && <ErrorMessage message={error} />}
 
       {proyecto && (
+        <div className="panel-rejilla">
         <article className="panel-tarjeta">
           <h2 className="panel-tarjeta__titulo">Descripción</h2>
           <p className="panel-prosa">{proyecto.descripcion || 'Sin descripción'}</p>
@@ -164,6 +188,34 @@ export function Panel() {
             </Link>
           </p>
         </article>
+        <aside className="panel-tarjeta">
+          <h2 className="panel-tarjeta__titulo">Equipo</h2>
+          {cargandoEquipo && <LoadingIndicator />}
+          {errorEquipo && <ErrorMessage message={errorEquipo} />}
+          {!cargandoEquipo && !errorEquipo && integrantes.length === 0 && (
+            <p className="panel-ayuda">Todavía no hay integrantes asignados.</p>
+          )}
+          {integrantes.length > 0 && (
+            <ul className="panel-equipo">
+              {integrantes.map((integrante, indice) => (
+                <li key={integrante.id}>
+                  <AvatarProyecto id={indice + 1} nombre={integrante.nombre} />
+                  <span className="panel-equipo__nombre">
+                    {integrante.nombre}
+                    <small>{ETIQUETAS_ROL[integrante.rol]}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="panel-tarjeta__pie">
+            <Link className="enlace" to="settings">
+              {soloLectura ? 'Ver equipo' : 'Configurar equipo'}
+              <Icono nombre="flecha" />
+            </Link>
+          </p>
+        </aside>
+        </div>
       )}
     </section>
   )
