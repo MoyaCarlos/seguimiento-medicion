@@ -1,28 +1,21 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { FormularioHoras } from './FormularioHoras'
-import { imputarHoras, listarIntegrantes } from './api'
+import { imputarHoras } from './api'
 import { fechaPropuesta } from './horas'
 
-vi.mock('./api', () => ({ imputarHoras: vi.fn(), listarIntegrantes: vi.fn() }))
+vi.mock('./api', () => ({ imputarHoras: vi.fn() }))
 
 const imputarMock = vi.mocked(imputarHoras)
-const integrantesMock = vi.mocked(listarIntegrantes)
-
-const INTEGRANTES = [
-  { id: 2, nombre: 'Ana' },
-  { id: 4, nombre: 'Jimena' },
-]
 
 function abrir(fechaFin?: string) {
   const alRegistrar = vi.fn()
-  render(<FormularioHoras historiaId={12} proyectoId={42} fechaFin={fechaFin} alRegistrar={alRegistrar} />)
+  render(<FormularioHoras historiaId={12} fechaFin={fechaFin} alRegistrar={alRegistrar} />)
   return { alRegistrar }
 }
 
-const lista = () => screen.findByLabelText('Integrante') as Promise<HTMLSelectElement>
 const fecha = () => screen.getByLabelText('Fecha') as HTMLInputElement
 const actividad = () => screen.getByLabelText('Actividad') as HTMLInputElement
 const horas = () => screen.getByLabelText('Horas') as HTMLInputElement
@@ -35,14 +28,12 @@ function renderizarOtroControl() {
 
 async function completar(texto = '4') {
   const user = userEvent.setup()
-  await user.selectOptions(await lista(), 'Ana')
   await user.type(actividad(), 'Revisión del PR')
   await user.type(horas(), texto)
   return user
 }
 
 beforeEach(() => {
-  integrantesMock.mockResolvedValue(INTEGRANTES)
   imputarMock.mockResolvedValue({})
 })
 
@@ -51,40 +42,25 @@ afterEach(() => {
 })
 
 describe('FormularioHoras: registrar horas', () => {
-  it('US1.1: consulta los integrantes del proyecto y muestra la carga mientras espera', () => {
-    integrantesMock.mockReturnValue(new Promise(() => {}))
+
+  it('US1.1: muestra los campos de fecha, actividad y horas, sin elegir integrante', () => {
     abrir()
 
-    expect(screen.getByText('Cargando…')).toBeTruthy()
-    expect(integrantesMock).toHaveBeenCalledWith(42)
-  })
-
-  it('US1.1: muestra la lista sin nadie seleccionado y los campos de fecha, actividad y horas', async () => {
-    abrir()
-
-    const seleccion = await lista()
-    expect(seleccion.value).toBe('')
-    expect(within(seleccion).getAllByRole('option').map((o) => o.textContent)).toEqual([
-      'Elegí un integrante',
-      'Ana',
-      'Jimena',
-    ])
+    expect(screen.queryByLabelText('Integrante')).toBeNull()
     expect(fecha().type).toBe('date')
     expect(actividad()).toBeTruthy()
     expect(horas().type).toBe('text')
   })
 
-  it('US1.1: propone la fecha de hoy', async () => {
+  it('US1.1: propone la fecha de hoy', () => {
     abrir()
 
-    await lista()
     expect(fecha().value).toBe(fechaPropuesta(new Date()))
   })
 
-  it('US1.1: si el Sprint ya pasó su fecha de fin, propone esa fecha', async () => {
+  it('US1.1: si el Sprint ya pasó su fecha de fin, propone esa fecha', () => {
     abrir('2020-01-31')
 
-    await lista()
     expect(fecha().value).toBe('2020-01-31')
   })
 
@@ -96,7 +72,6 @@ describe('FormularioHoras: registrar horas', () => {
 
     expect((await screen.findByRole('status')).textContent).toBe('Horas registradas')
     expect(imputarMock).toHaveBeenCalledWith(12, {
-      integrante_id: 2,
       fecha: fechaPropuesta(new Date()),
       actividad: 'Revisión del PR',
       horas: '4',
@@ -104,7 +79,7 @@ describe('FormularioHoras: registrar horas', () => {
     expect(alRegistrar).toHaveBeenCalledTimes(1)
   })
 
-  it('US1.2: al guardar vacía actividad y horas, y conserva integrante y fecha', async () => {
+  it('US1.2: al guardar vacía actividad y horas, y conserva la fecha', async () => {
     abrir()
     const user = await completar()
 
@@ -113,7 +88,6 @@ describe('FormularioHoras: registrar horas', () => {
     await screen.findByText('Horas registradas')
     expect(actividad().value).toBe('')
     expect(horas().value).toBe('')
-    expect((await lista()).value).toBe('2')
     expect(fecha().value).toBe(fechaPropuesta(new Date()))
   })
 
@@ -129,7 +103,6 @@ describe('FormularioHoras: registrar horas', () => {
 
   it('formato h:mm: se muestra la ayuda y el campo de horas está asociado a ella', async () => {
     abrir()
-    await lista()
 
     const ayuda = screen.getByText('Ej.: 1,5 o 1:30 (horas:minutos)')
     expect(ayuda.id).not.toBe('')
@@ -138,7 +111,6 @@ describe('FormularioHoras: registrar horas', () => {
 
   it('formato h:mm: el campo de horas no usa el teclado decimal, que no tiene el signo ":"', async () => {
     abrir()
-    await lista()
 
     expect(horas().getAttribute('inputmode')).not.toBe('decimal')
     expect(horas().getAttribute('inputmode')).toBe('text')
@@ -175,13 +147,6 @@ describe('FormularioHoras: registrar horas', () => {
     expect(guardar().disabled).toBe(true)
     expect(screen.getByText('Cargando…')).toBeTruthy()
     expect(imputarMock).toHaveBeenCalledTimes(1)
-  })
-
-  it('foco: al cargar la lista de integrantes, el foco pasa a ella', async () => {
-    abrir()
-
-    const seleccion = await lista()
-    await waitFor(() => expect(document.activeElement).toBe(seleccion))
   })
 
   describe('foco: al terminar el envío vuelve a donde estaba', () => {
@@ -245,31 +210,17 @@ describe('FormularioHoras: registrar horas', () => {
     })
   })
 
-  it('foco: si la persona se movió mientras cargaba la lista, no le saca el foco', async () => {
-    let responderLista: (lista: typeof INTEGRANTES) => void = () => {}
-    integrantesMock.mockReturnValue(new Promise((resolve) => (responderLista = resolve)))
-    abrir()
-    const otroControl = renderizarOtroControl()
-
-    otroControl.focus()
-    responderLista(INTEGRANTES)
-
-    await lista()
-    expect(document.activeElement).toBe(otroControl)
-  })
-
   it('dos formularios abiertos no repiten los id de sus campos', async () => {
     render(
       <>
-        <FormularioHoras historiaId={1} proyectoId={42} alRegistrar={vi.fn()} />
-        <FormularioHoras historiaId={2} proyectoId={42} alRegistrar={vi.fn()} />
+        <FormularioHoras historiaId={1} alRegistrar={vi.fn()} />
+        <FormularioHoras historiaId={2} alRegistrar={vi.fn()} />
       </>,
     )
 
-    await screen.findAllByLabelText('Integrante')
     const ids = [...document.querySelectorAll('input, select')].map((campo) => campo.id)
-    expect(ids).toHaveLength(8)
-    expect(new Set(ids).size).toBe(8)
+    expect(ids).toHaveLength(6)
+    expect(new Set(ids).size).toBe(6)
   })
 })
 
@@ -277,39 +228,10 @@ describe('FormularioHoras: errores', () => {
   const rechazar = (campo: string | undefined, mensaje: string) =>
     imputarMock.mockRejectedValueOnce(new ApiError(400, mensaje, campo))
 
-  it('US2.1: sin integrante muestra el error junto a la lista y no envía la carga', async () => {
-    const user = userEvent.setup()
-    abrir()
-    const seleccion = await lista()
-    await user.type(actividad(), 'Revisión del PR')
-    await user.type(horas(), '4')
-
-    await user.click(guardar())
-
-    const error = await screen.findByRole('alert')
-    expect(error.textContent).toBe('Elegí un integrante')
-    expect(seleccion.getAttribute('aria-invalid')).toBe('true')
-    expect(seleccion.getAttribute('aria-describedby')).toBe(error.id)
-    expect(imputarMock).not.toHaveBeenCalled()
-  })
-
-  it('US2.1: un proyecto sin integrantes no permite enviar la carga', async () => {
-    integrantesMock.mockResolvedValue([])
-    const user = userEvent.setup()
-    abrir()
-    await lista()
-
-    await user.click(guardar())
-
-    expect((await screen.findByRole('alert')).textContent).toBe('Elegí un integrante')
-    expect(imputarMock).not.toHaveBeenCalled()
-  })
-
   it.each([
     ['US2.2', 'horas', 'Horas', 'las horas deben ser un número'],
     ['US2.3', 'actividad', 'Actividad', 'la actividad es obligatoria'],
     ['US2.4', 'fecha', 'Fecha', 'la fecha no puede ser posterior a hoy'],
-    ['US2.5', 'integrante_id', 'Integrante', 'el integrante no pertenece al proyecto de la historia'],
   ])('%s: el rechazo de "%s" se muestra junto a su campo', async (_escenario, campo, etiqueta, mensaje) => {
     rechazar(campo, mensaje)
     abrir()
@@ -344,7 +266,6 @@ describe('FormularioHoras: errores', () => {
     await user.click(guardar())
 
     await screen.findByRole('alert')
-    expect((await lista()).value).toBe('2')
     expect(actividad().value).toBe('Revisión del PR')
     expect(horas().value).toBe('abc')
     expect(screen.queryByText('Horas registradas')).toBeNull()
@@ -390,13 +311,26 @@ describe('FormularioHoras: errores', () => {
     expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
     expect(horas().value).toBe('4')
   })
+})
 
-  it('si falla la consulta de integrantes muestra el error y no permite guardar', async () => {
-    integrantesMock.mockRejectedValue(new ApiError(404, 'proyecto no encontrado'))
+describe('FormularioHoras: la sesión es quien registra (HU-21 Escenario 7)', () => {
+  it('Escenario 7: horas sin elegir integrante, sin selector «Integrante» y sin integrante_id en el pedido', async () => {
     abrir()
+    const user = userEvent.setup()
 
-    expect((await screen.findByRole('alert')).textContent).toBe('proyecto no encontrado')
-    expect(screen.queryByRole('button', { name: 'Guardar horas' })).toBeNull()
-    expect(screen.queryByText('Cargando…')).toBeNull()
+    await screen.findByLabelText('Horas')
+    expect(screen.queryByLabelText('Integrante')).toBeNull()
+
+    await user.type(actividad(), 'Revisión del PR')
+    await user.type(horas(), '1:30')
+    await user.click(guardar())
+
+    await waitFor(() =>
+      expect(imputarMock).toHaveBeenCalledWith(12, {
+        fecha: fechaPropuesta(new Date()),
+        actividad: 'Revisión del PR',
+        horas: '1:30',
+      }),
+    )
   })
 })

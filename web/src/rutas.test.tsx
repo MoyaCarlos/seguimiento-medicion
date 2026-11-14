@@ -259,7 +259,6 @@ describe('registro de rutas', () => {
 
       expect(await screen.findByText('Listado caído', {}, { timeout: 5000 })).toBeTruthy()
       await usuario.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
-      await usuario.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
       await usuario.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
       expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()

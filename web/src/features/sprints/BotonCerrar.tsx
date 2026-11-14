@@ -3,14 +3,15 @@ import { post } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { clasificarError } from './errores'
 import type { Sprint } from './sprint'
 
 const cerrarSprint = (id: number) => post<Sprint>(`/sprints/${id}/cerrar`, undefined)
 
-type Props = { sprint: Sprint; alActualizar: (sprint: Sprint) => void }
+type Props = { sprint: Sprint; alActualizar: (sprint: Sprint) => void; puedeGestionar?: boolean }
 
-export function BotonCerrar({ sprint, alActualizar }: Props) {
+export function BotonCerrar({ sprint, alActualizar, puedeGestionar = true }: Props) {
   const [enviando, setEnviando] = useState(false)
   const [aviso, setAviso] = useState<string>()
 
@@ -31,7 +32,17 @@ export function BotonCerrar({ sprint, alActualizar }: Props) {
     <div>
       {aviso && <ErrorMessage message={aviso} />}
       {enviando && <LoadingIndicator />}
-      <Button type="button" onClick={alHacerClic} disabled={enviando}>Cerrar Sprint</Button>
+      <Button
+        type="button"
+        onClick={alHacerClic}
+        disabled={enviando || !puedeGestionar}
+        aria-describedby={puedeGestionar ? undefined : `sprint-${sprint.id}-nota-cerrar`}
+      >
+        Cerrar Sprint
+      </Button>
+      {!puedeGestionar && (
+        <NotaGestion id={`sprint-${sprint.id}-nota-cerrar`} texto="Solo el Scrum Master puede cerrar un Sprint" />
+      )}
     </div>
   )
 }

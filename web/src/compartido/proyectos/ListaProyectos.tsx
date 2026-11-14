@@ -6,10 +6,15 @@ import { ErrorMessage } from '../componentes/ErrorMessage'
 import { Icono } from '../componentes/Icono'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { periodoCorto } from '../formato/fechas'
-import type { ProyectoResumen } from './api'
+import type { ProyectoResumen, RolEnProyecto } from './api'
 import { filtrarProyectos } from './busqueda'
 import { etiquetaProyecto } from './ruta'
 import { useProyectos } from './useProyectos'
+
+const ETIQUETA_ROL: Record<RolEnProyecto, string> = {
+  scrum_master: 'Scrum Master',
+  product_builder: 'Product Builder',
+}
 
 function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
   const idDetalle = `proyecto-${proyecto.id}-detalle`
@@ -23,6 +28,7 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
     >
       <span className="tarjeta-proyecto__cabecera">
         <AvatarProyecto id={proyecto.id} nombre={proyecto.nombre} />
+        {proyecto.rol && <span className="tarjeta-proyecto__rol">{ETIQUETA_ROL[proyecto.rol]}</span>}
       </span>
       <span className="tarjeta-proyecto__nombre" title={proyecto.nombre}>{proyecto.nombre}</span>
       <span id={idDetalle} className="tarjeta-proyecto__detalle">

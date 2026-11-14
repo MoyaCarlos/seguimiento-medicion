@@ -3,13 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../compartido/api/client'
 import { EsfuerzoHistoria } from './EsfuerzoHistoria'
-import { consultarEsfuerzo, imputarHoras, listarIntegrantes } from './api'
+import { consultarEsfuerzo, imputarHoras } from './api'
 import type { EsfuerzoReal } from './horas'
 
 vi.mock('./api', () => ({
   consultarEsfuerzo: vi.fn(),
   imputarHoras: vi.fn(),
-  listarIntegrantes: vi.fn(),
 }))
 
 const imputacion = { proyectoId: 42, fechaFin: '2999-12-31' }
@@ -27,7 +26,6 @@ const botonDetalle = () => screen.getByRole('button', { name: 'Ver detalle' })
 async function guardarCarga() {
   const user = userEvent.setup()
   await user.click(botonRegistrar())
-  await user.selectOptions(await screen.findByLabelText('Integrante'), 'Ana')
   await user.type(screen.getByLabelText('Actividad'), 'Revisión')
   await user.type(screen.getByLabelText('Horas'), '4')
   await user.click(screen.getByRole('button', { name: 'Guardar horas' }))
@@ -37,7 +35,6 @@ async function guardarCarga() {
 
 beforeEach(() => {
   esfuerzoMock.mockResolvedValue(SIN_CARGAS)
-  vi.mocked(listarIntegrantes).mockResolvedValue([{ id: 2, nombre: 'Ana' }])
   vi.mocked(imputarHoras).mockResolvedValue({})
 })
 
@@ -58,20 +55,19 @@ describe('EsfuerzoHistoria: registrar horas', () => {
 
     expect(await screen.findByLabelText('Actividad')).toBeTruthy()
     expect(botonRegistrar().getAttribute('aria-expanded')).toBe('true')
-    expect(listarIntegrantes).toHaveBeenCalledWith(42)
   })
 
-  it('US1.1: al cerrar y volver a abrir, la lista vuelve sin nadie seleccionado', async () => {
+  it('US1.1: al cerrar y volver a abrir, el formulario vuelve vacío', async () => {
     const user = userEvent.setup()
     render(<EsfuerzoHistoria historiaId={12} imputacion={imputacion} />)
     await user.click(botonRegistrar())
-    await user.selectOptions(await screen.findByLabelText('Integrante'), 'Ana')
+    await user.type(await screen.findByLabelText('Actividad'), 'Revisión')
 
     await user.click(botonRegistrar())
-    expect(screen.queryByLabelText('Integrante')).toBeNull()
+    expect(screen.queryByLabelText('Actividad')).toBeNull()
     await user.click(botonRegistrar())
 
-    expect(((await screen.findByLabelText('Integrante')) as HTMLSelectElement).value).toBe('')
+    expect(((await screen.findByLabelText('Actividad')) as HTMLInputElement).value).toBe('')
   })
 
   it('US1.5: mientras envía no se puede cerrar el formulario para volver a guardar', async () => {
@@ -80,7 +76,6 @@ describe('EsfuerzoHistoria: registrar horas', () => {
     const user = userEvent.setup()
     render(<EsfuerzoHistoria historiaId={12} imputacion={imputacion} />)
     await user.click(botonRegistrar())
-    await user.selectOptions(await screen.findByLabelText('Integrante'), 'Ana')
     await user.type(screen.getByLabelText('Actividad'), 'Revisión')
     await user.type(screen.getByLabelText('Horas'), '4')
 
