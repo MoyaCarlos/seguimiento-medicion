@@ -86,11 +86,11 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ### Aviso y nota (RED y GREEN separados, un commit por fase)
 
-- [ ] T011 RED: escribir `web/src/compartido/permisos/AvisoProyectoCerrado.test.tsx` (con fecha muestra «Proyecto cerrado el AAAA-MM-DD» tal como llega, con `role="status"`; con `null` no renderiza nada) y `web/src/compartido/permisos/NotaCerrado.test.tsx` (muestra «El proyecto está cerrado» y usa el `id` recibido). Correr y confirmar que FALLA (los componentes no existen).
-- [ ] T067 COMMIT `RED: aviso de proyecto cerrado y nota de cierre (falla)` (solo los archivos de test). *(ID agregado en el análisis; se ejecuta entre T011 y T012.)*
-- [ ] T012 GREEN: crear `web/src/compartido/permisos/AvisoProyectoCerrado.tsx` (props `fechaCierre: string | null`; sin fecha → `null`; con fecha → `<div role="status" className="aviso-cerrado">`) y `web/src/compartido/permisos/NotaCerrado.tsx` (prop `id`; `<p id={id} className="nota-gestion">El proyecto está cerrado</p>`, sin tocar `NotaGestion.tsx`). Tests en verde.
-- [ ] T013 Agregar los estilos de `.aviso-cerrado` en `web/src/features/proyecto/estilos.css` (nunca en `App.css`), usando las variables de color que ya usa ese archivo.
-- [ ] T014 COMMIT `GREEN: aviso de proyecto cerrado y nota de cierre, test en verde` (incluye el hallazgo de T002 sobre dónde vive `.nota-gestion`)
+- [X] T011 RED: escribir `web/src/compartido/permisos/AvisoProyectoCerrado.test.tsx` (con fecha muestra «Proyecto cerrado el AAAA-MM-DD» tal como llega, con `role="status"`; con `null` no renderiza nada) y `web/src/compartido/permisos/NotaCerrado.test.tsx` (muestra «El proyecto está cerrado» y usa el `id` recibido). Correr y confirmar que FALLA (los componentes no existen).
+- [X] T067 COMMIT `RED: aviso de proyecto cerrado y nota de cierre (falla)` (solo los archivos de test). *(ID agregado en el análisis; se ejecuta entre T011 y T012.)*
+- [X] T012 GREEN: crear `web/src/compartido/permisos/AvisoProyectoCerrado.tsx` (props `fechaCierre: string | null`; sin fecha → `null`; con fecha → `<div role="status" className="aviso-cerrado">`) y `web/src/compartido/permisos/NotaCerrado.tsx` (prop `id`; `<p id={id} className="nota-gestion">El proyecto está cerrado</p>`, sin tocar `NotaGestion.tsx`). Tests en verde.
+- [X] T013 Agregar los estilos de `.aviso-cerrado` en `web/src/features/proyecto/estilos.css` (nunca en `App.css`), usando las variables de color que ya usa ese archivo.
+- [X] T014 COMMIT `GREEN: aviso de proyecto cerrado y nota de cierre, test en verde` (incluye el hallazgo de T002 sobre dónde vive `.nota-gestion`)
 
 **Checkpoint**: los permisos compartidos tienen el estado de cierre y HU-21 sigue igual.
 
