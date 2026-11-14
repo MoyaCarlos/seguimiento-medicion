@@ -192,10 +192,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ### Fase 3 — Votación
 
-- [ ] T046 [US2] RED: casos nuevos en `web/src/features/votacion/index.test.tsx`: proyecto cerrado → aviso, la votación se sigue leyendo, y quedan deshabilitados iniciar votación, votar (cartas), revelar, registrar estimación y nueva ronda, con `NotaCerrado` (sin duplicar la nota de HU-21); abierto → igual que hoy; una sola llamada a `GET /projects/{id}`; un 409 «El proyecto está cerrado» al votar se muestra tal cual; con el cierre desconocido (cargando o error) todo queda habilitado. En `Cartas.test.tsx`: `deshabilitada` ya cubre el caso. Confirmar que FALLA.
-- [ ] T047 [US2] COMMIT `RED: Votación en solo lectura con el proyecto cerrado (falla)`
-- [ ] T048 [US2] GREEN: en `web/src/features/votacion/index.tsx` reemplazar `useEsScrumMaster` por UNA llamada a `usePermisosProyecto`; aviso arriba; `puedeGestionar` (que ya incluye el cierre) sigue a `SinVotacion`, `Consenso` y `AccionesScrumMaster`; `puedeEscribir` deshabilita `Cartas` vía `Ronda.tsx`; cuando `cerrado`, esos componentes muestran `NotaCerrado` en lugar de su nota de gestión. Estilos en `web/src/features/votacion/votacion.css`. Tests en verde.
-- [ ] T049 [US2] COMMIT `GREEN: Votación en solo lectura con el proyecto cerrado, test en verde`
+- [x] T046 [US2] RED: casos nuevos en `web/src/features/votacion/index.test.tsx`: proyecto cerrado → aviso, la votación se sigue leyendo, y quedan deshabilitados iniciar votación, votar (cartas), revelar, registrar estimación y nueva ronda, con `NotaCerrado` (sin duplicar la nota de HU-21); abierto → igual que hoy; una sola llamada a `GET /projects/{id}`; un 409 «El proyecto está cerrado» al votar se muestra tal cual; con el cierre desconocido (cargando o error) todo queda habilitado. En `Cartas.test.tsx`: `deshabilitada` ya cubre el caso. Confirmar que FALLA.
+- [x] T047 [US2] COMMIT `RED: Votación en solo lectura con el proyecto cerrado (falla)`
+- [x] T048 [US2] GREEN: en `web/src/features/votacion/index.tsx` reemplazar `useEsScrumMaster` por UNA llamada a `usePermisosProyecto`; aviso arriba; `puedeGestionar` (que ya incluye el cierre) sigue a `SinVotacion`, `Consenso` y `AccionesScrumMaster`; `puedeEscribir` deshabilita `Cartas` vía `Ronda.tsx`; cuando `cerrado`, esos componentes muestran `NotaCerrado` en lugar de su nota de gestión. Estilos en `web/src/features/votacion/votacion.css`. Tests en verde.
+- [x] T049 [US2] COMMIT `GREEN: Votación en solo lectura con el proyecto cerrado, test en verde`
 
 ### Fase 3 — Defectos
 
