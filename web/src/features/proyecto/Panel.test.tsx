@@ -18,11 +18,11 @@ const proyecto = {
 
 const proyectoBeta = { ...proyecto, id: 4, nombre: 'Proyecto Beta' }
 
-function abrir() {
+function abrir(hoy?: () => Date) {
   render(
     <MemoryRouter initialEntries={['/projects/3/proyecto']}>
       <Routes>
-        <Route path="/projects/:id/proyecto" element={<Panel />} />
+        <Route path="/projects/:id/proyecto" element={<Panel hoy={hoy} />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -589,5 +589,65 @@ describe('tarjeta «Equipo» del panel como el prototipo', () => {
     expect(tarjeta.parentElement?.className).toBe('panel-rejilla')
     expect(tarjeta.className).toBe('panel-tarjeta')
     expect(tarjeta.previousElementSibling?.tagName).toBe('ARTICLE')
+  })
+})
+
+describe('barra de avance del cronograma', () => {
+  function responder(extra: object = {}) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado: 'En curso' } : { ...proyecto, rol: 'scrum_master', ...extra },
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+  const pista = () => screen.findByRole('img', { name: /^Avance / })
+
+  it('Given que hoy es anterior al inicio, When abre el panel, Then la barra marca 0%', async () => {
+    responder()
+    abrir(() => new Date(2026, 8, 15))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 0%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('0%')
+    expect((barra.querySelector('b') as HTMLElement).style.left).toBe('0%')
+  })
+
+  it('Given que hoy está a mitad del período, When abre el panel, Then la barra marca el porcentaje transcurrido', async () => {
+    responder({ fecha_inicio: '2026-10-01', fecha_fin: '2026-10-31' })
+    abrir(() => new Date(2026, 9, 16))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 50%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('50%')
+    expect((barra.querySelector('b') as HTMLElement).style.left).toBe('50%')
+  })
+
+  it('Given que hoy es posterior al fin, When abre el panel, Then la barra marca 100%', async () => {
+    responder()
+    abrir(() => new Date(2026, 11, 1))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 100%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('100%')
+  })
+
+  it('Given un proyecto sin fechas, When abre el panel, Then no se dibuja la barra', async () => {
+    responder({ fecha_inicio: null, fecha_fin: null })
+    abrir(() => new Date(2026, 9, 16))
+
+    await screen.findByRole('heading', { level: 2, name: 'Cronograma' })
+
+    expect(screen.queryByRole('img', { name: /^Avance / })).toBeNull()
   })
 })

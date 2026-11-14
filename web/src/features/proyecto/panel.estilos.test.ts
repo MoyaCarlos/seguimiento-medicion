@@ -100,3 +100,13 @@ it('Given la nota de rol, When se estiliza, Then es una franja ámbar con texto 
   expect(bloque).toMatch(/font-size:\s*13\.5px/)
   expect(contraste(color(bloque, 'color'), color(bloque, 'background'))).toBeGreaterThanOrEqual(4.5)
 })
+
+it('Given la barra de avance, When se estiliza, Then es una pista de 8px con relleno degradado y un marcador circular de 16px', () => {
+  expect(regla('.cronograma__pista')).toMatch(/height:\s*8px/)
+  expect(regla('.cronograma__pista')).toMatch(/border-radius:\s*999px/)
+  expect(regla('.cronograma__pista i')).toMatch(/linear-gradient\(90deg,\s*#2dd4bf,\s*#0d9488\)/)
+  const marcador = regla('.cronograma__pista b')
+  expect(marcador).toMatch(/width:\s*16px/)
+  expect(marcador).toMatch(/height:\s*16px/)
+  expect(marcador).toMatch(/border-radius:\s*50%/)
+})
