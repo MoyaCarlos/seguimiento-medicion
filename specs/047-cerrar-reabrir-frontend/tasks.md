@@ -156,10 +156,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ### Aviso en el Panel (Fase 1, US2.1; tareas agregadas en el análisis, IDs T063 a T066)
 
-- [ ] T063 [US2] RED: casos nuevos en `web/src/features/proyecto/Panel.test.tsx` (sin cambiar los existentes): (a) proyecto cerrado → se ve «Proyecto cerrado el AAAA-MM-DD» y los datos del Panel siguen visibles; (b) proyecto abierto (`fecha_cierre: null`) → sin aviso; (c) mientras carga el rol y el cierre, o si ese pedido falla → sin aviso; (d) el Panel no deshabilita sus enlaces de navegación («Configuración», «Editar»). Confirmar que FALLA.
-- [ ] T064 [US2] COMMIT `RED: el Panel muestra el aviso de proyecto cerrado (falla)`
-- [ ] T065 [US2] GREEN: en `web/src/features/proyecto/Panel.tsx`, cambio mínimo: UNA llamada a `usePermisosProyecto(Number(id))` (un `GET /projects/{id}` igual al que ya hacen las demás pantallas; sin pedidos de otro tipo) y `<AvisoProyectoCerrado fechaCierre={fechaCierre} />` arriba. Sin otros cambios en el Panel. Tests en verde, incluidos los existentes.
-- [ ] T066 [US2] COMMIT `GREEN: el Panel muestra el aviso de proyecto cerrado, test en verde`
+- [x] T063 [US2] RED: casos nuevos en `web/src/features/proyecto/Panel.test.tsx` (sin cambiar los existentes): (a) proyecto cerrado → se ve «Proyecto cerrado el AAAA-MM-DD» y los datos del Panel siguen visibles; (b) proyecto abierto (`fecha_cierre: null`) → sin aviso; (c) mientras carga el rol y el cierre, o si ese pedido falla → sin aviso; (d) el Panel no deshabilita sus enlaces de navegación («Configuración», «Editar»). Confirmar que FALLA.
+- [x] T064 [US2] COMMIT `RED: el Panel muestra el aviso de proyecto cerrado (falla)`
+- [x] T065 [US2] GREEN: en `web/src/features/proyecto/Panel.tsx`, cambio mínimo: UNA llamada a `usePermisosProyecto(Number(id))` (un `GET /projects/{id}` igual al que ya hacen las demás pantallas; sin pedidos de otro tipo) y `<AvisoProyectoCerrado fechaCierre={fechaCierre} />` arriba. Sin otros cambios en el Panel. Tests en verde, incluidos los existentes.
+- [x] T066 [US2] COMMIT `GREEN: el Panel muestra el aviso de proyecto cerrado, test en verde`
 
 **Checkpoint**: Fase 1 completa. Validación: T036.
 
