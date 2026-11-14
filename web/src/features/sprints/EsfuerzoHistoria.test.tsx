@@ -209,7 +209,7 @@ describe('EsfuerzoHistoria: esfuerzo acumulado', () => {
     const cargas = within(screen.getByRole('list')).getAllByRole('listitem')
     expect(cargas).toHaveLength(2)
     expect(cargas[0].textContent).toContain('Ana')
-    expect(cargas[0].textContent).toContain('2026-10-27')
+    expect(cargas[0].textContent).toContain('27/10/2026')
     expect(cargas[0].textContent).toContain('Revisión del PR')
     expect(cargas[0].textContent).toContain('1,5 h')
     expect(cargas[1].textContent).toContain('Jimena')

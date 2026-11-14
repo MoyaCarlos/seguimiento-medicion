@@ -90,3 +90,76 @@ it('Given la columna vacía, When se estiliza, Then es un recuadro punteado cent
 it('Given el plazo del proyecto, When se estiliza, Then es una línea de 13,5px', () => {
   expect(regla('.sprints-plazo')).toMatch(/font-size:\s*13\.5px/)
 })
+
+it('Given una historia del Sprint, When se estiliza, Then es una tarjeta de radio 10 con relleno 10/12 y fondo casi blanco', () => {
+  const bloque = regla('.sprint-historia')
+
+  expect(bloque).toMatch(/border-radius:\s*10px/)
+  expect(bloque).toMatch(/padding:\s*10px 12px/)
+  expect(bloque).toMatch(/background:\s*#fbfcfd/)
+})
+
+it('Given el título de la historia, When se estiliza, Then es de 14px en negrita', () => {
+  const bloque = regla('.sprint-historia__titulo')
+
+  expect(bloque).toMatch(/font-size:\s*14px/)
+  expect(bloque).toMatch(/font-weight:\s*700/)
+})
+
+it('Given las etiquetas de la historia, When se estilizan, Then son rectángulos de 7px de 12px de letra y su texto cumple 4,5:1', () => {
+  expect(regla('.sprint-chip')).toMatch(/border-radius:\s*7px/)
+  expect(regla('.sprint-chip')).toMatch(/font-size:\s*12px/)
+  const pares: [string, string][] = [
+    ['.sprint-chip--must', '#0f1b2d'],
+    ['.sprint-chip--should', '#dcf3ef'],
+    ['.sprint-chip--could', '#eef2f6'],
+    ['.sprint-chip--nueva', '#eef2f6'],
+    ['.sprint-chip--sp', '#ffffff'],
+    ['.sprint-chip--ninguno', '#ffffff'],
+    ['.sprint-chip--wont', '#ffffff'],
+    ['.sprint-chip--progreso', '#fdf0d5'],
+    ['.sprint-chip--ok', '#dcf5e4'],
+  ]
+  for (const [selector, fondoFijo] of pares) {
+    const bloque = regla(selector)
+    const texto = color(bloque, 'color')
+    const fondo = color(bloque, 'background') || fondoFijo
+
+    expect(texto, selector).not.toBe('')
+    expect(contraste(texto, fondo), selector).toBeGreaterThanOrEqual(4.5)
+  }
+  expect(regla('.sprint-chip--ninguno')).toMatch(/font-style:\s*italic/)
+  expect(regla('.sprint-chip--wont')).toMatch(/text-decoration:\s*line-through/)
+})
+
+it('Given el esfuerzo real, When se estiliza, Then es de 13px, negrita y verde de marca con cifras tabulares', () => {
+  const bloque = regla('.sprint-esfuerzo')
+
+  expect(bloque).toMatch(/font-size:\s*13px/)
+  expect(bloque).toMatch(/font-weight:\s*700/)
+  expect(bloque).toMatch(/font-variant-numeric:\s*tabular-nums/)
+  expect(contraste(color(bloque, 'color'), '#fbfcfd')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given el pie de acciones, When se estiliza, Then los botones van a la derecha y pueden pasar de renglón', () => {
+  const bloque = regla('.sprint-historia__acciones')
+
+  expect(bloque).toMatch(/display:\s*flex/)
+  expect(bloque).toMatch(/justify-content:\s*flex-end/)
+  expect(bloque).toMatch(/flex-wrap:\s*wrap/)
+  expect(bloque).toMatch(/gap:\s*6px/)
+})
+
+it('Given los botones chicos, When se estilizan, Then miden 32px con letra de 13px; el de contorno usa el color de marca', () => {
+  expect(regla('.sprint-boton')).toMatch(/min-height:\s*32px/)
+  expect(regla('.sprint-boton')).toMatch(/font-size:\s*13px/)
+  const contorno = regla('.sprint-boton--contorno')
+  expect(contorno).toMatch(/border-color:\s*var\(--brand\)/)
+  expect(contraste(color(contorno, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given «Ver detalle», When se estiliza, Then es un control verde de marca, en negrita y con un triángulo delante', () => {
+  expect(regla('.sprint-detalle')).toMatch(/font-weight:\s*700/)
+  expect(regla('.sprint-detalle::before')).toMatch(/content:\s*'▸'/)
+  expect(regla('.sprint-detalle[aria-expanded="true"]::before')).toMatch(/rotate\(90deg\)/)
+})

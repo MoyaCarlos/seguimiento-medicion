@@ -239,7 +239,7 @@ describe('SprintBacklog con cambio de estado', () => {
     expect(fetchSimulado.mock.calls.find(([, o]) => o?.method === 'PUT')?.[0]).toBe('/backlog/1/estado')
   })
 
-  it('US3.2: completar una historia muestra "Completada el AAAA-MM-DD" y quita la acción', async () => {
+  it('US3.2: completar una historia muestra "Completada el dd/mm/aaaa" y quita la acción', async () => {
     simularEstado(
       respuesta(200, { ...historias[0], estado: 'Completada', fecha_finalizacion: '2026-10-29' }),
     )
@@ -249,7 +249,7 @@ describe('SprintBacklog con cambio de estado', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Completar' }))
 
     const item = (await screen.findAllByRole('listitem'))[0]
-    expect(await within(item).findByText('Completada el 2026-10-29')).toBeTruthy()
+    expect(await within(item).findByText('Completada el 29/10/2026')).toBeTruthy()
     expect(within(item).queryByRole('button')).toBeNull()
   })
 
@@ -265,5 +265,100 @@ describe('SprintBacklog con cambio de estado', () => {
     const item = screen.getAllByRole('listitem')[1]
     expect(item.textContent).toContain('Nueva')
     expect(within(item).getByRole('button', { name: 'Iniciar' })).toBeTruthy()
+  })
+})
+
+describe('SprintBacklog como el prototipo', () => {
+  const lista: HistoriaDeSprint[] = [
+    { id: 1, titulo: 'Nueva con SP', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 },
+    { id: 2, titulo: 'En curso', prioridad: 'S', estado: 'En progreso', estimacion_sp: null },
+    { id: 3, titulo: 'Terminada', prioridad: 'C', estado: 'Completada', estimacion_sp: 8, fecha_finalizacion: '2026-10-29' },
+    { id: 4, titulo: 'Descartada', prioridad: 'W', estado: 'Nueva', estimacion_sp: 1 },
+  ]
+  const imputacion = { proyectoId: 42, fechaFin: '2026-11-20' }
+
+  async function items(props: object = {}) {
+    simularBacklog(lista)
+    render(<SprintBacklog sprintId={4} {...props} />)
+    return screen.findAllByRole('listitem')
+  }
+  const chips = (item: HTMLElement) =>
+    [...item.querySelectorAll('.sprint-chips > li')].map((c) => [c.textContent, c.className])
+
+  it('Given las historias, When se listan, Then cada una es una tarjeta con su título', async () => {
+    const [primera] = await items()
+
+    expect(primera.className).toBe('sprint-historia')
+    expect(within(primera).getByRole('heading').className).toBe('sprint-historia__titulo')
+  })
+
+  it('Given cada historia, When se muestran sus etiquetas, Then prioridad, estado y Story Points llevan su variante', async () => {
+    const [nueva, enCurso, terminada, descartada] = await items()
+
+    expect(chips(nueva)).toEqual([
+      ['Must have (M)', 'sprint-chip sprint-chip--must'],
+      ['Nueva', 'sprint-chip sprint-chip--nueva'],
+      ['5 SP', 'sprint-chip sprint-chip--sp'],
+    ])
+    expect(chips(enCurso)).toEqual([
+      ['Should have (S)', 'sprint-chip sprint-chip--should'],
+      ['En progreso', 'sprint-chip sprint-chip--progreso'],
+      ['Sin estimar', 'sprint-chip sprint-chip--ninguno'],
+    ])
+    expect(chips(terminada)).toEqual([
+      ['Could have (C)', 'sprint-chip sprint-chip--could'],
+      ['Completada', 'sprint-chip sprint-chip--ok'],
+      ['8 SP', 'sprint-chip sprint-chip--sp'],
+    ])
+    expect(chips(descartada)[0]).toEqual(["Won't have (W)", 'sprint-chip sprint-chip--wont'])
+  })
+
+  it('Given una historia completada, When se muestra, Then la fecha va en una nota aparte', async () => {
+    const [, , terminada] = await items()
+
+    expect(within(terminada).getByText('Completada el 29/10/2026').className).toBe('sprint-historia__nota')
+  })
+
+  it('Given el esfuerzo real, When se muestra, Then va en verde de marca en su propia línea', async () => {
+    const [primera] = await items()
+
+    expect(within(primera).getByText('Esfuerzo real: 0 h').className).toBe('sprint-esfuerzo')
+  })
+
+  it('Given un Sprint activo, When se muestran las acciones, Then «Registrar horas» (con reloj) va antes que «Completar»/«Iniciar» (con ícono), alineadas en un pie', async () => {
+    const [nueva, enCurso] = await items({ permiteCambiarEstado: true, imputacion })
+
+    for (const [item, accion] of [[nueva, 'Iniciar'], [enCurso, 'Completar']] as const) {
+      const pie = item.querySelector('.sprint-historia__acciones') as HTMLElement
+      const botones = within(pie).getAllByRole('button')
+      expect(botones.map((b) => b.textContent)).toEqual(['Registrar horas', accion])
+      expect(botones[0].className).toBe('button button--secondary sprint-boton')
+      expect(botones[1].className).toBe('button button--secondary sprint-boton sprint-boton--contorno')
+      expect(botones.every((b) => b.querySelector('svg'))).toBe(true)
+    }
+  })
+
+  it('Given un Sprint sin acciones, When se muestran las historias, Then no hay pie de acciones', async () => {
+    const [primera] = await items()
+
+    expect(primera.querySelector('.sprint-historia__acciones')).toBeNull()
+  })
+
+  it('Given una historia con cargas, When se muestra, Then «Ver detalle» es un control con triángulo y la lista usa dd/mm/aaaa', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((ruta: string) =>
+        Promise.resolve(
+          ruta.endsWith('/horas')
+            ? respuesta(200, { total_horas: 2, registros: [{ id: 1, integrante: 'Ana', fecha: '2026-10-27', actividad: 'Revisión', horas: 2 }] })
+            : respuesta(200, [lista[0]]),
+        ),
+      ),
+    )
+    render(<SprintBacklog sprintId={4} imputacion={imputacion} />)
+
+    const detalle = await screen.findByRole('button', { name: 'Ver detalle' })
+
+    expect(detalle.className).toBe('sprint-detalle')
   })
 })
