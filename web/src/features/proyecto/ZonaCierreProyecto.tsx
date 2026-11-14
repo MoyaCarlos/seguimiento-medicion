@@ -5,7 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
-import { cerrarProyecto } from './api'
+import { cerrarProyecto, reabrirProyecto } from './api'
 import type { EstadoProyecto, Rol } from './api'
 import { mensajeDeError } from './errores'
 
@@ -18,7 +18,8 @@ type Props = {
   onCambio: (fechaCierre: string | null) => void
 }
 
-export function ZonaCierreProyecto({ proyectoId, onCambio }: Props) {
+/** Cerrar pide confirmación en línea; reabrir no (research D5). */
+export function ZonaCierreProyecto({ proyectoId, fechaCierre, onCambio }: Props) {
   const [fase, setFase] = useState<Fase>('reposo')
   const [estado, setEstado] = useState<EstadoProyecto | null>(null)
   const [sinPermiso, setSinPermiso] = useState('')
@@ -39,11 +40,13 @@ export function ZonaCierreProyecto({ proyectoId, onCambio }: Props) {
     if (evento.key === 'Escape' && fase === 'confirmando') setFase('reposo')
   }
 
-  async function confirmar() {
+  async function enviar(accion: typeof cerrarProyecto) {
     if (fase === 'enviando') return
+    setError('')
+    setSinPermiso('')
     setFase('enviando')
     try {
-      const proyecto = await cerrarProyecto(proyectoId)
+      const proyecto = await accion(proyectoId)
       setEstado(proyecto.estado)
       onCambio(proyecto.fecha_cierre)
     } catch (causa) {
@@ -65,14 +68,24 @@ export function ZonaCierreProyecto({ proyectoId, onCambio }: Props) {
       {sinPermiso && <AvisoSinPermiso mensaje={sinPermiso} />}
       {estado && <p className="zona-cierre__estado">{estado}</p>}
 
-      {fase === 'reposo' && <Button onClick={pedirConfirmacion}>Cerrar proyecto</Button>}
+      {fechaCierre !== null && (
+        <>
+          <p className="zona-cierre__fecha">Proyecto cerrado el {fechaCierre}</p>
+          {fase === 'enviando' && <LoadingIndicator />}
+          <Button onClick={() => enviar(reabrirProyecto)} disabled={fase === 'enviando'}>
+            Reabrir proyecto
+          </Button>
+        </>
+      )}
 
-      {fase !== 'reposo' && (
+      {fechaCierre === null && fase === 'reposo' && <Button onClick={pedirConfirmacion}>Cerrar proyecto</Button>}
+
+      {fechaCierre === null && fase !== 'reposo' && (
         <div className="zona-cierre__confirmacion">
           <p>¿Cerrar el proyecto?</p>
           {fase === 'enviando' && <LoadingIndicator />}
           <div className="hu04-acciones">
-            <Button onClick={confirmar} disabled={fase === 'enviando'}>
+            <Button onClick={() => enviar(cerrarProyecto)} disabled={fase === 'enviando'}>
               Confirmar
             </Button>
             <button
