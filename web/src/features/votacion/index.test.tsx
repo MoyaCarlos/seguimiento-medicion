@@ -977,3 +977,179 @@ describe('Pantalla de votación - la sesión es quien actúa (HU-21 Escenario 7)
     vi.unstubAllGlobals()
   })
 })
+
+describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const CERRADO = 'El proyecto está cerrado'
+
+  /** El GET /projects/25 de los permisos es el único fetch de la pantalla: ./api está simulado. */
+  function simularProyecto(rol: 'scrum_master' | 'product_builder', fecha_cierre: string | null) {
+    const simulado = vi.fn((_ruta: string, _opciones?: RequestInit) =>
+      Promise.resolve(new Response(JSON.stringify({ id: 25, rol, fecha_cierre }), { status: 200 })),
+    )
+    vi.stubGlobal('fetch', simulado)
+    return simulado
+  }
+
+  const nota = (elemento: HTMLElement) =>
+    document.getElementById(elemento.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const cartas = () => screen.getByRole('group', { name: 'Cartas de estimación' })
+  const boton = (nombre: string) => screen.getByRole('button', { name: nombre }) as HTMLButtonElement
+
+  const sinVotacionIniciada = () =>
+    consultarMock.mockRejectedValue(new ApiError(404, 'la historia no tiene votación iniciada'))
+
+  it('Escenario: proyecto cerrado con una ronda abierta: aviso «Proyecto cerrado el 2026-11-10», la votación se sigue viendo y las cartas y «Revelar» quedan deshabilitadas con «El proyecto está cerrado»', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    simularProyecto('scrum_master', '2026-11-10')
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
+    for (const carta of within(cartas()).getAllByRole('button')) {
+      expect((carta as HTMLButtonElement).disabled).toBe(true)
+    }
+    expect(nota(cartas())).toBe(CERRADO)
+    expect(boton('Revelar').disabled).toBe(true)
+    expect(nota(boton('Revelar'))).toBe(CERRADO)
+    expect(screen.getAllByText(CERRADO)).toHaveLength(2)
+
+    await userEvent.click(boton('8'))
+    await userEvent.click(boton('Revelar'))
+    expect(votarMock).not.toHaveBeenCalled()
+    expect(revelarMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: proyecto cerrado sin votación: «Iniciar votación» deshabilitada con «El proyecto está cerrado»', async () => {
+    sinVotacionIniciada()
+    simularProyecto('scrum_master', '2026-11-10')
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const iniciar = boton('Iniciar votación')
+    expect(iniciar.disabled).toBe(true)
+    expect(nota(iniciar)).toBe(CERRADO)
+
+    await userEvent.click(iniciar)
+    expect(iniciarMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: proyecto cerrado con la ronda revelada: «Registrar estimación», su selector y «Nueva ronda» deshabilitados con «El proyecto está cerrado»', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    simularProyecto('scrum_master', '2026-11-10')
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    expect(screen.getByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
+    for (const accion of [boton('Registrar estimación'), boton('Nueva ronda')]) {
+      expect(accion.disabled).toBe(true)
+      expect(nota(accion)).toBe(CERRADO)
+    }
+    expect((screen.getByLabelText('Estimación acordada (Story Points)') as HTMLSelectElement).disabled).toBe(true)
+    expect(screen.getAllByText(CERRADO)).toHaveLength(2)
+  })
+
+  it('Escenario: proyecto cerrado y Product Builder con una ronda abierta: «Revelar» muestra solo «El proyecto está cerrado», no la nota de HU-21', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    simularProyecto('product_builder', '2026-11-10')
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    expect(nota(boton('Revelar'))).toBe(CERRADO)
+    expect(screen.queryByText('Solo el Scrum Master puede revelar los votos')).toBeNull()
+  })
+
+  it('Escenario: proyecto cerrado y Product Builder sin votación: «Iniciar votación» muestra solo «El proyecto está cerrado»', async () => {
+    sinVotacionIniciada()
+    simularProyecto('product_builder', '2026-11-10')
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    expect(nota(boton('Iniciar votación'))).toBe(CERRADO)
+    expect(screen.queryByText('Solo el Scrum Master puede iniciar la votación')).toBeNull()
+    expect(screen.getAllByText(CERRADO)).toHaveLength(1)
+  })
+
+  it('Escenario: proyecto cerrado y Product Builder con la ronda revelada: «Registrar estimación» y «Nueva ronda» muestran solo «El proyecto está cerrado»', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    simularProyecto('product_builder', '2026-11-10')
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    expect(nota(boton('Registrar estimación'))).toBe(CERRADO)
+    expect(nota(boton('Nueva ronda'))).toBe(CERRADO)
+    expect(screen.queryByText('Solo el Scrum Master puede registrar la estimación')).toBeNull()
+    expect(screen.queryByText('Solo el Scrum Master puede abrir una nueva ronda')).toBeNull()
+  })
+
+  it('Escenario: proyecto abierto: sin aviso, las cartas y «Revelar» habilitadas y sin nota como antes', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    const simulado = simularProyecto('scrum_master', null)
+    abrir()
+
+    await screen.findByRole('button', { name: '8' })
+    await waitFor(() => expect(simulado).toHaveBeenCalled())
+    await waitFor(() => expect(boton('Revelar').disabled).toBe(false))
+    expect(boton('8').disabled).toBe(false)
+    expect(cartas().hasAttribute('aria-describedby')).toBe(false)
+    expect(boton('Revelar').hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    expect(screen.queryByText(CERRADO)).toBeNull()
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por la pantalla, aunque se vote, se revele y se actualice', async () => {
+    servidor.votos = { 2: 5, 3: 5 }
+    const simulado = simularProyecto('scrum_master', null)
+    abrir()
+
+    await userEvent.click(await screen.findByRole('button', { name: '5' }))
+    await waitFor(() => expect(boton('Revelar').disabled).toBe(false))
+    await userEvent.click(boton('Revelar'))
+    await screen.findByText('Promedio exacto')
+    await userEvent.click(boton('Actualizar'))
+    await waitFor(() => expect(consultarMock.mock.calls.length).toBeGreaterThan(1))
+
+    expect(simulado).toHaveBeenCalledTimes(1)
+    expect(simulado.mock.calls.map(([ruta]) => ruta)).toEqual(['/projects/25'])
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al votar se muestra tal cual', async () => {
+    votarMock.mockRejectedValue(new ApiError(409, CERRADO))
+    simularProyecto('product_builder', null)
+    abrir()
+
+    await userEvent.click(await screen.findByRole('button', { name: '8' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe(CERRADO)
+  })
+
+  it('Escenario: cierre desconocido (cargando): las cartas y «Revelar» quedan habilitadas y sin nota', async () => {
+    servidor.votos = { 1: 5, 2: 5, 3: 5 }
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})))
+    abrir()
+
+    await screen.findByRole('button', { name: '8' })
+    expect(boton('8').disabled).toBe(false)
+    expect(boton('Revelar').disabled).toBe(false)
+    expect(cartas().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(CERRADO)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: cierre desconocido (error): «Registrar estimación» y «Nueva ronda» quedan habilitadas y sin nota', async () => {
+    servidor.votos = { 1: 3, 2: 5, 3: 8 }
+    servidor.revelada = true
+    const simulado = vi.fn(() => Promise.reject(new TypeError('Failed to fetch')))
+    vi.stubGlobal('fetch', simulado)
+    abrir()
+
+    await screen.findByRole('button', { name: 'Registrar estimación' })
+    await waitFor(() => expect(simulado).toHaveBeenCalled())
+    expect(boton('Registrar estimación').disabled).toBe(false)
+    expect(boton('Nueva ronda').disabled).toBe(false)
+    expect(screen.queryByText(CERRADO)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+})

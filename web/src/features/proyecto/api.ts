@@ -14,6 +14,7 @@ export type Proyecto = {
   fecha_fin: string | null
   creado_en: string
   horas_por_story_point: number | null
+  fecha_cierre: string | null
 }
 
 export type Integrante = {
@@ -58,6 +59,12 @@ export const descargarReporteProyecto = (id: string) =>
 
 export const editarProyecto = (id: string, datos: ProyectoEditado) =>
   put<Proyecto>(`/projects/${id}`, datos)
+
+export const cerrarProyecto = (id: string) =>
+  post<Proyecto & { estado: EstadoProyecto }>(`/projects/${id}/cerrar`, undefined)
+
+export const reabrirProyecto = (id: string) =>
+  post<Proyecto & { estado: EstadoProyecto }>(`/projects/${id}/reabrir`, undefined)
 
 export const listarIntegrantes = (id: string) =>
   get<Integrante[]>(`/projects/${id}/members`)
