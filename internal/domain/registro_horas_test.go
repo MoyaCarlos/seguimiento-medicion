@@ -205,3 +205,67 @@ func TestTotalMinutos(t *testing.T) {
 		})
 	}
 }
+
+// Formato h:mm en el mismo campo "horas" (issue #228): permite cargar minutos
+// que el decimal no expresa (20 min = 0:20).
+func TestMinutosDesdeHoras_FormatoHmm(t *testing.T) {
+	const (
+		errNumero  = "las horas deben ser un número"
+		errCero    = "las horas deben ser mayores que cero"
+		errTope    = "las horas no pueden superar 24 por carga"
+		errMinutos = "los minutos deben estar entre 00 y 59"
+	)
+	casos := []struct {
+		horas    string
+		esperado int
+		mensaje  string // vacío si es válido
+	}{
+		{"0:20", 20, ""},
+		{"1:05", 65, ""},
+		{"1:30", 90, ""},
+		{"24:00", 1440, ""},
+		{"0:59", 59, ""},
+		{"0:00", 0, errCero},
+		{"24:01", 0, errTope},
+		{"1:60", 0, errMinutos},
+		{"1:99", 0, errMinutos},
+		{"1:5", 0, errNumero},
+		{"1:20:00", 0, errNumero},
+		{"-0:20", 0, errNumero},
+		{":30", 0, errNumero},
+		{"1:", 0, errNumero},
+		// Casos de borde.
+		{"24:60", 0, errMinutos},
+		{"00:30", 30, ""},
+		{"001:30", 90, ""},
+		{"99999999999999999999:00", 0, errTope},
+		{" 1:30", 0, errNumero},
+		{"1:30 ", 0, errNumero},
+		{"1:30\n", 0, errNumero},
+		{"０:２０", 0, errNumero}, // dígitos de ancho completo
+		// Los decimales de hoy siguen igual.
+		{"1.5", 90, ""},
+		{"0.05", 3, ""},
+		{"0.01", 0, "las horas deben equivaler a minutos enteros"},
+	}
+	for _, c := range casos {
+		t.Run(c.horas, func(t *testing.T) {
+			minutos, err := MinutosDesdeHoras(c.horas)
+
+			if c.mensaje == "" {
+				if err != nil {
+					t.Fatalf("no se esperaba error: %v", err)
+				}
+				if minutos != c.esperado {
+					t.Errorf("se esperaban %d minutos, se obtuvo %d", c.esperado, minutos)
+				}
+				return
+			}
+			esperado := ValidationError{Campo: "horas", Mensaje: c.mensaje}
+			var verr ValidationError
+			if !errors.As(err, &verr) || verr != esperado {
+				t.Errorf("se esperaba %v, se obtuvo %v", esperado, err)
+			}
+		})
+	}
+}

@@ -7,6 +7,7 @@ import type { ProyectoResumen } from './api'
 import { ListaProyectos } from './ListaProyectos'
 
 function p(id: number, nombre: string, resto: Partial<ProyectoResumen> = {}): ProyectoResumen {
+  // `rol` es opcional en ProyectoResumen; sin él la tarjeta no muestra etiqueta.
   return { id, nombre, descripcion: '', fecha_inicio: null, fecha_fin: null, ...resto }
 }
 
@@ -60,9 +61,29 @@ describe('ListaProyectos', () => {
   it('US3.3: sin proyectos invita a crear el primero y no muestra un error', async () => {
     abrir([])
 
-    expect(await screen.findByText(/Todavía no hay proyectos/)).toBeTruthy()
+    expect(await screen.findByText(/No integrás ningún proyecto/)).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.queryAllByRole('link')).toHaveLength(0)
+  })
+
+  it('Escenario 5: veo solo mis proyectos con mi rol', async () => {
+    abrir([p(1, 'Alfa', { rol: 'scrum_master' }), p(2, 'Beta', { rol: 'product_builder' })])
+
+    const alfa = await screen.findByRole('link', { name: 'Alfa (#1)' })
+    const beta = screen.getByRole('link', { name: 'Beta (#2)' })
+
+    expect(within(alfa).getByText('Scrum Master')).toBeTruthy()
+    expect(within(alfa).queryByText('Product Builder')).toBeNull()
+    expect(within(beta).getByText('Product Builder')).toBeTruthy()
+    expect(within(beta).queryByText('Scrum Master')).toBeNull()
+  })
+
+  it('Escenario 9: sin proyectos veo el mensaje y puedo crear uno', async () => {
+    abrir([])
+
+    expect(await screen.findByText(/No integrás ningún proyecto/)).toBeTruthy()
+    expect(screen.getByText(/Creá uno con el formulario/)).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   describe('tarjetas y contador', () => {
@@ -203,7 +224,7 @@ describe('ListaProyectos', () => {
       await abrirYBuscar('zzz')
 
       expect(screen.getByText('Ningún proyecto coincide con la búsqueda')).toBeTruthy()
-      expect(screen.queryByText(/Todavía no hay proyectos/)).toBeNull()
+      expect(screen.queryByText(/No integrás ningún proyecto/)).toBeNull()
       expect(screen.getByRole('heading', { name: 'Proyectos existentes 0 de 4' })).toBeTruthy()
       expect(screen.getByRole('searchbox', { name: 'Buscar proyecto' })).toBeTruthy()
     })
@@ -211,7 +232,7 @@ describe('ListaProyectos', () => {
     it('US5.8: con la lista vacía no hay buscador y se invita a crear el primero', async () => {
       abrir([])
 
-      expect(await screen.findByText(/Todavía no hay proyectos/)).toBeTruthy()
+      expect(await screen.findByText(/No integrás ningún proyecto/)).toBeTruthy()
       expect(screen.queryByRole('searchbox')).toBeNull()
       expect(screen.queryByText('Ningún proyecto coincide con la búsqueda')).toBeNull()
     })
@@ -262,7 +283,7 @@ describe('ListaProyectos', () => {
 
       expect((await screen.findByRole('alert')).textContent).toBe('Falló el listado')
       expect(screen.queryByRole('list')).toBeNull()
-      expect(screen.queryByText(/Todavía no hay proyectos/)).toBeNull()
+      expect(screen.queryByText(/No integrás ningún proyecto/)).toBeNull()
     })
   })
 })

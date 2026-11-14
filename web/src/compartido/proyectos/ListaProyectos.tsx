@@ -2,10 +2,15 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
-import type { ProyectoResumen } from './api'
+import type { ProyectoResumen, RolEnProyecto } from './api'
 import { filtrarProyectos } from './busqueda'
 import { etiquetaProyecto } from './ruta'
 import { useProyectos } from './useProyectos'
+
+const ETIQUETA_ROL: Record<RolEnProyecto, string> = {
+  scrum_master: 'Scrum Master',
+  product_builder: 'Product Builder',
+}
 
 function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
   const idDetalle = `proyecto-${proyecto.id}-detalle`
@@ -20,6 +25,7 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
       <span className="tarjeta-proyecto__cabecera">
         <span className="tarjeta-proyecto__nombre" title={proyecto.nombre}>{proyecto.nombre}</span>
         <span className="tarjeta-proyecto__id">#{proyecto.id}</span>
+        {proyecto.rol && <span className="tarjeta-proyecto__rol">{ETIQUETA_ROL[proyecto.rol]}</span>}
       </span>
       <span id={idDetalle}>
         <span className="tarjeta-proyecto__descripcion">{proyecto.descripcion || 'Sin descripción'}</span>
@@ -65,7 +71,7 @@ export function ListaProyectos() {
       {proyectos.estado === 'cargando' && <LoadingIndicator />}
       {proyectos.estado === 'error' && <ErrorMessage message={proyectos.mensaje} />}
       {proyectos.estado === 'listo' && total.length === 0 && (
-        <p className="lista-proyectos__vacio">Todavía no hay proyectos. Creá el primero con el formulario.</p>
+        <p className="lista-proyectos__vacio">No integrás ningún proyecto. Creá uno con el formulario.</p>
       )}
       {total.length > 0 && visibles.length === 0 && <p className="lista-proyectos__vacio">Ningún proyecto coincide con la búsqueda</p>}
       {visibles.length > 0 && (

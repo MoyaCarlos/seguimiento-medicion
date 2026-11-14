@@ -17,7 +17,6 @@ export type IntegranteDeProyecto = {
 }
 
 export type DatosImputacion = {
-  integrante_id: number
   fecha: string
   actividad: string
   horas: string
