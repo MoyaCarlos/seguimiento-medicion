@@ -199,10 +199,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ### Fase 3 — Defectos
 
-- [ ] T050 [US2] RED: casos nuevos en `web/src/features/defectos/index.test.tsx`: proyecto cerrado → aviso, el listado de defectos se sigue viendo, y «Registrar defecto» y el botón «Resolver» de cada defecto Pendiente (`ListadoDefectos.tsx`, con Sprint activo) deshabilitados con `NotaCerrado`; abierto → igual que hoy; una sola llamada a `GET /projects/{id}`; un 409 «El proyecto está cerrado» al registrar o resolver se muestra tal cual; con el cierre desconocido todo queda habilitado. Confirmar que FALLA.
-- [ ] T051 [US2] COMMIT `RED: Defectos en solo lectura con el proyecto cerrado (falla)`
-- [ ] T052 [US2] GREEN: en `web/src/features/defectos/PantallaDefectos.tsx` llamar UNA vez a `usePermisosProyecto`, mostrar el aviso y pasar `puedeEscribir` a `FormularioDefecto.tsx` (deshabilita campos y botón) y a `ListadoDefectos.tsx` (deshabilita «Resolver»), ambas con default `true`. Estilos en `web/src/features/defectos/defectos.css`. Tests en verde.
-- [ ] T053 [US2] COMMIT `GREEN: Defectos en solo lectura con el proyecto cerrado, test en verde`
+- [x] T050 [US2] RED: casos nuevos en `web/src/features/defectos/index.test.tsx`: proyecto cerrado → aviso, el listado de defectos se sigue viendo, y «Registrar defecto» y el botón «Resolver» de cada defecto Pendiente (`ListadoDefectos.tsx`, con Sprint activo) deshabilitados con `NotaCerrado`; abierto → igual que hoy; una sola llamada a `GET /projects/{id}`; un 409 «El proyecto está cerrado» al registrar o resolver se muestra tal cual; con el cierre desconocido todo queda habilitado. Confirmar que FALLA.
+- [x] T051 [US2] COMMIT `RED: Defectos en solo lectura con el proyecto cerrado (falla)`
+- [x] T052 [US2] GREEN: en `web/src/features/defectos/PantallaDefectos.tsx` llamar UNA vez a `usePermisosProyecto`, mostrar el aviso y pasar `puedeEscribir` a `FormularioDefecto.tsx` (deshabilita campos y botón) y a `ListadoDefectos.tsx` (deshabilita «Resolver»), ambas con default `true`. Estilos en `web/src/features/defectos/defectos.css`. Tests en verde.
+- [x] T053 [US2] COMMIT `GREEN: Defectos en solo lectura con el proyecto cerrado, test en verde`
 
 ### Fase 3 — Equipo
 
