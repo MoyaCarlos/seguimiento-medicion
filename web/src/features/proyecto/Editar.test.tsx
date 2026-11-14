@@ -247,3 +247,109 @@ describe('edición de proyecto - rol (HU-21)', () => {
     expect(screen.getByDisplayValue('Proyecto Beta')).toBeTruthy()
   })
 })
+
+describe('edición de proyecto - cierre (#312)', () => {
+  const NOTA_CERRADO = 'El proyecto está cerrado'
+  const NOTA_GESTION = 'Solo el Scrum Master puede guardar el proyecto'
+
+  function responderCierre(opciones: {
+    fechaCierre: string | null
+    rol?: 'scrum_master' | 'product_builder'
+    hook?: 'normal' | 'pendiente' | 'falla'
+  }) {
+    const { fechaCierre, rol = 'scrum_master', hook = 'normal' } = opciones
+    let lecturas = 0
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({ ...proyecto, rol, fecha_cierre: '2026-11-11', estado: 'Finalizado' }),
+            { status: 200 },
+          ),
+        )
+      }
+      lecturas += 1
+      if (lecturas === 2 && hook === 'pendiente') return new Promise<Response>(() => {})
+      if (lecturas === 2 && hook === 'falla') {
+        return Promise.resolve(new Response(JSON.stringify({ mensaje: 'falló' }), { status: 500 }))
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify({ ...proyecto, rol, fecha_cierre: fechaCierre }), { status: 200 }),
+      )
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  const guardar = () => screen.getByRole('button', { name: 'Guardar cambios' })
+
+  it('Escenario: Scrum Master abre Editar proyecto y aparece la zona «Cerrar proyecto»', async () => {
+    responderCierre({ fechaCierre: null })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+
+    expect(await screen.findByRole('region', { name: 'Cerrar proyecto' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Cerrar proyecto' })).toBeTruthy()
+  })
+
+  it('SC-001: cerrar y confirmar deja «Proyecto cerrado el AAAA-MM-DD» y «Finalizado» sin recargar, con «Guardar cambios» deshabilitado y la nota «El proyecto está cerrado»', async () => {
+    responderCierre({ fechaCierre: null })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    await userEvent.click(await screen.findByRole('button', { name: 'Cerrar proyecto' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByText('Finalizado')).toBeTruthy()
+    await waitFor(() => expect(guardar().hasAttribute('disabled')).toBe(true))
+    expect(document.getElementById(guardar().getAttribute('aria-describedby') ?? '')?.textContent).toBe(
+      NOTA_CERRADO,
+    )
+  })
+
+  it('Escenario: con el proyecto ya cerrado al abrir se ve el aviso y la nota única, sin la nota de HU-21', async () => {
+    responderCierre({ fechaCierre: '2026-11-11' })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getAllByText(NOTA_CERRADO)).toHaveLength(1)
+    expect(screen.queryByText(NOTA_GESTION)).toBeNull()
+    expect(guardar().hasAttribute('disabled')).toBe(true)
+  })
+
+  it('Escenario: la nota «El proyecto está cerrado» no aparece mientras el rol y el cierre se cargan y «Guardar cambios» sigue habilitado', async () => {
+    responderCierre({ fechaCierre: '2026-11-11', hook: 'pendiente' })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(guardar().hasAttribute('disabled')).toBe(false)
+  })
+
+  it('Escenario: la nota «El proyecto está cerrado» no aparece si el GET del hook falla y «Guardar cambios» sigue habilitado', async () => {
+    const fetchMock = responderCierre({ fechaCierre: '2026-11-11', hook: 'falla' })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2))
+
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(guardar().hasAttribute('disabled')).toBe(false)
+  })
+
+  it('Escenario: la nota «El proyecto está cerrado» no aparece en un proyecto abierto y «Guardar cambios» sigue habilitado', async () => {
+    responderCierre({ fechaCierre: null })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(screen.queryByText('Proyecto cerrado el 2026-11-11')).toBeNull()
+    expect(guardar().hasAttribute('disabled')).toBe(false)
+  })
+})
