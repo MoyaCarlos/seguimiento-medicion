@@ -10,12 +10,11 @@ import {
   votar,
 } from './api'
 import { esVotacionNoIniciada, mensajeDeError } from './errores'
-import { esScrumMaster, estaRevelada, sinValores, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
+import type { HistoriaResumen, Integrante, Votacion } from './votacion'
 
 export function useVotacion(proyectoId: string, historiaId: number) {
   const [integrantes, setIntegrantes] = useState<Integrante[] | null>(null)
   const [historia, setHistoria] = useState<HistoriaResumen | null>(null)
-  const [actorId, setActorId] = useState<number>()
   const [votacion, setVotacion] = useState<Votacion | null>(null)
   const [sinVotacion, setSinVotacion] = useState(false)
   const [cargadaPara, setCargadaPara] = useState('')
@@ -29,10 +28,8 @@ export function useVotacion(proyectoId: string, historiaId: number) {
   const envioEnCurso = useRef(false)
   const accionesIniciadas = useRef(0)
 
-  const consulta = `${historiaId}/${actorId}/${recarga}`
+  const consulta = `${historiaId}/${recarga}`
   const cargando = cargadaPara !== consulta
-  const actor = integrantes?.find((integrante) => integrante.id === actorId)
-  const scrumMaster = actor !== undefined && esScrumMaster(actor) ? actor : undefined
   const reconsultar = useCallback(() => setRecarga((actual) => actual + 1), [])
   const recargar = useCallback(() => {
     setErrorDeAccion('')
@@ -78,7 +75,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     const accionesAlConsultar = accionesIniciadas.current
     const sigueVigente = () => vigente && accionesAlConsultar === accionesIniciadas.current
 
-    consultarVotacion(historiaId, actorId)
+    consultarVotacion(historiaId)
       .then((datos) => {
         if (!sigueVigente()) return
         setVotacion(datos)
@@ -102,7 +99,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     return () => {
       vigente = false
     }
-  }, [historiaId, actorId, consulta])
+  }, [historiaId, consulta])
 
   function mostrarVotacion(datos: Votacion) {
     setVotacion(datos)
@@ -134,18 +131,9 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     }
   }
 
-  function elegirActor(id: number | undefined) {
-    setErrorDeAccion('')
-    setAviso('')
-    setVotacion((actual) => (actual && !estaRevelada(actual) ? sinValores(actual) : actual))
-    setActorId(id)
-  }
-
   return {
     historia,
     integrantes,
-    actor,
-    scrumMaster,
     votacion,
     sinVotacion,
     cargando,
@@ -155,18 +143,11 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     errorDeAccion,
     aviso,
     recargar,
-    elegirActor,
-    iniciar: () =>
-      scrumMaster ? ejecutar(() => iniciarVotacion(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
-    revelar: () =>
-      scrumMaster ? ejecutar(() => revelarVotacion(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
-    votar: (valor: number) =>
-      actor ? ejecutar(() => votar(historiaId, actor.id, valor), mostrarVotacion) : undefined,
-    abrirNuevaRonda: () =>
-      scrumMaster ? ejecutar(() => abrirNuevaRonda(historiaId, scrumMaster.id), mostrarVotacion) : undefined,
+    iniciar: () => ejecutar(() => iniciarVotacion(historiaId), mostrarVotacion),
+    revelar: () => ejecutar(() => revelarVotacion(historiaId), mostrarVotacion),
+    votar: (valor: number) => ejecutar(() => votar(historiaId, valor), mostrarVotacion),
+    abrirNuevaRonda: () => ejecutar(() => abrirNuevaRonda(historiaId), mostrarVotacion),
     registrarEstimacion: (valor: number) =>
-      scrumMaster
-        ? ejecutar(() => registrarEstimacion(historiaId, scrumMaster.id, valor), mostrarEstimacion)
-        : undefined,
+      ejecutar(() => registrarEstimacion(historiaId, valor), mostrarEstimacion),
   }
 }

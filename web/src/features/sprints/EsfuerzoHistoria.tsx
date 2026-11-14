@@ -88,7 +88,6 @@ export function EsfuerzoHistoria({ historiaId, imputacion }: Props) {
       {imputacion && formularioAbierto && (
         <FormularioHoras
           historiaId={historiaId}
-          proyectoId={imputacion.proyectoId}
           fechaFin={imputacion.fechaFin}
           alRegistrar={() => setConsulta((actual) => actual + 1)}
           alCambiarEnvio={setEnviando}

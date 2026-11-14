@@ -14,6 +14,7 @@ export type Proyecto = {
   fecha_fin: string | null
   creado_en: string
   horas_por_story_point: number | null
+  fecha_cierre: string | null
 }
 
 export type Integrante = {
@@ -27,7 +28,6 @@ export type Integrante = {
 export type NuevoProyecto = {
   nombre: string
   descripcion: string
-  creador: string
   fecha_inicio: string | null
   fecha_fin: string | null
 }
@@ -42,7 +42,7 @@ export type ProyectoEditado = {
 
 export type NuevoIntegrante = {
   nombre: string
-  rol: Rol
+  rol?: Rol
 }
 
 export const crearProyecto = (datos: NuevoProyecto) =>
@@ -60,16 +60,28 @@ export const descargarReporteProyecto = (id: string) =>
 export const editarProyecto = (id: string, datos: ProyectoEditado) =>
   put<Proyecto>(`/projects/${id}`, datos)
 
+export const cerrarProyecto = (id: string) =>
+  post<Proyecto & { estado: EstadoProyecto }>(`/projects/${id}/cerrar`, undefined)
+
+export const reabrirProyecto = (id: string) =>
+  post<Proyecto & { estado: EstadoProyecto }>(`/projects/${id}/reabrir`, undefined)
+
 export const listarIntegrantes = (id: string) =>
   get<Integrante[]>(`/projects/${id}/members`)
 
 export const asignarIntegrante = (id: string, datos: NuevoIntegrante) =>
   post<Integrante>(`/projects/${id}/members`, datos)
 
-export const aNuevoProyecto = (datos: DatosProyecto): NuevoProyecto => ({
+export type UsuarioRegistrado = {
+  id: number
+  nombre: string
+}
+
+export const listarUsuarios = () => get<UsuarioRegistrado[]>('/users')
+
+export const aNuevoProyecto =(datos: DatosProyecto): NuevoProyecto => ({
   nombre: datos.nombre.trim(),
   descripcion: datos.descripcion.trim(),
-  creador: datos.creador.trim(),
   fecha_inicio: datos.fecha_inicio || null,
   fecha_fin: datos.fecha_fin || null,
 })

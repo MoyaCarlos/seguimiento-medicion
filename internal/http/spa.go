@@ -14,7 +14,7 @@ const rutaSalud = "/health"
 // verifica que incluya los prefijos que proxea web/vite.config.ts. Las descargas
 // que terminan en /reporte (PDF de HU-10) también llegan a la API aunque acepten
 // text/html; cualquier otra excepción se agrega junto a /health.
-var PrefijosAPI = []string{"/backlog", "/defectos", "/projects", "/sprints", "/demo", "/auth", rutaSalud}
+var PrefijosAPI = []string{"/backlog", "/defectos", "/projects", "/sprints", "/demo", "/auth", "/users", rutaSalud}
 
 func ServirSPA(api http.Handler, dirWeb string) http.Handler {
 	if info, err := os.Stat(dirWeb); err != nil || !info.IsDir() {

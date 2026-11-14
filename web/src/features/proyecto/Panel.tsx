@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { ApiError } from '../../compartido/api/client'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NoIntegrante } from '../../compartido/permisos/NoIntegrante'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
@@ -13,12 +17,14 @@ function mostrarFecha(fecha: string | null) {
 
 export function Panel() {
   const { id = '' } = useParams()
+  const { fechaCierre } = usePermisosProyecto(Number(id))
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(true)
   const [estado, setEstado] = useState<EstadoProyecto>()
   const [errorEstado, setErrorEstado] = useState('')
   const [cargandoEstado, setCargandoEstado] = useState(true)
+  const [noIntegrante, setNoIntegrante] = useState(false)
 
   useEffect(() => {
     let vigente = true
@@ -28,7 +34,9 @@ export function Panel() {
         if (vigente) setProyecto(datos)
       })
       .catch((causa: unknown) => {
-        if (vigente) setError(mensajeDeError(causa))
+        if (!vigente) return
+        if (causa instanceof ApiError && causa.tipo === 'no_integrante') setNoIntegrante(true)
+        else setError(mensajeDeError(causa))
       })
       .finally(() => {
         if (vigente) setCargando(false)
@@ -58,8 +66,11 @@ export function Panel() {
     }
   }, [id])
 
+  if (noIntegrante) return <NoIntegrante />
+
   return (
     <section className="hu04-panel" aria-labelledby="panel-title">
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
       <div className="hu04-encabezado">
         <div>
           <p className="eyebrow">Panel principal</p>

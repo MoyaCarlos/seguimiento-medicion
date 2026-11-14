@@ -25,7 +25,7 @@ describe('pantalla de creación de proyecto', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
     expect(screen.getByText('El nombre es obligatorio')).toBeTruthy()
-    expect(screen.getByText('El nombre del creador es obligatorio')).toBeTruthy()
+    expect(screen.queryByText('El nombre del creador es obligatorio')).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
@@ -47,7 +47,6 @@ describe('pantalla de creación de proyecto', () => {
     abrir()
 
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
-    await userEvent.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
     await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
@@ -58,7 +57,6 @@ describe('pantalla de creación de proyecto', () => {
         body: JSON.stringify({
           nombre: 'Proyecto Alfa',
           descripcion: '',
-          creador: 'Ana',
           fecha_inicio: null,
           fecha_fin: null,
         }),
@@ -75,11 +73,37 @@ describe('pantalla de creación de proyecto', () => {
     abrir()
 
     await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
-    await userEvent.type(screen.getByLabelText('Tu nombre (Scrum Master)'), 'Ana')
     await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
     expect(await screen.findByText(mensaje)).toBeTruthy()
     const nombre = screen.getByLabelText('Nombre del proyecto')
     expect(nombre.getAttribute('aria-describedby')).toBeNull()
+  })
+})
+
+describe('pantalla de creación de proyecto: la sesión es quien crea (HU-21 Escenario 7)', () => {
+  it('Escenario 7: crear proyecto sin campo «Tu nombre (Scrum Master)» y sin creador en el pedido', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ id: 7, nombre: 'Proyecto Alfa', descripcion: '', fecha_inicio: null, fecha_fin: null }),
+        { status: 201 },
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+
+    expect(screen.queryByLabelText('Tu nombre (Scrum Master)')).toBeNull()
+
+    await userEvent.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
+    await userEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ nombre: 'Proyecto Alfa', descripcion: '', fecha_inicio: null, fecha_fin: null }),
+      }),
+    )
   })
 })
