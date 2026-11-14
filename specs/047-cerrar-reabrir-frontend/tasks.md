@@ -210,7 +210,8 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 - [x] T055 [US2] COMMIT `RED: Equipo en solo lectura con el proyecto cerrado (falla)`
 - [x] T056 [US2] GREEN: en `web/src/features/proyecto/Configuracion.tsx` reemplazar `useEsScrumMaster` por UNA llamada a `usePermisosProyecto`; aviso; la nota es `NotaCerrado` si `cerrado`, si no la actual. Tests en verde.
 - [x] T057 [US2] COMMIT `GREEN: Equipo en solo lectura con el proyecto cerrado, test en verde`
-- [ ] T058 [US2] Fase 3: `cd web && npm test && npm run lint && npm run build` en verde y pasos «Fase 3» de [quickstart.md](quickstart.md). Marcar T042 a T058 en `tasks.md` y commitear junto con ese cambio: `Validar la Fase 3 de cerrar y reabrir (Refs #312)`.
+- [X] T058 [US2] Fase 3: `cd web && npm test && npm run lint && npm run build` en verde y pasos «Fase 3» de [quickstart.md](quickstart.md). Marcar T042 a T058 en `tasks.md` y commitear junto con ese cambio: `Validar la Fase 3 de cerrar y reabrir (Refs #312)`.
+  - Fase 3 validada a mano con un Scrum Master y un Product Builder: con el proyecto cerrado, Historias (incluido el formulario de alta), Votación, Defectos y Equipo muestran el aviso y sus acciones de escritura deshabilitadas con «El proyecto está cerrado» (una sola nota por acción, también para el Product Builder), las lecturas siguen visibles y los enlaces «Votar» y «Nueva historia» siguen navegando; al reabrir todo se habilita y el Product Builder vuelve a ver las notas de HU-21. «Resolver» de Defectos no aparece sin Sprint Activo y queda cubierto por las pruebas.
 
 **Checkpoint**: US2 completa en las tres fases.
 
