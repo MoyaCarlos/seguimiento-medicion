@@ -329,6 +329,7 @@
 
 .sprints-encabezado .button {
   align-items: center;
+  align-self: flex-start;
   display: inline-flex;
   gap: 8px;
 }
@@ -468,4 +469,15 @@
 .sprint-enlace svg {
   height: 15px;
   width: 15px;
+}
+
+@media (max-width: 640px) {
+  .sprint-historia__acciones {
+    justify-content: flex-start;
+  }
+
+  .sprint-boton--contorno {
+    min-height: 40px;
+    width: 100%;
+  }
 }
