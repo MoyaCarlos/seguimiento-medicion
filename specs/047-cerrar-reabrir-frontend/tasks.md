@@ -206,10 +206,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ### Fase 3 — Equipo
 
-- [ ] T054 [US2] RED: casos nuevos en `web/src/features/proyecto/Configuracion.test.tsx`: proyecto cerrado → aviso, la lista de integrantes se sigue viendo, y «Asignar» deshabilitado con `NotaCerrado` (una sola nota); abierto → igual que hoy (incluida la nota de HU-21 para el Product Builder); un 409 «El proyecto está cerrado» al asignar se muestra tal cual; con el cierre desconocido todo queda habilitado. Confirmar que FALLA.
-- [ ] T055 [US2] COMMIT `RED: Equipo en solo lectura con el proyecto cerrado (falla)`
-- [ ] T056 [US2] GREEN: en `web/src/features/proyecto/Configuracion.tsx` reemplazar `useEsScrumMaster` por UNA llamada a `usePermisosProyecto`; aviso; la nota es `NotaCerrado` si `cerrado`, si no la actual. Tests en verde.
-- [ ] T057 [US2] COMMIT `GREEN: Equipo en solo lectura con el proyecto cerrado, test en verde`
+- [x] T054 [US2] RED: casos nuevos en `web/src/features/proyecto/Configuracion.test.tsx`: proyecto cerrado → aviso, la lista de integrantes se sigue viendo, y «Asignar» deshabilitado con `NotaCerrado` (una sola nota); abierto → igual que hoy (incluida la nota de HU-21 para el Product Builder); un 409 «El proyecto está cerrado» al asignar se muestra tal cual; con el cierre desconocido todo queda habilitado. Confirmar que FALLA.
+- [x] T055 [US2] COMMIT `RED: Equipo en solo lectura con el proyecto cerrado (falla)`
+- [x] T056 [US2] GREEN: en `web/src/features/proyecto/Configuracion.tsx` reemplazar `useEsScrumMaster` por UNA llamada a `usePermisosProyecto`; aviso; la nota es `NotaCerrado` si `cerrado`, si no la actual. Tests en verde.
+- [x] T057 [US2] COMMIT `GREEN: Equipo en solo lectura con el proyecto cerrado, test en verde`
 - [ ] T058 [US2] Fase 3: `cd web && npm test && npm run lint && npm run build` en verde y pasos «Fase 3» de [quickstart.md](quickstart.md). Marcar T042 a T058 en `tasks.md` y commitear junto con ese cambio: `Validar la Fase 3 de cerrar y reabrir (Refs #312)`.
 
 **Checkpoint**: US2 completa en las tres fases.
