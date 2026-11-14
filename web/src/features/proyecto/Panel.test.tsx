@@ -425,6 +425,7 @@ describe('cabecera y botones del panel como el prototipo', () => {
     expect(equipo.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
     expect(editar.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
     expect(screen.queryByRole('link', { name: 'Editar proyecto' })).toBeNull()
+    expect(nota.closest('[id]')?.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
   })
 
   it('Given la descripción del proyecto, When abre el panel, Then va en una tarjeta «Descripción» con el enlace «Ver estado del proyecto» y su flecha', async () => {

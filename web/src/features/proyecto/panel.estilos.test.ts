@@ -92,3 +92,11 @@ it('Given el enlace «Ver estado del proyecto», When se estiliza, Then usa el c
   expect(regla('.enlace')).toMatch(/font-weight:\s*700/)
   expect(regla('.enlace svg')).toMatch(/width:\s*15px/)
 })
+
+it('Given la nota de rol, When se estiliza, Then es una franja ámbar con texto de 13,5px que cumple 4,5:1', () => {
+  const bloque = regla('.nota-gestion')
+
+  expect(bloque).toMatch(/background:\s*#fdf0d5/)
+  expect(bloque).toMatch(/font-size:\s*13\.5px/)
+  expect(contraste(color(bloque, 'color'), color(bloque, 'background'))).toBeGreaterThanOrEqual(4.5)
+})
