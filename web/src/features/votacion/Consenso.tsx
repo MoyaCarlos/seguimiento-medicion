@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Button } from '../../compartido/componentes/Button'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { CARTAS, type Votacion } from './votacion'
 
@@ -9,9 +10,22 @@ type Props = {
   alRegistrar: (valor: number) => void
   alAbrirRonda: () => void
   puedeGestionar?: boolean
+  cerrado?: boolean
 }
 
-export function Consenso({ votacion, deshabilitado, alRegistrar, alAbrirRonda, puedeGestionar = true }: Props) {
+/** Una sola nota por acción: el cierre gana a la de HU-21. */
+function Nota({ id, cerrado, texto }: { id: string; cerrado: boolean; texto: string }) {
+  return cerrado ? <NotaCerrado id={id} /> : <NotaGestion id={id} texto={texto} />
+}
+
+export function Consenso({
+  votacion,
+  deshabilitado,
+  alRegistrar,
+  alAbrirRonda,
+  puedeGestionar = true,
+  cerrado = false,
+}: Props) {
   const [valor, setValor] = useState<number>(votacion.promedio?.carta_sugerida ?? CARTAS[0])
 
   function registrar(evento: FormEvent<HTMLFormElement>) {
@@ -50,7 +64,11 @@ export function Consenso({ votacion, deshabilitado, alRegistrar, alAbrirRonda, p
         </Button>
       </div>
       {!puedeGestionar && (
-        <NotaGestion id="votacion-nota-estimacion" texto="Solo el Scrum Master puede registrar la estimación" />
+        <Nota
+          id="votacion-nota-estimacion"
+          cerrado={cerrado}
+          texto="Solo el Scrum Master puede registrar la estimación"
+        />
       )}
       <div className="votacion-consenso__ronda">
         <p>¿Hace falta seguir conversando? Abrí otra ronda: los votos actuales quedan en el historial.</p>
@@ -64,7 +82,11 @@ export function Consenso({ votacion, deshabilitado, alRegistrar, alAbrirRonda, p
           Nueva ronda
         </Button>
         {!puedeGestionar && (
-          <NotaGestion id="votacion-nota-nueva-ronda" texto="Solo el Scrum Master puede abrir una nueva ronda" />
+          <Nota
+            id="votacion-nota-nueva-ronda"
+            cerrado={cerrado}
+            texto="Solo el Scrum Master puede abrir una nueva ronda"
+          />
         )}
       </div>
     </form>

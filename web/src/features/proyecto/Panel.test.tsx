@@ -298,3 +298,100 @@ describe('panel del proyecto', () => {
     expect(getComputedStyle(parrafo).getPropertyValue('overflow-wrap')).toBe('anywhere')
   })
 })
+
+function responderProyecto(respuesta: () => Promise<Response>) {
+  const fetchMock = vi.fn((url: string) => {
+    if (url === '/projects/3') return respuesta()
+    if (url === '/projects/3/status') {
+      return Promise.resolve(
+        new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
+      )
+    }
+    return Promise.reject(new Error(`URL inesperada: ${url}`))
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  return fetchMock
+}
+
+function conCierre(fecha_cierre: string | null) {
+  return () =>
+    Promise.resolve(
+      new Response(JSON.stringify({ ...proyecto, rol: 'scrum_master', fecha_cierre }), {
+        status: 200,
+      }),
+    )
+}
+
+describe('aviso de proyecto cerrado en el panel', () => {
+  it('US2.1: un proyecto cerrado muestra el aviso y los datos del panel siguen visibles', async () => {
+    responderProyecto(conCierre('2026-10-20'))
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(screen.getByText('Proyecto Alfa')).toBeTruthy()
+    expect(screen.getByText('Descripción')).toBeTruthy()
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+  })
+
+  it('un proyecto abierto no muestra el aviso', async () => {
+    responderProyecto(conCierre(null))
+    abrir()
+
+    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('mientras carga el rol y el cierre no muestra el aviso', async () => {
+    const fetchMock = responderProyecto(() => new Promise<Response>(() => {}))
+    abrir()
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('si el pedido del rol y el cierre falla no muestra el aviso', async () => {
+    responderProyecto(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ mensaje: 'falló el servidor' }), { status: 500 }),
+      ),
+    )
+    abrir()
+
+    expect(await screen.findByText('falló el servidor')).toBeTruthy()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('con el proyecto cerrado, los enlaces de navegación del panel siguen habilitados', async () => {
+    responderProyecto(conCierre('2026-10-20'))
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    for (const nombre of ['Configurar equipo', 'Editar proyecto']) {
+      const enlace = screen.getByRole('link', { name: nombre })
+      expect(enlace.getAttribute('href')).toBeTruthy()
+      expect(enlace.getAttribute('aria-disabled')).toBeNull()
+    }
+  })
+
+  it('FR-007a: el panel pide el proyecto una sola vez', async () => {
+    const fetchMock = vi.fn((url: string, _init?: RequestInit) => {
+      if (url === '/projects/3') return conCierre('2026-10-20')()
+      if (url === '/projects/3/status') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
+        )
+      }
+      return Promise.reject(new Error(`URL inesperada: ${url}`))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    const pedidosDelProyecto = fetchMock.mock.calls.filter(
+      ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',
+    )
+    expect(pedidosDelProyecto).toHaveLength(1)
+  })
+})

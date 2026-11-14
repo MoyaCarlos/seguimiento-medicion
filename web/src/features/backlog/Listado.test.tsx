@@ -786,3 +786,168 @@ describe('respuesta tardía de una carga vieja al cambiar de proyecto', () => {
     ])
   })
 })
+
+describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  type ProyectoApi = () => Response | Promise<Response>
+
+  /** Igual que simularApi, más el GET /projects/42 de los permisos. Devuelve el simulado de toda la pantalla. */
+  function simularConProyecto(proyecto: ProyectoApi, ...resto: Parameters<typeof simularApi>) {
+    const backlog = simularApi(...resto)
+    const pantalla = vi.fn((ruta: string, opciones?: RequestInit) =>
+      ruta === '/projects/42' ? Promise.resolve(proyecto()) : backlog(ruta, opciones),
+    )
+    vi.stubGlobal('fetch', pantalla)
+    return pantalla
+  }
+
+  const proyecto = (fecha_cierre: string | null) => () =>
+    respuesta(200, { id: 42, rol: 'scrum_master', fecha_cierre })
+
+  const nota = (elemento: HTMLElement) =>
+    document.getElementById(elemento.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const acciones = (titulo: string) => {
+    const articulo = articuloDe(titulo)
+    return {
+      editar: within(articulo).getByRole('button', { name: 'Editar' }) as HTMLButtonElement,
+      asignar: within(articulo).getByRole('button', { name: 'Asignar a Sprint' }) as HTMLButtonElement,
+      votar: within(articulo).getByRole('link', { name: 'Votar' }),
+    }
+  }
+
+  const metodos = (simulado: ReturnType<typeof vi.fn>) =>
+    simulado.mock.calls.map(([, opciones]) => (opciones as RequestInit | undefined)?.method ?? 'GET')
+
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», el listado se sigue viendo y «Editar» y «Asignar a Sprint» deshabilitados con «El proyecto está cerrado»; «Votar» sigue siendo un enlace', async () => {
+    const pantalla = simularConProyecto(
+      proyecto('2026-11-10'),
+      conHistorias(MUST, SHOULD),
+      undefined,
+      conSprints(...SPRINTS),
+    )
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    for (const historia of [MUST, SHOULD]) {
+      const { editar, asignar, votar } = acciones(historia.titulo)
+      expect(editar.disabled).toBe(true)
+      expect(asignar.disabled).toBe(true)
+      expect(nota(editar)).toBe('El proyecto está cerrado')
+      expect(nota(asignar)).toBe('El proyecto está cerrado')
+      expect(votar.getAttribute('href')).toBe(`/projects/42/votacion/${historia.id}`)
+    }
+    expect(within(articuloDe(MUST.titulo)).getAllByText('El proyecto está cerrado')).toHaveLength(1)
+
+    await userEvent.click(acciones(MUST.titulo).editar)
+    await userEvent.click(acciones(MUST.titulo).asignar)
+    expect(screen.queryByRole('form')).toBeNull()
+    expect(metodos(pantalla).every((metodo) => metodo === 'GET')).toBe(true)
+  })
+
+  it('Escenario: proyecto abierto: sin aviso, y «Editar» y «Asignar a Sprint» habilitados y sin nota como antes', async () => {
+    const pantalla = simularConProyecto(proyecto(null), conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await waitFor(() => expect(pantalla).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    const { editar, asignar } = acciones(MUST.titulo)
+    for (const accion of [editar, asignar]) {
+      expect(accion.disabled).toBe(false)
+      expect(accion.hasAttribute('aria-describedby')).toBe(false)
+    }
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+    expect(pantalla.mock.calls[0][0]).toBe('/projects/42/backlog')
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por la pantalla', async () => {
+    const pantalla = simularConProyecto(proyecto(null), conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await abrirAsignacion(MUST.titulo)
+    await screen.findByLabelText('Sprint')
+
+    expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al guardar la edición se muestra tal cual y no recarga la historia', async () => {
+    const pantalla = simularConProyecto(proyecto(null), conHistorias(MUST), () =>
+      respuesta(409, { mensaje: 'El proyecto está cerrado' }),
+    )
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirEdicion(MUST.titulo)
+    await userEvent.click(botonGuardar())
+
+    expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+    expect(
+      pantalla.mock.calls.filter(
+        ([ruta, opciones]) =>
+          ruta === `/backlog/${MUST.id}` &&
+          ((opciones as RequestInit | undefined)?.method ?? 'GET') === 'GET',
+      ),
+    ).toHaveLength(0)
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al asignar a un Sprint se muestra tal cual', async () => {
+    simularConProyecto(proyecto(null), conHistorias(MUST), undefined, conSprints(...SPRINTS), () =>
+      respuesta(409, { mensaje: 'El proyecto está cerrado' }),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirAsignacion(MUST.titulo)
+    await user.selectOptions(await screen.findByLabelText('Sprint'), '12')
+    await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+  })
+
+  it('Escenario: el cierre se conoce con la edición abierta: «Guardar cambios» queda deshabilitado con la nota y no envía', async () => {
+    let responderProyecto: (respuesta: Response) => void = () => {}
+    const pendiente = new Promise<Response>((resolve) => {
+      responderProyecto = resolve
+    })
+    const pantalla = simularConProyecto(() => pendiente, conHistorias(MUST), () => respuesta(200, MUST))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+
+    await act(async () => {
+      responderProyecto(respuesta(200, { id: 42, rol: 'scrum_master', fecha_cierre: '2026-11-10' }))
+    })
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const guardar = botonGuardar() as HTMLButtonElement
+    expect(guardar.disabled).toBe(true)
+    expect(nota(guardar)).toBe('El proyecto está cerrado')
+    fireEvent.submit(screen.getByRole('form', { name: `Editar ${MUST.titulo}` }))
+    expect(metodos(pantalla).every((metodo) => metodo === 'GET')).toBe(true)
+  })
+
+  it.each([
+    ['cargando', () => new Promise<Response>(() => {})],
+    ['error', () => respuesta(500, { mensaje: 'error interno' })],
+  ])('Escenario: cierre desconocido (%s): «Editar» y «Asignar a Sprint» habilitados, sin aviso y sin nota', async (_caso, respuestaProyecto) => {
+    const pantalla = simularConProyecto(respuestaProyecto, conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await waitFor(() => expect(pantalla).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    const { editar, asignar } = acciones(MUST.titulo)
+    for (const accion of [editar, asignar]) {
+      expect(accion.disabled).toBe(false)
+      expect(accion.hasAttribute('aria-describedby')).toBe(false)
+    }
+    await userEvent.click(editar)
+    expect((botonGuardar() as HTMLButtonElement).disabled).toBe(false)
+    expect(botonGuardar().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+})
