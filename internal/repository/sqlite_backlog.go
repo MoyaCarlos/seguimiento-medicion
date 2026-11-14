@@ -185,7 +185,7 @@ func (r *SQLiteBacklogRepository) motivoDeEdicionNoAplicada(ctx context.Context,
 	var actual *int
 	err := r.db.QueryRowContext(ctx, "SELECT estimacion_sp FROM historias WHERE id = ?", id).Scan(&actual)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ErrEdicionDesactualizada
+		return domain.ErrHistoriaNoEncontrada
 	}
 	if err != nil {
 		return fmt.Errorf("leer la estimación de la historia %d: %w", id, err)
