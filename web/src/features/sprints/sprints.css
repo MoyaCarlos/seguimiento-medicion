@@ -23,6 +23,7 @@
 
 .sprints-carril {
   align-content: start;
+  grid-template-columns: minmax(0, 1fr);
   background: rgb(15 27 45 / 3.5%);
   border: 1px solid var(--line);
   border-radius: 16px;
