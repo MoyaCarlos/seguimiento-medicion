@@ -5,6 +5,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { cerrarProyecto, reabrirProyecto } from './api'
 import type { EstadoProyecto, Rol } from './api'
 import { mensajeDeError } from './errores'
@@ -18,8 +19,16 @@ type Props = {
   onCambio: (fechaCierre: string | null) => void
 }
 
-/** Cerrar pide confirmación en línea; reabrir no (research D5). */
-export function ZonaCierreProyecto({ proyectoId, fechaCierre, onCambio }: Props) {
+const ID_NOTA = 'zona-cierre-nota'
+
+/**
+ * Cerrar pide confirmación en línea; reabrir no (research D5).
+ * Decide por `rol` y no por `puedeGestionar`: con el proyecto cerrado este último es false
+ * para todos, y el Scrum Master tiene que poder reabrir (research D3).
+ */
+export function ZonaCierreProyecto({ proyectoId, rol, fechaCierre, onCambio }: Props) {
+  const bloqueado = rol === 'product_builder'
+  const describedBy = bloqueado ? ID_NOTA : undefined
   const [fase, setFase] = useState<Fase>('reposo')
   const [estado, setEstado] = useState<EstadoProyecto | null>(null)
   const [sinPermiso, setSinPermiso] = useState('')
@@ -72,13 +81,23 @@ export function ZonaCierreProyecto({ proyectoId, fechaCierre, onCambio }: Props)
         <>
           <p className="zona-cierre__fecha">Proyecto cerrado el {fechaCierre}</p>
           {fase === 'enviando' && <LoadingIndicator />}
-          <Button onClick={() => enviar(reabrirProyecto)} disabled={fase === 'enviando'}>
+          <Button
+            onClick={() => enviar(reabrirProyecto)}
+            disabled={bloqueado || fase === 'enviando'}
+            aria-describedby={describedBy}
+          >
             Reabrir proyecto
           </Button>
         </>
       )}
 
-      {fechaCierre === null && fase === 'reposo' && <Button onClick={pedirConfirmacion}>Cerrar proyecto</Button>}
+      {fechaCierre === null && fase === 'reposo' && (
+        <Button onClick={pedirConfirmacion} disabled={bloqueado} aria-describedby={describedBy}>
+          Cerrar proyecto
+        </Button>
+      )}
+
+      {bloqueado && <NotaGestion id={ID_NOTA} texto="Solo el Scrum Master puede cerrar o reabrir el proyecto" />}
 
       {fechaCierre === null && fase !== 'reposo' && (
         <div className="zona-cierre__confirmacion">
