@@ -148,8 +148,9 @@ export function FormularioHoras({ historiaId, proyectoId, fechaFin, alRegistrar,
       <Field
         id={id('horas')}
         name="horas"
-        inputMode="decimal"
+        inputMode="text"
         label="Horas"
+        help="Ej.: 1,5 o 1:30 (horas:minutos)"
         value={horas}
         onChange={(evento) => setHoras(evento.target.value)}
         disabled={enviando}
