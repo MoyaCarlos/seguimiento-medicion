@@ -171,3 +171,12 @@
     padding: 1.5rem;
   }
 }
+
+.aviso-cerrado {
+  background: var(--brand-soft);
+  border: 1px solid var(--lilac);
+  border-radius: 0.75rem;
+  color: var(--lilac-dark);
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+}
