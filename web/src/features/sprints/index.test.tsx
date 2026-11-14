@@ -236,7 +236,9 @@ describe('pantalla de Sprints', () => {
     simularApi(conSprints(), (ruta) =>
       ruta === '/projects/42'
         ? respuesta(200, { id: 42, rol: 'scrum_master' })
-        : ruta === '/sprints/1/iniciar'
+        : ruta === '/projects'
+          ? respuesta(200, [])
+          : ruta === '/sprints/1/iniciar'
           ? respuesta(400, { campo: 'estado', mensaje: 'error del Sprint 1' })
           : (respuestas.shift() as Response),
     )
@@ -285,7 +287,7 @@ describe('pantalla de Sprints', () => {
       expect(within(seccion(nombre)).getByText('No hay Sprints')).toBeTruthy()
     }
     expect(screen.getAllByRole('heading', { name: 'Sprints' })).toHaveLength(1)
-    expect(screen.getByText('2').tagName).toBe('STRONG')
+    expect(screen.getByText('Proyecto #2')).toBeTruthy()
   })
 })
 
