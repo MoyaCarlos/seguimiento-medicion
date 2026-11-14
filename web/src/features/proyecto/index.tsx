@@ -10,8 +10,7 @@ function PanelLayout() {
 
   return (
     <>
-      {esElPanel && <p className="eyebrow">Panel principal</p>}
-      <h1 id="panel-title">Panel del proyecto</h1>
+      {!esElPanel && <h1 id="panel-title">Panel del proyecto</h1>}
       <Outlet />
     </>
   )
