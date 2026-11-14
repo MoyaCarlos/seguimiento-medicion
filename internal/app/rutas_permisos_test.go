@@ -38,17 +38,18 @@ var nivelesDeLaSpec = map[string]apihttp.NivelRuta{
 	"POST /defectos/{id}/resolver":      apihttp.SesionIntegrante,
 	"POST /backlog/{id}/votacion/votos": apihttp.SesionIntegrante,
 
-	"POST /sprints":                          apihttp.SesionScrumMaster,
-	"POST /sprints/{id}/iniciar":             apihttp.SesionScrumMaster,
-	"POST /sprints/{id}/cerrar":              apihttp.SesionScrumMaster,
-	"POST /backlog/{id}/votacion":            apihttp.SesionScrumMaster,
-	"POST /backlog/{id}/votacion/revelar":    apihttp.SesionScrumMaster,
-	"POST /backlog/{id}/votacion/rondas":     apihttp.SesionScrumMaster,
-	"POST /backlog/{id}/votacion/estimacion": apihttp.SesionScrumMaster,
-	"PUT /projects/{id}":                     apihttp.SesionScrumMaster,
-	"POST /projects/{id}/members":            apihttp.SesionScrumMaster,
-	"POST /projects/{id}/cerrar":             apihttp.SesionScrumMaster,
-	"POST /projects/{id}/reabrir":            apihttp.SesionScrumMaster,
+	"POST /sprints":                              apihttp.SesionScrumMaster,
+	"POST /sprints/{id}/iniciar":                 apihttp.SesionScrumMaster,
+	"POST /sprints/{id}/cerrar":                  apihttp.SesionScrumMaster,
+	"POST /backlog/{id}/votacion":                apihttp.SesionScrumMaster,
+	"POST /backlog/{id}/votacion/revelar":        apihttp.SesionScrumMaster,
+	"POST /backlog/{id}/votacion/rondas":         apihttp.SesionScrumMaster,
+	"POST /backlog/{id}/votacion/estimacion":     apihttp.SesionScrumMaster,
+	"PUT /projects/{id}":                         apihttp.SesionScrumMaster,
+	"POST /projects/{id}/members":                apihttp.SesionScrumMaster,
+	"DELETE /projects/{id}/members/{usuario_id}": apihttp.SesionScrumMaster,
+	"POST /projects/{id}/cerrar":                 apihttp.SesionScrumMaster,
+	"POST /projects/{id}/reabrir":                apihttp.SesionScrumMaster,
 
 	"GET /projects":                           apihttp.Lectura,
 	"GET /projects/{id}":                      apihttp.Lectura,
@@ -121,7 +122,7 @@ func pedidoDe(patron string) (string, string) {
 	if !ok {
 		return http.MethodGet, strings.TrimSuffix(patron, "/") + "/otra"
 	}
-	ruta = strings.NewReplacer("{id}", "1", "{sprintId}", "1").Replace(ruta)
+	ruta = strings.NewReplacer("{id}", "1", "{sprintId}", "1", "{usuario_id}", "1").Replace(ruta)
 	return metodo, ruta
 }
 
