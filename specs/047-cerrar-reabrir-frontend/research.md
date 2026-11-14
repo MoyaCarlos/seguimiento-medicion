@@ -12,7 +12,7 @@ No quedaban `NEEDS CLARIFICATION`. Se verificó el código actual y el contrato 
 ## Decisiones
 
 ### D1. Un solo hook, `usePermisosProyecto(id)`
-- **Decisión**: `useRolEnProyecto` suma `fechaCierre: string | null` al estado `listo`; `usePermisosProyecto` lo envuelve y calcula `cerrado = fechaCierre != null`, `puedeGestionar = !cerrado && rol !== 'product_builder'`, `puedeEscribir = !cerrado`. Con rol o cierre desconocidos (cargando o error) ambos son `true`. `no_integrante` mantiene `puedeGestionar = false`, como hoy.
+- **Decisión**: `useRolEnProyecto` suma `fechaCierre: string | null` al estado `listo`; `usePermisosProyecto` lo envuelve y calcula `cerrado = fechaCierre !== null`, `puedeGestionar = !cerrado && rol !== 'product_builder'`, `puedeEscribir = !cerrado`. Con rol o cierre desconocidos (cargando o error) ambos son `true`. `no_integrante` mantiene `puedeGestionar = false`, como hoy; `puedeEscribir` depende solo de `cerrado`.
 - **Rationale**: un pedido por pantalla (FR-007a) y retrocompatible: `useEsScrumMaster` devuelve lo mismo que hoy con proyectos abiertos.
 - **Alternativas**: un Context de proyecto (cambia `LayoutProyecto`, prohibido); un segundo hook con otro `GET` (viola FR-007a).
 
@@ -26,7 +26,7 @@ No quedaban `NEEDS CLARIFICATION`. Se verificó el código actual y el contrato 
 Con el proyecto cerrado `puedeGestionar` es `false` para todos, pero el Scrum Master tiene que poder reabrir. La zona usa `rol`: Scrum Master (o rol desconocido, decide el servidor) → habilitada; Product Builder → deshabilitada con la nota «Solo el Scrum Master puede cerrar o reabrir el proyecto» (patrón de HU-21, FR-009).
 
 ### D4. Una sola nota cuando coinciden cierre y falta de permiso
-Las pantallas muestran `NotaCerrado` si `cerrado`; si no, la `NotaGestion` de HU-21 si falta permiso. Nunca las dos. `NotaCerrado` reutiliza el elemento `p.nota-gestion` con el texto «El proyecto está cerrado», para heredar el estilo sin tocar `App.css`; va en archivo nuevo para dejar `NotaGestion` intacta.
+Las pantallas muestran `NotaCerrado` solo si `cerrado` (cierre conocido con fecha: nunca cargando, con error ni en un proyecto abierto); si no, la `NotaGestion` de HU-21 si falta permiso. Nunca las dos. `NotaCerrado` reutiliza el elemento `p.nota-gestion` con el texto «El proyecto está cerrado», para heredar el estilo sin tocar `App.css`; va en archivo nuevo para dejar `NotaGestion` intacta.
 
 ### D5. Confirmación en línea
 `ZonaCierreProyecto` tiene tres estados: `reposo`, `confirmando`, `enviando`. Al pasar a `confirmando` el foco va a «Cancelar» (ref + `useEffect`); Escape (keydown en la zona) cancela salvo en `enviando`; en `enviando` ambos botones quedan `disabled` (sin doble envío). Un 409 cierra la confirmación y muestra el mensaje del servidor junto a la zona con `ErrorMessage`; 403 muestra `AvisoSinPermiso`; 404, el aviso estándar de proyecto inexistente; la conexión caída, el mensaje de `ConnectionError`. Los errores se mapean con `mensajeDeError` y `ApiError.tipo` ya existentes en `features/proyecto/errores.ts`.

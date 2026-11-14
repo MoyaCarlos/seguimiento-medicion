@@ -19,7 +19,7 @@ La API es la de la spec 044 (`specs/044-cerrar-reabrir-proyecto/contracts/`); no
 | Componente | Props | Salida |
 |---|---|---|
 | `AvisoProyectoCerrado` | `fechaCierre: string \| null` | Sin fecha: nada. Con fecha: `role="status"` con «Proyecto cerrado el AAAA-MM-DD» |
-| `NotaCerrado` | `id: string` | `<p id class="nota-gestion">El proyecto está cerrado</p>` para `aria-describedby` |
+| `NotaCerrado` | `id: string` | `<p id class="nota-gestion">El proyecto está cerrado</p>` para `aria-describedby`. Las pantallas la muestran solo si `cerrado` (cierre conocido con fecha): nunca cargando, con error ni en un proyecto abierto |
 | `ZonaCierreProyecto` | `proyectoId: string`, `rol: Rol \| null`, `fechaCierre: string \| null`, `onCambio(fechaCierre: string \| null)` | Sección «Cerrar proyecto» (ver abajo) |
 
 ### `ZonaCierreProyecto`

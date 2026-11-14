@@ -26,7 +26,7 @@ Solo frontend. Se amplían los permisos compartidos de HU-21 (`web/src/compartid
 
 **Constraints**: no tocar `App.tsx`, `App.css`, `rutas.tsx`, `LayoutProyecto.tsx` ni el backend; estilos solo en el CSS de cada feature; los usos y las pruebas de HU-21 no cambian (SC-006)
 
-**Scale/Scope**: 3 fases, unas 9 pantallas/componentes que escriben
+**Scale/Scope**: 3 fases; el Panel y 7 pantallas que escriben (Editar proyecto, Sprints, Historias —crear y listado—, Votación, Defectos, Equipo) y los componentes hijos que reciben las props
 
 ## Constitution Check
 
@@ -80,6 +80,7 @@ web/src/
 │   ├── api.ts                       # + cerrarProyecto, reabrirProyecto, fecha_cierre en Proyecto
 │   ├── ZonaCierreProyecto.tsx       # nuevo
 │   ├── Editar.tsx                   # cambio mínimo: monta la zona, aviso y deshabilita Guardar
+│   ├── Panel.tsx                    # cambio mínimo: muestra AvisoProyectoCerrado
 │   └── estilos.css                  # estilos de la zona y el aviso
 ├── features/sprints/                # Fase 2: index, FormularioInicio, BotonCerrar, FormularioHoras, EstadoHistoria
 ├── features/backlog/                # Fase 3: crear, Edicion, AsignarASprint
@@ -92,7 +93,7 @@ web/src/
 
 ## Fases (cada una con su RED/GREEN y su validación)
 
-1. **Fase 1**: `useRolEnProyecto` (+`fechaCierre`), `usePermisosProyecto`, `useEsScrumMaster` como envoltorio, `AvisoProyectoCerrado`, `NotaCerrado`, `cerrarProyecto`/`reabrirProyecto`, `ZonaCierreProyecto` y Editar proyecto. Entrega US1, US3 y US4 completas, y US2 en Editar.
+1. **Fase 1**: `useRolEnProyecto` (+`fechaCierre`), `usePermisosProyecto`, `useEsScrumMaster` como envoltorio, `AvisoProyectoCerrado`, `NotaCerrado`, `cerrarProyecto`/`reabrirProyecto`, `ZonaCierreProyecto`, Editar proyecto y el aviso en el Panel. Entrega US1, US3 y US4 completas, y US2 en Editar y Panel. Las pantallas de solo lectura (Estado, Dashboard, Historial) quedan fuera: pueden mostrar el aviso cuando se rediseñen.
 2. **Fase 2**: Sprints (crear, iniciar, cerrar Sprint, horas y estado de las historias).
 3. **Fase 3**: Historias (crear, editar, asignar a Sprint), Votación, Defectos y Equipo.
 

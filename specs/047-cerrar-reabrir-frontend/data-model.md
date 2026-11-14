@@ -17,10 +17,11 @@ Validación: `fecha_cierre` ausente o `null` → `null`; string → se toma tal 
 | `fechaCierre` | `string \| null` | `null` si abierto o desconocido |
 | `cerrado` | `boolean` | `fechaCierre !== null` |
 | `puedeGestionar` | `boolean` | `!cerrado && rol !== 'product_builder' && estado !== 'no_integrante'` |
-| `puedeEscribir` | `boolean` | `!cerrado && estado !== 'no_integrante'` |
+| `puedeEscribir` | `boolean` | `!cerrado` |
 | `aplicarCierre` | `(f: string \| null) => void` | reemplaza `fechaCierre` con la respuesta del servidor |
 
 Desconocido (cargando o error) → `puedeGestionar` y `puedeEscribir` son `true`.
+`cerrado` solo es `true` cuando el cierre es conocido: el estado es `listo` y la respuesta trae `fecha_cierre` con fecha. Nunca mientras carga, ante un error, para `no_integrante` ni en un proyecto abierto; por eso la nota «El proyecto está cerrado» (que solo se muestra si `cerrado`) nunca aparece en esos casos.
 
 ## Estado de la zona de cierre (`ZonaCierreProyecto`)
 

@@ -19,12 +19,13 @@ npm run build
 4. Con un Sprint Activo, confirmar el cierre: se ve «Cerrá el Sprint activo antes de cerrar el proyecto» y la confirmación se cierra (US1.3).
 5. Con el foco: al abrir la confirmación el foco está en «Cancelar»; Escape cancela; doble clic en «Confirmar» envía un solo pedido.
 6. Como Product Builder: la zona se ve deshabilitada con la nota (US4.1).
+7. Panel: con el proyecto cerrado se ve «Proyecto cerrado el AAAA-MM-DD» y los enlaces siguen funcionando; abierto, sin aviso.
 
 ## Fase 2: Sprints
 Con el proyecto cerrado, en Sprints quedan deshabilitados crear, iniciar y cerrar Sprint, cargar horas y cambiar el estado de las historias, con la nota «El proyecto está cerrado» y el aviso arriba. El listado sigue visible.
 
 ## Fase 3: Historias, Votación, Defectos y Equipo
-Con el proyecto cerrado, quedan deshabilitados crear y editar Historia, asignar a Sprint, las acciones de Votación, registrar Defectos y asignar integrantes. Tras reabrir y volver a entrar, todo se habilita.
+Con el proyecto cerrado, quedan deshabilitados crear y editar Historia, asignar a Sprint, las acciones de Votación, registrar y resolver Defectos y asignar integrantes. Tras reabrir y volver a entrar, todo se habilita.
 
 ## Cobertura contra la spec
 Cada escenario de US1–US4 y cada borde (conexión caída, doble clic, Escape, cargando, nota única, cambio de proyecto) tiene una prueba con su nombre en el título (SC-007).
