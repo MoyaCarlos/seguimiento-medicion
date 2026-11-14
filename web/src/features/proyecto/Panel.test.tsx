@@ -40,6 +40,7 @@ type EstadoDelNuevo = 'En curso' | 'pendiente' | 'error'
 
 function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -72,6 +73,7 @@ function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
 
 function responderEstado(estado: string | null) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -118,6 +120,7 @@ function simularDescarga() {
 
 function responderPanelYReporte(reporte: Response) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -291,9 +294,11 @@ describe('panel del proyecto', () => {
       vi.fn((url: string) =>
         Promise.resolve(
           new Response(
-            JSON.stringify(
-              url === '/projects/3' ? { ...proyecto, descripcion } : { estado: 'Planificado' },
-            ),
+            url.endsWith('/members')
+              ? '[]'
+              : JSON.stringify(
+                  url === '/projects/3' ? { ...proyecto, descripcion } : { estado: 'Planificado' },
+                ),
             { status: 200 },
           ),
         ),
@@ -317,7 +322,12 @@ describe('pretítulo del panel', () => {
       'fetch',
       vi.fn((url: string) =>
         Promise.resolve(
-          new Response(JSON.stringify(url.endsWith('/status') ? { estado: 'Planificado' } : proyecto), { status: 200 }),
+          new Response(
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado: 'Planificado' } : proyecto,
+            ),
+            { status: 200 },
+          ),
         ),
       ),
     )
@@ -353,7 +363,9 @@ describe('cabecera y botones del panel como el prototipo', () => {
       vi.fn((url: string) =>
         Promise.resolve(
           new Response(
-            JSON.stringify(url.endsWith('/status') ? { estado } : { ...proyecto, rol, ...extra }),
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado } : { ...proyecto, rol, ...extra },
+            ),
             { status: 200 },
           ),
         ),
@@ -383,7 +395,9 @@ describe('cabecera y botones del panel como el prototipo', () => {
       vi.fn((url: string) =>
         url.endsWith('/status')
           ? Promise.resolve(new Response(JSON.stringify({ mensaje: 'falló' }), { status: 500 }))
-          : Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol: 'scrum_master' }), { status: 200 })),
+          : url.endsWith('/members')
+            ? Promise.resolve(new Response('[]', { status: 200 }))
+            : Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol: 'scrum_master' }), { status: 200 })),
       ),
     )
     abrir()
@@ -457,5 +471,123 @@ describe('cabecera y botones del panel como el prototipo', () => {
     expect(within(cronograma).getByText('01/10/2026')).toBeTruthy()
     expect(within(cronograma).getByText('01/11/2026')).toBeTruthy()
     expect(within(cronograma).getByText('En curso')).toBeTruthy()
+  })
+})
+
+describe('tarjeta «Equipo» del panel como el prototipo', () => {
+  const integrantes = [
+    { id: 1, proyecto_id: 3, nombre: 'carlos.moya', rol: 'scrum_master', vinculado_en: '2026-10-01T00:00:00Z' },
+    { id: 2, proyecto_id: 3, nombre: 'ana.iriarte', rol: 'product_builder', vinculado_en: '2026-10-01T00:00:00Z' },
+  ]
+
+  function responder(rol: string, respuestaEquipo: () => Promise<Response>) {
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/projects/3/members') return respuestaEquipo()
+      if (url === '/projects/3/status') {
+        return Promise.resolve(new Response(JSON.stringify({ estado: 'En curso' }), { status: 200 }))
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+  const conEquipo = () => Promise.resolve(new Response(JSON.stringify(integrantes), { status: 200 }))
+
+  async function tarjetaEquipo() {
+    return (await screen.findByRole('heading', { level: 2, name: 'Equipo' })).closest('aside') as HTMLElement
+  }
+
+  it('Given un proyecto con integrantes, When abre el panel, Then la tarjeta «Equipo» lista nombre y rol de cada uno', async () => {
+    const api = responder('scrum_master', conEquipo)
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+    const filas = await within(tarjeta).findAllByRole('listitem')
+
+    expect(filas).toHaveLength(2)
+    expect(within(filas[0]).getByText('carlos.moya')).toBeTruthy()
+    expect(within(filas[0]).getByText('Scrum Master')).toBeTruthy()
+    expect(within(filas[1]).getByText('ana.iriarte')).toBeTruthy()
+    expect(within(filas[1]).getByText('Product Builder')).toBeTruthy()
+    expect(api.mock.calls.filter(([url]) => url === '/projects/3/members')).toHaveLength(1)
+  })
+
+  it('Given los integrantes, When se listan, Then cada uno lleva un avatar con su inicial y colores que rotan desde el segundo', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const filas = await within(await tarjetaEquipo()).findAllByRole('listitem')
+    const avatares = filas.map((fila) => fila.querySelector('.avatar-proyecto'))
+
+    expect(avatares.map((a) => a?.getAttribute('data-inicial'))).toEqual(['C', 'A'])
+    expect(avatares.map((a) => a?.className)).toEqual([
+      'avatar-proyecto avatar-proyecto--1',
+      'avatar-proyecto avatar-proyecto--2',
+    ])
+  })
+
+  it('Given el Scrum Master, When mira la tarjeta, Then el pie dice «Configurar equipo» y lleva a la configuración', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const enlace = within(await tarjetaEquipo()).getByRole('link', { name: 'Configurar equipo' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(enlace.className).toBe('enlace')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un Product Builder, When mira la tarjeta, Then el pie dice «Ver equipo» y sigue llevando a la configuración', async () => {
+    responder('product_builder', conEquipo)
+    abrir()
+
+    const enlace = within(await tarjetaEquipo()).getByRole('link', { name: 'Ver equipo' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(within(await tarjetaEquipo()).queryByRole('link', { name: 'Configurar equipo' })).toBeNull()
+  })
+
+  it('Given un proyecto sin integrantes, When abre el panel, Then la tarjeta lo dice', async () => {
+    responder('scrum_master', () => Promise.resolve(new Response('[]', { status: 200 })))
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(await within(tarjeta).findByText('Todavía no hay integrantes asignados.')).toBeTruthy()
+    expect(within(tarjeta).queryByRole('list')).toBeNull()
+  })
+
+  it('Given que el equipo falla, When abre el panel, Then la tarjeta muestra el error y el resto del panel sigue', async () => {
+    responder('scrum_master', () =>
+      Promise.resolve(new Response(JSON.stringify({ mensaje: 'no se pudo leer el equipo' }), { status: 500 })),
+    )
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect((await within(tarjeta).findByRole('alert')).textContent).toBe('no se pudo leer el equipo')
+    expect(within(tarjeta).queryByText('Todavía no hay integrantes asignados.')).toBeNull()
+    expect(screen.getByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+  })
+
+  it('Given que el equipo está cargando, When abre el panel, Then la tarjeta muestra el indicador de carga y no «Todavía no hay integrantes»', async () => {
+    responder('scrum_master', () => new Promise<Response>(() => {}))
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(within(tarjeta).getByRole('status')).toBeTruthy()
+    expect(within(tarjeta).queryByText('Todavía no hay integrantes asignados.')).toBeNull()
+  })
+
+  it('Given las dos tarjetas, When abre el panel, Then comparten la rejilla con la descripción', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(tarjeta.parentElement?.className).toBe('panel-rejilla')
+    expect(tarjeta.className).toBe('panel-tarjeta')
+    expect(tarjeta.previousElementSibling?.tagName).toBe('ARTICLE')
   })
 })
