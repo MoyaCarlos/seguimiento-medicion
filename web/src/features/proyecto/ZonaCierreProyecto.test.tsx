@@ -182,3 +182,103 @@ describe('zona de cierre del proyecto - cerrar', () => {
     expect(onCambio).not.toHaveBeenCalled()
   })
 })
+
+const respuestaReapertura = { ...respuestaCierre, fecha_cierre: null, estado: 'En curso' }
+
+function abrirCerrado(onCambio = vi.fn()) {
+  render(<ZonaCierreProyecto proyectoId="7" rol="scrum_master" fechaCierre="2026-11-11" onCambio={onCambio} />)
+  return onCambio
+}
+
+async function reabrir() {
+  await userEvent.click(screen.getByRole('button', { name: 'Reabrir proyecto' }))
+}
+
+describe('zona de cierre del proyecto - reabrir', () => {
+  it('Escenario: cerrado y Scrum Master, se ve «Proyecto cerrado el 2026-11-11» y «Reabrir proyecto» habilitado, sin «Cerrar proyecto»', () => {
+    const fetchMock = responder(json(respuestaReapertura))
+    abrirCerrado()
+
+    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Reabrir proyecto' }).hasAttribute('disabled')).toBe(false)
+    expect(screen.queryByRole('button', { name: 'Cerrar proyecto' })).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('US3.1: pulsar «Reabrir proyecto» hace un POST /projects/7/reabrir sin confirmación, llama onCambio(null) y muestra el estado devuelto', async () => {
+    const fetchMock = responder(json(respuestaReapertura))
+    const onCambio = abrirCerrado()
+
+    await reabrir()
+
+    expect(await screen.findByText('En curso')).toBeTruthy()
+    expect(screen.queryByText('¿Cerrar el proyecto?')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Confirmar' })).toBeNull()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(url).toBe('/projects/7/reabrir')
+    expect(init.method).toBe('POST')
+    expect(onCambio).toHaveBeenCalledWith(null)
+  })
+
+  it('Escenario: con la reapertura en curso «Reabrir proyecto» está deshabilitado y un segundo clic no envía otro pedido', async () => {
+    let resolver: (r: Response) => void = () => {}
+    const fetchMock = responder(() => new Promise<Response>((resuelto) => { resolver = resuelto }))
+    abrirCerrado()
+
+    await reabrir()
+
+    const boton = screen.getByRole('button', { name: 'Reabrir proyecto' })
+    expect(boton.hasAttribute('disabled')).toBe(true)
+    await userEvent.click(boton)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    resolver(json(respuestaReapertura))
+    expect(await screen.findByText('En curso')).toBeTruthy()
+  })
+
+  it('US3.2: 409 «El proyecto no está cerrado» muestra el mensaje tal cual y no llama onCambio', async () => {
+    const mensaje = 'El proyecto no está cerrado'
+    responder(json({ mensaje }, 409))
+    const onCambio = abrirCerrado()
+
+    await reabrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
+    expect(screen.getByRole('button', { name: 'Reabrir proyecto' }).hasAttribute('disabled')).toBe(false)
+    expect(onCambio).not.toHaveBeenCalled()
+  })
+
+  it('US4.2: 403 al reabrir muestra el aviso «No tenés permiso» con el mensaje del servidor', async () => {
+    responder(json({ mensaje: 'Solo el Scrum Master puede realizar esta acción' }, 403))
+    const onCambio = abrirCerrado()
+
+    await reabrir()
+
+    expect(await screen.findByText('No tenés permiso')).toBeTruthy()
+    expect(screen.getByText('Solo el Scrum Master puede realizar esta acción')).toBeTruthy()
+    expect(onCambio).not.toHaveBeenCalled()
+  })
+
+  it('US4.3: 404 al reabrir muestra el aviso de proyecto inexistente', async () => {
+    responder(json({ mensaje: 'no existe el proyecto' }, 404))
+    const onCambio = abrirCerrado()
+
+    await reabrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('no existe el proyecto')
+    expect(onCambio).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: conexión caída al reabrir muestra el error de conexión y el estado no cambia', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    const onCambio = abrirCerrado()
+
+    await reabrir()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.queryByText('En curso')).toBeNull()
+    expect(onCambio).not.toHaveBeenCalled()
+  })
+})

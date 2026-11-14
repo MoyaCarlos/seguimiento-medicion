@@ -251,6 +251,8 @@ describe('edición de proyecto - rol (HU-21)', () => {
 describe('edición de proyecto - cierre (#312)', () => {
   const NOTA_CERRADO = 'El proyecto está cerrado'
   const NOTA_GESTION = 'Solo el Scrum Master puede guardar el proyecto'
+  // La zona de cierre también muestra «Proyecto cerrado el …»; esto apunta al aviso de la pantalla.
+  const AVISO = '.aviso-cerrado'
 
   function responderCierre(opciones: {
     fechaCierre: string | null
@@ -259,11 +261,17 @@ describe('edición de proyecto - cierre (#312)', () => {
   }) {
     const { fechaCierre, rol = 'scrum_master', hook = 'normal' } = opciones
     let lecturas = 0
-    const fetchMock = vi.fn((_url: string, init?: RequestInit) => {
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
       if (init?.method === 'POST') {
+        const reabre = url.endsWith('/reabrir')
         return Promise.resolve(
           new Response(
-            JSON.stringify({ ...proyecto, rol, fecha_cierre: '2026-11-11', estado: 'Finalizado' }),
+            JSON.stringify({
+              ...proyecto,
+              rol,
+              fecha_cierre: reabre ? null : '2026-11-11',
+              estado: reabre ? 'En curso' : 'Finalizado',
+            }),
             { status: 200 },
           ),
         )
@@ -301,7 +309,7 @@ describe('edición de proyecto - cierre (#312)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Cerrar proyecto' }))
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })).toBeTruthy()
     expect(screen.getByText('Finalizado')).toBeTruthy()
     await waitFor(() => expect(guardar().hasAttribute('disabled')).toBe(true))
     expect(document.getElementById(guardar().getAttribute('aria-describedby') ?? '')?.textContent).toBe(
@@ -315,7 +323,7 @@ describe('edición de proyecto - cierre (#312)', () => {
 
     await screen.findByDisplayValue('Proyecto Alfa')
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })).toBeTruthy()
     expect(screen.getAllByText(NOTA_CERRADO)).toHaveLength(1)
     expect(screen.queryByText(NOTA_GESTION)).toBeNull()
     expect(guardar().hasAttribute('disabled')).toBe(true)
@@ -351,5 +359,20 @@ describe('edición de proyecto - cierre (#312)', () => {
     expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
     expect(screen.queryByText('Proyecto cerrado el 2026-11-11')).toBeNull()
     expect(guardar().hasAttribute('disabled')).toBe(false)
+  })
+
+  it('SC-005: reabrir como Scrum Master hace desaparecer el aviso y habilita «Guardar cambios» sin recargar', async () => {
+    const fetchMock = responderCierre({ fechaCierre: '2026-11-11' })
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })
+    await userEvent.click(await screen.findByRole('button', { name: 'Reabrir proyecto' }))
+
+    await waitFor(() => expect(screen.queryByText('Proyecto cerrado el 2026-11-11')).toBeNull())
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(guardar().hasAttribute('disabled')).toBe(false)
+    expect(screen.getByRole('button', { name: 'Cerrar proyecto' })).toBeTruthy()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method !== 'POST')).toHaveLength(2)
   })
 })
