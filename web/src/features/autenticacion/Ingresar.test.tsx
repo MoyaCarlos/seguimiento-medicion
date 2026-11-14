@@ -93,6 +93,31 @@ describe('pantalla de ingreso', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Ingresar' }))
   })
 
+  it('Escenario 5: el foco ya está en el botón Ingresar en el instante en que aparece el aviso de error (sin carrera con el efecto)', async () => {
+    let rechazar: () => void = () => {}
+    vi.stubGlobal('fetch', vi.fn((ruta: string) =>
+      ruta.includes('/demo/') ? Promise.resolve(new Response('404 page not found', { status: 404 }))
+        : new Promise<Response>((resolver) => { rechazar = () => resolver(json({ mensaje: 'Usuario o contraseña incorrectos' }, 401)) }),
+    ))
+    montar()
+    const usuario = userEvent.setup()
+    await usuario.type(screen.getByLabelText('Nombre de usuario'), 'ana.perez')
+    await usuario.type(screen.getByLabelText('Contraseña'), 'clave-equivocada')
+    await usuario.click(screen.getByRole('button', { name: 'Ingresar' }))
+    screen.getByLabelText('Nombre de usuario').focus()
+    let focoAlAparecerElAviso: Element | null = null
+    const observador = new MutationObserver(() => {
+      if (!focoAlAparecerElAviso && document.querySelector('[role="alert"]')) focoAlAparecerElAviso = document.activeElement
+    })
+    observador.observe(document.body, { childList: true, subtree: true })
+
+    rechazar()
+    await screen.findByRole('alert')
+    observador.disconnect()
+
+    expect(focoAlAparecerElAviso).toBe(screen.getByRole('button', { name: 'Ingresar' }))
+  })
+
   it('Escenario 6: con state.vencida se muestra “Tu sesión venció. Volvé a ingresar para continuar.” como estado', () => {
     montar({ pathname: '/ingresar', state: { desde: '/backlog', vencida: true } })
 
