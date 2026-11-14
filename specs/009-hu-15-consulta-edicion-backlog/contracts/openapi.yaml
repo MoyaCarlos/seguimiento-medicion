@@ -6,7 +6,9 @@ info:
     Contrato de la consulta del Product Backlog de un proyecto y de la edición
     de una historia. La edición reemplaza juntos título, descripción, criterios
     de aceptación y Story Points; prioridad, valor de negocio, estado y Sprint
-    no se editan acá.
+    no se editan acá. Recibe además la estimación que leyó el formulario
+    (`estimacion_sp_leida`) y responde 409 si la estimación cambió mientras
+    tanto (issue #248).
 paths:
   /projects/{id}/backlog:
     get:
@@ -67,12 +69,15 @@ paths:
     put:
       summary: Editar una historia del Product Backlog
       description: >-
-        Si la historia no existe responde 404 antes de validar el cuerpo. Los
-        cuatro campos son obligatorios como claves; criterios_aceptacion y
-        estimacion_sp aceptan null (o "" para los criterios) para dejarlos vacíos.
-        Una edición con cualquier campo inválido se rechaza entera. Si la historia
-        está en un Sprint Activo o Finalizado y ya tiene Story Points, no se pueden
-        cambiar (D2b); cargarlos cuando estaban en null sí se permite.
+        Si la historia no existe responde 404 antes de validar el cuerpo. Las
+        cinco claves son obligatorias; criterios_aceptacion, estimacion_sp y
+        estimacion_sp_leida aceptan null (o "" para los criterios) para dejarlos
+        vacíos. estimacion_sp_leida es la estimación que el formulario leyó al
+        abrirse: si no coincide con la actual, responde 409 y no modifica nada
+        (issue #248). Una edición con cualquier campo inválido se rechaza entera.
+        Si la historia está en un Sprint Activo o Finalizado y ya tiene Story
+        Points, no se pueden cambiar (D2b); cargarlos cuando estaban en null sí
+        se permite.
       operationId: editarHistoria
       parameters:
         - $ref: '#/components/parameters/ID'
@@ -89,12 +94,14 @@ paths:
                   descripcion: Autenticación con OAuth
                   criterios_aceptacion: "Dado que tengo cuenta de Google, cuando ingreso, entonces veo el tablero"
                   estimacion_sp: 8
+                  estimacion_sp_leida: 5
               sinEstimacion:
                 value:
                   titulo: Como usuario quiero cerrar sesión
                   descripcion: Cerrar la sesión activa
                   criterios_aceptacion: null
                   estimacion_sp: null
+                  estimacion_sp_leida: null
       responses:
         '200':
           description: Historia editada; devuelve la historia completa.
@@ -128,6 +135,21 @@ paths:
                   value:
                     campo: criterios_aceptacion
                     mensaje: los criterios de aceptación no pueden superar los 2000 caracteres
+                faltaEstimacionLeida:
+                  value:
+                    campo: estimacion_sp_leida
+                    mensaje: el campo es obligatorio
+        '409':
+          description: >-
+            La estimación cambió desde que el formulario la leyó; no se modifica
+            la historia (issue #248).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                campo: estimacion_sp
+                mensaje: "la estimación cambió mientras editabas: recargá la historia y volvé a intentar"
         '404':
           description: La historia no existe.
           content:
@@ -149,7 +171,7 @@ components:
   schemas:
     EditarHistoriaRequest:
       type: object
-      required: [titulo, descripcion, criterios_aceptacion, estimacion_sp]
+      required: [titulo, descripcion, criterios_aceptacion, estimacion_sp, estimacion_sp_leida]
       properties:
         titulo:
           type: string
@@ -162,6 +184,13 @@ components:
           nullable: true
           maxLength: 2000
         estimacion_sp:
+          type: integer
+          nullable: true
+          enum: [1, 2, 3, 5, 8, 13, 21]
+        estimacion_sp_leida:
+          description: >-
+            Estimación que tenía la historia cuando el formulario se abrió. Si no
+            coincide con la actual, el PUT responde 409.
           type: integer
           nullable: true
           enum: [1, 2, 3, 5, 8, 13, 21]

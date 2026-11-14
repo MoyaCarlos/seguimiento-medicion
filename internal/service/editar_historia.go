@@ -14,6 +14,9 @@ type EditarHistoriaInput struct {
 	Descripcion         string
 	CriteriosAceptacion *string
 	EstimacionSP        *int
+	// EstimacionLeida es la estimación que tenía la historia cuando se abrió el
+	// formulario. Si no coincide con la actual, la edición se rechaza (#248).
+	EstimacionLeida *int
 	// UsuarioID es quien edita (la sesión, HU-21); debe integrar el proyecto.
 	UsuarioID int64
 }
@@ -45,11 +48,15 @@ func (s *EditarHistoria) Ejecutar(ctx context.Context, input EditarHistoriaInput
 		return domain.BacklogItem{}, err
 	}
 
+	if !mismaEstimacion(actual.EstimacionSP, input.EstimacionLeida) {
+		return domain.BacklogItem{}, domain.ErrEstimacionDesactualizada
+	}
+
 	if err := validarEstimacionCongelada(ctx, s.sprints, actual, editada.EstimacionSP); err != nil {
 		return domain.BacklogItem{}, err
 	}
 
-	if err := s.historias.Actualizar(ctx, editada); err != nil {
+	if err := s.historias.ActualizarSiEstimacionSigueSiendo(ctx, editada, input.EstimacionLeida); err != nil {
 		return domain.BacklogItem{}, err
 	}
 	return editada, nil

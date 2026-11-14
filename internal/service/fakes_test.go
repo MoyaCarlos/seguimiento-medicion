@@ -196,7 +196,7 @@ func (f *fakeHistoriaRepository) ObtenerPorID(_ context.Context, id int64) (doma
 	return h, nil
 }
 
-func (f *fakeHistoriaRepository) Actualizar(_ context.Context, item domain.BacklogItem) error {
+func (f *fakeHistoriaRepository) ActualizarSiEstimacionSigueSiendo(_ context.Context, item domain.BacklogItem, _ *int) error {
 	if f.errActualizar != nil {
 		return f.errActualizar
 	}

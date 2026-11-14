@@ -211,6 +211,7 @@ func (p *pasosSprint) cambioLaEstimacion(puntos int) error {
 		Descripcion:         actual.Descripcion,
 		CriteriosAceptacion: actual.CriteriosAceptacion,
 		EstimacionSP:        &puntos,
+		EstimacionLeida:     actual.EstimacionSP,
 	})
 	return err
 }

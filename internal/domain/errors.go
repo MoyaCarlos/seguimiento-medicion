@@ -54,6 +54,11 @@ var ErrSprintNoFinalizado = ValidationError{Campo: "estado", Mensaje: "el Sprint
 // historia de un Sprint Activo o Finalizado (decisión D2b).
 var ErrEstimacionCongelada = ValidationError{Campo: "estimacion_sp", Mensaje: "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"}
 
+// ErrEstimacionDesactualizada indica que la estimación cambió entre que el
+// formulario la leyó y se guardó la edición (#248). El repositorio la devuelve
+// si el compare-and-set no encuentra el valor esperado.
+var ErrEstimacionDesactualizada = errors.New("la estimación cambió mientras editabas: recargá la historia y volvé a intentar")
+
 // ErrHistoriaFueraDelSprintActivo indica una carga de horas a una historia que
 // no está en un Sprint Activo (HU-07).
 var ErrHistoriaFueraDelSprintActivo = ValidationError{Campo: "historia_id", Mensaje: "solo se imputan horas a historias del Sprint activo"}

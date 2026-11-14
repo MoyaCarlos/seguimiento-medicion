@@ -21,9 +21,12 @@ type ProductBacklogRepository interface {
 
 // HistoriaRepository es el puerto que usa la edición de una historia.
 // ObtenerPorID devuelve domain.ErrHistoriaNoEncontrada si la historia no existe.
+// ActualizarSiEstimacionSigueSiendo escribe solo si la estimación actual sigue
+// siendo la que leyó el formulario; si no, devuelve
+// domain.ErrEstimacionDesactualizada (#248).
 type HistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
-	Actualizar(ctx context.Context, item domain.BacklogItem) error
+	ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, estimacionLeida *int) error
 }
 
 // EstimacionHistoriaRepository es el puerto que usa el registro de la estimación
