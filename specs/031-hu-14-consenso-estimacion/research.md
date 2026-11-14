@@ -138,9 +138,12 @@ documento registra las decisiones técnicas del diseño.
   condicional que exige: el `rondaID` sigue siendo la ronda de mayor número y está revelada; y D2b se
   cumple en el estado actual del Sprint (`NULL` + `Finalizado` rechaza la primera carga; ya cargada +
   `Activo`/`Finalizado` rechaza el cambio). Un valor igual al actual se acepta sin restricción de D2b.
-  Si no afecta filas devuelve `ErrRegistroEstimacionDesactualizado` (409) sin modificar nada. En
-  `EditarHistoria` el mismo `UPDATE` de #248 suma la condición de D2b; si el Sprint cambió, devuelve
-  409 `ErrEstimacionDesactualizada`.
+  Si no afecta filas devuelve `ErrRegistroEstimacionDesactualizado` (409) sin modificar nada, o
+  `ErrHistoriaNoEncontrada` (404) si la historia no existe. En `EditarHistoria`, el
+  `ActualizarSiEstimacionSigueSiendo` de #248 combina en el mismo `UPDATE` el compare-and-set de la
+  estimación leída (`estimacion_sp IS ?`) y la condición D2b de #249; si no afecta filas, distingue
+  `ErrHistoriaNoEncontrada` (404), `ErrEstimacionDesactualizada` (409, la estimación cambió desde que
+  se leyó) o `ErrEdicionDesactualizada` (409, el Sprint cambió y D2b congela la estimación).
 - **Rationale**: la validación en el service y la escritura eran dos pasos; entre ellos otra petición
   podía iniciar o finalizar el Sprint, o abrir otra ronda, y la respuesta seguía siendo 200. El `UPDATE`
   condicional cierra la ventana sin transacciones en el service y sin repetir la regla en Go. D2b es

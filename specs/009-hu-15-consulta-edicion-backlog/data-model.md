@@ -99,7 +99,8 @@ HistoriaRepository
   ObtenerPorID(ctx, id int64) (domain.BacklogItem, error)                              // ErrHistoriaNoEncontrada
   ActualizarSiEstimacionSigueSiendo(ctx, item domain.BacklogItem, estimacionLeida *int) error
       // UPDATE ... WHERE id = ? AND estimacion_sp IS ? AND D2b
-      // 0 filas -> ErrEstimacionDesactualizada (estimación leída vieja) o ErrEdicionDesactualizada (D2b)
+      // 0 filas -> ErrHistoriaNoEncontrada (404), ErrEstimacionDesactualizada (estimación leída vieja)
+      //            o ErrEdicionDesactualizada (D2b)
 ```
 
 `EditarHistoria` usa además el puerto existente `SprintRepository.ObtenerPorID` para D2b.
