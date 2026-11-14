@@ -9,9 +9,9 @@
 **Status**: Implementada (pendiente de PR y review)
 
 **Dependencia**: el backend de HU-15 ya está en `main` (PR #135). Esta spec solo cubre
-la pantalla: consume `GET /projects/{id}/backlog` y `PUT /backlog/{id}` tal como los define
-la spec 009 (incluido `estimacion_sp_leida` desde el fix #248). La pantalla de creación de
-historias de HU-01 se conserva, movida a la sub-ruta `backlog/nueva`.
+la pantalla: consume `GET /projects/{id}/backlog`, `GET /backlog/{id}` y `PUT /backlog/{id}`
+tal como los define la spec 009 (incluido `estimacion_sp_leida` desde el fix #248). La
+pantalla de creación de historias de HU-01 se conserva, movida a la sub-ruta `backlog/nueva`.
 
 ## Objetivo
 
@@ -31,6 +31,9 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
   Las cinco claves son obligatorias; `criterios_aceptacion`, `estimacion_sp` y
   `estimacion_sp_leida` aceptan `null`. `estimacion_sp_leida` es la estimación que la
   historia tenía al abrir el formulario, y no se edita.
+- **Entrada (recarga tras 409)**: `GET /backlog/{id}`, para actualizar solo la estimación
+  leída y el selector de Story Points con el valor actual cuando la estimación cambió
+  mientras se editaba (#248).
 - **Salida en pantalla**: el listado del backlog con todos sus datos y, al elegir una
   historia, un formulario de edición con los cuatro campos editables. Al guardar, la
   historia actualizada se refleja en el listado y se muestra una confirmación.
@@ -57,6 +60,10 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 - **IF** la API responde 409 porque la estimación cambió mientras editaba, **THEN** la
   pantalla **shall** mostrar el mensaje junto al selector de Story Points y **shall**
   conservar los datos escritos y el formulario abierto (#248).
+- **WHEN** la API responde 409 porque la estimación cambió mientras editaba, **THEN** la
+  pantalla **shall** volver a consultar la historia con `GET /backlog/{id}` y **shall**
+  actualizar la estimación leída y el selector de Story Points con el valor actual, sin
+  modificar el título, la descripción ni los criterios escritos (#248).
 - **WHEN** una edición se guarda correctamente, **THEN** la pantalla **shall** conservar
   visible el identificador y el estado de la historia y mostrar una confirmación.
 - **WHEN** se guardan los criterios de aceptación vacíos o compuestos solo por espacios,
@@ -124,7 +131,8 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
   **shall** conservar los demás valores del formulario.
 - **IF** la API responde 409 por estimación desactualizada, **THEN** la pantalla **shall**
   mostrar el mensaje junto al selector de Story Points, **shall** conservar los demás
-  valores y **shall** dejar el formulario abierto para recargar y volver a intentar.
+  valores, **shall** recargar la historia para actualizar la estimación leída y el selector,
+  y **shall** dejar el formulario abierto para volver a intentar.
 - **IF** la API responde 404 al guardar, **THEN** la pantalla **shall** mostrar "historia
   no encontrada" como aviso general y **shall not** cerrar el formulario.
 - **IF** la API responde un error de campo desconocido, **THEN** la pantalla **shall**
@@ -178,7 +186,7 @@ de una historia desde la interfaz, sin salir de la pantalla ni recargar la aplic
 | Título y descripción obligatorios | `validarEdicion` | `US2.2`, `US2.3` y `edicion.test.ts` |
 | Criterios de hasta 2000 | `validarEdicion` | `US2.4` y `edicion.test.ts` |
 | Error de campo de la API | `Edicion` | `US2.5` de `Listado.test.tsx` |
-| Estimación desactualizada (409) | `Edicion` + `armarCuerpoEdicion` | `US2.7` y `edicionHistoria.test.ts` |
+| Estimación desactualizada (409) | `Edicion` + `armarCuerpoEdicion` + `obtenerHistoria` | `US2.7`, `US2.7b`, `US2.7c` y `edicionHistoria.test.ts` |
 | Error general / 404 al guardar | `Edicion` | `US2.6` de `Listado.test.tsx` |
 | Cambio de proyecto | `Listado` (`useEffect` por `id`) | caso de cambio de proyecto |
 | Creación de HU-01 conservada | ruta `backlog/nueva` | `rutas.test.tsx` |
