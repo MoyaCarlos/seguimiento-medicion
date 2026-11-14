@@ -163,3 +163,41 @@ it('Given «Ver detalle», When se estiliza, Then es un control verde de marca, 
   expect(regla('.sprint-detalle::before')).toMatch(/content:\s*'▸'/)
   expect(regla('.sprint-detalle[aria-expanded="true"]::before')).toMatch(/rotate\(90deg\)/)
 })
+
+it('Given el panel «Iniciar Sprint», When se estiliza, Then es un recuadro gris claro de radio 12 y relleno 18', () => {
+  const bloque = regla('.sprint-panel')
+
+  expect(bloque).toMatch(/background:\s*#f8fafc/)
+  expect(bloque).toMatch(/border-radius:\s*12px/)
+  expect(bloque).toMatch(/padding:\s*18px/)
+  expect(regla('.sprint-boton-bloque')).toMatch(/width:\s*100%/)
+})
+
+it('Given el pie de un Sprint activo, When se estiliza, Then lo separa una línea y el botón queda a la derecha', () => {
+  const bloque = regla('.sprint-pie')
+
+  expect(bloque).toMatch(/border-top:\s*1px solid/)
+  expect(bloque).toMatch(/justify-content:\s*flex-end/)
+})
+
+it('Given un Sprint finalizado, When se estiliza, Then es un desplegable de radio 14 con la línea inferior al abrir', () => {
+  expect(regla('.sprint-terminado')).toMatch(/border-radius:\s*14px/)
+  expect(regla('.sprint-terminado[open] summary')).toMatch(/border-bottom:\s*1px solid/)
+  expect(regla('.sprint-terminado summary')).toMatch(/cursor:\s*pointer/)
+})
+
+it('Given el resumen del finalizado, When se abre, Then el chevrón gira 180 grados', () => {
+  expect(regla('.sprint-terminado[open] .sprint-chevron')).toMatch(/rotate\(180deg\)/)
+})
+
+it('Given las historias dentro de un finalizado, When se estilizan, Then van en lista con separadores y sin tarjeta', () => {
+  const bloque = regla('.sprint-terminado .sprint-historia')
+
+  expect(bloque).toMatch(/border:\s*0/)
+  expect(bloque).toMatch(/background:\s*none/)
+  expect(regla('.sprint-terminado .sprint-backlog > li + li')).toMatch(/border-top:\s*1px solid/)
+})
+
+it('Given el encabezado, When lleva ícono, Then el ícono se separa 8px del texto', () => {
+  expect(regla('.sprints-encabezado .button')).toMatch(/gap:\s*8px/)
+})

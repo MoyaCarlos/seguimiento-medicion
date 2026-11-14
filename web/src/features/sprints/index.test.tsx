@@ -482,3 +482,94 @@ describe('pantalla de Sprints como el prototipo: cabecera, plazo y tablero', () 
     expect(tarjeta.querySelector('.sprint-fechas')).toBeNull()
   })
 })
+
+describe('pantalla de Sprints como el prototipo: Sprints finalizados', () => {
+  const finalizado = (id: number, numero: number): Sprint => ({
+    id, numero, proyecto_id: 42, estado: 'Finalizado', sprint_goal: `Meta ${numero}`, fecha_inicio: '2026-10-01', fecha_fin: '2026-10-15',
+  })
+  const h = (id: number, estado: string, sp: number | null) => ({
+    id, titulo: `Historia ${id}`, prioridad: 'M', estado, estimacion_sp: sp, fecha_finalizacion: estado === 'Completada' ? '2026-10-14' : null,
+  })
+  const BACKLOGS: Record<string, unknown[]> = {
+    '2': [h(1, 'Completada', 5), h(2, 'Completada', 3), h(3, 'Nueva', 2)],
+    '1': [h(4, 'Completada', 1)],
+    '9': [],
+  }
+
+  function abrirConFinalizados(...sprints: Sprint[]) {
+    simularApi(conSprints(...sprints), undefined, (sprintId) => respuesta(200, BACKLOGS[sprintId] ?? []))
+    abrir()
+  }
+  const terminado = async (nombre: string) =>
+    (await screen.findByRole('heading', { name: nombre })).closest('details') as HTMLDetailsElement
+  const etiquetas = (el: HTMLElement) =>
+    [...el.querySelectorAll('summary .sprint-chips > span')].map((c) => [c.textContent, c.className])
+
+  it('Given varios Sprints finalizados, When abre, Then cada uno es un desplegable cerrado y el más reciente va arriba', async () => {
+    abrirConFinalizados(finalizado(1, 1), finalizado(2, 2))
+
+    const dos = await terminado('Sprint 2')
+    const uno = await terminado('Sprint 1')
+
+    expect(dos.className).toBe('sprint-terminado')
+    expect(dos.open).toBe(false)
+    expect(dos.compareDocumentPosition(uno) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('Given un Sprint finalizado, When se carga su backlog, Then el resumen muestra Goal, fechas, historias completadas y Story Points completados', async () => {
+    abrirConFinalizados(finalizado(2, 2))
+
+    const dos = await terminado('Sprint 2')
+
+    await waitFor(() =>
+      expect(etiquetas(dos)).toEqual([
+        ['2 completadas', 'sprint-chip sprint-chip--ok'],
+        ['8 SP', 'sprint-chip sprint-chip--sp'],
+      ]),
+    )
+    expect(within(dos).getByText('Meta 2').closest('summary')).toBeTruthy()
+    expect(within(dos).getByText('01/10/2026 → 15/10/2026').closest('summary')).toBeTruthy()
+  })
+
+  it('Given un Sprint con una sola completada o ninguna, When se carga, Then dice «1 completada» y «0 completadas» (esta en gris)', async () => {
+    abrirConFinalizados(finalizado(1, 1), finalizado(9, 9))
+
+    const uno = await terminado('Sprint 1')
+    const nueve = await terminado('Sprint 9')
+
+    await waitFor(() => expect(etiquetas(uno)[0]).toEqual(['1 completada', 'sprint-chip sprint-chip--ok']))
+    await waitFor(() => expect(etiquetas(nueve)).toEqual([
+      ['0 completadas', 'sprint-chip sprint-chip--nueva'],
+      ['0 SP', 'sprint-chip sprint-chip--sp'],
+    ]))
+  })
+
+  it('Given las historias de un Sprint finalizado, When se listan, Then no llevan chip de estado y las no completadas dicen «No completada»', async () => {
+    abrirConFinalizados(finalizado(2, 2))
+
+    const dos = await terminado('Sprint 2')
+    const items = await within(dos).findAllByRole('listitem')
+    const chips = (i: number) => [...items[i].querySelectorAll('.sprint-chips > span')].map((c) => c.textContent)
+
+    expect(chips(0)).toEqual(['Must have (M)', '5 SP'])
+    expect(chips(2)).toEqual(['Must have (M)', '2 SP', 'No completada'])
+  })
+
+  it('Given un Sprint finalizado, When se abre, Then ofrece «Ver en el historial» hacia su detalle', async () => {
+    abrirConFinalizados(finalizado(2, 2))
+
+    const enlace = within(await terminado('Sprint 2')).getByRole('link', { name: 'Ver en el historial' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/42/historial/2')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un Sprint activo o pendiente, When abre, Then no es un desplegable', async () => {
+    simularApi(conSprints({ ...pendiente(1), estado: 'Activo' }, pendiente(3)))
+    abrir()
+
+    await screen.findByRole('heading', { name: 'Sprint 3' })
+
+    expect(document.querySelector('details')).toBeNull()
+  })
+})

@@ -14,6 +14,14 @@ const cerrar = () => userEvent.click(screen.getByRole('button', { name: 'Cerrar 
 
 afterEach(() => vi.unstubAllGlobals())
 
+describe('BotonCerrar como el prototipo', () => {
+  it('Given un Sprint activo, When se muestra «Cerrar Sprint», Then va en un pie separado por una línea', () => {
+    render(<BotonCerrar sprint={activo} alActualizar={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Cerrar Sprint' }).parentElement?.className).toBe('sprint-pie')
+  })
+})
+
 describe('BotonCerrar', () => {
   it('hace POST /sprints/{id}/cerrar sin cuerpo y entrega el Sprint devuelto', async () => {
     const fetchSimulado = vi.fn().mockResolvedValue(respuesta(200, finalizado))

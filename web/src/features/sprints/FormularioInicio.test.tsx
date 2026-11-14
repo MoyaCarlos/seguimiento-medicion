@@ -26,6 +26,18 @@ async function completarYEnviar() {
 
 afterEach(() => vi.unstubAllGlobals())
 
+describe('FormularioInicio como el prototipo', () => {
+  it('Given un Sprint pendiente, When se muestra el formulario, Then es un panel con el título «Iniciar Sprint» y el botón ocupa todo el ancho', () => {
+    render(<FormularioInicio sprint={pendiente} alActualizar={vi.fn()} />)
+
+    const boton = screen.getByRole('button', { name: 'Iniciar Sprint' })
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Iniciar Sprint' })).toBeTruthy()
+    expect(boton.closest('form')?.className).toBe('sprint-panel')
+    expect(boton.className).toBe('button button--primary sprint-boton-bloque')
+  })
+})
+
 describe('FormularioInicio', () => {
   it('ofrece Goal y fechas asociados a su etiqueta y el botón de iniciar', () => {
     render(<FormularioInicio sprint={pendiente} alActualizar={vi.fn()} />)
