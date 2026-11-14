@@ -373,4 +373,25 @@ describe('aviso de proyecto cerrado en el panel', () => {
       expect(enlace.getAttribute('aria-disabled')).toBeNull()
     }
   })
+
+  it('FR-007a: el panel pide el proyecto una sola vez', async () => {
+    const fetchMock = vi.fn((url: string, _init?: RequestInit) => {
+      if (url === '/projects/3') return conCierre('2026-10-20')()
+      if (url === '/projects/3/status') {
+        return Promise.resolve(
+          new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
+        )
+      }
+      return Promise.reject(new Error(`URL inesperada: ${url}`))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Planificado')).toBeTruthy()
+    const pedidosDelProyecto = fetchMock.mock.calls.filter(
+      ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',
+    )
+    expect(pedidosDelProyecto).toHaveLength(1)
+  })
 })
