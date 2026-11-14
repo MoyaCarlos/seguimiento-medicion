@@ -110,3 +110,19 @@ it('Given la barra de avance, When se estiliza, Then es una pista de 8px con rel
   expect(marcador).toMatch(/height:\s*16px/)
   expect(marcador).toMatch(/border-radius:\s*50%/)
 })
+
+it('Given la cabecera del panel, When se estiliza, Then los botones bajan debajo del título cuando no entran (flex-wrap, huecos 16/24)', () => {
+  const bloque = regla('.hu04-panel .page-header')
+
+  expect(bloque).toMatch(/flex-wrap:\s*wrap/)
+  expect(bloque).toMatch(/gap:\s*16px 24px/)
+})
+
+it('Given los botones de la cabecera, When llevan ícono, Then ícono y texto van separados 8px y el ícono mide 16px', () => {
+  expect(regla('.hu04-acciones .button')).toMatch(/gap:\s*8px/)
+  expect(regla('.hu04-acciones .button svg')).toMatch(/width:\s*16px/)
+})
+
+it('Given el enlace «Ver estado del proyecto», When se estiliza, Then no va subrayado salvo al pasar el mouse', () => {
+  expect(regla('.enlace')).toMatch(/text-decoration:\s*none/)
+})
