@@ -6,6 +6,8 @@
 
 **Status**: Implementada, pendiente de revisión por PR.
 
+> **Nota (HU-21, spec 042)**: desde HU-21 el integrante que carga las horas sale de la sesión; `POST /backlog/{id}/horas` ya no recibe `integrante_id` y el selector «Integrante» de la interfaz ya no existe. Este documento conserva el diseño original de HU-07; para el contrato vigente ver `specs/042-hu-21-permisos-por-rol/contracts/api-permisos.md`.
+
 **Input**: User description: "HU-07: Imputación de Horas Trabajadas (issue #7). Como integrante del equipo quiero registrar las horas reales que invertí trabajando en una Historia de Usuario para poder proveer datos al sistema que permitan comparar el esfuerzo estimado (Story Points convertidos a horas, ver HU-03) contra el esfuerzo real. Escenario 1: registro válido de tiempo (integrante, fecha de hoy, actividad y 4 horas sobre una historia de un Sprint activo; se suman al esfuerzo acumulado de la historia y se registra el Sprint activo en ese momento). Escenario 2: validación de inputs (horas negativas, texto no numérico, actividad vacía o integrante que no pertenece al proyecto bloquean el guardado). Depende de HU-04, HU-06 y HU-05. Las horas se guardan como minutos enteros (D8). El tope de horas por carga lo define esta especificación. Alcance: backend; el frontend es la sub-issue #63."
 
 ## Clarifications
