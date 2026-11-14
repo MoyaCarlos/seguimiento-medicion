@@ -75,7 +75,6 @@ async function abrirSelector(usuario: ReturnType<typeof userEvent.setup>) {
 
 describe('registro de rutas', () => {
   it.each([
-    ['/projects/42/proyecto', 'Panel del proyecto', '42'],
     ['/projects/42/backlog', 'Product Backlog', 'Proyecto #42'],
     ['/projects/42/backlog/nueva', 'Nueva historia', 'Proyecto #42'],
     ['/projects/42/sprints', 'Sprints', '42'],
@@ -86,6 +85,12 @@ describe('registro de rutas', () => {
 
     expect(await screen.findByRole('heading', { name: titulo }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByText(texto)).toBeTruthy()
+  })
+
+  it('/projects/42/proyecto muestra el panel con el proyecto de la URL', async () => {
+    abrir('/projects/42/proyecto')
+
+    expect(await screen.findByText('Panel principal · #42', {}, { timeout: 5000 })).toBeTruthy()
   })
 
   it('/projects/:id/votacion/:historiaId muestra la votación de la historia', async () => {
@@ -261,7 +266,7 @@ describe('registro de rutas', () => {
       await usuario.type(screen.getByLabelText('Nombre del proyecto'), 'Proyecto Alfa')
       await usuario.click(screen.getByRole('button', { name: 'Crear proyecto' }))
 
-      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+      expect(await screen.findByText(/^Panel principal · #\d+$/, {}, { timeout: 5000 })).toBeTruthy()
       expect(router.state.location.pathname).toBe('/projects/77/proyecto')
     })
   })
@@ -285,7 +290,7 @@ describe('registro de rutas', () => {
       await usuario.click(await screen.findByRole('link', { name: 'Alfa (#1)' }, { timeout: 5000 }))
 
       expect(router.state.location.pathname).toBe('/projects/1/proyecto')
-      expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+      expect(await screen.findByText(/^Panel principal · #\d+$/, {}, { timeout: 5000 })).toBeTruthy()
     })
   })
 
@@ -300,7 +305,7 @@ describe('registro de rutas', () => {
   it('/projects/:id redirige al panel del proyecto', async () => {
     const router = abrir('/projects/1')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByText(/^Panel principal · #\d+$/, {}, { timeout: 5000 })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/1/proyecto')
   })
 
@@ -831,7 +836,7 @@ describe('ventana «Nuevo proyecto» en /projects/new', () => {
 
     expect(await screen.findByRole('dialog', { name: 'Crear proyecto' }, { timeout: 5000 })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1, name: 'Proyectos' })).toBeTruthy()
-    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
+    expect(screen.queryByText(/Panel principal/)).toBeNull()
     const pedidos = vi.mocked(fetch).mock.calls.map(([url]) => String(url))
     expect(pedidos.some((url) => url.startsWith('/projects/new'))).toBe(false)
   })
@@ -839,7 +844,7 @@ describe('ventana «Nuevo proyecto» en /projects/new', () => {
   it('/projects/12 sigue abriendo el panel del proyecto 12', async () => {
     const router = abrir('/projects/12')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByText(/^Panel principal · #\d+$/, {}, { timeout: 5000 })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/12/proyecto')
     expect(screen.queryByRole('dialog')).toBeNull()
   })
