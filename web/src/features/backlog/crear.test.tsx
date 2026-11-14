@@ -18,11 +18,31 @@ const HISTORIA: HistoriaCreada = {
   estimacion_sp: null,
 }
 
+const PROYECTO_ABIERTO = { id: 42, rol: 'scrum_master', fecha_cierre: null }
+
+type RespuestaProyecto = () => Response | Promise<Response>
+
+const proyectoAbierto: RespuestaProyecto = () =>
+  new Response(JSON.stringify(PROYECTO_ABIERTO), { status: 200 })
+
+/**
+ * Simula fetch: el GET /projects/{id} de los permisos se responde con `proyecto` y el resto
+ * va a `backlog`, así los casos siguen contando solo los pedidos del backlog.
+ * Devuelve el simulado de toda la pantalla.
+ */
+function simularFetch(backlog: ReturnType<typeof vi.fn>, proyecto: RespuestaProyecto = proyectoAbierto) {
+  const pantalla = vi.fn((ruta: string, opciones?: RequestInit) =>
+    /^\/projects\/[^/]+$/.test(ruta) ? Promise.resolve(proyecto()) : backlog(ruta, opciones),
+  )
+  vi.stubGlobal('fetch', pantalla)
+  return pantalla
+}
+
 function responderCreada(overrides: Partial<HistoriaCreada> = {}) {
   const fetchMock = vi.fn().mockImplementation(() =>
     Promise.resolve(new Response(JSON.stringify({ ...HISTORIA, ...overrides }), { status: 201 })),
   )
-  vi.stubGlobal('fetch', fetchMock)
+  simularFetch(fetchMock)
   return fetchMock
 }
 
@@ -30,13 +50,13 @@ function responderConError(status: number, cuerpo: { campo?: string; mensaje: st
   const fetchMock = vi.fn().mockImplementation(() =>
     Promise.resolve(new Response(JSON.stringify(cuerpo), { status })),
   )
-  vi.stubGlobal('fetch', fetchMock)
+  simularFetch(fetchMock)
   return fetchMock
 }
 
 function responderCaido() {
   const fetchMock = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
-  vi.stubGlobal('fetch', fetchMock)
+  simularFetch(fetchMock)
   return fetchMock
 }
 
@@ -156,7 +176,7 @@ describe('casos límite de creación', () => {
     'con un id inválido (%s) avisa y deshabilita el formulario sin llamar a la API',
     async (id) => {
       const fetchMock = vi.fn()
-      vi.stubGlobal('fetch', fetchMock)
+      simularFetch(fetchMock)
 
       abrir(`/projects/${id}/backlog`)
 
@@ -176,7 +196,7 @@ describe('casos límite de creación', () => {
       resolver = resolve
     })
     const fetchMock = vi.fn().mockReturnValue(pendiente)
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = await completarFormulario()
 
@@ -220,7 +240,7 @@ describe('casos límite de creación', () => {
 describe('validación de US2', () => {
   it('US2.1: sin título advierte junto al campo y no llama a la API', async () => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = userEvent.setup()
 
@@ -240,7 +260,7 @@ describe('validación de US2', () => {
     ['descripción', 'Descripción'],
   ])('US2.2: con %s de solo espacios lo considera vacío', async (_caso, etiqueta) => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = userEvent.setup()
 
@@ -266,7 +286,7 @@ describe('validación de US2', () => {
     ['una descripción de 2001 caracteres', 'Descripción', 'a'.repeat(2001)],
   ])('US2.3: rechaza %s sin llamar a la API', async (_caso, etiqueta, texto) => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = userEvent.setup()
 
@@ -305,7 +325,7 @@ describe('validación de US2', () => {
 
   it('US2.5: muestra todos los errores del intento a la vez', async () => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = userEvent.setup()
 
@@ -525,7 +545,7 @@ describe('criterios de aceptación de #174', () => {
 
   it('rechaza criterios de 2001 caracteres sin llamar a la API', async () => {
     const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    simularFetch(fetchMock)
     abrir()
     const user = await completarFormulario()
 
@@ -586,5 +606,88 @@ describe('prioridad MoSCoW', () => {
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).prioridad).toBe(codigo)
     expect(within(confirmacion).getByText(etiqueta)).toBeTruthy()
+  })
+})
+
+describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const proyecto = (fecha_cierre: string | null) => () =>
+    new Response(JSON.stringify({ id: 42, rol: 'scrum_master', fecha_cierre }), { status: 200 })
+
+  const nota = (elemento: HTMLElement) =>
+    document.getElementById(elemento.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const campos = () => [
+    screen.getByLabelText('Título') as HTMLInputElement,
+    screen.getByLabelText('Descripción') as HTMLTextAreaElement,
+    screen.getByLabelText('Criterios de aceptación') as HTMLTextAreaElement,
+    screen.getByLabelText('Prioridad') as HTMLSelectElement,
+    screen.getByLabelText('Valor de negocio') as HTMLSelectElement,
+  ]
+
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», formulario y «Guardar» deshabilitados con «El proyecto está cerrado» y sin enviar', async () => {
+    const backlog = vi.fn()
+    simularFetch(backlog, proyecto('2026-11-10'))
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    for (const campo of campos()) expect(campo.disabled).toBe(true)
+    const guardar = botonGuardar() as HTMLButtonElement
+    expect(guardar.disabled).toBe(true)
+    expect(nota(guardar)).toBe('El proyecto está cerrado')
+    expect(screen.getAllByText('El proyecto está cerrado')).toHaveLength(1)
+
+    fireEvent.submit(guardar.closest('form') as HTMLFormElement)
+    expect(backlog).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: proyecto abierto: sin aviso, formulario y «Guardar» habilitados y sin nota como antes', async () => {
+    const pantalla = simularFetch(vi.fn(), proyecto(null))
+    abrir()
+
+    await waitFor(() => expect(pantalla).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    for (const campo of campos()) expect(campo.disabled).toBe(false)
+    expect((botonGuardar() as HTMLButtonElement).disabled).toBe(false)
+    expect(botonGuardar().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por la pantalla', async () => {
+    const pantalla = simularFetch(vi.fn(), proyecto('2026-11-10'))
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await userEvent.type(screen.getByLabelText('Título'), 'x')
+
+    expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al crear se muestra tal cual', async () => {
+    const backlog = vi.fn().mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ mensaje: 'El proyecto está cerrado' }), { status: 409 })),
+    )
+    const pantalla = simularFetch(backlog, proyecto(null))
+    abrir()
+    await waitFor(() => expect(pantalla).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+  })
+
+  it.each([
+    ['cargando', () => new Promise<Response>(() => {})],
+    ['error', () => new Response(JSON.stringify({ mensaje: 'error interno' }), { status: 500 })],
+  ])('Escenario: cierre desconocido (%s): todo queda habilitado, sin aviso y sin nota', async (_caso, respuestaProyecto) => {
+    const pantalla = simularFetch(vi.fn(), respuestaProyecto)
+    abrir()
+
+    await waitFor(() => expect(pantalla).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    for (const campo of campos()) expect(campo.disabled).toBe(false)
+    expect((botonGuardar() as HTMLButtonElement).disabled).toBe(false)
+    expect(botonGuardar().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
 })

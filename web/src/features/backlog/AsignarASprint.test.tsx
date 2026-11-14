@@ -134,3 +134,54 @@ describe('AsignarASprint', () => {
     expect(asignarMock).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('AsignarASprint - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  function abrirCerrado() {
+    render(
+      <AsignarASprint
+        historia={HISTORIA}
+        sprints={SPRINTS}
+        errorSprints=""
+        onAsignada={vi.fn()}
+        onCancelar={vi.fn()}
+        puedeEscribir={false}
+      />,
+    )
+  }
+
+  it('Escenario: con puedeEscribir={false} «Confirmar asignación» queda deshabilitado con «El proyecto está cerrado» y no envía', async () => {
+    const user = userEvent.setup()
+    abrirCerrado()
+
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
+    const boton = screen.getByRole('button', { name: 'Confirmar asignación' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(true)
+    const nota = document.getElementById(boton.getAttribute('aria-describedby') ?? '')
+    expect(nota?.textContent).toBe('El proyecto está cerrado')
+    expect(screen.getAllByText('El proyecto está cerrado')).toHaveLength(1)
+
+    await user.click(boton)
+    fireEvent.submit(screen.getByRole('form', { name: `Asignar ${HISTORIA.titulo} a un Sprint` }))
+    expect(asignarMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: sin puedeEscribir (valor por defecto) «Confirmar asignación» queda habilitado y sin nota como antes', () => {
+    abrir()
+
+    const boton = screen.getByRole('button', { name: 'Confirmar asignación' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al asignar se muestra tal cual', async () => {
+    asignarMock.mockRejectedValue(new ApiError(409, 'El proyecto está cerrado'))
+    const user = userEvent.setup()
+    abrir()
+
+    await user.selectOptions(screen.getByLabelText('Sprint'), '12')
+    await user.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+  })
+})
