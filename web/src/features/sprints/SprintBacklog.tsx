@@ -61,7 +61,7 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion, finalizado, alCa
     return () => {
       vigente = false
     }
-  }, [sprintId])
+  }, [sprintId, alCargar])
 
   function reemplazar(nueva: HistoriaDeSprint) {
     setEstado((actual) =>
