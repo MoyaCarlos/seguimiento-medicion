@@ -77,7 +77,7 @@ describe('registro de rutas', () => {
   it.each([
     ['/projects/42/backlog', 'Product Backlog', 'Proyecto #42'],
     ['/projects/42/backlog/nueva', 'Nueva historia', 'Proyecto #42'],
-    ['/projects/42/sprints', 'Sprints', '42'],
+    ['/projects/42/sprints', 'Sprints', 'Proyecto #42'],
     ['/projects/42/defectos', 'Defectos', '42'],
     ['/projects/42/status', 'Estado del proyecto', '42'],
   ])('%s muestra su pantalla con el proyecto de la URL', async (url, titulo, texto) => {

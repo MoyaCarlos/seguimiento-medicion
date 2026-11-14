@@ -64,14 +64,16 @@ describe('pantalla de Sprints', () => {
     expect(screen.queryByRole('heading', { name: 'Sprint 7' })).toBeNull()
   })
 
-  it('conserva el contrato con la base: h1 "Sprints" y el id en un único <strong>', () => {
+  it('conserva el contrato con la base: un único h1 "Sprints" y el pretítulo «Proyecto #42» encima', () => {
     simularApi(conSprints())
     abrir()
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Sprints' })).toBeTruthy()
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Sprints' })
+    const pretitulo = screen.getByText('Proyecto #42')
+
     expect(screen.getAllByRole('heading', { name: 'Sprints' })).toHaveLength(1)
-    expect(screen.getByText('42').tagName).toBe('STRONG')
-    expect(screen.getByText('42').parentElement?.textContent).toBe('Proyecto actual: 42')
+    expect(pretitulo.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/Proyecto actual/)).toBeNull()
   })
 
   it('pide los Sprints del proyecto, muestra la carga y después los agrupa por estado', async () => {
@@ -216,7 +218,7 @@ describe('pantalla de Sprints', () => {
     const enActivo = within(seccion('Activo'))
     expect(await enActivo.findByRole('heading', { name: 'Sprint 5' })).toBeTruthy()
     expect(enActivo.getByText('Meta')).toBeTruthy()
-    expect(enActivo.getByText('2026-10-01 a 2026-10-15')).toBeTruthy()
+    expect(enActivo.getByText('01/10/2026 → 15/10/2026')).toBeTruthy()
     expect(within(seccion('Pendiente')).queryByRole('heading', { name: 'Sprint 5' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Iniciar Sprint' })).toBeNull()
 
@@ -379,5 +381,102 @@ describe('pantalla de Sprints - acciones de gestión según el rol (HU-21)', () 
     expect(iniciar.hasAttribute('disabled')).toBe(false)
     expect(cerrar.hasAttribute('disabled')).toBe(false)
     expect(crearBoton.hasAttribute('aria-describedby')).toBe(false)
+  })
+})
+
+describe('pantalla de Sprints como el prototipo: cabecera, plazo y tablero', () => {
+  const activo: Sprint = { ...pendiente(2), estado: 'Activo', sprint_goal: 'Meta del Sprint', fecha_inicio: '2026-11-07', fecha_fin: '2026-11-20' }
+  const proyectos = [
+    { id: 41, nombre: 'Otro', descripcion: '', fecha_inicio: '2026-01-01', fecha_fin: '2026-02-02' },
+    { id: 42, nombre: 'Alfa', descripcion: '', fecha_inicio: '2026-10-15', fecha_fin: '2026-12-29' },
+  ]
+  const conProyectos = (lista: unknown) =>
+    simularApi(conSprints(pendiente(1), activo), (ruta) =>
+      ruta === '/projects' ? respuesta(200, lista) : respuesta(404, { mensaje: 'no encontrado' }),
+    )
+
+  it('Given la pantalla, When abre, Then «Crear Sprint» va en la cabecera como botón principal con el ícono «+»', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    const boton = await screen.findByRole('button', { name: 'Crear Sprint' })
+
+    expect(boton.className).toBe('button button--primary')
+    expect(boton.querySelector('svg')).toBeTruthy()
+    expect(boton.closest('header')?.querySelector('h1')?.textContent).toBe('Sprints')
+  })
+
+  it('Given un proyecto con fechas, When abre, Then muestra el plazo del proyecto y la regla de los Sprints', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    const plazo = (await screen.findByText('Plazo del proyecto:')).parentElement as HTMLElement
+
+    expect(plazo.textContent).toBe(
+      'Plazo del proyecto: 15/10/2026 → 29/12/2026. Los Sprints tienen que quedar dentro de este rango.',
+    )
+    expect(plazo.querySelector('strong')?.textContent).toBe('Plazo del proyecto:')
+  })
+
+  it.each([
+    ['sin fechas', [{ ...proyectos[1], fecha_inicio: null, fecha_fin: null }]],
+    ['sin ese proyecto en la lista', [proyectos[0]]],
+    ['con la lista caída', null],
+  ])('Given un proyecto %s, When abre, Then no muestra el plazo', async (_caso, lista) => {
+    if (lista === null) {
+      simularApi(conSprints(pendiente(1)), () => respuesta(500, { mensaje: 'caído' }))
+    } else conProyectos(lista)
+    abrir()
+
+    await screen.findByRole('heading', { name: 'Sprint 1' })
+
+    expect(screen.queryByText('Plazo del proyecto:')).toBeNull()
+  })
+
+  it('Given los Sprints, When abre, Then las tres columnas están en el tablero con sus variantes', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    await screen.findByRole('heading', { name: 'Sprint 1' })
+    const columnas = ['Pendiente', 'Activo', 'Finalizado'].map(seccion)
+
+    expect(columnas.map((c) => c.className)).toEqual([
+      'sprints-carril',
+      'sprints-carril sprints-carril--activo',
+      'sprints-carril sprints-carril--fin',
+    ])
+    expect(new Set(columnas.map((c) => c.parentElement))).toHaveProperty('size', 1)
+    expect(columnas[0].parentElement?.className).toBe('sprints-tablero')
+  })
+
+  it('Given una columna sin Sprints, When abre, Then dice «No hay Sprints» en un recuadro punteado', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    await screen.findByRole('heading', { name: 'Sprint 1' })
+
+    expect(within(seccion('Finalizado')).getByText('No hay Sprints').className).toBe('sprints-vacio')
+  })
+
+  it('Given un Sprint con Goal y fechas, When abre, Then el Goal va en gris y las fechas en una etiqueta con calendario', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    const tarjeta = (await screen.findByRole('heading', { name: 'Sprint 2' })).closest('article') as HTMLElement
+    const fechas = within(tarjeta).getByText('07/11/2026 → 20/11/2026')
+
+    expect(within(tarjeta).getByText('Meta del Sprint').className).toBe('sprint-goal')
+    expect(fechas.className).toBe('sprint-fechas')
+    expect(fechas.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un Sprint sin Goal ni fechas, When abre, Then la tarjeta no dibuja etiquetas vacías', async () => {
+    conProyectos(proyectos)
+    abrir()
+
+    const tarjeta = (await screen.findByRole('heading', { name: 'Sprint 1' })).closest('article') as HTMLElement
+
+    expect(tarjeta.querySelector('.sprint-goal')).toBeNull()
+    expect(tarjeta.querySelector('.sprint-fechas')).toBeNull()
   })
 })
