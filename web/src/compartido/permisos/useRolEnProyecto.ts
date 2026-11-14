@@ -7,7 +7,7 @@ export type EstadoRol =
   | { estado: 'cargando' }
   | { estado: 'error'; mensaje: string }
   | { estado: 'no_integrante' }
-  | { estado: 'listo'; rol: Rol }
+  | { estado: 'listo'; rol: Rol; fechaCierre: string | null }
 
 const MENSAJE_NO_INTERPRETABLE = 'No se pudo interpretar el rol en el proyecto'
 
@@ -29,15 +29,17 @@ export function useRolEnProyecto(proyectoId: number): EstadoRol {
   useEffect(() => {
     let vigente = true
 
-    get<{ rol?: unknown }>(`/projects/${proyectoId}`)
+    get<{ rol?: unknown; fecha_cierre?: unknown }>(`/projects/${proyectoId}`)
       .then((proyecto) => {
         if (!vigente) return
         const rol = proyecto?.rol
+        const fechaCierre = proyecto?.fecha_cierre ?? null
         setConsulta({
           proyectoId,
-          resultado: esRol(rol)
-            ? { estado: 'listo', rol }
-            : { estado: 'error', mensaje: MENSAJE_NO_INTERPRETABLE },
+          resultado:
+            esRol(rol) && (fechaCierre === null || typeof fechaCierre === 'string')
+              ? { estado: 'listo', rol, fechaCierre }
+              : { estado: 'error', mensaje: MENSAJE_NO_INTERPRETABLE },
         })
       })
       .catch((error: unknown) => {
