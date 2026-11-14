@@ -3,6 +3,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { iniciarSprint } from './api'
 import { clasificarError } from './errores'
@@ -10,15 +11,22 @@ import type { Sprint } from './sprint'
 
 const CAMPOS = ['sprint_goal', 'fecha_inicio', 'fecha_fin']
 
-type Props = { sprint: Sprint; alActualizar: (sprint: Sprint) => void; puedeGestionar?: boolean }
+type Props = {
+  sprint: Sprint
+  alActualizar: (sprint: Sprint) => void
+  puedeGestionar?: boolean
+  puedeEscribir?: boolean
+}
 
-export function FormularioInicio({ sprint, alActualizar, puedeGestionar = true }: Props) {
+export function FormularioInicio({ sprint, alActualizar, puedeGestionar = true, puedeEscribir = true }: Props) {
+  const habilitado = puedeGestionar && puedeEscribir
   const [enviando, setEnviando] = useState(false)
   const [aviso, setAviso] = useState<string>()
   const [errores, setErrores] = useState<Record<string, string>>({})
 
   async function alEnviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
+    if (!habilitado) return
     const datos = new FormData(evento.currentTarget)
     setAviso(undefined)
     setErrores({})
@@ -51,13 +59,17 @@ export function FormularioInicio({ sprint, alActualizar, puedeGestionar = true }
       {enviando && <LoadingIndicator />}
       <Button
         type="submit"
-        disabled={enviando || !puedeGestionar}
-        aria-describedby={puedeGestionar ? undefined : id('nota-gestion')}
+        disabled={enviando || !habilitado}
+        aria-describedby={habilitado ? undefined : id('nota-gestion')}
       >
         Iniciar Sprint
       </Button>
-      {!puedeGestionar && (
-        <NotaGestion id={id('nota-gestion')} texto="Solo el Scrum Master puede iniciar un Sprint" />
+      {!puedeEscribir ? (
+        <NotaCerrado id={id('nota-gestion')} />
+      ) : (
+        !puedeGestionar && (
+          <NotaGestion id={id('nota-gestion')} texto="Solo el Scrum Master puede iniciar un Sprint" />
+        )
       )}
     </form>
   )
