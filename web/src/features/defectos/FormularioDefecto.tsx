@@ -2,18 +2,21 @@ import { useState, type FormEvent } from 'react'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { registrarDefecto, type HistoriaDeProyecto, type Severidad } from './api'
 import { clasificarError } from './errores'
 
 const SEVERIDADES: Severidad[] = ['Alta', 'Media', 'Baja']
+const ID_NOTA_CERRADO = 'registrar-defecto-nota-cerrado'
 
 type Props = {
   proyectoId: string
   historias: HistoriaDeProyecto[]
   alRegistrar: () => void
+  puedeEscribir?: boolean
 }
 
-export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props) {
+export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEscribir = true }: Props) {
   const [descripcion, setDescripcion] = useState('')
   const [severidad, setSeveridad] = useState('')
   const [historiaId, setHistoriaId] = useState('')
@@ -23,10 +26,11 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
   const [errores, setErrores] = useState<Record<string, string>>({})
 
   const grupos = agruparPorOrigen(historias)
+  const bloqueado = enviando || !puedeEscribir
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando) return
+    if (enviando || !puedeEscribir) return
     setConfirmado(false)
     setAviso('')
 
@@ -80,7 +84,7 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
             setDescripcion(evento.target.value)
             limpiar('descripcion')
           }}
-          disabled={enviando}
+          disabled={bloqueado}
           aria-invalid={Boolean(errores.descripcion)}
           aria-describedby={errores.descripcion ? 'descripcion-error' : undefined}
         />
@@ -97,7 +101,7 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
             setSeveridad(evento.target.value)
             limpiar('severidad')
           }}
-          disabled={enviando}
+          disabled={bloqueado}
           aria-invalid={Boolean(errores.severidad)}
           aria-describedby={errores.severidad ? 'severidad-error' : undefined}
         >
@@ -119,7 +123,7 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
             setHistoriaId(evento.target.value)
             limpiar('historia_id')
           }}
-          disabled={enviando}
+          disabled={bloqueado}
           aria-invalid={Boolean(errores.historia_id)}
           aria-describedby={errores.historia_id ? 'historia-error' : undefined}
         >
@@ -138,7 +142,14 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar }: Props)
       </div>
 
       {enviando && <LoadingIndicator />}
-      <Button type="submit" disabled={enviando}>Registrar defecto</Button>
+      <Button
+        type="submit"
+        disabled={bloqueado}
+        aria-describedby={puedeEscribir ? undefined : ID_NOTA_CERRADO}
+      >
+        Registrar defecto
+      </Button>
+      {!puedeEscribir && <NotaCerrado id={ID_NOTA_CERRADO} />}
     </form>
   )
 }
