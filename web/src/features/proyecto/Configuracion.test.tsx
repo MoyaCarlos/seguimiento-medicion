@@ -253,6 +253,8 @@ describe('quitar integrante desde Configurar equipo (HU-16, #182)', () => {
   }
 
   const filaDe = (nombre: string) => screen.getByText(nombre).closest('li') as HTMLElement
+  const articuloEquipo = () =>
+    screen.getByRole('heading', { name: 'Equipo del proyecto' }).closest('article') as HTMLElement
 
   const pedirQuitar = (nombre: string) =>
     userEvent.click(within(filaDe(nombre)).getByRole('button', { name: 'Quitar' }))
@@ -293,7 +295,7 @@ describe('quitar integrante desde Configurar equipo (HU-16, #182)', () => {
     await pedirQuitar('Jimena')
     await confirmarQuitar('Jimena')
 
-    await waitFor(() => expect(screen.queryByText('Jimena')).toBeNull())
+    await waitFor(() => expect(within(articuloEquipo()).queryByText('Jimena')).toBeNull())
     expect(fetchMock).toHaveBeenCalledWith(
       '/projects/3/members/2',
       expect.objectContaining({ method: 'DELETE' }),
@@ -303,8 +305,10 @@ describe('quitar integrante desde Configurar equipo (HU-16, #182)', () => {
     await userEvent.selectOptions(selector, 'Jimena')
     await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
 
-    expect(await screen.findByText('Jimena')).toBeTruthy()
-    expect(filaDe('Jimena').textContent).toContain('Product Builder')
+    await waitFor(() => expect(within(articuloEquipo()).getByText('Jimena')).toBeTruthy())
+    expect(within(articuloEquipo()).getByText('Jimena').closest('li')?.textContent).toContain(
+      'Product Builder',
+    )
     expect(fetchMock).toHaveBeenCalledWith(
       '/projects/3/members',
       expect.objectContaining({ method: 'POST' }),
