@@ -37,7 +37,9 @@ Decisiones abiertas del issue #300, confirmadas por la usuaria (backend) el 2026
   migración 008. Un solo PR con `MODELO-DE-DATOS.md` y la migración. Cierra D16.
 - Q: D16 propone «sin cierre manual, el proyecto no pasa a Finalizado»; el issue propone que
   el cierre tenga prioridad y las reglas de HU-13 sigan iguales. ¿Cuál vale? → A: **La del
-  issue.** Cerrado ⇒ «Finalizado» siempre; abierto ⇒ las reglas de HU-13 sin cambios.
+  issue.** Cerrado ⇒ «Finalizado» siempre; abierto ⇒ las reglas de HU-13 sin cambios (con la
+  regla vigente desde #173: con todos los Sprints finalizados, «Finalizado» solo si la fecha
+  de fin ya pasó).
 
 ## Objetivo
 
@@ -176,9 +178,11 @@ integra el proyecto, cerrar y reabrir responden el 403 de HU-21 y el proyecto no
 ### Edge Cases
 
 - **Reabrir un proyecto con la fecha de fin vencida o con todos sus Sprints
-  finalizados**: al reabrirlo, HU-13 lo sigue mostrando «Finalizado», pero está abierto
-  (fecha de cierre vacía) y acepta escrituras. «Finalizado» es el estado derivado; lo que
-  bloquea las escrituras es solo el cierre.
+  finalizados**: al reabrirlo, HU-13 vuelve a decidir el estado con su regla vigente (#173):
+  con la fecha de fin ya pasada lo muestra «Finalizado»; con todos los Sprints finalizados
+  pero fecha de fin futura o sin cargar, «En curso». En ambos casos está abierto (fecha de
+  cierre vacía) y acepta escrituras. «Finalizado» es el estado derivado; lo que bloquea las
+  escrituras es solo el cierre.
 - **Cerrar un proyecto sin Sprints ni fechas**: se permite; queda «Finalizado».
 - **Cerrar un proyecto con Sprints Pendientes**: se permite (solo el Sprint Activo lo
   impide); los Sprints Pendientes quedan como están, sin poder iniciarse mientras el

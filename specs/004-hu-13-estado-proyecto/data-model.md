@@ -17,7 +17,7 @@ tablas existentes:
 |---|---|
 | `Planificado` | El proyecto aún no inició ejecución: sin Sprints iniciados y sin alcanzar la fecha de inicio (o sin fecha de inicio cargada). |
 | `En curso` | Hay un Sprint `Activo`; o hay un Sprint `Finalizado` junto a un `Pendiente`; o todos los Sprints están `Finalizado` pero la fecha de fin es futura o no está cargada; o (sin Sprints iniciados) la fecha actual está dentro del rango del proyecto. |
-| `Finalizado` | El proyecto se cerró manualmente (`fecha_cierre`), o no tiene Sprints `Activo` ni `Pendiente` y la fecha de fin ya pasó (con o sin Sprints `Finalizado`). |
+| `Finalizado` | El proyecto se cerró manualmente (`fecha_cierre`), o no tiene Sprints `Activo` ni `Pendiente`, la fecha de fin ya pasó **y** hay ejecución iniciada: algún Sprint `Finalizado`, o la fecha de inicio cargada y ya alcanzada. Un proyecto sin Sprints, sin fecha de inicio y con la fecha de fin pasada queda `Planificado` (ver el algoritmo de «Regla de cálculo»). |
 
 **Representación**: `domain.EstadoProyecto string` con constantes
 (`ProyectoPlanificado`/`ProyectoEnCurso`/`ProyectoFinalizado`). No se agrega método
