@@ -219,10 +219,10 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T059 [P] Cobertura SC-007 y mapa de escrituras: revisar que cada escenario de US1 a US4 y cada borde de la spec (conexión caída, doble clic, Escape, cargando, nota única, cambio de proyecto) tenga una prueba con su nombre en el título; agregar las que falten con su RED/GREEN. Verificar además que cada `post`/`put` de `web/src/features` (los de los `api.ts` y los que se llaman directo desde un componente, como `cerrarSprint` en `sprints/BotonCerrar.tsx`; salvo autenticación y `POST /projects`) esté en el mapa de acciones de escritura con su prueba: `grep -rnE "\b(post|put|patch|del)(<[^>]*>)?\(" web/src --include=*.ts --include=*.tsx`.
-- [ ] T060 [P] Confirmar con `git diff main -- web/src/App.tsx web/src/App.css web/src/rutas.tsx web/src/compartido/router/LayoutProyecto.tsx` que no hay cambios, y que `git diff main -- web/src/compartido/permisos/permisos.test.tsx` solo suma `fechaCierre: null` en tres aserciones `toEqual`, y `git diff main --stat -- . ':!web' ':!specs'` sin cambios de backend (FR-012, SC-006).
-- [ ] T061 Recorrido final de [quickstart.md](quickstart.md) contra el backend real, con un Scrum Master y un Product Builder, y marcar las tareas hechas.
-- [ ] T062 COMMIT `Marcar las tareas de #312 como hechas (Refs #312)` (el commit incluye el tick de `tasks.md`, así no queda vacío)
+- [X] T059 [P] Cobertura SC-007 y mapa de escrituras: revisar que cada escenario de US1 a US4 y cada borde de la spec (conexión caída, doble clic, Escape, cargando, nota única, cambio de proyecto) tenga una prueba con su nombre en el título; agregar las que falten con su RED/GREEN. Verificar además que cada `post`/`put` de `web/src/features` (los de los `api.ts` y los que se llaman directo desde un componente, como `cerrarSprint` en `sprints/BotonCerrar.tsx`; salvo autenticación y `POST /projects`) esté en el mapa de acciones de escritura con su prueba: `grep -rnE "\b(post|put|patch|del)(<[^>]*>)?\(" web/src --include=*.ts --include=*.tsx`.
+- [X] T060 [P] Confirmar con `git diff main -- web/src/App.tsx web/src/App.css web/src/rutas.tsx web/src/compartido/router/LayoutProyecto.tsx` que no hay cambios, y que `git diff main -- web/src/compartido/permisos/permisos.test.tsx` solo suma `fechaCierre: null` en tres aserciones `toEqual`, y `git diff main --stat -- . ':!web' ':!specs'` sin cambios de backend (FR-012, SC-006).
+- [X] T061 Recorrido final de [quickstart.md](quickstart.md) contra el backend real, con un Scrum Master y un Product Builder, y marcar las tareas hechas.
+- [X] T062 COMMIT `Marcar las tareas de #312 como hechas (Refs #312)` (el commit incluye el tick de `tasks.md`, así no queda vacío)
 
 ---
 
