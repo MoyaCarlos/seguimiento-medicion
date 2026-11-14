@@ -80,3 +80,29 @@ describe('BotonCerrar', () => {
     expect(screen.queryByText('primer error')).toBeNull()
   })
 })
+
+describe('BotonCerrar - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const boton = () => screen.getByRole('button', { name: 'Cerrar Sprint' }) as HTMLButtonElement
+  const nota = () => document.getElementById(boton().getAttribute('aria-describedby') ?? '')?.textContent
+
+  it('Escenario: proyecto cerrado: «Cerrar Sprint» deshabilitado con la nota «El proyecto está cerrado» y no envía', async () => {
+    const fetchSimulado = vi.fn().mockResolvedValue(respuesta(200, finalizado))
+    vi.stubGlobal('fetch', fetchSimulado)
+    render(<BotonCerrar sprint={activo} alActualizar={vi.fn()} puedeGestionar={false} puedeEscribir={false} />)
+
+    await cerrar()
+
+    expect(boton().disabled).toBe(true)
+    expect(nota()).toBe('El proyecto está cerrado')
+    expect(screen.queryByText(/Solo el Scrum Master/)).toBeNull()
+    expect(fetchSimulado).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: proyecto abierto: con los valores por defecto el botón está habilitado y sin nota', () => {
+    render(<BotonCerrar sprint={activo} alActualizar={vi.fn()} />)
+
+    expect(boton().disabled).toBe(false)
+    expect(boton().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+})

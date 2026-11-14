@@ -6,6 +6,9 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { crearHistoria } from './api'
 import { ESTADO_INICIAL, armarCuerpo, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
@@ -13,10 +16,39 @@ import { Markdown } from './Markdown'
 import { PRIORIDADES, VALORES_NEGOCIO, etiquetaPrioridad } from './opciones'
 import './backlog.css'
 
+const NOTA_CERRADO = 'backlog-crear-nota-cerrado'
+
 export function Component() {
   const { id } = useParams()
   const proyectoId = parsearProyectoId(id)
-  const deshabilitado = proyectoId === null
+
+  // Con un id inválido no se pide el proyecto: la pantalla ya queda deshabilitada.
+  if (proyectoId === null) return <PantallaCrear id={id} proyectoId={null} />
+  return <PantallaConPermisos id={id} proyectoId={proyectoId} />
+}
+
+function PantallaConPermisos({ id, proyectoId }: { id?: string; proyectoId: number }) {
+  const { fechaCierre, puedeEscribir } = usePermisosProyecto(proyectoId)
+
+  return (
+    <PantallaCrear
+      id={id}
+      proyectoId={proyectoId}
+      fechaCierre={fechaCierre}
+      puedeEscribir={puedeEscribir}
+    />
+  )
+}
+
+type Props = {
+  id?: string
+  proyectoId: number | null
+  fechaCierre?: string | null
+  puedeEscribir?: boolean
+}
+
+function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = true }: Props) {
+  const deshabilitado = proyectoId === null || !puedeEscribir
 
   const [formulario, setFormulario] = useState<FormularioHistoria>(ESTADO_INICIAL)
   const [enviando, setEnviando] = useState(false)
@@ -52,7 +84,7 @@ export function Component() {
 
   async function enviar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando || proyectoId === null) return
+    if (enviando || proyectoId === null || !puedeEscribir) return
 
     setConfirmacion(null)
     setErrorGeneral(undefined)
@@ -102,7 +134,8 @@ export function Component() {
         </Link>
       </div>
 
-      {deshabilitado && (
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
+      {proyectoId === null && (
         <ErrorMessage message="El identificador del proyecto de la dirección no es válido." />
       )}
       {errorGeneral && <ErrorMessage message={errorGeneral} />}
@@ -197,9 +230,14 @@ export function Component() {
 
           {enviando && <LoadingIndicator />}
 
-          <Button type="submit" disabled={enviando || deshabilitado}>
+          <Button
+            type="submit"
+            disabled={enviando || deshabilitado}
+            aria-describedby={puedeEscribir ? undefined : NOTA_CERRADO}
+          >
             Guardar
           </Button>
+          {!puedeEscribir && <NotaCerrado id={NOTA_CERRADO} />}
         </fieldset>
       </form>
 
