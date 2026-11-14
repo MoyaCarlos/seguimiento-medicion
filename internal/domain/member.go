@@ -79,6 +79,15 @@ type Member struct {
 	CreadoEn  time.Time
 }
 
+// ValidarBaja verifica que el integrante se pueda quitar del equipo: el Scrum
+// Master no se quita, para que el proyecto conserve siempre uno (HU-16).
+func (m Member) ValidarBaja() error {
+	if m.Role == RolScrumMaster {
+		return ErrScrumMasterNoSeQuita
+	}
+	return nil
+}
+
 // ProyectoConRol es un proyecto visto por uno de sus integrantes, con el rol
 // que tiene en él («Mis proyectos», HU-21).
 type ProyectoConRol struct {

@@ -7,9 +7,10 @@ type Props = {
   estado: Sprint['estado']
   sprints: Sprint[]
   alActualizar: (sprint: Sprint) => void
+  puedeGestionar?: boolean
 }
 
-export function SeccionSprints({ estado, sprints, alActualizar }: Props) {
+export function SeccionSprints({ estado, sprints, alActualizar, puedeGestionar = true }: Props) {
   return (
     <section className="sprints-seccion">
       <h2>{estado}</h2>
@@ -28,8 +29,12 @@ export function SeccionSprints({ estado, sprints, alActualizar }: Props) {
               estado === 'Activo' ? { proyectoId: sprint.proyecto_id, fechaFin: sprint.fecha_fin } : undefined
             }
           />
-          {estado === 'Pendiente' && <FormularioInicio sprint={sprint} alActualizar={alActualizar} />}
-          {estado === 'Activo' && <BotonCerrar sprint={sprint} alActualizar={alActualizar} />}
+          {estado === 'Pendiente' && (
+            <FormularioInicio sprint={sprint} alActualizar={alActualizar} puedeGestionar={puedeGestionar} />
+          )}
+          {estado === 'Activo' && (
+            <BotonCerrar sprint={sprint} alActualizar={alActualizar} puedeGestionar={puedeGestionar} />
+          )}
         </article>
       ))}
     </section>

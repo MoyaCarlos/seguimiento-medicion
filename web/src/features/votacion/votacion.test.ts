@@ -1,19 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   CARTAS,
-  esScrumMaster,
   estaRevelada,
   faltanPorVotar,
   puedeRevelar,
   textoDeDiferencias,
   textoDeVoto,
-  type Integrante,
   type Votacion,
   type VotoDeIntegrante,
 } from './votacion'
-
-const MASTER: Integrante = { id: 1, nombre: 'Beta Uno', rol: 'scrum_master' }
-const BUILDER: Integrante = { id: 2, nombre: 'Beta Dos', rol: 'product_builder' }
 
 const voto = (usuario_id: number, ya_voto: boolean, valor: number | null): VotoDeIntegrante => ({
   usuario_id,
@@ -38,14 +33,6 @@ describe('CARTAS', () => {
   })
 })
 
-describe('esScrumMaster', () => {
-  it('Given un scrum_master, Then es Scrum Master; un product_builder o nadie, no', () => {
-    expect(esScrumMaster(MASTER)).toBe(true)
-    expect(esScrumMaster(BUILDER)).toBe(false)
-    expect(esScrumMaster(undefined)).toBe(false)
-  })
-})
-
 describe('estaRevelada', () => {
   it('Given revelada_en con fecha, Then está revelada; con null, no', () => {
     expect(estaRevelada(votacion([], '2026-11-02T10:00:00Z'))).toBe(true)
@@ -64,23 +51,18 @@ describe('faltanPorVotar', () => {
 describe('puedeRevelar', () => {
   const completa = votacion([voto(1, true, null), voto(2, true, 5)])
 
-  it('Given votaron todos y el actor es Scrum Master, When la ronda está abierta, Then puede revelar', () => {
-    expect(puedeRevelar(completa, MASTER)).toBe(true)
+  it('Given votaron todos, When la ronda está abierta, Then puede revelar', () => {
+    expect(puedeRevelar(completa)).toBe(true)
   })
 
   it('Given que falta un voto, Then no puede revelar', () => {
-    expect(puedeRevelar(votacion([voto(1, true, null), voto(2, false, null)]), MASTER)).toBe(false)
-  })
-
-  it('Given un Product Builder o nadie elegido, Then no puede revelar', () => {
-    expect(puedeRevelar(completa, BUILDER)).toBe(false)
-    expect(puedeRevelar(completa, undefined)).toBe(false)
+    expect(puedeRevelar(votacion([voto(1, true, null), voto(2, false, null)]))).toBe(false)
   })
 
   it('Given una ronda ya revelada, Then no puede revelar de nuevo', () => {
     const revelada = votacion([voto(1, true, 3)], '2026-11-02T10:00:00Z')
 
-    expect(puedeRevelar(revelada, MASTER)).toBe(false)
+    expect(puedeRevelar(revelada)).toBe(false)
   })
 })
 

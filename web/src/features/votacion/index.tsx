@@ -1,13 +1,13 @@
 import { useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
 import { AccionesScrumMaster } from './AccionesScrumMaster'
 import { Consenso } from './Consenso'
 import { Encabezado } from './Encabezado'
 import { Resultado } from './Resultado'
 import { ResumenHistoria } from './ResumenHistoria'
 import { Ronda } from './Ronda'
-import { SelectorActor } from './SelectorActor'
 import { SinVotacion } from './SinVotacion'
 import { useVotacion } from './useVotacion'
 import { estaRevelada } from './votacion'
@@ -25,7 +25,8 @@ type Props = { proyectoId: string; historiaId: number }
 
 function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const estado = useVotacion(proyectoId, historiaId)
-  const { integrantes, actor, scrumMaster, votacion, enviando } = estado
+  const puedeGestionar = useEsScrumMaster(Number(proyectoId))
+  const { integrantes, votacion, enviando } = estado
 
   return (
     <section className="votacion" aria-labelledby="votacion-title">
@@ -44,22 +45,12 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
       {estado.cargando && <LoadingIndicator />}
 
       {integrantes !== null && integrantes.length === 0 && <p>El proyecto no tiene integrantes</p>}
-      {integrantes !== null && integrantes.length > 0 && (
-        <SelectorActor
-          integrantes={integrantes}
-          actorId={actor?.id}
-          deshabilitado={enviando}
-          alElegir={estado.elegirActor}
-        />
-      )}
 
       {estado.sinVotacion && (
         <SinVotacion
-          actor={actor}
-          puedeIniciar={scrumMaster !== undefined}
-          hayIntegrantes={Boolean(integrantes?.length)}
           deshabilitado={enviando}
           alIniciar={estado.iniciar}
+          puedeGestionar={puedeGestionar}
         />
       )}
 
@@ -67,24 +58,20 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
         <>
           <Ronda
             votacion={votacion}
-            actor={actor}
-            hayIntegrantes={Boolean(integrantes?.length)}
-            deshabilitado={enviando} alVotar={estado.votar}
+            deshabilitado={enviando}
+            alVotar={estado.votar}
           />
           {estaRevelada(votacion) && (
             <>
               <Resultado promedio={votacion.promedio} diferencias={votacion.diferencias} />
-              {scrumMaster ? (
-                <Consenso
-                  key={votacion.ronda}
-                  votacion={votacion}
-                  deshabilitado={enviando}
-                  alRegistrar={estado.registrarEstimacion}
-                  alAbrirRonda={estado.abrirNuevaRonda}
-                />
-              ) : (
-                <p className="votacion-nota">El Scrum Master registra la estimación acordada o abre una nueva ronda.</p>
-              )}
+              <Consenso
+                key={votacion.ronda}
+                votacion={votacion}
+                deshabilitado={enviando}
+                alRegistrar={estado.registrarEstimacion}
+                alAbrirRonda={estado.abrirNuevaRonda}
+                puedeGestionar={puedeGestionar}
+              />
               {estado.aviso && (
                 <p className="message votacion-aviso" role="status">
                   {estado.aviso}
@@ -92,12 +79,12 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               )}
             </>
           )}
-          {scrumMaster && !estaRevelada(votacion) && (
+          {!estaRevelada(votacion) && (
             <AccionesScrumMaster
               votacion={votacion}
-              scrumMaster={scrumMaster}
               deshabilitado={enviando}
               alRevelar={estado.revelar}
+              puedeGestionar={puedeGestionar}
             />
           )}
         </>

@@ -194,3 +194,56 @@ describe('pantalla de edición de proyecto', () => {
     })
   })
 })
+
+describe('edición de proyecto - rol (HU-21)', () => {
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  function responderConRol(rol: 'scrum_master' | 'product_builder', alGuardar?: () => Response) {
+    const fetchMock = vi.fn((_url: string, init?: RequestInit) =>
+      Promise.resolve(
+        init?.method === 'PUT' && alGuardar
+          ? alGuardar()
+          : new Response(JSON.stringify({ ...proyecto, rol }), { status: 200 }),
+      ),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  it('Escenario 2: como Product Builder veo «Guardar cambios» deshabilitado con la nota «Solo el Scrum Master puede guardar el proyecto»', async () => {
+    responderConRol('product_builder')
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    const boton = screen.getByRole('button', { name: 'Guardar cambios' })
+    await waitFor(() => expect(boton.hasAttribute('disabled')).toBe(true))
+    expect(nota(boton)).toBe('Solo el Scrum Master puede guardar el proyecto')
+  })
+
+  it('Escenario 1: como Scrum Master «Guardar cambios» está habilitado', async () => {
+    responderConRol('scrum_master')
+    abrir()
+
+    await screen.findByDisplayValue('Proyecto Alfa')
+    const boton = screen.getByRole('button', { name: 'Guardar cambios' })
+    expect(boton.hasAttribute('disabled')).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+  })
+
+  it('un 403 de rol inesperado muestra «No tenés permiso» sin perder lo escrito', async () => {
+    responderConRol('scrum_master', () =>
+      new Response(JSON.stringify({ mensaje: 'Solo el Scrum Master puede realizar esta acción' }), { status: 403 }),
+    )
+    abrir()
+
+    const nombre = await screen.findByDisplayValue('Proyecto Alfa')
+    await userEvent.clear(nombre)
+    await userEvent.type(nombre, 'Proyecto Beta')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    expect(await screen.findByText('No tenés permiso')).toBeTruthy()
+    expect(screen.getByText('Solo el Scrum Master puede realizar esta acción')).toBeTruthy()
+    expect(screen.getByDisplayValue('Proyecto Beta')).toBeTruthy()
+  })
+})

@@ -96,3 +96,14 @@ func TestNewMembership_CamposObligatorios(t *testing.T) {
 		})
 	}
 }
+
+// Al Scrum Master no se lo quita del equipo (HU-16, FR-009); a un Product
+// Builder sí.
+func TestMember_ValidarBaja(t *testing.T) {
+	if err := (Member{Role: RolScrumMaster}).ValidarBaja(); !errors.Is(err, ErrScrumMasterNoSeQuita) {
+		t.Errorf("Scrum Master: se esperaba ErrScrumMasterNoSeQuita, se obtuvo %v", err)
+	}
+	if err := (Member{Role: RolProductBuilder}).ValidarBaja(); err != nil {
+		t.Errorf("Product Builder: se esperaba nil, se obtuvo %v", err)
+	}
+}

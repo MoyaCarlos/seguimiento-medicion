@@ -44,16 +44,13 @@ export type Votacion = {
   diferencias: Diferencias | null
 }
 
-export const esScrumMaster = (integrante: Integrante | undefined): boolean =>
-  integrante?.rol === 'scrum_master'
-
 export const estaRevelada = (votacion: Votacion): boolean => votacion.revelada_en !== null
 
 export const faltanPorVotar = (votacion: Votacion): VotoDeIntegrante[] =>
   votacion.integrantes.filter((integrante) => !integrante.ya_voto)
 
-export const puedeRevelar = (votacion: Votacion, actor: Integrante | undefined): boolean =>
-  esScrumMaster(actor) && !estaRevelada(votacion) && faltanPorVotar(votacion).length === 0
+export const puedeRevelar = (votacion: Votacion): boolean =>
+  !estaRevelada(votacion) && faltanPorVotar(votacion).length === 0
 
 export function textoDeVoto(voto: VotoDeIntegrante): string {
   if (!voto.ya_voto) return 'Falta'
@@ -65,8 +62,3 @@ export function textoDeDiferencias(diferencias: Diferencias | null): string {
   if (!diferencias.hay_diferencias) return 'No hay diferencias: todos votaron lo mismo'
   return `Hay diferencias: mínimo ${diferencias.minimo}, máximo ${diferencias.maximo}`
 }
-
-export const sinValores = (votacion: Votacion): Votacion => ({
-  ...votacion,
-  integrantes: votacion.integrantes.map((integrante) => ({ ...integrante, valor: null })),
-})
