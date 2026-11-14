@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { resolverDefecto, type Defecto, type SprintResumen } from './api'
 import { mensajeDeError } from './errores'
 
@@ -12,6 +13,7 @@ type Props = {
   haySprintActivo: boolean
   sprints: SprintResumen[]
   alResolver: () => void
+  puedeEscribir?: boolean
 }
 
 export function ListadoDefectos({
@@ -21,12 +23,13 @@ export function ListadoDefectos({
   haySprintActivo,
   sprints,
   alResolver,
+  puedeEscribir = true,
 }: Props) {
   const [resolviendo, setResolviendo] = useState<number | null>(null)
   const [errorResolucion, setErrorResolucion] = useState('')
 
   async function resolver(id: number) {
-    if (resolviendo !== null) return
+    if (resolviendo !== null || !puedeEscribir) return
     setErrorResolucion('')
     setResolviendo(id)
     try {
@@ -71,14 +74,18 @@ export function ListadoDefectos({
               <span>Registrado: {formatearFecha(defecto.creado_en)}</span>
             </p>
             {defecto.estado === 'Pendiente' && haySprintActivo && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => resolver(defecto.id)}
-                disabled={resolviendo !== null}
-              >
-                {resolviendo === defecto.id ? 'Resolviendo…' : 'Resolver'}
-              </Button>
+              <div className="defecto__accion">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => resolver(defecto.id)}
+                  disabled={resolviendo !== null || !puedeEscribir}
+                  aria-describedby={puedeEscribir ? undefined : `defecto-${defecto.id}-nota-cerrado`}
+                >
+                  {resolviendo === defecto.id ? 'Resolviendo…' : 'Resolver'}
+                </Button>
+                {!puedeEscribir && <NotaCerrado id={`defecto-${defecto.id}-nota-cerrado`} />}
+              </div>
             )}
           </li>
         ))}

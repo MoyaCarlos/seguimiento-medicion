@@ -7,25 +7,31 @@ import { EsfuerzoHistoria, type Imputacion } from './EsfuerzoHistoria'
 import { EstadoHistoria } from './EstadoHistoria'
 import { ETIQUETAS_PRIORIDAD, type HistoriaDeSprint } from './sprint'
 
-type Props = { sprintId: number; permiteCambiarEstado?: boolean; imputacion?: Imputacion }
+type Props = {
+  sprintId: number
+  permiteCambiarEstado?: boolean
+  imputacion?: Imputacion
+  puedeEscribir?: boolean
+}
 
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'listo'; historias: HistoriaDeSprint[] }
   | { tipo: 'error'; mensaje: string }
 
-export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion }: Props) {
+export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion, puedeEscribir = true }: Props) {
   return (
     <Consulta
       key={sprintId}
       sprintId={sprintId}
       permiteCambiarEstado={permiteCambiarEstado}
       imputacion={imputacion}
+      puedeEscribir={puedeEscribir}
     />
   )
 }
 
-function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
+function Consulta({ sprintId, permiteCambiarEstado, imputacion, puedeEscribir }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
 
   useEffect(() => {
@@ -74,9 +80,9 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
           </p>
           <p>{historia.estimacion_sp === null ? 'Sin estimar' : `${historia.estimacion_sp} SP`}</p>
           {permiteCambiarEstado && (
-            <EstadoHistoria historia={historia} alCambiar={reemplazar} />
+            <EstadoHistoria historia={historia} alCambiar={reemplazar} puedeEscribir={puedeEscribir} />
           )}
-          <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} />
+          <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} puedeEscribir={puedeEscribir} />
         </li>
       ))}
     </ul>
