@@ -556,11 +556,11 @@ describe('pantalla de Sprints como el prototipo: Sprints finalizados', () => {
   })
 
   it('Given un Sprint finalizado, When se abre, Then ofrece «Ver en el historial» hacia su detalle', async () => {
-    abrirConFinalizados(finalizado(2, 2))
+    abrirConFinalizados(finalizado(7, 2))
 
     const enlace = within(await terminado('Sprint 2')).getByRole('link', { name: 'Ver en el historial' })
 
-    expect(enlace.getAttribute('href')).toBe('/projects/42/historial/2')
+    expect(enlace.getAttribute('href')).toBe('/projects/42/historial/7')
     expect(enlace.querySelector('svg')).toBeTruthy()
   })
 

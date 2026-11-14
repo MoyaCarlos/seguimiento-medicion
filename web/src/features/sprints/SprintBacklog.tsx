@@ -11,25 +11,33 @@ import { ETIQUETAS_PRIORIDAD, type HistoriaDeSprint } from './sprint'
 const CLASE_PRIORIDAD = { M: 'must', S: 'should', C: 'could', W: 'wont' } as const
 const CLASE_ESTADO = { Nueva: 'nueva', 'En progreso': 'progreso', Completada: 'ok' } as const
 
-type Props = { sprintId: number; permiteCambiarEstado?: boolean; imputacion?: Imputacion }
+type Props = {
+  sprintId: number
+  permiteCambiarEstado?: boolean
+  imputacion?: Imputacion
+  finalizado?: boolean
+  alCargar?: (historias: HistoriaDeSprint[]) => void
+}
 
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'listo'; historias: HistoriaDeSprint[] }
   | { tipo: 'error'; mensaje: string }
 
-export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion }: Props) {
+export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion, finalizado, alCargar }: Props) {
   return (
     <Consulta
       key={sprintId}
       sprintId={sprintId}
       permiteCambiarEstado={permiteCambiarEstado}
       imputacion={imputacion}
+      finalizado={finalizado}
+      alCargar={alCargar}
     />
   )
 }
 
-function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
+function Consulta({ sprintId, permiteCambiarEstado, imputacion, finalizado, alCargar }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
 
   useEffect(() => {
@@ -37,7 +45,9 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
 
     consultarSprintBacklog(sprintId)
       .then((historias) => {
-        if (vigente) setEstado({ tipo: 'listo', historias })
+        if (!vigente) return
+        setEstado({ tipo: 'listo', historias })
+        alCargar?.(historias)
       })
       .catch((error: unknown) => {
         if (!vigente) return
@@ -74,11 +84,16 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion }: Props) {
             <span className={`sprint-chip sprint-chip--${CLASE_PRIORIDAD[historia.prioridad]}`}>
               {`${ETIQUETAS_PRIORIDAD[historia.prioridad]} (${historia.prioridad})`}
             </span>
-            <span className={`sprint-chip sprint-chip--${CLASE_ESTADO[historia.estado]}`}>{historia.estado}</span>
+            {!finalizado && (
+              <span className={`sprint-chip sprint-chip--${CLASE_ESTADO[historia.estado]}`}>{historia.estado}</span>
+            )}
             {historia.estimacion_sp === null ? (
               <span className="sprint-chip sprint-chip--ninguno">Sin estimar</span>
             ) : (
               <span className="sprint-chip sprint-chip--sp">{`${historia.estimacion_sp} SP`}</span>
+            )}
+            {finalizado && historia.estado !== 'Completada' && (
+              <span className="sprint-chip sprint-chip--nueva">No completada</span>
             )}
           </div>
           {historia.estado === 'Completada' && historia.fecha_finalizacion && (

@@ -325,3 +325,146 @@
   border-color: var(--brand);
   color: #0b5f58;
 }
+
+.sprints-encabezado .button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.sprints-encabezado .button svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-panel {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.sprint-panel h3 {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-boton-bloque {
+  width: 100%;
+}
+
+.sprint-pie {
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 14px;
+}
+
+.sprint-terminado {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sprint-terminado summary {
+  align-items: start;
+  cursor: pointer;
+  display: grid;
+  gap: 8px 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  list-style: none;
+  padding: 14px 16px;
+}
+
+.sprint-terminado summary::-webkit-details-marker {
+  display: none;
+}
+
+.sprint-terminado summary:hover {
+  background: #fbfcfd;
+}
+
+.sprint-terminado[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.sprint-terminado h3 {
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-terminado .sprint-goal {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sprint-terminado summary .sprint-chips {
+  grid-column: 1 / -1;
+}
+
+.sprint-chevron {
+  color: var(--muted);
+  height: 16px;
+  margin-top: 3px;
+  transition: transform 0.2s;
+  width: 16px;
+}
+
+.sprint-chevron svg {
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-terminado[open] .sprint-chevron {
+  transform: rotate(180deg);
+}
+
+.sprint-terminado .sprint-backlog {
+  gap: 0;
+  padding: 4px 16px 8px;
+}
+
+.sprint-terminado .sprint-historia {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+}
+
+.sprint-terminado .sprint-backlog > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.sprint-enlace {
+  font-size: 14px;
+  margin: 0;
+  padding: 0 16px 14px;
+}
+
+.sprint-enlace a {
+  align-items: center;
+  color: #0b5f58;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.sprint-enlace a:hover {
+  text-decoration: underline;
+}
+
+.sprint-enlace svg {
+  height: 15px;
+  width: 15px;
+}

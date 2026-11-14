@@ -11,11 +11,11 @@ export type Sprint = {
 }
 
 export function agruparPorEstado(sprints: Sprint[]): Record<Sprint['estado'], Sprint[]> {
-  const ordenados = [...sprints].sort((a, b) => a.id - b.id)
+  const ascendentes = [...sprints].sort((a, b) => a.numero - b.numero)
   return {
-    Pendiente: ordenados.filter((s) => s.estado === 'Pendiente'),
-    Activo: ordenados.filter((s) => s.estado === 'Activo'),
-    Finalizado: ordenados.filter((s) => s.estado === 'Finalizado'),
+    Pendiente: ascendentes.filter((s) => s.estado === 'Pendiente'),
+    Activo: ascendentes.filter((s) => s.estado === 'Activo'),
+    Finalizado: ascendentes.filter((s) => s.estado === 'Finalizado').reverse(),
   }
 }
 
