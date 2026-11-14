@@ -51,6 +51,18 @@ const columnasHistoria = `id, proyecto_id, titulo, descripcion, criterios_acepta
 // de creación. El orden alfabético de la prioridad no sirve, por eso el CASE.
 const ordenBacklog = "ORDER BY CASE prioridad WHEN 'M' THEN 0 WHEN 'S' THEN 1 WHEN 'C' THEN 2 WHEN 'W' THEN 3 END, id"
 
+// condicionD2b expresa la regla D2b sobre la fila de historias: la estimación
+// nueva puede ser igual a la actual, o el Sprint actual no puede estar en un
+// estado que la congele (Finalizado para la carga inicial; Activo o Finalizado
+// si ya estaba cargada). La comparten la edición y el registro de la estimación
+// para que ambas escrituras no se desincronicen (#249).
+const condicionD2b = `(estimacion_sp IS ? OR NOT EXISTS (
+	SELECT 1 FROM sprints s
+	 WHERE s.id = historias.sprint_id
+	   AND ((historias.estimacion_sp IS NULL AND s.estado = 'Finalizado')
+	     OR (historias.estimacion_sp IS NOT NULL AND s.estado IN ('Activo','Finalizado')))
+))`
+
 // ListarPorSprint devuelve las historias del Sprint ordenadas por prioridad
 // MoSCoW (M, S, C, W) y luego por id, el mismo orden que el Product Backlog.
 // El cierre de Sprint no depende de este orden.
@@ -162,12 +174,7 @@ func (r *SQLiteBacklogRepository) ActualizarSiEstimacionSigueSiendo(ctx context.
 		UPDATE historias SET titulo = ?, descripcion = ?, criterios_aceptacion = ?, estimacion_sp = ?
 		 WHERE id = ?
 		   AND estimacion_sp IS ?
-		   AND (estimacion_sp IS ? OR NOT EXISTS (
-		         SELECT 1 FROM sprints s
-		          WHERE s.id = historias.sprint_id
-		            AND ((historias.estimacion_sp IS NULL AND s.estado = 'Finalizado')
-		              OR (historias.estimacion_sp IS NOT NULL AND s.estado IN ('Activo','Finalizado')))
-		       ))
+		   AND `+condicionD2b+`
 		 RETURNING id`,
 		item.Titulo, item.Descripcion, punteroATextoSQL(item.CriteriosAceptacion), punteroAValorSQL(item.EstimacionSP),
 		item.ID, punteroAValorSQL(estimacionLeida), punteroAValorSQL(item.EstimacionSP),
@@ -212,12 +219,7 @@ func (r *SQLiteBacklogRepository) GuardarEstimacion(ctx context.Context, id int6
 	err := r.db.QueryRowContext(ctx, `
 		UPDATE historias SET estimacion_sp = ?
 		 WHERE id = ?
-		   AND (estimacion_sp IS ? OR NOT EXISTS (
-		         SELECT 1 FROM sprints s
-		          WHERE s.id = historias.sprint_id
-		            AND ((historias.estimacion_sp IS NULL AND s.estado = 'Finalizado')
-		              OR (historias.estimacion_sp IS NOT NULL AND s.estado IN ('Activo','Finalizado')))
-		       ))
+		   AND `+condicionD2b+`
 		   AND EXISTS (
 		         SELECT 1 FROM rondas_votacion r
 		          WHERE r.id = ? AND r.historia_id = ?
