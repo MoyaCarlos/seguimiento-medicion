@@ -163,7 +163,8 @@ Fuera de la tabla, a propósito: la autenticación (`/auth/*`, fuera de alcance)
 
 **Checkpoint**: Fase 1 completa. Validación: T036.
 
-- [ ] T036 Fase 1: `cd web && npm test && npm run lint && npm run build` en verde y pasos «Fase 1» de [quickstart.md](quickstart.md) contra el backend real. Marcar T036 como hecha en `tasks.md` y commitear junto con ese cambio: `Validar la Fase 1 de cerrar y reabrir (Refs #312)`.
+- [X] T036 Fase 1: `cd web && npm test && npm run lint && npm run build` en verde y pasos «Fase 1» de [quickstart.md](quickstart.md) contra el backend real. Marcar T036 como hecha en `tasks.md` y commitear junto con ese cambio: `Validar la Fase 1 de cerrar y reabrir (Refs #312)`.
+  - Fase 1 validada a mano con la API real y npm run dev, con un Scrum Master y un Product Builder: confirmación en línea con el foco en Cancelar (Escape cancela sin enviar), error «Cerrá el Sprint activo antes de cerrar el proyecto» con un Sprint Activo, cierre con el aviso en Editar y en el Panel, «Guardar cambios» deshabilitado con una sola nota, zona deshabilitada con nota para el Product Builder y reabrir sin confirmación
 
 ---
 
