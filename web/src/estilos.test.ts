@@ -135,3 +135,24 @@ it('Given un botón discreto gris (ghost), When se estiliza, Then es transparent
   expect((1.05) / (luz(texto) + 0.05)).toBeGreaterThanOrEqual(4.5)
   expect(bloque('.button--ghost:hover')).toMatch(/background:\s*#eef2f6/)
 })
+
+it('Given la sección «Proyectos cerrados», When se estiliza, Then su título es una etiqueta de 12px en mayúsculas separada de los abiertos', () => {
+  expect(bloque('.lista-proyectos__cerrados h2')).toMatch(/font-size:\s*12px/)
+  expect(bloque('.lista-proyectos__cerrados h2')).toMatch(/text-transform:\s*uppercase/)
+  expect(bloque('.lista-proyectos__cerrados')).toMatch(/gap:\s*12px/)
+})
+
+it('Given la insignia «Cerrado el …», When se estiliza, Then es una píldora gris de 12px y cumple 4,5:1', () => {
+  const cuerpo = bloque('.tarjeta-proyecto__cierre')
+  const texto = cuerpo.match(/color:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const fondo = cuerpo.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+  expect(cuerpo).toMatch(/border-radius:\s*999px/)
+  expect(cuerpo).toMatch(/font-size:\s*12px/)
+  expect(texto).not.toBe('')
+  const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
+  expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
+})

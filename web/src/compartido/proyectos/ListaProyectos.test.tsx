@@ -347,3 +347,109 @@ describe('ListaProyectos', () => {
     })
   })
 })
+
+describe('proyectos cerrados', () => {
+  const ABIERTO_A = p(1, 'Alfa abierto')
+  const ABIERTO_B = p(2, 'Beta abierto')
+  const CERRADO_A = p(3, 'Alfa cerrado', { fecha_cierre: '2026-11-10' })
+  const CERRADO_B = p(4, 'Gamma cerrado', { fecha_cierre: '2026-11-12' })
+
+  const seccionCerrados = () =>
+    screen.getByRole('heading', { level: 2, name: 'Proyectos cerrados' }).closest('section') as HTMLElement
+  const enlaces = (contenedor: HTMLElement | Document = document) =>
+    within(contenedor as HTMLElement).queryAllByRole('link').map((e) => e.getAttribute('aria-label'))
+
+  it('Given abiertos y cerrados, When abre la lista, Then los cerrados van en la sección «Proyectos cerrados», debajo de los abiertos', async () => {
+    abrir([ABIERTO_A, CERRADO_A, ABIERTO_B, CERRADO_B])
+
+    await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+    const cerrados = seccionCerrados()
+    const abiertos = screen.getByRole('link', { name: 'Alfa abierto (#1)' })
+
+    expect(enlaces(cerrados)).toEqual(['Gamma cerrado (#4)', 'Alfa cerrado (#3)'])
+    expect(cerrados.contains(abiertos)).toBe(false)
+    expect(abiertos.compareDocumentPosition(cerrados) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Beta abierto (#2)' })).toBeTruthy()
+    expect(screen.queryAllByRole('link', { name: /cerrado/ }).every((e) => cerrados.contains(e))).toBe(true)
+  })
+
+  it('Given un proyecto cerrado, When se muestra su tarjeta, Then lleva la insignia «Cerrado el dd/mm/aaaa»', async () => {
+    abrir([ABIERTO_A, CERRADO_A])
+
+    await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+    const tarjeta = within(seccionCerrados()).getByRole('link', { name: 'Alfa cerrado (#3)' })
+
+    expect(within(tarjeta).getByText('Cerrado el 10/11/2026')).toBeTruthy()
+    expect(within(screen.getByRole('link', { name: 'Alfa abierto (#1)' })).queryByText(/Cerrado el/)).toBeNull()
+  })
+
+  it('Given un proyecto cerrado, When se abre su tarjeta, Then lleva a su panel como cualquier otro', async () => {
+    const router = abrir([CERRADO_A])
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('link', { name: 'Alfa cerrado (#3)' }))
+
+    expect(router.state.location.pathname).toBe('/projects/3/proyecto')
+  })
+
+  it('Given que no hay proyectos cerrados, When abre la lista, Then no aparece la sección', async () => {
+    abrir([ABIERTO_A, p(2, 'Beta abierto', { fecha_cierre: null })])
+
+    await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+
+    expect(screen.queryByRole('heading', { name: 'Proyectos cerrados' })).toBeNull()
+    expect(screen.queryByText(/Cerrado el/)).toBeNull()
+  })
+
+  it('Given el buscador, When se escribe, Then filtra los abiertos y los cerrados', async () => {
+    const usuario = userEvent.setup()
+    abrir([ABIERTO_A, ABIERTO_B, CERRADO_A, CERRADO_B])
+
+    await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'alfa')
+
+    expect(screen.getByRole('link', { name: 'Alfa abierto (#1)' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Beta abierto (#2)' })).toBeNull()
+    expect(enlaces(seccionCerrados())).toEqual(['Alfa cerrado (#3)'])
+  })
+
+  it('Given una búsqueda que solo coincide con un cerrado, When se escribe, Then se ve la sección y ningún abierto ni el aviso de sin coincidencias', async () => {
+    const usuario = userEvent.setup()
+    abrir([ABIERTO_A, CERRADO_B])
+
+    await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'gamma')
+
+    expect(enlaces(seccionCerrados())).toEqual(['Gamma cerrado (#4)'])
+    expect(screen.queryByRole('link', { name: 'Alfa abierto (#1)' })).toBeNull()
+    expect(screen.queryByText('No hay proyectos que coincidan con la búsqueda.')).toBeNull()
+  })
+
+  it('Given una búsqueda que solo coincide con abiertos, When se escribe, Then desaparece la sección de cerrados', async () => {
+    const usuario = userEvent.setup()
+    abrir([ABIERTO_A, CERRADO_B])
+
+    await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'alfa')
+
+    expect(screen.queryByRole('heading', { name: 'Proyectos cerrados' })).toBeNull()
+  })
+
+  it('Given una búsqueda sin coincidencias, When se escribe, Then dice que no hay y no muestra la sección', async () => {
+    const usuario = userEvent.setup()
+    abrir([ABIERTO_A, CERRADO_A])
+
+    await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'zzz')
+
+    expect(screen.getByText('No hay proyectos que coincidan con la búsqueda.')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Proyectos cerrados' })).toBeNull()
+  })
+
+  it('Given que todos los proyectos están cerrados, When abre la lista, Then se ve la sección, la tarjeta «Nuevo proyecto» y no el aviso de «Todavía no tenés proyectos»', async () => {
+    abrir([CERRADO_A, CERRADO_B])
+
+    await screen.findByRole('heading', { name: 'Proyectos cerrados' })
+
+    expect(enlaces(seccionCerrados())).toEqual(['Gamma cerrado (#4)', 'Alfa cerrado (#3)'])
+    expect(screen.queryByText('Todavía no tenés proyectos')).toBeNull()
+    expect(screen.getAllByRole('button', { name: 'Nuevo proyecto' }).length).toBeGreaterThan(0)
+  })
+})
+
