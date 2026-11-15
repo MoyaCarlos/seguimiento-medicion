@@ -71,18 +71,27 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion, puedeEscribir }:
     <ul className="sprint-backlog">
       {estado.historias.map((historia) => (
         <li key={historia.id}>
-          <h4>{historia.titulo}</h4>
-          <p>{`${ETIQUETAS_PRIORIDAD[historia.prioridad]} (${historia.prioridad})`}</p>
-          <p>
-            {historia.estado === 'Completada' && historia.fecha_finalizacion
-              ? `Completada el ${historia.fecha_finalizacion}`
-              : historia.estado}
-          </p>
-          <p>{historia.estimacion_sp === null ? 'Sin estimar' : `${historia.estimacion_sp} SP`}</p>
-          {permiteCambiarEstado && (
-            <EstadoHistoria historia={historia} alCambiar={reemplazar} puedeEscribir={puedeEscribir} />
-          )}
-          <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} puedeEscribir={puedeEscribir} />
+          <details className="historia-tarjeta">
+            <summary className="historia-tarjeta__resumen">
+              <h4>{historia.titulo}</h4>
+              <span className="historia-marca" data-estado={historia.estado}>
+                {historia.estado}
+              </span>
+              <span className="historia-tarjeta__sp">
+                {historia.estimacion_sp === null ? 'Sin estimar' : `${historia.estimacion_sp} SP`}
+              </span>
+            </summary>
+            <div className="historia-tarjeta__detalle">
+              <p>{`${ETIQUETAS_PRIORIDAD[historia.prioridad]} (${historia.prioridad})`}</p>
+              {historia.estado === 'Completada' && historia.fecha_finalizacion && (
+                <p>{`Completada el ${historia.fecha_finalizacion}`}</p>
+              )}
+              {permiteCambiarEstado && (
+                <EstadoHistoria historia={historia} alCambiar={reemplazar} puedeEscribir={puedeEscribir} />
+              )}
+              <EsfuerzoHistoria historiaId={historia.id} imputacion={imputacion} puedeEscribir={puedeEscribir} />
+            </div>
+          </details>
         </li>
       ))}
     </ul>
