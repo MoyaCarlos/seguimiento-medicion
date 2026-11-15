@@ -12,11 +12,11 @@ function json(cuerpo: unknown, status: number) {
   return new Response(JSON.stringify(cuerpo), { status })
 }
 
-function montar() {
+function montar(rol?: string) {
   return render(
     <MemoryRouter initialEntries={['/']}>
       <SesionProvider>
-        <MenuUsuario />
+        <MenuUsuario rol={rol} />
         <Routes>
           <Route path="/ingresar" element={<h1>Pantalla de ingreso</h1>} />
           <Route path="*" element={<p>Inicio</p>} />
@@ -130,3 +130,29 @@ describe('MenuUsuario', () => {
     expect(screen.getByRole('group', { name: 'Cuenta' })).toBeTruthy()
   })
 })
+
+describe('MenuUsuario con el rol del proyecto', () => {
+  async function abrirConRol(rol?: string) {
+    guardarToken('token-guardado')
+    vi.stubGlobal('fetch', vi.fn(async () => json(USUARIO, 200)))
+    montar(rol)
+    await userEvent.click(await screen.findByRole('button', { name: 'Menú de usuario' }))
+    return screen.getByRole('group', { name: 'Cuenta' })
+  }
+
+  it('Given una pantalla de proyecto, When se abre el menú, Then dice «Tu rol en este proyecto: Scrum Master» y el rol reemplaza a «Sesión iniciada» bajo el nombre', async () => {
+    const panel = await abrirConRol('Scrum Master')
+
+    expect(within(panel).getByText('Tu rol en este proyecto: Scrum Master')).toBeTruthy()
+    expect(within(panel).queryByText('Sesión iniciada')).toBeNull()
+    expect(panel.querySelector('.menu-usuario__cabecera small')?.textContent).toBe('Scrum Master')
+  })
+
+  it('Given una pantalla fuera de un proyecto, When se abre el menú, Then no hay línea de rol y sigue «Sesión iniciada»', async () => {
+    const panel = await abrirConRol(undefined)
+
+    expect(within(panel).queryByText(/Tu rol/)).toBeNull()
+    expect(within(panel).getByText('Sesión iniciada')).toBeTruthy()
+  })
+})
+

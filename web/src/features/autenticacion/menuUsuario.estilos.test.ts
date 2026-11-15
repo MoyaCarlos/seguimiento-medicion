@@ -58,3 +58,22 @@ it('Given la «Sesión iniciada» de la cabecera, When se estiliza, Then cumple 
   expect(contraste(hex(regla('.menu-usuario__cabecera small'), 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
   expect(regla('.menu-usuario__cabecera small')).toMatch(/color:\s*#606f86/)
 })
+
+it('Given la línea «Tu rol en este proyecto», When se estiliza, Then es una franja de la marca de 12,5px con contraste 4,5:1', () => {
+  const bloque = regla('.menu-usuario__rol')
+
+  expect(bloque).toMatch(/background:\s*var\(--brand-soft\)/)
+  expect(bloque).toMatch(/font-size:\s*12\.5px/)
+  expect(bloque).toMatch(/border-radius:\s*8px/)
+  expect(contraste(hex(bloque, 'color'), '#dcf3ef')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given el bloque de usuario del pie de la barra lateral, When se estiliza, Then queda abajo, con línea superior y texto claro con contraste 4,5:1 sobre la barra', () => {
+  const bloque = regla('.bloque-usuario')
+
+  expect(bloque).toMatch(/margin-top:\s*auto/)
+  expect(bloque).toMatch(/border-top:\s*1px solid/)
+  expect(contraste(hex(regla('.bloque-usuario small'), 'color'), '#0b1626')).toBeGreaterThanOrEqual(4.5)
+  expect(regla('.bloque-usuario strong')).toMatch(/color:\s*#fff/)
+  expect(regla('.bloque-usuario__salir')).toMatch(/width:\s*34px/)
+})

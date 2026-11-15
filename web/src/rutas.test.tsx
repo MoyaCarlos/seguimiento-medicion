@@ -19,7 +19,7 @@ const PROYECTO = {
   creado_en: '2026-10-01T00:00:00Z',
 }
 
-let proyectosSimulados: { id: number; nombre: string }[] = []
+let proyectosSimulados: { id: number; nombre: string; rol?: string }[] = []
 
 function responderListado(url: string) {
   if (url.includes('/auth/yo')) return JSON.stringify(USUARIO)
@@ -1019,3 +1019,41 @@ describe('migas con el nombre del proyecto (#230)', () => {
     expect(rutaDeNavegacion().querySelectorAll('svg')).toHaveLength(2)
   })
 })
+
+describe('rol del usuario en el armazón (menú y pie de la barra lateral)', () => {
+  const barra = () => screen.getByRole('complementary', { name: 'Navegación principal' })
+
+  it('Given una pantalla de proyecto donde soy Product Builder, When se abre, Then el pie de la barra y el menú de usuario dicen mi rol', async () => {
+    proyectosSimulados = [{ id: 27, nombre: 'Beta', rol: 'product_builder' }]
+    const usuario = userEvent.setup()
+    abrir('/projects/27/backlog')
+
+    await waitFor(() => expect(within(barra()).getByText('Product Builder')).toBeTruthy(), { timeout: 5000 })
+    await usuario.click(screen.getByRole('button', { name: 'Menú de usuario' }))
+
+    expect(within(screen.getByRole('group', { name: 'Cuenta' })).getByText('Tu rol en este proyecto: Product Builder')).toBeTruthy()
+  })
+
+  it('Given la lista de proyectos, When estoy fuera de un proyecto, Then el pie dice «Sesión iniciada» y el menú no muestra rol', async () => {
+    proyectosSimulados = [{ id: 27, nombre: 'Beta', rol: 'scrum_master' }]
+    const usuario = userEvent.setup()
+    abrir('/')
+
+    await screen.findByRole('link', { name: 'Beta (#27)' }, { timeout: 5000 })
+    await usuario.click(screen.getByRole('button', { name: 'Menú de usuario' }))
+
+    expect(within(barra()).getByText('Sesión iniciada')).toBeTruthy()
+    expect(screen.queryByText(/Tu rol en este proyecto/)).toBeNull()
+  })
+
+  it('Given un proyecto que no está en mi lista, When abro su pantalla, Then no se inventa un rol', async () => {
+    proyectosSimulados = [{ id: 1, nombre: 'Alfa', rol: 'scrum_master' }]
+    abrir('/projects/99/backlog')
+
+    await screen.findByRole('heading', { name: 'Product Backlog' }, { timeout: 5000 })
+
+    expect(within(barra()).getByText('Sesión iniciada')).toBeTruthy()
+    expect(within(barra()).queryByText(/Scrum Master|Product Builder/)).toBeNull()
+  })
+})
+
