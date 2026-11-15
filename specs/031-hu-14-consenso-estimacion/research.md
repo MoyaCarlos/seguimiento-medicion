@@ -73,10 +73,10 @@ documento registra las decisiones técnicas del diseño.
 - **Decision**: puerto nuevo `EstimacionHistoriaRepository` con `ObtenerPorID` y
   `GuardarEstimacion(ctx, id, sp, rondaID)`, implementado en `SQLiteBacklogRepository` con un
   `UPDATE` condicional que evalúa D2b y que la ronda siga siendo la actual y revelada (R12).
-- **Rationale**: `HistoriaRepository.Actualizar` también reescribe título, descripción y criterios, y
-  pisaría una edición simultánea de HU-15. La separación sigue el patrón de
-  `AsignacionHistoriaRepository` y `CambioEstadoHistoriaRepository` (ISP).
-- **Alternatives considered**: reutilizar `Actualizar` (riesgo anterior).
+- **Rationale**: `HistoriaRepository.ActualizarSiEstimacionSigueSiendo` también reescribe título,
+  descripción y criterios, y pisaría una edición simultánea de HU-15. La separación sigue el
+  patrón de `AsignacionHistoriaRepository` y `CambioEstadoHistoriaRepository` (ISP).
+- **Alternatives considered**: reutilizar `ActualizarSiEstimacionSigueSiendo` (riesgo anterior).
 
 ## R8. Concurrencia
 
