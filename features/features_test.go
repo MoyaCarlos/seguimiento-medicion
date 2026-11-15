@@ -17,6 +17,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioListado(ctx, sesion)              // HU-04 (listado)
 			permisos := InitializeScenarioPermisos(ctx, sesion) // HU-21 (permisos por rol)
 			InitializeScenarioCierreProyecto(ctx, permisos)     // #300
+			InitializeScenarioGestionEquipo(ctx, permisos)      // HU-16
 			InitializeScenarioEstado(ctx, sc)                   // HU-13
 			InitializeScenarioBacklog(ctx, sc)                  // HU-15
 			InitializeScenarioConsultarSprints(ctx)             // HU-05 (consulta)

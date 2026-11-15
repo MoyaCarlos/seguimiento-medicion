@@ -131,3 +131,29 @@ describe('EstadoHistoria', () => {
     expect(alCambiar).not.toHaveBeenCalled()
   })
 })
+
+describe('EstadoHistoria - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const boton = () => screen.getByRole('button', { name: 'Iniciar' }) as HTMLButtonElement
+  const nota = () => document.getElementById(boton().getAttribute('aria-describedby') ?? '')?.textContent
+
+  it('Escenario: proyecto cerrado: con puedeEscribir en false «Iniciar» queda deshabilitado con la nota «El proyecto está cerrado» y no envía', async () => {
+    cambiarMock.mockResolvedValue(EN_PROGRESO)
+    const alCambiar = vi.fn()
+    render(<EstadoHistoria historia={NUEVA} alCambiar={alCambiar} puedeEscribir={false} />)
+
+    await userEvent.click(boton())
+
+    expect(boton().disabled).toBe(true)
+    expect(nota()).toBe('El proyecto está cerrado')
+    expect(cambiarMock).not.toHaveBeenCalled()
+    expect(alCambiar).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: proyecto abierto: con el valor por defecto «Iniciar» está habilitado y sin nota', () => {
+    abrir(NUEVA)
+
+    expect(boton().disabled).toBe(false)
+    expect(boton().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+})

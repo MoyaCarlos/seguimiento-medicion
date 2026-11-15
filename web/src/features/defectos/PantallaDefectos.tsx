@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import {
   listarDefectos,
   listarHistoriasDelProyecto,
@@ -19,6 +21,7 @@ type Props = {
 }
 
 export function PantallaDefectos({ proyectoId }: Props) {
+  const { fechaCierre, puedeEscribir } = usePermisosProyecto(Number(proyectoId))
   const [defectos, setDefectos] = useState<Defecto[]>([])
   const [cargandoDefectos, setCargandoDefectos] = useState(true)
   const [errorDefectos, setErrorDefectos] = useState('')
@@ -92,6 +95,7 @@ export function PantallaDefectos({ proyectoId }: Props) {
         </div>
       </div>
 
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
       {exito && (
         <p className="defectos-exito" role="status">
           {exito}
@@ -121,6 +125,7 @@ export function PantallaDefectos({ proyectoId }: Props) {
               recargarDefectos()
               setExito('Defecto registrado')
             }}
+              puedeEscribir={puedeEscribir}
             />
           </section>
         )}
@@ -137,6 +142,7 @@ export function PantallaDefectos({ proyectoId }: Props) {
             recargarDefectos()
             setExito(mensaje)
           }}
+            puedeEscribir={puedeEscribir}
           />
         </section>
       </div>

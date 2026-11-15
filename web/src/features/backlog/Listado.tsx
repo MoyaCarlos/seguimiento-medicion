@@ -5,6 +5,9 @@ import { Icono } from '../../compartido/componentes/Icono'
 import { VentanaModal } from '../../compartido/componentes/VentanaModal'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { listarBacklog, listarSprintsDelProyecto } from './api'
 import type { SprintParaAsignar } from './api'
 import { AsignarASprint } from './AsignarASprint'
@@ -15,6 +18,8 @@ import { Markdown } from './Markdown'
 import { etiquetaPrioridad } from './opciones'
 import type { Prioridad } from './opciones'
 import './backlog.css'
+
+const notaCerradoDe = (historiaId: number) => `backlog-${historiaId}-nota-cerrado`
 
 const MARCADOR: Record<Prioridad, string> = { M: 'must', S: 'should', C: 'could', W: 'wont' }
 
@@ -72,6 +77,9 @@ function PantallaBacklog({ id }: { id: string }) {
     }
   }, [id])
 
+  // Va después de las cargas para que el backlog siga siendo la primera petición de la pantalla.
+  const { fechaCierre, puedeEscribir } = usePermisosProyecto(Number(id))
+
   function asignada(historia: Historia, sprintId: number) {
     setHistorias((actuales) => actuales.filter((actual) => actual.id !== historia.id))
     setAsignandoId(null)
@@ -106,6 +114,7 @@ function PantallaBacklog({ id }: { id: string }) {
           </Link>
         </div>
 
+        <AvisoProyectoCerrado fechaCierre={fechaCierre} />
         {aviso && (
           <p className="message backlog-aviso" role="status">
             {aviso}
@@ -133,6 +142,8 @@ function PantallaBacklog({ id }: { id: string }) {
                     <Button
                       type="button"
                       variant="secondary"
+                      disabled={!puedeEscribir}
+                      aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
                       onClick={() => {
                         setAviso('')
                         setAsignandoId(null)
@@ -145,6 +156,8 @@ function PantallaBacklog({ id }: { id: string }) {
                     <Button
                       type="button"
                       variant="secondary"
+                      disabled={!puedeEscribir}
+                      aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
                       onClick={() => {
                         setAviso('')
                         setEditandoId(null)
@@ -158,6 +171,7 @@ function PantallaBacklog({ id }: { id: string }) {
                     </Link>
                   </div>
                 </div>
+                {!puedeEscribir && <NotaCerrado id={notaCerradoDe(historia.id)} />}
 
                 <ul className="backlog-chips">
                   <li className={`backlog-chip backlog-chip--${MARCADOR[historia.prioridad]}`}>
@@ -195,6 +209,7 @@ function PantallaBacklog({ id }: { id: string }) {
                     historia={historia}
                     onGuardada={guardar}
                     onCancelar={() => setEditandoId(null)}
+                    puedeEscribir={puedeEscribir}
                   />
                 )}
 
@@ -206,6 +221,7 @@ function PantallaBacklog({ id }: { id: string }) {
                     errorSprints={errorSprints}
                     onAsignada={asignada}
                     onCancelar={() => setAsignandoId(null)}
+                    puedeEscribir={puedeEscribir}
                   />
                 )}
               </article>

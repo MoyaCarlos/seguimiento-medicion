@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { asignarASprint } from './api'
 import type { SprintParaAsignar } from './api'
 import { mensajeDeError } from './edicionHistoria'
@@ -14,6 +15,7 @@ type Props = {
   errorSprints: string
   onAsignada: (historia: Historia, sprintId: number) => void
   onCancelar: () => void
+  puedeEscribir?: boolean
 }
 
 function etiquetaDe(sprint: SprintParaAsignar) {
@@ -21,17 +23,25 @@ function etiquetaDe(sprint: SprintParaAsignar) {
   return sprint.sprint_goal ? `${base} - ${sprint.sprint_goal}` : base
 }
 
-export function AsignarASprint({ historia, sprints, errorSprints, onAsignada, onCancelar }: Props) {
+export function AsignarASprint({
+  historia,
+  sprints,
+  errorSprints,
+  onAsignada,
+  onCancelar,
+  puedeEscribir = true,
+}: Props) {
   const [sprintId, setSprintId] = useState('')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
 
   const disponibles = (sprints ?? []).filter((sprint) => sprint.estado !== 'Finalizado')
   const campo = `asignar-${historia.id}-sprint`
+  const notaCerrado = `asignar-${historia.id}-nota-cerrado`
 
   async function asignar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando) return
+    if (enviando || !puedeEscribir) return
 
     if (!sprintId) {
       setError('Elegí un Sprint')
@@ -96,11 +106,16 @@ export function AsignarASprint({ historia, sprints, errorSprints, onAsignada, on
           Cancelar
         </Button>
         {puedeAsignar && (
-          <Button type="submit" disabled={enviando}>
+          <Button
+            type="submit"
+            disabled={enviando || !puedeEscribir}
+            aria-describedby={puedeEscribir ? undefined : notaCerrado}
+          >
             Confirmar asignación
           </Button>
         )}
       </div>
+      {puedeAsignar && !puedeEscribir && <NotaCerrado id={notaCerrado} />}
     </form>
   )
 }

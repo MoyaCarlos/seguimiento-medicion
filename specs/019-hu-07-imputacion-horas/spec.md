@@ -6,6 +6,8 @@
 
 **Status**: Implementada, pendiente de revisión por PR.
 
+> **Nota (HU-21, spec 042)**: desde HU-21 el integrante que carga las horas sale de la sesión; `POST /backlog/{id}/horas` ya no recibe `integrante_id` y el selector «Integrante» de la interfaz ya no existe. Este documento conserva el diseño original de HU-07; para el contrato vigente ver `specs/042-hu-21-permisos-por-rol/contracts/api-permisos.md`.
+
 **Input**: User description: "HU-07: Imputación de Horas Trabajadas (issue #7). Como integrante del equipo quiero registrar las horas reales que invertí trabajando en una Historia de Usuario para poder proveer datos al sistema que permitan comparar el esfuerzo estimado (Story Points convertidos a horas, ver HU-03) contra el esfuerzo real. Escenario 1: registro válido de tiempo (integrante, fecha de hoy, actividad y 4 horas sobre una historia de un Sprint activo; se suman al esfuerzo acumulado de la historia y se registra el Sprint activo en ese momento). Escenario 2: validación de inputs (horas negativas, texto no numérico, actividad vacía o integrante que no pertenece al proyecto bloquean el guardado). Depende de HU-04, HU-06 y HU-05. Las horas se guardan como minutos enteros (D8). El tope de horas por carga lo define esta especificación. Alcance: backend; el frontend es la sub-issue #63."
 
 ## Clarifications
@@ -13,7 +15,7 @@
 ### Session 2026-10-28
 
 - Q: ¿Cuál es el tope de horas de una sola carga? → A: 24 horas (un día completo), con el borde inclusivo. Frena errores de tipeo (400 en vez de 4) sin limitar casos reales. Es la regla que D8 de `MODELO-DE-DATOS.md` deja a esta spec; vive en el dominio, no en la base.
-- Q: ¿En qué unidad y con qué precisión se ingresan las horas? → A: En horas con decimales, con precisión de un minuto: se convierten a minutos enteros (1,5 h = 90 min) y se rechaza lo que no da minutos enteros (0,01 h = 0,6 min).
+- Q: ¿En qué unidad y con qué precisión se ingresan las horas? → A: En horas con decimales o en formato h:mm (por ejemplo, 0:20 = 20 minutos), con precisión de un minuto: se convierten a minutos enteros (1,5 h = 90 min) y se rechaza lo que no da minutos enteros (0,01 h = 0,6 min).
 - Q: ¿Qué fechas acepta una carga? → A: Desde la fecha de inicio del Sprint activo hasta hoy, ambas inclusive. Ni fechas futuras ni anteriores al Sprint al que se atribuyen las horas. (El límite superior se precisa en la pregunta sobre la fecha de fin, más abajo.)
 - Q: ¿Se pueden imputar horas a una historia "Completada" que sigue en el Sprint activo? → A: Sí. Mientras la historia esté en el Sprint "Activo", la carga se acepta cualquiera sea su estado; solo importa el Sprint.
 - Q: Si el Sprint sigue "Activo" después de su fecha de fin, ¿se aceptan cargas con fecha posterior a esa fecha de fin? → A: No. El rango aceptado va desde la fecha de inicio del Sprint hasta la menor entre hoy y su fecha de fin, ambas inclusive, para que las horas caigan siempre dentro del período del Sprint al que se atribuyen.
@@ -108,7 +110,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-003**: El Sprint de una carga MUST ser el Sprint "Activo" al que pertenecía la historia al cargarla, y MUST mantenerse aunque la historia cambie de Sprint después.
 - **FR-004**: El sistema MUST rechazar la carga cuando la historia no pertenece a un Sprint "Activo".
 - **FR-005**: El sistema MUST rechazar la carga cuando la persona elegida no es integrante del proyecto de la historia.
-- **FR-006**: La cantidad de horas MUST ingresarse en horas, admitiendo decimales, y guardarse convertida a minutos enteros. El sistema MUST rechazar la carga cuando la cantidad no es un número, es cero o negativa, supera las 24 horas (tope por carga) o no da un número entero de minutos.
+- **FR-006**: La cantidad de horas MUST ingresarse en horas, admitiendo decimales o el formato h:mm (minutos de 00 a 59; por ejemplo, 1:05 = 65 minutos), y guardarse convertida a minutos enteros. El sistema MUST rechazar la carga cuando la cantidad no es un número, es cero o negativa, supera las 24 horas (tope por carga) o no da un número entero de minutos.
 - **FR-007**: El sistema MUST rechazar la carga cuando la actividad está vacía, tiene solo espacios o supera los 500 caracteres.
 - **FR-008**: El sistema MUST rechazar la carga cuando la fecha falta, no es una fecha válida, es posterior a hoy, es posterior a la fecha de fin del Sprint activo o es anterior a su fecha de inicio.
 - **FR-009**: Cada rechazo MUST identificar el campo con problemas (historia, integrante, horas, actividad o fecha) y MUST dejar sin cambios las cargas y el esfuerzo acumulado.

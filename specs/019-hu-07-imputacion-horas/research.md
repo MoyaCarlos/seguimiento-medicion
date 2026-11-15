@@ -35,6 +35,12 @@ Este documento registra las decisiones técnicas tomadas para el diseño.
   0 min; contradice la Clarification de precisión); recibir minutos en la API (traslada la
   conversión al frontend y la duplica, rompe DRY; la spec dice que se ingresan horas).
 
+> **Actualización (#228)**: el campo también acepta el formato `h:mm` (`0:20` = 20 minutos,
+> `1:05` = 65; minutos de `00` a `59`; `0:00` da el error de cero; `24:00` es el máximo y
+> `24:01` da el error de tope). Los decimales siguen funcionando igual. El porqué: 20 minutos
+> son 1/3 de hora y no se pueden escribir como decimal exacto (0,33 h no da minutos enteros),
+> así que el decimal solo no alcanza para cargar duraciones comunes.
+
 ## R3. Formato de `horas` en el JSON
 
 - **Decision**: el campo `horas` se lee como `json.RawMessage`. Si es un número JSON, se pasa

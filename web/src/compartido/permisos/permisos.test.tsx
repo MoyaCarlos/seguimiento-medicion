@@ -61,7 +61,7 @@ describe('useRolEnProyecto', () => {
       const { result } = renderHook(() => useRolEnProyecto(7))
 
       await waitFor(() => expect(result.current.estado).toBe('listo'))
-      expect(result.current).toEqual({ estado: 'listo', rol })
+      expect(result.current).toEqual({ estado: 'listo', rol, fechaCierre: null })
     },
   )
 
@@ -112,12 +112,12 @@ describe('useRolEnProyecto', () => {
     })
     rerender({ id: 2 })
     respuestas['/projects/2'](new Response(JSON.stringify({ id: 2, rol: 'product_builder' }), { status: 200 }))
-    await waitFor(() => expect(result.current).toEqual({ estado: 'listo', rol: 'product_builder' }))
+    await waitFor(() => expect(result.current).toEqual({ estado: 'listo', rol: 'product_builder', fechaCierre: null }))
     respuestas['/projects/1'](new Response(JSON.stringify({ id: 1, rol: 'scrum_master' }), { status: 200 }))
     await Promise.resolve()
     await Promise.resolve()
 
-    expect(result.current).toEqual({ estado: 'listo', rol: 'product_builder' })
+    expect(result.current).toEqual({ estado: 'listo', rol: 'product_builder', fechaCierre: null })
   })
 
   it('al cambiar de proyecto vuelve a cargando hasta que responde el nuevo', async () => {

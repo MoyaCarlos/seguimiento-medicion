@@ -3,6 +3,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { imputarHoras } from './api'
 import { clasificarError } from './errores'
 import { fechaPropuesta, normalizarHoras } from './horas'
@@ -14,9 +15,16 @@ type Props = {
   fechaFin?: string | null
   alRegistrar: () => void
   alCambiarEnvio?: (enviando: boolean) => void
+  puedeEscribir?: boolean
 }
 
-export function FormularioHoras({ historiaId, fechaFin, alRegistrar, alCambiarEnvio }: Props) {
+export function FormularioHoras({
+  historiaId,
+  fechaFin,
+  alRegistrar,
+  alCambiarEnvio,
+  puedeEscribir = true,
+}: Props) {
   const [fecha, setFecha] = useState(() => fechaPropuesta(new Date(), fechaFin))
   const [actividad, setActividad] = useState('')
   const [horas, setHoras] = useState('')
@@ -34,7 +42,7 @@ export function FormularioHoras({ historiaId, fechaFin, alRegistrar, alCambiarEn
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando) return
+    if (enviando || !puedeEscribir) return
     setConfirmado(false)
     setAviso(undefined)
     setErrores({})
@@ -98,7 +106,14 @@ export function FormularioHoras({ historiaId, fechaFin, alRegistrar, alCambiarEn
         error={errores.horas}
       />
       {enviando && <LoadingIndicator />}
-      <Button type="submit" disabled={enviando}>Guardar horas</Button>
+      <Button
+        type="submit"
+        disabled={enviando || !puedeEscribir}
+        aria-describedby={puedeEscribir ? undefined : id('nota-cerrado')}
+      >
+        Guardar horas
+      </Button>
+      {!puedeEscribir && <NotaCerrado id={id('nota-cerrado')} />}
     </form>
   )
 }

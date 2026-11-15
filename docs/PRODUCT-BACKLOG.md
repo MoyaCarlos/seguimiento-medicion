@@ -612,17 +612,19 @@ Entonces el sistema responde "no encontrado".
 ### Depende de
 HU-04 (proyecto e integrantes) y HU-20 (autenticación). Afecta a HU-02 (la votación cuenta solo a los integrantes activos), a HU-07 y a HU-03 (el historial de quien fue dado de baja se conserva).
 ### Notas
-La baja es lógica: requiere una columna nueva en `integrantes` (por ejemplo, la fecha de baja, vacía mientras el integrante está activo). Un cambio de esquema se hace en un solo PR que modifica `MODELO-DE-DATOS.md` y agrega la migración. Propuesta del Scrum Master del 2026-10-30, a confirmar con el equipo.
+La baja es lógica: la columna anulable `integrantes.fecha_baja` (migración 009) guarda el día de la baja y vacía significa activo. Quitar a alguien registra la fecha sin borrar la fila ni sus aportes; volver a sumarlo con el mismo alta de HU-21 (`POST /projects/{id}/members`) reutiliza esa fila como Product Builder. Decisión D15 de `MODELO-DE-DATOS.md`, confirmada por el equipo el 2026-11-12 (spec `045-gestion-equipo`).
+Al dar de baja a alguien se descartan sus votos de las rondas que todavía no se revelaron (eran secretos y nadie los vio), así no cuentan en el promedio; las rondas ya reveladas no cambian. El historial de rondas y las horas siguen mostrando sus aportes con su nombre, y las métricas no cambian.
+No hay una acción para cambiar el rol: el escenario 4 se cubre con los caminos existentes (quitar al Scrum Master responde 409; agregarlo de nuevo, con cualquier rol, responde 400 «el integrante ya pertenece al proyecto»).
 Al crear un proyecto siempre se registra a su creador como Scrum Master (HU-04; con HU-21 es quien tiene la sesión iniciada), así que un proyecto nunca nace sin uno y la regla se cumple desde el principio. Con el Scrum Master único (#236, HU-21) la decisión D4 de `MODELO-DE-DATOS.md` queda cerrada en esos issues: esta historia ya no la reabre.
 Con un único Scrum Master por proyecto (#236), no hay ascenso a Scrum Master y no se puede quitar al Scrum Master ni cambiar su rol: el traspaso del rol queda fuera de alcance hasta después de la entrega, como límite declarado.
 La regla del último Scrum Master se verifica dentro de la misma transacción que el cambio, para que dos pedidos simultáneos no la salteen (la misma carrera que los fixes #145 y #158).
 El nombre de la persona no se edita desde el equipo del proyecto: pertenece al usuario y se edita en HU-17.
 Los permisos por rol quedaron fuera del alcance de HU-04 y los cubre HU-21.
-El escenario 1 se superpone con el escenario 8 de HU-21: el alta como Product Builder de un usuario registrado la cubre HU-21, y HU-16 queda para quitar integrantes.
+El escenario 1 se superpone con el escenario 8 de HU-21: el alta como Product Builder de un usuario registrado la cubre HU-21 (`permisos_por_rol.feature`), y HU-16 queda para quitar y reactivar integrantes (`gestion_equipo.feature`).
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
 ### Estado
-Nueva
+Implementada (backend, `DELETE /projects/{id}/members/{usuario_id}`, rama `feature/175-gestion-equipo`; falta el frontend: issue #182)
 ### Valor de Negocio
 5 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación

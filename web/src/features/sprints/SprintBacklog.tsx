@@ -17,6 +17,7 @@ type Props = {
   imputacion?: Imputacion
   finalizado?: boolean
   alCargar?: (historias: HistoriaDeSprint[]) => void
+  puedeEscribir?: boolean
 }
 
 type Estado =
@@ -24,7 +25,14 @@ type Estado =
   | { tipo: 'listo'; historias: HistoriaDeSprint[] }
   | { tipo: 'error'; mensaje: string }
 
-export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputacion, finalizado, alCargar }: Props) {
+export function SprintBacklog({
+  sprintId,
+  permiteCambiarEstado = false,
+  imputacion,
+  finalizado,
+  alCargar,
+  puedeEscribir = true,
+}: Props) {
   return (
     <Consulta
       key={sprintId}
@@ -33,11 +41,12 @@ export function SprintBacklog({ sprintId, permiteCambiarEstado = false, imputaci
       imputacion={imputacion}
       finalizado={finalizado}
       alCargar={alCargar}
+      puedeEscribir={puedeEscribir}
     />
   )
 }
 
-function Consulta({ sprintId, permiteCambiarEstado, imputacion, finalizado, alCargar }: Props) {
+function Consulta({ sprintId, permiteCambiarEstado, imputacion, finalizado, alCargar, puedeEscribir }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
 
   useEffect(() => {
@@ -102,8 +111,9 @@ function Consulta({ sprintId, permiteCambiarEstado, imputacion, finalizado, alCa
           <EsfuerzoHistoria
             historiaId={historia.id}
             imputacion={imputacion}
+            puedeEscribir={puedeEscribir}
             acciones={
-              permiteCambiarEstado ? <EstadoHistoria historia={historia} alCambiar={reemplazar} /> : undefined
+              permiteCambiarEstado ? <EstadoHistoria historia={historia} alCambiar={reemplazar} puedeEscribir={puedeEscribir} /> : undefined
             }
           />
         </li>

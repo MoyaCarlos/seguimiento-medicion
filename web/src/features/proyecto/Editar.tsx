@@ -7,13 +7,16 @@ import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { ApiError } from '../../compartido/api/client'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
-import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { useRecargarProyectos } from '../../compartido/proyectos/recargaProyectos'
 import { aProyectoEditado, editarProyecto, obtenerProyecto } from './api'
 import { CampoDescripcion } from './Campos'
 import { campoDeError, mensajeDeError } from './errores'
 import { validarEdicion } from './validacion'
+import { ZonaCierreProyecto } from './ZonaCierreProyecto'
 import type { DatosProyecto, ErroresProyecto } from './validacion'
 
 const FORMULARIO_VACIO: DatosProyecto = {
@@ -68,7 +71,7 @@ export function Editar() {
   }, [id])
 
   // Va después de la carga del proyecto para que esa sea la primera petición de la pantalla.
-  const puedeGestionar = useEsScrumMaster(Number(id))
+  const { rol, fechaCierre, cerrado, puedeGestionar, aplicarCierre } = usePermisosProyecto(Number(id))
 
   function actualizar(campo: keyof DatosProyecto, valor: string) {
     setDatos((actuales) => ({ ...actuales, [campo]: valor }))
@@ -112,6 +115,8 @@ export function Editar() {
         Corregí el nombre, la descripción, las fechas o las horas por Story Point. Los
         cambios se guardan sobre el proyecto actual.
       </p>
+
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
 
       {cargando && <LoadingIndicator />}
       {errorCarga && <ErrorMessage message={errorCarga} />}
@@ -181,10 +186,18 @@ export function Editar() {
               Guardar cambios
             </Button>
           </div>
-          {!puedeGestionar && (
-            <NotaGestion id="editar-nota-guardar" texto="Solo el Scrum Master puede guardar el proyecto" />
+          {cerrado ? (
+            <NotaCerrado id="editar-nota-guardar" />
+          ) : (
+            !puedeGestionar && (
+              <NotaGestion id="editar-nota-guardar" texto="Solo el Scrum Master puede guardar el proyecto" />
+            )
           )}
         </form>
+      )}
+
+      {!cargando && !errorCarga && (
+        <ZonaCierreProyecto proyectoId={id} rol={rol} fechaCierre={fechaCierre} onCambio={aplicarCierre} />
       )}
     </section>
   )

@@ -1,7 +1,8 @@
 import { useParams } from 'react-router'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { AccionesScrumMaster } from './AccionesScrumMaster'
 import { Consenso } from './Consenso'
 import { Encabezado } from './Encabezado'
@@ -25,7 +26,8 @@ type Props = { proyectoId: string; historiaId: number }
 
 function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const estado = useVotacion(proyectoId, historiaId)
-  const puedeGestionar = useEsScrumMaster(Number(proyectoId))
+  // Un solo GET /projects/{id}: de ahí salen el rol y el cierre.
+  const { fechaCierre, cerrado, puedeGestionar, puedeEscribir } = usePermisosProyecto(Number(proyectoId))
   const { integrantes, votacion, enviando } = estado
 
   return (
@@ -36,6 +38,8 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
         deshabilitado={enviando || estado.cargando}
         alActualizar={estado.recargar}
       />
+
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
 
       <ResumenHistoria historiaId={historiaId} historia={estado.historia} />
 
@@ -51,6 +55,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
           deshabilitado={enviando}
           alIniciar={estado.iniciar}
           puedeGestionar={puedeGestionar}
+          cerrado={cerrado}
         />
       )}
 
@@ -60,6 +65,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
             votacion={votacion}
             deshabilitado={enviando}
             alVotar={estado.votar}
+            puedeEscribir={puedeEscribir}
           />
           {estaRevelada(votacion) && (
             <>
@@ -71,6 +77,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
                 alRegistrar={estado.registrarEstimacion}
                 alAbrirRonda={estado.abrirNuevaRonda}
                 puedeGestionar={puedeGestionar}
+                cerrado={cerrado}
               />
               {estado.aviso && (
                 <p className="message votacion-aviso" role="status">
@@ -85,6 +92,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
               deshabilitado={enviando}
               alRevelar={estado.revelar}
               puedeGestionar={puedeGestionar}
+              cerrado={cerrado}
             />
           )}
         </>

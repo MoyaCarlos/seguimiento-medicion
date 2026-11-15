@@ -27,7 +27,7 @@ no cambia el documento.
 | `SprintID` | `int64` | historia | Sprint `Activo` de la historia al cargar; no se recalcula (FR-003) |
 | `Fecha` | `time.Time` (00:00 UTC) | cuerpo | `AAAA-MM-DD` real; `inicio del Sprint ≤ fecha ≤ min(hoy, fin del Sprint)` |
 | `Actividad` | `string` | cuerpo | sin espacios externos; no vacía; ≤ 500 runas |
-| `Minutos` | `int` | cuerpo (`horas`) | `1 ≤ minutos ≤ 1440`; horas decimales que den minutos enteros (R2) |
+| `Minutos` | `int` | cuerpo (`horas`) | `1 ≤ minutos ≤ 1440`; horas decimales (que den minutos enteros) o formato h:mm (R2) |
 | `CreadoEn` | `time.Time` | base | auditoría (RFC 3339 UTC); sin reglas |
 
 **Factory**:

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../../compartido/api/client'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
 import { NoIntegrante } from '../../compartido/permisos/NoIntegrante'
 import { Button } from '../../compartido/componentes/Button'
 import { BotonExportar } from '../../compartido/componentes/BotonExportar'
@@ -100,6 +101,7 @@ export function Panel({ hoy = () => new Date() }: { hoy?: () => Date }) {
 
   return (
     <section className="hu04-panel" aria-labelledby="panel-title">
+      <AvisoProyectoCerrado fechaCierre={proyecto?.fecha_cierre ?? null} />
       <header className="page-header">
         <div>
           <p className="eyebrow">Panel principal · #{id}</p>

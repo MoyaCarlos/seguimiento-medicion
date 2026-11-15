@@ -1,3 +1,8 @@
+# Nota (HU-21, spec 042): desde HU-21 el integrante que carga las horas sale de la
+# sesión; POST /backlog/{id}/horas ya no recibe integrante_id y el selector
+# «Integrante» de la interfaz ya no existe. Este documento conserva el diseño
+# original de HU-07; para el contrato vigente ver
+# specs/042-hu-21-permisos-por-rol/contracts/api-permisos.md.
 openapi: 3.0.3
 info:
   title: Software Metrics & Estimation API — Imputación de Horas Trabajadas (HU-07)

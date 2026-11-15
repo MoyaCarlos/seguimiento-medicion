@@ -13,9 +13,16 @@ type Props = {
   sprints: Sprint[]
   alActualizar: (sprint: Sprint) => void
   puedeGestionar?: boolean
+  puedeEscribir?: boolean
 }
 
-export function SeccionSprints({ estado, sprints, alActualizar, puedeGestionar = true }: Props) {
+export function SeccionSprints({
+  estado,
+  sprints,
+  alActualizar,
+  puedeGestionar = true,
+  puedeEscribir = true,
+}: Props) {
   return (
     <section className={`sprints-carril${VARIANTE[estado]}`}>
       <h2>{estado}</h2>
@@ -36,15 +43,26 @@ export function SeccionSprints({ estado, sprints, alActualizar, puedeGestionar =
             <SprintBacklog
               sprintId={sprint.id}
               permiteCambiarEstado={estado === 'Activo'}
+            puedeEscribir={puedeEscribir}
               imputacion={
                 estado === 'Activo' ? { proyectoId: sprint.proyecto_id, fechaFin: sprint.fecha_fin } : undefined
               }
             />
             {estado === 'Pendiente' && (
-              <FormularioInicio sprint={sprint} alActualizar={alActualizar} puedeGestionar={puedeGestionar} />
+              <FormularioInicio
+              sprint={sprint}
+              alActualizar={alActualizar}
+              puedeGestionar={puedeGestionar}
+              puedeEscribir={puedeEscribir}
+            />
             )}
             {estado === 'Activo' && (
-              <BotonCerrar sprint={sprint} alActualizar={alActualizar} puedeGestionar={puedeGestionar} />
+              <BotonCerrar
+              sprint={sprint}
+              alActualizar={alActualizar}
+              puedeGestionar={puedeGestionar}
+              puedeEscribir={puedeEscribir}
+            />
             )}
           </article>
         ),

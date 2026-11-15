@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PantallaDefectos } from './PantallaDefectos'
@@ -58,7 +58,11 @@ type Opciones = {
   errorRegistro?: { status: number; cuerpo: unknown }
   errorResolucion?: { status: number; cuerpo: unknown }
   demoraRegistro?: Promise<void>
+  proyecto?: { status: number; cuerpo: unknown } | 'pendiente'
 }
+
+const PROYECTO_ABIERTO = { status: 200, cuerpo: { id: 1, rol: 'scrum_master', fecha_cierre: null } }
+const PROYECTO_CERRADO = { status: 200, cuerpo: { id: 1, rol: 'scrum_master', fecha_cierre: '2026-11-10' } }
 
 function respuesta(valor: unknown, status = 200) {
   return new Response(JSON.stringify(valor), {
@@ -76,6 +80,7 @@ function montarFetch({
   errorRegistro,
   errorResolucion,
   demoraRegistro,
+  proyecto = PROYECTO_ABIERTO,
 }: Opciones = {}) {
   const estado = {
     defectos: defectos.map((defecto) => ({ ...defecto })),
@@ -83,6 +88,11 @@ function montarFetch({
   }
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
     const metodo = init?.method ?? 'GET'
+
+    if (url === '/projects/1' && metodo === 'GET') {
+      if (proyecto === 'pendiente') return new Promise<Response>(() => {})
+      return Promise.resolve(respuesta(proyecto.cuerpo, proyecto.status))
+    }
 
     if (url === '/projects/1/defectos' && metodo === 'GET') {
       if (errorDefectos) return Promise.resolve(respuesta(errorDefectos.cuerpo, errorDefectos.status))
@@ -491,5 +501,145 @@ describe('avisos de éxito como el prototipo', () => {
     expect(fondo).toBe('#dcf5e4')
     const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
     expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const NOTA = 'El proyecto está cerrado'
+
+  function llamadasAlProyecto(fetchMock: ReturnType<typeof montarFetch>['fetchMock']) {
+    return fetchMock.mock.calls.filter(
+      ([url, init]) => url === '/projects/1' && (init?.method ?? 'GET') === 'GET',
+    )
+  }
+
+  function descripcionDe(elemento: HTMLElement) {
+    const id = elemento.getAttribute('aria-describedby')
+    return id ? document.getElementById(id)?.textContent : undefined
+  }
+
+  it('Escenario: proyecto cerrado: muestra el aviso y el listado de defectos se sigue viendo', async () => {
+    abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO] })
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('El total no se actualiza')).toBeTruthy()
+    expect(screen.getByText('El botón no responde')).toBeTruthy()
+  })
+
+  it('Escenario: proyecto cerrado: «Registrar defecto» y sus campos quedan deshabilitados con una sola nota «El proyecto está cerrado» y no envía', async () => {
+    const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [] })
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const boton = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
+    expect(boton.disabled).toBe(true)
+    expect(descripcionDe(boton)).toBe(NOTA)
+    expect((screen.getByLabelText('Descripción') as HTMLTextAreaElement).disabled).toBe(true)
+    expect((screen.getByLabelText('Severidad') as HTMLSelectElement).disabled).toBe(true)
+    expect((screen.getByLabelText('Historia relacionada') as HTMLSelectElement).disabled).toBe(true)
+
+    const formulario = screen.getByRole('form', { name: 'Registrar defecto' })
+    expect(within(formulario).getAllByText(NOTA)).toHaveLength(1)
+
+    fireEvent.submit(formulario)
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it('Escenario: proyecto cerrado con Sprint activo: el botón «Resolver» de cada defecto pendiente queda deshabilitado con una sola nota y no envía', async () => {
+    const usuario = userEvent.setup()
+    const segundo: DefectoPrueba = { ...DEFECTO_PENDIENTE, id: 10, descripcion: 'Otro pendiente' }
+    const { fetchMock } = abrir({
+      proyecto: PROYECTO_CERRADO,
+      defectos: [DEFECTO_PENDIENTE, segundo, DEFECTO_RESUELTO],
+    })
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('El total no se actualiza')
+    const botones = (await screen.findAllByRole('button', { name: 'Resolver' })) as HTMLButtonElement[]
+    expect(botones).toHaveLength(2)
+    for (const boton of botones) {
+      expect(boton.disabled).toBe(true)
+      expect(descripcionDe(boton)).toBe(NOTA)
+      const item = boton.closest('li') as HTMLElement
+      expect(within(item).getAllByText(NOTA)).toHaveLength(1)
+    }
+
+    await usuario.click(botones[0])
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith('/resolver'))).toBe(false)
+  })
+
+  it('Escenario: proyecto abierto: registrar y resolver están habilitados, sin aviso y sin nota', async () => {
+    const { fetchMock } = abrir({ proyecto: PROYECTO_ABIERTO, defectos: [DEFECTO_PENDIENTE] })
+
+    await waitFor(() => expect(llamadasAlProyecto(fetchMock)).toHaveLength(1))
+    const resolver = (await screen.findByRole('button', { name: 'Resolver' })) as HTMLButtonElement
+    const registrar = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
+    expect(resolver.disabled).toBe(false)
+    expect(registrar.disabled).toBe(false)
+    expect(screen.queryByText(NOTA)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por pantalla', async () => {
+    const usuario = userEvent.setup()
+    const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE] })
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByRole('button', { name: 'Registrar defecto' })
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByLabelText('Descripción'))
+
+    expect(llamadasAlProyecto(fetchMock)).toHaveLength(1)
+  })
+
+  it('Escenario: 409 «El proyecto está cerrado» al registrar: se muestra el mensaje tal cual y una sola vez', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [],
+      errorRegistro: { status: 409, cuerpo: { mensaje: NOTA } },
+    })
+
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText(NOTA)).toBeTruthy()
+    expect(screen.getAllByText(NOTA)).toHaveLength(1)
+  })
+
+  it('Escenario: 409 «El proyecto está cerrado» al resolver: se muestra el mensaje tal cual y una sola vez', async () => {
+    const usuario = userEvent.setup()
+    abrir({
+      defectos: [DEFECTO_PENDIENTE],
+      errorResolucion: { status: 409, cuerpo: { mensaje: NOTA } },
+    })
+
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(await screen.findByRole('button', { name: 'Resolver' }))
+
+    expect(await screen.findByText(NOTA)).toBeTruthy()
+    expect(screen.getAllByText(NOTA)).toHaveLength(1)
+  })
+
+  it('Escenario: cierre desconocido (cargando): registrar y resolver quedan habilitados y sin nota', async () => {
+    abrir({ proyecto: 'pendiente', defectos: [DEFECTO_PENDIENTE] })
+
+    const resolver = (await screen.findByRole('button', { name: 'Resolver' })) as HTMLButtonElement
+    const registrar = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
+    expect(resolver.disabled).toBe(false)
+    expect(registrar.disabled).toBe(false)
+    expect(screen.queryByText(NOTA)).toBeNull()
+  })
+
+  it('Escenario: cierre desconocido (error al consultar el proyecto): registrar y resolver quedan habilitados y sin nota', async () => {
+    const { fetchMock } = abrir({
+      proyecto: { status: 500, cuerpo: { mensaje: 'Falló el proyecto' } },
+      defectos: [DEFECTO_PENDIENTE],
+    })
+
+    await waitFor(() => expect(llamadasAlProyecto(fetchMock)).toHaveLength(1))
+    const resolver = (await screen.findByRole('button', { name: 'Resolver' })) as HTMLButtonElement
+    const registrar = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
+    expect(resolver.disabled).toBe(false)
+    expect(registrar.disabled).toBe(false)
+    expect(screen.queryByText(NOTA)).toBeNull()
   })
 })

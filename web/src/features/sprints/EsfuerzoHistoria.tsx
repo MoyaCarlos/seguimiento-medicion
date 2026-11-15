@@ -11,14 +11,14 @@ import { formatearHoras, type EsfuerzoReal } from './horas'
 
 export type Imputacion = { proyectoId: number; fechaFin?: string | null }
 
-type Props = { historiaId: number; imputacion?: Imputacion; acciones?: ReactNode }
+type Props = { historiaId: number; imputacion?: Imputacion; acciones?: ReactNode; puedeEscribir?: boolean }
 
 type Estado =
   | { tipo: 'cargando' }
   | { tipo: 'listo'; esfuerzo: EsfuerzoReal }
   | { tipo: 'error'; mensaje: string }
 
-export function EsfuerzoHistoria({ historiaId, imputacion, acciones }: Props) {
+export function EsfuerzoHistoria({ historiaId, imputacion, acciones, puedeEscribir = true }: Props) {
   const [estado, setEstado] = useState<Estado>({ tipo: 'cargando' })
   const [consulta, setConsulta] = useState(0)
   const [detalleAbierto, setDetalleAbierto] = useState(false)
@@ -100,6 +100,7 @@ export function EsfuerzoHistoria({ historiaId, imputacion, acciones }: Props) {
           fechaFin={imputacion.fechaFin}
           alRegistrar={() => setConsulta((actual) => actual + 1)}
           alCambiarEnvio={setEnviando}
+          puedeEscribir={puedeEscribir}
         />
       )}
     </div>

@@ -573,3 +573,128 @@ describe('pantalla de Sprints como el prototipo: Sprints finalizados', () => {
     expect(document.querySelector('details')).toBeNull()
   })
 })
+
+describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const activo: Sprint = { ...pendiente(2), estado: 'Activo', sprint_goal: 'Meta', fecha_fin: '2026-11-09' }
+  const historia = { id: 7, titulo: 'Exportar reporte', prioridad: 'M', estado: 'Nueva', estimacion_sp: 5 }
+
+  const conProyecto = (
+    proyecto: () => Response | Promise<Response>,
+    otras: Otras = () => respuesta(404, { mensaje: 'no encontrado' }),
+  ) =>
+    simularApi(
+      conSprints(pendiente(1), activo),
+      (ruta, opciones) => (ruta === '/projects/42' ? proyecto() : otras(ruta, opciones)),
+      () => respuesta(200, [historia]),
+    )
+
+  const proyecto = (rol: 'scrum_master' | 'product_builder', fecha_cierre: string | null) => () =>
+    respuesta(200, { id: 42, rol, fecha_cierre })
+
+  const nota = (boton: HTMLElement) =>
+    document.getElementById(boton.getAttribute('aria-describedby') ?? '')?.textContent
+
+  const boton = (nombre: string) => screen.findByRole('button', { name: nombre })
+
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», «Crear Sprint» deshabilitado con «El proyecto está cerrado» y el listado de Sprints sigue visible', async () => {
+    conProyecto(proyecto('product_builder', '2026-11-10'))
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    const crearBoton = await boton('Crear Sprint')
+    expect(crearBoton.hasAttribute('disabled')).toBe(true)
+    expect(nota(crearBoton)).toBe('El proyecto está cerrado')
+    expect(within(seccion('Pendiente')).getByRole('heading', { name: 'Sprint 1' })).toBeTruthy()
+    expect(within(seccion('Activo')).getByRole('heading', { name: 'Sprint 2' })).toBeTruthy()
+    expect(screen.queryByText(/Solo el Scrum Master/)).toBeNull()
+  })
+
+  it('Escenario: proyecto abierto: sin aviso, y crear, iniciar y cerrar Sprint habilitados y sin nota como antes', async () => {
+    const simulado = conProyecto(proyecto('scrum_master', null))
+    abrir()
+
+    const crearBoton = await boton('Crear Sprint')
+    const iniciar = await boton('Iniciar Sprint')
+    const cerrar = await boton('Cerrar Sprint')
+    await waitFor(() => expect(simulado).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    for (const accion of [crearBoton, iniciar, cerrar]) {
+      expect(accion.hasAttribute('disabled')).toBe(false)
+      expect(accion.hasAttribute('aria-describedby')).toBe(false)
+    }
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+
+  it('Escenario: Scrum Master con el proyecto cerrado: iniciar y cerrar Sprint, cambiar el estado y guardar horas deshabilitados con la nota única «El proyecto está cerrado»', async () => {
+    const simulado = conProyecto(proyecto('scrum_master', '2026-11-10'))
+    const user = userEvent.setup()
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const iniciar = await boton('Iniciar Sprint')
+    const cerrar = await boton('Cerrar Sprint')
+    const cambiarEstado = await within(seccion('Activo')).findByRole('button', { name: 'Iniciar' })
+    await waitFor(() => expect(iniciar.hasAttribute('disabled')).toBe(true))
+    expect(cerrar.hasAttribute('disabled')).toBe(true)
+    expect(cambiarEstado.hasAttribute('disabled')).toBe(true)
+    expect(nota(iniciar)).toBe('El proyecto está cerrado')
+    expect(nota(cerrar)).toBe('El proyecto está cerrado')
+    expect(nota(cambiarEstado)).toBe('El proyecto está cerrado')
+
+    await user.click(within(seccion('Activo')).getByRole('button', { name: 'Registrar horas' }))
+    const guardar = await boton('Guardar horas')
+    expect(guardar.hasAttribute('disabled')).toBe(true)
+    expect(nota(guardar)).toBe('El proyecto está cerrado')
+
+    await user.click(cerrar)
+    await user.click(cambiarEstado)
+    expect(screen.queryByText(/Solo el Scrum Master/)).toBeNull()
+    const metodos = simulado.mock.calls.map(([, opciones]) => opciones?.method ?? 'GET')
+    expect(metodos.every((metodo) => metodo === 'GET')).toBe(true)
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por la pantalla', async () => {
+    const simulado = conProyecto(proyecto('scrum_master', '2026-11-10'))
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await waitFor(() => expect(screen.getAllByText('Esfuerzo real: 1,5 h')).toHaveLength(2))
+    await userEvent.click(within(seccion('Activo')).getByRole('button', { name: 'Registrar horas' }))
+    await boton('Guardar horas')
+
+    expect(simulado.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
+  })
+
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al crear un Sprint se muestra tal cual', async () => {
+    conProyecto(proyecto('scrum_master', null), () => respuesta(409, { mensaje: 'El proyecto está cerrado' }))
+    abrir()
+    await waitFor(() => expect(screen.queryByText('Cargando…')).toBeNull())
+
+    await crear()
+
+    expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+  })
+
+  it.each([
+    ['cargando', () => new Promise<Response>(() => {})],
+    ['error', () => respuesta(500, { mensaje: 'error interno' })],
+  ])('Escenario: cierre desconocido (%s): todo queda habilitado, sin aviso y sin nota', async (_caso, respuestaProyecto) => {
+    const simulado = conProyecto(respuestaProyecto)
+    abrir()
+
+    const crearBoton = await boton('Crear Sprint')
+    const iniciar = await boton('Iniciar Sprint')
+    const cerrar = await boton('Cerrar Sprint')
+    const cambiarEstado = await within(seccion('Activo')).findByRole('button', { name: 'Iniciar' })
+    await waitFor(() => expect(simulado).toHaveBeenCalledWith('/projects/42', expect.anything()))
+    await userEvent.click(within(seccion('Activo')).getByRole('button', { name: 'Registrar horas' }))
+    const guardar = await boton('Guardar horas')
+
+    for (const accion of [crearBoton, iniciar, cerrar, cambiarEstado, guardar]) {
+      expect(accion.hasAttribute('disabled')).toBe(false)
+      expect(accion.hasAttribute('aria-describedby')).toBe(false)
+    }
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+})

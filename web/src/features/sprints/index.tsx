@@ -6,8 +6,10 @@ import { periodoCorto } from '../../compartido/formato/fechas'
 import { useProyectos } from '../../compartido/proyectos/useProyectos'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
-import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { crearSprint, listarSprints } from './api'
 import { clasificarError } from './errores'
 import { SeccionSprints } from './SeccionSprints'
@@ -48,7 +50,7 @@ function PantallaSprints({ id }: { id?: string }) {
   }, [id])
 
   // Va después de la carga de Sprints para que el listado sea la primera petición de la pantalla.
-  const puedeGestionar = useEsScrumMaster(Number(id))
+  const { fechaCierre, cerrado, puedeGestionar, puedeEscribir } = usePermisosProyecto(Number(id))
 
   const guardar = (sprint: Sprint) => setSprints((actuales) => guardarSprint(actuales, sprint))
 
@@ -86,10 +88,13 @@ function PantallaSprints({ id }: { id?: string }) {
           <Icono nombre="mas" />
           Crear Sprint
         </Button>
-        {!puedeGestionar && (
-          <NotaGestion id="sprints-nota-crear" texto="Solo el Scrum Master puede crear un Sprint" />
+        {cerrado ? (
+          <NotaCerrado id="sprints-nota-crear" />
+        ) : (
+          !puedeGestionar && <NotaGestion id="sprints-nota-crear" texto="Solo el Scrum Master puede crear un Sprint" />
         )}
       </header>
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
       {proyecto?.fecha_inicio && proyecto.fecha_fin && (
         <p className="sprints-plazo">
           <strong>Plazo del proyecto:</strong>{' '}
@@ -106,6 +111,7 @@ function PantallaSprints({ id }: { id?: string }) {
             sprints={grupos[estado]}
             alActualizar={guardar}
             puedeGestionar={puedeGestionar}
+            puedeEscribir={puedeEscribir}
           />
         ))}
       </div>
