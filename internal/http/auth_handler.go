@@ -13,14 +13,48 @@ import (
 // AuthHandler es el adaptador de entrada de la autenticación (HU-20). No
 // registra cuerpos ni cabeceras: llevan contraseñas y tokens.
 type AuthHandler struct {
-	registrar *service.RegistrarUsuario
-	ingresar  *service.Ingresar
-	obtener   *service.ObtenerSesion
-	cerrar    *service.CerrarSesion
+	registrar     *service.RegistrarUsuario
+	ingresar      *service.Ingresar
+	obtener       *service.ObtenerSesion
+	cerrar        *service.CerrarSesion
+	cambiarNombre *service.CambiarNombreUsuario
 }
 
-func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar, obtener *service.ObtenerSesion, cerrar *service.CerrarSesion) *AuthHandler {
-	return &AuthHandler{registrar: registrar, ingresar: ingresar, obtener: obtener, cerrar: cerrar}
+func NewAuthHandler(
+	registrar *service.RegistrarUsuario,
+	ingresar *service.Ingresar,
+	obtener *service.ObtenerSesion,
+	cerrar *service.CerrarSesion,
+	cambiarNombre *service.CambiarNombreUsuario,
+) *AuthHandler {
+	return &AuthHandler{
+		registrar:     registrar,
+		ingresar:      ingresar,
+		obtener:       obtener,
+		cerrar:        cerrar,
+		cambiarNombre: cambiarNombre,
+	}
+}
+
+// CambiarNombre atiende PUT /auth/yo: el usuario sale de la sesión y el cuerpo
+// solo lleva el nombre nuevo (HU-17).
+func (h *AuthHandler) CambiarNombre(w nethttp.ResponseWriter, r *nethttp.Request) {
+	usuario := usuarioDeSesion(r)
+	if usuario.ID <= 0 {
+		escribirError(w, domain.ErrNoAutenticado)
+		return
+	}
+	var req cambiarNombreRequest
+	if err := json.NewDecoder(nethttp.MaxBytesReader(w, r.Body, maxCuerpoAuth)).Decode(&req); err != nil {
+		escribirJSON(w, nethttp.StatusBadRequest, errorResponse{Mensaje: "JSON inválido"})
+		return
+	}
+	actualizado, err := h.cambiarNombre.Ejecutar(r.Context(), usuario.ID, req.Nombre)
+	if err != nil {
+		escribirError(w, err)
+		return
+	}
+	escribirJSON(w, nethttp.StatusOK, usuarioSesionResponse{ID: actualizado.ID, Nombre: actualizado.Nombre})
 }
 
 // Yo atiende GET /auth/yo.

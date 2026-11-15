@@ -632,58 +632,38 @@ Implementada (backend, `DELETE /projects/{id}/members/{usuario_id}`, rama `featu
 
 ---
 
-## HU-17: Gestión de Usuarios
+## HU-17: Renombrar el propio usuario (Gestión de Usuarios redefinida)
 ### Descripción
-Como Scrum Master quiero crear y editar usuarios y elegir a los integrantes de un proyecto de entre los usuarios ya creados, para no asignar roles a personas ficticias ni por un error de tipeo, y para que el equipo de pruebas tenga usuarios listos después de cada despliegue.
-### Criterios de aceptacion (BDD):
-Escenario 1: Alta de un usuario.
-Dado que ingreso un nombre válido que no existe,
-Cuando creo el usuario,
-Entonces el sistema lo agrega a la lista de usuarios, sin rol (el rol se asigna por proyecto).
-Escenario 2: Usuario repetido.
-Dado que ya existe un usuario con ese nombre, sin distinguir mayúsculas ni espacios externos,
-Cuando intento crearlo otra vez,
-Entonces el sistema rechaza el alta con un mensaje claro y no crea un duplicado.
-Escenario 3: Elegir integrantes de la lista.
-Dado que existen usuarios creados,
-Cuando asigno un integrante a un proyecto,
-Entonces elijo a la persona de la lista y le asigno un rol, y no puedo escribir un nombre libre.
-Escenario 4: Elegir al Scrum Master al crear el proyecto.
-Dado que existen usuarios creados,
-Cuando creo un proyecto,
-Entonces elijo de la lista a quien será su Scrum Master.
-Escenario 5: Edición del nombre.
+Como usuario quiero cambiar mi nombre de usuario, para corregir un error de tipeo sin perder mi historial en los proyectos.
+### Criterios de aceptación (BDD):
+Escenario 5 (vigente): Edición del nombre.
 Dado que existe un usuario que participa en varios proyectos,
 Cuando cambio su nombre a uno que no está en uso,
 Entonces el nombre cambia en todos los proyectos y el historial (votos, horas, equipos) sigue asociado a la misma persona.
-Escenario 6: Edición con un nombre en uso.
+Escenario 6 (vigente): Edición con un nombre en uso.
 Dado que existe otro usuario con el nombre que ingreso,
 Cuando guardo el cambio,
 Entonces el sistema lo rechaza y no modifica al usuario.
-Escenario 7: Usuarios predeterminados de la demo.
-Dado que uso el botón de datos de prueba,
-Cuando se cargan los datos,
-Entonces se crean los usuarios predeterminados sin rol, y si ya existen no se duplican.
+Escenarios retirados por la redefinición (2026-11-15):
+- Escenarios 1 y 2 (alta y nombre repetido): cubiertos por HU-20.
+- Escenario 3 (elegir integrantes y rol): cubierto por HU-21 (el rol es siempre Product Builder).
+- Escenario 4 (elegir al Scrum Master al crear el proyecto): obsoleto; lo es quien crea el proyecto (HU-21).
+- Escenario 7 (usuarios predeterminados de la demo): cubierto por #235.
 ### Depende de
-HU-04 (usuarios e integrantes) y el issue #144 (botón de datos de prueba).
+HU-20 (registro e ingreso) y HU-21 (permisos por rol), ya en `main`. La implementación arranca después de #300 (mergeado) y de HU-16.
 ### Notas
-No requiere cambio de esquema: `usuarios` ya existe y es independiente de los proyectos (ver `MODELO-DE-DATOS.md` §4.2). La identidad es `nombre_normalizado`, y las demás tablas apuntan por `usuario_id`, por eso renombrar es seguro.
-El contrato de asignación cambia: hoy `POST /projects/{id}/members` recibe un nombre. Se hace en dos pasos para no romper `main`: primero el backend acepta `usuario_id` además del nombre y agrega `GET /users`; después el frontend pasa a elegir de la lista y, en ese mismo PR, se retira el camino del nombre. Lo mismo con el Scrum Master de `POST /projects`.
-Quién puede crear usuarios mientras no existan perfiles: cualquiera. La restricción por perfil ("admin" o "betaTester") queda para cuando se agreguen perfiles, y se discute con el equipo.
-**Alineación pendiente con HU-20 y HU-21** (a redefinir después de HU-20 y HU-21; sus escenarios no se tocan hasta entonces):
-1. Escenario 4: elige de una lista a quien será el Scrum Master del proyecto, pero en HU-21 el Scrum Master es quien crea el proyecto (con la sesión iniciada).
-2. Escenario 3: asigna a un integrante cualquier rol, pero en HU-21 "configurar equipo" solo agrega usuarios ya registrados como Product Builder.
-3. Escenario 1: crea usuarios sin contraseña, pero con HU-20 cada persona se registra sola con la suya.
-4. Resuelto (Scrum Master, 2026-11-04): el nombre de usuario de HU-20 es `usuarios.nombre` y renombrar queda fuera de HU-20. Si HU-17 renombra un usuario (escenario 5), cambia su dato de ingreso.
-HU-17 se redefine después de HU-20 y HU-21 (decisión del Scrum Master, 2026-11-03); hasta entonces sus escenarios quedan como están. Sigue entrando solo si sobra tiempo, igual que HU-16.
+Decisión del Scrum Master (2026-11-15), opción A: cada persona cambia **solo su propio** nombre de usuario; nadie cambia el dato de ingreso de otra persona. El endpoint es `PUT /auth/yo`, con el usuario tomado de la sesión.
+El renombrado es atómico: actualiza `usuarios.nombre` y `usuarios.nombre_normalizado` en una sola sentencia y rechaza duplicados sin distinguir mayúsculas, igual que el registro (409 «Ese nombre de usuario ya existe»). No requiere cambio de esquema: `usuarios` ya existe y votos, horas, integrantes, defectos y sesiones apuntan por `usuario_id`, así que el historial y la sesión actual no cambian.
+El nombre de usuario es el dato de ingreso: después del cambio, el nombre anterior deja de servir y el nuevo funciona con la misma contraseña. El frontend ofrece «Cambiar nombre» en el menú de la cuenta y actualiza el nombre sin recargar.
+Spec: `specs/048-hu-17-renombrar-usuario/`. Rama: `feature/HU-17-renombrar-usuario`.
 ### Prioridad
-C (Could have) - Mejora de calidad surgida del beta testing; no es requisito del enunciado.
+C (Could have) - Mejora de calidad surgida del beta testing; entra solo si sobra tiempo antes de la entrega, después de #300 y HU-16.
 ### Estado
-Nueva
+Implementada en `feature/HU-17-renombrar-usuario` (PR #325)
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación
-8 Story Points - propuesta, a estimar con el equipo
+2 Story Points - propuesta, a estimar con el equipo
 
 ---
 

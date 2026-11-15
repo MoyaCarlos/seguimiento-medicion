@@ -10,6 +10,10 @@ type usuarioSesionResponse struct {
 	Nombre string `json:"nombre"`
 }
 
+type cambiarNombreRequest struct {
+	Nombre string `json:"nombre"`
+}
+
 // sesionResponse entrega el token en claro una sola vez; nunca incluye la
 // contraseña ni su hash.
 type sesionResponse struct {
