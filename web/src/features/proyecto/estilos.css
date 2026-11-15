@@ -417,6 +417,7 @@
 
 .cronograma__fechas div {
   min-width: 0;
+}
 
 .aviso-cerrado {
   background: var(--brand-soft);
