@@ -451,5 +451,23 @@ describe('proyectos cerrados', () => {
     expect(screen.queryByText('Todavía no tenés proyectos')).toBeNull()
     expect(screen.getAllByRole('button', { name: 'Nuevo proyecto' }).length).toBeGreaterThan(0)
   })
+
+  it('Given un proyecto cerrado con rol, When se muestra su tarjeta, Then el rol y la insignia de cierre van juntos a la derecha de la cabecera', async () => {
+    abrir([p(3, 'Alfa cerrado', { fecha_cierre: '2026-11-10', rol: 'scrum_master' })])
+
+    const tarjeta = await screen.findByRole('link', { name: 'Alfa cerrado (#3)' })
+    const etiquetas = tarjeta.querySelector('.tarjeta-proyecto__etiquetas') as HTMLElement
+
+    expect([...etiquetas.children].map((e) => e.textContent)).toEqual(['Scrum Master', 'Cerrado el 10/11/2026'])
+    expect(etiquetas.parentElement?.className).toBe('tarjeta-proyecto__cabecera')
+  })
+
+  it('Given un proyecto abierto sin rol, When se muestra su tarjeta, Then no dibuja el contenedor de etiquetas', async () => {
+    abrir([ABIERTO_A])
+
+    const tarjeta = await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+
+    expect(tarjeta.querySelector('.tarjeta-proyecto__etiquetas')).toBeNull()
+  })
 })
 

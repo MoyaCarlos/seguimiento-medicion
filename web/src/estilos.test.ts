@@ -156,3 +156,20 @@ it('Given la insignia «Cerrado el …», When se estiliza, Then es una píldora
   const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
   expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
 })
+
+it('Given las etiquetas de la tarjeta de proyecto, When se estilizan, Then van a la derecha con 6px entre sí y el rol es una etiqueta gris de 12px que cumple 4,5:1', () => {
+  const etiquetas = bloque('.tarjeta-proyecto__etiquetas')
+  const rol = bloque('.tarjeta-proyecto__rol')
+  const texto = rol.match(/color:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const fondo = rol.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+  expect(etiquetas).toMatch(/margin-left:\s*auto/)
+  expect(etiquetas).toMatch(/gap:\s*6px/)
+  expect(rol).toMatch(/border-radius:\s*7px/)
+  expect(rol).toMatch(/font-size:\s*12px/)
+  const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
+  expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
+})
