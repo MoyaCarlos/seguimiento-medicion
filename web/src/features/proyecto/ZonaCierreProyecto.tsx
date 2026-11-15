@@ -4,6 +4,7 @@ import { ApiError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { fechaCorta } from '../../compartido/formato/fechas'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { cerrarProyecto, reabrirProyecto } from './api'
@@ -79,7 +80,7 @@ export function ZonaCierreProyecto({ proyectoId, rol, fechaCierre, onCambio }: P
 
       {fechaCierre !== null && (
         <>
-          <p className="zona-cierre__fecha">Proyecto cerrado el {fechaCierre}</p>
+          <p className="zona-cierre__fecha">{`Proyecto cerrado el ${fechaCorta(fechaCierre)}`}</p>
           {fase === 'enviando' && <LoadingIndicator />}
           <Button
             onClick={() => enviar(reabrirProyecto)}
