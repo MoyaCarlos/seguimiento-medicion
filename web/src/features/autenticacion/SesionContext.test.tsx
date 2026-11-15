@@ -281,6 +281,43 @@ describe('contexto de sesión', () => {
     })
   })
 
+  it('Given una sesión autenticada, When cambio mi nombre, Then se envía PUT /auth/yo y el usuario del contexto se actualiza', async () => {
+    guardarToken('token-guardado')
+    const actualizado = { id: 7, nombre: 'ana.gomez' }
+    const fetchMock = simularFetch({
+      'GET /auth/yo': () => json(USUARIO, 200),
+      'PUT /auth/yo': () => json(actualizado, 200),
+    })
+    montar('/backlog')
+    await waitFor(() => expect(estado()).toBe('autenticado'))
+
+    await act(() => sesion.cambiarNombre('ana.gomez'))
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/auth/yo',
+      expect.objectContaining({
+        method: 'PUT',
+        body: JSON.stringify({ nombre: 'ana.gomez' }),
+      }),
+    )
+    expect(sesion.usuario).toEqual(actualizado)
+  })
+
+  it('Given una sesión autenticada, When el servidor rechaza el nombre, Then la promesa se rechaza y el usuario no cambia', async () => {
+    guardarToken('token-guardado')
+    simularFetch({
+      'GET /auth/yo': () => json(USUARIO, 200),
+      'PUT /auth/yo': () => json({ mensaje: 'Ese nombre de usuario ya existe' }, 409),
+    })
+    montar('/backlog')
+    await waitFor(() => expect(estado()).toBe('autenticado'))
+
+    await expect(act(() => sesion.cambiarNombre('bruno'))).rejects.toEqual(
+      new ApiError(409, 'Ese nombre de usuario ya existe'),
+    )
+    expect(sesion.usuario).toEqual(USUARIO)
+  })
+
   it('registra el enganche del cliente al montar y lo quita al desmontar', () => {
     simularFetch({})
     const { unmount } = montar('/ingresar')
