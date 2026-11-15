@@ -200,3 +200,10 @@ it('Given el botón «Quitar», When se estiliza, Then es chico (32px, 13px de l
   expect(bloque).toMatch(/font-size:\s*13px/)
   expect(contraste(color(regla('.button--secondary.equipo-quitar'), 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
 })
+
+it('Given la confirmación de «Quitar», When se estiliza, Then baja a su propia línea y alineada a la izquierda para no aplastar el nombre (el cálculo del ancho real se mira en el navegador)', () => {
+  expect(regla('.equipo-lista li')).toMatch(/flex-wrap:\s*wrap/)
+  expect(regla('.equipo-acciones--confirmando')).toMatch(/flex-basis:\s*100%/)
+  expect(regla('.equipo-acciones .hu04-confirmacion')).toMatch(/justify-content:\s*flex-start/)
+  expect(regla('.equipo-persona')).toMatch(/flex:\s*1 1 120px/)
+})

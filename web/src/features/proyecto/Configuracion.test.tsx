@@ -629,6 +629,7 @@ describe('Configurar equipo como el prototipo', () => {
     const confirmacion = screen.getByText('¿Quitar a Jimena del equipo?').parentElement as HTMLElement
 
     expect(confirmacion.className).toBe('hu04-confirmacion')
+    expect(confirmacion.parentElement?.className).toBe('equipo-acciones equipo-acciones--confirmando')
     expect(within(confirmacion).getByRole('button', { name: 'Cancelar' })).toBeTruthy()
     expect(within(confirmacion).getByRole('button', { name: 'Sí, quitar' }).className).toBe('button button--primary equipo-quitar')
   })
@@ -638,6 +639,15 @@ describe('Configurar equipo como el prototipo', () => {
     abrir()
 
     expect((await screen.findByText('No hay usuarios registrados para agregar')).className).toBe('panel-ayuda')
+  })
+
+  it('Given que no estoy confirmando, When se muestra «Quitar», Then su contenedor no lleva la variante de confirmación', async () => {
+    responder()
+    abrir()
+
+    const quitar = await screen.findByRole('button', { name: 'Quitar a Jimena' })
+
+    expect(quitar.parentElement?.className).toBe('equipo-acciones')
   })
 })
 
