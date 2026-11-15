@@ -30,25 +30,39 @@ function abrir(historia: HistoriaDeSprint) {
   return { alCambiar }
 }
 
+async function pedir(etiqueta: 'Iniciar' | 'Completar') {
+  await userEvent.click(screen.getByRole('button', { name: etiqueta }))
+}
+
+async function confirmar(etiqueta: 'Iniciar' | 'Completar') {
+  await pedir(etiqueta)
+  await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+}
+
 afterEach(() => {
   vi.resetAllMocks()
 })
 
 describe('EstadoHistoria', () => {
-  it('US3.1: con estado Nueva ofrece "Iniciar" y llama con "En progreso"', async () => {
+  it('US3.1: con estado Nueva, «Iniciar» pide confirmación y «Confirmar» llama con «En progreso»', async () => {
     cambiarMock.mockResolvedValue(EN_PROGRESO)
     abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await pedir('Iniciar')
+
+    expect(screen.getByText('¿Iniciar la historia?')).toBeTruthy()
+    expect(cambiarMock).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     expect(cambiarMock).toHaveBeenCalledWith(12, 'En progreso')
   })
 
-  it('US3.2: con estado En progreso ofrece "Completar" y llama con "Completada"', async () => {
+  it('US3.2: con estado En progreso, «Completar» pide confirmación y «Confirmar» llama con «Completada»', async () => {
     cambiarMock.mockResolvedValue(COMPLETADA)
     abrir(EN_PROGRESO)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Completar' }))
+    await confirmar('Completar')
 
     expect(cambiarMock).toHaveBeenCalledWith(12, 'Completada')
     expect(screen.queryByRole('button', { name: 'Iniciar' })).toBeNull()
@@ -60,14 +74,16 @@ describe('EstadoHistoria', () => {
     expect(screen.queryByRole('button')).toBeNull()
   })
 
-  it('US3.4: el botón queda deshabilitado mientras la petición está en curso y no envía dos veces', async () => {
+  it('US3.4: con el pedido en curso los botones quedan deshabilitados y no se envía dos veces', async () => {
     cambiarMock.mockReturnValue(new Promise(() => {}))
     abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await pedir('Iniciar')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
-    expect((screen.getByRole('button', { name: 'Iniciar' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Confirmar' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Cancelar' }) as HTMLButtonElement).disabled).toBe(true)
     expect(cambiarMock).toHaveBeenCalledTimes(1)
   })
 
@@ -75,7 +91,7 @@ describe('EstadoHistoria', () => {
     cambiarMock.mockResolvedValue(EN_PROGRESO)
     const { alCambiar } = abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await confirmar('Iniciar')
 
     await waitFor(() => expect(alCambiar).toHaveBeenCalledWith(EN_PROGRESO))
   })
@@ -86,12 +102,13 @@ describe('EstadoHistoria', () => {
     )
     const { alCambiar } = abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await confirmar('Iniciar')
 
     expect((await screen.findByRole('alert')).textContent).toBe(
       'solo se cambia el estado de historias de un Sprint activo',
     )
     expect(alCambiar).not.toHaveBeenCalled()
+    expect(screen.queryByText('¿Iniciar la historia?')).toBeNull()
     expect((screen.getByRole('button', { name: 'Iniciar' }) as HTMLButtonElement).disabled).toBe(false)
   })
 
@@ -100,7 +117,7 @@ describe('EstadoHistoria', () => {
     cambiarMock.mockRejectedValue(new ApiError(409, mensaje))
     const { alCambiar } = abrir(EN_PROGRESO)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Completar' }))
+    await confirmar('Completar')
 
     expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
     expect(alCambiar).not.toHaveBeenCalled()
@@ -111,10 +128,10 @@ describe('EstadoHistoria', () => {
     cambiarMock.mockResolvedValueOnce(EN_PROGRESO)
     const { alCambiar } = abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await confirmar('Iniciar')
     expect(await screen.findByRole('alert')).toBeTruthy()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await confirmar('Iniciar')
 
     await waitFor(() => expect(alCambiar).toHaveBeenCalledWith(EN_PROGRESO))
     expect(screen.queryByRole('alert')).toBeNull()
@@ -125,10 +142,48 @@ describe('EstadoHistoria', () => {
     cambiarMock.mockRejectedValue(new ApiError(404, mensaje))
     const { alCambiar } = abrir(NUEVA)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await confirmar('Iniciar')
 
     expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
     expect(alCambiar).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: al pedir confirmación el foco queda en «Cancelar»', async () => {
+    abrir(NUEVA)
+
+    await pedir('Iniciar')
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancelar' }))
+  })
+
+  it('Escenario: «Cancelar» cierra la confirmación sin enviar nada', async () => {
+    abrir(NUEVA)
+
+    await pedir('Iniciar')
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(screen.queryByText('¿Iniciar la historia?')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Iniciar' })).toBeTruthy()
+    expect(cambiarMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: Escape cierra la confirmación sin enviar nada', async () => {
+    abrir(NUEVA)
+
+    await pedir('Iniciar')
+    await userEvent.keyboard('{Escape}')
+
+    expect(screen.queryByText('¿Iniciar la historia?')).toBeNull()
+    expect(cambiarMock).not.toHaveBeenCalled()
+  })
+
+  it('Escenario: un clic fuera de la confirmación no envía nada', async () => {
+    abrir(NUEVA)
+
+    await pedir('Iniciar')
+    await userEvent.click(document.body)
+
+    expect(cambiarMock).not.toHaveBeenCalled()
   })
 })
 
@@ -145,6 +200,7 @@ describe('EstadoHistoria - proyecto cerrado (cerrar y reabrir, US2)', () => {
 
     expect(boton().disabled).toBe(true)
     expect(nota()).toBe('El proyecto está cerrado')
+    expect(screen.queryByText('¿Iniciar la historia?')).toBeNull()
     expect(cambiarMock).not.toHaveBeenCalled()
     expect(alCambiar).not.toHaveBeenCalled()
   })
