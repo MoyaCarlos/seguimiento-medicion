@@ -49,6 +49,11 @@ func (r *SQLiteCredencialRepository) Registrar(ctx context.Context, u domain.Use
 
 // ObtenerPorNombreNormalizado devuelve el usuario y su hash, vacío si el
 // usuario no tiene contraseña (NULL).
+// CambiarNombre es el stub del RED de HU-17; el GREEN lo implementa.
+func (r *SQLiteCredencialRepository) CambiarNombre(ctx context.Context, id int64, nombre, nombreNormalizado string) error {
+	return nil
+}
+
 func (r *SQLiteCredencialRepository) ObtenerPorNombreNormalizado(ctx context.Context, normalizado string) (domain.User, string, error) {
 	row := r.db.QueryRowContext(ctx,
 		`SELECT id, nombre, nombre_normalizado, contrasena_hash, creado_en FROM usuarios WHERE nombre_normalizado = ?`,
