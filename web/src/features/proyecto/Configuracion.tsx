@@ -32,7 +32,7 @@ export function Configuracion() {
   const [quitandoId, setQuitandoId] = useState<number | null>(null)
   const [errorQuitar, setErrorQuitar] = useState('')
   const [sinPermisoQuitar, setSinPermisoQuitar] = useState('')
-  const { cerrado, fechaCierre, puedeGestionar, puedeEscribir } = usePermisosProyecto(Number(id))
+  const { cerrado, fechaCierre, puedeGestionar } = usePermisosProyecto(Number(id))
 
   useEffect(() => {
     let vigente = true
@@ -105,7 +105,7 @@ export function Configuracion() {
   }
 
   async function quitar(integrante: Integrante) {
-    if (!puedeEscribir) return
+    if (!puedeGestionar) return
     setErrorQuitar('')
     setSinPermisoQuitar('')
     setQuitandoId(integrante.id)
@@ -198,7 +198,13 @@ export function Configuracion() {
           {errorLista && <ErrorMessage message={errorLista} />}
           {errorQuitar && <ErrorMessage message={errorQuitar} />}
           {sinPermisoQuitar && <AvisoSinPermiso mensaje={sinPermisoQuitar} />}
-          {cerrado && <NotaCerrado id="configuracion-nota-cerrado-equipo" />}
+          {cerrado && <NotaCerrado id="configuracion-nota-quitar" />}
+          {!cerrado && !puedeGestionar && (
+            <NotaGestion
+              id="configuracion-nota-quitar"
+              texto="Solo el Scrum Master puede quitar integrantes"
+            />
+          )}
           {!cargando && !errorLista && integrantes.length === 0 && (
             <p className="hu04-intro">Todavía no hay integrantes asignados.</p>
           )}
@@ -235,14 +241,15 @@ export function Configuracion() {
                         <Button
                           type="button"
                           variant="quiet"
+                          aria-label={`Quitar a ${integrante.nombre}`}
                           onClick={() => {
                             setErrorQuitar('')
                             setSinPermisoQuitar('')
                             setConfirmandoQuitarId(integrante.id)
                           }}
-                          disabled={!puedeEscribir}
+                          disabled={!puedeGestionar}
                           aria-describedby={
-                            puedeEscribir ? undefined : 'configuracion-nota-cerrado-equipo'
+                            puedeGestionar ? undefined : 'configuracion-nota-quitar'
                           }
                         >
                           Quitar
