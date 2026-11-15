@@ -521,6 +521,14 @@ describe('criterios de aceptación de #174', () => {
     expect(screen.getByLabelText('Criterios de aceptación')).toBeTruthy()
   })
 
+  it('Given el formulario de creación, When se muestra, Then Descripción y Criterios admiten Markdown con ayuda y barra', () => {
+    abrir()
+
+    expect(screen.getAllByText(/Admite Markdown/)).toHaveLength(2)
+    expect(screen.getAllByRole('toolbar', { name: 'Formato Markdown' })).toHaveLength(2)
+    expect(screen.getAllByRole('tab', { name: 'Vista previa' })).toHaveLength(2)
+  })
+
   it('envía los criterios recortados y los muestra en la confirmación con Markdown', async () => {
     const criterios = '**Dado** un usuario, cuando ingresa, entonces accede.'
     const fetchMock = responderCreada({ criterios_aceptacion: criterios })

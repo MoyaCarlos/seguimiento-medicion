@@ -924,13 +924,14 @@ issue y entra en los Sprints.
 | #139 | Despliegue continuo en Render: un servicio con la imagen Docker, que se actualiza en cada merge a `main` | Cerrado (PR #200, mergeado el 4-nov) |
 | #144 | Botón «Cargar datos de prueba» (endpoint de demo y pantalla), para el servicio de Render, que no conserva la base | Abierto (Carlos) |
 | #148 | Navegar entre proyectos desde la interfaz (lista y selector) | Abierto (Jimena) |
-| #147 | Mostrar con Markdown la descripción y los criterios de aceptación de las historias | Abierto, tarea libre (depende de #98) |
+| #147 | Mostrar con Markdown la descripción y los criterios de aceptación de las historias | Cerrado (PR #211) |
 | #140 | Test de las rutas HTTP y del cableado de `cmd/api/main.go` | Abierto, tarea libre |
 | #141 | Eliminar `Inicio.tsx`, que ningún archivo importa | Abierto, tarea libre |
 | #168 | Rechazar Sprints con fechas fuera del plazo del proyecto (backend) | Abierto, a priorizar |
 | #169 | Mostrar las fechas del proyecto en la pantalla de Sprints y limitar los selectores | Abierto, a priorizar |
 | #173 | Regla del estado del proyecto: «Finalizado» derivado de los Sprints solo si la fecha de fin ya pasó (HU-13) | Implementado en `fix/173-estado-proyecto-fecha-de-fin` (PR #315), pendiente de merge |
-| #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, Sprint 4 (solo los criterios de aceptación; notas y «depende de» quedan para después) |
+| #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Cerrado (criterios de aceptación; notas y «depende de» quedan para después) |
+| #215 | Mejorar la presentación del Markdown del backlog: títulos más chicos, ayuda de sintaxis y barra de formato | Implementado en `feature/215-mejoras-markdown-backlog` (PR #326), Sprint 5 |
 | #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, la base en el Sprint 4 y las pantallas en el Sprint 5 |
 | #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |
 | #235 | Datos de prueba v2: 4 usuarios con contraseña `demo1234` (un Scrum Master), equipo, historias con criterios, Sprints, horas, votaciones y defectos; tras cada deploy se recargan con `POST /demo/datos` (sin sesión) | Implementado en `feature/235-datos-de-prueba-v2`, pendiente de PR, Sprint 4 |

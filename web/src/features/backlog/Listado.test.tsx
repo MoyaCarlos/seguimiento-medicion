@@ -218,6 +218,17 @@ describe('listado del Product Backlog (US1)', () => {
 })
 
 describe('edición de una historia (US2)', () => {
+  it('Given el formulario de edición, When se muestra, Then Descripción y Criterios admiten Markdown con ayuda y barra', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+
+    expect(screen.getAllByText(/Admite Markdown/)).toHaveLength(2)
+    expect(screen.getAllByRole('toolbar', { name: 'Formato Markdown' })).toHaveLength(2)
+    expect(screen.getAllByRole('tab', { name: 'Vista previa' })).toHaveLength(2)
+  })
+
   it('US2.1: al guardar envía los cuatro campos y actualiza el listado conservando id y estado', async () => {
     const actualizada: Historia = {
       ...MUST,
