@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useUsuarioActual } from './useUsuarioActual'
 
@@ -27,6 +27,7 @@ describe('useUsuarioActual', () => {
 
     const { result } = renderHook(() => useUsuarioActual())
     await waitFor(() => expect(fetchSimulado).toHaveBeenCalled())
+    await act(() => new Promise((resolver) => setTimeout(resolver, 0)))
 
     expect(result.current).toBeNull()
   })
