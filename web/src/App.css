@@ -619,6 +619,24 @@ select {
   justify-content: space-between;
 }
 
+.tarjeta-proyecto__etiquetas {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.tarjeta-proyecto__rol {
+  background: #eef2f6;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 9px;
+}
+
 .tarjeta-proyecto__nombre {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

@@ -28,9 +28,13 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
     >
       <span className="tarjeta-proyecto__cabecera">
         <AvatarProyecto id={proyecto.id} nombre={proyecto.nombre} />
-        {proyecto.rol && <span className="tarjeta-proyecto__rol">{ETIQUETA_ROL[proyecto.rol]}</span>}
-        {proyecto.fecha_cierre && (
-          <span className="tarjeta-proyecto__cierre">{`Cerrado el ${fechaCorta(proyecto.fecha_cierre)}`}</span>
+        {(proyecto.rol || proyecto.fecha_cierre) && (
+          <span className="tarjeta-proyecto__etiquetas">
+            {proyecto.rol && <span className="tarjeta-proyecto__rol">{ETIQUETA_ROL[proyecto.rol]}</span>}
+            {proyecto.fecha_cierre && (
+              <span className="tarjeta-proyecto__cierre">{`Cerrado el ${fechaCorta(proyecto.fecha_cierre)}`}</span>
+            )}
+          </span>
         )}
       </span>
       <span className="tarjeta-proyecto__nombre" title={proyecto.nombre}>{proyecto.nombre}</span>
