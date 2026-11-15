@@ -195,7 +195,7 @@ describe('registro de rutas', () => {
   it('la pantalla de una feature sigue mostrándose en sus sub-rutas', async () => {
     abrir('/projects/1/proyecto/settings')
 
-    expect(await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Configurar equipo' }, { timeout: 5000 })).toBeTruthy()
   })
 
   it('la pantalla principal lista los proyectos y «Nuevo proyecto» abre la ventana de creación', async () => {

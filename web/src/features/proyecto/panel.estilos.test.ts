@@ -172,3 +172,31 @@ it('Given la descripción del formulario de edición, When se estiliza, Then es 
   expect(bloque).toMatch(/border-radius:\s*10px/)
   expect(bloque).toMatch(/padding:\s*10px 12px/)
 })
+
+it('Given la rejilla de Configurar equipo, When se estiliza, Then son columnas de al menos 300px con 20px de hueco', () => {
+  const bloque = regla('.equipo-rejilla')
+
+  expect(bloque).toMatch(/grid-template-columns:\s*repeat\(auto-fit, minmax\(300px, 1fr\)\)/)
+  expect(bloque).toMatch(/gap:\s*20px/)
+  expect(bloque).toMatch(/align-items:\s*start/)
+})
+
+it('Given el título de una tarjeta de Equipo, When se estiliza, Then es de 17px', () => {
+  expect(regla('.equipo-titulo')).toMatch(/font-size:\s*17px/)
+})
+
+it('Given una persona del equipo, When se estiliza, Then el nombre es de 14px, el rol gris de 12,5px con contraste 4,5:1 y la fila las separa 12px', () => {
+  expect(regla('.equipo-persona')).toMatch(/font-size:\s*14px/)
+  const rol = regla('.equipo-persona small')
+  expect(rol).toMatch(/font-size:\s*12\.5px/)
+  expect(contraste(color(rol, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+  expect(regla('.equipo-lista li')).toMatch(/gap:\s*12px/)
+})
+
+it('Given el botón «Quitar», When se estiliza, Then es chico (32px, 13px de letra) y con contorno de la marca con contraste 4,5:1', () => {
+  const bloque = regla('.equipo-quitar')
+
+  expect(bloque).toMatch(/min-height:\s*32px/)
+  expect(bloque).toMatch(/font-size:\s*13px/)
+  expect(contraste(color(regla('.button--secondary.equipo-quitar'), 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
