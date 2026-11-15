@@ -58,3 +58,10 @@ it('Given «Nueva ronda», When se estiliza, Then va debajo de su texto, sin lí
   expect(bloque).toMatch(/justify-items:\s*start/)
   expect(bloque).toMatch(/display:\s*grid/)
 })
+
+it('Given los párrafos del consenso, When se estilizan, Then usan el color de texto principal, como el prototipo, y cumplen 4,5:1', () => {
+  const bloque = regla('.votacion-consenso p')
+
+  expect(bloque).toMatch(/color:\s*#334155/)
+  expect(contraste('#334155', '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
