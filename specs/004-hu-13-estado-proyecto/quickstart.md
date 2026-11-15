@@ -23,7 +23,8 @@ go test ./internal/domain/... ./internal/service/... -run Estado -v
 | Sprints del proyecto | Fecha actual vs proyecto | Estado esperado |
 |---|---|---|
 | Al menos uno `Activo` | cualquiera (aunque `FechaFin` vencida) | `En curso` |
-| Ninguno `Activo`, todos `Finalizado` | cualquiera | `Finalizado` |
+| Ninguno `Activo`, todos `Finalizado` | `ahora > FechaFin` | `Finalizado` |
+| Ninguno `Activo`, todos `Finalizado` | `FechaFin` futura, igual a hoy o sin cargar | `En curso` |
 | Ninguno `Activo`, al menos un `Finalizado` y al menos un `Pendiente` | cualquiera | `En curso` |
 | Sin iniciar (ninguno Activo/Finalizado) | `ahora < FechaInicio` | `Planificado` |
 | Sin iniciar | `FechaInicio ≤ ahora ≤ FechaFin` | `En curso` |

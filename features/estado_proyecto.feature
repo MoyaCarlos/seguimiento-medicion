@@ -16,8 +16,20 @@ Característica: Consulta del estado general del proyecto
     Cuando consulto el estado del proyecto
     Entonces el estado del proyecto es "En curso"
 
-  Escenario: Proyecto con todos sus Sprints Finalizados muestra "Finalizado"
+  Escenario: Proyecto con todos sus Sprints Finalizados y fecha de fin futura muestra "En curso"
+    Dado que el proyecto tiene fecha de inicio y fecha de fin cargadas
+    Y que el proyecto tiene todos sus Sprints en estado "Finalizado"
+    Cuando consulto el estado del proyecto
+    Entonces el estado del proyecto es "En curso"
+
+  Escenario: Proyecto con todos sus Sprints Finalizados y sin fecha de fin muestra "En curso"
     Dado que el proyecto tiene todos sus Sprints en estado "Finalizado"
+    Cuando consulto el estado del proyecto
+    Entonces el estado del proyecto es "En curso"
+
+  Escenario: Proyecto con todos sus Sprints Finalizados y fecha de fin vencida muestra "Finalizado"
+    Dado que el proyecto tiene la fecha de fin vencida
+    Y que el proyecto tiene todos sus Sprints en estado "Finalizado"
     Cuando consulto el estado del proyecto
     Entonces el estado del proyecto es "Finalizado"
 
@@ -55,8 +67,16 @@ Característica: Consulta del estado general del proyecto
     Cuando inicio un Sprint del proyecto y consulto su estado nuevamente
     Entonces el estado del proyecto es "En curso"
 
+  Escenario: Cerrar el último Sprint con fecha de fin futura deja el proyecto "En curso"
+    Dado que el proyecto tiene fecha de inicio y fecha de fin cargadas
+    Y que el proyecto cuenta con un Sprint en estado "Activo"
+    Y que consulté el estado del proyecto y era "En curso"
+    Cuando cierro su último Sprint y consulto su estado nuevamente
+    Entonces el estado del proyecto es "En curso"
+
   Escenario: El estado se actualiza al cerrar el último Sprint sin recálculo manual
-    Dado que el proyecto cuenta con un Sprint en estado "Activo"
+    Dado que el proyecto tiene la fecha de fin vencida
+    Y que el proyecto cuenta con un Sprint en estado "Activo"
     Y que consulté el estado del proyecto y era "En curso"
     Cuando cierro su último Sprint y consulto su estado nuevamente
     Entonces el estado del proyecto es "Finalizado"
