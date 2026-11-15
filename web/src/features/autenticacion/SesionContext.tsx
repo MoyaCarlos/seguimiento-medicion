@@ -94,7 +94,9 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       usuario,
       ingresar: async (nombre, contrasena) => iniciar(await api.ingresar(nombre, contrasena)),
       registrar: async (nombre, contrasena) => iniciar(await api.registrar(nombre, contrasena)),
-      cambiarNombre: async () => {},
+      cambiarNombre: async (nombre) => {
+        setUsuario(await api.cambiarNombre(nombre))
+      },
       reintentar: async () => {
         setEstado('cargando')
         await consultarSesion.current(() => true)
