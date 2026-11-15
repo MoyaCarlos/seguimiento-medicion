@@ -4,6 +4,7 @@ export type RolEnProyecto = 'scrum_master' | 'product_builder'
 
 export type ProyectoResumen = {
   rol?: RolEnProyecto
+  fecha_cierre?: string | null
   id: number
   nombre: string
   descripcion: string

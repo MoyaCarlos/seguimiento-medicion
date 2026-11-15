@@ -5,7 +5,7 @@ import { Button } from '../componentes/Button'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { Icono } from '../componentes/Icono'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
-import { periodoCorto } from '../formato/fechas'
+import { fechaCorta, periodoCorto } from '../formato/fechas'
 import type { ProyectoResumen, RolEnProyecto } from './api'
 import { filtrarProyectos } from './busqueda'
 import { etiquetaProyecto } from './ruta'
@@ -29,6 +29,9 @@ function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
       <span className="tarjeta-proyecto__cabecera">
         <AvatarProyecto id={proyecto.id} nombre={proyecto.nombre} />
         {proyecto.rol && <span className="tarjeta-proyecto__rol">{ETIQUETA_ROL[proyecto.rol]}</span>}
+        {proyecto.fecha_cierre && (
+          <span className="tarjeta-proyecto__cierre">{`Cerrado el ${fechaCorta(proyecto.fecha_cierre)}`}</span>
+        )}
       </span>
       <span className="tarjeta-proyecto__nombre" title={proyecto.nombre}>{proyecto.nombre}</span>
       <span id={idDetalle} className="tarjeta-proyecto__detalle">
@@ -53,6 +56,9 @@ export function ListaProyectos() {
   const total = proyectos.estado === 'listo' ? proyectos.proyectos : []
   const visibles = [...filtrarProyectos(total, busqueda)].sort((a, b) => b.id - a.id)
   const hayFiltro = busqueda.trim() !== ''
+  const abiertos = visibles.filter((proyecto) => !proyecto.fecha_cierre)
+  const cerrados = visibles.filter((proyecto) => proyecto.fecha_cierre)
+  const mostrarAbiertos = abiertos.length > 0 || (!hayFiltro && total.length > 0)
   const irANuevo = () => navegar('/projects/new')
 
   return (
@@ -94,9 +100,9 @@ export function ListaProyectos() {
       {total.length > 0 && visibles.length === 0 && (
         <div className="lista-proyectos__vacio">No hay proyectos que coincidan con la búsqueda.</div>
       )}
-      {visibles.length > 0 && (
+      {mostrarAbiertos && (
         <ul className="lista-proyectos__tarjetas">
-          {visibles.map((proyecto) => (
+          {abiertos.map((proyecto) => (
             <li key={proyecto.id}>
               <TarjetaProyecto proyecto={proyecto} />
             </li>
@@ -110,6 +116,18 @@ export function ListaProyectos() {
             </li>
           )}
         </ul>
+      )}
+      {cerrados.length > 0 && (
+        <section className="lista-proyectos__cerrados" aria-labelledby="proyectos-cerrados-titulo">
+          <h2 id="proyectos-cerrados-titulo">Proyectos cerrados</h2>
+          <ul className="lista-proyectos__tarjetas">
+            {cerrados.map((proyecto) => (
+              <li key={proyecto.id}>
+                <TarjetaProyecto proyecto={proyecto} />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </section>
   )

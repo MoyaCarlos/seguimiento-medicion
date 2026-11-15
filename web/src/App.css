@@ -494,6 +494,31 @@ select {
   min-width: 0;
 }
 
+.lista-proyectos__cerrados {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.lista-proyectos__cerrados h2 {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.tarjeta-proyecto__cierre {
+  background: #eef2f6;
+  border-radius: 999px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
 .lista-proyectos__vacio {
   background: var(--surface);
   border: 1px dashed var(--line-strong);
