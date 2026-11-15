@@ -25,3 +25,6 @@ Thumbs.db
 # Informes locales de revisión (no se commitean)
 docs/reviews/
 INFORME-*.md
+
+# Dependencias y cachés de herramientas (también las que cree un Vitest corrido desde la raíz)
+node_modules/
