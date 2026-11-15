@@ -22,8 +22,9 @@ type ProductBacklogRepository interface {
 // HistoriaRepository es el puerto que usa la edición de una historia.
 // ObtenerPorID devuelve domain.ErrHistoriaNoEncontrada si la historia no existe.
 // ActualizarSiEstimacionSigueSiendo escribe solo si la estimación actual sigue
-// siendo la que leyó el formulario; si no, devuelve
-// domain.ErrEstimacionDesactualizada (#248).
+// siendo la que leyó el formulario (#248) y D2b se cumple en el mismo UPDATE
+// (#249). Si no afecta filas devuelve domain.ErrEstimacionDesactualizada o
+// domain.ErrEdicionDesactualizada según cuál de las dos condiciones haya cambiado.
 type HistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
 	ActualizarSiEstimacionSigueSiendo(ctx context.Context, item domain.BacklogItem, estimacionLeida *int) error
@@ -31,11 +32,13 @@ type HistoriaRepository interface {
 
 // EstimacionHistoriaRepository es el puerto que usa el registro de la estimación
 // acordada. Separado de HistoriaRepository (ISP): escribe solo los Story Points,
-// así no pisa una edición simultánea. GuardarEstimacion devuelve
-// domain.ErrHistoriaNoEncontrada si no afectó ninguna fila.
+// así no pisa una edición simultánea. GuardarEstimacion aplica en el mismo
+// UPDATE la regla D2b y la ronda revelada; si no afecta filas devuelve
+// domain.ErrRegistroEstimacionDesactualizado (#249) o
+// domain.ErrHistoriaNoEncontrada si la historia no existe.
 type EstimacionHistoriaRepository interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
-	GuardarEstimacion(ctx context.Context, id int64, sp int) error
+	GuardarEstimacion(ctx context.Context, id int64, sp int, rondaID int64) error
 }
 
 // AsignacionHistoriaRepository es el puerto que usa la asignación de una

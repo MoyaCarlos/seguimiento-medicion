@@ -65,6 +65,11 @@ Después de `ConDatosEditados`, si `SprintID != nil` el service carga el Sprint:
 | `Activo` / `Finalizado` | `v` | `v` (igual) | se guarda (no cambia) |
 | `Activo` / `Finalizado` | `v` | otro valor o `nil` | `domain.ErrEstimacionCongelada` (400, `campo: estimacion_sp`, "los Story Points ya cargados no se pueden cambiar en un Sprint Activo o Finalizado"); no se llama a `Actualizar` |
 
+La misma regla se evalúa otra vez dentro del `UPDATE` de `Actualizar` (#249): si entre la
+validación del service y la escritura el Sprint pasó a `Activo` o `Finalizado`, y la estimación
+cambia, el `UPDATE` no afecta filas y devuelve `domain.ErrEdicionDesactualizada` (409). Reenviar
+la misma estimación no se bloquea.
+
 ## Vista: Product Backlog (no persistida)
 
 - **Origen**: historias con `proyecto_id = ?` y `sprint_id IS NULL`, cualquiera sea su estado.
@@ -81,7 +86,8 @@ Después de `ConDatosEditados`, si `SprintID != nil` el service carga el Sprint:
 | `domain.ErrHistoriaNoEncontrada` (nuevo) | edición de historia inexistente | 404 |
 | `domain.ValidationError` | edición inválida | 400 con `campo` |
 | `domain.ErrEstimacionCongelada` (nuevo, `ValidationError`) | cambio de SP ya cargados en Sprint Activo/Finalizado (D2b) | 400 con `campo: estimacion_sp` |
-| `domain.ErrEstimacionDesactualizada` (nuevo) | la estimación cambió desde que se leyó el formulario (#248, D18) | 409 con `campo: estimacion_sp` |
+| `domain.ErrEstimacionDesactualizada` (nuevo, #248) | la estimación cambió desde que se leyó el formulario (D18) | 409 con `campo: estimacion_sp` |
+| `domain.ErrEdicionDesactualizada` (nuevo, #249) | el Sprint cambió y D2b congela la estimación entre la validación y el `UPDATE` (D19) | 409 con `campo: estimacion_sp` |
 
 ## Puertos (internal/repository)
 
@@ -92,7 +98,9 @@ ProductBacklogRepository
 HistoriaRepository
   ObtenerPorID(ctx, id int64) (domain.BacklogItem, error)                              // ErrHistoriaNoEncontrada
   ActualizarSiEstimacionSigueSiendo(ctx, item domain.BacklogItem, estimacionLeida *int) error
-      // UPDATE ... WHERE id = ? AND estimacion_sp IS ?; 0 filas -> ErrEstimacionDesactualizada
+      // UPDATE ... WHERE id = ? AND estimacion_sp IS ? AND D2b
+      // 0 filas -> ErrHistoriaNoEncontrada (404), ErrEstimacionDesactualizada (estimación leída vieja)
+      //            o ErrEdicionDesactualizada (D2b)
 ```
 
 `EditarHistoria` usa además el puerto existente `SprintRepository.ObtenerPorID` para D2b.

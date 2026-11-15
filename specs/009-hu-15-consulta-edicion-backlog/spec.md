@@ -86,6 +86,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHERE** la historia no tiene Sprint o su Sprint está `Pendiente`, la regla anterior **shall** ser la única protección de la estimación: D2b no la frena.
 - **WHEN** la estimación actual coincide con la leída y la nueva estimación es válida (o `null`), **THEN** el sistema **shall** guardar la edición completa y escribir la nueva estimación.
 - **IF** la edición llega sin `estimacion_sp_leida`, **THEN** el sistema **shall** responder 400 porque el campo es obligatorio.
+- **IF** entre la lectura de la historia y la escritura de la edición el Sprint se inicia o se finaliza, y eso congela la estimación, **THEN** el sistema **shall** rechazar la edición con 409, sin modificar ningún campo, e informar que hay que recargar (#249, D19). La condición de D2b se evalúa en el mismo `UPDATE`.
 - **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido para título, descripción y criterios, y **shall** rechazar con 409 si la estimación cambió (sin versionado de toda la fila, mismo criterio que HU-04 para el resto).
 
 ## Requirements *(mandatory)*
@@ -108,6 +109,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-014**: Las historias creadas antes de esta funcionalidad MUST aparecer en el listado con los criterios de aceptación vacíos.
 - **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse, salvo con un Sprint `Finalizado`, donde MUST rechazarse (decisión D2b del equipo, spec 032).
 - **FR-016**: La edición MUST recibir la estimación que leyó el formulario (`estimacion_sp_leida`, obligatoria como clave) y MUST rechazar con 409 y sin modificar nada cuando no coincida con la estimación actual de la historia. El repositorio MUST aplicar la condición en el mismo `UPDATE` (`estimacion_sp IS ?`) para cubrir la carrera con HU-14 (issue #248, D18).
+- **FR-017**: La edición MUST evaluar D2b en el mismo `UPDATE` que escribe los campos editables. Si el Sprint cambió a un estado que congela la estimación entre la validación y la escritura, el sistema MUST responder 409 y MUST NOT modificar la historia (issue #249, D19).
 
 ### Key Entities *(include if feature involves data)*
 
