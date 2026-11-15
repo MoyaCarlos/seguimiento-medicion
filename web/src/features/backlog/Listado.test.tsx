@@ -873,8 +873,8 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
   })
 
-  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al guardar la edición se muestra tal cual', async () => {
-    simularConProyecto(proyecto(null), conHistorias(MUST), () =>
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al guardar la edición se muestra tal cual y no recarga la historia', async () => {
+    const pantalla = simularConProyecto(proyecto(null), conHistorias(MUST), () =>
       respuesta(409, { mensaje: 'El proyecto está cerrado' }),
     )
     abrir()
@@ -884,6 +884,13 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     await userEvent.click(botonGuardar())
 
     expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+    expect(
+      pantalla.mock.calls.filter(
+        ([ruta, opciones]) =>
+          ruta === `/backlog/${MUST.id}` &&
+          ((opciones as RequestInit | undefined)?.method ?? 'GET') === 'GET',
+      ),
+    ).toHaveLength(0)
   })
 
   it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al asignar a un Sprint se muestra tal cual', async () => {
