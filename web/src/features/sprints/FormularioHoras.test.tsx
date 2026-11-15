@@ -334,3 +334,31 @@ describe('FormularioHoras: la sesión es quien registra (HU-21 Escenario 7)', ()
     )
   })
 })
+
+describe('FormularioHoras - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const nota = () => document.getElementById(guardar().getAttribute('aria-describedby') ?? '')?.textContent
+
+  it('Escenario: proyecto cerrado: con puedeEscribir en false «Guardar horas» queda deshabilitado con la nota «El proyecto está cerrado» y no envía', async () => {
+    const alRegistrar = vi.fn()
+    render(<FormularioHoras historiaId={12} alRegistrar={alRegistrar} puedeEscribir={false} />)
+    const user = await completar()
+
+    await user.click(guardar())
+    await user.type(horas(), '{Enter}')
+
+    expect(guardar().disabled).toBe(true)
+    expect(nota()).toBe('El proyecto está cerrado')
+    expect(imputarMock).not.toHaveBeenCalled()
+    expect(alRegistrar).not.toHaveBeenCalled()
+    expect(screen.getByText('Ej.: 1,5 o 1:30 (horas:minutos)')).toBeTruthy()
+    expect(horas().getAttribute('inputmode')).toBe('text')
+  })
+
+  it('Escenario: proyecto abierto: con el valor por defecto «Guardar horas» está habilitado y sin nota', () => {
+    abrir()
+
+    expect(guardar().disabled).toBe(false)
+    expect(guardar().hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+})

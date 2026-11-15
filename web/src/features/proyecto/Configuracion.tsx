@@ -6,8 +6,10 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { ApiError } from '../../compartido/api/client'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
+import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
-import { useEsScrumMaster } from '../../compartido/permisos/useEsScrumMaster'
+import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
 import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes, listarUsuarios } from './api'
 import type { Integrante, UsuarioRegistrado } from './api'
 import { CampoSelect } from './Campos'
@@ -26,7 +28,7 @@ export function Configuracion() {
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [sinPermiso, setSinPermiso] = useState('')
-  const puedeGestionar = useEsScrumMaster(Number(id))
+  const { cerrado, fechaCierre, puedeGestionar } = usePermisosProyecto(Number(id))
 
   useEffect(() => {
     let vigente = true
@@ -75,6 +77,8 @@ export function Configuracion() {
     setErrorGeneral('')
     setSinPermiso('')
 
+    if (!puedeGestionar) return
+
     if (!nombre) {
       setErrorNombre('Elegí un usuario de la lista')
       return
@@ -110,6 +114,8 @@ export function Configuracion() {
           Volver al panel
         </Link>
       </div>
+
+      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
 
       <div className="hu04-columnas">
         <article className="hu04-tarjeta">
@@ -151,7 +157,8 @@ export function Configuracion() {
             >
               Asignar integrante
             </Button>
-            {!puedeGestionar && (
+            {cerrado && <NotaCerrado id="configuracion-nota-agregar" />}
+            {!cerrado && !puedeGestionar && (
               <NotaGestion
                 id="configuracion-nota-agregar"
                 texto="Solo el Scrum Master puede agregar integrantes"

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -195,5 +195,167 @@ describe('configuración del equipo - rol (HU-21)', () => {
     const boton = screen.getByRole('button', { name: 'Asignar integrante' })
     expect(boton.hasAttribute('disabled')).toBe(false)
     expect(boton.hasAttribute('aria-describedby')).toBe(false)
+  })
+})
+
+describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)', () => {
+  const NOTA_CERRADO = 'El proyecto está cerrado'
+  const NOTA_HU21 = 'Solo el Scrum Master puede agregar integrantes'
+  const usuarios = [
+    { id: 1, nombre: 'Ana' },
+    { id: 2, nombre: 'Bruno' },
+  ]
+
+  type Proyecto = { status: number; cuerpo: unknown } | 'pendiente'
+
+  const proyectoCon = (rol: string, fechaCierre: string | null): Proyecto => ({
+    status: 200,
+    cuerpo: { id: 3, rol, fecha_cierre: fechaCierre },
+  })
+
+  function responder(proyecto: Proyecto, alta?: Response) {
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') {
+        return Promise.resolve(alta ?? new Response(JSON.stringify({}), { status: 201 }))
+      }
+      if (url === '/projects/3') {
+        if (proyecto === 'pendiente') return new Promise<Response>(() => {})
+        return Promise.resolve(
+          new Response(JSON.stringify(proyecto.cuerpo), { status: proyecto.status }),
+        )
+      }
+      if (url === '/users') return Promise.resolve(new Response(JSON.stringify(usuarios)))
+      return Promise.resolve(new Response(JSON.stringify(integrantes)))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  function llamadasAlProyecto(fetchMock: ReturnType<typeof responder>) {
+    return fetchMock.mock.calls.filter(
+      ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',
+    )
+  }
+
+  function descripcionDe(elemento: HTMLElement) {
+    const id = elemento.getAttribute('aria-describedby')
+    return id ? document.getElementById(id)?.textContent : undefined
+  }
+
+  it('Escenario: proyecto cerrado: muestra el aviso y la lista de integrantes se sigue viendo', async () => {
+    responder(proyectoCon('scrum_master', '2026-11-10'))
+    abrir()
+
+    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Ana')).toBeTruthy()
+    expect(screen.getByText('Ana').closest('li')?.textContent).toContain('Scrum Master')
+  })
+
+  it('Escenario: proyecto cerrado: «Asignar integrante» queda deshabilitado con una sola nota «El proyecto está cerrado» y no envía', async () => {
+    const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const selector = await screen.findByLabelText('Usuario')
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(true)
+    expect(descripcionDe(boton)).toBe(NOTA_CERRADO)
+
+    const formulario = screen.getByRole('form', { name: 'Asignar integrante' })
+    expect(within(formulario).getAllByText(NOTA_CERRADO)).toHaveLength(1)
+
+    fireEvent.change(selector, { target: { value: 'Bruno' } })
+    fireEvent.submit(formulario)
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false)
+  })
+
+  it('Escenario: proyecto cerrado y Product Builder: la nota de cierre gana y no aparece la de HU-21', async () => {
+    responder(proyectoCon('product_builder', '2026-11-10'))
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(true)
+    expect(descripcionDe(boton)).toBe(NOTA_CERRADO)
+    const formulario = screen.getByRole('form', { name: 'Asignar integrante' })
+    expect(within(formulario).getAllByText(NOTA_CERRADO)).toHaveLength(1)
+    expect(screen.queryByText(NOTA_HU21)).toBeNull()
+  })
+
+  it('Escenario: proyecto abierto y Scrum Master: «Asignar integrante» habilitado, sin aviso y sin nota', async () => {
+    const fetchMock = responder(proyectoCon('scrum_master', null))
+    abrir()
+
+    await screen.findByText('Ana')
+    await waitFor(() => expect(llamadasAlProyecto(fetchMock)).toHaveLength(1))
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: proyecto abierto y Product Builder: se mantiene la nota de HU-21 y no la de cierre', async () => {
+    responder(proyectoCon('product_builder', null))
+    abrir()
+
+    await screen.findByText('Ana')
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    await waitFor(() => expect(boton.disabled).toBe(true))
+    expect(descripcionDe(boton)).toBe(NOTA_HU21)
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: cierre desconocido (cargando): todo habilitado, sin aviso y sin nota', async () => {
+    responder('pendiente')
+    abrir()
+
+    await screen.findByText('Ana')
+    await screen.findByLabelText('Usuario')
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(screen.queryByText(NOTA_HU21)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: cierre desconocido (error): todo habilitado, sin aviso y sin nota', async () => {
+    const fetchMock = responder({ status: 500, cuerpo: { mensaje: 'falla' } })
+    abrir()
+
+    await screen.findByText('Ana')
+    await waitFor(() => expect(llamadasAlProyecto(fetchMock)).toHaveLength(1))
+    const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
+    expect(boton.disabled).toBe(false)
+    expect(boton.hasAttribute('aria-describedby')).toBe(false)
+    expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
+    expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+
+  it('Escenario: 409 «El proyecto está cerrado» al asignar: se muestra el mensaje tal cual y una sola vez', async () => {
+    responder(
+      proyectoCon('scrum_master', null),
+      new Response(JSON.stringify({ mensaje: NOTA_CERRADO }), { status: 409 }),
+    )
+    abrir()
+
+    await userEvent.selectOptions(await screen.findByLabelText('Usuario'), 'Bruno')
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
+
+    expect(await screen.findByText(NOTA_CERRADO)).toBeTruthy()
+    expect(screen.getAllByText(NOTA_CERRADO)).toHaveLength(1)
+  })
+
+  it('Escenario: una sola llamada a GET /projects/{id} por pantalla', async () => {
+    const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
+    abrir()
+
+    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Ana')
+    await screen.findByLabelText('Usuario')
+
+    expect(llamadasAlProyecto(fetchMock)).toHaveLength(1)
   })
 })

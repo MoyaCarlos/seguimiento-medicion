@@ -4,6 +4,7 @@ import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
+import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { editarHistoria, obtenerHistoria } from './api'
 import {
   armarCuerpoEdicion,
@@ -22,6 +23,7 @@ type Props = {
   onGuardada: (historia: Historia) => void
   onEstimacionActualizada: (estimacion: number | null) => void
   onCancelar: () => void
+  puedeEscribir?: boolean
 }
 
 export function Edicion({
@@ -29,6 +31,7 @@ export function Edicion({
   onGuardada,
   onEstimacionActualizada,
   onCancelar,
+  puedeEscribir = true,
 }: Props) {
   const [formulario, setFormulario] = useState<FormularioEdicion>(() => formularioDe(historia))
   const [estimacionLeida, setEstimacionLeida] = useState(historia.estimacion_sp)
@@ -57,7 +60,7 @@ export function Edicion({
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (enviando) return
+    if (enviando || !puedeEscribir) return
 
     setErrorGeneral('')
     const validacion = validarEdicion(formulario)
@@ -174,10 +177,15 @@ export function Edicion({
         <Button type="button" variant="secondary" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={enviando}>
+        <Button
+          type="submit"
+          disabled={enviando || !puedeEscribir}
+          aria-describedby={puedeEscribir ? undefined : id('nota-cerrado')}
+        >
           Guardar cambios
         </Button>
       </div>
+      {!puedeEscribir && <NotaCerrado id={id('nota-cerrado')} />}
     </form>
   )
 }

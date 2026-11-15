@@ -3,6 +3,16 @@
   gap: 1rem;
 }
 
+/* Mismo aspecto que el aviso del Panel: features/proyecto/estilos.css no se carga en esta ruta. */
+.sprints-pantalla .aviso-cerrado {
+  background: var(--brand-soft);
+  border: 1px solid var(--lilac);
+  border-radius: 0.75rem;
+  color: var(--lilac-dark);
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+}
+
 .sprints-secciones {
   display: grid;
   gap: 1rem;
