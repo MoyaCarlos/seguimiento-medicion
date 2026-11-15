@@ -4,7 +4,8 @@
 # - Normal: listado del Product Backlog; edición válida.
 # - Alternativo: backlog vacío; carga inicial de Story Points en un Sprint "Activo" (con Sprint "Finalizado" se rechaza, ver calculo_metricas.feature).
 # - Límite: Story Points fuera de la escala Fibonacci; Story Points ya cargados en un Sprint "Activo" o "Finalizado".
-# - Error: proyecto inexistente; título en blanco; historia inexistente (el 404 domina sobre la validación).
+# - Error: proyecto inexistente; título en blanco; historia inexistente (el 404 domina sobre la validación);
+#   estimación desactualizada (409) si otra persona la cambió mientras el formulario estaba abierto (#248).
 
 @HU-15
 Característica: Consulta y edición del Product Backlog
@@ -64,6 +65,20 @@ Característica: Consulta y edición del Product Backlog
   Escenario: Edición de una historia inexistente
     Cuando intento editar la historia con identificador 999, que no existe, dejando su título en blanco
     Entonces la edición se rechaza con error "historia no encontrada"
+
+  Escenario: Edición con la estimación desactualizada de una historia sin estimar
+    Dado que existe una historia en el Product Backlog del proyecto
+    Y que mientras tengo el formulario abierto otra persona cambia su estimación a 8 Story Points
+    Cuando guardo la edición sin cambiar la estimación
+    Entonces la edición se rechaza por estimación desactualizada
+    Y la historia conserva sus Story Points en 8
+
+  Escenario: Edición con una estimación vieja
+    Dado que existe una historia en el Product Backlog del proyecto con 3 Story Points
+    Y que mientras tengo el formulario abierto otra persona cambia su estimación a 8 Story Points
+    Cuando cambio sus Story Points a 5 y guardo
+    Entonces la edición se rechaza por estimación desactualizada
+    Y la historia conserva sus Story Points en 8
 
   Esquema del escenario: No se cambian los Story Points ya cargados en un Sprint "<estado>"
     Dado que existe una historia con 3 Story Points asignada a un Sprint en estado "<estado>"

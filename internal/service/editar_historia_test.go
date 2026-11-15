@@ -22,6 +22,7 @@ func edicionValida(id int64) EditarHistoriaInput {
 	return EditarHistoriaInput{UsuarioID: actorDePrueba,
 		ID: id, Titulo: "Nuevo", Descripcion: "Descripción nueva",
 		CriteriosAceptacion: strPtr("Dado, cuando, entonces"), EstimacionSP: intPtr(5),
+		EstimacionLeida: nil,
 	}
 }
 
@@ -128,6 +129,7 @@ func TestEditarHistoria_StoryPointsSegunEstadoDelSprint(t *testing.T) {
 			repo.historias[historia.ID] = historia
 			input := edicionValida(historia.ID)
 			input.EstimacionSP = tc.spNuevo
+			input.EstimacionLeida = tc.spActual
 
 			editada, err := servicio.Ejecutar(context.Background(), input)
 
@@ -147,5 +149,58 @@ func TestEditarHistoria_StoryPointsSegunEstadoDelSprint(t *testing.T) {
 				t.Errorf("se esperaba guardar la edición completa: %+v", editada)
 			}
 		})
+	}
+}
+
+// Issue #248: si la estimación cambió después de que el formulario la leyó, la
+// edición no puede pisarla con el valor viejo.
+func TestEditarHistoria_EstimacionDesactualizada(t *testing.T) {
+	pendiente := domain.SprintPendiente
+	casos := []struct {
+		nombre       string
+		estadoSprint *domain.EstadoSprint
+		actual       *int
+		leida        *int
+		nueva        *int
+	}{
+		{"sin Sprint, el formulario leyó sin estimar y otra persona cargó 8", nil, intPtr(8), nil, nil},
+		{"sin Sprint, el formulario leyó 3 y otra persona cargó 8", nil, intPtr(8), intPtr(3), intPtr(5)},
+		{"Sprint Pendiente, el formulario leyó 3 y otra persona cargó 8", &pendiente, intPtr(8), intPtr(3), intPtr(5)},
+	}
+
+	for _, tc := range casos {
+		t.Run(tc.nombre, func(t *testing.T) {
+			historia := historiaDelBacklog()
+			historia.EstimacionSP = tc.actual
+			servicio, repo, sprints := nuevoEditarHistoria()
+			if tc.estadoSprint != nil {
+				sprint, _ := sprints.Guardar(context.Background(), domain.Sprint{ProyectoID: 1, Estado: *tc.estadoSprint})
+				historia.SprintID = &sprint.ID
+			}
+			repo.historias[historia.ID] = historia
+			input := edicionValida(historia.ID)
+			input.EstimacionSP = tc.nueva
+			input.EstimacionLeida = tc.leida
+
+			_, err := servicio.Ejecutar(context.Background(), input)
+
+			if !errors.Is(err, domain.ErrEstimacionDesactualizada) {
+				t.Fatalf("se esperaba domain.ErrEstimacionDesactualizada, se obtuvo %v", err)
+			}
+			if len(repo.actualizaciones) != 0 {
+				t.Errorf("no se esperaba actualizar la historia")
+			}
+		})
+	}
+}
+
+func TestEditarHistoria_PropagaElConflictoDeEstimacionDelRepositorio(t *testing.T) {
+	servicio, repo, _ := nuevoEditarHistoria(historiaDelBacklog())
+	repo.errActualizar = domain.ErrEstimacionDesactualizada
+
+	_, err := servicio.Ejecutar(context.Background(), edicionValida(3))
+
+	if !errors.Is(err, domain.ErrEstimacionDesactualizada) {
+		t.Fatalf("se esperaba domain.ErrEstimacionDesactualizada, se obtuvo %v", err)
 	}
 }

@@ -949,7 +949,7 @@ issue y entra en los Sprints.
 | #141 | Eliminar `Inicio.tsx`, que ningún archivo importa | Abierto, tarea libre |
 | #168 | Rechazar Sprints con fechas fuera del plazo del proyecto (backend) | Abierto, a priorizar |
 | #169 | Mostrar las fechas del proyecto en la pantalla de Sprints y limitar los selectores | Abierto, a priorizar |
-| #173 | Regla del estado del proyecto: cierre manual en vez de «Finalizado» derivado de los Sprints (HU-13) | Abierto, a decidir |
+| #173 | Regla del estado del proyecto: «Finalizado» derivado de los Sprints solo si la fecha de fin ya pasó (HU-13) | Implementado en `fix/173-estado-proyecto-fecha-de-fin` (PR #315), pendiente de merge |
 | #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Abierto, Sprint 4 (solo los criterios de aceptación; notas y «depende de» quedan para después) |
 | #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, la base en el Sprint 4 y las pantallas en el Sprint 5 |
 | #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |

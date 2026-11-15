@@ -277,8 +277,13 @@ func (p *pasosHistorial) historiaPasaATener(titulo string, puntos int) error {
 	if err != nil {
 		return err
 	}
+	var leida *int
+	if err := p.db.QueryRow("SELECT estimacion_sp FROM historias WHERE id = ?", p.historias[titulo]).Scan(&leida); err != nil {
+		return err
+	}
 	_, err = p.editarHist.Ejecutar(context.Background(), service.EditarHistoriaInput{
-		ID: p.historias[titulo], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: &puntos, UsuarioID: actor,
+		ID: p.historias[titulo], Titulo: titulo, Descripcion: "Detalle", EstimacionSP: &puntos,
+		EstimacionLeida: leida, UsuarioID: actor,
 	})
 	return err
 }

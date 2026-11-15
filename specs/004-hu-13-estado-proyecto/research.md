@@ -37,6 +37,11 @@ dominio; no se agrega columna `estado` a `projects` ni tabla nueva.
    - `ahora` dentro de `[FechaInicio, FechaFin]` (bordes inclusivos) ⇒ **"En curso"**;
    - `ahora` posterior a `FechaFin` ⇒ **"Finalizado"**.
 
+> **Nota (#173, 2026-11-11)**: el paso 2 se ajustó: con todos los Sprints `Finalizado` el
+> proyecto es "Finalizado" solo si la fecha de fin ya pasó; con fecha de fin futura, igual a
+> hoy o sin cargar queda "En curso". El resto de la decisión no cambió. Se conserva el
+> registro original como evidencia de la decisión.
+
 **Rationale**: los Sprints reflejan ejecución real y pesan más que la fecha estimada; el
 conflicto "Sprint Activo con fecha de fin vencida" se resuelve como "En curso". Las fechas
 solo desempatan cuando no hay Sprints iniciados. Coincide con la aceptación y con los casos

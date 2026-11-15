@@ -47,35 +47,43 @@ describe('formularioDe', () => {
 })
 
 describe('armarCuerpoEdicion', () => {
-  it('recorta los textos y conserva los Story Points elegidos', () => {
+  it('recorta los textos, conserva los Story Points elegidos y envía la estimación leída', () => {
     expect(
-      armarCuerpoEdicion({
-        titulo: '  Título  ',
-        descripcion: '  Descripción  ',
-        criterios: '  Criterio  ',
-        estimacion: '8',
-      }),
+      armarCuerpoEdicion(
+        {
+          titulo: '  Título  ',
+          descripcion: '  Descripción  ',
+          criterios: '  Criterio  ',
+          estimacion: '8',
+        },
+        5,
+      ),
     ).toEqual({
       titulo: 'Título',
       descripcion: 'Descripción',
       criterios_aceptacion: 'Criterio',
       estimacion_sp: 8,
+      estimacion_sp_leida: 5,
     })
   })
 
   it('envía null cuando los criterios o los Story Points quedan vacíos', () => {
     expect(
-      armarCuerpoEdicion({
-        titulo: 'Título',
-        descripcion: 'Descripción',
-        criterios: '   ',
-        estimacion: '',
-      }),
+      armarCuerpoEdicion(
+        {
+          titulo: 'Título',
+          descripcion: 'Descripción',
+          criterios: '   ',
+          estimacion: '',
+        },
+        null,
+      ),
     ).toEqual({
       titulo: 'Título',
       descripcion: 'Descripción',
       criterios_aceptacion: null,
       estimacion_sp: null,
+      estimacion_sp_leida: null,
     })
   })
 })

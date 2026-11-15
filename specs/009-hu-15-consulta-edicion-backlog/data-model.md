@@ -42,6 +42,18 @@ entero (R5).
 
 Resultado: copia con los cuatro campos reemplazados y todos los demás intactos (FR-011).
 
+`EditarHistoriaInput` agrega `EstimacionLeida *int`: la estimación que el formulario leyó al
+abrirse. No es un campo editable; es la condición de concurrencia de la estimación (#248).
+
+### Regla de concurrencia de la estimación (#248)
+
+Después de `ConDatosEditados`, el service compara `actual.EstimacionSP` con
+`input.EstimacionLeida`. Si difieren, devuelve `domain.ErrEstimacionDesactualizada` (409,
+`campo: estimacion_sp`) y no escribe. Si coinciden, el repositorio ejecuta el `UPDATE` con
+`AND estimacion_sp IS ?` usando la estimación leída; si no afecta filas (otra escritura se
+metió entre la lectura y el `UPDATE`), devuelve el mismo error. La comparación cubre la
+carrera con HU-14, sobre todo sin Sprint o con Sprint `Pendiente`, donde D2b no aplica.
+
 ### Regla de servicio D2b (en `EditarHistoria`, no en el dominio)
 
 Después de `ConDatosEditados`, si `SprintID != nil` el service carga el Sprint:
@@ -69,6 +81,7 @@ Después de `ConDatosEditados`, si `SprintID != nil` el service carga el Sprint:
 | `domain.ErrHistoriaNoEncontrada` (nuevo) | edición de historia inexistente | 404 |
 | `domain.ValidationError` | edición inválida | 400 con `campo` |
 | `domain.ErrEstimacionCongelada` (nuevo, `ValidationError`) | cambio de SP ya cargados en Sprint Activo/Finalizado (D2b) | 400 con `campo: estimacion_sp` |
+| `domain.ErrEstimacionDesactualizada` (nuevo) | la estimación cambió desde que se leyó el formulario (#248, D18) | 409 con `campo: estimacion_sp` |
 
 ## Puertos (internal/repository)
 
@@ -77,8 +90,9 @@ ProductBacklogRepository
   ListarSinSprint(ctx, proyectoID int64) ([]domain.BacklogItem, error)   // ORDER BY CASE prioridad ..., id
 
 HistoriaRepository
-  ObtenerPorID(ctx, id int64) (domain.BacklogItem, error)               // ErrHistoriaNoEncontrada
-  Actualizar(ctx, item domain.BacklogItem) error                         // titulo, descripcion, criterios, estimacion_sp
+  ObtenerPorID(ctx, id int64) (domain.BacklogItem, error)                              // ErrHistoriaNoEncontrada
+  ActualizarSiEstimacionSigueSiendo(ctx, item domain.BacklogItem, estimacionLeida *int) error
+      // UPDATE ... WHERE id = ? AND estimacion_sp IS ?; 0 filas -> ErrEstimacionDesactualizada
 ```
 
 `EditarHistoria` usa además el puerto existente `SprintRepository.ObtenerPorID` para D2b.

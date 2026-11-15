@@ -351,7 +351,7 @@ func TestSQLiteBacklogRepository_Actualizar(t *testing.T) {
 	editado := guardado
 	editado.Titulo, editado.Descripcion = "Nuevo", "Descripción nueva"
 	editado.CriteriosAceptacion, editado.EstimacionSP = &criterios, &sp
-	if err := repo.Actualizar(ctx, editado); err != nil {
+	if err := repo.ActualizarSiEstimacionSigueSiendo(ctx, editado, guardado.EstimacionSP); err != nil {
 		t.Fatalf("no se esperaba error al actualizar: %v", err)
 	}
 
@@ -385,7 +385,8 @@ func TestSQLiteBacklogRepository_Actualizar_VuelveANull(t *testing.T) {
 	}
 
 	guardado.CriteriosAceptacion, guardado.EstimacionSP = nil, nil
-	if err := repo.Actualizar(ctx, guardado); err != nil {
+	leida := 5
+	if err := repo.ActualizarSiEstimacionSigueSiendo(ctx, guardado, &leida); err != nil {
 		t.Fatalf("no se esperaba error al actualizar: %v", err)
 	}
 
@@ -400,6 +401,66 @@ func TestSQLiteBacklogRepository_Actualizar_VuelveANull(t *testing.T) {
 	}
 	if criterios != nil || estimacion != nil {
 		t.Errorf("se esperaban criterios y estimación NULL, se obtuvo %v %v", criterios, estimacion)
+	}
+}
+
+func TestSQLiteBacklogRepository_ActualizarSiEstimacionSigueSiendo_RechazaLaEstimacionVieja(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	guardado := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	if _, err := repo.db.ExecContext(ctx,
+		"UPDATE historias SET estimacion_sp = 3 WHERE id = ?", guardado.ID,
+	); err != nil {
+		t.Fatalf("no se pudo sembrar la estimación: %v", err)
+	}
+	if _, err := repo.db.ExecContext(ctx,
+		"UPDATE historias SET estimacion_sp = 8 WHERE id = ?", guardado.ID,
+	); err != nil {
+		t.Fatalf("no se pudo simular el cambio de otra persona: %v", err)
+	}
+	leida := 3
+	guardado.Titulo = "Cambiada"
+	nueva := 5
+	guardado.EstimacionSP = &nueva
+
+	if err := repo.ActualizarSiEstimacionSigueSiendo(ctx, guardado, &leida); !errors.Is(err, domain.ErrEstimacionDesactualizada) {
+		t.Fatalf("se esperaba ErrEstimacionDesactualizada, se obtuvo %v", err)
+	}
+
+	var titulo string
+	var estimacion *int
+	if err := repo.db.QueryRowContext(ctx,
+		"SELECT titulo, estimacion_sp FROM historias WHERE id = ?", guardado.ID,
+	).Scan(&titulo, &estimacion); err != nil {
+		t.Fatalf("no se pudo releer la historia: %v", err)
+	}
+	if titulo == "Cambiada" || estimacion == nil || *estimacion != 8 {
+		t.Errorf("la edición no debía persistirse: título %q, estimación %v", titulo, estimacion)
+	}
+}
+
+func TestSQLiteBacklogRepository_ActualizarSiEstimacionSigueSiendo_RechazaLaCargaInicialVieja(t *testing.T) {
+	repo := nuevaBDDePrueba(t)
+	ctx := context.Background()
+	guardado := guardarHistoria(t, repo, 1, "Historia", domain.PrioridadMust)
+	if _, err := repo.db.ExecContext(ctx,
+		"UPDATE historias SET estimacion_sp = 8 WHERE id = ?", guardado.ID,
+	); err != nil {
+		t.Fatalf("no se pudo sembrar la estimación: %v", err)
+	}
+
+	if err := repo.ActualizarSiEstimacionSigueSiendo(ctx, guardado, nil); !errors.Is(err, domain.ErrEstimacionDesactualizada) {
+		t.Fatalf("se esperaba ErrEstimacionDesactualizada, se obtuvo %v", err)
+	}
+
+	var estimacion *int
+	if err := repo.db.QueryRowContext(ctx,
+		"SELECT estimacion_sp FROM historias WHERE id = ?", guardado.ID,
+	).Scan(&estimacion); err != nil {
+		t.Fatalf("no se pudo releer la historia: %v", err)
+	}
+	if estimacion == nil || *estimacion != 8 {
+		t.Errorf("la historia debía conservar 8 Story Points, se obtuvo %v", estimacion)
 	}
 }
 

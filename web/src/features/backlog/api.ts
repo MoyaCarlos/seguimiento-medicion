@@ -9,6 +9,10 @@ export function listarBacklog(proyectoId: string): Promise<Historia[]> {
   return get<Historia[]>(`/projects/${proyectoId}/backlog`)
 }
 
+export function obtenerHistoria(id: number): Promise<Historia> {
+  return get<Historia>(`/backlog/${id}`)
+}
+
 export function editarHistoria(
   id: number,
   cuerpo: CuerpoEditarHistoria,

@@ -58,19 +58,26 @@ type ListadoApi = (proyecto: string) => Response | Promise<Response>
 type EdicionApi = (id: number, opciones?: RequestInit) => Response | Promise<Response>
 type SprintsApi = (proyecto: string) => Response | Promise<Response>
 type AsignacionApi = (id: number, opciones?: RequestInit) => Response | Promise<Response>
+type HistoriaApi = (id: number, opciones?: RequestInit) => Response | Promise<Response>
 
 function simularApi(
   listado: ListadoApi,
   edicion?: EdicionApi,
   sprints?: SprintsApi,
   asignacion?: AsignacionApi,
+  historia?: HistoriaApi,
 ) {
   const fetchSimulado = vi.fn((ruta: string, opciones?: RequestInit) => {
     const coincideListado = RUTA_LISTADO.exec(ruta)
     if (coincideListado) return Promise.resolve(listado(coincideListado[1]))
 
     const coincideEdicion = RUTA_EDICION.exec(ruta)
-    if (coincideEdicion && edicion) return Promise.resolve(edicion(Number(coincideEdicion[1]), opciones))
+    if (coincideEdicion) {
+      const id = Number(coincideEdicion[1])
+      const metodo = opciones?.method ?? 'GET'
+      if (metodo === 'PUT' && edicion) return Promise.resolve(edicion(id, opciones))
+      if (metodo === 'GET' && historia) return Promise.resolve(historia(id, opciones))
+    }
 
     const coincideSprints = RUTA_SPRINTS.exec(ruta)
     if (coincideSprints && sprints) return Promise.resolve(sprints(coincideSprints[1]))
@@ -114,7 +121,10 @@ const abrirEdicion = (titulo: string) =>
 const botonGuardar = () => screen.getByRole('button', { name: 'Guardar cambios' })
 
 function cuerpoEnviado(fetchSimulado: ReturnType<typeof vi.fn>, indice = 0) {
-  const llamada = fetchSimulado.mock.calls.filter(([ruta]) => RUTA_EDICION.test(ruta))[indice]
+  const llamada = fetchSimulado.mock.calls.filter(
+    ([ruta, opciones]) =>
+      RUTA_EDICION.test(ruta) && (opciones as RequestInit | undefined)?.method === 'PUT',
+  )[indice]
   return JSON.parse((llamada[1] as RequestInit).body as string) as Record<string, unknown>
 }
 
@@ -249,6 +259,7 @@ describe('edición de una historia (US2)', () => {
       criterios_aceptacion:
         'Dado que tengo cuenta de Google, cuando ingreso, entonces veo el tablero',
       estimacion_sp: 8,
+      estimacion_sp_leida: 5,
     })
 
     const actualizado = articuloDe(actualizada.titulo)
@@ -274,6 +285,7 @@ describe('edición de una historia (US2)', () => {
     await screen.findByText('Historia actualizada')
     expect(cuerpoEnviado(fetchSimulado).criterios_aceptacion).toBeNull()
     expect(cuerpoEnviado(fetchSimulado).estimacion_sp).toBeNull()
+    expect(cuerpoEnviado(fetchSimulado).estimacion_sp_leida).toBe(5)
   })
 
   it('US2.2: sin título advierte junto al campo y no llama a la API', async () => {
@@ -344,6 +356,129 @@ describe('edición de una historia (US2)', () => {
     expect(mensajeDe(storyPoints)).toBe(mensaje)
     expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Título conservado')
     expect(screen.queryByText('Historia actualizada')).toBeNull()
+  })
+
+  it('US2.7: si la estimación cambió mientras editaba, muestra el 409 junto a Story Points y conserva los datos', async () => {
+    const mensaje = 'la estimación cambió mientras editabas: recargá la historia y volvé a intentar'
+    const fetchSimulado = simularApi(conHistorias(MUST), () =>
+      respuesta(409, { campo: 'estimacion_sp', mensaje }),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirEdicion(MUST.titulo)
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Título conservado')
+    await user.click(botonGuardar())
+
+    expect(await screen.findByText(mensaje)).toBeTruthy()
+    const storyPoints = screen.getByLabelText('Story Points')
+    expect(storyPoints.getAttribute('aria-invalid')).toBe('true')
+    expect(mensajeDe(storyPoints)).toBe(mensaje)
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Título conservado')
+    expect(cuerpoEnviado(fetchSimulado)).toMatchObject({
+      estimacion_sp: 5,
+      estimacion_sp_leida: 5,
+    })
+    expect(screen.queryByText('Historia actualizada')).toBeNull()
+  })
+
+  it('US2.7b: tras el 409, el segundo guardado envía la estimación actual', async () => {
+    const mensaje = 'la estimación cambió mientras editabas: recargá la historia y volvé a intentar'
+    const actual: Historia = { ...MUST, estimacion_sp: 3 }
+    let intentos = 0
+    const fetchSimulado = simularApi(
+      conHistorias(MUST),
+      () => {
+        intentos += 1
+        return intentos === 1
+          ? respuesta(409, { campo: 'estimacion_sp', mensaje })
+          : respuesta(200, { ...actual, titulo: 'Título conservado' })
+      },
+      undefined,
+      undefined,
+      () => respuesta(200, actual),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirEdicion(MUST.titulo)
+    await user.clear(screen.getByLabelText('Título'))
+    await user.type(screen.getByLabelText('Título'), 'Título conservado')
+    await user.selectOptions(screen.getByLabelText('Story Points'), '8')
+    await user.click(botonGuardar())
+
+    expect(await screen.findByText(mensaje)).toBeTruthy()
+    expect(cuerpoEnviado(fetchSimulado)).toMatchObject({
+      estimacion_sp: 8,
+      estimacion_sp_leida: 5,
+    })
+    await waitFor(() =>
+      expect((screen.getByLabelText('Story Points') as HTMLSelectElement).value).toBe('3'),
+    )
+    expect(
+      llamadasA(fetchSimulado, RUTA_EDICION).filter(
+        ([, opciones]) => (opciones as RequestInit | undefined)?.method === 'GET',
+      ),
+    ).toHaveLength(1)
+    expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('Título conservado')
+    expect((screen.getByLabelText('Descripción') as HTMLTextAreaElement).value).toBe(MUST.descripcion)
+    expect((screen.getByLabelText('Criterios de aceptación') as HTMLTextAreaElement).value).toBe(
+      MUST.criterios_aceptacion,
+    )
+
+    await user.click(botonGuardar())
+
+    expect(await screen.findByText('Historia actualizada')).toBeTruthy()
+    expect(cuerpoEnviado(fetchSimulado, 1)).toMatchObject({
+      titulo: 'Título conservado',
+      descripcion: MUST.descripcion,
+      criterios_aceptacion: MUST.criterios_aceptacion,
+      estimacion_sp: 3,
+      estimacion_sp_leida: 3,
+    })
+  })
+
+  it('US2.7c: tras el 409, al cancelar y reabrir la estimación leída es la actual', async () => {
+    const mensaje = 'la estimación cambió mientras editabas: recargá la historia y volvé a intentar'
+    const actual: Historia = { ...MUST, estimacion_sp: 3 }
+    let intentos = 0
+    const fetchSimulado = simularApi(
+      conHistorias(MUST),
+      () => {
+        intentos += 1
+        return intentos === 1
+          ? respuesta(409, { campo: 'estimacion_sp', mensaje })
+          : respuesta(200, actual)
+      },
+      undefined,
+      undefined,
+      () => respuesta(200, actual),
+    )
+    const user = userEvent.setup()
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await abrirEdicion(MUST.titulo)
+    await user.click(botonGuardar())
+    expect(await screen.findByText(mensaje)).toBeTruthy()
+    await waitFor(() =>
+      expect(within(articuloDe(MUST.titulo)).getByText('3 Story Points')).toBeTruthy(),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+    await abrirEdicion(MUST.titulo)
+
+    expect((screen.getByLabelText('Story Points') as HTMLSelectElement).value).toBe('3')
+    await user.click(botonGuardar())
+
+    expect(await screen.findByText('Historia actualizada')).toBeTruthy()
+    expect(cuerpoEnviado(fetchSimulado, 1)).toMatchObject({
+      estimacion_sp: 3,
+      estimacion_sp_leida: 3,
+    })
   })
 
   it('US2.6: si la API responde 404 al guardar muestra el aviso general y no cierra el formulario', async () => {
@@ -962,8 +1097,8 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
   })
 
-  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al guardar la edición se muestra tal cual', async () => {
-    simularConProyecto(proyecto(null), conHistorias(MUST), () =>
+  it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al guardar la edición se muestra tal cual y no recarga la historia', async () => {
+    const pantalla = simularConProyecto(proyecto(null), conHistorias(MUST), () =>
       respuesta(409, { mensaje: 'El proyecto está cerrado' }),
     )
     abrir()
@@ -973,6 +1108,13 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     await userEvent.click(botonGuardar())
 
     expect((await screen.findByRole('alert')).textContent).toBe('El proyecto está cerrado')
+    expect(
+      pantalla.mock.calls.filter(
+        ([ruta, opciones]) =>
+          ruta === `/backlog/${MUST.id}` &&
+          ((opciones as RequestInit | undefined)?.method ?? 'GET') === 'GET',
+      ),
+    ).toHaveLength(0)
   })
 
   it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al asignar a un Sprint se muestra tal cual', async () => {
