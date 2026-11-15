@@ -31,6 +31,7 @@ func TestFeatures(t *testing.T) {
 			InitializeScenarioMetricas(ctx)                     // HU-03
 			InitializeScenarioReporte(ctx)                      // HU-10
 			InitializeScenarioAutenticacion(ctx)                // HU-20
+			InitializeScenarioGestionUsuarios(ctx)              // HU-17
 			InitializeScenarioHistorial(ctx)                    // HU-12
 			InitializeScenarioAvance(ctx, sc)                   // HU-18
 			InitializeScenarioObtenerHistoria(ctx)              // Issue #222

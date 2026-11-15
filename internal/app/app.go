@@ -98,6 +98,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		service.NewIngresar(credenciales, op.Contrasenas, emisorSesiones),
 		obtenerSesion,
 		service.NewCerrarSesion(obtenerSesion, sesionesRepo, op.Ahora),
+		service.NewCambiarNombreUsuario(credenciales),
 	)
 
 	calcularMetricas := service.NewCalcularMetricas(proyectos, metricasRepo)

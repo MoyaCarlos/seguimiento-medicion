@@ -74,6 +74,7 @@ func (p *pasosAutenticacion) preparar() error {
 		service.NewIngresar(credenciales, hasheador, emisor),
 		obtener,
 		service.NewCerrarSesion(obtener, p.sesiones, reloj),
+		service.NewCambiarNombreUsuario(credenciales),
 	)
 	p.api = app.NuevoMux(db, app.Opciones{
 		DemoHabilitado: func() bool { return false },

@@ -12,6 +12,7 @@ const TRAZOS = {
   cerrar: 'M6 6l12 12M18 6L6 18',
   salir: 'M10 4H5v16h5M15 8l4 4-4 4M19 12H9',
   mas: 'M12 5v14M5 12h14',
+  lapiz: 'M4 20h4L18 10l-4-4L4 16v4zM13 5l4 4',
 }
 
 export type NombreIcono = keyof typeof TRAZOS

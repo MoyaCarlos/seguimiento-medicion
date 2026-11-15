@@ -201,6 +201,11 @@ Restricciones de base:
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
+**Renombrado (HU-17):** cada persona puede cambiar su propio `nombre`; el sistema actualiza
+`nombre` y `nombre_normalizado` en una sola sentencia y aplica la misma unicidad del registro
+(sin distinguir mayúsculas). Votos, horas, integrantes, defectos y sesiones siguen asociados
+por `usuario_id`; no hay migración.
+
 ### 4.3 `integrantes` — HU-04 (antes `project_members`)
 
 | Columna | Tipo | Notas |
@@ -427,6 +432,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | `sprint_deteccion_id` y `sprint_resolucion_id` de un defecto son el Sprint `Activo` en ese momento | — | Servicio (HU-08) |
 | `estimacion_sp` ya cargada no se modifica con Sprint `Activo` o `Finalizado` (cargarla desde `NULL` se permite, salvo con Sprint `Finalizado`) — **Decidido (D2b, 2026-10-13; reabierta el 2026-11-03)**: decisión de producto, ya reflejada en el backlog | — | Servicio (HU-15 y HU-14) |
 | La edición no pisa una estimación que cambió desde que se abrió el formulario (#248, D18) | `UPDATE` condicional (`WHERE id = ? AND estimacion_sp IS ?`): compare-and-set con la estimación leída | Servicio y repositorio (HU-15) |
+| La estimación se escribe con D2b y la ronda revelada evaluadas en el mismo `UPDATE` (#249, D19) | Subconsultas a `sprints` y `rondas_votacion` en el `WHERE`; 0 filas → 409 y no se escribe | Repositorio (HU-14 y HU-15) |
 | Cerrar un Sprint es atómico (§4.6) | Transacción en el adaptador | `CerrarConArrastre`, una sola llamada |
 | La ronda anterior se reveló antes de abrir otra | — | Servicio (HU-14) |
 | Fechas en el pasado al iniciar un Sprint | — | **Permitidas** (decidido el 2026-10-14, #20): el equipo pudo empezar el Sprint y olvidar declararlo; ninguna restricción de base ni de servicio |
@@ -437,6 +443,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Una baja no se aplica dos veces (HU-16) | `UPDATE` condicional (`fecha_baja IS NULL`): de dos pedidos simultáneos, uno solo cambia la fila | El servicio busca al objetivo entre los activos: 404 «integrante no encontrado» |
 | La reactivación reutiliza la fila (HU-16, D15) | `INSERT … ON CONFLICT (proyecto_id, usuario_id) DO UPDATE … WHERE integrantes.fecha_baja IS NOT NULL RETURNING creado_en`: sin fila devuelta, la persona ya era activa | `AsignarIntegrante` responde 400 «el integrante ya pertenece al proyecto» si es activa, o la reactiva con su `creado_en` original |
 | Al dar de baja se descartan sus votos no revelados (HU-16, FR-018) | Misma transacción que el `UPDATE` de la baja (`DELETE` de sus votos en rondas con `revelada_en IS NULL` del proyecto) | — . **Límite declarado:** `Votar` comprueba la pertenencia y después llama a `GuardarVoto` en dos pasos separados. Si la baja borra los votos de la persona justo entre esos dos pasos, su voto queda guardado y cuenta en el promedio de esa ronda. FR-014 cubre solo dos bajas al mismo tiempo; se acepta por lo improbable (equipos chicos, un solo Scrum Master) |
+| El renombrado del propio usuario es atómico y rechaza duplicados sin distinguir mayúsculas (HU-17) | `UPDATE usuarios SET nombre = ?, nombre_normalizado = ? WHERE id = ?`; `SQLITE_CONSTRAINT_UNIQUE` → 409 | Servicio y repositorio (HU-17) |
 
 ### Traducción de violaciones a errores
 
@@ -498,6 +505,7 @@ pendiente D17, que surgió del beta testing del
 | **D16** | **Cerrada el 2026-11-11** (#300, spec 044, confirmada por el equipo). Cierre manual del proyecto (#173): hasta entonces el estado era solo derivado y no se guardaba nada. | Columna anulable `proyectos.fecha_cierre` (`YYYY-MM-DD`, `CHECK` D12, migración 008). El Scrum Master cierra (sin Sprint `Activo`) y reabre. Un proyecto cerrado es «Finalizado» **con prioridad** sobre las reglas de HU-13 y queda de solo lectura; uno abierto sigue las reglas de HU-13 **sin cambios**. Se descartó la propuesta original («sin cierre manual, el proyecto no pasa a Finalizado») porque cambiaba HU-13 y sus escenarios. | HU-13 |
 | **D17** | **PENDIENTE.** Notas y "depende de" de las historias (#174): no existen como columnas. | Dos columnas de texto opcional, o dejarlas dentro de la descripción con Markdown. Cambio de esquema solo si se agregan. | HU-01, HU-15 |
 | **D18** | **Aprobada el 2026-11-13** (issue #248). La edición de una historia podía pisar la estimación acordada por HU-14 si el formulario estaba desactualizado, sobre todo sin Sprint o con Sprint `Pendiente`, donde D2b no la frena. | El formulario envía `estimacion_sp_leida` y el `PUT` solo escribe si la estimación actual coincide con la leída (compare-and-set); si no, responde 409 y no modifica nada. No cambia el esquema ni agrega migración. Alternativa descartada: versión de fila + migración, porque el problema es solo la estimación y el resto conserva "gana el último guardado". | HU-15, HU-14 |
+| **D19** | **Aprobada el 2026-11-13** (issue #249). `RegistrarEstimacion` y `EditarHistoria` validaban D2b y la ronda revelada en un paso y escribían en otro: entre ambos, otra petición podía iniciar el Sprint o abrir una ronda, y la escritura quedaba con 200 sobre un estado congelado. | Llevar las condiciones al mismo `UPDATE` con subconsultas a `sprints` y `rondas_votacion`; si no afecta filas, responder 409 y no escribir. No cambia el esquema ni agrega migración. Alternativa descartada: aceptar el riesgo de milisegundos (el Sprint cerrado no guarda foto de las historias completadas y confía en D2b). | HU-14, HU-15 |
 
 **Qué decisión bloquea cada migración:** 001 → D12 y D13 (cerradas); 002 (#117) → D2b y D2c (cerradas); 004 → D8 (cerrada). Ya no queda ninguna decisión bloqueante; D1 se corrige en el backlog (§12).
 
@@ -517,6 +525,7 @@ pendiente D17, que surgió del beta testing del
 | HU-07 Horas | `registros_horas` | `integrantes`, `historias`, `sprints` | 004 |
 | HU-08 Defectos | `defectos` | `historias`, `sprints` | 005 |
 | HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
+| HU-17 Renombrar usuario | `usuarios.nombre`, `usuarios.nombre_normalizado` | `usuarios` | sin migración |
 | HU-21 Permisos por rol | — | `integrantes`, `usuarios`, `sesiones` | sin migración |
 | #300 Cerrar y reabrir un proyecto | `proyectos.fecha_cierre` | `integrantes`, `sprints` | 008 |
 | HU-16 Gestión del equipo | `integrantes.fecha_baja`, `votos` (borra los de rondas no reveladas) | `integrantes`, `rondas_votacion`, `historias` | 009 |

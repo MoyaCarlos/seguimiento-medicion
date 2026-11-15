@@ -76,7 +76,7 @@ Registrar la estimación no cambia ninguna ronda.
 | Service | Entrada | Pasos |
 |---|---|---|
 | `AbrirNuevaRonda` | `historiaID`, `usuarioID` | historia existe → Scrum Master → no `Completada` → ronda actual → `Siguiente` → `CrearRonda` (`ErrVotacionYaIniciada` → `ErrRondaYaAbierta`) |
-| `RegistrarEstimacion` | `historiaID`, `usuarioID`, `valor` | historia existe → Scrum Master → `ConEstimacion` → ronda actual revelada → D2b → `GuardarEstimacion` |
+| `RegistrarEstimacion` | `historiaID`, `usuarioID`, `valor` | historia existe → Scrum Master → `ConEstimacion` → ronda actual revelada → D2b → `GuardarEstimacion` (el repositorio revalida D2b y la ronda en el mismo `UPDATE`; 0 filas → 409) |
 | `ConsultarHistorialRondas` | `historiaID` | historia existe → `ListarRondasReveladas` → agrega nombre y rol a cada voto |
 | `ConsultarVotacion` (cambia) | sin cambios | `VistaVotacion` suma `Diferencias *domain.Diferencias`, `nil` sin revelar |
 
@@ -92,12 +92,12 @@ Registrar la estimación no cambia ninguna ronda.
 ```go
 // votacion_repository.go: se agregan dos métodos a VotacionRepository.
 ListarRondasReveladas(ctx context.Context, historiaID int64) ([]domain.RondaVotacion, error)
-RondaActualRevelada(ctx context.Context, historiaID int64) (bool, error)
+RondaActualRevelada(ctx context.Context, historiaID int64) (rondaID int64, revelada bool, err error)
 
 // backlog_repository.go: puerto nuevo, separado de HistoriaRepository (ISP).
 type EstimacionHistoriaRepository interface {
     ObtenerPorID(ctx context.Context, id int64) (domain.BacklogItem, error)
-    GuardarEstimacion(ctx context.Context, id int64, sp int) error
+    GuardarEstimacion(ctx context.Context, id int64, sp int, rondaID int64) error
 }
 ```
 
@@ -105,7 +105,7 @@ type EstimacionHistoriaRepository interface {
 |---|---|---|
 | `ListarRondasReveladas` | una consulta `rondas_votacion LEFT JOIN votos`, `WHERE revelada_en IS NOT NULL`, por `numero` y `usuario_id` (R9) | sin filas → lista vacía |
 | `RondaActualRevelada` | la ronda de mayor `numero`, sin leer `votos` | sin filas → `ErrVotacionNoIniciada` |
-| `GuardarEstimacion` | `UPDATE historias SET estimacion_sp = ? WHERE id = ?` (R7) | 0 filas → `ErrHistoriaNoEncontrada` |
+| `GuardarEstimacion` | `UPDATE historias SET estimacion_sp = ? WHERE id = ?` con subconsultas a `sprints` (D2b) y `rondas_votacion` (ronda actual revelada) (R7, R12) | 0 filas → `ErrRegistroEstimacionDesactualizado` (409); si la historia no existe, `ErrHistoriaNoEncontrada` |
 
 **Fake de los tests**: `fakeVotacionRepository` guarda hoy una ronda por historia. Debe conservar las
 rondas anteriores, mantener el `ErrVotacionYaIniciada` cuando el número no es mayor que el de la ronda

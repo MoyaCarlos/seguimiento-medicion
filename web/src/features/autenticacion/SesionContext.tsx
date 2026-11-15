@@ -14,6 +14,7 @@ export type Sesion = {
   usuario: Usuario | null
   ingresar(nombre: string, contrasena: string): Promise<void>
   registrar(nombre: string, contrasena: string): Promise<void>
+  cambiarNombre(nombre: string): Promise<void>
   salir(): Promise<void>
   reintentar(): Promise<void>
 }
@@ -93,6 +94,9 @@ export function SesionProvider({ children }: { children: ReactNode }) {
       usuario,
       ingresar: async (nombre, contrasena) => iniciar(await api.ingresar(nombre, contrasena)),
       registrar: async (nombre, contrasena) => iniciar(await api.registrar(nombre, contrasena)),
+      cambiarNombre: async (nombre) => {
+        setUsuario(await api.cambiarNombre(nombre))
+      },
       reintentar: async () => {
         setEstado('cargando')
         await consultarSesion.current(() => true)

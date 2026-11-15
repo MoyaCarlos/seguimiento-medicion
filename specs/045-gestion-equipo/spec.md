@@ -65,10 +65,6 @@ aportó, para poder mantener el equipo al día sin perder el historial del proye
 - Editar el nombre de la persona: pertenece al usuario (HU-17).
 - Que un integrante se dé de baja a sí mismo: solo el Scrum Master gestiona el equipo.
 - Borrar físicamente a un integrante o sus aportes.
-- Mostrar al Product Builder la acción de quitar deshabilitada, con la nota «Solo el Scrum
-  Master puede…» (antes US6, escenario 3). La pantalla del equipo todavía no conoce el rol de
-  quien la ve. Va con el frontend de HU-21 (#247). Mientras tanto, si un Product Builder pide
-  la baja, el servidor responde 403 (FR-012) y la interfaz muestra ese mensaje (FR-016).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -176,9 +172,10 @@ se verifica que siga en verde.
    Builder y confirmo, **Then** desaparece de la lista.
 2. **Given** que veo el equipo, **When** se muestra el Scrum Master, **Then** no tiene la
    acción de quitar.
-
-El escenario «el Product Builder ve la acción deshabilitada» queda fuera de alcance (ver
-«Fuera de alcance»): va con el frontend de HU-21 (#247).
+3. **Given** que soy Product Builder y veo el equipo, **When** se muestra la acción de quitar,
+   **Then** está deshabilitada con la nota «Solo el Scrum Master puede quitar integrantes».
+4. **Given** un proyecto cerrado, **When** veo el equipo, **Then** la acción de quitar está
+   deshabilitada con la nota «El proyecto está cerrado» y no se muestra la nota de gestión.
 
 ### Edge Cases
 
@@ -257,7 +254,10 @@ El escenario «el Product Builder ve la acción deshabilitada» queda fuera de a
 ### Requisitos de la interfaz *(frontend)*
 
 - **FR-015**: La pantalla del equipo MUST ofrecer al Scrum Master la acción de quitar en cada
-  Product Builder, con confirmación, y no ofrecerla en el Scrum Master.
+  Product Builder, con confirmación, y no ofrecerla en el Scrum Master. A un Product Builder
+  MUST mostrarle la acción deshabilitada con la nota «Solo el Scrum Master puede quitar
+  integrantes»; en un proyecto cerrado MUST mostrarla deshabilitada con la nota «El proyecto
+  está cerrado». MUST mostrarse una sola nota por acción.
 - **FR-016**: La interfaz MUST mostrar el mensaje del servidor si la baja se rechaza.
 
 ### Requisitos de datos
