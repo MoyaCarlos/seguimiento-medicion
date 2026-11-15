@@ -389,3 +389,65 @@ describe('edición de proyecto - cierre (#312)', () => {
     )
   })
 })
+
+describe('Editar proyecto como el prototipo', () => {
+  async function abierta() {
+    responderProyecto()
+    abrir()
+    await screen.findByDisplayValue('Proyecto Alfa')
+  }
+
+  it('Given la pantalla, When abre, Then «Proyecto #3» va sobre el h1 «Editar proyecto» y ya no hay «Panel del proyecto» ni la introducción larga', async () => {
+    await abierta()
+
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Editar proyecto' })
+
+    expect(screen.getByText('Proyecto #3').compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
+    expect(screen.queryByText(/Corregí el nombre/)).toBeNull()
+    expect(screen.queryByText('Proyecto · Edición')).toBeNull()
+  })
+
+  it('Given la cabecera, When abre, Then «Volver al panel» lleva al panel con una flecha y estilo discreto', async () => {
+    await abierta()
+
+    const volver = screen.getByRole('link', { name: 'Volver al panel' })
+
+    expect(volver.getAttribute('href')).toBe('/projects/3/proyecto')
+    expect(volver.className).toBe('button button--ghost')
+    expect(volver.querySelector('svg')).toBeTruthy()
+    expect(volver.closest('header')?.querySelector('h1')?.textContent).toBe('Editar proyecto')
+  })
+
+  it('Given «Horas por Story Point», When se muestra, Then explica para qué sirve y lo asocia al campo', async () => {
+    await abierta()
+
+    const campo = screen.getByLabelText('Horas por Story Point (opcional)')
+    const ayuda = screen.getByText('Con este dato el Dashboard y el historial calculan las horas estimadas.')
+
+    expect(campo.getAttribute('aria-describedby')).toContain(ayuda.id)
+    expect(document.querySelector('label[for="horas_por_story_point"] .hu04-opcional')?.textContent).toBe('(opcional)')
+  })
+
+  it('Given los botones del formulario, When se muestran, Then «Guardar cambios» va primero y «Cancelar» después, discreto', async () => {
+    await abierta()
+
+    const guardar = screen.getByRole('button', { name: 'Guardar cambios' })
+    const cancelar = screen.getByRole('link', { name: 'Cancelar' })
+
+    expect(guardar.compareDocumentPosition(cancelar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(cancelar.className).toBe('button button--ghost')
+    expect(cancelar.getAttribute('href')).toBe('/projects/3/proyecto')
+  })
+
+  it('Given el formulario y la zona de cierre, When se muestran, Then cada uno es su propia tarjeta', async () => {
+    await abierta()
+
+    const formulario = screen.getByRole('form', { name: 'Editar proyecto' })
+    const zona = document.querySelector('.zona-cierre') as HTMLElement
+
+    expect(formulario.className).toBe('panel-formulario')
+    expect(formulario.contains(zona)).toBe(false)
+    expect(zona.parentElement?.className).toBe('panel-editar')
+  })
+})

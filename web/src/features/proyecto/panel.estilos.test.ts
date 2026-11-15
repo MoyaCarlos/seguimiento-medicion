@@ -134,3 +134,27 @@ it('Given el cronograma en pantallas angostas, When las fechas no entran, Then c
 it('Given las tres fechas del cronograma, When no entran en una fila, Then bajan de renglón en vez de pisarse', () => {
   expect(regla('.cronograma__fechas')).toMatch(/flex-wrap:\s*wrap/)
 })
+
+it('Given el formulario de edición, When se estiliza, Then es una tarjeta de hasta 720px con radio 14 y relleno 22px', () => {
+  const bloque = regla('.panel-formulario')
+
+  expect(bloque).toMatch(/max-width:\s*720px/)
+  expect(bloque).toMatch(/border-radius:\s*var\(--radius\)/)
+  expect(bloque).toMatch(/padding:\s*22px/)
+})
+
+it('Given la zona de cierre, When se estiliza, Then es otra tarjeta, separada del formulario', () => {
+  const bloque = regla('.panel-editar .zona-cierre')
+
+  expect(bloque).toMatch(/border:\s*1px solid/)
+  expect(bloque).toMatch(/border-radius:\s*var\(--radius\)/)
+  expect(bloque).toMatch(/padding:\s*22px/)
+  expect(bloque).toMatch(/max-width:\s*720px/)
+})
+
+it('Given la ayuda de un campo de la edición, When se estiliza, Then es de 12,5px y gris con contraste 4,5:1', () => {
+  const bloque = regla('.panel-formulario .message')
+
+  expect(bloque).toMatch(/font-size:\s*12\.5px/)
+  expect(contraste(color(bloque, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})

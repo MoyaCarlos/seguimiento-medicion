@@ -326,7 +326,7 @@ describe('registro de rutas', () => {
 
   it('en «Editar proyecto» y «Equipo» se marca el ajuste y no «Proyecto»', async () => {
     const router = abrir('/projects/1/proyecto/edit')
-    await screen.findByRole('heading', { name: 'Panel del proyecto' }, { timeout: 5000 })
+    await screen.findByRole('heading', { level: 1, name: 'Editar proyecto' }, { timeout: 5000 })
 
     expect(screen.getByRole('link', { name: 'Editar proyecto' }).getAttribute('aria-current')).toBe('page')
     expect(screen.getByRole('link', { name: 'Proyecto' }).getAttribute('aria-current')).toBeNull()

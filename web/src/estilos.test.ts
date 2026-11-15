@@ -122,3 +122,16 @@ it('Given los separadores de la ruta, When se estilizan, Then son iconos de 14px
   expect(separador).toMatch(/width:\s*14px/)
   expect(separador).toMatch(/opacity:\s*0?\.6/)
 })
+
+it('Given un botón discreto gris (ghost), When se estiliza, Then es transparente, gris y cumple 4,5:1 contra blanco', () => {
+  const cuerpo = bloque('.button--ghost')
+  const texto = cuerpo.match(/color:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+  expect(cuerpo).toMatch(/background:\s*transparent/)
+  expect(texto).not.toBe('')
+  expect((1.05) / (luz(texto) + 0.05)).toBeGreaterThanOrEqual(4.5)
+  expect(bloque('.button--ghost:hover')).toMatch(/background:\s*#eef2f6/)
+})
