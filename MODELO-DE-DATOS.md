@@ -201,6 +201,11 @@ Restricciones de base:
 
 Un usuario puede pertenecer a varios proyectos y puede existir sin ninguno.
 
+**Renombrado (HU-17):** cada persona puede cambiar su propio `nombre`; el sistema actualiza
+`nombre` y `nombre_normalizado` en una sola sentencia y aplica la misma unicidad del registro
+(sin distinguir mayúsculas). Votos, horas, integrantes, defectos y sesiones siguen asociados
+por `usuario_id`; no hay migración.
+
 ### 4.3 `integrantes` — HU-04 (antes `project_members`)
 
 | Columna | Tipo | Notas |
@@ -437,6 +442,7 @@ demás, en el servicio. Esto es lo que #19 mostró que faltaba.
 | Una baja no se aplica dos veces (HU-16) | `UPDATE` condicional (`fecha_baja IS NULL`): de dos pedidos simultáneos, uno solo cambia la fila | El servicio busca al objetivo entre los activos: 404 «integrante no encontrado» |
 | La reactivación reutiliza la fila (HU-16, D15) | `INSERT … ON CONFLICT (proyecto_id, usuario_id) DO UPDATE … WHERE integrantes.fecha_baja IS NOT NULL RETURNING creado_en`: sin fila devuelta, la persona ya era activa | `AsignarIntegrante` responde 400 «el integrante ya pertenece al proyecto» si es activa, o la reactiva con su `creado_en` original |
 | Al dar de baja se descartan sus votos no revelados (HU-16, FR-018) | Misma transacción que el `UPDATE` de la baja (`DELETE` de sus votos en rondas con `revelada_en IS NULL` del proyecto) | — . **Límite declarado:** `Votar` comprueba la pertenencia y después llama a `GuardarVoto` en dos pasos separados. Si la baja borra los votos de la persona justo entre esos dos pasos, su voto queda guardado y cuenta en el promedio de esa ronda. FR-014 cubre solo dos bajas al mismo tiempo; se acepta por lo improbable (equipos chicos, un solo Scrum Master) |
+| El renombrado del propio usuario es atómico y rechaza duplicados sin distinguir mayúsculas (HU-17) | `UPDATE usuarios SET nombre = ?, nombre_normalizado = ? WHERE id = ?`; `SQLITE_CONSTRAINT_UNIQUE` → 409 | Servicio y repositorio (HU-17) |
 
 ### Traducción de violaciones a errores
 
@@ -517,6 +523,7 @@ pendiente D17, que surgió del beta testing del
 | HU-07 Horas | `registros_horas` | `integrantes`, `historias`, `sprints` | 004 |
 | HU-08 Defectos | `defectos` | `historias`, `sprints` | 005 |
 | HU-20 Autenticación | `usuarios` (`contrasena_hash`), `sesiones` | `usuarios` | 006 |
+| HU-17 Renombrar usuario | `usuarios.nombre`, `usuarios.nombre_normalizado` | `usuarios` | sin migración |
 | HU-21 Permisos por rol | — | `integrantes`, `usuarios`, `sesiones` | sin migración |
 | #300 Cerrar y reabrir un proyecto | `proyectos.fecha_cierre` | `integrantes`, `sprints` | 008 |
 | HU-16 Gestión del equipo | `integrantes.fecha_baja`, `votos` (borra los de rondas no reveladas) | `integrantes`, `rondas_votacion`, `historias` | 009 |
