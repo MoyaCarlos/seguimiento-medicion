@@ -10,7 +10,9 @@ import {
   votar,
 } from './api'
 import { esVotacionNoIniciada, mensajeDeError } from './errores'
-import type { HistoriaResumen, Integrante, Votacion } from './votacion'
+import { estaRevelada, type HistoriaResumen, type Integrante, type Votacion } from './votacion'
+
+const INTERVALO_ACTUALIZACION_MS = 5000
 
 export function useVotacion(proyectoId: string, historiaId: number) {
   const [integrantes, setIntegrantes] = useState<Integrante[] | null>(null)
@@ -30,6 +32,7 @@ export function useVotacion(proyectoId: string, historiaId: number) {
 
   const consulta = `${historiaId}/${recarga}`
   const cargando = cargadaPara !== consulta
+  const rondaAbierta = votacion !== null && !estaRevelada(votacion)
   const reconsultar = useCallback(() => setRecarga((actual) => actual + 1), [])
   const recargar = useCallback(() => {
     setErrorDeAccion('')
@@ -37,6 +40,20 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     setActualizacion((actual) => actual + 1)
     reconsultar()
   }, [reconsultar])
+  const aplicarVotacion = useCallback((datos: Votacion) => {
+    setVotacion(datos)
+    setSinVotacion(false)
+    setErrorDeVotacion('')
+  }, [])
+  const procesarErrorDeVotacion = useCallback((causa: unknown) => {
+    if (esVotacionNoIniciada(causa)) {
+      setVotacion(null)
+      setSinVotacion(true)
+      setErrorDeVotacion('')
+      return
+    }
+    setErrorDeVotacion(mensajeDeError(causa))
+  }, [])
 
   useEffect(() => {
     let vigente = true
@@ -77,20 +94,10 @@ export function useVotacion(proyectoId: string, historiaId: number) {
 
     consultarVotacion(historiaId)
       .then((datos) => {
-        if (!sigueVigente()) return
-        setVotacion(datos)
-        setSinVotacion(false)
-        setErrorDeVotacion('')
+        if (sigueVigente()) aplicarVotacion(datos)
       })
       .catch((causa: unknown) => {
-        if (!sigueVigente()) return
-        if (esVotacionNoIniciada(causa)) {
-          setVotacion(null)
-          setSinVotacion(true)
-          setErrorDeVotacion('')
-        } else {
-          setErrorDeVotacion(mensajeDeError(causa))
-        }
+        if (sigueVigente()) procesarErrorDeVotacion(causa)
       })
       .finally(() => {
         if (vigente) setCargadaPara(consulta)
@@ -99,13 +106,36 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     return () => {
       vigente = false
     }
-  }, [historiaId, consulta])
+  }, [historiaId, consulta, aplicarVotacion, procesarErrorDeVotacion])
 
-  function mostrarVotacion(datos: Votacion) {
-    setVotacion(datos)
-    setSinVotacion(false)
-    setErrorDeVotacion('')
-  }
+  useEffect(() => {
+    if (!rondaAbierta || enviando || cargando) return
+
+    let vigente = true
+    let consultando = false
+
+    async function consultarEnSegundoPlano() {
+      if (consultando || document.visibilityState !== 'visible') return
+      consultando = true
+      const accionesAlConsultar = accionesIniciadas.current
+      const sigueVigente = () => vigente && accionesAlConsultar === accionesIniciadas.current
+      try {
+        const datos = await consultarVotacion(historiaId)
+        if (sigueVigente()) aplicarVotacion(datos)
+      } catch (causa) {
+        if (sigueVigente()) procesarErrorDeVotacion(causa)
+      } finally {
+        consultando = false
+      }
+    }
+
+    const intervalo = window.setInterval(consultarEnSegundoPlano, INTERVALO_ACTUALIZACION_MS)
+
+    return () => {
+      vigente = false
+      window.clearInterval(intervalo)
+    }
+  }, [rondaAbierta, enviando, cargando, historiaId, aplicarVotacion, procesarErrorDeVotacion])
 
   function mostrarEstimacion(datos: HistoriaResumen) {
     setHistoria(datos)
@@ -143,10 +173,10 @@ export function useVotacion(proyectoId: string, historiaId: number) {
     errorDeAccion,
     aviso,
     recargar,
-    iniciar: () => ejecutar(() => iniciarVotacion(historiaId), mostrarVotacion),
-    revelar: () => ejecutar(() => revelarVotacion(historiaId), mostrarVotacion),
-    votar: (valor: number) => ejecutar(() => votar(historiaId, valor), mostrarVotacion),
-    abrirNuevaRonda: () => ejecutar(() => abrirNuevaRonda(historiaId), mostrarVotacion),
+    iniciar: () => ejecutar(() => iniciarVotacion(historiaId), aplicarVotacion),
+    revelar: () => ejecutar(() => revelarVotacion(historiaId), aplicarVotacion),
+    votar: (valor: number) => ejecutar(() => votar(historiaId, valor), aplicarVotacion),
+    abrirNuevaRonda: () => ejecutar(() => abrirNuevaRonda(historiaId), aplicarVotacion),
     registrarEstimacion: (valor: number) =>
       ejecutar(() => registrarEstimacion(historiaId, valor), mostrarEstimacion),
   }
