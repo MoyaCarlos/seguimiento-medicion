@@ -12,6 +12,7 @@ import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyec
 import { crearHistoria } from './api'
 import { ESTADO_INICIAL, armarCuerpo, mapearError, parsearProyectoId, validarHistoria } from './historia'
 import type { ErrorDeCampo, FormularioHistoria, HistoriaCreada } from './historia'
+import { CampoMarkdown } from './CampoMarkdown'
 import { Markdown } from './Markdown'
 import { PRIORIDADES, VALORES_NEGOCIO, etiquetaPrioridad } from './opciones'
 import './backlog.css'
@@ -60,14 +61,6 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
 
   function cambiarTitulo(evento: ChangeEvent<HTMLInputElement>) {
     setFormulario((actual) => ({ ...actual, titulo: evento.target.value }))
-  }
-
-  function cambiarDescripcion(evento: ChangeEvent<HTMLTextAreaElement>) {
-    setFormulario((actual) => ({ ...actual, descripcion: evento.target.value }))
-  }
-
-  function cambiarCriterios(evento: ChangeEvent<HTMLTextAreaElement>) {
-    setFormulario((actual) => ({ ...actual, criterios: evento.target.value }))
   }
 
   function cambiarPrioridad(evento: ChangeEvent<HTMLSelectElement>) {
@@ -205,40 +198,27 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
             error={errores.titulo}
           />
 
-          <div className="field">
-            <label htmlFor="descripcion">Descripción</label>
-            <textarea
-              id="descripcion"
-              name="descripcion"
-              value={formulario.descripcion}
-              onChange={cambiarDescripcion}
-              disabled={deshabilitado}
-              aria-invalid={Boolean(errores.descripcion)}
-              aria-describedby={errores.descripcion ? 'descripcion-error' : undefined}
-            />
-            {errores.descripcion && (
-              <ErrorMessage id="descripcion-error" message={errores.descripcion} />
-            )}
-          </div>
+          <CampoMarkdown
+            id="descripcion"
+            name="descripcion"
+            label="Descripción"
+            value={formulario.descripcion}
+            onChange={(valor) =>
+              setFormulario((actual) => ({ ...actual, descripcion: valor }))
+            }
+            disabled={deshabilitado}
+            error={errores.descripcion}
+          />
 
-          <div className="field">
-            <label htmlFor="criterios">Criterios de aceptación</label>
-            <textarea
-              id="criterios"
-              name="criterios"
-              value={formulario.criterios}
-              onChange={cambiarCriterios}
-              disabled={deshabilitado}
-              aria-invalid={Boolean(errores.criterios)}
-              aria-describedby={errores.criterios ? 'criterios-error' : 'criterios-ayuda'}
-            />
-            <p id="criterios-ayuda" className="field__ayuda">
-              Opcional. Hasta 2000 caracteres. Admite Markdown.
-            </p>
-            {errores.criterios && (
-              <ErrorMessage id="criterios-error" message={errores.criterios} />
-            )}
-          </div>
+          <CampoMarkdown
+            id="criterios"
+            name="criterios"
+            label="Criterios de aceptación"
+            value={formulario.criterios}
+            onChange={(valor) => setFormulario((actual) => ({ ...actual, criterios: valor }))}
+            disabled={deshabilitado}
+            error={errores.criterios}
+          />
 
           <div className="backlog-form__fila">
             <div className="field">

@@ -18,3 +18,10 @@ type BuscadorCredenciales interface {
 	// contraseña (NULL) y domain.ErrNoEncontrado si no existe.
 	ObtenerPorNombreNormalizado(ctx context.Context, normalizado string) (domain.User, string, error)
 }
+
+// ActualizadorNombreUsuario cambia el nombre y la identidad normalizada del
+// propio usuario en una sola sentencia (HU-17). Devuelve ErrUsuarioDuplicado si
+// el nombre normalizado ya existe y domain.ErrNoEncontrado si el usuario no existe.
+type ActualizadorNombreUsuario interface {
+	CambiarNombre(ctx context.Context, id int64, nombre, nombreNormalizado string) error
+}

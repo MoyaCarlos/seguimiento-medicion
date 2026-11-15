@@ -1,4 +1,4 @@
-import { get, post } from '../../compartido/api/client'
+import { get, post, put } from '../../compartido/api/client'
 
 export type Usuario = { id: number; nombre: string }
 
@@ -14,6 +14,10 @@ export function ingresar(nombre: string, contrasena: string): Promise<RespuestaS
 
 export function yo(): Promise<Usuario> {
   return get<Usuario>('/auth/yo')
+}
+
+export function cambiarNombre(nombre: string): Promise<Usuario> {
+  return put<Usuario>('/auth/yo', { nombre })
 }
 
 export function salir(): Promise<void> {

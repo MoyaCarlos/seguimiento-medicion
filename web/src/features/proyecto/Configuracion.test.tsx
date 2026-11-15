@@ -198,6 +198,182 @@ describe('configuración del equipo - rol (HU-21)', () => {
   })
 })
 
+describe('quitar integrante desde Configurar equipo (HU-16, #182)', () => {
+  const equipo = [
+    {
+      id: 1,
+      proyecto_id: 3,
+      nombre: 'Ana',
+      rol: 'scrum_master',
+      vinculado_en: '2026-09-01T00:00:00Z',
+    },
+    {
+      id: 2,
+      proyecto_id: 3,
+      nombre: 'Jimena',
+      rol: 'product_builder',
+      vinculado_en: '2026-09-02T00:00:00Z',
+    },
+  ]
+  const usuarios = [
+    { id: 1, nombre: 'Ana' },
+    { id: 2, nombre: 'Jimena' },
+  ]
+
+  function responderEquipo(
+    quitar?: (id: number) => Response,
+    fechaCierre: string | null = null,
+    rol: 'scrum_master' | 'product_builder' = 'scrum_master',
+  ) {
+    const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+      if (url === '/projects/3' && (!init?.method || init.method === 'GET')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ id: 3, rol, fecha_cierre: fechaCierre })),
+        )
+      }
+      if (url === '/users') {
+        return Promise.resolve(new Response(JSON.stringify(usuarios)))
+      }
+      if (url.startsWith('/projects/3/members/') && init?.method === 'DELETE') {
+        const id = Number(url.split('/').pop())
+        return Promise.resolve(quitar?.(id) ?? new Response(null, { status: 204 }))
+      }
+      if (url === '/projects/3/members' && init?.method === 'POST') {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              id: 2,
+              proyecto_id: 3,
+              nombre: 'Jimena',
+              rol: 'product_builder',
+              vinculado_en: '2026-09-02T00:00:00Z',
+            }),
+            { status: 201 },
+          ),
+        )
+      }
+      return Promise.resolve(new Response(JSON.stringify(equipo)))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+
+  const filaDe = (nombre: string) => screen.getByText(nombre).closest('li') as HTMLElement
+  const articuloEquipo = () =>
+    screen.getByRole('heading', { name: 'Equipo del proyecto' }).closest('article') as HTMLElement
+
+  const pedirQuitar = (nombre: string) =>
+    userEvent.click(within(filaDe(nombre)).getByRole('button', { name: `Quitar a ${nombre}` }))
+
+  const confirmarQuitar = (nombre: string) =>
+    userEvent.click(within(filaDe(nombre)).getByRole('button', { name: 'Sí, quitar' }))
+
+  it('Given un equipo con Scrum Master y Product Builder, When se muestra, Then solo el Product Builder tiene «Quitar»', async () => {
+    responderEquipo()
+    abrir()
+
+    await screen.findByText('Ana')
+    expect(within(filaDe('Jimena')).getByRole('button', { name: 'Quitar a Jimena' })).toBeTruthy()
+    expect(within(filaDe('Ana')).queryByRole('button', { name: 'Quitar a Ana' })).toBeNull()
+  })
+
+  it('Given un Product Builder, When pulso «Quitar» y cancelo, Then no se llama a DELETE y la fila sigue', async () => {
+    const fetchMock = responderEquipo()
+    abrir()
+    await screen.findByText('Jimena')
+
+    await pedirQuitar('Jimena')
+    expect(within(filaDe('Jimena')).getByText('¿Quitar a Jimena del equipo?')).toBeTruthy()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+
+    await userEvent.click(within(filaDe('Jimena')).getByRole('button', { name: 'Cancelar' }))
+
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+    expect(screen.getByText('Jimena')).toBeTruthy()
+    expect(within(filaDe('Jimena')).queryByRole('button', { name: 'Sí, quitar' })).toBeNull()
+  })
+
+  it('Given un Product Builder, When confirmo «Quitar», Then se llama a DELETE, la fila desaparece y vuelve a estar disponible para el alta', async () => {
+    const fetchMock = responderEquipo()
+    abrir()
+    await screen.findByText('Jimena')
+
+    await pedirQuitar('Jimena')
+    await confirmarQuitar('Jimena')
+
+    await waitFor(() => expect(within(articuloEquipo()).queryByText('Jimena')).toBeNull())
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/3/members/2',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+
+    const selector = await screen.findByLabelText('Usuario')
+    await userEvent.selectOptions(selector, 'Jimena')
+    await userEvent.click(screen.getByRole('button', { name: 'Asignar integrante' }))
+
+    await waitFor(() => expect(within(articuloEquipo()).getByText('Jimena')).toBeTruthy())
+    expect(within(articuloEquipo()).getByText('Jimena').closest('li')?.textContent).toContain(
+      'Product Builder',
+    )
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/3/members',
+      expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('Given un proyecto cerrado con un Product Builder, When se muestra el equipo, Then «Quitar» queda deshabilitado con la nota y no envía', async () => {
+    const fetchMock = responderEquipo(undefined, '2026-11-10')
+    abrir()
+    await screen.findByText('Jimena')
+
+    const boton = within(filaDe('Jimena')).getByRole('button', {
+      name: 'Quitar a Jimena',
+    }) as HTMLButtonElement
+    await waitFor(() => expect(boton.disabled).toBe(true))
+    expect(boton.getAttribute('aria-describedby')).toBe('configuracion-nota-quitar')
+    expect(document.getElementById('configuracion-nota-quitar')?.textContent).toBe(
+      'El proyecto está cerrado',
+    )
+    expect(screen.queryByText('Solo el Scrum Master puede quitar integrantes')).toBeNull()
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === 'DELETE')).toHaveLength(0)
+  })
+
+  it('Given un Product Builder en un proyecto abierto, When se muestra el equipo, Then «Quitar» queda deshabilitado con la nota de gestión', async () => {
+    responderEquipo(undefined, null, 'product_builder')
+    abrir()
+    await screen.findByText('Jimena')
+
+    const boton = within(filaDe('Jimena')).getByRole('button', {
+      name: 'Quitar a Jimena',
+    }) as HTMLButtonElement
+    await waitFor(() => expect(boton.disabled).toBe(true))
+    expect(boton.getAttribute('aria-describedby')).toBe('configuracion-nota-quitar')
+    expect(document.getElementById('configuracion-nota-quitar')?.textContent).toBe(
+      'Solo el Scrum Master puede quitar integrantes',
+    )
+    expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
+  })
+
+  it.each([
+    [409, 'No se puede quitar al Scrum Master del proyecto'],
+    [404, 'integrante no encontrado'],
+    [403, 'Solo el Scrum Master puede realizar esta acción'],
+  ])(
+    'Given el servidor responde %i, When confirmo «Quitar», Then se muestra «%s» y la fila sigue',
+    async (status, mensaje) => {
+      responderEquipo(() => new Response(JSON.stringify({ mensaje }), { status }))
+      abrir()
+      await screen.findByText('Jimena')
+
+      await pedirQuitar('Jimena')
+      await confirmarQuitar('Jimena')
+
+      expect(await screen.findByText(mensaje)).toBeTruthy()
+      expect(screen.getByText('Jimena')).toBeTruthy()
+    },
+  )
+})
+
 describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const NOTA_CERRADO = 'El proyecto está cerrado'
   const NOTA_HU21 = 'Solo el Scrum Master puede agregar integrantes'

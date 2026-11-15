@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ApiError, ConnectionError, get, post, put } from './client'
+import { ApiError, ConnectionError, del, get, post, put } from './client'
 import { configurarSesionHttp } from './sesionHttp'
 
 function respondWith(body: BodyInit | null, status: number) {
@@ -177,6 +177,18 @@ describe('cliente de la API', () => {
         headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
       }),
     )
+  })
+
+  it('del usa el método DELETE sin cuerpo y acepta una respuesta 204', async () => {
+    const fetchMock = respondWith(null, 204)
+
+    await expect(del('/projects/1/members/2')).resolves.toBeUndefined()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/projects/1/members/2',
+      expect.objectContaining({ method: 'DELETE' }),
+    )
+    expect((fetchMock.mock.calls[0][1] as RequestInit).body).toBeUndefined()
   })
 })
 

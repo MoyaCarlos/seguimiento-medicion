@@ -77,7 +77,8 @@ paths:
         (issue #248). Una edición con cualquier campo inválido se rechaza entera.
         Si la historia está en un Sprint Activo o Finalizado y ya tiene Story
         Points, no se pueden cambiar (D2b); cargarlos cuando estaban en null sí
-        se permite.
+        se permite. D2b se evalúa otra vez en el mismo UPDATE que escribe: si el
+        Sprint cambió entre la validación y la escritura, responde 409 (#249).
       operationId: editarHistoria
       parameters:
         - $ref: '#/components/parameters/ID'
@@ -141,15 +142,22 @@ paths:
                     mensaje: el campo es obligatorio
         '409':
           description: >-
-            La estimación cambió desde que el formulario la leyó; no se modifica
-            la historia (issue #248).
+            No se modifica la historia: la estimación cambió desde que el
+            formulario la leyó (issue #248) o el Sprint cambió a un estado que
+            la congela entre la validación y la escritura (#249).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-              example:
-                campo: estimacion_sp
-                mensaje: "la estimación cambió mientras editabas: recargá la historia y volvé a intentar"
+              examples:
+                estimacionDesactualizada:
+                  value:
+                    campo: estimacion_sp
+                    mensaje: "la estimación cambió mientras editabas: recargá la historia y volvé a intentar"
+                d2bCambio:
+                  value:
+                    campo: estimacion_sp
+                    mensaje: "la historia cambió mientras la editabas: recargá y volvé a intentar"
         '404':
           description: La historia no existe.
           content:

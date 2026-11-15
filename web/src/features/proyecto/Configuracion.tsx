@@ -10,7 +10,7 @@ import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCer
 import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { NotaGestion } from '../../compartido/permisos/NotaGestion'
 import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
-import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes, listarUsuarios } from './api'
+import { ETIQUETAS_ROL, asignarIntegrante, listarIntegrantes, listarUsuarios, quitarIntegrante } from './api'
 import type { Integrante, UsuarioRegistrado } from './api'
 import { CampoSelect } from './Campos'
 import { mensajeDeError } from './errores'
@@ -28,6 +28,10 @@ export function Configuracion() {
   const [errorGeneral, setErrorGeneral] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [sinPermiso, setSinPermiso] = useState('')
+  const [confirmandoQuitarId, setConfirmandoQuitarId] = useState<number | null>(null)
+  const [quitandoId, setQuitandoId] = useState<number | null>(null)
+  const [errorQuitar, setErrorQuitar] = useState('')
+  const [sinPermisoQuitar, setSinPermisoQuitar] = useState('')
   const { cerrado, fechaCierre, puedeGestionar } = usePermisosProyecto(Number(id))
 
   useEffect(() => {
@@ -97,6 +101,27 @@ export function Configuracion() {
       }
     } finally {
       setEnviando(false)
+    }
+  }
+
+  async function quitar(integrante: Integrante) {
+    if (!puedeGestionar) return
+    setErrorQuitar('')
+    setSinPermisoQuitar('')
+    setQuitandoId(integrante.id)
+    try {
+      await quitarIntegrante(id, integrante.id)
+      setIntegrantes((actuales) => actuales.filter((actual) => actual.id !== integrante.id))
+      setConfirmandoQuitarId(null)
+    } catch (error) {
+      setConfirmandoQuitarId(null)
+      if (error instanceof ApiError && error.tipo === 'sin_permiso') {
+        setSinPermisoQuitar(error.message)
+      } else {
+        setErrorQuitar(mensajeDeError(error))
+      }
+    } finally {
+      setQuitandoId(null)
     }
   }
 
@@ -171,6 +196,15 @@ export function Configuracion() {
           <h2>Equipo del proyecto</h2>
           {cargando && <LoadingIndicator />}
           {errorLista && <ErrorMessage message={errorLista} />}
+          {errorQuitar && <ErrorMessage message={errorQuitar} />}
+          {sinPermisoQuitar && <AvisoSinPermiso mensaje={sinPermisoQuitar} />}
+          {cerrado && <NotaCerrado id="configuracion-nota-quitar" />}
+          {!cerrado && !puedeGestionar && (
+            <NotaGestion
+              id="configuracion-nota-quitar"
+              texto="Solo el Scrum Master puede quitar integrantes"
+            />
+          )}
           {!cargando && !errorLista && integrantes.length === 0 && (
             <p className="hu04-intro">Todavía no hay integrantes asignados.</p>
           )}
@@ -178,8 +212,51 @@ export function Configuracion() {
             <ul className="hu04-equipo">
               {integrantes.map((integrante) => (
                 <li key={integrante.id}>
-                  <span>{integrante.nombre}</span>
-                  <strong>{ETIQUETAS_ROL[integrante.rol]}</strong>
+                  <div className="hu04-equipo__persona">
+                    <span>{integrante.nombre}</span>
+                    <strong>{ETIQUETAS_ROL[integrante.rol]}</strong>
+                  </div>
+                  {integrante.rol === 'product_builder' && (
+                    <div className="hu04-equipo__acciones">
+                      {confirmandoQuitarId === integrante.id ? (
+                        <div className="hu04-confirmacion">
+                          <p>¿Quitar a {integrante.nombre} del equipo?</p>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => setConfirmandoQuitarId(null)}
+                            disabled={quitandoId === integrante.id}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={() => quitar(integrante)}
+                            disabled={quitandoId === integrante.id}
+                          >
+                            Sí, quitar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="quiet"
+                          aria-label={`Quitar a ${integrante.nombre}`}
+                          onClick={() => {
+                            setErrorQuitar('')
+                            setSinPermisoQuitar('')
+                            setConfirmandoQuitarId(integrante.id)
+                          }}
+                          disabled={!puedeGestionar}
+                          aria-describedby={
+                            puedeGestionar ? undefined : 'configuracion-nota-quitar'
+                          }
+                        >
+                          Quitar
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

@@ -217,6 +217,17 @@ describe('listado del Product Backlog (US1)', () => {
 })
 
 describe('edición de una historia (US2)', () => {
+  it('Given el formulario de edición, When se muestra, Then Descripción y Criterios admiten Markdown con ayuda y barra', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await abrirEdicion(MUST.titulo)
+
+    expect(screen.getAllByText(/Admite Markdown/)).toHaveLength(2)
+    expect(screen.getAllByRole('toolbar', { name: 'Formato Markdown' })).toHaveLength(2)
+    expect(screen.getAllByRole('tab', { name: 'Vista previa' })).toHaveLength(2)
+  })
+
   it('US2.1: al guardar envía los cuatro campos y actualiza el listado conservando id y estado', async () => {
     const actualizada: Historia = {
       ...MUST,
@@ -986,7 +997,7 @@ describe('respuesta tardía de una carga vieja al cambiar de proyecto', () => {
 })
 
 describe('paneles de Editar y Asignar según el prototipo (#230)', () => {
-  it('Given una historia en edición, When se abre el panel, Then los criterios explican el límite y el Markdown, y «Cancelar» es el botón discreto', async () => {
+  it('Given una historia en edición, When se abre el panel, Then los criterios explican la sintaxis Markdown con la ayuda del editor (#326), y «Cancelar» es el botón discreto', async () => {
     simularApi(conHistorias(MUST))
     abrir()
     await screen.findByRole('heading', { level: 2 })
@@ -994,7 +1005,7 @@ describe('paneles de Editar y Asignar según el prototipo (#230)', () => {
     await abrirEdicion(MUST.titulo)
 
     const panel = await screen.findByRole('form', { name: `Editar ${MUST.titulo}` })
-    expect(within(panel).getByText('Hasta 2000 caracteres. Admite Markdown.')).toBeTruthy()
+    expect(panel.querySelector('[id$="criterios-ayuda"]')?.textContent).toMatch(/^Admite Markdown: negrita, listas, enlaces/)
     expect(within(panel).getByLabelText('Story Points').closest('.field')?.className).toContain('backlog-campo--corto')
     expect(within(panel).getByRole('button', { name: 'Cancelar' }).className).toContain('button--quiet')
   })

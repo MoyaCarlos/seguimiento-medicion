@@ -170,7 +170,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado),
 		errors.Is(err, domain.ErrHistoriaNoEncontrada), errors.Is(err, domain.ErrVotacionNoIniciada),
 		errors.Is(err, domain.ErrDefectoNoEncontrado), errors.Is(err, domain.ErrUsuarioNoEncontrado),
-		errors.Is(err, domain.ErrIntegranteNoEncontrado):
+		errors.Is(err, domain.ErrIntegranteNoEncontrado), errors.Is(err, domain.ErrNoEncontrado):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})
@@ -190,8 +190,10 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrConflictoEstadoHistoria):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: "la historia cambió de estado mientras tanto: recargá y volvé a intentar"})
-	case errors.Is(err, domain.ErrEstimacionDesactualizada):
-		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "estimacion_sp", Mensaje: domain.ErrEstimacionDesactualizada.Error()})
+	case errors.Is(err, domain.ErrEstimacionDesactualizada), errors.Is(err, domain.ErrEdicionDesactualizada):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Campo: "estimacion_sp", Mensaje: err.Error()})
+	case errors.Is(err, domain.ErrRegistroEstimacionDesactualizado):
+		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: domain.ErrRegistroEstimacionDesactualizado.Error()})
 	case errors.Is(err, repository.ErrHistoriaFueraDelSprint):
 		escribirJSON(w, nethttp.StatusConflict, errorResponse{Mensaje: repository.ErrHistoriaFueraDelSprint.Error()})
 	case errors.Is(err, domain.ErrReporteNoGenerado):

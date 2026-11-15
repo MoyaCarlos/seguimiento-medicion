@@ -50,6 +50,28 @@ func (c *credencialesEnMemoriaHTTP) ObtenerPorNombreNormalizado(_ context.Contex
 	return u, c.hashes[normalizado], nil
 }
 
+func (c *credencialesEnMemoriaHTTP) CambiarNombre(_ context.Context, id int64, nombre, normalizado string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for clave, u := range c.usuarios {
+		if u.ID != id {
+			continue
+		}
+		if existente, ok := c.usuarios[normalizado]; ok && existente.ID != id {
+			return repository.ErrUsuarioDuplicado
+		}
+		hash := c.hashes[clave]
+		delete(c.usuarios, clave)
+		delete(c.hashes, clave)
+		u.Nombre = nombre
+		u.NombreNormalizado = normalizado
+		c.usuarios[normalizado] = u
+		c.hashes[normalizado] = hash
+		return nil
+	}
+	return domain.ErrNoEncontrado
+}
+
 type sesionesEnMemoriaHTTP struct {
 	mu           sync.Mutex
 	sesiones     map[string]domain.Sesion
@@ -126,7 +148,8 @@ func nuevoAuthHandlerConSesiones() (*AuthHandler, *credencialesEnMemoriaHTTP, *s
 	ingresar := service.NewIngresar(credenciales, hasheador, emisor)
 	obtener := service.NewObtenerSesion(sesiones, reloj)
 	cerrar := service.NewCerrarSesion(obtener, sesiones, reloj)
-	return NewAuthHandler(registrar, ingresar, obtener, cerrar), credenciales, sesiones, &ahora
+	cambiarNombre := service.NewCambiarNombreUsuario(credenciales)
+	return NewAuthHandler(registrar, ingresar, obtener, cerrar, cambiarNombre), credenciales, sesiones, &ahora
 }
 
 func postRegistro(h *AuthHandler, cuerpo string) *httptest.ResponseRecorder {

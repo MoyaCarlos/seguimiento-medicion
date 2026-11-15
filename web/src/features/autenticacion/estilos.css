@@ -514,3 +514,15 @@
   background: rgb(255 255 255 / 9%);
   color: #fff;
 }
+
+.menu-usuario__cambio {
+  display: grid;
+  gap: 12px;
+  padding: 8px;
+}
+
+.menu-usuario__cambio-acciones {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

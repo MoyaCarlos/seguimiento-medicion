@@ -328,6 +328,25 @@
   overflow-wrap: anywhere;
 }
 
+.backlog .markdown h1,
+.backlog .markdown h2,
+.backlog .markdown h3 {
+  line-height: 1.3;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.backlog .markdown h1 {
+  font-size: 1.25rem;
+}
+
+.backlog .markdown h2 {
+  font-size: 1.15rem;
+}
+
+.backlog .markdown h3 {
+  font-size: 1.1rem;
+}
+
 .backlog .markdown > :first-child {
   margin-top: 0;
 }
@@ -379,7 +398,9 @@
 
 .backlog .markdown img {
   height: auto;
+  max-height: 20rem;
   max-width: 100%;
+  object-fit: contain;
 }
 
 .backlog-edicion,
@@ -500,3 +521,77 @@
   }
 }
 
+
+.campo-markdown {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.campo-markdown-pestanas {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.campo-markdown-pestanas button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.45rem;
+}
+
+.campo-markdown-pestanas button[aria-selected='true'] {
+  border-color: var(--lilac-dark);
+  color: var(--ink);
+}
+
+.campo-markdown-herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.campo-markdown-herramientas button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+}
+
+.campo-markdown-herramientas button:hover:not(:disabled) {
+  background: var(--background);
+}
+
+.campo-markdown-herramientas button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.campo-markdown-vista {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  min-height: 6rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.campo-markdown-vacio {
+  color: var(--muted);
+  margin: 0;
+}
+
+.campo-markdown-ayuda {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+}

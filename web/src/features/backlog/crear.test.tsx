@@ -528,6 +528,14 @@ describe('criterios de aceptación de #174', () => {
     expect(screen.getByLabelText('Criterios de aceptación')).toBeTruthy()
   })
 
+  it('Given el formulario de creación, When se muestra, Then Descripción y Criterios admiten Markdown con ayuda y barra', () => {
+    abrir()
+
+    expect(screen.getAllByText(/Admite Markdown/)).toHaveLength(2)
+    expect(screen.getAllByRole('toolbar', { name: 'Formato Markdown' })).toHaveLength(2)
+    expect(screen.getAllByRole('tab', { name: 'Vista previa' })).toHaveLength(2)
+  })
+
   it('envía los criterios recortados y los muestra en la confirmación con Markdown', async () => {
     const criterios = '**Dado** un usuario, cuando ingresa, entonces accede.'
     const fetchMock = responderCreada({ criterios_aceptacion: criterios })
@@ -627,10 +635,10 @@ describe('presentación del cajón según el prototipo (#230)', () => {
     expect(screen.getByText('Se agrega al Product Backlog del proyecto #42.')).toBeTruthy()
   })
 
-  it('Given el campo de criterios, When se muestra, Then explica que es opcional, el límite y que admite Markdown', () => {
+  it('Given el campo de criterios, When se muestra, Then explica con la ayuda del editor de Markdown (#326) qué sintaxis admite', () => {
     abrir()
 
-    expect(screen.getByText('Opcional. Hasta 2000 caracteres. Admite Markdown.')).toBeTruthy()
+    expect(document.getElementById('criterios-ayuda')?.textContent).toMatch(/^Admite Markdown: negrita, listas, enlaces/)
   })
 
   it('Given el formulario, When se muestra, Then «Cancelar» lo cierra volviendo a /backlog', async () => {

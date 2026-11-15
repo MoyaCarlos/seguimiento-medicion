@@ -1,4 +1,4 @@
-import { descargar, get, post, put } from '../../compartido/api/client'
+import { del, descargar, get, post, put } from '../../compartido/api/client'
 import { aHorasPorStoryPoint } from './validacion'
 import type { DatosProyecto } from './validacion'
 
@@ -72,6 +72,9 @@ export const listarIntegrantes = (id: string) =>
 
 export const asignarIntegrante = (id: string, datos: NuevoIntegrante) =>
   post<Integrante>(`/projects/${id}/members`, datos)
+
+export const quitarIntegrante = (id: string, usuarioId: number) =>
+  del<void>(`/projects/${id}/members/${usuarioId}`)
 
 export type UsuarioRegistrado = {
   id: number

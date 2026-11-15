@@ -91,6 +91,107 @@ func TestSQLiteCredencialRepository_InexistenteEsNoEncontrado(t *testing.T) {
 	}
 }
 
+func TestSQLiteCredencialRepository_CambiarNombreActualizaLaIdentidad(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSQLiteCredencialRepository(nuevaBDMigrada(t))
+	ana, err := repo.Registrar(ctx, nuevoUsuario(t, "ana"), "hash-ana")
+	if err != nil {
+		t.Fatalf("preparar usuario: %v", err)
+	}
+
+	if err := repo.CambiarNombre(ctx, ana.ID, "Ana.Perez", "ana.perez"); err != nil {
+		t.Fatalf("no se esperaba error al renombrar: %v", err)
+	}
+
+	actualizada, hash, err := repo.ObtenerPorNombreNormalizado(ctx, "ana.perez")
+	if err != nil {
+		t.Fatalf("no se encontró el nombre nuevo: %v", err)
+	}
+	if actualizada.ID != ana.ID || actualizada.Nombre != "Ana.Perez" || hash != "hash-ana" {
+		t.Errorf("usuario renombrado inesperado: %+v, hash %q", actualizada, hash)
+	}
+	if _, _, err := repo.ObtenerPorNombreNormalizado(ctx, "ana"); !errors.Is(err, domain.ErrNoEncontrado) {
+		t.Errorf("el nombre anterior debía dejar de existir, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteCredencialRepository_CambiarNombreDuplicado(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSQLiteCredencialRepository(nuevaBDMigrada(t))
+	ana, err := repo.Registrar(ctx, nuevoUsuario(t, "ana"), "h1")
+	if err != nil {
+		t.Fatalf("preparar a Ana: %v", err)
+	}
+	if _, err := repo.Registrar(ctx, nuevoUsuario(t, "bruno"), "h2"); err != nil {
+		t.Fatalf("preparar a Bruno: %v", err)
+	}
+
+	err = repo.CambiarNombre(ctx, ana.ID, "BRUNO", "bruno")
+
+	if !errors.Is(err, ErrUsuarioDuplicado) {
+		t.Fatalf("se esperaba ErrUsuarioDuplicado, se obtuvo %v", err)
+	}
+	guardada, _, err := repo.ObtenerPorNombreNormalizado(ctx, "ana")
+	if err != nil || guardada.Nombre != "ana" {
+		t.Errorf("Ana debía conservar su nombre: %+v, %v", guardada, err)
+	}
+}
+
+func TestSQLiteCredencialRepository_CambiarNombreInexistente(t *testing.T) {
+	repo := NewSQLiteCredencialRepository(nuevaBDMigrada(t))
+
+	err := repo.CambiarNombre(context.Background(), 999, "nuevo", "nuevo")
+
+	if !errors.Is(err, domain.ErrNoEncontrado) {
+		t.Fatalf("se esperaba domain.ErrNoEncontrado, se obtuvo %v", err)
+	}
+}
+
+func TestSQLiteCredencialRepository_CambiarNombreConcurrente(t *testing.T) {
+	ctx := context.Background()
+	repo := NewSQLiteCredencialRepository(nuevaBDMigrada(t))
+	ana, err := repo.Registrar(ctx, nuevoUsuario(t, "ana"), "h1")
+	if err != nil {
+		t.Fatalf("preparar a Ana: %v", err)
+	}
+	bruno, err := repo.Registrar(ctx, nuevoUsuario(t, "bruno"), "h2")
+	if err != nil {
+		t.Fatalf("preparar a Bruno: %v", err)
+	}
+
+	errs := make([]error, 2)
+	var listos, arranque sync.WaitGroup
+	listos.Add(2)
+	arranque.Add(1)
+	go func() {
+		defer listos.Done()
+		arranque.Wait()
+		errs[0] = repo.CambiarNombre(ctx, ana.ID, "Nuevo", "nuevo")
+	}()
+	go func() {
+		defer listos.Done()
+		arranque.Wait()
+		errs[1] = repo.CambiarNombre(ctx, bruno.ID, "NUEVO", "nuevo")
+	}()
+	arranque.Done()
+	listos.Wait()
+
+	var exitos, duplicados int
+	for _, err := range errs {
+		switch {
+		case err == nil:
+			exitos++
+		case errors.Is(err, ErrUsuarioDuplicado):
+			duplicados++
+		default:
+			t.Errorf("error inesperado: %v", err)
+		}
+	}
+	if exitos != 1 || duplicados != 1 {
+		t.Errorf("se esperaba 1 renombrado y 1 duplicado, se obtuvo %d y %d", exitos, duplicados)
+	}
+}
+
 func TestSQLiteCredencialRepository_RegistroConcurrenteDelMismoNombre(t *testing.T) {
 	ctx := context.Background()
 	repo := NewSQLiteCredencialRepository(nuevaBDMigrada(t))

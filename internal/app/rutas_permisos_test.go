@@ -25,6 +25,7 @@ var nivelesDeLaSpec = map[string]apihttp.NivelRuta{
 	"/demo/":              apihttp.Publica,
 
 	"GET /auth/yo":     apihttp.Lectura,
+	"PUT /auth/yo":     apihttp.SoloSesion,
 	"POST /auth/salir": apihttp.SoloSesion,
 	"POST /projects":   apihttp.SoloSesion,
 	"GET /users":       apihttp.SoloSesion,

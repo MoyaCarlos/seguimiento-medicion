@@ -6,6 +6,7 @@ import { Field } from '../../compartido/componentes/Field'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { editarHistoria, obtenerHistoria } from './api'
+import { CampoMarkdown } from './CampoMarkdown'
 import {
   armarCuerpoEdicion,
   campoDeEdicion,
@@ -116,40 +117,25 @@ export function Edicion({
         error={errores.titulo}
       />
 
-      <div className="field">
-        <label htmlFor={id('descripcion')}>Descripción</label>
-        <textarea
-          id={id('descripcion')}
-          name="descripcion"
-          value={formulario.descripcion}
-          onChange={(evento) => actualizar('descripcion', evento.target.value)}
-          disabled={enviando}
-          aria-invalid={Boolean(errores.descripcion)}
-          aria-describedby={errores.descripcion ? `${id('descripcion')}-error` : undefined}
-        />
-        {errores.descripcion && (
-          <ErrorMessage id={`${id('descripcion')}-error`} message={errores.descripcion} />
-        )}
-      </div>
+      <CampoMarkdown
+        id={id('descripcion')}
+        name="descripcion"
+        label="Descripción"
+        value={formulario.descripcion}
+        onChange={(valor) => actualizar('descripcion', valor)}
+        disabled={enviando}
+        error={errores.descripcion}
+      />
 
-      <div className="field">
-        <label htmlFor={id('criterios')}>Criterios de aceptación</label>
-        <textarea
-          id={id('criterios')}
-          name="criterios"
-          value={formulario.criterios}
-          onChange={(evento) => actualizar('criterios', evento.target.value)}
-          disabled={enviando}
-          aria-invalid={Boolean(errores.criterios)}
-          aria-describedby={errores.criterios ? `${id('criterios')}-error` : `${id('criterios')}-ayuda`}
-        />
-        <p id={`${id('criterios')}-ayuda`} className="field__ayuda">
-          Hasta 2000 caracteres. Admite Markdown.
-        </p>
-        {errores.criterios && (
-          <ErrorMessage id={`${id('criterios')}-error`} message={errores.criterios} />
-        )}
-      </div>
+      <CampoMarkdown
+        id={id('criterios')}
+        name="criterios"
+        label="Criterios de aceptación"
+        value={formulario.criterios}
+        onChange={(valor) => actualizar('criterios', valor)}
+        disabled={enviando}
+        error={errores.criterios}
+      />
 
       <div className="field backlog-campo--corto">
         <label htmlFor={id('estimacion')}>Story Points</label>

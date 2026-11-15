@@ -77,3 +77,12 @@ it('Given el bloque de usuario del pie de la barra lateral, When se estiliza, Th
   expect(regla('.bloque-usuario strong')).toMatch(/color:\s*#fff/)
   expect(regla('.bloque-usuario__salir')).toMatch(/width:\s*34px/)
 })
+
+it('Given el formulario de «Cambiar nombre» dentro del menú, When se estiliza, Then es una grilla de 12px con relleno de 8px y los botones van a la derecha', () => {
+  const formulario = regla('.menu-usuario__cambio')
+
+  expect(formulario).toMatch(/display:\s*grid/)
+  expect(formulario).toMatch(/gap:\s*12px/)
+  expect(formulario).toMatch(/padding:\s*8px/)
+  expect(regla('.menu-usuario__cambio-acciones')).toMatch(/justify-content:\s*flex-end/)
+})
