@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-15
 
-**Status**: Implementada (pendiente de PR)
+**Status**: Implementada (PR #327, pendiente de review)
 
 **Relacionado**: PR #217 (HU-11 frontend), spec 027, #215, #218. Solo frontend; no cambia la
 API, el esquema ni las reglas de negocio de HU-11.
