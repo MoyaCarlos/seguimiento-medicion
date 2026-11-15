@@ -72,17 +72,6 @@ export function CampoMarkdown({
     enfocar(inicioLinea + nuevoBloque.length, inicioLinea + nuevoBloque.length)
   }
 
-  const boton = (etiqueta: string, accion: () => void) => (
-    <button
-      type="button"
-      onMouseDown={(evento) => evento.preventDefault()}
-      onClick={accion}
-      disabled={disabled}
-    >
-      {etiqueta}
-    </button>
-  )
-
   return (
     <div className="field campo-markdown">
       <label htmlFor={id}>{label}</label>
@@ -109,13 +98,62 @@ export function CampoMarkdown({
       {vista === 'escribir' ? (
         <>
           <div className="campo-markdown-herramientas" role="toolbar" aria-label="Formato Markdown">
-            {boton('Título', () => prefijar('# '))}
-            {boton('Negrita', () => envolver('**', '**', 'negrita'))}
-            {boton('Cursiva', () => envolver('*', '*', 'cursiva'))}
-            {boton('Lista', () => prefijar('- '))}
-            {boton('Enlace', () => envolver('[', '](https://ejemplo.com)', 'texto'))}
-            {boton('Código', () => envolver('`', '`', 'código'))}
-            {boton('Imagen', () => envolver('![', '](https://ejemplo.com/imagen.png)', 'texto'))}
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => prefijar('# ')}
+              disabled={disabled}
+            >
+              Título
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => envolver('**', '**', 'negrita')}
+              disabled={disabled}
+            >
+              Negrita
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => envolver('*', '*', 'cursiva')}
+              disabled={disabled}
+            >
+              Cursiva
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => prefijar('- ')}
+              disabled={disabled}
+            >
+              Lista
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => envolver('[', '](https://ejemplo.com)', 'texto')}
+              disabled={disabled}
+            >
+              Enlace
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => envolver('`', '`', 'código')}
+              disabled={disabled}
+            >
+              Código
+            </button>
+            <button
+              type="button"
+              onMouseDown={(evento) => evento.preventDefault()}
+              onClick={() => envolver('![', '](https://ejemplo.com/imagen.png)', 'texto')}
+              disabled={disabled}
+            >
+              Imagen
+            </button>
           </div>
 
           <textarea
