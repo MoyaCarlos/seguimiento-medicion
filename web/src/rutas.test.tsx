@@ -463,6 +463,79 @@ describe('registro de rutas', () => {
       })
     })
 
+    describe('cerrar y reabrir el proyecto abierto', () => {
+      type ProyectoSimulado = { id: number; nombre: string; fecha_cierre?: string | null }
+
+      function simularCierre(inicial: string | null, respuestaPost?: () => Response) {
+        let cierre = inicial
+        proyectosSimulados = [{ id: 27, nombre: 'Beta', fecha_cierre: cierre } as ProyectoSimulado]
+        vi.stubGlobal(
+          'fetch',
+          vi.fn((url: string, init?: RequestInit) => {
+            if (init?.method === 'POST' && /^\/projects\/27\/(cerrar|reabrir)$/.test(url)) {
+              if (respuestaPost) return Promise.resolve(respuestaPost())
+              cierre = url.endsWith('/cerrar') ? '2026-11-14' : null
+              proyectosSimulados = [{ id: 27, nombre: 'Beta', fecha_cierre: cierre } as ProyectoSimulado]
+              return Promise.resolve(
+                new Response(
+                  JSON.stringify({ ...PROYECTO, id: 27, rol: 'scrum_master', fecha_cierre: cierre, estado: cierre ? 'Finalizado' : 'En curso' }),
+                  { status: 200 },
+                ),
+              )
+            }
+            if (url === '/projects/27') {
+              return Promise.resolve(
+                new Response(JSON.stringify({ ...PROYECTO, id: 27, rol: 'scrum_master', fecha_cierre: cierre }), { status: 200 }),
+              )
+            }
+            return Promise.resolve(new Response(responderListado(url), { status: 200 }))
+          }),
+        )
+      }
+
+      it('al cerrar el proyecto se vuelve a pedir el listado y «Proyectos» lo muestra en «Proyectos cerrados» sin recargar la página', async () => {
+        simularCierre(null)
+        const usuario = userEvent.setup()
+        const router = abrir('/projects/27/proyecto/edit')
+        await esperarProyectoEnSelector('Beta')
+        await usuario.click(await screen.findByRole('button', { name: 'Cerrar proyecto' }, { timeout: 5000 }))
+
+        await usuario.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+        await waitFor(() => expect(llamadasAlListado()).toBe(2), { timeout: 5000 })
+        await act(() => router.navigate('/'))
+        const cerrados = (await screen.findByRole('heading', { name: 'Proyectos cerrados' }, { timeout: 5000 })).closest('section') as HTMLElement
+        expect(within(cerrados).getByText('Cerrado el 14/11/2026')).toBeTruthy()
+      })
+
+      it('al reabrir el proyecto se vuelve a pedir el listado y vuelve a la lista de abiertos', async () => {
+        simularCierre('2026-11-10')
+        const usuario = userEvent.setup()
+        const router = abrir('/projects/27/proyecto/edit')
+        await esperarProyectoEnSelector('Beta')
+
+        await usuario.click(await screen.findByRole('button', { name: 'Reabrir proyecto' }, { timeout: 5000 }))
+
+        await waitFor(() => expect(llamadasAlListado()).toBe(2), { timeout: 5000 })
+        await act(() => router.navigate('/'))
+        await screen.findByRole('link', { name: 'Beta (#27)' }, { timeout: 5000 })
+        expect(screen.queryByRole('heading', { name: 'Proyectos cerrados' })).toBeNull()
+      })
+
+      it('si el cierre falla no se vuelve a pedir el listado', async () => {
+        simularCierre(null, () => new Response(JSON.stringify({ mensaje: 'Cerrá el Sprint activo antes de cerrar el proyecto' }), { status: 409 }))
+        const usuario = userEvent.setup()
+        abrir('/projects/27/proyecto/edit')
+        await esperarProyectoEnSelector('Beta')
+        await usuario.click(await screen.findByRole('button', { name: 'Cerrar proyecto' }, { timeout: 5000 }))
+
+        await usuario.click(screen.getByRole('button', { name: 'Confirmar' }))
+
+        expect(await screen.findByText('Cerrá el Sprint activo antes de cerrar el proyecto')).toBeTruthy()
+        expect(llamadasAlListado()).toBe(1)
+      })
+    })
+
     it('US1.4: al cambiar de proyecto la pantalla no muestra datos del proyecto anterior', async () => {
       proyectosSimulados = DOS_PROYECTOS
       const historia = {
