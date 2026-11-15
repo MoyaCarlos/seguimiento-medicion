@@ -221,7 +221,9 @@ export function Configuracion() {
                     </small>
                   </span>
                   {integrante.rol === 'product_builder' && (
-                    <div className="equipo-acciones">
+                    <div
+                      className={`equipo-acciones${confirmandoQuitarId === integrante.id ? ' equipo-acciones--confirmando' : ''}`}
+                    >
                       {confirmandoQuitarId === integrante.id ? (
                         <div className="hu04-confirmacion">
                           <p>¿Quitar a {integrante.nombre} del equipo?</p>

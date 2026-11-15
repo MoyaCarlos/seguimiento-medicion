@@ -598,12 +598,13 @@
 .equipo-lista li {
   align-items: center;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 8px 4px;
 }
 
 .equipo-persona {
-  flex: 1;
+  flex: 1 1 120px;
   font-size: 14px;
   font-weight: 600;
   min-width: 0;
@@ -619,6 +620,15 @@
 
 .equipo-acciones {
   flex: none;
+}
+
+.equipo-acciones--confirmando {
+  flex-basis: 100%;
+}
+
+.equipo-acciones .hu04-confirmacion {
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .equipo-quitar {
