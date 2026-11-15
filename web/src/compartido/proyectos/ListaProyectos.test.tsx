@@ -449,7 +449,7 @@ describe('proyectos cerrados', () => {
 
     expect(enlaces(seccionCerrados())).toEqual(['Gamma cerrado (#4)', 'Alfa cerrado (#3)'])
     expect(screen.queryByText('Todavía no tenés proyectos')).toBeNull()
-    expect(screen.getAllByRole('button', { name: 'Nuevo proyecto' }).length).toBeGreaterThan(0)
+    expect(document.querySelector('button.tarjeta-proyecto--nueva')).not.toBeNull()
   })
 
   it('Given un proyecto cerrado con rol, When se muestra su tarjeta, Then el rol y la insignia de cierre van juntos a la derecha de la cabecera', async () => {
