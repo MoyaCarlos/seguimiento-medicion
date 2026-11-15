@@ -75,6 +75,7 @@ func (p *pasosDatosPrueba) autenticacion(hasheador *service.ServicioContrasenas)
 		service.NewIngresar(credenciales, hasheador, emisor),
 		obtener,
 		service.NewCerrarSesion(obtener, sesiones, time.Now),
+		service.NewCambiarNombreUsuario(credenciales),
 	)
 }
 
