@@ -60,4 +60,4 @@ RED → COMMIT → GREEN → COMMIT. No se hace `git push` ni merge desde las ta
   el estado y el PR.
 - [x] T014 COMMIT `docs: registrar #215 en el Product Backlog (Refs #215)`.
 - [x] T015 `cd web && npm test`, `npm run lint` y `npm run build` en verde.
-- [ ] T016 Crear el PR con «Closes #215».
+- [x] T016 PR #326 creado con «Closes #215».

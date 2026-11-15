@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-15
 
-**Status**: Implementada (PR pendiente)
+**Status**: Implementada (PR #326, pendiente de review)
 
 **Dependencia**: #147 (PR #211, Markdown en la descripción y los criterios) y #174
 (criterios al crear una historia), ya en `main`. Solo frontend; no cambia la API, el
