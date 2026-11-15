@@ -680,7 +680,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     responderProyecto(conCierre('2026-10-20'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 2, name: 'Descripción' })).toBeTruthy()
     expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
@@ -719,7 +719,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     responderProyecto(conCierre('2026-10-20'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
     for (const nombre of ['Configurar equipo', 'Editar proyecto']) {
       for (const enlace of screen.getAllByRole('link', { name: nombre })) {
         expect(enlace.getAttribute('href')).toBeTruthy()
@@ -742,7 +742,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     vi.stubGlobal('fetch', fetchMock)
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
     expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
     const pedidosDelProyecto = fetchMock.mock.calls.filter(
       ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',

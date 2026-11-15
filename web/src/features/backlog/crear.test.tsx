@@ -685,12 +685,12 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     screen.getByLabelText('Valor de negocio') as HTMLSelectElement,
   ]
 
-  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», formulario y «Guardar» deshabilitados con «El proyecto está cerrado» y sin enviar', async () => {
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 10/11/2026», formulario y «Guardar» deshabilitados con «El proyecto está cerrado» y sin enviar', async () => {
     const backlog = vi.fn()
     simularFetch(backlog, proyecto('2026-11-10'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     for (const campo of campos()) expect(campo.disabled).toBe(true)
     const guardar = botonGuardar() as HTMLButtonElement
     expect(guardar.disabled).toBe(true)
@@ -717,7 +717,7 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     const pantalla = simularFetch(vi.fn(), proyecto('2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await userEvent.type(screen.getByLabelText('Título'), 'x')
 
     expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)

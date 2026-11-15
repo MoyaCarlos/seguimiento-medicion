@@ -1003,12 +1003,12 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
   const sinVotacionIniciada = () =>
     consultarMock.mockRejectedValue(new ApiError(404, 'la historia no tiene votación iniciada'))
 
-  it('Escenario: proyecto cerrado con una ronda abierta: aviso «Proyecto cerrado el 2026-11-10», la votación se sigue viendo y las cartas y «Revelar» quedan deshabilitadas con «El proyecto está cerrado»', async () => {
+  it('Escenario: proyecto cerrado con una ronda abierta: aviso «Proyecto cerrado el 10/11/2026», la votación se sigue viendo y las cartas y «Revelar» quedan deshabilitadas con «El proyecto está cerrado»', async () => {
     servidor.votos = { 1: 5, 2: 5, 3: 5 }
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
     for (const carta of within(cartas()).getAllByRole('button')) {
       expect((carta as HTMLButtonElement).disabled).toBe(true)
@@ -1029,7 +1029,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const iniciar = boton('Iniciar votación')
     expect(iniciar.disabled).toBe(true)
     expect(nota(iniciar)).toBe(CERRADO)
@@ -1044,7 +1044,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(screen.getByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
     for (const accion of [boton('Registrar estimación'), boton('Nueva ronda')]) {
       expect(accion.disabled).toBe(true)
@@ -1059,7 +1059,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Revelar'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede revelar los votos')).toBeNull()
   })
@@ -1069,7 +1069,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Iniciar votación'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede iniciar la votación')).toBeNull()
     expect(screen.getAllByText(CERRADO)).toHaveLength(1)
@@ -1081,7 +1081,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Registrar estimación'))).toBe(CERRADO)
     expect(nota(boton('Nueva ronda'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede registrar la estimación')).toBeNull()

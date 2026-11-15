@@ -521,7 +521,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
   it('Escenario: proyecto cerrado: muestra el aviso y el listado de defectos se sigue viendo', async () => {
     abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO] })
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(await screen.findByText('El total no se actualiza')).toBeTruthy()
     expect(screen.getByText('El botón no responde')).toBeTruthy()
   })
@@ -529,7 +529,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
   it('Escenario: proyecto cerrado: «Registrar defecto» y sus campos quedan deshabilitados con una sola nota «El proyecto está cerrado» y no envía', async () => {
     const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [] })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const boton = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
     expect(descripcionDe(boton)).toBe(NOTA)
@@ -552,7 +552,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
       defectos: [DEFECTO_PENDIENTE, segundo, DEFECTO_RESUELTO],
     })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByText('El total no se actualiza')
     const botones = (await screen.findAllByRole('button', { name: 'Resolver' })) as HTMLButtonElement[]
     expect(botones).toHaveLength(2)
@@ -583,7 +583,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
     const usuario = userEvent.setup()
     const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE] })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByRole('button', { name: 'Registrar defecto' })
     await screen.findByText('El total no se actualiza')
     await usuario.click(screen.getByLabelText('Descripción'))

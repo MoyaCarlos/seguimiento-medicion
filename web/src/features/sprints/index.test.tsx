@@ -596,11 +596,11 @@ describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () =>
 
   const boton = (nombre: string) => screen.findByRole('button', { name: nombre })
 
-  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», «Crear Sprint» deshabilitado con «El proyecto está cerrado» y el listado de Sprints sigue visible', async () => {
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 10/11/2026», «Crear Sprint» deshabilitado con «El proyecto está cerrado» y el listado de Sprints sigue visible', async () => {
     conProyecto(proyecto('product_builder', '2026-11-10'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     const crearBoton = await boton('Crear Sprint')
     expect(crearBoton.hasAttribute('disabled')).toBe(true)
     expect(nota(crearBoton)).toBe('El proyecto está cerrado')
@@ -630,7 +630,7 @@ describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () =>
     const user = userEvent.setup()
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const iniciar = await boton('Iniciar Sprint')
     const cerrar = await boton('Cerrar Sprint')
     const cambiarEstado = await within(seccion('Activo')).findByRole('button', { name: 'Iniciar' })
@@ -657,7 +657,7 @@ describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () =>
     const simulado = conProyecto(proyecto('scrum_master', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await waitFor(() => expect(screen.getAllByText('Esfuerzo real: 1,5 h')).toHaveLength(2))
     await userEvent.click(within(seccion('Activo')).getByRole('button', { name: 'Registrar horas' }))
     await boton('Guardar horas')

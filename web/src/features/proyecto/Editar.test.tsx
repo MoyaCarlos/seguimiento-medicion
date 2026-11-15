@@ -301,7 +301,7 @@ describe('edición de proyecto - cierre (#312)', () => {
     expect(screen.getByRole('button', { name: 'Cerrar proyecto' })).toBeTruthy()
   })
 
-  it('SC-001: cerrar y confirmar deja «Proyecto cerrado el AAAA-MM-DD» y «Finalizado» sin recargar, con «Guardar cambios» deshabilitado y la nota «El proyecto está cerrado»', async () => {
+  it('SC-001: cerrar y confirmar deja «Proyecto cerrado el dd/mm/aaaa» y «Finalizado» sin recargar, con «Guardar cambios» deshabilitado y la nota «El proyecto está cerrado»', async () => {
     responderCierre({ fechaCierre: null })
     abrir()
 
@@ -309,7 +309,7 @@ describe('edición de proyecto - cierre (#312)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Cerrar proyecto' }))
     await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 11/11/2026', { selector: AVISO })).toBeTruthy()
     expect(screen.getByText('Finalizado')).toBeTruthy()
     await waitFor(() => expect(guardar().hasAttribute('disabled')).toBe(true))
     expect(document.getElementById(guardar().getAttribute('aria-describedby') ?? '')?.textContent).toBe(
@@ -323,7 +323,7 @@ describe('edición de proyecto - cierre (#312)', () => {
 
     await screen.findByDisplayValue('Proyecto Alfa')
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 11/11/2026', { selector: AVISO })).toBeTruthy()
     expect(screen.getAllByText(NOTA_CERRADO)).toHaveLength(1)
     expect(screen.queryByText(NOTA_GESTION)).toBeNull()
     expect(guardar().hasAttribute('disabled')).toBe(true)
@@ -357,7 +357,7 @@ describe('edición de proyecto - cierre (#312)', () => {
     await screen.findByDisplayValue('Proyecto Alfa')
 
     expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
-    expect(screen.queryByText('Proyecto cerrado el 2026-11-11')).toBeNull()
+    expect(screen.queryByText('Proyecto cerrado el 11/11/2026')).toBeNull()
     expect(guardar().hasAttribute('disabled')).toBe(false)
   })
 
@@ -366,10 +366,10 @@ describe('edición de proyecto - cierre (#312)', () => {
     abrir()
 
     await screen.findByDisplayValue('Proyecto Alfa')
-    await screen.findByText('Proyecto cerrado el 2026-11-11', { selector: AVISO })
+    await screen.findByText('Proyecto cerrado el 11/11/2026', { selector: AVISO })
     await userEvent.click(await screen.findByRole('button', { name: 'Reabrir proyecto' }))
 
-    await waitFor(() => expect(screen.queryByText('Proyecto cerrado el 2026-11-11')).toBeNull())
+    await waitFor(() => expect(screen.queryByText('Proyecto cerrado el 11/11/2026')).toBeNull())
     expect(screen.queryByText(NOTA_CERRADO)).toBeNull()
     expect(guardar().hasAttribute('disabled')).toBe(false)
     expect(screen.getByRole('button', { name: 'Cerrar proyecto' })).toBeTruthy()

@@ -194,12 +194,23 @@ async function reabrir() {
   await userEvent.click(screen.getByRole('button', { name: 'Reabrir proyecto' }))
 }
 
+describe('zona de cierre del proyecto - fecha de cierre en dd/mm/aaaa', () => {
+  it.each([
+    ['2026-01-05', '05/01/2026'],
+    ['2026-12-31', '31/12/2026'],
+  ])('Given un proyecto cerrado el %s, When se muestra la zona, Then dice «Proyecto cerrado el %s»', (iso, esperado) => {
+    render(<ZonaCierreProyecto proyectoId="7" rol="scrum_master" fechaCierre={iso} onCambio={vi.fn()} />)
+
+    expect(screen.getByText(`Proyecto cerrado el ${esperado}`)).toBeTruthy()
+  })
+})
+
 describe('zona de cierre del proyecto - reabrir', () => {
-  it('Escenario: cerrado y Scrum Master, se ve «Proyecto cerrado el 2026-11-11» y «Reabrir proyecto» habilitado, sin «Cerrar proyecto»', () => {
+  it('Escenario: cerrado y Scrum Master, se ve «Proyecto cerrado el 11/11/2026» y «Reabrir proyecto» habilitado, sin «Cerrar proyecto»', () => {
     const fetchMock = responder(json(respuestaReapertura))
     abrirCerrado()
 
-    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByText('Proyecto cerrado el 11/11/2026')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Reabrir proyecto' }).hasAttribute('disabled')).toBe(false)
     expect(screen.queryByRole('button', { name: 'Cerrar proyecto' })).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
@@ -277,7 +288,7 @@ describe('zona de cierre del proyecto - reabrir', () => {
     await reabrir()
 
     expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
-    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByText('Proyecto cerrado el 11/11/2026')).toBeTruthy()
     expect(screen.queryByText('En curso')).toBeNull()
     expect(onCambio).not.toHaveBeenCalled()
   })

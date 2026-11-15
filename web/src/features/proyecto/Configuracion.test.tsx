@@ -246,7 +246,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(await screen.findByText('Ana')).toBeTruthy()
     expect(screen.getByText('Ana').closest('li')?.textContent).toContain('Scrum Master')
   })
@@ -255,7 +255,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const selector = await screen.findByLabelText('Usuario')
     const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
@@ -273,7 +273,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     responder(proyectoCon('product_builder', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
     expect(descripcionDe(boton)).toBe(NOTA_CERRADO)
@@ -352,7 +352,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByText('Ana')
     await screen.findByLabelText('Usuario')
 

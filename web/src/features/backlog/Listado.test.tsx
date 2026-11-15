@@ -1042,7 +1042,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const metodos = (simulado: ReturnType<typeof vi.fn>) =>
     simulado.mock.calls.map(([, opciones]) => (opciones as RequestInit | undefined)?.method ?? 'GET')
 
-  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», el listado se sigue viendo y «Editar» y «Asignar a Sprint» deshabilitados con «El proyecto está cerrado»; «Votar» sigue siendo un enlace', async () => {
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 10/11/2026», el listado se sigue viendo y «Editar» y «Asignar a Sprint» deshabilitados con «El proyecto está cerrado»; «Votar» sigue siendo un enlace', async () => {
     const pantalla = simularConProyecto(
       proyecto('2026-11-10'),
       conHistorias(MUST, SHOULD),
@@ -1051,7 +1051,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     )
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     for (const historia of [MUST, SHOULD]) {
       const { editar, asignar, votar } = acciones(historia.titulo)
       expect(editar.disabled).toBe(true)
@@ -1146,7 +1146,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
       responderProyecto(respuesta(200, { id: 42, rol: 'scrum_master', fecha_cierre: '2026-11-10' }))
     })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const guardar = botonGuardar() as HTMLButtonElement
     expect(guardar.disabled).toBe(true)
     expect(nota(guardar)).toBe('El proyecto está cerrado')
