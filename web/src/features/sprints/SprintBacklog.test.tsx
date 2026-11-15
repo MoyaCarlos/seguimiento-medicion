@@ -10,7 +10,14 @@ const respuesta = (status: number, cuerpo: unknown) =>
 const historias: HistoriaDeSprint[] = [
   { id: 2, titulo: 'Recuperar clave', prioridad: 'S', estado: 'En progreso', estimacion_sp: 3 },
   { id: 1, titulo: 'Iniciar sesión', prioridad: 'M', estado: 'Nueva', estimacion_sp: null },
-  { id: 3, titulo: 'Exportar reporte', prioridad: 'W', estado: 'Completada', estimacion_sp: 8 },
+  {
+    id: 3,
+    titulo: 'Exportar reporte',
+    prioridad: 'W',
+    estado: 'Completada',
+    estimacion_sp: 8,
+    fecha_finalizacion: '2026-10-29',
+  },
 ]
 
 const SIN_CARGAS = { total_horas: 0, registros: [] }
@@ -21,6 +28,14 @@ function simularBacklog(backlog: HistoriaDeSprint[]) {
   )
   vi.stubGlobal('fetch', simulado)
   return simulado
+}
+
+function tarjetaDe(item: HTMLElement) {
+  return item.querySelector('details') as HTMLDetailsElement
+}
+
+async function abrirHistoria(titulo: string) {
+  await userEvent.click(await screen.findByText(titulo))
 }
 
 afterEach(() => vi.unstubAllGlobals())
@@ -146,6 +161,44 @@ describe('SprintBacklog', () => {
   })
 })
 
+describe('SprintBacklog - tarjetas plegables', () => {
+  it('Escenario: cada historia se muestra plegada con su título, estado y Story Points', async () => {
+    simularBacklog(historias)
+
+    render(<SprintBacklog sprintId={4} />)
+
+    const items = await screen.findAllByRole('listitem')
+    const resumenes = items.map((item) => item.querySelector('summary')?.textContent ?? '')
+
+    expect(items.every((item) => tarjetaDe(item).open === false)).toBe(true)
+    expect(resumenes[0]).toContain('Recuperar clave')
+    expect(resumenes[0]).toContain('En progreso')
+    expect(resumenes[0]).toContain('3 SP')
+    expect(resumenes[0]).not.toContain('Should have (S)')
+    expect(resumenes[1]).toContain('Sin estimar')
+    expect(resumenes[2]).toContain('Completada')
+    expect(resumenes[2]).toContain('8 SP')
+    expect(resumenes[2]).not.toContain('Completada el')
+  })
+
+  it('Escenario: al activar el resumen se despliegan la prioridad, la fecha y las acciones', async () => {
+    simularBacklog(historias)
+
+    render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
+
+    const [primera, , tercera] = await screen.findAllByRole('listitem')
+    await abrirHistoria('Recuperar clave')
+    await abrirHistoria('Exportar reporte')
+
+    expect(tarjetaDe(primera).open).toBe(true)
+    expect(within(primera).getByText('Should have (S)')).toBeTruthy()
+    expect(within(primera).getByRole('button', { name: 'Completar' })).toBeTruthy()
+    expect(tarjetaDe(tercera).open).toBe(true)
+    expect(within(tercera).getByText('Completada el 2026-10-29')).toBeTruthy()
+    expect(within(tercera).queryByRole('button')).toBeNull()
+  })
+})
+
 describe('SprintBacklog con registro de horas', () => {
   it('US1.1: con imputación ofrece "Registrar horas" en cada historia', async () => {
     simularBacklog(historias)
@@ -210,7 +263,9 @@ describe('SprintBacklog con cambio de estado', () => {
 
     render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
 
-    await screen.findByText('Recuperar clave')
+    await abrirHistoria('Recuperar clave')
+    await abrirHistoria('Iniciar sesión')
+    await abrirHistoria('Exportar reporte')
     expect(screen.getAllByRole('button', { name: 'Iniciar' })).toHaveLength(1)
     expect(screen.getAllByRole('button', { name: 'Completar' })).toHaveLength(1)
   })
@@ -224,14 +279,19 @@ describe('SprintBacklog con cambio de estado', () => {
     expect(screen.queryByRole('button')).toBeNull()
   })
 
-  it('US3.1: iniciar una historia refleja el estado "En progreso" en la lista', async () => {
+  it('US3.1: iniciar una historia pide confirmación y refleja el estado "En progreso"', async () => {
     const fetchSimulado = simularEstado(
       respuesta(200, { ...historias[1], estado: 'En progreso' }),
     )
 
     render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
-    await screen.findByText('Iniciar sesión')
+    await abrirHistoria('Iniciar sesión')
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+
+    expect(screen.getByText('¿Iniciar la historia?')).toBeTruthy()
+    expect(fetchSimulado.mock.calls.find(([, o]) => o?.method === 'PUT')).toBeUndefined()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     const item = (await screen.findAllByRole('listitem'))[1]
     expect(await within(item).findByRole('button', { name: 'Completar' })).toBeTruthy()
@@ -245,8 +305,9 @@ describe('SprintBacklog con cambio de estado', () => {
     )
 
     render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
-    await screen.findByText('Recuperar clave')
+    await abrirHistoria('Recuperar clave')
     await userEvent.click(screen.getByRole('button', { name: 'Completar' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     const item = (await screen.findAllByRole('listitem'))[0]
     expect(await within(item).findByText('Completada el 2026-10-29')).toBeTruthy()
@@ -258,8 +319,9 @@ describe('SprintBacklog con cambio de estado', () => {
     simularEstado(respuesta(409, { mensaje }))
 
     render(<SprintBacklog sprintId={4} permiteCambiarEstado />)
-    await screen.findByText('Iniciar sesión')
+    await abrirHistoria('Iniciar sesión')
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar' }))
 
     expect((await screen.findByRole('alert')).textContent).toBe(mensaje)
     const item = screen.getAllByRole('listitem')[1]
