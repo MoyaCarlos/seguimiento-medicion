@@ -598,8 +598,11 @@ describe('registro de rutas', () => {
   it('con sesión el encabezado muestra el menú de usuario', async () => {
     abrir('/')
 
-    expect(await screen.findByText('ana.perez', {}, { timeout: 5000 })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Menú de usuario' })).toBeTruthy()
+    await screen.findByRole('button', { name: 'Menú de usuario' }, { timeout: 5000 })
+    const encabezado = document.querySelector('.barra-superior') as HTMLElement
+
+    expect(await within(encabezado).findByText('ana.perez', {}, { timeout: 5000 })).toBeTruthy()
+    expect(within(encabezado).getByRole('button', { name: 'Menú de usuario' })).toBeTruthy()
   })
 })
 

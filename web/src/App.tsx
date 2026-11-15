@@ -6,6 +6,8 @@ import { ProveedorRecargaProyectos } from './compartido/proyectos/recargaProyect
 import { SelectorProyecto } from './compartido/proyectos/SelectorProyecto'
 import { ProveedorProyectos } from './compartido/proyectos/ProveedorProyectos'
 import { useProyectos } from './compartido/proyectos/useProyectos'
+import { useRolEnRuta } from './compartido/proyectos/useRolEnRuta'
+import { BloqueUsuario } from './features/autenticacion/BloqueUsuario'
 import { MenuUsuario } from './features/autenticacion/MenuUsuario'
 import { SesionProvider, useSesion } from './features/autenticacion/SesionContext'
 import { ajustes, navegacion, seccionDeRuta } from './navegacion'
@@ -69,6 +71,14 @@ function RutaDeNavegacion({ pathname, id }: { pathname: string; id?: string }) {
       )}
     </nav>
   )
+}
+
+function MenuUsuarioDelProyecto({ id }: { id?: string }) {
+  return <MenuUsuario rol={useRolEnRuta(id)} />
+}
+
+function BloqueUsuarioDelProyecto({ id }: { id?: string }) {
+  return <BloqueUsuario rol={useRolEnRuta(id)} />
 }
 
 function Armazon() {
@@ -139,6 +149,7 @@ function Armazon() {
               </nav>
             </>
           )}
+          <BloqueUsuarioDelProyecto id={id} />
         </aside>
         <div className="armazon__fondo" onClick={cerrarMenu} />
         <div className="armazon__columna">
@@ -154,7 +165,7 @@ function Armazon() {
               <Icono nombre="menu" />
             </button>
             <RutaDeNavegacion pathname={pathname} id={id} />
-            <MenuUsuario />
+            <MenuUsuarioDelProyecto id={id} />
           </header>
           <main className="contenido">
             <ProveedorRecargaProyectos value={() => setRecargas((actual) => actual + 1)}>

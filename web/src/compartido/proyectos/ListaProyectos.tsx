@@ -6,15 +6,11 @@ import { ErrorMessage } from '../componentes/ErrorMessage'
 import { Icono } from '../componentes/Icono'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
 import { fechaCorta, periodoCorto } from '../formato/fechas'
-import type { ProyectoResumen, RolEnProyecto } from './api'
+import { ETIQUETA_ROL } from './api'
+import type { ProyectoResumen } from './api'
 import { filtrarProyectos } from './busqueda'
 import { etiquetaProyecto } from './ruta'
 import { useProyectos } from './useProyectos'
-
-const ETIQUETA_ROL: Record<RolEnProyecto, string> = {
-  scrum_master: 'Scrum Master',
-  product_builder: 'Product Builder',
-}
 
 function TarjetaProyecto({ proyecto }: { proyecto: ProyectoResumen }) {
   const idDetalle = `proyecto-${proyecto.id}-detalle`

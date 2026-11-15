@@ -435,3 +435,82 @@
   margin: 0;
   padding: 10px 12px;
 }
+
+.menu-usuario__rol {
+  background: var(--brand-soft);
+  border-radius: 8px;
+  color: #0b5f58;
+  font-size: 12.5px;
+  font-weight: 600;
+  margin: 2px 8px 6px;
+  padding: 6px 10px;
+}
+
+.bloque-usuario {
+  align-items: center;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
+  padding: 14px 8px 2px;
+}
+
+.bloque-usuario > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.bloque-usuario strong,
+.bloque-usuario small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bloque-usuario strong {
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.bloque-usuario small {
+  color: #8da0b8;
+  font-size: 12px;
+}
+
+.bloque-usuario__avatar {
+  background: #1d3557;
+  border-radius: 50%;
+  color: #fff;
+  display: grid;
+  flex: none;
+  font-size: 13px;
+  font-weight: 800;
+  height: 32px;
+  place-items: center;
+  width: 32px;
+}
+
+.bloque-usuario__salir {
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  color: var(--nav-ink);
+  cursor: pointer;
+  display: grid;
+  flex: none;
+  height: 34px;
+  place-items: center;
+  width: 34px;
+}
+
+.bloque-usuario__salir svg {
+  height: 18px;
+  width: 18px;
+}
+
+.bloque-usuario__salir:hover {
+  background: rgb(255 255 255 / 9%);
+  color: #fff;
+}

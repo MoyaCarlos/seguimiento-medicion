@@ -12,4 +12,9 @@ export type ProyectoResumen = {
   fecha_fin: string | null
 }
 
+export const ETIQUETA_ROL: Record<RolEnProyecto, string> = {
+  scrum_master: 'Scrum Master',
+  product_builder: 'Product Builder',
+}
+
 export const listarProyectos = () => get<ProyectoResumen[]>('/projects')

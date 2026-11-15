@@ -4,7 +4,7 @@ import { Icono } from '../../compartido/componentes/Icono'
 import { useSesion } from './SesionContext'
 import './estilos.css'
 
-export function MenuUsuario() {
+export function MenuUsuario({ rol }: { rol?: string }) {
   const { estado, usuario, salir } = useSesion()
   const [abierto, setAbierto] = useState(false)
   const raiz = useRef<HTMLDivElement>(null)
@@ -53,9 +53,10 @@ export function MenuUsuario() {
               <span className="menu-usuario__avatar" aria-hidden="true">{inicial}</span>
               <div>
                 <strong>{usuario.nombre}</strong>
-                <small>Sesión iniciada</small>
+                <small>{rol ?? 'Sesión iniciada'}</small>
               </div>
             </div>
+            {rol && <p className="menu-usuario__rol">{`Tu rol en este proyecto: ${rol}`}</p>}
             <hr />
             <button
               type="button"
