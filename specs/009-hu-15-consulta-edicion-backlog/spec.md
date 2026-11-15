@@ -20,6 +20,10 @@
 
 - Q: ¿Se pueden cambiar los Story Points de una historia asignada a un Sprint `Activo` o `Finalizado`? → A: No, si ya estaban cargados. Es la decisión D2b del equipo (aprobada el 2026-10-13, aclarada el 2026-10-14), registrada en `MODELO-DE-DATOS.md` (§4.4, §5 y D2b) y en las decisiones transversales y el Escenario 3 de HU-15 de `docs/PRODUCT-BACKLOG.md`: "No se modifican los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`, para que las métricas históricas se puedan reproducir. Cargarlos por primera vez (la historia estaba sin estimar) sí se permite." Es una regla de servicio, compartida con HU-14. **Actualizado por la spec 032 (HU-03, 2026-11-03):** con un Sprint `Finalizado` tampoco se permite la primera carga.
 
+### Session 2026-11-13
+
+- Q: ¿Qué pasa si la estimación cambió desde que se abrió el formulario de edición (issue #248)? → A: La edición se rechaza con 409 y no modifica la historia. El formulario envía la estimación que leyó (`estimacion_sp_leida`); el `PUT` solo escribe si la estimación actual sigue siendo esa (compare-and-set), lo que cubre también la carrera con HU-14. No se agrega versión de fila ni migración (D18 de `MODELO-DE-DATOS.md`).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Consultar el Product Backlog de un proyecto (Priority: P1)
@@ -54,6 +58,7 @@ Como Product Builder, modifico el título, la descripción, los criterios de ace
 4. **Given** que intento editar una historia que no existe, **When** envío la edición (aunque sus datos también sean inválidos), **Then** el sistema responde "no encontrado".
 5. **Given** que una historia con Story Points ya cargados está asignada a un Sprint "Activo" o "Finalizado", **When** intento cambiar sus Story Points, **Then** el sistema rechaza el cambio, muestra una advertencia y no modifica la historia.
 6. **Given** que una historia sin estimar está asignada a un Sprint "Activo", **When** cargo sus Story Points con un valor de la escala Fibonacci, **Then** el sistema persiste la estimación.
+7. **Given** una historia sin Sprint o con Sprint "Pendiente" cuya estimación cambió desde que abrí el formulario, **When** guardo la edición con la estimación vieja (o con otra), **Then** el sistema responde 409, me avisa que la estimación cambió y la historia conserva la estimación actual.
 
 ---
 
@@ -77,7 +82,11 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **WHILE** una historia está asignada a un Sprint `Finalizado` y no tiene Story Points cargados, **IF** la edición informa Story Points, **THEN** el sistema **shall** rechazarla con una advertencia sobre los Story Points (D2b, spec 032).
 - **WHILE** una historia está asignada a un Sprint `Pendiente`, el sistema **shall** permitir cambiar sus Story Points como si estuviera en el Product Backlog.
 - **WHEN** se edita una historia, **THEN** el sistema **shall** conservar su identificador, proyecto, estado y Sprint asignado.
-- **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido (sin versionado ni historial, mismo criterio que HU-04).
+- **WHEN** la estimación actual de la historia no coincide con la que leyó el formulario (`estimacion_sp_leida`), **THEN** el sistema **shall** rechazar la edición con 409, sin modificar ningún campo, e informar que la estimación cambió y hay que recargar (issue #248, D18).
+- **WHERE** la historia no tiene Sprint o su Sprint está `Pendiente`, la regla anterior **shall** ser la única protección de la estimación: D2b no la frena.
+- **WHEN** la estimación actual coincide con la leída y la nueva estimación es válida (o `null`), **THEN** el sistema **shall** guardar la edición completa y escribir la nueva estimación.
+- **IF** la edición llega sin `estimacion_sp_leida`, **THEN** el sistema **shall** responder 400 porque el campo es obligatorio.
+- **WHEN** dos personas editan la misma historia al mismo tiempo, **THEN** el sistema **shall** conservar el último guardado válido para título, descripción y criterios, y **shall** rechazar con 409 si la estimación cambió (sin versionado de toda la fila, mismo criterio que HU-04 para el resto).
 
 ## Requirements *(mandatory)*
 
@@ -98,6 +107,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - **FR-013**: Los cambios de una edición válida MUST persistir y seguir disponibles después de cerrar y volver a abrir la aplicación.
 - **FR-014**: Las historias creadas antes de esta funcionalidad MUST aparecer en el listado con los criterios de aceptación vacíos.
 - **FR-015**: El sistema MUST rechazar, con una advertencia sobre los Story Points y sin modificar la historia, toda edición que cambie los Story Points ya cargados de una historia asignada a un Sprint `Activo` o `Finalizado`. Cargarlos cuando la historia no tenía estimación MUST permitirse, salvo con un Sprint `Finalizado`, donde MUST rechazarse (decisión D2b del equipo, spec 032).
+- **FR-016**: La edición MUST recibir la estimación que leyó el formulario (`estimacion_sp_leida`, obligatoria como clave) y MUST rechazar con 409 y sin modificar nada cuando no coincida con la estimación actual de la historia. El repositorio MUST aplicar la condición en el mismo `UPDATE` (`estimacion_sp IS ?`) para cubrir la carrera con HU-14 (issue #248, D18).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -124,6 +134,7 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - Cargar los Story Points desde HU-15 es una carga directa. HU-14 puede reemplazarlos más adelante con la estimación acordada en Planning Poker.
 - Los Story Points se pueden borrar (dejar vacíos), porque la estimación es opcional hasta que se acuerde.
 - La edición envía todos los campos editables juntos: lo que se deja vacío queda vacío. No hay edición parcial campo por campo.
+- Junto con los campos editables, el formulario envía `estimacion_sp_leida` con la estimación que tenía la historia al abrirse. No es un quinto campo editable: es la condición de concurrencia de la estimación (#248).
 - No hay paginación ni búsqueda: el volumen de historias de un proyecto académico es chico.
 - Por la regla transversal del backlog, una historia sin Sprint está en "Nueva": al cerrar un Sprint, las no completadas vuelven a "Nueva" (fix #99, PR #115) y la base lo garantiza con `CHECK (estado = 'Nueva' OR sprint_id IS NOT NULL)`. El listado muestra el estado que tenga la historia, sin filtrar por él.
 - La columna de criterios de aceptación ya existe en la migración 001 del modelo de datos (#107, D10), así que esta historia no agrega migraciones.
