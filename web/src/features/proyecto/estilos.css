@@ -447,3 +447,56 @@
   display: grid;
   gap: 0.75rem;
 }
+
+.panel-editar {
+  display: grid;
+  gap: 20px;
+}
+
+.panel-editar .page-header {
+  flex-wrap: wrap;
+  gap: 16px 24px;
+}
+
+.panel-editar .button {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.panel-editar .button svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.panel-formulario {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+  padding: 22px;
+}
+
+.panel-formulario .field label {
+  font-size: 13px;
+}
+
+.panel-formulario .field__ayuda {
+  color: #606f86;
+  font-size: 12.5px;
+  margin: 0;
+}
+
+.panel-editar .zona-cierre {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin: 0;
+  max-width: 720px;
+  padding: 22px;
+}

@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { Field } from '../../compartido/componentes/Field'
+import { Icono } from '../../compartido/componentes/Icono'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { ApiError } from '../../compartido/api/client'
 import { AvisoSinPermiso } from '../../compartido/permisos/AvisoSinPermiso'
@@ -108,13 +109,17 @@ export function Editar() {
   }
 
   return (
-    <section className="hu04-tarjeta hu04-tarjeta--angosta" aria-labelledby="editar-title">
-      <p className="eyebrow">Proyecto · Edición</p>
-      <h2 id="editar-title">Editar proyecto</h2>
-      <p className="hu04-intro">
-        Corregí el nombre, la descripción, las fechas o las horas por Story Point. Los
-        cambios se guardan sobre el proyecto actual.
-      </p>
+    <section className="panel-editar" aria-labelledby="editar-title">
+      <header className="page-header">
+        <div>
+          <p className="eyebrow">Proyecto #{id}</p>
+          <h1 id="editar-title">Editar proyecto</h1>
+        </div>
+        <Link className="button button--ghost" to={`/projects/${id}/proyecto`}>
+          <Icono nombre="atras" />
+          Volver al panel
+        </Link>
+      </header>
 
       <AvisoProyectoCerrado fechaCierre={fechaCierre} />
 
@@ -122,7 +127,7 @@ export function Editar() {
       {errorCarga && <ErrorMessage message={errorCarga} />}
 
       {!cargando && !errorCarga && (
-        <form onSubmit={guardar} noValidate aria-label="Editar proyecto">
+        <form onSubmit={guardar} noValidate aria-label="Editar proyecto" className="panel-formulario">
           {errorGeneral && <ErrorMessage message={errorGeneral} />}
           {sinPermiso && <AvisoSinPermiso mensaje={sinPermiso} />}
 
@@ -166,7 +171,12 @@ export function Editar() {
             id="horas_por_story_point"
             name="horas_por_story_point"
             inputMode="decimal"
-            label="Horas por Story Point (opcional)"
+            label={
+              <>
+                Horas por Story Point <span className="hu04-opcional">(opcional)</span>
+              </>
+            }
+            ayuda="Con este dato el Dashboard y el historial calculan las horas estimadas."
             value={datos.horas_por_story_point}
             onChange={(evento) => actualizar('horas_por_story_point', evento.target.value)}
             error={errores.horas_por_story_point}
@@ -175,9 +185,6 @@ export function Editar() {
           {enviando && <LoadingIndicator />}
 
           <div className="hu04-acciones">
-            <Link className="button button--quiet" to={`/projects/${id}/proyecto`}>
-              Cancelar
-            </Link>
             <Button
               type="submit"
               disabled={enviando || cargando || !puedeGestionar}
@@ -185,6 +192,9 @@ export function Editar() {
             >
               Guardar cambios
             </Button>
+            <Link className="button button--ghost" to={`/projects/${id}/proyecto`}>
+              Cancelar
+            </Link>
           </div>
           {cerrado ? (
             <NotaCerrado id="editar-nota-guardar" />

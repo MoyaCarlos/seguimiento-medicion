@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode } from 'react'
 import { ErrorMessage } from './ErrorMessage'
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
-  label: string
+  label: ReactNode
   error?: string
   help?: string
   ayuda?: string

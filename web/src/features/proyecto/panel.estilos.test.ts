@@ -153,8 +153,12 @@ it('Given la zona de cierre, When se estiliza, Then es otra tarjeta, separada de
 })
 
 it('Given la ayuda de un campo de la edición, When se estiliza, Then es de 12,5px y gris con contraste 4,5:1', () => {
-  const bloque = regla('.panel-formulario .message')
+  const bloque = regla('.panel-formulario .field__ayuda')
 
   expect(bloque).toMatch(/font-size:\s*12\.5px/)
   expect(contraste(color(bloque, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given las etiquetas del formulario de edición, When se estilizan, Then miden 13px', () => {
+  expect(regla('.panel-formulario .field label')).toMatch(/font-size:\s*13px/)
 })

@@ -783,6 +783,16 @@ h1 {
   color: var(--lilac-dark);
 }
 
+.button--ghost {
+  background: transparent;
+  color: #606f86;
+}
+
+.button--ghost:hover {
+  background: #eef2f6;
+  color: var(--ink);
+}
+
 .field {
   display: grid;
   gap: 0.4rem;

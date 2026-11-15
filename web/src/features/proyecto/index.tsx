@@ -6,11 +6,11 @@ import { Panel } from './Panel'
 import './estilos.css'
 
 function PanelLayout() {
-  const esElPanel = useMatch('/projects/:id/proyecto')
+  const esEquipo = useMatch('/projects/:id/proyecto/settings')
 
   return (
     <>
-      {!esElPanel && <h1 id="panel-title">Panel del proyecto</h1>}
+      {esEquipo && <h1 id="panel-title">Panel del proyecto</h1>}
       <Outlet />
     </>
   )
