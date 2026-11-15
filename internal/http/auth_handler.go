@@ -13,14 +13,33 @@ import (
 // AuthHandler es el adaptador de entrada de la autenticación (HU-20). No
 // registra cuerpos ni cabeceras: llevan contraseñas y tokens.
 type AuthHandler struct {
-	registrar *service.RegistrarUsuario
-	ingresar  *service.Ingresar
-	obtener   *service.ObtenerSesion
-	cerrar    *service.CerrarSesion
+	registrar      *service.RegistrarUsuario
+	ingresar       *service.Ingresar
+	obtener        *service.ObtenerSesion
+	cerrar         *service.CerrarSesion
+	cambiarNombre  *service.CambiarNombreUsuario
 }
 
-func NewAuthHandler(registrar *service.RegistrarUsuario, ingresar *service.Ingresar, obtener *service.ObtenerSesion, cerrar *service.CerrarSesion) *AuthHandler {
-	return &AuthHandler{registrar: registrar, ingresar: ingresar, obtener: obtener, cerrar: cerrar}
+func NewAuthHandler(
+	registrar *service.RegistrarUsuario,
+	ingresar *service.Ingresar,
+	obtener *service.ObtenerSesion,
+	cerrar *service.CerrarSesion,
+	cambiarNombre *service.CambiarNombreUsuario,
+) *AuthHandler {
+	return &AuthHandler{
+		registrar:     registrar,
+		ingresar:      ingresar,
+		obtener:       obtener,
+		cerrar:        cerrar,
+		cambiarNombre: cambiarNombre,
+	}
+}
+
+// CambiarNombre atiende PUT /auth/yo. Es el stub del RED de HU-17; el GREEN
+// implementa la lógica.
+func (h *AuthHandler) CambiarNombre(w nethttp.ResponseWriter, r *nethttp.Request) {
+	w.WriteHeader(nethttp.StatusNoContent)
 }
 
 // Yo atiende GET /auth/yo.
