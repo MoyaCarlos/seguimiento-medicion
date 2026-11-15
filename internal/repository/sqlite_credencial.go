@@ -49,8 +49,29 @@ func (r *SQLiteCredencialRepository) Registrar(ctx context.Context, u domain.Use
 
 // ObtenerPorNombreNormalizado devuelve el usuario y su hash, vacío si el
 // usuario no tiene contraseña (NULL).
-// CambiarNombre es el stub del RED de HU-17; el GREEN lo implementa.
+// CambiarNombre actualiza el nombre visible y su identidad normalizada en una
+// sola sentencia (HU-17). La unicidad la garantiza la base: si el nombre
+// normalizado ya existe, devuelve ErrUsuarioDuplicado. No toca la contraseña ni
+// ninguna otra tabla.
 func (r *SQLiteCredencialRepository) CambiarNombre(ctx context.Context, id int64, nombre, nombreNormalizado string) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE usuarios SET nombre = ?, nombre_normalizado = ? WHERE id = ?`,
+		nombre, nombreNormalizado, id,
+	)
+	if err != nil {
+		var sqliteErr *sqlite.Error
+		if errors.As(err, &sqliteErr) && sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+			return ErrUsuarioDuplicado
+		}
+		return fmt.Errorf("cambiar nombre del usuario %d: %w", id, err)
+	}
+	filas, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("cambiar nombre del usuario %d: %w", id, err)
+	}
+	if filas == 0 {
+		return domain.ErrNoEncontrado
+	}
 	return nil
 }
 
