@@ -123,7 +123,15 @@ export function ListaProyectos() {
       )}
       {cerrados.length > 0 && (
         <section className="lista-proyectos__cerrados" aria-labelledby="proyectos-cerrados-titulo">
-          <h2 id="proyectos-cerrados-titulo">Proyectos cerrados</h2>
+          <div className="lista-proyectos__cerrados-cabecera">
+            <h2 id="proyectos-cerrados-titulo">Proyectos cerrados</h2>
+            <span
+              className="lista-proyectos__contador"
+              aria-label={`${cerrados.length} ${cerrados.length === 1 ? 'proyecto cerrado' : 'proyectos cerrados'}`}
+            >
+              {cerrados.length}
+            </span>
+          </div>
           <ul className="lista-proyectos__tarjetas">
             {cerrados.map((proyecto) => (
               <li key={proyecto.id}>
