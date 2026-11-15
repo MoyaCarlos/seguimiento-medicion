@@ -207,7 +207,15 @@ export function Editar() {
       )}
 
       {!cargando && !errorCarga && (
-        <ZonaCierreProyecto proyectoId={id} rol={rol} fechaCierre={fechaCierre} onCambio={aplicarCierre} />
+        <ZonaCierreProyecto
+          proyectoId={id}
+          rol={rol}
+          fechaCierre={fechaCierre}
+          onCambio={(nuevaFecha) => {
+            aplicarCierre(nuevaFecha)
+            recargarProyectos()
+          }}
+        />
       )}
     </section>
   )
