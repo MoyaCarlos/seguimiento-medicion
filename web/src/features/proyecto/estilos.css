@@ -551,3 +551,86 @@
 .zona-cierre .message--error {
   margin-bottom: 12px;
 }
+
+.equipo-rejilla {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.equipo-titulo {
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  margin: 0 0 14px;
+  overflow-wrap: anywhere;
+}
+
+.panel-tarjeta form {
+  display: grid;
+  gap: 16px;
+}
+
+.panel-tarjeta form .button {
+  justify-self: start;
+}
+
+.panel-tarjeta select {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14.5px;
+  min-height: 42px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.equipo-lista {
+  display: grid;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.equipo-lista li {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  padding: 8px 4px;
+}
+
+.equipo-persona {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.equipo-persona small {
+  color: #606f86;
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.equipo-acciones {
+  flex: none;
+}
+
+.equipo-quitar {
+  align-items: center;
+  display: inline-flex;
+  font-size: 13px;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.button--secondary.equipo-quitar {
+  background: var(--surface);
+  border-color: var(--brand);
+  color: #0b5f58;
+}

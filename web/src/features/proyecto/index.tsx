@@ -1,4 +1,4 @@
-import { Outlet, Route, Routes, useMatch, useParams } from 'react-router'
+import { Outlet, Route, Routes, useParams } from 'react-router'
 import { NoEncontrada } from '../../compartido/router/NoEncontrada'
 import { Configuracion } from './Configuracion'
 import { Editar } from './Editar'
@@ -6,14 +6,7 @@ import { Panel } from './Panel'
 import './estilos.css'
 
 function PanelLayout() {
-  const esEquipo = useMatch('/projects/:id/proyecto/settings')
-
-  return (
-    <>
-      {esEquipo && <h1 id="panel-title">Panel del proyecto</h1>}
-      <Outlet />
-    </>
-  )
+  return <Outlet />
 }
 
 export function Component() {
