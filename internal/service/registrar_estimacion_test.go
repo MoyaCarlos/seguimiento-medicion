@@ -84,6 +84,20 @@ func TestRegistrarEstimacion_MismoValorConSprintActivo_NoEscribe(t *testing.T) {
 	}
 }
 
+func TestRegistrarEstimacion_PropagaElConflictoDelRepositorio(t *testing.T) {
+	servicio, repo := nuevoRegistrarEstimacion(escenarioEstimacion{sp: intPtr(3), votaciones: votacionReveladaConDiferencias()})
+	repo.errGuardar = domain.ErrRegistroEstimacionDesactualizado
+
+	_, err := servicio.Ejecutar(context.Background(), 3, carlos, 8)
+
+	if !errors.Is(err, domain.ErrRegistroEstimacionDesactualizado) {
+		t.Fatalf("se esperaba domain.ErrRegistroEstimacionDesactualizado, se obtuvo %v", err)
+	}
+	if repo.escrituras != 0 {
+		t.Errorf("el conflicto no debía escribir, hubo %d escrituras", repo.escrituras)
+	}
+}
+
 type votacionQueNoDebeCargarVotos struct {
 	*fakeVotacionRepository
 	t *testing.T

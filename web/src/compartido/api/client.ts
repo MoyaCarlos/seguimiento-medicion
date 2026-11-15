@@ -26,7 +26,7 @@ export class ConnectionError extends Error {
   }
 }
 
-type Method = 'GET' | 'POST' | 'PUT'
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 export type Descarga = { blob: Blob; nombre: string }
 
@@ -51,6 +51,10 @@ export function post<T>(path: string, body: unknown): Promise<T> {
 
 export function put<T>(path: string, body: unknown): Promise<T> {
   return request<T>('PUT', path, body)
+}
+
+export function del<T>(path: string): Promise<T> {
+  return request<T>('DELETE', path)
 }
 
 async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {

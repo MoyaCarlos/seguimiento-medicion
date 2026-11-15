@@ -91,8 +91,8 @@ documento registra las decisiones técnicas tomadas para el diseño.
 
 ## R9. Concurrencia
 
-- **Decision**: para título, descripción y criterios, `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido. Para la estimación, el `UPDATE` agrega `AND estimacion_sp IS ?` con la estimación leída (R11).
-- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04). La estimación se exceptúa porque perderla sin aviso afecta las métricas de HU-03 y la acordada en HU-14 (#248).
+- **Decision**: para título, descripción y criterios, `UPDATE ... WHERE id = ?` sin versión: gana el último guardado válido. Para la estimación, el `UPDATE` agrega `AND estimacion_sp IS ?` con la estimación leída (#248) y evalúa además D2b en el mismo `UPDATE` (#249, R11).
+- **Rationale**: edge case explícito de la spec (mismo criterio que HU-04). La estimación se exceptúa porque perderla sin aviso afecta las métricas de HU-03 y la acordada en HU-14 (#248); D2b se exceptúa porque las métricas de un Sprint cerrado no guardan una foto de las historias completadas (#249).
 
 ## R10. Story Points congelados en Sprints Activo o Finalizado (D2b)
 
@@ -111,22 +111,30 @@ documento registra las decisiones técnicas tomadas para el diseño.
 - **Alternatives considered**: ponerla en el dominio (`ConDatosEditados`); el modelo de datos la
   asigna al servicio porque necesita el estado del Sprint, que no es parte de la historia.
 
-## R11. Estimación desactualizada en la edición (#248)
+## R11. Concurrencia de la edición: estimación desactualizada y D2b atómica (#248, #249)
 
 - **Decision**: el `PUT /backlog/{id}` recibe `estimacion_sp_leida` (obligatoria como clave,
   `null` permitido) con el valor que el formulario leyó al abrirse. `EditarHistoria` compara
   esa estimación con la actual después de validar los campos y antes de D2b; si difieren,
-  devuelve `domain.ErrEstimacionDesactualizada` (409, campo `estimacion_sp`). Además, el
-  repositorio escribe con `UPDATE ... WHERE id = ? AND estimacion_sp IS ?` usando la
-  estimación leída; si no afecta ninguna fila, devuelve el mismo error. El handler parsea
-  `estimacion_sp_leida` como `*json.Number` y valida que sea `null` o un valor de la escala.
+  devuelve `domain.ErrEstimacionDesactualizada` (409, campo `estimacion_sp`). El repositorio
+  escribe con un `UPDATE` condicional que exige las dos cosas en la misma sentencia:
+  `estimacion_sp IS ?` con la estimación leída (#248) y D2b contra el Sprint actual y la
+  estimación nueva (#249). La fila se devuelve con `RETURNING id`; si no hay fila, el
+  repositorio distingue si la historia ya no existe (`ErrHistoriaNoEncontrada`, 404), si la
+  estimación cambió desde que se leyó (`ErrEstimacionDesactualizada`, 409) o si fue el Sprint
+  el que cambió y D2b congela la estimación (`ErrEdicionDesactualizada`, 409). El handler
+  parsea `estimacion_sp_leida` como `*json.Number` y valida que sea `null` o un valor de la
+  escala.
 - **Rationale**: el formulario puede haber quedado abierto mientras el Scrum Master registraba
-  la estimación acordada (HU-14). Sin la condición, el `PUT` pisa el valor nuevo sin aviso,
-  sobre todo si la historia no tiene Sprint o está en uno `Pendiente`, donde D2b no aplica. La
-  comparación en el `UPDATE` cubre la ventana entre la lectura del service y la escritura. No
-  se necesita una columna de versión: el único dato que no puede pisarse es la estimación, y
-  el resto mantiene el criterio de "gana el último guardado". No hay migración (D18).
+  la estimación acordada (HU-14), y entre la lectura del service y la escritura el Sprint
+  también podía iniciarse o finalizarse. Sin las condiciones, el `PUT` pisa el valor nuevo sin
+  aviso o cambia Story Points de un Sprint cerrado. Las dos condiciones son compatibles en un
+  único `UPDATE` y cierran ambas ventanas sin transacciones en el servicio ni repetir la regla
+  en Go. No se necesita una columna de versión: el único dato que no puede pisarse es la
+  estimación, y el resto mantiene el criterio de "gana el último guardado". No hay migración
+  (D18, D19).
 - **Alternatives considered**: versión de fila o `updated_at` con migración (rechazada por el
   equipo: más superficie para un problema acotado); que el `PUT` no toque la estimación si no
-  cambió (no avisa cuando el usuario sí cambió un valor viejo); aceptar el riesgo y
-  documentarlo (rechazada porque pierde la estimación acordada).
+  cambió (no avisa cuando el usuario sí cambió un valor viejo); aceptar el riesgo de
+  milisegundos (descartado en #249); transacción en el servicio (el servicio no conoce
+  transacciones).
