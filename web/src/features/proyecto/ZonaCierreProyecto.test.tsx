@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
+import globales from '../../App.css?raw'
+import estilos from './estilos.css?raw'
 import { ZonaCierreProyecto } from './ZonaCierreProyecto'
 
 const respuestaCierre = {
@@ -355,5 +357,39 @@ describe('zona de cierre del proyecto - rol (HU-21)', () => {
     await reabrir()
 
     expect(await screen.findByText('No tenés permiso')).toBeTruthy()
+  })
+})
+
+describe('zona de cierre del proyecto - espacio del mensaje de error', () => {
+  it('Given el 409 «Cerrá el Sprint activo…», When se muestra el error, Then queda separado 12px del botón «Cerrar proyecto» que tiene debajo', async () => {
+    const mensaje = 'Cerrá el Sprint activo antes de cerrar el proyecto'
+    responder(json({ mensaje }, 409))
+    const hoja = document.createElement('style')
+    hoja.textContent = `${globales}\n${estilos}`
+    document.head.append(hoja)
+    onTestFinished(() => hoja.remove())
+    abrir()
+
+    await confirmar()
+    const error = await screen.findByText(mensaje)
+    const boton = screen.getByRole('button', { name: 'Cerrar proyecto' })
+
+    expect(error.compareDocumentPosition(boton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(getComputedStyle(error).getPropertyValue('margin-bottom')).toBe('12px')
+  })
+
+  it('Given un mensaje de error fuera de la zona de cierre, When se estiliza, Then conserva su margen de siempre (0)', () => {
+    const suelto = document.createElement('p')
+    suelto.className = 'message message--error'
+    document.body.append(suelto)
+    const hoja = document.createElement('style')
+    hoja.textContent = `${globales}\n${estilos}`
+    document.head.append(hoja)
+    onTestFinished(() => {
+      hoja.remove()
+      suelto.remove()
+    })
+
+    expect(getComputedStyle(suelto).getPropertyValue('margin-bottom')).not.toBe('12px')
   })
 })
