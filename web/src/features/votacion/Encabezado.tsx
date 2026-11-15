@@ -19,7 +19,7 @@ export function Encabezado({ proyectoId, historiaId, deshabilitado, alActualizar
         </p>
       </div>
       <div className="votacion-encabezado__acciones">
-        <Link className="button button--quiet" to={`/projects/${proyectoId}/backlog`}>
+        <Link className="button button--ghost" to={`/projects/${proyectoId}/backlog`}>
           Volver al Product Backlog
         </Link>
         <Button type="button" variant="secondary" onClick={alActualizar} disabled={deshabilitado}>

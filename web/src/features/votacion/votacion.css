@@ -144,10 +144,20 @@
   font-weight: 700;
 }
 
-.votacion-integrante__rol,
-.votacion-integrante__estado {
+.votacion-integrante__rol {
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+.votacion-integrante__estado {
+  color: #166534;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.votacion-integrante--yo {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 1px var(--brand);
 }
 
 .votacion-integrante__voto {
@@ -176,18 +186,9 @@
 }
 
 .votacion-diferencias {
-  background: rgb(79 142 145 / 10%);
-  border-left: 4px solid var(--complement);
-  border-radius: 0.5rem;
   color: var(--ink);
   font-weight: 700;
   margin: 0;
-  padding: 0.65rem 0.9rem;
-}
-
-.votacion-diferencias--hay {
-  background: rgb(180 35 90 / 8%);
-  border-left-color: var(--danger);
 }
 
 .votacion-resultado__datos {
@@ -254,13 +255,9 @@
 }
 
 .votacion-consenso__ronda {
-  align-items: center;
-  border-top: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 1rem;
-  justify-content: space-between;
-  padding-top: 0.9rem;
+  display: grid;
+  gap: 0.6rem;
+  justify-items: start;
 }
 
 .votacion-aviso {
@@ -310,8 +307,7 @@
     grid-template-columns: repeat(4, 1fr);
   }
 
-  .votacion-consenso__fila,
-  .votacion-consenso__ronda {
+  .votacion-consenso__fila {
     align-items: stretch;
     flex-direction: column;
   }
