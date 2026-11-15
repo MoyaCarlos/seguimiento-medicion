@@ -139,5 +139,5 @@ unicidad case-insensitive.
 - [x] T032 COMMIT `docs: cerrar HU-17 (spec y tareas) (Refs #176)`.
 - [x] T033 `gofmt -l .`, `go build ./...`, `go vet ./...`, `go test ./...`; `cd web && npm test`,
   `npm run lint` y `npm run build` en verde.
-- [ ] T034 Crear el PR con «Closes #176» y actualizar el cuerpo del issue con la redefinición
+- [x] T034 PR #325 creado con «Closes #176» y cuerpo del issue #176 actualizado con la redefinición
   acordada.

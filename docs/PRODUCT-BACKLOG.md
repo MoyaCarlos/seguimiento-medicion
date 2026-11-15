@@ -659,7 +659,7 @@ Spec: `specs/048-hu-17-renombrar-usuario/`. Rama: `feature/HU-17-renombrar-usuar
 ### Prioridad
 C (Could have) - Mejora de calidad surgida del beta testing; entra solo si sobra tiempo antes de la entrega, después de #300 y HU-16.
 ### Estado
-Implementada en `feature/HU-17-renombrar-usuario` (PR pendiente)
+Implementada en `feature/HU-17-renombrar-usuario` (PR #325)
 ### Valor de Negocio
 8 (Fibonacci) - propuesta, a confirmar con el equipo
 ### Estimación

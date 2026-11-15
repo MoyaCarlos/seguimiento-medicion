@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-15
 
-**Status**: Implementada (pendiente de review)
+**Status**: Implementada (PR #325, pendiente de review)
 
 **Dependencia**: HU-20 (autenticación, #233) y HU-21 (permisos por rol, #234), ya en `main`.
 No hay cambio de esquema: `usuarios` ya existe y las demás tablas referencian `usuario_id`.
