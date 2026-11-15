@@ -519,3 +519,7 @@
   box-shadow: 0 0 0 3px rgb(13 148 136 / 18%);
   outline: none;
 }
+
+.zona-cierre .message--error {
+  margin-bottom: 12px;
+}
