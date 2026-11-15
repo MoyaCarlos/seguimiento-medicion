@@ -162,3 +162,13 @@ it('Given la ayuda de un campo de la edición, When se estiliza, Then es de 12,5
 it('Given las etiquetas del formulario de edición, When se estilizan, Then miden 13px', () => {
   expect(regla('.panel-formulario .field label')).toMatch(/font-size:\s*13px/)
 })
+
+it('Given la descripción del formulario de edición, When se estiliza, Then es un cuadro de 92px mínimo con la tipografía de la app, no monoespaciada', () => {
+  const bloque = regla('.panel-formulario textarea')
+
+  expect(bloque).toMatch(/font:\s*inherit/)
+  expect(bloque).toMatch(/font-size:\s*14\.5px/)
+  expect(bloque).toMatch(/min-height:\s*92px/)
+  expect(bloque).toMatch(/border-radius:\s*10px/)
+  expect(bloque).toMatch(/padding:\s*10px 12px/)
+})
