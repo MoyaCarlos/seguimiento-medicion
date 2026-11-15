@@ -21,6 +21,10 @@ pasado; si no hay `Activo` y todos los Sprints están `Finalizado` ⇒ "Finaliza
 `Activo`, con al menos un `Finalizado` y al menos un `Pendiente` ⇒ "En curso" (FR-016); en
 el resto deciden las fechas del proyecto.
 
+> **Nota (#173, 2026-11-11)**: el caso «todos `Finalizado`» se ajustó: es "Finalizado" solo
+> si la fecha de fin ya pasó; con fecha de fin futura, igual a hoy o sin cargar, queda
+> "En curso". El resto de la precedencia no cambió.
+
 ## Technical Context
 
 **Language/Version**: Go 1.26 (mismo módulo `github.com/MoyaCarlos/seguimiento-medicion`)

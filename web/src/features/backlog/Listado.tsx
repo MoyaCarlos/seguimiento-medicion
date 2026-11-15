@@ -87,6 +87,14 @@ function PantallaBacklog({ id }: { id: string }) {
     setAviso('Historia actualizada')
   }
 
+  function actualizarEstimacion(historiaId: number, estimacion: number | null) {
+    setHistorias((actuales) =>
+      actuales.map((historia) =>
+        historia.id === historiaId ? { ...historia, estimacion_sp: estimacion } : historia,
+      ),
+    )
+  }
+
   return (
     <section className="backlog" aria-labelledby="backlog-title">
       <div className="page-header backlog-encabezado">
@@ -190,6 +198,9 @@ function PantallaBacklog({ id }: { id: string }) {
                   key={historia.id}
                   historia={historia}
                   onGuardada={guardar}
+                  onEstimacionActualizada={(estimacion) =>
+                    actualizarEstimacion(historia.id, estimacion)
+                  }
                   onCancelar={() => setEditandoId(null)}
                   puedeEscribir={puedeEscribir}
                 />
