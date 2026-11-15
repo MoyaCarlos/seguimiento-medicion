@@ -49,7 +49,11 @@ let sesion = 1
 function simularRol(rol: 'scrum_master' | 'product_builder') {
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(new Response(JSON.stringify({ id: 25, rol }), { status: 200 }))),
+    vi.fn((ruta: string) =>
+      Promise.resolve(
+        new Response(JSON.stringify(ruta === '/auth/yo' ? { id: sesion, nombre: 'sesión' } : { id: 25, rol }), { status: 200 }),
+      ),
+    ),
   )
 }
 
@@ -1151,5 +1155,39 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     expect(boton('Nueva ronda').disabled).toBe(false)
     expect(screen.queryByText(CERRADO)).toBeNull()
     expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+})
+
+describe('Pantalla de votación como el prototipo', () => {
+  it('Given que tengo la sesión, When se muestran los integrantes, Then mi fila queda resaltada', async () => {
+    servidor = { votos: { 1: 3, 2: 5 }, revelada: false, ronda: 1 }
+    actuarComo('Beta Dos')
+    abrir()
+
+    const yo = (await screen.findAllByRole('listitem')).find((fila) => fila.getAttribute('aria-current') === 'true')
+
+    expect(yo?.textContent).toContain('Beta Dos')
+    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1)
+  })
+
+  it('Given que el servidor no dice quién soy, When se muestran los integrantes, Then ninguna fila se resalta y no hay error', async () => {
+    servidor = { votos: { 1: 3 }, revelada: false, ronda: 1 }
+    simularRol('scrum_master')
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'no' }), { status: 401 }))))
+    abrir()
+
+    await screen.findAllByRole('listitem')
+
+    expect(document.querySelector('[aria-current="true"]')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Given la cabecera, When se muestra, Then «Volver al Product Backlog» es un botón gris discreto', async () => {
+    servidor = { votos: {}, revelada: false, ronda: 1 }
+    abrir()
+
+    const volver = await screen.findByRole('link', { name: 'Volver al Product Backlog' })
+
+    expect(volver.className).toBe('button button--ghost')
   })
 })
