@@ -170,7 +170,7 @@ func escribirError(w nethttp.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrSprintNoEncontrado), errors.Is(err, domain.ErrProyectoNoEncontrado),
 		errors.Is(err, domain.ErrHistoriaNoEncontrada), errors.Is(err, domain.ErrVotacionNoIniciada),
 		errors.Is(err, domain.ErrDefectoNoEncontrado), errors.Is(err, domain.ErrUsuarioNoEncontrado),
-		errors.Is(err, domain.ErrIntegranteNoEncontrado):
+		errors.Is(err, domain.ErrIntegranteNoEncontrado), errors.Is(err, domain.ErrNoEncontrado):
 		escribirJSON(w, nethttp.StatusNotFound, errorResponse{Mensaje: err.Error()})
 	case errors.Is(err, domain.ErrNoEsIntegrante), errors.Is(err, domain.ErrNoEsScrumMaster):
 		escribirJSON(w, nethttp.StatusForbidden, errorResponse{Mensaje: err.Error()})

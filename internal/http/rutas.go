@@ -53,6 +53,7 @@ func Rutas(h Handlers) []Ruta {
 		{"POST /auth/registro", Publica, h.Auth.Registro},
 		{"POST /auth/ingreso", Publica, h.Auth.Ingreso},
 		{"GET /auth/yo", Lectura, h.Auth.Yo},
+		{"PUT /auth/yo", SoloSesion, h.Auth.CambiarNombre},
 		{"POST /auth/salir", SoloSesion, h.Auth.Salir},
 		{"GET /demo/estado", Publica, h.Demo.soloSiHabilitado(h.Demo.Estado)},
 		{"POST /demo/datos", Publica, h.Demo.soloSiHabilitado(h.Demo.Cargar)},

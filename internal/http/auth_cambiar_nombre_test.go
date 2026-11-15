@@ -125,6 +125,16 @@ func TestAuthHandler_CambiarNombre_Devuelve409ConNombreEnUso(t *testing.T) {
 	}
 }
 
+func TestAuthHandler_CambiarNombre_Devuelve404SiElUsuarioDeLaSesionNoExiste(t *testing.T) {
+	h, _ := nuevoAuthHandlerDePrueba()
+
+	rec := pedirCambiarNombre(h, domain.User{ID: 999, Nombre: "fantasma"}, `{"nombre":"ana.perez"}`)
+
+	if rec.Code != nethttp.StatusNotFound {
+		t.Fatalf("status = %d, se esperaba 404 (cuerpo: %s)", rec.Code, rec.Body.String())
+	}
+}
+
 func TestAuthHandler_CambiarNombre_IgnoraElUsuarioIDDelCuerpo(t *testing.T) {
 	h, credenciales := nuevoAuthHandlerDePrueba()
 	ana := registrarUsuarioDePrueba(t, credenciales, "ana")
