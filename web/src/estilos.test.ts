@@ -173,3 +173,26 @@ it('Given las etiquetas de la tarjeta de proyecto, When se estilizan, Then van a
   const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
   expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
 })
+
+it('Given la sección de cerrados, When se estiliza, Then la separa una línea divisoria de los abiertos y el título lleva su contador', () => {
+  const seccion = bloque('.lista-proyectos__cerrados')
+
+  expect(seccion).toMatch(/border-top:\s*1px solid var\(--line-strong\)/)
+  expect(seccion).toMatch(/padding-top:\s*20px/)
+  expect(seccion).toMatch(/margin-top:\s*16px/)
+  expect(bloque('.lista-proyectos__cerrados-cabecera')).toMatch(/display:\s*flex/)
+  expect(bloque('.lista-proyectos__contador')).toMatch(/border-radius:\s*999px/)
+})
+
+it('Given las tarjetas de los cerrados, When se estilizan, Then quedan más tenues que las de los abiertos (fondo gris suave y sin sombra) sin perder contraste de texto', () => {
+  const tarjeta = bloque('.lista-proyectos__cerrados .tarjeta-proyecto')
+  const fondo = tarjeta.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+  const luz = (h: string) =>
+    [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+      .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+  expect(fondo).toBe('#f8fafc')
+  expect(tarjeta).toMatch(/box-shadow:\s*none/)
+  const [claro, oscuro] = [luz(fondo), luz('#606f86')].sort((x, y) => y - x)
+  expect((claro + 0.05) / (oscuro + 0.05)).toBeGreaterThanOrEqual(4.5)
+})

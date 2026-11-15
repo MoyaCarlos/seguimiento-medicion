@@ -469,5 +469,33 @@ describe('proyectos cerrados', () => {
 
     expect(tarjeta.querySelector('.tarjeta-proyecto__etiquetas')).toBeNull()
   })
+
+  it('Given varios proyectos cerrados, When se muestra la sección, Then un contador junto al título dice cuántos hay', async () => {
+    abrir([ABIERTO_A, CERRADO_A, CERRADO_B])
+
+    await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+    const contador = seccionCerrados().querySelector('.lista-proyectos__contador') as HTMLElement
+
+    expect(contador.textContent).toBe('2')
+    expect(contador.getAttribute('aria-label')).toBe('2 proyectos cerrados')
+    expect(contador.previousElementSibling?.textContent).toBe('Proyectos cerrados')
+  })
+
+  it('Given un solo proyecto cerrado, When se muestra la sección, Then el contador dice «1 proyecto cerrado» en singular', async () => {
+    abrir([ABIERTO_A, CERRADO_A])
+
+    await screen.findByRole('link', { name: 'Alfa abierto (#1)' })
+
+    expect(seccionCerrados().querySelector('.lista-proyectos__contador')?.getAttribute('aria-label')).toBe('1 proyecto cerrado')
+  })
+
+  it('Given una búsqueda, When filtra los cerrados, Then el contador cuenta solo los que se ven', async () => {
+    const usuario = userEvent.setup()
+    abrir([ABIERTO_A, CERRADO_A, CERRADO_B])
+
+    await usuario.type(await screen.findByRole('searchbox', { name: 'Buscar proyecto' }), 'alfa')
+
+    expect(seccionCerrados().querySelector('.lista-proyectos__contador')?.textContent).toBe('1')
+  })
 })
 
