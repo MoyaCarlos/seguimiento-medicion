@@ -270,7 +270,7 @@ func (e escenarioDefectosHTTP) listar(id string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/defectos", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Listar(rec, req)
+	e.handler.Listar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

@@ -35,7 +35,7 @@ func nuevasFuentesDelDetalle() fuentesDelDetalle {
 }
 
 func (f fuentesDelDetalle) consultar(proyectoID, sprintID int64) (domain.DetalleSprint, error) {
-	return NewConsultarDetalleSprint(f.proyectos, f.sprints, f.metricas, f.historial).Ejecutar(context.Background(), proyectoID, sprintID)
+	return NewConsultarDetalleSprint(f.proyectos, f.sprints, f.metricas, f.historial).Ejecutar(context.Background(), proyectoID, sprintID, actorDePrueba)
 }
 
 func TestConsultarDetalleSprint_ArmaElDetalleDeUnSprintFinalizado(t *testing.T) {

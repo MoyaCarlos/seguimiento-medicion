@@ -68,7 +68,7 @@ type escenarioReporteHTTP struct {
 
 func nuevoEscenarioReporteHTTP() escenarioReporteHTTP {
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}}
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}, miembros: anaIntegra(1)}
 	backlog := &stubReporteBacklog{}
 	generar := service.NewGenerarReporte(proyectos, sprints, backlog, backlog, backlog, stubDatosMetricas{}, &stubDefectoRepository{})
 	pdf := &generadorReporteStub{contenidoSprint: []byte("%PDF-1.4 contenido"), contenidoProyecto: []byte("%PDF-1.4 proyecto")}
@@ -94,7 +94,7 @@ func (e escenarioReporteHTTP) pedirSprint(id string) *httptest.ResponseRecorder 
 	req := httptest.NewRequest(nethttp.MethodGet, "/sprints/"+id+"/reporte", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Sprint(rec, req)
+	e.handler.Sprint(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -102,7 +102,7 @@ func (e escenarioReporteHTTP) pedirProyecto(id string) *httptest.ResponseRecorde
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/reporte", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.Proyecto(rec, req)
+	e.handler.Proyecto(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -267,7 +267,7 @@ func TestReporteHandler_Proyecto_IdInvalido(t *testing.T) {
 
 func TestReporteHandler_ErrorDeLecturaNoEscribeRespuesta(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}}
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}, miembros: anaIntegra(1)}
 	backlog := &stubReporteBacklog{}
 	falla := errors.New("falla de la base")
 	pdf := &generadorReporteStub{contenidoSprint: []byte("%PDF-1.4"), contenidoProyecto: []byte("%PDF-1.4")}
@@ -281,12 +281,12 @@ func TestReporteHandler_ErrorDeLecturaNoEscribeRespuesta(t *testing.T) {
 	reqSprint := httptest.NewRequest(nethttp.MethodGet, "/sprints/1/reporte", nil)
 	reqSprint.SetPathValue("id", "1")
 	recSprint := httptest.NewRecorder()
-	handler.Sprint(recSprint, reqSprint)
+	handler.Sprint(recSprint, conSesionDe(reqSprint, anaDePrueba))
 
 	reqProyecto := httptest.NewRequest(nethttp.MethodGet, "/projects/1/reporte", nil)
 	reqProyecto.SetPathValue("id", "1")
 	recProyecto := httptest.NewRecorder()
-	handler.Proyecto(recProyecto, reqProyecto)
+	handler.Proyecto(recProyecto, conSesionDe(reqProyecto, anaDePrueba))
 
 	if finalizado.ID == 0 {
 		t.Fatal("el Sprint debía tener ID")

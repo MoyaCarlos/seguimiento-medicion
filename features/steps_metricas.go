@@ -347,12 +347,12 @@ func (p *pasosMetricas) cambiarTitulo(nombre, titulo string) error {
 }
 
 func (p *pasosMetricas) consultar() error {
-	p.metricas, p.errConsulta = p.calcular.Ejecutar(context.Background(), p.proyectoID)
+	p.metricas, p.errConsulta = p.calcular.Ejecutar(context.Background(), p.proyectoID, scrumMasterDelProyecto(p.db, p.proyectoID))
 	return p.errConsulta
 }
 
 func (p *pasosMetricas) consultarInexistente(id int) error {
-	_, p.errConsulta = p.calcular.Ejecutar(context.Background(), int64(id))
+	_, p.errConsulta = p.calcular.Ejecutar(context.Background(), int64(id), scrumMasterDelProyecto(p.db, int64(id)))
 	return nil
 }
 

@@ -366,7 +366,7 @@ func (p *pasosHistorial) otroProyectoConSprint() error {
 }
 
 func (p *pasosHistorial) consultarHistorialDe(proyectoID int64) error {
-	p.historial, p.errConsulta = p.listar.Ejecutar(context.Background(), proyectoID)
+	p.historial, p.errConsulta = p.listar.Ejecutar(context.Background(), proyectoID, scrumMasterDelProyecto(p.db, proyectoID))
 	return nil
 }
 
@@ -377,7 +377,7 @@ func (p *pasosHistorial) consultarHistorialInexistente() error {
 }
 
 func (p *pasosHistorial) consultarDetalleDe(sprintID int64) error {
-	p.detalle, p.errConsulta = p.detallar.Ejecutar(context.Background(), p.proyectoID, sprintID)
+	p.detalle, p.errConsulta = p.detallar.Ejecutar(context.Background(), p.proyectoID, sprintID, scrumMasterDelProyecto(p.db, p.proyectoID))
 	return nil
 }
 
@@ -479,7 +479,7 @@ func (p *pasosHistorial) sprintSinDatosDeHoras(nombre string) error {
 }
 
 func (p *pasosHistorial) metricasDeHU03() (map[int64]domain.Metricas, error) {
-	calculadas, err := p.calcular.Ejecutar(context.Background(), p.proyectoID)
+	calculadas, err := p.calcular.Ejecutar(context.Background(), p.proyectoID, scrumMasterDelProyecto(p.db, p.proyectoID))
 	if err != nil {
 		return nil, err
 	}

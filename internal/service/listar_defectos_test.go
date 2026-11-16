@@ -9,7 +9,7 @@ import (
 )
 
 func nuevoListarDefectos() (*ListarDefectos, *fakeDefectoRepository) {
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}, 2: {ID: 2}}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: {ID: 1}, 2: {ID: 2}}}
 	defectos := &fakeDefectoRepository{titulos: map[int64]string{3: "Carrito de compras"}}
 	return NewListarDefectos(proyectos, defectos), defectos
 }
@@ -22,7 +22,7 @@ func TestListarDefectos_DevuelveLosDelProyecto(t *testing.T) {
 		}
 	}
 
-	got, err := listar.Ejecutar(context.Background(), 1)
+	got, err := listar.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -35,7 +35,7 @@ func TestListarDefectos_DevuelveLosDelProyecto(t *testing.T) {
 func TestListarDefectos_ProyectoSinDefectos(t *testing.T) {
 	listar, _ := nuevoListarDefectos()
 
-	got, err := listar.Ejecutar(context.Background(), 1)
+	got, err := listar.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -48,7 +48,7 @@ func TestListarDefectos_ProyectoSinDefectos(t *testing.T) {
 func TestListarDefectos_ProyectoInexistente(t *testing.T) {
 	listar, defectos := nuevoListarDefectos()
 
-	_, err := listar.Ejecutar(context.Background(), 999)
+	_, err := listar.Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)

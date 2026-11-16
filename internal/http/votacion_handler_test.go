@@ -56,7 +56,7 @@ func nuevoVotacionHandlerDePrueba(t *testing.T, sentencias ...string) *VotacionH
 	proyectos := repository.NewSQLiteProjectRepository(db)
 	votaciones := repository.NewSQLiteVotacionRepository(db)
 	return NewVotacionHandler(
-		service.NewObtenerHistoria(historias),
+		service.NewObtenerHistoria(historias, proyectos),
 		service.NewVotar(historias, proyectos, votaciones),
 		service.NewConsultarVotacion(historias, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(historias, proyectos, votaciones),
@@ -613,7 +613,7 @@ func historialDe(handler *VotacionHandler, id string) *httptest.ResponseRecorder
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/votacion/rondas", nil)
 	req.SetPathValue("id", id)
-	handler.Historial(rec, req)
+	handler.Historial(rec, comoActor(req, 1))
 	return rec
 }
 

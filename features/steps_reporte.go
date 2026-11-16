@@ -323,7 +323,7 @@ func (p *pasosReporte) solicitarSprintInexistente(id int) error {
 }
 
 func (p *pasosReporte) ejecutarSprint(id int64) error {
-	reporte, err := p.generar.EjecutarSprint(context.Background(), id, p.ahora)
+	reporte, err := p.generar.EjecutarSprint(context.Background(), id, p.lector(sprintDeProyecto(p.db, id)), p.ahora)
 	p.reporteSprint = reporte
 	if err != nil {
 		p.err = err
@@ -354,7 +354,7 @@ func (p *pasosReporte) solicitarProyectoConGeneradorQueFalla() error {
 }
 
 func (p *pasosReporte) ejecutarProyecto(id int64) error {
-	reporte, err := p.generar.EjecutarProyecto(context.Background(), id, p.ahora)
+	reporte, err := p.generar.EjecutarProyecto(context.Background(), id, p.lector(id), p.ahora)
 	p.reporteProyecto = reporte
 	if err != nil {
 		p.err = err
@@ -711,4 +711,22 @@ func InitializeScenarioReporte(ctx *godog.ScenarioContext) {
 	ctx.Step(`^el reporte incluye la historia "([^"]*)" en el Product Backlog$`, p.proyectoIncluyeHistoriaEnBacklog)
 	ctx.Step(`^el reporte incluye la historia "([^"]*)" solo en el Sprint Activo$`, p.proyectoIncluyeHistoriaSoloEnActivo)
 	ctx.Step(`^el reporte informa las métricas, el esfuerzo y los defectos como "sin datos"$`, p.informaSinDatos)
+}
+
+// lector es quien consulta el reporte: el primer integrante del proyecto, para
+// no cambiar el equipo que el reporte lista; si el proyecto no tiene a nadie,
+// su Scrum Master de escenario. 0 si el proyecto no existe (el servicio
+// responde 404 antes de pedir pertenencia).
+func (p *pasosReporte) lector(proyectoID int64) int64 {
+	var id int64
+	if err := p.db.QueryRow(`SELECT usuario_id FROM integrantes WHERE proyecto_id = ? ORDER BY usuario_id LIMIT 1`, proyectoID).Scan(&id); err == nil {
+		return id
+	}
+	return scrumMasterDelProyecto(p.db, proyectoID)
+}
+
+func sprintDeProyecto(db *sql.DB, sprintID int64) int64 {
+	var proyectoID int64
+	_ = db.QueryRow(`SELECT proyecto_id FROM sprints WHERE id = ?`, sprintID).Scan(&proyectoID)
+	return proyectoID
 }

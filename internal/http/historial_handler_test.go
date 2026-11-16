@@ -41,7 +41,7 @@ func sprintFinalizadoDelHistorial(id int64, numero int, goal string) domain.Spri
 func consultarHistorial(t *testing.T, f fuentesDelHistorial, id string) *httptest.ResponseRecorder {
 	t.Helper()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
-	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: f.horasPorSP})
+	proyecto, err := proyectos.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: f.horasPorSP}, anaDePrueba.ID)
 	if err != nil {
 		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
 	}
@@ -53,7 +53,7 @@ func consultarHistorial(t *testing.T, f fuentesDelHistorial, id string) *httptes
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/historial", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	NewHistorialHandler(service.NewConsultarHistorialSprints(metricas, f.sprints), nil).Listar(rec, req)
+	NewHistorialHandler(service.NewConsultarHistorialSprints(metricas, f.sprints), nil).Listar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

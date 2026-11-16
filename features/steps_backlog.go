@@ -107,12 +107,12 @@ func (p *pasosBacklog) proyectoSinHistoriasSinSprint() error {
 }
 
 func (p *pasosBacklog) consultoBacklog() error {
-	p.backlog, p.err = p.consultar.Ejecutar(context.Background(), p.base.proyectoID)
+	p.backlog, p.err = p.consultar.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	return nil
 }
 
 func (p *pasosBacklog) consultoBacklogDeInexistente(identificador int) error {
-	p.backlog, p.err = p.consultar.Ejecutar(context.Background(), int64(identificador))
+	p.backlog, p.err = p.consultar.Ejecutar(context.Background(), int64(identificador), scrumMasterDelProyecto(p.base.db, int64(identificador)))
 	return nil
 }
 

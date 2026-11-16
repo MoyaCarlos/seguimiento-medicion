@@ -60,7 +60,7 @@ func consultarDetalle(t *testing.T, historial stubHistorialSprint, id, sprintID 
 	t.Helper()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	horas := 4.0
-	if _, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: &horas}); err != nil {
+	if _, err := proyectos.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: &horas}, anaDePrueba.ID); err != nil {
 		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
 	}
 
@@ -70,7 +70,7 @@ func consultarDetalle(t *testing.T, historial stubHistorialSprint, id, sprintID 
 	req.SetPathValue("id", id)
 	req.SetPathValue("sprintId", sprintID)
 	rec := httptest.NewRecorder()
-	NewHistorialHandler(nil, detalle).Detalle(rec, req)
+	NewHistorialHandler(nil, detalle).Detalle(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

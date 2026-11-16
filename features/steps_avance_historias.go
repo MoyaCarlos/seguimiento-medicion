@@ -12,7 +12,6 @@ import (
 	"github.com/cucumber/godog"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
-	apihttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -57,11 +56,7 @@ func (p *pasosAvance) preparar() {
 	p.plan = &pasosAsignacion{base: p.base}
 	p.plan.preparar()
 	p.cambiar = service.NewCambiarEstadoHistoria(p.plan.backlog, p.plan.sprints, func() time.Time { return relojEstadoHistoria }, repository.NewSQLiteProjectRepository(p.base.db))
-	handler := apihttp.NewAvanceHandler(service.NewConsultarAvanceHistorias(
-		repository.NewSQLiteProjectRepository(p.base.db), p.plan.backlog, p.plan.sprints))
-	mux := nethttp.NewServeMux()
-	mux.HandleFunc("GET /projects/{id}/avance", handler.Consultar)
-	p.rutas = mux
+	p.rutas = apiDeEscenario(p.base.db)
 	p.sprints = map[string]int64{}
 	p.respuesta = nil
 }
@@ -142,7 +137,14 @@ func (p *pasosAvance) seCierraElSprint(nombre string) error {
 }
 
 func (p *pasosAvance) consultarCon(id string) error {
-	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/avance", nil)
+	lector, err := nuevoLector(p.base.db)
+	if err != nil {
+		return err
+	}
+	if err := lector.integra(p.base.proyectoID); err != nil {
+		return err
+	}
+	req := lector.pedir(httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/avance", nil))
 	p.respuesta = httptest.NewRecorder()
 	p.rutas.ServeHTTP(p.respuesta, req)
 	return nil

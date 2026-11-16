@@ -52,7 +52,7 @@ func TestConsultarHistorialRondas_ConservaElNombreDeUnDadoDeBaja(t *testing.T) {
 	darDeBaja(t, equipo, candela)
 	servicio := NewConsultarHistorialRondas(historias(historiaDelBacklog()), equipo, votacionConRondaUnoReveladaYDosAbierta())
 
-	historial, err := servicio.Ejecutar(context.Background(), 3)
+	historial, err := servicio.Ejecutar(context.Background(), 3, carlos)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}

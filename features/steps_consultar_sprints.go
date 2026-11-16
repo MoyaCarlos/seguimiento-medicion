@@ -10,16 +10,15 @@ import (
 
 	"github.com/cucumber/godog"
 
-	apphttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
-	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
 // consultaSprintsContext ejercita GET /projects/{id}/sprints sobre una base real en memoria.
 type consultaSprintsContext struct {
-	db  *sql.DB
-	mux *http.ServeMux
-	rec *httptest.ResponseRecorder
+	db     *sql.DB
+	mux    *http.ServeMux
+	rec    *httptest.ResponseRecorder
+	lector lectorDeEscenario
 }
 
 func (c *consultaSprintsContext) iniciar() error {
@@ -31,14 +30,11 @@ func (c *consultaSprintsContext) iniciar() error {
 	if err := repository.AplicarMigraciones(context.Background(), db); err != nil {
 		return err
 	}
-	proyectos := repository.NewSQLiteProjectRepository(db)
-	sprints := repository.NewSQLiteSprintRepository(db)
-	handler := apphttp.NewSprintHandler(nil, nil, nil, service.NewConsultarSprints(proyectos, sprints), nil, sprints)
 	c.db = db
-	c.mux = http.NewServeMux()
-	c.mux.HandleFunc("GET /projects/{id}/sprints", handler.Listar)
+	c.mux = apiDeEscenario(db)
 	c.rec = nil
-	return nil
+	c.lector, err = nuevoLector(db)
+	return err
 }
 
 func (c *consultaSprintsContext) cerrar() error {
@@ -54,7 +50,10 @@ func (c *consultaSprintsContext) crearProyecto(id int) error {
 	_, err := c.db.Exec(
 		`INSERT OR IGNORE INTO proyectos (id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en)
 		 VALUES (?, 'Proyecto', '', NULL, NULL, '2026-10-26T00:00:00Z')`, id)
-	return err
+	if err != nil {
+		return err
+	}
+	return c.lector.integra(int64(id))
 }
 
 func (c *consultaSprintsContext) proyectoConSprints(proyecto, primero, segundo int) error {
@@ -75,7 +74,7 @@ func (c *consultaSprintsContext) proyectoSinSprints(proyecto int) error {
 
 func (c *consultaSprintsContext) consultoSprintsDe(id string) error {
 	c.rec = httptest.NewRecorder()
-	c.mux.ServeHTTP(c.rec, httptest.NewRequest(http.MethodGet, "/projects/"+id+"/sprints", nil))
+	c.mux.ServeHTTP(c.rec, c.lector.pedir(httptest.NewRequest(http.MethodGet, "/projects/"+id+"/sprints", nil)))
 	return nil
 }
 

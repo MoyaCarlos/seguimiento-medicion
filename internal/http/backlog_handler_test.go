@@ -85,11 +85,11 @@ func nuevoHandlerDePrueba() (*BacklogHandler, *stubBacklogRepository) {
 		historias: map[int64]domain.BacklogItem{},
 		sprints:   repository.NewSprintRepositoryEnMemoria(),
 	}
-	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}, miembros: anaIntegra(1)}
+	proyectos := &stubProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}, miembros: anaIntegra(1, 2)}
 	return NewBacklogHandler(
 		service.NewCrearHistoriaBacklog(repo, proyectos),
 		service.NewConsultarProductBacklog(proyectos, repo),
-		service.NewObtenerHistoria(repo),
+		service.NewObtenerHistoria(repo, proyectos),
 		service.NewEditarHistoria(repo, repo.sprints, proyectos),
 		service.NewAsignarHistoriaASprint(repo, repo.sprints, proyectos),
 		service.NewCambiarEstadoHistoria(repo, repo.sprints, relojDePrueba, proyectos),
@@ -276,7 +276,7 @@ func consultarBacklog(handler *BacklogHandler, id string) *httptest.ResponseReco
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/backlog", nil)
 	req.SetPathValue("id", id)
-	handler.ConsultarBacklog(rec, req)
+	handler.ConsultarBacklog(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
@@ -284,7 +284,7 @@ func consultarHistoria(handler *BacklogHandler, id string) *httptest.ResponseRec
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id, nil)
 	req.SetPathValue("id", id)
-	handler.Obtener(rec, req)
+	handler.Obtener(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

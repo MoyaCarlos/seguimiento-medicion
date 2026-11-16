@@ -33,12 +33,12 @@ func TestGenerarReporte_EjecutarProyecto_ExcluyeAlDadoDeBajaSinCambiarSusHoras(t
 	sut := nuevoGenerarReporteDePrueba(proyectos, sprints, &fakeProductBacklogRepository{}, historias,
 		&fakeArrastradasRepository{}, datos, &fakeDefectoRepository{})
 
-	antes, err := sut.EjecutarProyecto(ctx, 1, fechaDeReporte(20))
+	antes, err := sut.EjecutarProyecto(ctx, 1, carlos, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("reporte antes de la baja: %v", err)
 	}
 	darDeBaja(t, proyectos, candela)
-	despues, err := sut.EjecutarProyecto(ctx, 1, fechaDeReporte(20))
+	despues, err := sut.EjecutarProyecto(ctx, 1, carlos, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("reporte después de la baja: %v", err)
 	}

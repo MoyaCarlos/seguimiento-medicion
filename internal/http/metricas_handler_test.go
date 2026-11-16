@@ -26,7 +26,7 @@ func (s stubDatosMetricas) ListarDatosSprintsFinalizados(context.Context, int64)
 func consultarMetricas(t *testing.T, horas *float64, datos stubDatosMetricas, id string) *httptest.ResponseRecorder {
 	t.Helper()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
-	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: horas})
+	proyecto, err := proyectos.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto", HorasPorStoryPoint: horas}, anaDePrueba.ID)
 	if err != nil {
 		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
 	}
@@ -37,7 +37,7 @@ func consultarMetricas(t *testing.T, horas *float64, datos stubDatosMetricas, id
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/metricas", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	NewMetricasHandler(service.NewCalcularMetricas(proyectos, datos)).Consultar(rec, req)
+	NewMetricasHandler(service.NewCalcularMetricas(proyectos, datos)).Consultar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 
