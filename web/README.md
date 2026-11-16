@@ -73,7 +73,8 @@ El navegador no puede llamar directamente al backend (el backend no tiene CORS,
 el permiso que necesita un navegador para llamar a otra dirección). Por eso, en
 desarrollo, el servidor de Vite hace de intermediario. Está configurado en
 `vite.config.ts` para las direcciones que empiezan con `/auth`, `/backlog`,
-`/defectos`, `/demo`, `/projects`, `/sprints` y `/users`, y decide según lo que pide quien llama:
+`/defectos`, `/demo`, `/projects`, `/sprints` y `/users`, y decide según lo
+que pide quien llama:
 
 - Si la llamada pide **JSON** (`Accept: application/json`), la reenvía al backend
   en `http://localhost:8080`.
@@ -174,9 +175,15 @@ agrega en la base:
 { ruta: 'ejemplo', texto: 'Ejemplo', icono: 'carpeta' },
 ```
 
-Eso es todo: fuera de tu carpeta cambian solo esas dos líneas. Si dos personas
-agregan su línea en el mismo lugar y Git marca un conflicto, se resuelve
-dejando **las dos líneas**.
+**4. Actualizar la cantidad de secciones del menú en `src/rutas.test.tsx`.**
+La prueba «la barra lateral ofrece «Proyectos», el selector y las secciones»
+cuenta los enlaces del menú con `toHaveLength(7)`. Si sumaste una línea en
+`navegacion.ts`, subí ese número en uno (en el ejemplo, `toHaveLength(8)`);
+si no, `npm test` falla.
+
+Fuera de tu carpeta no cambia nada más. Si dos personas agregan su línea en el
+mismo lugar y Git marca un conflicto, se resuelve dejando **las dos líneas**
+(y, en la prueba, el número que corresponde a la cantidad final de secciones).
 
 El `/*` del final permite que tu pantalla tenga sub-pantallas propias
 (por ejemplo `/projects/<id>/ejemplo/editar`), que declarás dentro de tu
