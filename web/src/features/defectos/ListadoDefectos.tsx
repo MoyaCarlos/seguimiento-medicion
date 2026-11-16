@@ -13,6 +13,7 @@ type Props = {
   haySprintActivo: boolean
   sprints: SprintResumen[]
   alResolver: (mensaje: string) => void
+  alIniciar?: () => void
   puedeEscribir?: boolean
 }
 
@@ -23,6 +24,7 @@ export function ListadoDefectos({
   haySprintActivo,
   sprints,
   alResolver,
+  alIniciar,
   puedeEscribir = true,
 }: Props) {
   const [resolviendo, setResolviendo] = useState<number | null>(null)
@@ -31,6 +33,7 @@ export function ListadoDefectos({
   async function resolver(id: number) {
     if (resolviendo !== null || !puedeEscribir) return
     setErrorResolucion('')
+    alIniciar?.()
     setResolviendo(id)
     try {
       const resuelto = await resolverDefecto(id)

@@ -121,10 +121,11 @@ export function PantallaDefectos({ proyectoId }: Props) {
             <FormularioDefecto
               proyectoId={proyectoId}
               historias={historias}
+              alIniciar={() => setExito('')}
               alRegistrar={() => {
-              recargarDefectos()
-              setExito('Defecto registrado')
-            }}
+                recargarDefectos()
+                setExito('Defecto registrado')
+              }}
               puedeEscribir={puedeEscribir}
             />
           </section>
@@ -138,10 +139,11 @@ export function PantallaDefectos({ proyectoId }: Props) {
             error={errorDefectos}
             haySprintActivo={Boolean(activo)}
             sprints={sprints ?? []}
+            alIniciar={() => setExito('')}
             alResolver={(mensaje) => {
-            recargarDefectos()
-            setExito(mensaje)
-          }}
+              recargarDefectos()
+              setExito(mensaje)
+            }}
             puedeEscribir={puedeEscribir}
           />
         </section>

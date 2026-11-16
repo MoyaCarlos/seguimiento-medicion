@@ -13,10 +13,11 @@ type Props = {
   proyectoId: string
   historias: HistoriaDeProyecto[]
   alRegistrar: () => void
+  alIniciar?: () => void
   puedeEscribir?: boolean
 }
 
-export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEscribir = true }: Props) {
+export function FormularioDefecto({ proyectoId, historias, alRegistrar, alIniciar, puedeEscribir = true }: Props) {
   const [descripcion, setDescripcion] = useState('')
   const [severidad, setSeveridad] = useState('')
   const [historiaId, setHistoriaId] = useState('')
@@ -39,6 +40,7 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEsc
     setErrores(validacion)
     if (Object.keys(validacion).length > 0) return
 
+    alIniciar?.()
     setEnviando(true)
     try {
       await registrarDefecto(proyectoId, {
