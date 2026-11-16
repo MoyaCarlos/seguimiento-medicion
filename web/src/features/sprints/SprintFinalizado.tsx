@@ -13,16 +13,14 @@ export function SprintFinalizado({ sprint }: { sprint: Sprint }) {
   return (
     <details className="sprint-terminado">
       <summary>
-        <span>
-          <h3>{`Sprint ${sprint.numero}`}</h3>
-          {sprint.sprint_goal && <span className="sprint-goal">{sprint.sprint_goal}</span>}
-          {sprint.fecha_inicio && sprint.fecha_fin && (
-            <span className="sprint-fechas">
-              <Icono nombre="calendario" />
-              {periodoCorto(sprint.fecha_inicio, sprint.fecha_fin)}
-            </span>
-          )}
-        </span>
+        <h3>{`Sprint ${sprint.numero}`}</h3>
+        {sprint.sprint_goal && <span className="sprint-goal">{sprint.sprint_goal}</span>}
+        {sprint.fecha_inicio && sprint.fecha_fin && (
+          <span className="sprint-fechas">
+            <Icono nombre="calendario" />
+            {periodoCorto(sprint.fecha_inicio, sprint.fecha_fin)}
+          </span>
+        )}
         <span className="sprint-chevron">
           <Icono nombre="chevronAbajo" />
         </span>

@@ -220,5 +220,7 @@ it('Given una pantalla de 640px o menos, When se estiliza, Then «Completar»/«
 
 it('Given el Goal y las etiquetas dentro del resumen de un finalizado, When van en span, Then se ven como bloques (display block / flex) y el resumen sigue en dos columnas', () => {
   expect(regla('.sprint-terminado .sprint-goal')).toMatch(/display:\s*block/)
-  expect(regla('.sprint-terminado summary > span:first-child')).toMatch(/display:\s*block/)
+  expect(regla('.sprint-terminado summary > .sprint-chevron')).toMatch(/grid-column:\s*2/)
+  expect(regla('.sprint-terminado summary > h3')).toMatch(/grid-column:\s*1/)
+  expect(regla('.sprint-terminado summary > .sprint-goal')).toMatch(/grid-column:\s*1/)
 })

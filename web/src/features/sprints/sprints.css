@@ -385,6 +385,17 @@
   overflow: hidden;
 }
 
+.sprint-terminado summary > h3,
+.sprint-terminado summary > .sprint-goal,
+.sprint-terminado summary > .sprint-fechas {
+  grid-column: 1;
+}
+
+.sprint-terminado summary > .sprint-chevron {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .sprint-terminado summary {
   align-items: start;
   cursor: pointer;
@@ -418,10 +429,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sprint-terminado summary > span:first-child {
-  display: block;
 }
 
 .sprint-terminado summary .sprint-chips {
