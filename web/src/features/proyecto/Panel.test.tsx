@@ -169,11 +169,11 @@ describe('panel del proyecto', () => {
     const fetchMock = responderCambio('En curso')
     const router = abrirNavegable()
 
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
-    expect((await screen.findAllByText('En curso')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('En curso')).toHaveLength(2))
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/projects/4/status')
   })
 
@@ -181,7 +181,7 @@ describe('panel del proyecto', () => {
     responderCambio('pendiente')
     const router = abrirNavegable()
 
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
@@ -193,7 +193,7 @@ describe('panel del proyecto', () => {
     responderCambio('error')
     const router = abrirNavegable()
 
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
     expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
@@ -683,7 +683,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
     expect(screen.getByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 2, name: 'Descripción' })).toBeTruthy()
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
   })
 
   it('un proyecto abierto no muestra el aviso', async () => {
@@ -691,7 +691,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     abrir()
 
     expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
   })
 
@@ -743,7 +743,7 @@ describe('aviso de proyecto cerrado en el panel', () => {
     abrir()
 
     expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
-    expect((await screen.findAllByText('Planificado')).length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     const pedidosDelProyecto = fetchMock.mock.calls.filter(
       ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',
     )

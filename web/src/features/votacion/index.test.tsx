@@ -1115,8 +1115,8 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     await userEvent.click(boton('Actualizar'))
     await waitFor(() => expect(consultarMock.mock.calls.length).toBeGreaterThan(1))
 
-    const pedidosDelProyecto = simulado.mock.calls.map(([ruta]) => ruta).filter((ruta) => ruta !== '/auth/yo')
-    expect(pedidosDelProyecto).toEqual(['/projects/25'])
+    expect(simulado).toHaveBeenCalledTimes(2)
+    expect(simulado.mock.calls.map(([ruta]) => ruta).sort()).toEqual(['/auth/yo', '/projects/25'])
   })
 
   it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al votar se muestra tal cual', async () => {
