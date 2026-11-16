@@ -527,7 +527,20 @@
   gap: 0.45rem;
 }
 
+.campo-markdown-etiqueta {
+  align-items: baseline;
+  display: flex;
+  gap: 8px;
+}
+
+.campo-markdown-opcional {
+  color: #606f86;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
 .campo-markdown-pestanas {
+  border-bottom: 1px solid var(--line);
   display: flex;
   gap: 0.25rem;
 }
@@ -541,34 +554,44 @@
   font: inherit;
   font-size: 0.8rem;
   font-weight: 700;
-  padding: 0.25rem 0.45rem;
+  margin-bottom: -1px;
+  padding: 0.4rem 0.75rem;
 }
 
 .campo-markdown-pestanas button[aria-selected='true'] {
-  border-color: var(--lilac-dark);
+  border-color: var(--brand);
   color: var(--ink);
+}
+
+.campo-markdown-pestanas button:focus-visible,
+.campo-markdown-herramientas button:focus-visible {
+  border-radius: 6px;
+  outline: 3px solid rgb(13 148 136 / 45%);
+  outline-offset: 2px;
 }
 
 .campo-markdown-herramientas {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+  margin-bottom: 0.45rem;
 }
 
 .campo-markdown-herramientas button {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 0.4rem;
   color: var(--ink);
   cursor: pointer;
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 13px;
   font-weight: 600;
-  padding: 0.25rem 0.5rem;
+  min-height: 32px;
+  padding: 0.2rem 0.6rem;
 }
 
 .campo-markdown-herramientas button:hover:not(:disabled) {
-  background: var(--background);
+  background: var(--brand-soft);
 }
 
 .campo-markdown-herramientas button:disabled {
@@ -576,12 +599,100 @@
   opacity: 0.55;
 }
 
+.campo-markdown textarea:disabled {
+  background: #eef2f6;
+  cursor: not-allowed;
+}
+
 .campo-markdown-vista {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 0.5rem;
   min-height: 6rem;
   padding: 0.75rem 0.85rem;
+}
+
+.campo-markdown-vista .markdown {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.campo-markdown-vista .markdown h1,
+.campo-markdown-vista .markdown h2,
+.campo-markdown-vista .markdown h3 {
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1.3;
+  margin: 0.75rem 0 0.4rem;
+}
+
+.campo-markdown-vista .markdown h1 {
+  font-size: 1.25rem;
+}
+
+.campo-markdown-vista .markdown h2 {
+  font-size: 1.15rem;
+}
+
+.campo-markdown-vista .markdown h3 {
+  font-size: 1.1rem;
+}
+
+.campo-markdown-vista .markdown > :first-child {
+  margin-top: 0;
+}
+
+.campo-markdown-vista .markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.campo-markdown-vista .markdown p,
+.campo-markdown-vista .markdown ul,
+.campo-markdown-vista .markdown ol,
+.campo-markdown-vista .markdown pre,
+.campo-markdown-vista .markdown blockquote {
+  margin: 0.5rem 0;
+}
+
+.campo-markdown-vista .markdown ul,
+.campo-markdown-vista .markdown ol {
+  padding-left: 1.4rem;
+}
+
+.campo-markdown-vista .markdown li + li {
+  margin-top: 0.2rem;
+}
+
+.campo-markdown-vista .markdown pre {
+  background: #0f1b2d;
+  border-radius: 0.5rem;
+  color: #e6fffb;
+  overflow-x: auto;
+  padding: 0.75rem;
+}
+
+.campo-markdown-vista .markdown pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.campo-markdown-vista .markdown blockquote {
+  border-left: 3px solid var(--line-strong);
+  color: var(--muted);
+  padding-left: 0.75rem;
+}
+
+.campo-markdown-vista .markdown a {
+  color: var(--brand-dark);
+  overflow-wrap: anywhere;
+}
+
+.campo-markdown-vista .markdown img {
+  height: auto;
+  max-height: 20rem;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .campo-markdown-vacio {

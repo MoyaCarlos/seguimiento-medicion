@@ -214,6 +214,7 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
             id="criterios"
             name="criterios"
             label="Criterios de aceptación"
+            opcional
             value={formulario.criterios}
             onChange={(valor) => setFormulario((actual) => ({ ...actual, criterios: valor }))}
             disabled={deshabilitado}

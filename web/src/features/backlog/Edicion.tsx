@@ -131,6 +131,7 @@ export function Edicion({
         id={id('criterios')}
         name="criterios"
         label="Criterios de aceptación"
+        opcional
         value={formulario.criterios}
         onChange={(valor) => actualizar('criterios', valor)}
         disabled={enviando}
