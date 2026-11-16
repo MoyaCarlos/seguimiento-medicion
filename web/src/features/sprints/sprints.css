@@ -89,6 +89,7 @@
 }
 
 .sprint-tarjeta {
+  grid-template-columns: minmax(0, 1fr);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -350,6 +351,7 @@
 }
 
 .sprint-panel {
+  grid-template-columns: minmax(0, 1fr);
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 12px;
