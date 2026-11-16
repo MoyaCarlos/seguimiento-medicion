@@ -572,6 +572,18 @@ describe('pantalla de Sprints como el prototipo: Sprints finalizados', () => {
 
     expect(document.querySelector('details')).toBeNull()
   })
+
+  it('Given el resumen de un Sprint finalizado, When se carga, Then el <summary> solo tiene contenido válido (título, y el resto en span): sin div ni p adentro', async () => {
+    abrirConFinalizados(finalizado(2, 2))
+
+    const dos = await terminado('Sprint 2')
+    await waitFor(() => expect(etiquetas(dos)).toHaveLength(2))
+    const resumen = dos.querySelector('summary') as HTMLElement
+
+    expect(resumen.querySelectorAll('div, p, section, ul')).toHaveLength(0)
+    expect(resumen.querySelector(':scope > h3')?.textContent).toBe('Sprint 2')
+    expect(within(resumen).getByText('Meta 2').tagName).toBe('SPAN')
+  })
 })
 
 describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () => {
@@ -697,4 +709,6 @@ describe('pantalla de Sprints - proyecto cerrado (cerrar y reabrir, US2)', () =>
     expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
     expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
+
 })
+

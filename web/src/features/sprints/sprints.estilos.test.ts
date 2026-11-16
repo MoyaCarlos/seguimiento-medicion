@@ -217,3 +217,8 @@ it('Given una pantalla de 640px o menos, When se estiliza, Then «Completar»/«
   expect(movil).toMatch(/\.sprint-boton--contorno\s*\{[^}]*min-height:\s*40px/)
   expect(movil).toMatch(/\.sprint-historia__acciones\s*\{[^}]*justify-content:\s*flex-start/)
 })
+
+it('Given el Goal y las etiquetas dentro del resumen de un finalizado, When van en span, Then se ven como bloques (display block / flex) y el resumen sigue en dos columnas', () => {
+  expect(regla('.sprint-terminado .sprint-goal')).toMatch(/display:\s*block/)
+  expect(regla('.sprint-terminado summary > span:first-child')).toMatch(/display:\s*block/)
+})
