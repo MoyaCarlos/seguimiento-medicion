@@ -35,10 +35,15 @@ func NewGenerarReporte(
 	}
 }
 
-// EjecutarSprint arma el reporte de un Sprint finalizado.
-func (s *GenerarReporte) EjecutarSprint(ctx context.Context, sprintID int64, _ time.Time) (domain.ReporteSprint, error) {
+// EjecutarSprint arma el reporte de un Sprint finalizado para quien integra su
+// proyecto: el Sprint inexistente (404) y el consultante ajeno (403) se
+// informan antes que el Sprint sin finalizar.
+func (s *GenerarReporte) EjecutarSprint(ctx context.Context, sprintID, consultanteID int64, _ time.Time) (domain.ReporteSprint, error) {
 	sprint, err := s.sprints.ObtenerPorID(ctx, sprintID)
 	if err != nil {
+		return domain.ReporteSprint{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, sprint.ProyectoID, consultanteID); err != nil {
 		return domain.ReporteSprint{}, err
 	}
 	if sprint.Estado != domain.SprintFinalizado {
@@ -158,10 +163,13 @@ func aDefectoReporte(defecto domain.DefectoDetalle, numeros map[int64]int) domai
 	}
 }
 
-// EjecutarProyecto arma el reporte completo de un proyecto.
-func (s *GenerarReporte) EjecutarProyecto(ctx context.Context, proyectoID int64, ahora time.Time) (domain.ReporteProyecto, error) {
+// EjecutarProyecto arma el reporte completo de un proyecto para quien lo integra.
+func (s *GenerarReporte) EjecutarProyecto(ctx context.Context, proyectoID, consultanteID int64, ahora time.Time) (domain.ReporteProyecto, error) {
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
 	if err != nil {
+		return domain.ReporteProyecto{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return domain.ReporteProyecto{}, err
 	}
 	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)

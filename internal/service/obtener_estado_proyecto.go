@@ -20,11 +20,14 @@ func NewObtenerEstadoProyecto(proyectos repository.ProjectRepository, sprints re
 	return &ObtenerEstadoProyecto{proyectos: proyectos, sprints: sprints}
 }
 
-// Ejecutar devuelve el estado derivado o domain.ErrProyectoNoEncontrado si el
-// proyecto no existe.
-func (s *ObtenerEstadoProyecto) Ejecutar(ctx context.Context, proyectoID int64, ahora time.Time) (domain.EstadoProyecto, error) {
+// Ejecutar devuelve el estado derivado, domain.ErrProyectoNoEncontrado si el
+// proyecto no existe y domain.ErrNoEsIntegrante si consultanteID no lo integra.
+func (s *ObtenerEstadoProyecto) Ejecutar(ctx context.Context, proyectoID, consultanteID int64, ahora time.Time) (domain.EstadoProyecto, error) {
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
 	if err != nil {
+		return "", err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return "", err
 	}
 	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)

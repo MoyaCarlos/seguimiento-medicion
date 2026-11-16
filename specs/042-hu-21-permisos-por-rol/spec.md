@@ -70,14 +70,17 @@ planificación.
 | **Solo sesión** | `POST /projects` (quien lo crea sale de la sesión y queda como Scrum Master) y `GET /users`. |
 | **Sesión e integrante** | `POST /backlog`, `PUT /backlog/{id}`, `PUT /backlog/{id}/estado`, `PUT /backlog/{id}/sprint`, `POST /backlog/{id}/horas`, `POST /projects/{id}/defectos`, `POST /defectos/{id}/resolver`, `POST /backlog/{id}/votacion/votos`. |
 | **Sesión y Scrum Master** | `POST /sprints`, `POST /sprints/{id}/iniciar`, `POST /sprints/{id}/cerrar`, `POST /backlog/{id}/votacion` (iniciar), `POST /backlog/{id}/votacion/revelar`, `POST /backlog/{id}/votacion/rondas` (nueva ronda), `POST /backlog/{id}/votacion/estimacion` (registrar la estimación, HU-14), `PUT /projects/{id}` y `POST /projects/{id}/members`. |
-| **Lecturas (`GET`)** | Todas exigen sesión (401). `GET /projects` es «Mis proyectos»: lista filtrada, nunca 403. La pertenencia (403) se comprueba **solo** en `GET /projects/{id}` (panel) y `GET /backlog/{id}/votacion` (voto secreto). El resto de las lecturas exige solo sesión. |
+| **Lecturas (`GET`) de la propia persona** *(nivel `Lectura`)* | `GET /auth/yo` y `GET /projects` exigen sesión (401). `GET /projects` es «Mis proyectos»: lista filtrada, nunca 403. |
+| **Lecturas (`GET`) de un proyecto** *(nivel `LecturaDeProyecto`)* | Sesión (401) e integrar el proyecto (403 «No sos integrante de este proyecto»), esté abierto o cerrado: `GET /projects/{id}` y sus `/status`, `/members`, `/backlog`, `/sprints`, `/defectos`, `/metricas`, `/historial`, `/historial/{sprintId}`, `/avance` y `/reporte`; `GET /backlog/{id}` y sus `/horas`, `/votacion` y `/votacion/rondas`; `GET /sprints/{id}/backlog` y `GET /sprints/{id}/reporte`. Para las rutas cuyo `{id}` no es el del proyecto se evalúa el proyecto de la historia o del Sprint. Un recurso inexistente responde 404 antes que el 403. |
 
 Las rutas de sesión de HU-20 (`GET /auth/yo`, `POST /auth/salir`) siguen como las dejó esa
 historia.
 
-**Límite conocido (se declara en la documentación)**: con sesión iniciada, quien no integra
-un proyecto puede leer sus demás datos (historias, Sprints, horas, defectos, métricas,
-historial, reportes).
+**Ex límite conocido (cerrado por el fix «Exigir ser integrante para leer los datos de un
+proyecto»)**: hasta entonces, con sesión iniciada, quien no integraba un proyecto podía leer
+sus demás datos (historias, Sprints, horas, defectos, métricas, historial, reportes). Hoy
+toda lectura con alcance de proyecto exige integrarlo; la regla vive en un solo guardia de
+la capa de servicio (`exigirLector`).
 
 ## Fuera de alcance
 
@@ -331,8 +334,9 @@ pantalla «No sos integrante».
   gestión, THEN el sistema SHALL responder 403 con un mensaje que empiece con «Solo el
   Scrum Master puede» y no cambiar nada.
 - **FR-017**: IF una persona que no integra el proyecto intenta una escritura sobre él, o
-  consulta `GET /projects/{id}` o `GET /backlog/{id}/votacion`, THEN el sistema SHALL
-  responder 403 «No sos integrante de este proyecto» y no cambiar nada.
+  cualquier lectura de sus datos (las rutas de nivel `LecturaDeProyecto` de la tabla «Qué se
+  protege»), THEN el sistema SHALL responder 403 «No sos integrante de este proyecto» y no
+  cambiar nada. El recurso inexistente (404) se informa antes que el 403.
 - **FR-018**: IF el Scrum Master intenta agregar un usuario que no existe o que no tiene
   contraseña, THEN el sistema SHALL rechazarlo igual en ambos casos, sin agregar a nadie.
 - **FR-019**: IF se intenta agregar un integrante con rol Scrum Master, THEN el sistema SHALL

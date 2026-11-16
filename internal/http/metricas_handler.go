@@ -17,12 +17,16 @@ func NewMetricasHandler(calcular *service.CalcularMetricas) *MetricasHandler {
 
 // Consultar atiende GET /projects/{id}/metricas.
 func (h *MetricasHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	metricas, err := h.calcular.Ejecutar(r.Context(), id)
+	metricas, err := h.calcular.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

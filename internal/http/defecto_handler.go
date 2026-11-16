@@ -83,13 +83,17 @@ func (h *DefectoHandler) Resolver(w nethttp.ResponseWriter, r *nethttp.Request) 
 
 // Listar atiende GET /projects/{id}/defectos.
 func (h *DefectoHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	defectos, err := h.listar.Ejecutar(r.Context(), id)
+	defectos, err := h.listar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

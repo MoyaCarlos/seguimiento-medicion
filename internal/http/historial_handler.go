@@ -20,12 +20,16 @@ func NewHistorialHandler(listar *service.ConsultarHistorialSprints, detalle *ser
 
 // Listar atiende GET /projects/{id}/historial.
 func (h *HistorialHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	historial, err := h.listar.Ejecutar(r.Context(), id)
+	historial, err := h.listar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -35,6 +39,10 @@ func (h *HistorialHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) 
 
 // Detalle atiende GET /projects/{id}/historial/{sprintId}.
 func (h *HistorialHandler) Detalle(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
@@ -45,7 +53,7 @@ func (h *HistorialHandler) Detalle(w nethttp.ResponseWriter, r *nethttp.Request)
 		escribirError(w, err)
 		return
 	}
-	detalle, err := h.detalle.Ejecutar(r.Context(), id, sprintID)
+	detalle, err := h.detalle.Ejecutar(r.Context(), id, sprintID, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

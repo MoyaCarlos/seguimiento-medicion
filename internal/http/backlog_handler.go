@@ -68,13 +68,17 @@ func (h *BacklogHandler) Crear(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarBacklog atiende GET /projects/{id}/backlog.
 func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	proyectoID, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	historias, err := h.consultarBacklog.Ejecutar(r.Context(), proyectoID)
+	historias, err := h.consultarBacklog.Ejecutar(r.Context(), proyectoID, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -89,11 +93,15 @@ func (h *BacklogHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.R
 
 // Obtener atiende GET /backlog/{id}.
 func (h *BacklogHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := idDeRuta(w, r)
 	if !ok {
 		return
 	}
-	item, err := h.obtenerHistoria.Ejecutar(r.Context(), id)
+	item, err := h.obtenerHistoria.ComoIntegrante(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

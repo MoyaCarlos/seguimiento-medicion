@@ -9,7 +9,7 @@ import (
 
 // calculadorMetricas es el cálculo único de métricas de HU-03.
 type calculadorMetricas interface {
-	Ejecutar(ctx context.Context, proyectoID int64) (domain.MetricasProyecto, error)
+	Ejecutar(ctx context.Context, proyectoID, consultanteID int64) (domain.MetricasProyecto, error)
 }
 
 // ConsultarHistorialSprints devuelve los Sprints finalizados de un proyecto
@@ -23,10 +23,11 @@ func NewConsultarHistorialSprints(metricas calculadorMetricas, sprints listadorS
 	return &ConsultarHistorialSprints{metricas: metricas, sprints: sprints}
 }
 
-// Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe:
-// lo verifica el cálculo de métricas.
-func (s *ConsultarHistorialSprints) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.SprintHistorial, error) {
-	metricas, err := s.metricas.Ejecutar(ctx, proyectoID)
+// Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe y
+// domain.ErrNoEsIntegrante si consultanteID no lo integra: ambos los verifica
+// el cálculo de métricas.
+func (s *ConsultarHistorialSprints) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) ([]domain.SprintHistorial, error) {
+	metricas, err := s.metricas.Ejecutar(ctx, proyectoID, consultanteID)
 	if err != nil {
 		return nil, err
 	}

@@ -10,8 +10,9 @@ import (
 // ConsultarEsfuerzoReal devuelve el total acumulado y el detalle de las cargas
 // de horas de una historia.
 type ConsultarEsfuerzoReal struct {
-	historias repository.HistoriaRepository
-	horas     repository.RegistroHorasRepository
+	historias   repository.HistoriaRepository
+	horas       repository.RegistroHorasRepository
+	integrantes repository.IntegrantesRepository
 }
 
 // EsfuerzoReal es el resultado de la consulta; no se guarda.
@@ -21,12 +22,16 @@ type EsfuerzoReal struct {
 	Registros    []domain.RegistroHorasDetalle
 }
 
-func NewConsultarEsfuerzoReal(historias repository.HistoriaRepository, horas repository.RegistroHorasRepository) *ConsultarEsfuerzoReal {
-	return &ConsultarEsfuerzoReal{historias: historias, horas: horas}
+func NewConsultarEsfuerzoReal(historias repository.HistoriaRepository, horas repository.RegistroHorasRepository, integrantes repository.IntegrantesRepository) *ConsultarEsfuerzoReal {
+	return &ConsultarEsfuerzoReal{historias: historias, horas: horas, integrantes: integrantes}
 }
 
-func (s *ConsultarEsfuerzoReal) Ejecutar(ctx context.Context, historiaID int64) (EsfuerzoReal, error) {
-	if _, err := s.historias.ObtenerPorID(ctx, historiaID); err != nil {
+func (s *ConsultarEsfuerzoReal) Ejecutar(ctx context.Context, historiaID, consultanteID int64) (EsfuerzoReal, error) {
+	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
+	if err != nil {
+		return EsfuerzoReal{}, err
+	}
+	if err := exigirLector(ctx, s.integrantes, historia.ProyectoID, consultanteID); err != nil {
 		return EsfuerzoReal{}, err
 	}
 	registros, err := s.horas.ListarPorHistoria(ctx, historiaID)

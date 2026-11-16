@@ -17,12 +17,16 @@ func NewAvanceHandler(consultar *service.ConsultarAvanceHistorias) *AvanceHandle
 
 // Consultar atiende GET /projects/{id}/avance.
 func (h *AvanceHandler) Consultar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	avance, err := h.consultar.Ejecutar(r.Context(), id)
+	avance, err := h.consultar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
