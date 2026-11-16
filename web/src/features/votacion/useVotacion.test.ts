@@ -176,4 +176,33 @@ describe('useVotacion - actualización automática', () => {
 
     expect(result.current.votacion?.integrantes[1].ya_voto).toBe(true)
   })
+
+  it('Escenario: el intervalo es de 5 segundos', async () => {
+    await montar()
+    expect(consultarMock).toHaveBeenCalledTimes(1)
+
+    await avanzar(INTERVALO - 1)
+    expect(consultarMock).toHaveBeenCalledTimes(1)
+
+    await avanzar(1)
+    expect(consultarMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('Escenario: la guarda evita consultas superpuestas', async () => {
+    await montar()
+    let resolverPendiente: (valor: Votacion) => void = () => {}
+    consultarMock.mockReturnValueOnce(new Promise((resolver) => (resolverPendiente = resolver)))
+
+    await avanzar(INTERVALO)
+    expect(consultarMock).toHaveBeenCalledTimes(2)
+
+    await avanzar(INTERVALO * 3)
+    expect(consultarMock).toHaveBeenCalledTimes(2)
+
+    await act(async () => resolverPendiente(votacion()))
+    await flush()
+
+    await avanzar(INTERVALO)
+    expect(consultarMock).toHaveBeenCalledTimes(3)
+  })
 })
