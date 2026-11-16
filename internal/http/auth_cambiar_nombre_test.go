@@ -154,6 +154,36 @@ func TestAuthHandler_CambiarNombre_IgnoraElUsuarioIDDelCuerpo(t *testing.T) {
 	}
 }
 
+func TestAuthHandler_CambiarNombre_RenombraAlUsuarioDeLaSesionYNoAOtro(t *testing.T) {
+	h, credenciales := nuevoAuthHandlerDePrueba()
+	relleno := registrarUsuarioDePrueba(t, credenciales, "relleno")
+	ana := registrarUsuarioDePrueba(t, credenciales, "ana")
+	bruno := registrarUsuarioDePrueba(t, credenciales, "bruno")
+
+	rec := pedirCambiarNombre(h, bruno, `{"nombre":"Bruno.Diaz"}`)
+
+	if rec.Code != nethttp.StatusOK {
+		t.Fatalf("status = %d, se esperaba 200 (cuerpo: %s)", rec.Code, rec.Body.String())
+	}
+	var resp usuarioSesionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("respuesta no es JSON: %v", err)
+	}
+	if resp.ID != bruno.ID || resp.Nombre != "Bruno.Diaz" {
+		t.Errorf("respuesta = %+v, se esperaba el id de bruno (%d) y el nombre nuevo", resp, bruno.ID)
+	}
+	renombrado, _, err := credenciales.ObtenerPorNombreNormalizado(context.Background(), "bruno.diaz")
+	if err != nil || renombrado.ID != bruno.ID {
+		t.Errorf("bruno debía quedar renombrado: %+v, %v", renombrado, err)
+	}
+	for _, otro := range []domain.User{relleno, ana} {
+		guardado, _, err := credenciales.ObtenerPorNombreNormalizado(context.Background(), otro.NombreNormalizado)
+		if err != nil || guardado.ID != otro.ID || guardado.Nombre != otro.Nombre {
+			t.Errorf("%q debía conservar su id y su nombre: %+v, %v", otro.Nombre, guardado, err)
+		}
+	}
+}
+
 func itoa(n int64) string {
 	if n == 0 {
 		return "0"
