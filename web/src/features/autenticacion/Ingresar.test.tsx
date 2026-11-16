@@ -207,7 +207,7 @@ describe('pantalla de ingreso', () => {
     await screen.findByRole('button', { name: 'Cargar datos de prueba' })
 
     expect(screen.queryByRole('heading', { name: 'Datos de prueba' })).not.toBeNull()
-    expect(screen.queryByText(/Crea cuatro usuarios y el proyecto #25/)).not.toBeNull()
+    expect(screen.queryByText(/Crea cuatro usuarios y ocho proyectos de ejemplo/)).not.toBeNull()
   })
 
   it('Dado que /demo/estado responde 404, cuando se muestra /ingresar, entonces no aparece el botón ni la tabla', async () => {
