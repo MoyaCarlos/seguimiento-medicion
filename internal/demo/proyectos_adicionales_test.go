@@ -372,3 +372,37 @@ func TestProyectosAdicionales_DosCargasSimultaneasDejanUnSoloJuego(t *testing.T)
 		t.Errorf("%d proyectos, se esperaban %d", n, 1+proyectosNuevos)
 	}
 }
+
+func TestProyectosAdicionales_LasFechasSonRelativasAlDiaDeLaCarga(t *testing.T) {
+	for _, ahora := range []time.Time{ahoraFijo, ahoraOtroDia} {
+		db := baseMigrada(t)
+		if _, err := NewCargador(db, func() time.Time { return ahora }, hasheadorBarato).Cargar(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		hoy := ahora.UTC().Truncate(24 * time.Hour)
+		dia := func(n int) string { return hoy.AddDate(0, 0, n).Format(time.DateOnly) }
+		id := idDelProyecto(t, db, pTurnos)
+
+		var inicio, fin string
+		if err := db.QueryRow(`SELECT fecha_inicio, fecha_fin FROM proyectos WHERE id = ?`, id).Scan(&inicio, &fin); err != nil {
+			t.Fatal(err)
+		}
+		if inicio != dia(-45) || fin != dia(30) {
+			t.Errorf("%s: proyecto %s a %s, se esperaba %s a %s", dia(0), inicio, fin, dia(-45), dia(30))
+		}
+		var activoDesde string
+		if err := db.QueryRow(`SELECT fecha_inicio FROM sprints WHERE proyecto_id = ? AND estado = 'Activo'`, id).Scan(&activoDesde); err != nil {
+			t.Fatal(err)
+		}
+		if activoDesde != dia(-7) {
+			t.Errorf("%s: el Sprint activo empieza %s, se esperaba %s", dia(0), activoDesde, dia(-7))
+		}
+		var cierre string
+		if err := db.QueryRow(`SELECT fecha_cierre FROM proyectos WHERE id = ?`, idDelProyecto(t, db, pBiblioteca)).Scan(&cierre); err != nil {
+			t.Fatal(err)
+		}
+		if cierre != dia(-4) {
+			t.Errorf("%s: cierre %s, se esperaba %s", dia(0), cierre, dia(-4))
+		}
+	}
+}
