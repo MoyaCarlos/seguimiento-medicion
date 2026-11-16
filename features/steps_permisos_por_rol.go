@@ -20,6 +20,7 @@ type permisosContext struct {
 	creador    string
 	proyectos  map[string]int64
 	historias  map[string]int64
+	sprints    map[string]int64
 	ultima     *httptest.ResponseRecorder
 	resultados []string
 	antes      string
@@ -37,6 +38,7 @@ type votacionDeEscenario struct {
 func (c *permisosContext) reiniciar() {
 	c.proyectos = map[string]int64{}
 	c.historias = map[string]int64{}
+	c.sprints = map[string]int64{}
 	c.ultima, c.resultados, c.antes, c.creador = nil, nil, "", ""
 	c.vista = votacionDeEscenario{}
 }
@@ -557,6 +559,67 @@ func (c *permisosContext) noVeElVotoOculto(quien, persona string) error {
 	return nil
 }
 
+// --- Lectura de datos de un proyecto ---
+
+var datosDeProyecto = map[string]string{
+	"el estado": "/status", "el equipo": "/members", "el backlog": "/backlog", "los Sprints": "/sprints",
+	"los defectos": "/defectos", "las métricas": "/metricas", "el historial": "/historial",
+	"el avance": "/avance", "el reporte": "/reporte",
+}
+
+var datosDeHistoria = map[string]string{
+	"la historia": "", "las horas": "/horas", "las rondas de votación": "/votacion/rondas",
+}
+
+var datosDeSprint = map[string]string{"el backlog del Sprint": "/backlog", "el reporte del Sprint": "/reporte"}
+
+func (c *permisosContext) tieneUnSprint(proyecto string) error {
+	id, err := c.proyecto(proyecto)
+	if err != nil {
+		return err
+	}
+	rec, err := c.esperar(c.scrumMasterDe(), http.MethodPost, "/sprints", map[string]any{"proyecto_id": id}, http.StatusCreated)
+	if err != nil {
+		return err
+	}
+	c.sprints[proyecto], err = leerID(rec)
+	return err
+}
+
+// rutaDeLectura arma la ruta de los datos pedidos; origen es el proyecto o la
+// historia del escenario.
+func (c *permisosContext) rutaDeLectura(datos, origen string) (string, error) {
+	if sufijo, ok := datosDeProyecto[datos]; ok {
+		id, err := c.proyecto(origen)
+		return fmt.Sprintf("/projects/%d%s", id, sufijo), err
+	}
+	if sufijo, ok := datosDeHistoria[datos]; ok {
+		id, err := c.historia(origen)
+		return fmt.Sprintf("/backlog/%d%s", id, sufijo), err
+	}
+	if sufijo, ok := datosDeSprint[datos]; ok {
+		id, ok := c.sprints[origen]
+		if !ok {
+			return "", fmt.Errorf("el escenario no creó un Sprint en %q", origen)
+		}
+		return fmt.Sprintf("/sprints/%d%s", id, sufijo), nil
+	}
+	return "", fmt.Errorf("el paso no conoce los datos %q", datos)
+}
+
+func (c *permisosContext) intentoConsultar(datos, origen string) error {
+	ruta, err := c.rutaDeLectura(datos, origen)
+	if err != nil {
+		return err
+	}
+	_, err = c.pedir(c.sesion.actor(), http.MethodGet, ruta, nil)
+	return err
+}
+
+func (c *permisosContext) entregaLosDatos() error {
+	return c.rechazaConCodigo(http.StatusOK)
+}
+
 // InitializeScenarioPermisos registra los pasos de permisos_por_rol.feature
 // (HU-21) y devuelve su contexto para los escenarios que reutilizan sus pasos.
 func InitializeScenarioPermisos(ctx *godog.ScenarioContext, sesion *sesionDeEscenario) *permisosContext {
@@ -573,6 +636,9 @@ func InitializeScenarioPermisos(ctx *godog.ScenarioContext, sesion *sesionDeEsce
 	ctx.Step(`^que "([^"]*)" tiene cuenta y no integra "[^"]*"$`, c.tieneCuenta)
 	ctx.Step(`^que "([^"]*)" tiene cuenta y no integra ningún proyecto$`, c.tieneCuenta)
 	ctx.Step(`^que no inicié sesión$`, c.noInicieSesion)
+	ctx.Step(`^que "([^"]*)" tiene un Sprint$`, c.tieneUnSprint)
+	ctx.Step(`^intento consultar (.+) de "([^"]*)"$`, c.intentoConsultar)
+	ctx.Step(`^el sistema entrega los datos$`, c.entregaLosDatos)
 
 	ctx.Step(`^creo un Sprint en "([^"]*)"$`, c.crearSprint)
 	ctx.Step(`^inicio la votación de "([^"]*)"$`, c.iniciarVotacion)
