@@ -224,3 +224,8 @@ it('Given el Goal y las etiquetas dentro del resumen de un finalizado, When van 
   expect(regla('.sprint-terminado summary > h3')).toMatch(/grid-column:\s*1/)
   expect(regla('.sprint-terminado summary > .sprint-goal')).toMatch(/grid-column:\s*1/)
 })
+
+it('Given una tarjeta de Sprint con un formulario ancho, When se estiliza, Then su única columna puede encogerse y el contenido no sobresale de la tarjeta', () => {
+  expect(regla('.sprint-tarjeta')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/)
+  expect(regla('.sprint-panel')).toMatch(/grid-template-columns:\s*minmax\(0, 1fr\)/)
+})
