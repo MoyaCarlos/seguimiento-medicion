@@ -229,7 +229,7 @@ describe('CampoMarkdown según el prototipo (guía de estados #/guia/markdown)',
 
     await user.click(screen.getByRole('tab', { name: 'Vista previa' }))
     expect(etiqueta.hasAttribute('for')).toBe(false)
-    expect(screen.getByRole('tabpanel', { name: 'Escribir' }).hasAttribute('hidden')).toBe(true)
+    expect(document.getElementById('descripcion-pe')?.hasAttribute('hidden')).toBe(true)
 
     await user.click(screen.getByRole('tab', { name: 'Escribir' }))
     expect(etiqueta.getAttribute('for')).toBe('descripcion')

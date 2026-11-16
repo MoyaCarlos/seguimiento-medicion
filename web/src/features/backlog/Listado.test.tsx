@@ -129,7 +129,8 @@ function cuerpoEnviado(fetchSimulado: ReturnType<typeof vi.fn>, indice = 0) {
 }
 
 function mensajeDe(campo: HTMLElement) {
-  const id = campo.getAttribute('aria-describedby')
+  // Con el marcador «Opcional» (criterios) aria-describedby lleva dos ids: el marcador y luego el error o la ayuda.
+  const id = campo.getAttribute('aria-describedby')?.split(' ').at(-1)
   return id ? document.getElementById(id)?.textContent ?? null : null
 }
 
