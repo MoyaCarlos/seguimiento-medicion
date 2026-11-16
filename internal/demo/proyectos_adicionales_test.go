@@ -346,7 +346,7 @@ func TestProyectosAdicionales_ElResumenSumaLosConteosNuevos(t *testing.T) {
 			t.Errorf("%s: el resumen dice %d y la base tiene %d", campo, esperados[campo], real)
 		}
 	}
-	if resumen.ProyectosAdicionales != proyectosNuevos || resumen.RondasAdicionales != 4 || resumen.VotosAdicionales < 13 {
+	if resumen.ProyectosAdicionales != proyectosNuevos || resumen.RondasAdicionales != 6 || resumen.VotosAdicionales != 21 {
 		t.Errorf("conteos fuera de lo esperado: %+v", resumen)
 	}
 }
