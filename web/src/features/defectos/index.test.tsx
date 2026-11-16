@@ -504,6 +504,65 @@ describe('avisos de éxito como el prototipo', () => {
   })
 })
 
+describe('aviso de éxito: se limpia al iniciar otra operación', () => {
+  const resolverElPendiente = async (usuario: ReturnType<typeof userEvent.setup>) => {
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
+    await screen.findByText('Defecto #7 resuelto en el Sprint 1')
+  }
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando empiezo a registrar otro defecto, entonces el aviso viejo desaparece mientras se envía y después aparece el nuevo', async () => {
+    const usuario = userEvent.setup()
+    const demora = diferido()
+    abrir({ defectos: [DEFECTO_PENDIENTE], demoraRegistro: demora.promesa })
+    await resolverElPendiente(usuario)
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    await waitFor(() => expect(screen.queryByText('Defecto #7 resuelto en el Sprint 1')).toBeNull())
+    expect(screen.queryByText('Defecto registrado')).toBeNull()
+    demora.resolver()
+    expect(await screen.findByText('Defecto registrado')).toBeTruthy()
+  })
+
+  it('Dado el aviso «Defecto registrado», cuando empiezo a resolver otro defecto y el servidor lo rechaza, entonces no queda el aviso viejo y se ve el error', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE], errorResolucion: { status: 409, cuerpo: { mensaje: 'No hay un Sprint activo' } } })
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+    await screen.findByText('Defecto registrado')
+
+    await usuario.click(screen.getAllByRole('button', { name: 'Resolver' })[0])
+
+    expect(await screen.findByText('No hay un Sprint activo')).toBeTruthy()
+    expect(screen.queryByText('Defecto registrado')).toBeNull()
+  })
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando intento registrar y el servidor lo rechaza, entonces el aviso viejo no vuelve y se ve el error', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE], errorRegistro: { status: 409, cuerpo: { mensaje: 'violación de integridad referencial' } } })
+    await resolverElPendiente(usuario)
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('violación de integridad referencial')).toBeTruthy()
+    expect(screen.queryByText('Defecto #7 resuelto en el Sprint 1')).toBeNull()
+  })
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando intento guardar el formulario vacío (sin enviar nada), entonces el aviso se conserva', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+    await resolverElPendiente(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('La descripción es obligatoria')).toBeTruthy()
+    expect(screen.getByText('Defecto #7 resuelto en el Sprint 1')).toBeTruthy()
+  })
+})
+
 describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const NOTA = 'El proyecto está cerrado'
 
