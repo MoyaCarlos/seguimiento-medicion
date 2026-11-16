@@ -1186,3 +1186,19 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
 })
+
+describe('editor de Markdown en el panel de Editar según el prototipo', () => {
+  it('Given una historia en edición, When se abre el panel, Then solo «Criterios de aceptación» lleva el marcador «Opcional»', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirEdicion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Editar ${MUST.titulo}` })
+    expect(within(panel).getAllByText('Opcional')).toHaveLength(1)
+    expect(within(panel).getByLabelText('Criterios de aceptación').closest('.campo-markdown')?.textContent).toContain('Opcional')
+    expect(within(panel).getByLabelText('Descripción').closest('.campo-markdown')?.textContent).not.toContain('Opcional')
+  })
+})
+

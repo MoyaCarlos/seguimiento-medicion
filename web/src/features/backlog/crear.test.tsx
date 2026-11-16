@@ -760,3 +760,26 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
 })
+
+describe('editor de Markdown en «Nueva historia» según el prototipo', () => {
+  it('Given el cajón, When se muestra, Then solo «Criterios de aceptación» lleva el marcador «Opcional» y su nombre accesible no cambia', () => {
+    abrir()
+
+    const criterios = screen.getByLabelText('Criterios de aceptación')
+    const marcador = screen.getByText('Opcional')
+
+    expect(screen.getAllByText('Opcional')).toHaveLength(1)
+    expect(criterios.closest('.campo-markdown')?.contains(marcador)).toBe(true)
+    expect(screen.getByLabelText('Descripción').closest('.campo-markdown')?.contains(marcador)).toBe(false)
+  })
+
+  it('Given el cajón, When se muestra, Then Descripción y Criterios tienen sus propias pestañas Escribir y Vista previa enlazadas a su panel', () => {
+    abrir()
+
+    const pestanas = screen.getAllByRole('tab', { name: 'Vista previa' })
+
+    expect(pestanas).toHaveLength(2)
+    expect(new Set(pestanas.map((p) => p.getAttribute('aria-controls'))).size).toBe(2)
+  })
+})
+
