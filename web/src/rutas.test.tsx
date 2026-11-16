@@ -606,6 +606,43 @@ describe('registro de rutas', () => {
   })
 })
 
+describe('lectura de un proyecto ajeno (el servidor responde 403)', () => {
+  const NO_INTEGRANTE = JSON.stringify({ mensaje: 'No sos integrante de este proyecto' })
+
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.includes('/auth/yo')) return Promise.resolve(new Response(JSON.stringify(USUARIO), { status: 200 }))
+        if (url === '/projects') return Promise.resolve(new Response('[]', { status: 200 }))
+        return Promise.resolve(new Response(NO_INTEGRANTE, { status: 403 }))
+      }),
+    )
+  })
+
+  it.each([
+    '/projects/42/proyecto',
+    '/projects/42/backlog',
+    '/projects/42/backlog/nueva',
+    '/projects/42/votacion/3',
+    '/projects/42/sprints',
+    '/projects/42/defectos',
+    '/projects/42/status',
+    '/projects/42/dashboard',
+    '/projects/42/historial',
+  ])(
+    'Escenario: quien no integra el proyecto abre %s y ve «No sos integrante de este proyecto» con el enlace a Mis proyectos',
+    async (url) => {
+      abrir(url)
+
+      expect(await screen.findByRole('heading', { name: 'No sos integrante de este proyecto' }, { timeout: 5000 })).toBeTruthy()
+      const enlace = screen.getByRole('link', { name: 'Mis proyectos' })
+      expect(enlace.getAttribute('href')).toBe('/')
+      expect(screen.queryByRole('progressbar')).toBeNull()
+    },
+  )
+})
+
 describe('rutas protegidas', () => {
   // Todas las rutas que declara rutas.tsx, con una URL concreta de cada una.
   const protegidas = [
