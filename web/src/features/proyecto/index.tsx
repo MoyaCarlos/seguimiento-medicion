@@ -6,12 +6,7 @@ import { Panel } from './Panel'
 import './estilos.css'
 
 function PanelLayout() {
-  return (
-    <>
-      <h1 id="panel-title">Panel del proyecto</h1>
-      <Outlet />
-    </>
-  )
+  return <Outlet />
 }
 
 export function Component() {

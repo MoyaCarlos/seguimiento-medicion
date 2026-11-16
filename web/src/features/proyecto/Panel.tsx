@@ -3,18 +3,26 @@ import { Link, useParams } from 'react-router'
 import { ApiError } from '../../compartido/api/client'
 import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
 import { NoIntegrante } from '../../compartido/permisos/NoIntegrante'
+import { Button } from '../../compartido/componentes/Button'
 import { BotonExportar } from '../../compartido/componentes/BotonExportar'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
+import { Icono } from '../../compartido/componentes/Icono'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
-import { descargarReporteProyecto, obtenerEstadoProyecto, obtenerProyecto } from './api'
-import type { EstadoProyecto, Proyecto } from './api'
+import { fechaCorta } from '../../compartido/formato/fechas'
+import { NotaGestion } from '../../compartido/permisos/NotaGestion'
+import { AvatarProyecto } from '../../compartido/componentes/AvatarProyecto'
+import { ETIQUETAS_ROL, descargarReporteProyecto, listarIntegrantes, obtenerEstadoProyecto, obtenerProyecto } from './api'
+import type { EstadoProyecto, Integrante, Proyecto } from './api'
+import { porcentajeTranscurrido } from './avance'
 import { mensajeDeError } from './errores'
 
-function mostrarFecha(fecha: string | null) {
-  return fecha ?? 'Sin definir'
+const ESTADOS_CON_INSIGNIA: string[] = ['Planificado', 'En curso', 'Finalizado']
+const VARIANTE_INSIGNIA: Record<string, string> = {
+  Planificado: ' badge--planificado',
+  Finalizado: ' badge--finalizado',
 }
 
-export function Panel() {
+export function Panel({ hoy = () => new Date() }: { hoy?: () => Date }) {
   const { id = '' } = useParams()
   const [proyecto, setProyecto] = useState<Proyecto>()
   const [error, setError] = useState('')
@@ -23,6 +31,9 @@ export function Panel() {
   const [errorEstado, setErrorEstado] = useState('')
   const [cargandoEstado, setCargandoEstado] = useState(true)
   const [noIntegrante, setNoIntegrante] = useState(false)
+  const [integrantes, setIntegrantes] = useState<Integrante[]>([])
+  const [errorEquipo, setErrorEquipo] = useState('')
+  const [cargandoEquipo, setCargandoEquipo] = useState(true)
 
   useEffect(() => {
     let vigente = true
@@ -64,61 +75,158 @@ export function Panel() {
     }
   }, [id])
 
+  useEffect(() => {
+    let vigente = true
+
+    listarIntegrantes(id)
+      .then((datos) => {
+        if (vigente) setIntegrantes(datos)
+      })
+      .catch((causa: unknown) => {
+        if (vigente) setErrorEquipo(mensajeDeError(causa))
+      })
+      .finally(() => {
+        if (vigente) setCargandoEquipo(false)
+      })
+
+    return () => {
+      vigente = false
+    }
+  }, [id])
+
   if (noIntegrante) return <NoIntegrante />
+
+  const soloLectura = proyecto?.rol === 'product_builder'
+  const avance = proyecto ? porcentajeTranscurrido(proyecto.fecha_inicio, proyecto.fecha_fin, hoy()) : null
 
   return (
     <section className="hu04-panel" aria-labelledby="panel-title">
       <AvisoProyectoCerrado fechaCierre={proyecto?.fecha_cierre ?? null} />
-      <div className="hu04-encabezado">
+      <header className="page-header">
         <div>
-          <p className="eyebrow">Panel principal</p>
-          <p className="hu04-referencia">
-            Proyecto <strong>{id}</strong>
-          </p>
+          <p className="eyebrow">Panel principal · #{id}</p>
+          {proyecto && (
+            <div className="title-row">
+              <h1 id="panel-title">{proyecto.nombre}</h1>
+              {estado && ESTADOS_CON_INSIGNIA.includes(estado) && (
+                <span className={`badge${VARIANTE_INSIGNIA[estado] ?? ''}`}>{estado}</span>
+              )}
+            </div>
+          )}
         </div>
         <div className="hu04-acciones">
           <BotonExportar descargar={() => descargarReporteProyecto(id)}>
             Exportar reporte del proyecto
           </BotonExportar>
-          <Link className="button button--secondary" to="settings">
-            Configurar equipo
-          </Link>
-          <Link className="button button--primary" to="edit">
-            Editar proyecto
-          </Link>
+          {soloLectura ? (
+            <>
+              <Button variant="secondary" disabled aria-describedby="nota-rol">
+                <Icono nombre="equipo" />
+                Configurar equipo
+              </Button>
+              <Button disabled aria-describedby="nota-rol">
+                <Icono nombre="editar" />
+                Editar proyecto
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link className="button button--secondary" to="settings">
+                <Icono nombre="equipo" />
+                Configurar equipo
+              </Link>
+              <Link className="button button--primary" to="edit">
+                <Icono nombre="editar" />
+                Editar proyecto
+              </Link>
+            </>
+          )}
         </div>
-      </div>
+        {soloLectura && (
+          <NotaGestion
+            id="nota-rol"
+            texto="Solo el Scrum Master puede editar el proyecto y configurar el equipo."
+          />
+        )}
+      </header>
 
       {cargando && <LoadingIndicator />}
       {error && <ErrorMessage message={error} />}
 
       {proyecto && (
-        <article className="hu04-tarjeta">
-          <h2>{proyecto.nombre}</h2>
-          <p>{proyecto.descripcion || 'Sin descripción'}</p>
-          <dl className="hu04-datos">
-            <div>
-              <dt>Inicio</dt>
-              <dd>{mostrarFecha(proyecto.fecha_inicio)}</dd>
-            </div>
-            <div>
-              <dt>Fin</dt>
-              <dd>{mostrarFecha(proyecto.fecha_fin)}</dd>
-            </div>
-            <div>
-              <dt>Estado</dt>
-              <dd aria-live="polite">
-                {cargandoEstado ? 'Consultando…' : (estado ?? 'Sin datos')}
-              </dd>
-            </div>
-          </dl>
-          {errorEstado && <ErrorMessage message={errorEstado} />}
+        <div className="panel-rejilla">
+        <article className="panel-tarjeta">
+          <h2 className="panel-tarjeta__titulo">Descripción</h2>
+          <p className="panel-prosa">{proyecto.descripcion || 'Sin descripción'}</p>
+          <hr className="panel-divisor" />
+          <section aria-labelledby="cronograma-titulo">
+            <h2 id="cronograma-titulo" className="panel-tarjeta__titulo">
+              Cronograma
+            </h2>
+            <dl className="cronograma__fechas">
+              <div>
+                <dt>Inicio</dt>
+                <dd>
+                  <strong>{fechaCorta(proyecto.fecha_inicio)}</strong>
+                </dd>
+              </div>
+              <div>
+                <dt>Fin</dt>
+                <dd>
+                  <strong>{fechaCorta(proyecto.fecha_fin)}</strong>
+                </dd>
+              </div>
+              <div>
+                <dt>Estado</dt>
+                <dd aria-live="polite">
+                  <strong>{cargandoEstado ? 'Consultando…' : (estado ?? 'Sin datos')}</strong>
+                </dd>
+              </div>
+            </dl>
+            {avance !== null && (
+              <div className="cronograma__pista" role="img" aria-label={`Avance ${avance}%`}>
+                <i style={{ width: `${avance}%` }} />
+                <b style={{ left: `${avance}%` }} />
+              </div>
+            )}
+            {errorEstado && <ErrorMessage message={errorEstado} />}
+          </section>
+          <p className="panel-tarjeta__pie">
+            <Link className="enlace" to={`/projects/${id}/status`}>
+              Ver estado del proyecto
+              <Icono nombre="flecha" />
+            </Link>
+          </p>
         </article>
+        <aside className="panel-tarjeta">
+          <h2 className="panel-tarjeta__titulo">Equipo</h2>
+          {cargandoEquipo && <LoadingIndicator />}
+          {errorEquipo && <ErrorMessage message={errorEquipo} />}
+          {!cargandoEquipo && !errorEquipo && integrantes.length === 0 && (
+            <p className="panel-ayuda">Todavía no hay integrantes asignados.</p>
+          )}
+          {integrantes.length > 0 && (
+            <ul className="panel-equipo">
+              {integrantes.map((integrante, indice) => (
+                <li key={integrante.id}>
+                  <AvatarProyecto id={indice + 1} nombre={integrante.nombre} />
+                  <span className="panel-equipo__nombre">
+                    {integrante.nombre}
+                    <small>{ETIQUETAS_ROL[integrante.rol]}</small>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="panel-tarjeta__pie">
+            <Link className="enlace" to="settings">
+              {soloLectura ? 'Ver equipo' : 'Configurar equipo'}
+              <Icono nombre="flecha" />
+            </Link>
+          </p>
+        </aside>
+        </div>
       )}
-
-      <Link className="hu04-enlace" to={`/projects/${id}/status`}>
-        Ver estado del proyecto
-      </Link>
     </section>
   )
 }

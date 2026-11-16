@@ -58,15 +58,16 @@ describe('BotonDatosDePrueba', () => {
     expect(screen.queryByRole('button', { name: 'Cargar datos de prueba' })).toBeNull()
   })
 
-  it('Dado el botón visible, cuando la carga responde 201, entonces muestra el aviso con el enlace al proyecto de prueba', async () => {
+  it('Dado el botón visible, cuando la carga responde 201, entonces avisa en línea que ya se puede ingresar con los usuarios de la lista, sin enlace', async () => {
     const fetchSimulado = simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
     abrir()
 
     await userEvent.click(await boton())
 
-    const enlace = await screen.findByRole('link', { name: 'Abrir el proyecto de prueba' })
-    expect(enlace.getAttribute('href')).toBe('/projects/25')
-    expect(screen.getByRole('status').textContent).toContain('Datos de prueba cargados')
+    expect((await screen.findByRole('status')).textContent).toBe(
+      'Datos de prueba cargados: ya podés ingresar con los usuarios de la lista',
+    )
+    expect(screen.queryByRole('link')).toBeNull()
     const [, opciones] = fetchSimulado.mock.calls.find(([ruta]) => ruta === '/demo/datos')!
     expect(opciones?.method).toBe('POST')
   })
@@ -81,7 +82,7 @@ describe('BotonDatosDePrueba', () => {
     await userEvent.click(await boton())
 
     expect((await screen.findByRole('status')).textContent).toContain('los datos de prueba ya están cargados')
-    expect(screen.getByRole('link', { name: 'Abrir el proyecto de prueba' }).getAttribute('href')).toBe('/projects/25')
+    expect(screen.queryByRole('link')).toBeNull()
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
@@ -187,6 +188,33 @@ describe('BotonDatosDePrueba', () => {
     await userEvent.click(within(fila).getByRole('button', { name: 'Usar ana.iriarte' }))
 
     expect(alUsar).toHaveBeenCalledWith('ana.iriarte', 'demo1234')
+  })
+
+  it('Dado la tabla de usuarios y un destino para «Usar», entonces tiene tres columnas y «Usar» queda debajo del rol', async () => {
+    simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
+    abrir(vi.fn())
+
+    await userEvent.click(await boton())
+    const tabla = await tablaDeUsuarios()
+
+    expect(within(tabla).getAllByRole('columnheader').map((c) => c.textContent)).toEqual(['Usuario', 'Contraseña', 'Rol'])
+    const filas = within(tabla).getAllByRole('row').slice(1)
+    expect(filas.map((fila) => within(fila).getAllByRole('cell').length)).toEqual([3, 3, 3, 3])
+    const celdaDelRol = within(filas[1]).getAllByRole('cell')[2]
+    expect(celdaDelRol.textContent).toBe('Product BuilderUsar')
+    expect(within(celdaDelRol).getByRole('button', { name: 'Usar ana.iriarte' })).toBeTruthy()
+  })
+
+  it('Dado la tabla de usuarios, entonces el usuario y la contraseña se muestran como código', async () => {
+    simularApi(json(200, { habilitado: true }), Promise.resolve(json(201, resumen)))
+    abrir()
+
+    await userEvent.click(await boton())
+    const [primera] = within(await tablaDeUsuarios()).getAllByRole('row').slice(1)
+
+    const [usuario, contrasena] = within(primera).getAllByRole('cell')
+    expect(within(usuario).getByText('carlos.moya').tagName).toBe('CODE')
+    expect(within(contrasena).getByText('demo1234').tagName).toBe('CODE')
   })
 
   it('Dado la tabla de usuarios sin destino para «Usar», entonces no hay botones «Usar»', async () => {

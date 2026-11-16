@@ -3,7 +3,6 @@
   gap: 1rem;
 }
 
-/* Mismo aspecto que el aviso del Panel: features/proyecto/estilos.css no se carga en esta ruta. */
 .sprints-pantalla .aviso-cerrado {
   background: var(--brand-soft);
   border: 1px solid var(--lilac);
@@ -13,29 +12,134 @@
   padding: 0.75rem 1rem;
 }
 
-.sprints-secciones {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+.sprints-encabezado {
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
 
-.sprints-seccion {
+.sprints-plazo {
+  color: #475569;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.sprints-tablero {
+  align-items: start;
   display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sprints-carril {
   align-content: start;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  background: rgb(15 27 45 / 3.5%);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sprints-carril h2 {
+  align-items: center;
+  color: #475569;
+  display: flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 8px;
+  letter-spacing: 0.09em;
+  margin: 0;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.sprints-carril h2::before {
+  background: #94a3b8;
+  border-radius: 50%;
+  content: '';
+  height: 8px;
+  width: 8px;
+}
+
+.sprints-carril--activo h2 {
+  color: #0b5f58;
+}
+
+.sprints-carril--activo h2::before {
+  background: var(--brand);
+}
+
+.sprints-carril--fin h2 {
+  color: #166534;
+}
+
+.sprints-carril--fin h2::before {
+  background: #15803d;
+}
+
+.sprints-vacio {
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+  padding: 20px 14px;
+  text-align: center;
 }
 
 .sprint-tarjeta {
-  border: 1px solid #d0d5dd;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
   display: grid;
-  gap: 0.5rem;
+  gap: 14px;
+  padding: 16px;
+}
+
+.sprint-tarjeta h3 {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-goal {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 2px 0 0;
+}
+
+.sprint-fechas {
+  align-items: center;
+  background: #eef2f6;
+  border-radius: 7px;
+  color: #475569;
+  display: inline-flex;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  gap: 6px;
+  justify-self: start;
+  margin-top: 8px;
+  padding: 2px 9px;
+}
+
+.sprint-fechas svg {
+  height: 13px;
+  width: 13px;
 }
 
 .sprint-tarjeta form {
   display: grid;
   gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  .sprints-tablero {
+    grid-template-columns: 1fr;
+  }
 }
 
 .esfuerzo-historia {
@@ -67,4 +171,336 @@
   margin: 0;
   padding-left: 1rem;
   overflow-wrap: anywhere;
+}
+
+.sprint-backlog {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sprint-historia {
+  background: #fbfcfd;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.sprint-historia__titulo {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sprint-historia__nota {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.sprint-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sprint-chip {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  padding: 2px 9px;
+}
+
+.sprint-chip--must {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+.sprint-chip--should {
+  background: var(--brand-soft);
+  color: #0b5f58;
+}
+
+.sprint-chip--could,
+.sprint-chip--nueva {
+  background: #eef2f6;
+  color: #475569;
+}
+
+.sprint-chip--sp,
+.sprint-chip--ninguno,
+.sprint-chip--wont {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px #cbd5e1;
+  color: #475569;
+}
+
+.sprint-chip--ninguno,
+.sprint-chip--wont {
+  color: #606f86;
+}
+
+.sprint-chip--ninguno {
+  font-style: italic;
+}
+
+.sprint-chip--wont {
+  text-decoration: line-through;
+}
+
+.sprint-chip--progreso {
+  background: #fdf0d5;
+  color: #7a4408;
+}
+
+.sprint-chip--ok {
+  background: #dcf5e4;
+  color: #166534;
+}
+
+.sprint-chip--progreso::before,
+.sprint-chip--ok::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  width: 6px;
+}
+
+.sprint-esfuerzo {
+  color: #0b5f58;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  margin: 0;
+}
+
+.sprint-detalle {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #0b5f58;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 6px;
+  padding: 0;
+}
+
+.sprint-detalle::before {
+  content: '▸';
+  display: inline-block;
+  font-size: 11px;
+}
+
+.sprint-detalle[aria-expanded="true"]::before {
+  transform: rotate(90deg);
+}
+
+.sprint-historia__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.sprint-boton {
+  align-items: center;
+  display: inline-flex;
+  font-size: 13px;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+}
+
+.sprint-boton svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-boton--contorno {
+  background: var(--surface);
+  border-color: var(--brand);
+  color: #0b5f58;
+}
+
+.sprints-encabezado .button {
+  align-items: center;
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.sprints-encabezado .button svg {
+  flex: none;
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-panel {
+  grid-template-columns: minmax(0, 1fr);
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.sprint-panel h3 {
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-boton-bloque {
+  width: 100%;
+}
+
+.sprint-pie {
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 14px;
+}
+
+.sprint-terminado {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.sprint-terminado summary > h3,
+.sprint-terminado summary > .sprint-goal,
+.sprint-terminado summary > .sprint-fechas {
+  grid-column: 1;
+}
+
+.sprint-terminado summary > .sprint-chevron {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.sprint-terminado summary {
+  align-items: start;
+  cursor: pointer;
+  display: grid;
+  gap: 8px 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  list-style: none;
+  padding: 14px 16px;
+}
+
+.sprint-terminado summary::-webkit-details-marker {
+  display: none;
+}
+
+.sprint-terminado summary:hover {
+  background: #fbfcfd;
+}
+
+.sprint-terminado[open] summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.sprint-terminado h3 {
+  font-size: 15.5px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.sprint-terminado .sprint-goal {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sprint-terminado summary .sprint-chips {
+  grid-column: 1 / -1;
+}
+
+.sprint-chevron {
+  color: var(--muted);
+  height: 16px;
+  margin-top: 3px;
+  transition: transform 0.2s;
+  width: 16px;
+}
+
+.sprint-chevron svg {
+  height: 16px;
+  width: 16px;
+}
+
+.sprint-terminado[open] .sprint-chevron {
+  transform: rotate(180deg);
+}
+
+.sprint-terminado .sprint-backlog {
+  gap: 0;
+  padding: 4px 16px 8px;
+}
+
+.sprint-terminado .sprint-historia {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 12px 0;
+}
+
+.sprint-terminado .sprint-backlog > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.sprint-enlace {
+  font-size: 14px;
+  margin: 0;
+  padding: 0 16px 14px;
+}
+
+.sprint-enlace a {
+  align-items: center;
+  color: #0b5f58;
+  display: inline-flex;
+  font-weight: 700;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.sprint-enlace a:hover {
+  text-decoration: underline;
+}
+
+.sprint-enlace svg {
+  height: 15px;
+  width: 15px;
+}
+
+@media (max-width: 640px) {
+  .sprint-historia__acciones {
+    justify-content: flex-start;
+  }
+
+  .sprint-boton--contorno {
+    min-height: 40px;
+    width: 100%;
+  }
 }

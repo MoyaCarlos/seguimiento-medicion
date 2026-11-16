@@ -51,7 +51,8 @@ export function FormularioInicio({ sprint, alActualizar, puedeGestionar = true, 
   const id = (campo: string) => `sprint-${sprint.id}-${campo}`
 
   return (
-    <form onSubmit={alEnviar}>
+    <form onSubmit={alEnviar} className="sprint-panel">
+      <h3>Iniciar Sprint</h3>
       {aviso && <ErrorMessage message={aviso} />}
       <Field id={id('sprint_goal')} name="sprint_goal" label="Sprint Goal" error={errores.sprint_goal} />
       <Field id={id('fecha_inicio')} name="fecha_inicio" type="date" label="Fecha de inicio" error={errores.fecha_inicio} />
@@ -59,6 +60,7 @@ export function FormularioInicio({ sprint, alActualizar, puedeGestionar = true, 
       {enviando && <LoadingIndicator />}
       <Button
         type="submit"
+        className="sprint-boton-bloque"
         disabled={enviando || !habilitado}
         aria-describedby={habilitado ? undefined : id('nota-gestion')}
       >

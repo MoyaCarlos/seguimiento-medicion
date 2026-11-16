@@ -1,43 +1,95 @@
+.demo-tarjeta {
+  background: #fffbea;
+  border: 1px dashed #e9c46a;
+  border-radius: 12px;
+  color: #5b4a1f;
+  display: grid;
+  font-size: 13px;
+  gap: 10px;
+  padding: 14px;
+}
+
+.demo-tarjeta h2 {
+  align-items: center;
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 14px;
+  gap: 8px;
+  margin: 0;
+}
+
+.demo-tarjeta p {
+  margin: 0;
+}
+
+.demo-tarjeta .button {
+  align-items: center;
+  border-radius: 10px;
+  display: inline-flex;
+  font-size: 14px;
+  gap: 8px;
+  height: 40px;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.demo-tarjeta > .button {
+  width: 100%;
+}
+
 .demo-credenciales {
   border-collapse: collapse;
-  font-size: 0.9rem;
-  margin-top: 0.75rem;
+  font-size: 12.5px;
+  margin: 0;
+  table-layout: fixed;
   width: 100%;
 }
 
 .demo-credenciales caption {
+  color: #8a6d1d;
+  font-size: 12px;
   font-weight: 700;
-  margin-bottom: 0.4rem;
+  letter-spacing: 0.06em;
+  padding: 8px 0 14px;
   text-align: left;
+  text-transform: uppercase;
 }
 
 .demo-credenciales th,
 .demo-credenciales td {
-  border-top: 1px solid var(--line);
   overflow-wrap: anywhere;
-  padding: 0.4rem 0.3rem;
+  padding: 6px 4px;
   text-align: left;
+  vertical-align: middle;
+}
+
+.demo-credenciales td {
+  border-top: 1px solid #f0e2b4;
 }
 
 .demo-credenciales th {
-  color: var(--muted);
-  font-size: 0.75rem;
+  color: #8a6d1d;
+  font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.demo-credenciales code {
+  background: #fff;
+  border-radius: 5px;
+  color: var(--ink);
+  padding: 1px 5px;
+}
+
+.demo-credenciales .button {
+  border-radius: 8px;
+  font-size: 13px;
+  height: 32px;
+  padding: 0 12px;
 }
 
 .demo-credenciales button:focus-visible {
   outline: 2px solid var(--lilac-dark);
   outline-offset: 2px;
-}
-
-.solo-lector {
-  border: 0;
-  clip: rect(0 0 0 0);
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
 }

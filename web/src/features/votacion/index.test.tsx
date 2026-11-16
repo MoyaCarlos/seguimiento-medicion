@@ -49,7 +49,11 @@ let sesion = 1
 function simularRol(rol: 'scrum_master' | 'product_builder') {
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(new Response(JSON.stringify({ id: 25, rol }), { status: 200 }))),
+    vi.fn((ruta: string) =>
+      Promise.resolve(
+        new Response(JSON.stringify(ruta === '/auth/yo' ? { id: sesion, nombre: 'sesión' } : { id: 25, rol }), { status: 200 }),
+      ),
+    ),
   )
 }
 
@@ -999,12 +1003,12 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
   const sinVotacionIniciada = () =>
     consultarMock.mockRejectedValue(new ApiError(404, 'la historia no tiene votación iniciada'))
 
-  it('Escenario: proyecto cerrado con una ronda abierta: aviso «Proyecto cerrado el 2026-11-10», la votación se sigue viendo y las cartas y «Revelar» quedan deshabilitadas con «El proyecto está cerrado»', async () => {
+  it('Escenario: proyecto cerrado con una ronda abierta: aviso «Proyecto cerrado el 10/11/2026», la votación se sigue viendo y las cartas y «Revelar» quedan deshabilitadas con «El proyecto está cerrado»', async () => {
     servidor.votos = { 1: 5, 2: 5, 3: 5 }
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(within(fila('Beta Dos')).getByText('Ya votó')).toBeTruthy()
     for (const carta of within(cartas()).getAllByRole('button')) {
       expect((carta as HTMLButtonElement).disabled).toBe(true)
@@ -1025,7 +1029,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const iniciar = boton('Iniciar votación')
     expect(iniciar.disabled).toBe(true)
     expect(nota(iniciar)).toBe(CERRADO)
@@ -1040,7 +1044,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('scrum_master', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(screen.getByText('Hay diferencias: mínimo 3, máximo 8')).toBeTruthy()
     for (const accion of [boton('Registrar estimación'), boton('Nueva ronda')]) {
       expect(accion.disabled).toBe(true)
@@ -1055,7 +1059,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Revelar'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede revelar los votos')).toBeNull()
   })
@@ -1065,7 +1069,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Iniciar votación'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede iniciar la votación')).toBeNull()
     expect(screen.getAllByText(CERRADO)).toHaveLength(1)
@@ -1077,7 +1081,7 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     simularProyecto('product_builder', '2026-11-10')
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     expect(nota(boton('Registrar estimación'))).toBe(CERRADO)
     expect(nota(boton('Nueva ronda'))).toBe(CERRADO)
     expect(screen.queryByText('Solo el Scrum Master puede registrar la estimación')).toBeNull()
@@ -1111,8 +1115,8 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     await userEvent.click(boton('Actualizar'))
     await waitFor(() => expect(consultarMock.mock.calls.length).toBeGreaterThan(1))
 
-    expect(simulado).toHaveBeenCalledTimes(1)
-    expect(simulado.mock.calls.map(([ruta]) => ruta)).toEqual(['/projects/25'])
+    expect(simulado).toHaveBeenCalledTimes(2)
+    expect(simulado.mock.calls.map(([ruta]) => ruta).sort()).toEqual(['/auth/yo', '/projects/25'])
   })
 
   it('Escenario: dato viejo: un 409 «El proyecto está cerrado» al votar se muestra tal cual', async () => {
@@ -1151,5 +1155,39 @@ describe('Pantalla de votación - proyecto cerrado (cerrar y reabrir, US2)', () 
     expect(boton('Nueva ronda').disabled).toBe(false)
     expect(screen.queryByText(CERRADO)).toBeNull()
     expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
+  })
+})
+
+describe('Pantalla de votación como el prototipo', () => {
+  it('Given que tengo la sesión, When se muestran los integrantes, Then mi fila queda resaltada', async () => {
+    servidor = { votos: { 1: 3, 2: 5 }, revelada: false, ronda: 1 }
+    actuarComo('Beta Dos')
+    abrir()
+
+    const yo = (await screen.findAllByRole('listitem')).find((fila) => fila.getAttribute('aria-current') === 'true')
+
+    expect(yo?.textContent).toContain('Beta Dos')
+    expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(1)
+  })
+
+  it('Given que el servidor no dice quién soy, When se muestran los integrantes, Then ninguna fila se resalta y no hay error', async () => {
+    servidor = { votos: { 1: 3 }, revelada: false, ronda: 1 }
+    simularRol('scrum_master')
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify({ mensaje: 'no' }), { status: 401 }))))
+    abrir()
+
+    await screen.findAllByRole('listitem')
+
+    expect(document.querySelector('[aria-current="true"]')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('Given la cabecera, When se muestra, Then «Volver al Product Backlog» es un botón gris discreto', async () => {
+    servidor = { votos: {}, revelada: false, ronda: 1 }
+    abrir()
+
+    const volver = await screen.findByRole('link', { name: 'Volver al Product Backlog' })
+
+    expect(volver.className).toBe('button button--ghost')
   })
 })

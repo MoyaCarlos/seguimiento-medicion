@@ -8,11 +8,12 @@ type Props = {
   deshabilitado: boolean
   alVotar: (valor: number) => void
   puedeEscribir?: boolean
+  usuarioActualId?: number | null
 }
 
 const NOTA_CERRADO = 'votacion-nota-cartas'
 
-export function Ronda({ votacion, deshabilitado, alVotar, puedeEscribir = true }: Props) {
+export function Ronda({ votacion, deshabilitado, alVotar, puedeEscribir = true, usuarioActualId = null }: Props) {
   const abierta = !estaRevelada(votacion)
   // Mientras la ronda está abierta el servidor solo muestra el voto de la sesión.
   const miVoto = votacion.integrantes.find((voto) => voto.valor !== null)?.valor ?? null
@@ -20,7 +21,7 @@ export function Ronda({ votacion, deshabilitado, alVotar, puedeEscribir = true }
   return (
     <>
       <p className="votacion-ronda">Ronda {votacion.ronda}</p>
-      <Integrantes integrantes={votacion.integrantes} />
+      <Integrantes integrantes={votacion.integrantes} usuarioActualId={usuarioActualId} />
       {abierta && (
         <>
           <p className="votacion-consigna">Elegí una carta: ¿cuántos Story Points creés que lleva esta historia?</p>

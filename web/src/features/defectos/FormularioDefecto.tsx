@@ -13,15 +13,15 @@ type Props = {
   proyectoId: string
   historias: HistoriaDeProyecto[]
   alRegistrar: () => void
+  alIniciar?: () => void
   puedeEscribir?: boolean
 }
 
-export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEscribir = true }: Props) {
+export function FormularioDefecto({ proyectoId, historias, alRegistrar, alIniciar, puedeEscribir = true }: Props) {
   const [descripcion, setDescripcion] = useState('')
   const [severidad, setSeveridad] = useState('')
   const [historiaId, setHistoriaId] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [confirmado, setConfirmado] = useState(false)
   const [aviso, setAviso] = useState('')
   const [errores, setErrores] = useState<Record<string, string>>({})
 
@@ -31,7 +31,6 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEsc
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (enviando || !puedeEscribir) return
-    setConfirmado(false)
     setAviso('')
 
     const validacion: Record<string, string> = {}
@@ -41,6 +40,7 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEsc
     setErrores(validacion)
     if (Object.keys(validacion).length > 0) return
 
+    alIniciar?.()
     setEnviando(true)
     try {
       await registrarDefecto(proyectoId, {
@@ -51,7 +51,6 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEsc
       setDescripcion('')
       setSeveridad('')
       setHistoriaId('')
-      setConfirmado(true)
       alRegistrar()
     } catch (error) {
       const clasificado = clasificarError(error)
@@ -65,13 +64,11 @@ export function FormularioDefecto({ proyectoId, historias, alRegistrar, puedeEsc
   function limpiar(campo: string) {
     setErrores((actuales) => ({ ...actuales, [campo]: '' }))
     setAviso('')
-    setConfirmado(false)
   }
 
   return (
     <form onSubmit={guardar} noValidate aria-label="Registrar defecto">
       {aviso && <ErrorMessage message={aviso} />}
-      {confirmado && <p className="message" role="status">Defecto registrado</p>}
 
       <div className="field">
         <label htmlFor="descripcion">Descripción</label>

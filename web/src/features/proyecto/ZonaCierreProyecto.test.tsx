@@ -1,6 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
+import globales from '../../App.css?raw'
+import estilos from './estilos.css?raw'
 import { ZonaCierreProyecto } from './ZonaCierreProyecto'
 
 const respuestaCierre = {
@@ -194,12 +196,23 @@ async function reabrir() {
   await userEvent.click(screen.getByRole('button', { name: 'Reabrir proyecto' }))
 }
 
+describe('zona de cierre del proyecto - fecha de cierre en dd/mm/aaaa', () => {
+  it.each([
+    ['2026-01-05', '05/01/2026'],
+    ['2026-12-31', '31/12/2026'],
+  ])('Given un proyecto cerrado el %s, When se muestra la zona, Then dice «Proyecto cerrado el %s»', (iso, esperado) => {
+    render(<ZonaCierreProyecto proyectoId="7" rol="scrum_master" fechaCierre={iso} onCambio={vi.fn()} />)
+
+    expect(screen.getByText(`Proyecto cerrado el ${esperado}`)).toBeTruthy()
+  })
+})
+
 describe('zona de cierre del proyecto - reabrir', () => {
-  it('Escenario: cerrado y Scrum Master, se ve «Proyecto cerrado el 2026-11-11» y «Reabrir proyecto» habilitado, sin «Cerrar proyecto»', () => {
+  it('Escenario: cerrado y Scrum Master, se ve «Proyecto cerrado el 11/11/2026» y «Reabrir proyecto» habilitado, sin «Cerrar proyecto»', () => {
     const fetchMock = responder(json(respuestaReapertura))
     abrirCerrado()
 
-    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByText('Proyecto cerrado el 11/11/2026')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Reabrir proyecto' }).hasAttribute('disabled')).toBe(false)
     expect(screen.queryByRole('button', { name: 'Cerrar proyecto' })).toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
@@ -277,7 +290,7 @@ describe('zona de cierre del proyecto - reabrir', () => {
     await reabrir()
 
     expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
-    expect(screen.getByText('Proyecto cerrado el 2026-11-11')).toBeTruthy()
+    expect(screen.getByText('Proyecto cerrado el 11/11/2026')).toBeTruthy()
     expect(screen.queryByText('En curso')).toBeNull()
     expect(onCambio).not.toHaveBeenCalled()
   })
@@ -344,5 +357,39 @@ describe('zona de cierre del proyecto - rol (HU-21)', () => {
     await reabrir()
 
     expect(await screen.findByText('No tenés permiso')).toBeTruthy()
+  })
+})
+
+describe('zona de cierre del proyecto - espacio del mensaje de error', () => {
+  it('Given el 409 «Cerrá el Sprint activo…», When se muestra el error, Then queda separado 12px del botón «Cerrar proyecto» que tiene debajo', async () => {
+    const mensaje = 'Cerrá el Sprint activo antes de cerrar el proyecto'
+    responder(json({ mensaje }, 409))
+    const hoja = document.createElement('style')
+    hoja.textContent = `${globales}\n${estilos}`
+    document.head.append(hoja)
+    onTestFinished(() => hoja.remove())
+    abrir()
+
+    await confirmar()
+    const error = await screen.findByText(mensaje)
+    const boton = screen.getByRole('button', { name: 'Cerrar proyecto' })
+
+    expect(error.compareDocumentPosition(boton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(getComputedStyle(error).getPropertyValue('margin-bottom')).toBe('12px')
+  })
+
+  it('Given un mensaje de error fuera de la zona de cierre, When se estiliza, Then conserva su margen de siempre (0)', () => {
+    const suelto = document.createElement('p')
+    suelto.className = 'message message--error'
+    document.body.append(suelto)
+    const hoja = document.createElement('style')
+    hoja.textContent = `${globales}\n${estilos}`
+    document.head.append(hoja)
+    onTestFinished(() => {
+      hoja.remove()
+      suelto.remove()
+    })
+
+    expect(getComputedStyle(suelto).getPropertyValue('margin-bottom')).not.toBe('12px')
   })
 })

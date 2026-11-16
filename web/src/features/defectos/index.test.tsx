@@ -1,3 +1,5 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -195,12 +197,12 @@ describe('pantalla de defectos', () => {
 
     expect(await screen.findByText('El total no se actualiza')).toBeTruthy()
     expect(screen.getByText('El botón no responde')).toBeTruthy()
-    expect(screen.getAllByText('Alta').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Severidad Alta').length).toBeGreaterThan(0)
     expect(screen.getByText('Pendiente')).toBeTruthy()
     expect(screen.getAllByText('Resuelto').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Carrito de compras/).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Sprint 1/).length).toBeGreaterThan(0)
-    expect(screen.getByText('Registrado: 04/11/2026')).toBeTruthy()
+    expect(screen.getByText('Detectado en Sprint 1 · Registrado: 04/11/2026')).toBeTruthy()
   })
 
   it('US2.1 — Dado un defecto pendiente y un Sprint activo, cuando lo marco como resuelto, entonces pasa a Resuelto', async () => {
@@ -422,6 +424,145 @@ describe('pantalla de defectos', () => {
   })
 })
 
+describe('listado de defectos como el prototipo', () => {
+  const ambos = { defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO], sprints: [SPRINT_ACTIVO, SPRINT_FINALIZADO], sprintsBacklog: { 2: [HISTORIA_SPRINT], 4: [] } }
+
+  it('Dado un defecto, cuando se lista, entonces su título es «Defecto #N · historia» en un encabezado de nivel 3', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByRole('heading', { level: 3, name: 'Defecto #7 · Carrito de compras' })).toBeTruthy()
+  })
+
+  it('Dados dos defectos, cuando se lista, entonces va primero el más nuevo', async () => {
+    abrir(ambos)
+
+    const titulos = (await screen.findAllByRole('heading', { level: 3 })).map((titulo) => titulo.textContent)
+    expect(titulos).toEqual(['Defecto #8 · Carrito de compras', 'Defecto #7 · Carrito de compras'])
+  })
+
+  it('Dado un defecto pendiente, cuando se lista, entonces «Resolver» va antes de la descripción', async () => {
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+
+    const boton = await screen.findByRole('button', { name: 'Resolver' })
+    const descripcion = screen.getByText('El total no se actualiza')
+    expect(boton.compareDocumentPosition(descripcion) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('Dado un defecto resuelto, cuando se lista, entonces los sprints y la fecha van en una sola línea separada por «·»', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByText('Detectado en Sprint 1 · Resuelto en Sprint 1 · Registrado: 03/11/2026')).toBeTruthy()
+  })
+
+  it('Dado un defecto, cuando se lista, entonces muestra «Severidad X» y el estado como etiquetas', async () => {
+    abrir(ambos)
+
+    expect(await screen.findByText('Severidad Alta')).toBeTruthy()
+    expect(screen.getByText('Severidad Baja')).toBeTruthy()
+    expect(screen.getByText('Pendiente')).toBeTruthy()
+    expect(screen.getByText('Resuelto')).toBeTruthy()
+  })
+})
+
+describe('avisos de éxito como el prototipo', () => {
+  it('Dado un defecto pendiente, cuando lo resuelvo, entonces aparece el aviso «Defecto #7 resuelto en el Sprint 1»', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
+
+    const aviso = await screen.findByText('Defecto #7 resuelto en el Sprint 1')
+    expect(aviso.closest('.defectos-exito')?.getAttribute('role')).toBe('status')
+  })
+
+  it('Dado que registro un defecto, cuando se guarda, entonces el aviso «Defecto registrado» va arriba, antes del formulario', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [] })
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    const aviso = await screen.findByText('Defecto registrado')
+    const formulario = screen.getByRole('heading', { name: 'Registrar defecto' })
+    expect(aviso.compareDocumentPosition(formulario) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(aviso.closest('form')).toBeNull()
+  })
+
+  it('Dado un aviso de éxito, cuando se estiliza, entonces es una caja verde con texto que cumple 4,5:1', () => {
+    const css = readFileSync('src/features/defectos/defectos.css', 'utf8')
+    const regla = css.match(/^\.defectos-exito\s*\{([^}]*)\}/m)?.[1] ?? ''
+    const fondo = regla.match(/background:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    const texto = regla.match(/\bcolor:\s*(#[0-9a-f]{6})/)?.[1] ?? ''
+    const luz = (h: string) =>
+      [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+        .reduce((a, c, i) => a + c * [0.2126, 0.7152, 0.0722][i], 0)
+
+    expect(fondo).toBe('#dcf5e4')
+    const [a, b] = [luz(fondo), luz(texto)].sort((x, y) => y - x)
+    expect((a + 0.05) / (b + 0.05)).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
+describe('aviso de éxito: se limpia al iniciar otra operación', () => {
+  const resolverElPendiente = async (usuario: ReturnType<typeof userEvent.setup>) => {
+    await screen.findByText('El total no se actualiza')
+    await usuario.click(screen.getByRole('button', { name: 'Resolver' }))
+    await screen.findByText('Defecto #7 resuelto en el Sprint 1')
+  }
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando empiezo a registrar otro defecto, entonces el aviso viejo desaparece mientras se envía y después aparece el nuevo', async () => {
+    const usuario = userEvent.setup()
+    const demora = diferido()
+    abrir({ defectos: [DEFECTO_PENDIENTE], demoraRegistro: demora.promesa })
+    await resolverElPendiente(usuario)
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    await waitFor(() => expect(screen.queryByText('Defecto #7 resuelto en el Sprint 1')).toBeNull())
+    expect(screen.queryByText('Defecto registrado')).toBeNull()
+    demora.resolver()
+    expect(await screen.findByText('Defecto registrado')).toBeTruthy()
+  })
+
+  it('Dado el aviso «Defecto registrado», cuando empiezo a resolver otro defecto y el servidor lo rechaza, entonces no queda el aviso viejo y se ve el error', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE], errorResolucion: { status: 409, cuerpo: { mensaje: 'No hay un Sprint activo' } } })
+    await completarFormulario(usuario)
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+    await screen.findByText('Defecto registrado')
+
+    await usuario.click(screen.getAllByRole('button', { name: 'Resolver' })[0])
+
+    expect(await screen.findByText('No hay un Sprint activo')).toBeTruthy()
+    expect(screen.queryByText('Defecto registrado')).toBeNull()
+  })
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando intento registrar y el servidor lo rechaza, entonces el aviso viejo no vuelve y se ve el error', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE], errorRegistro: { status: 409, cuerpo: { mensaje: 'violación de integridad referencial' } } })
+    await resolverElPendiente(usuario)
+    await completarFormulario(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('violación de integridad referencial')).toBeTruthy()
+    expect(screen.queryByText('Defecto #7 resuelto en el Sprint 1')).toBeNull()
+  })
+
+  it('Dado el aviso «Defecto #7 resuelto…», cuando intento guardar el formulario vacío (sin enviar nada), entonces el aviso se conserva', async () => {
+    const usuario = userEvent.setup()
+    abrir({ defectos: [DEFECTO_PENDIENTE] })
+    await resolverElPendiente(usuario)
+
+    await usuario.click(screen.getByRole('button', { name: 'Registrar defecto' }))
+
+    expect(await screen.findByText('La descripción es obligatoria')).toBeTruthy()
+    expect(screen.getByText('Defecto #7 resuelto en el Sprint 1')).toBeTruthy()
+  })
+})
+
 describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const NOTA = 'El proyecto está cerrado'
 
@@ -439,7 +580,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
   it('Escenario: proyecto cerrado: muestra el aviso y el listado de defectos se sigue viendo', async () => {
     abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE, DEFECTO_RESUELTO] })
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(await screen.findByText('El total no se actualiza')).toBeTruthy()
     expect(screen.getByText('El botón no responde')).toBeTruthy()
   })
@@ -447,7 +588,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
   it('Escenario: proyecto cerrado: «Registrar defecto» y sus campos quedan deshabilitados con una sola nota «El proyecto está cerrado» y no envía', async () => {
     const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [] })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const boton = (await screen.findByRole('button', { name: 'Registrar defecto' })) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
     expect(descripcionDe(boton)).toBe(NOTA)
@@ -470,7 +611,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
       defectos: [DEFECTO_PENDIENTE, segundo, DEFECTO_RESUELTO],
     })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByText('El total no se actualiza')
     const botones = (await screen.findAllByRole('button', { name: 'Resolver' })) as HTMLButtonElement[]
     expect(botones).toHaveLength(2)
@@ -501,7 +642,7 @@ describe('pantalla de defectos - proyecto cerrado (cerrar y reabrir, US2)', () =
     const usuario = userEvent.setup()
     const { fetchMock } = abrir({ proyecto: PROYECTO_CERRADO, defectos: [DEFECTO_PENDIENTE] })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByRole('button', { name: 'Registrar defecto' })
     await screen.findByText('El total no se actualiza')
     await usuario.click(screen.getByLabelText('Descripción'))

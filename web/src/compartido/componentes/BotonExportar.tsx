@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { ApiError, ConnectionError, type Descarga } from '../api/client'
 import { Button } from './Button'
+import { Icono } from './Icono'
 import { ErrorMessage } from './ErrorMessage'
 import './BotonExportar.css'
 
@@ -42,7 +43,8 @@ export function BotonExportar({ children, descargar }: BotonExportarProps) {
 
   return (
     <div className="reporte-exportar">
-      <Button type="button" onClick={exportar} disabled={generando}>
+      <Button type="button" variant="secondary" className="reporte-exportar__boton" onClick={exportar} disabled={generando}>
+        {!generando && <Icono nombre="flecha" />}
         {generando ? 'Generando…' : children}
       </Button>
       {error && <ErrorMessage message={error} />}

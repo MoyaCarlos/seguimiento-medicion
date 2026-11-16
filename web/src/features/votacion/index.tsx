@@ -3,6 +3,7 @@ import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
 import { usePermisosProyecto } from '../../compartido/permisos/usePermisosProyecto'
+import { useUsuarioActual } from '../../compartido/permisos/useUsuarioActual'
 import { AccionesScrumMaster } from './AccionesScrumMaster'
 import { Consenso } from './Consenso'
 import { Encabezado } from './Encabezado'
@@ -28,6 +29,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
   const estado = useVotacion(proyectoId, historiaId)
   // Un solo GET /projects/{id}: de ahí salen el rol y el cierre.
   const { fechaCierre, cerrado, puedeGestionar, puedeEscribir } = usePermisosProyecto(Number(proyectoId))
+  const usuarioActualId = useUsuarioActual()
   const { integrantes, votacion, enviando } = estado
 
   return (
@@ -66,6 +68,7 @@ function PantallaVotacion({ proyectoId, historiaId }: Props) {
             deshabilitado={enviando}
             alVotar={estado.votar}
             puedeEscribir={puedeEscribir}
+            usuarioActualId={usuarioActualId}
           />
           {estaRevelada(votacion) && (
             <>

@@ -422,7 +422,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     expect(await screen.findByText('Ana')).toBeTruthy()
     expect(screen.getByText('Ana').closest('li')?.textContent).toContain('Scrum Master')
   })
@@ -431,7 +431,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const selector = await screen.findByLabelText('Usuario')
     const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
@@ -449,7 +449,7 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     responder(proyectoCon('product_builder', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const boton = screen.getByRole('button', { name: 'Asignar integrante' }) as HTMLButtonElement
     expect(boton.disabled).toBe(true)
     expect(descripcionDe(boton)).toBe(NOTA_CERRADO)
@@ -528,10 +528,126 @@ describe('configuración del equipo - proyecto cerrado (cerrar y reabrir, US2)',
     const fetchMock = responder(proyectoCon('scrum_master', '2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await screen.findByText('Ana')
     await screen.findByLabelText('Usuario')
 
     expect(llamadasAlProyecto(fetchMock)).toHaveLength(1)
   })
 })
+
+describe('Configurar equipo como el prototipo', () => {
+  const equipo = [
+    { id: 1, proyecto_id: 3, nombre: 'Ana', rol: 'scrum_master', vinculado_en: '2026-09-01T00:00:00Z' },
+    { id: 2, proyecto_id: 3, nombre: 'Jimena', rol: 'product_builder', vinculado_en: '2026-09-01T00:00:00Z' },
+    { id: 3, proyecto_id: 3, nombre: 'Bruno', rol: 'product_builder', vinculado_en: '2026-09-01T00:00:00Z' },
+  ]
+
+  function responder(rol: 'scrum_master' | 'product_builder' = 'scrum_master') {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(url === '/projects/3' ? { id: 3, rol, fecha_cierre: null } : url === '/users' ? [] : equipo),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+
+  it('Given la pantalla, When abre, Then «Proyecto #3» va sobre el h1 «Configurar equipo» y ya no hay «Panel del proyecto», «Configuración» ni «Proyecto <strong>»', async () => {
+    responder()
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: 'Configurar equipo' })
+
+    expect(screen.getByText('Proyecto #3').compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
+    expect(screen.queryByText('Configuración')).toBeNull()
+    expect(document.querySelector('.hu04-referencia')).toBeNull()
+  })
+
+  it('Given la cabecera, When abre, Then «Volver al panel» lleva al panel con flecha y estilo discreto', async () => {
+    responder()
+    abrir()
+
+    const volver = await screen.findByRole('link', { name: 'Volver al panel' })
+
+    expect(volver.getAttribute('href')).toBe('/projects/3/proyecto')
+    expect(volver.className).toBe('button button--ghost')
+    expect(volver.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given las dos tarjetas, When abre, Then están en una rejilla y sus títulos son de 17px (clase propia)', async () => {
+    responder()
+    abrir()
+
+    const asignar = (await screen.findByRole('heading', { level: 2, name: 'Asignar integrante' })).closest('article') as HTMLElement
+    const equipoTarjeta = screen.getByRole('heading', { level: 2, name: 'Equipo del proyecto' }).closest('article') as HTMLElement
+
+    expect(asignar.parentElement?.className).toBe('equipo-rejilla')
+    expect(equipoTarjeta.parentElement).toBe(asignar.parentElement)
+    expect(asignar.className).toBe('panel-tarjeta')
+    expect(within(asignar).getByRole('heading', { level: 2 }).className).toBe('equipo-titulo')
+  })
+
+  it('Given un equipo, When se lista, Then cada integrante lleva avatar con su inicial y paleta rotativa, nombre y rol, y el Scrum Master dice «fijo»', async () => {
+    responder()
+    abrir()
+
+    await screen.findByText('Jimena')
+    const filas = within(screen.getByRole('heading', { name: 'Equipo del proyecto' }).closest('article') as HTMLElement).getAllByRole('listitem')
+    const avatares = filas.map((fila) => fila.querySelector('.avatar-proyecto'))
+
+    expect(avatares.map((a) => a?.getAttribute('data-inicial'))).toEqual(['A', 'J', 'B'])
+    expect(avatares.map((a) => a?.className)).toEqual([
+      'avatar-proyecto avatar-proyecto--1',
+      'avatar-proyecto avatar-proyecto--2',
+      'avatar-proyecto avatar-proyecto--3',
+    ])
+    expect(filas[0].querySelector('.equipo-persona small')?.textContent).toBe('Scrum Master · fijo')
+    expect(filas[1].querySelector('.equipo-persona small')?.textContent).toBe('Product Builder')
+  })
+
+  it('Given un Product Builder del equipo, When se muestra su fila, Then «Quitar» es un botón de contorno chico', async () => {
+    responder()
+    abrir()
+
+    const quitar = await screen.findByRole('button', { name: 'Quitar a Jimena' })
+
+    expect(quitar.className).toBe('button button--secondary equipo-quitar')
+    expect(quitar.textContent).toBe('Quitar')
+  })
+
+  it('Given la confirmación en línea, When pulso «Quitar», Then conserva sus textos y botones y se ve compacta', async () => {
+    responder()
+    abrir()
+    await userEvent.click(await screen.findByRole('button', { name: 'Quitar a Jimena' }))
+
+    const confirmacion = screen.getByText('¿Quitar a Jimena del equipo?').parentElement as HTMLElement
+
+    expect(confirmacion.className).toBe('hu04-confirmacion')
+    expect(confirmacion.parentElement?.className).toBe('equipo-acciones equipo-acciones--confirmando')
+    expect(within(confirmacion).getByRole('button', { name: 'Cancelar' })).toBeTruthy()
+    expect(within(confirmacion).getByRole('button', { name: 'Sí, quitar' }).className).toBe('button button--primary equipo-quitar')
+  })
+
+  it('Given que no hay usuarios para agregar, When se muestra la tarjeta, Then lo dice con el texto de ayuda gris', async () => {
+    responder()
+    abrir()
+
+    expect((await screen.findByText('No hay usuarios registrados para agregar')).className).toBe('panel-ayuda')
+  })
+
+  it('Given que no estoy confirmando, When se muestra «Quitar», Then su contenedor no lleva la variante de confirmación', async () => {
+    responder()
+    abrir()
+
+    const quitar = await screen.findByRole('button', { name: 'Quitar a Jimena' })
+
+    expect(quitar.parentElement?.className).toBe('equipo-acciones')
+  })
+})
+
