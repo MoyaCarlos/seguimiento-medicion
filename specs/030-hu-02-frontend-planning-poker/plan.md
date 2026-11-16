@@ -38,7 +38,7 @@ Constitución v1.1.0 (`.specify/memory/constitution.md`).
 | II. SDD | specify → clarify → plan; siguen tasks, analyze, implement | PASS |
 | III. BDD | Pruebas de componente Vitest con el escenario Given-When-Then en el nombre; la API sigue cubierta por Godog (spec 012) | PASS |
 | IV. Clean/Hexagonal | No aplica al backend (no se toca); en el frontend, lógica de la vista en funciones puras separadas de los componentes | PASS |
-| V. Clean Code/SOLID/KISS/YAGNI/DRY | Sin polling, sin store global, sin persistir la elección; el promedio y la carta sugerida los calcula el backend (no se duplica la regla) | PASS |
+| V. Clean Code/SOLID/KISS/YAGNI/DRY | Sin store global ni persistencia de la elección; el promedio y la carta sugerida los calcula el backend (no se duplica la regla). Desde #225 (spec 051) hay polling acotado, pausado con la pestaña oculta, la ronda revelada o una acción en curso | PASS |
 | VI. Stack | React + Vite + Vitest + Testing Library, sin dependencias nuevas | PASS |
 
 **Re-evaluación post-diseño**: todos los gates siguen en PASS.

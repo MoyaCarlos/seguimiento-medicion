@@ -932,6 +932,7 @@ issue y entra en los Sprints.
 | #173 | Regla del estado del proyecto: «Finalizado» derivado de los Sprints solo si la fecha de fin ya pasó (HU-13) | Implementado en `fix/173-estado-proyecto-fecha-de-fin` (PR #315), pendiente de merge |
 | #174 | Cargar criterios de aceptación, notas y «depende de» al crear una historia | Cerrado (criterios de aceptación; notas y «depende de» quedan para después) |
 | #215 | Mejorar la presentación del Markdown del backlog: títulos más chicos, ayuda de sintaxis y barra de formato | Implementado en `feature/215-mejoras-markdown-backlog` (PR #326), Sprint 5 |
+| #225 | Planning Poker: actualización automática de la votación cada 5 segundos, pausada con la pestaña oculta o la ronda revelada | Implementado en `feature/225-actualizacion-automatica-votacion` (PR #328), Sprint 5 |
 | #230 | Rediseño visual del frontend y mejor aprovechamiento del ancho de pantalla (a partir de un prototipo) | Abierto, la base en el Sprint 4 y las pantallas en el Sprint 5 |
 | #232 | Eliminar un proyecto: solo el Scrum Master, con triple confirmación | Abierto, Sprint 5 |
 | #235 | Datos de prueba v2: 4 usuarios con contraseña `demo1234` (un Scrum Master), equipo, historias con criterios, Sprints, horas, votaciones y defectos; tras cada deploy se recargan con `POST /demo/datos` (sin sesión) | Implementado en `feature/235-datos-de-prueba-v2`, pendiente de PR, Sprint 4 |
