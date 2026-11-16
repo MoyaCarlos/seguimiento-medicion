@@ -414,9 +414,14 @@
 }
 
 .sprint-terminado .sprint-goal {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sprint-terminado summary > span:first-child {
+  display: block;
 }
 
 .sprint-terminado summary .sprint-chips {

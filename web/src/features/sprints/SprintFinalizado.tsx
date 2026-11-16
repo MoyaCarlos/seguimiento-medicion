@@ -13,26 +13,26 @@ export function SprintFinalizado({ sprint }: { sprint: Sprint }) {
   return (
     <details className="sprint-terminado">
       <summary>
-        <div>
+        <span>
           <h3>{`Sprint ${sprint.numero}`}</h3>
-          {sprint.sprint_goal && <p className="sprint-goal">{sprint.sprint_goal}</p>}
+          {sprint.sprint_goal && <span className="sprint-goal">{sprint.sprint_goal}</span>}
           {sprint.fecha_inicio && sprint.fecha_fin && (
             <span className="sprint-fechas">
               <Icono nombre="calendario" />
               {periodoCorto(sprint.fecha_inicio, sprint.fecha_fin)}
             </span>
           )}
-        </div>
+        </span>
         <span className="sprint-chevron">
           <Icono nombre="chevronAbajo" />
         </span>
         {historias && (
-          <div className="sprint-chips">
+          <span className="sprint-chips">
             <span className={`sprint-chip sprint-chip--${completadas.length > 0 ? 'ok' : 'nueva'}`}>
               {`${completadas.length} completada${completadas.length === 1 ? '' : 's'}`}
             </span>
             <span className="sprint-chip sprint-chip--sp">{`${puntos} SP`}</span>
-          </div>
+          </span>
         )}
       </summary>
       <SprintBacklog sprintId={sprint.id} finalizado alCargar={setHistorias} />
