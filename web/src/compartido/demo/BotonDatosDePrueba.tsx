@@ -3,7 +3,7 @@ import { ApiError } from '../api/client'
 import { Button } from '../componentes/Button'
 import { ErrorMessage } from '../componentes/ErrorMessage'
 import { LoadingIndicator } from '../componentes/LoadingIndicator'
-import { PROYECTO_DE_PRUEBA, cargarDatosDePrueba, datosDePruebaHabilitados } from './api'
+import { cargarDatosDePrueba, datosDePruebaHabilitados } from './api'
 import { CredencialesDemo } from './CredencialesDemo'
 
 type Resultado = { tipo: 'aviso'; mensaje: string; conTabla: boolean; exito?: boolean } | { tipo: 'error'; mensaje: string }
@@ -49,9 +49,8 @@ export function BotonDatosDePrueba({ alUsar }: Props) {
     <div className="demo-tarjeta">
       <h2>Datos de prueba</h2>
       <p>
-        Crea cuatro usuarios y el proyecto #{PROYECTO_DE_PRUEBA} «Licencia de conducir (datos de prueba)»: 4 Sprints
-        (dos finalizados, uno activo y uno pendiente), 12 historias, 20 registros de horas, 2 votaciones y 5 defectos.
-        Si algún usuario ya existe, no se carga nada.
+        Crea cuatro usuarios y ocho proyectos de ejemplo (en curso, planificados y finalizados) con Sprints, historias,
+        horas, votaciones y defectos. Contraseña de todos: demo1234. Si algún usuario ya existe, no se carga nada.
       </p>
       {resultado?.tipo === 'error' && <ErrorMessage className="auth-alerta" message={resultado.mensaje} />}
       {resultado?.tipo === 'aviso' && (
