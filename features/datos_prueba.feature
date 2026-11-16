@@ -14,6 +14,7 @@ Característica: Cargar datos de prueba
     Entonces el sistema responde 201 con el resumen del proyecto 25
     Y el proyecto 25 tiene 12 historias, 4 Sprints y 4 integrantes
     Y el resumen informa 4 usuarios, 4 integrantes, 4 Sprints, 12 historias, 20 registros de horas, 2 rondas de votación, 6 votos y 5 defectos
+    Y el resumen informa 7 proyectos adicionales, 13 Sprints, 52 historias, 50 registros de horas, 6 rondas de votación, 21 votos y 10 defectos adicionales
     Y el proyecto 25 tiene 5 defectos, 3 Resueltos y 2 Pendientes
     Y "carlos.moya" es el único Scrum Master del proyecto 25
 

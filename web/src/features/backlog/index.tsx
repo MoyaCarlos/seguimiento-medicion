@@ -6,8 +6,10 @@ import { Listado } from './Listado'
 export function Component() {
   return (
     <Routes>
-      <Route index element={<Listado />} />
-      <Route path="nueva" element={<Crear />} />
+      <Route element={<Listado />}>
+        <Route index />
+        <Route path="nueva" element={<Crear />} />
+      </Route>
       <Route path="*" element={<NoEncontrada />} />
     </Routes>
   )

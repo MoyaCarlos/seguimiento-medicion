@@ -4,6 +4,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Historia } from './historia'
+import { Component as Crear } from './crear'
 import { Listado } from './Listado'
 
 const respuesta = (status: number, cuerpo: unknown) =>
@@ -99,10 +100,8 @@ function abrir(url = '/projects/42/backlog') {
     [
       {
         path: '/projects/:id/backlog',
-        children: [
-          { index: true, element: <Listado /> },
-          { path: 'nueva', element: <p>Nueva historia</p> },
-        ],
+        element: <Listado />,
+        children: [{ index: true }, { path: 'nueva', element: <Crear /> }],
       },
     ],
     { initialEntries: [url] },
@@ -130,7 +129,8 @@ function cuerpoEnviado(fetchSimulado: ReturnType<typeof vi.fn>, indice = 0) {
 }
 
 function mensajeDe(campo: HTMLElement) {
-  const id = campo.getAttribute('aria-describedby')
+  // Con el marcador «Opcional» (criterios) aria-describedby lleva dos ids: el marcador y luego el error o la ayuda.
+  const id = campo.getAttribute('aria-describedby')?.split(' ').at(-1)
   return id ? document.getElementById(id)?.textContent ?? null : null
 }
 
@@ -149,7 +149,7 @@ describe('listado del Product Backlog (US1)', () => {
     expect(fetchSimulado.mock.calls[0][0]).toBe('/projects/42/backlog')
 
     const must = articuloDe(MUST.titulo)
-    expect(within(must).getByText('Historia #3')).toBeTruthy()
+    expect(within(must).getByText('#3')).toBeTruthy()
     expect(within(must).getByText('Must have')).toBeTruthy()
     expect(within(must).getByText('Nueva')).toBeTruthy()
     expect(within(must).getByText('5 Story Points')).toBeTruthy()
@@ -160,7 +160,7 @@ describe('listado del Product Backlog (US1)', () => {
 
     const should = articuloDe(SHOULD.titulo)
     expect(within(should).getByText('Sin estimar')).toBeTruthy()
-    expect(within(should).getByText('Valor de negocio: Sin valor de negocio')).toBeTruthy()
+    expect(within(should).getByText('Sin valor de negocio')).toBeTruthy()
     expect(within(should).getByText('Sin criterios de aceptación')).toBeTruthy()
   })
 
@@ -172,7 +172,7 @@ describe('listado del Product Backlog (US1)', () => {
     const articulo = articuloDe(MARKDOWN.titulo)
 
     expect(articulo.querySelector('strong')?.textContent).toBe('Importante:')
-    expect(articulo.querySelectorAll('li')).toHaveLength(4)
+    expect(articulo.querySelectorAll('.markdown li')).toHaveLength(4)
     expect(within(articulo).getByText('primer paso')).toBeTruthy()
     expect(within(articulo).getByText('caso dos')).toBeTruthy()
   })
@@ -212,7 +212,7 @@ describe('listado del Product Backlog (US1)', () => {
     await screen.findByText('No hay historias en el backlog')
     await userEvent.click(screen.getByRole('link', { name: 'Nueva historia' }))
 
-    expect(await screen.findByText('Nueva historia')).toBeTruthy()
+    expect(await screen.findByRole('dialog', { name: 'Nueva historia' })).toBeTruthy()
     expect(router.state.location.pathname).toBe('/projects/42/backlog/nueva')
   })
 })
@@ -275,7 +275,7 @@ describe('edición de una historia (US2)', () => {
     })
 
     const actualizado = articuloDe(actualizada.titulo)
-    expect(within(actualizado).getByText('Historia #3')).toBeTruthy()
+    expect(within(actualizado).getByText('#3')).toBeTruthy()
     expect(within(actualizado).getByText('Nueva')).toBeTruthy()
     expect(within(actualizado).getByText('8 Story Points')).toBeTruthy()
     expect(screen.queryByLabelText('Título')).toBeNull()
@@ -739,6 +739,205 @@ describe('acceso a la votación de Planning Poker (HU-02, US4.1)', () => {
   })
 })
 
+describe('presentación de la lista según el prototipo (#230)', () => {
+  const WONT: Historia = { ...SHOULD, id: 9, titulo: 'Como usuario quiero algo descartado', prioridad: 'W' }
+  const COULD: Historia = { ...SHOULD, id: 8, titulo: 'Como usuario quiero algo opcional', prioridad: 'C' }
+
+  it('Given el proyecto 42 con 2 historias, When se abre, Then el pretítulo es "Proyecto #42" y la bajada cuenta las historias sin Sprint', async () => {
+    simularApi(conHistorias(MUST, SHOULD))
+    abrir()
+
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    expect(screen.getByText('Proyecto #42')).toBeTruthy()
+    expect(screen.getByText('2 historias sin Sprint')).toBeTruthy()
+    expect(screen.queryByText(/Proyecto actual/)).toBeNull()
+  })
+
+  it('Given una sola historia, When se abre, Then la bajada va en singular', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+
+    expect(await screen.findByText('1 historia sin Sprint')).toBeTruthy()
+  })
+
+  it('Given 2 historias, When asigno una a un Sprint, Then la bajada pasa a "1 historia sin Sprint"', async () => {
+    simularApi(conHistorias(MUST, SHOULD), undefined, conSprints(...SPRINTS), () =>
+      respuesta(200, { ...MUST, sprint_id: 12 }),
+    )
+    abrir()
+    await screen.findByText('2 historias sin Sprint')
+
+    await abrirAsignacion(MUST.titulo)
+    await userEvent.selectOptions(await screen.findByLabelText('Sprint'), '12')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar asignación' }))
+
+    expect(await screen.findByText('1 historia sin Sprint')).toBeTruthy()
+  })
+
+  it('Given el listado, When se muestra, Then "Nueva historia" es un enlace con icono a la pantalla de creación', async () => {
+    simularApi(conHistorias())
+    abrir()
+
+    const enlace = await screen.findByRole('link', { name: 'Nueva historia' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/42/backlog/nueva')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given una historia, When se muestra, Then el número va junto al título y el título es el h2', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(MUST.titulo)
+
+    expect(within(articulo).getByRole('heading', { level: 2 }).textContent).toBe(MUST.titulo)
+    expect(within(articulo).getByText('#3').nextElementSibling?.tagName).toBe('H2')
+  })
+
+  it('Given historias de las cuatro prioridades, When se muestran, Then cada tarjeta lleva el marcador de su prioridad', async () => {
+    simularApi(conHistorias(MUST, SHOULD, COULD, WONT))
+    abrir()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    expect(articuloDe(MUST.titulo).className).toContain('backlog-item--must')
+    expect(articuloDe(SHOULD.titulo).className).toContain('backlog-item--should')
+    expect(articuloDe(COULD.titulo).className).toContain('backlog-item--could')
+    expect(articuloDe(WONT.titulo).className).toContain('backlog-item--wont')
+  })
+
+  it('Given una historia, When se muestra, Then prioridad, estado, puntos y valor son una lista de etiquetas', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const etiquetas = within(articuloDe(MUST.titulo)).getByRole('list')
+
+    expect(within(etiquetas).getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+      'Must have',
+      'Nueva',
+      '5 Story Points',
+      'Valor de negocio: 13',
+    ])
+  })
+
+  it('Given una historia sin estimar y sin valor, When se muestra, Then esas dos etiquetas llevan el estilo de "ninguno"', async () => {
+    simularApi(conHistorias(SHOULD))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(SHOULD.titulo)
+
+    expect(within(articulo).getByText('Sin estimar').className).toContain('backlog-chip--ninguno')
+    expect(within(articulo).getByText('Sin valor de negocio').className).toContain('backlog-chip--ninguno')
+    expect(within(articulo).getByText('Should have').className).not.toContain('backlog-chip--ninguno')
+  })
+
+  it('Given una historia, When se muestra, Then "Editar" lleva un icono y "Votar" es el enlace de contorno', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    const articulo = articuloDe(MUST.titulo)
+
+    expect(within(articulo).getByRole('button', { name: 'Editar' }).querySelector('svg')).toBeTruthy()
+    expect(within(articulo).getByRole('link', { name: 'Votar' }).className).toContain('backlog-votar')
+  })
+})
+
+describe('«Nueva historia» como cajón lateral sobre la lista (#230)', () => {
+  const NUEVA: Historia = {
+    ...SHOULD,
+    id: 20,
+    titulo: 'Como usuario quiero una historia nueva',
+    descripcion: 'Descripción de la nueva',
+  }
+
+  function simularConCreacion() {
+    let creada = false
+    const fetchSimulado = vi.fn((ruta: string, opciones?: RequestInit) => {
+      if (ruta === '/backlog' && opciones?.method === 'POST') {
+        creada = true
+        return Promise.resolve(respuesta(201, NUEVA))
+      }
+      if (RUTA_LISTADO.test(ruta)) return Promise.resolve(respuesta(200, creada ? [MUST, NUEVA] : [MUST]))
+      return Promise.resolve(respuesta(404, { mensaje: 'no encontrado' }))
+    })
+    vi.stubGlobal('fetch', fetchSimulado)
+    return fetchSimulado
+  }
+
+  it('Given la URL /backlog/nueva, When se abre, Then el cajón aparece sobre la lista, que sigue ahí', async () => {
+    simularApi(conHistorias(MUST))
+    abrir('/projects/42/backlog/nueva')
+
+    const cajon = await screen.findByRole('dialog', { name: 'Nueva historia' })
+
+    expect(cajon.className).toContain('ventana--lateral')
+    expect(await screen.findByRole('heading', { name: MUST.titulo })).toBeTruthy()
+    expect(screen.getByRole('heading', { name: 'Product Backlog', level: 1 })).toBeTruthy()
+    expect(within(cajon).getByText('Se agrega al Product Backlog del proyecto #42.')).toBeTruthy()
+  })
+
+  it('Given el cajón abierto con el botón, When presiono Escape, Then vuelve a /backlog y el foco vuelve a «Nueva historia»', async () => {
+    simularApi(conHistorias(MUST))
+    const router = abrir()
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await usuario.click(screen.getByRole('link', { name: 'Nueva historia' }))
+    await screen.findByRole('dialog', { name: 'Nueva historia' })
+    await usuario.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+    expect(document.activeElement).toBe(screen.getByRole('link', { name: 'Nueva historia' }))
+  })
+
+  it.each([['Cancelar'], ['Cerrar']])('Given el cajón abierto, When presiono «%s», Then se cierra y vuelve a /backlog', async (nombre) => {
+    simularApi(conHistorias(MUST))
+    const router = abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+
+    await usuario.click(await screen.findByRole('button', { name: nombre }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+
+  it('Given el cajón abierto, When creo una historia, Then veo «Historia creada» y la lista de atrás ya la incluye', async () => {
+    simularConCreacion()
+    abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+
+    await usuario.type(screen.getByLabelText('Título'), NUEVA.titulo)
+    await usuario.type(screen.getByLabelText('Descripción'), NUEVA.descripcion)
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    const cajon = await screen.findByRole('dialog', { name: 'Historia creada' })
+    expect(within(cajon).getByText(NUEVA.titulo)).toBeTruthy()
+    expect(await screen.findByRole('heading', { name: NUEVA.titulo, level: 2 })).toBeTruthy()
+    expect(screen.getByText('2 historias sin Sprint')).toBeTruthy()
+  })
+
+  it('Given «Historia creada», When presiono «Ver Product Backlog», Then se cierra el cajón', async () => {
+    simularConCreacion()
+    const router = abrir('/projects/42/backlog/nueva')
+    const usuario = userEvent.setup()
+    await screen.findByRole('heading', { name: MUST.titulo })
+    await usuario.type(screen.getByLabelText('Título'), NUEVA.titulo)
+    await usuario.type(screen.getByLabelText('Descripción'), NUEVA.descripcion)
+    await usuario.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await usuario.click(await screen.findByRole('button', { name: 'Ver Product Backlog' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+})
+
 function diferida() {
   let resolver!: (valor: Response) => void
   const promesa = new Promise<Response>((resolve) => {
@@ -798,6 +997,32 @@ describe('respuesta tardía de una carga vieja al cambiar de proyecto', () => {
   })
 })
 
+describe('paneles de Editar y Asignar según el prototipo (#230)', () => {
+  it('Given una historia en edición, When se abre el panel, Then los criterios explican la sintaxis Markdown con la ayuda del editor (#326), y «Cancelar» es el botón discreto', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirEdicion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Editar ${MUST.titulo}` })
+    expect(panel.querySelector('[id$="criterios-ayuda"]')?.textContent).toMatch(/^Admite Markdown: negrita, listas, enlaces/)
+    expect(within(panel).getByLabelText('Story Points').closest('.field')?.className).toContain('backlog-campo--corto')
+    expect(within(panel).getByRole('button', { name: 'Cancelar' }).className).toContain('button--quiet')
+  })
+
+  it('Given una historia por asignar, When se abre el panel, Then «Cancelar» es el botón discreto', async () => {
+    simularApi(conHistorias(MUST), undefined, conSprints(...SPRINTS))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirAsignacion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Asignar ${MUST.titulo} a un Sprint` })
+    expect(within(panel).getByRole('button', { name: 'Cancelar' }).className).toContain('button--quiet')
+  })
+})
+
 describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
   type ProyectoApi = () => Response | Promise<Response>
 
@@ -829,7 +1054,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const metodos = (simulado: ReturnType<typeof vi.fn>) =>
     simulado.mock.calls.map(([, opciones]) => (opciones as RequestInit | undefined)?.method ?? 'GET')
 
-  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», el listado se sigue viendo y «Editar» y «Asignar a Sprint» deshabilitados con «El proyecto está cerrado»; «Votar» sigue siendo un enlace', async () => {
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 10/11/2026», el listado se sigue viendo y «Editar» y «Asignar a Sprint» deshabilitados con «El proyecto está cerrado»; «Votar» sigue siendo un enlace', async () => {
     const pantalla = simularConProyecto(
       proyecto('2026-11-10'),
       conHistorias(MUST, SHOULD),
@@ -838,7 +1063,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     )
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     for (const historia of [MUST, SHOULD]) {
       const { editar, asignar, votar } = acciones(historia.titulo)
       expect(editar.disabled).toBe(true)
@@ -933,7 +1158,7 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
       responderProyecto(respuesta(200, { id: 42, rol: 'scrum_master', fecha_cierre: '2026-11-10' }))
     })
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     const guardar = botonGuardar() as HTMLButtonElement
     expect(guardar.disabled).toBe(true)
     expect(nota(guardar)).toBe('El proyecto está cerrado')
@@ -962,3 +1187,19 @@ describe('Product Backlog - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
 })
+
+describe('editor de Markdown en el panel de Editar según el prototipo', () => {
+  it('Given una historia en edición, When se abre el panel, Then solo «Criterios de aceptación» lleva el marcador «Opcional»', async () => {
+    simularApi(conHistorias(MUST))
+    abrir()
+    await screen.findByRole('heading', { level: 2 })
+
+    await abrirEdicion(MUST.titulo)
+
+    const panel = await screen.findByRole('form', { name: `Editar ${MUST.titulo}` })
+    expect(within(panel).getAllByText('Opcional')).toHaveLength(1)
+    expect(within(panel).getByLabelText('Criterios de aceptación').closest('.campo-markdown')?.textContent).toContain('Opcional')
+    expect(within(panel).getByLabelText('Descripción').closest('.campo-markdown')?.textContent).not.toContain('Opcional')
+  })
+})
+

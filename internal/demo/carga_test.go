@@ -16,7 +16,9 @@ func TestCargar_BaseVaciaDevuelveElResumenCompleto(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cargar: %v", err)
 	}
-	esperado := Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 4, Sprints: 4, Historias: 12, RegistrosHoras: 20, Rondas: 2, Votos: 6, Defectos: 5}
+	esperado := Resumen{ProyectoID: 25, Usuarios: 4, Integrantes: 4, Sprints: 4, Historias: 12, RegistrosHoras: 20, Rondas: 2, Votos: 6, Defectos: 5,
+		ProyectosAdicionales: 7, HistoriasAdicionales: 52, SprintsAdicionales: 13, RegistrosHorasAdicionales: 50,
+		RondasAdicionales: 6, VotosAdicionales: 21, DefectosAdicionales: 10}
 	if resumen != esperado {
 		t.Errorf("resumen %+v, se esperaba %+v", resumen, esperado)
 	}
@@ -118,7 +120,7 @@ func TestCargar_TodasLasFechasSonRelativasAlDiaDeLaCarga(t *testing.T) {
 			t.Errorf("%s: el proyecto empieza %s, se esperaba %s", hoy.Format(time.DateOnly), inicio, dia(-30))
 		}
 		esperados := [][2]string{{dia(-28), dia(-15)}, {dia(-14), dia(-8)}, {dia(-7), dia(6)}}
-		filas, err := db.Query(`SELECT fecha_inicio, fecha_fin FROM sprints WHERE fecha_inicio IS NOT NULL ORDER BY id`)
+		filas, err := db.Query(`SELECT fecha_inicio, fecha_fin FROM sprints WHERE proyecto_id = 25 AND fecha_inicio IS NOT NULL ORDER BY id`)
 		if err != nil {
 			t.Fatal(err)
 		}

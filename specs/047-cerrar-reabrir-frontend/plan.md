@@ -6,7 +6,7 @@
 
 ## Summary
 
-Solo frontend. Se amplían los permisos compartidos de HU-21 (`web/src/compartido/permisos/`) con el estado «cerrado» leído del mismo `GET /projects/{id}` (que ya devuelve `rol` y `fecha_cierre`). Un hook nuevo, `usePermisosProyecto(id)`, hace un solo pedido y entrega `{ rol, fechaCierre, cerrado, puedeGestionar, puedeEscribir }`; `useEsScrumMaster` pasa a ser un envoltorio fino sobre él. Se agregan el aviso «Proyecto cerrado el AAAA-MM-DD», una nota «El proyecto está cerrado» y la zona «Cerrar proyecto» (confirmación en línea) montada desde Editar proyecto. Luego cada pantalla que escribe adopta el hook en tres fases independientes. El contrato de la API es el de la spec 044 y no cambia.
+Solo frontend. Se amplían los permisos compartidos de HU-21 (`web/src/compartido/permisos/`) con el estado «cerrado» leído del mismo `GET /projects/{id}` (que ya devuelve `rol` y `fecha_cierre`). Un hook nuevo, `usePermisosProyecto(id)`, hace un solo pedido y entrega `{ rol, fechaCierre, cerrado, puedeGestionar, puedeEscribir }`; `useEsScrumMaster` pasa a ser un envoltorio fino sobre él. Se agregan el aviso «Proyecto cerrado el dd/mm/aaaa», una nota «El proyecto está cerrado» y la zona «Cerrar proyecto» (confirmación en línea) montada desde Editar proyecto. Luego cada pantalla que escribe adopta el hook en tres fases independientes. El contrato de la API es el de la spec 044 y no cambia.
 
 ## Technical Context
 

@@ -264,10 +264,28 @@ func (p *pasosDatosPrueba) resumenInforma(usuarios, integrantes, sprints, histor
 	if err := json.Unmarshal(p.respuesta.Body.Bytes(), &resumen); err != nil {
 		return err
 	}
+	resumen.ProyectosAdicionales, resumen.HistoriasAdicionales, resumen.SprintsAdicionales = 0, 0, 0
+	resumen.RegistrosHorasAdicionales, resumen.RondasAdicionales, resumen.VotosAdicionales, resumen.DefectosAdicionales = 0, 0, 0, 0
 	esperado := demo.Resumen{ProyectoID: 25, Usuarios: usuarios, Integrantes: integrantes, Sprints: sprints,
 		Historias: historias, RegistrosHoras: horas, Rondas: rondas, Votos: votos, Defectos: defectos}
 	if resumen != esperado {
 		return fmt.Errorf("resumen %+v, se esperaba %+v", resumen, esperado)
+	}
+	return nil
+}
+
+func (p *pasosDatosPrueba) resumenInformaAdicionales(proyectos, sprints, historias, horas, rondas, votos, defectos int) error {
+	var resumen demo.Resumen
+	if err := json.Unmarshal(p.respuesta.Body.Bytes(), &resumen); err != nil {
+		return err
+	}
+	visto := demo.Resumen{ProyectosAdicionales: resumen.ProyectosAdicionales, SprintsAdicionales: resumen.SprintsAdicionales,
+		HistoriasAdicionales: resumen.HistoriasAdicionales, RegistrosHorasAdicionales: resumen.RegistrosHorasAdicionales,
+		RondasAdicionales: resumen.RondasAdicionales, VotosAdicionales: resumen.VotosAdicionales, DefectosAdicionales: resumen.DefectosAdicionales}
+	esperado := demo.Resumen{ProyectosAdicionales: proyectos, SprintsAdicionales: sprints, HistoriasAdicionales: historias,
+		RegistrosHorasAdicionales: horas, RondasAdicionales: rondas, VotosAdicionales: votos, DefectosAdicionales: defectos}
+	if visto != esperado {
+		return fmt.Errorf("adicionales %+v, se esperaba %+v", visto, esperado)
 	}
 	return nil
 }
@@ -352,6 +370,7 @@ func InitializeScenarioDatosPrueba(ctx *godog.ScenarioContext) {
 	ctx.Step(`^ningún usuario de la demo guarda su contraseña en claro$`, p.ningunaContrasenaEnClaro)
 	ctx.Step(`^no existen usuarios «Beta»$`, p.noHayUsuariosBeta)
 	ctx.Step(`^el resumen informa (\d+) usuarios, (\d+) integrantes, (\d+) Sprints, (\d+) historias, (\d+) registros de horas, (\d+) rondas de votación, (\d+) votos y (\d+) defectos$`, p.resumenInforma)
+	ctx.Step(`^el resumen informa (\d+) proyectos adicionales, (\d+) Sprints, (\d+) historias, (\d+) registros de horas, (\d+) rondas de votación, (\d+) votos y (\d+) defectos adicionales$`, p.resumenInformaAdicionales)
 	ctx.Step(`^el proyecto 25 tiene (\d+) defectos, (\d+) Resueltos y (\d+) Pendientes$`, p.proyectoTieneDefectos)
 	ctx.Step(`^"([^"]*)" es el único Scrum Master del proyecto 25$`, p.esElUnicoScrumMaster)
 	ctx.Step(`^el sistema responde 500 sin filtrar el detalle del error$`, p.respondeErrorInterno)

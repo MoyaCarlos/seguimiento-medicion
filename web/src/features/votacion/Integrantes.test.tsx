@@ -56,3 +56,22 @@ describe('Integrantes', () => {
     expect(item.textContent).toContain('Voto: 8')
   })
 })
+
+describe('Integrantes: mi fila', () => {
+  const lista = [voto(1, 'Beta Uno', true, 5), voto(2, 'Beta Dos', true, 8)]
+
+  it('Given el id del usuario actual, When se muestran los integrantes, Then su fila queda resaltada y marcada como actual', () => {
+    render(<Integrantes integrantes={lista} usuarioActualId={2} />)
+
+    expect(fila('Beta Dos').getAttribute('aria-current')).toBe('true')
+    expect(fila('Beta Dos').className).toBe('votacion-integrante votacion-integrante--yo')
+    expect(fila('Beta Uno').hasAttribute('aria-current')).toBe(false)
+    expect(fila('Beta Uno').className).toBe('votacion-integrante')
+  })
+
+  it('Given que no se conoce el usuario actual, When se muestran los integrantes, Then ninguna fila se resalta', () => {
+    render(<Integrantes integrantes={lista} usuarioActualId={null} />)
+
+    expect(document.querySelector('[aria-current]')).toBeNull()
+  })
+})

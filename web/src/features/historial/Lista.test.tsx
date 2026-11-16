@@ -78,14 +78,14 @@ describe('lista del historial de Sprints', () => {
     expect(api).toHaveBeenCalledWith('/projects/7/historial', expect.objectContaining({ method: 'GET' }))
   })
 
-  it('US4.1: Given la lista, When la leo, Then los Sprints aparecen en el orden en que los informa el historial', async () => {
+  it('US4.1: Given la lista, When la leo, Then el Sprint más nuevo aparece primero', async () => {
     simularApi(() => respuesta(200, [sprint(1), sprint(2), sprint(3)]))
 
     abrir()
 
     await tarjeta('Sprint 3')
     const nombres = screen.getAllByRole('article').map((articulo) => articulo.getAttribute('aria-label'))
-    expect(nombres).toEqual(['Sprint 1', 'Sprint 2', 'Sprint 3'])
+    expect(nombres).toEqual(['Sprint 3', 'Sprint 2', 'Sprint 1'])
   })
 
   it('US4.1 y FR-003: Given un Sprint cerrado, When lo veo en la lista, Then muestra sus métricas principales', async () => {
@@ -96,10 +96,10 @@ describe('lista del historial de Sprints', () => {
     const primero = await tarjeta('Sprint 1')
     expect(metrica(primero, 'Story Points planificados')).toBe('8')
     expect(metrica(primero, 'Story Points completados')).toBe('5')
-    expect(metrica(primero, 'Historias completadas')).toBe('50%')
+    expect(metrica(primero, 'Historias completadas')).toBe('50 %')
     expect(metrica(primero, 'Horas estimadas')).toBe('32 h')
     expect(metrica(primero, 'Horas reales')).toBe('30,5 h')
-    expect(metrica(primero, 'Desviación')).toBe('-1,5 h (-4,69%)')
+    expect(metrica(primero, 'Desviación')).toBe('-1,5 h (-4,7 %)')
     expect(metrica(primero, 'Defectos detectados')).toBe('2')
     expect(metrica(primero, 'Defectos resueltos')).toBe('1')
   })
@@ -146,7 +146,7 @@ describe('lista del historial de Sprints', () => {
 
     abrir()
 
-    expect(metrica(await tarjeta('Sprint 1'), 'Desviación')).toBe('3 h (sin datos)')
+    expect(metrica(await tarjeta('Sprint 1'), 'Desviación')).toBe('+3 h (sin datos)')
   })
 
   it('US4.5: Given que la consulta falla, When ingreso al historial, Then veo el mensaje de error y ningún dato parcial', async () => {
@@ -166,5 +166,49 @@ describe('lista del historial de Sprints', () => {
     abrir()
 
     expect((await screen.findByRole('alert')).textContent).toBe('No se pudo conectar con el servidor')
+  })
+
+  it('Given un Sprint, When veo la lista, Then el pretítulo va encima del título y la bajada debajo', async () => {
+    simularApi(() => respuesta(200, [sprint(1)]))
+
+    abrir()
+
+    await tarjeta('Sprint 1')
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Historial de Sprints' })
+    const pretitulo = screen.getByText('Proyecto #7')
+    const bajada = screen.getByText('Compará el desempeño del equipo en cada Sprint cerrado.')
+    expect(pretitulo.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(titulo.compareDocumentPosition(bajada) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(titulo.parentElement).toBe(bajada.parentElement)
+  })
+
+  it('Given un Sprint con 5 de 8 Story Points, When veo la tarjeta, Then dice «5 / 8 SP» junto a la barra', async () => {
+    simularApi(() => respuesta(200, [sprint(1)]))
+
+    abrir()
+
+    const primero = await tarjeta('Sprint 1')
+    expect(within(primero).getByText('5 / 8 SP')).toBeTruthy()
+  })
+
+  it('Given una tarjeta, When la recorro con el teclado, Then tiene un solo enlace con el nombre del Sprint y ningún otro control', async () => {
+    simularApi(() => respuesta(200, [sprint(2)]))
+
+    abrir()
+
+    const segundo = await tarjeta('Sprint 2')
+    expect(within(segundo).getAllByRole('link').map((enlace) => enlace.textContent)).toEqual(['Sprint 2'])
+    expect(within(segundo).queryByRole('button')).toBeNull()
+    expect(segundo.querySelector('a a, a button, button a')).toBeNull()
+  })
+
+  it('Given las fechas de un Sprint, When veo la tarjeta, Then van en una etiqueta con ícono junto al título', async () => {
+    simularApi(() => respuesta(200, [sprint(1)]))
+
+    abrir()
+
+    const fechas = within(await tarjeta('Sprint 1')).getByText('20/10/2026 → 26/10/2026')
+    expect(fechas.querySelector('svg[aria-hidden="true"]')).not.toBeNull()
+    expect(fechas.closest('.historial-sprint__cabecera')).not.toBeNull()
   })
 })

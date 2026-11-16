@@ -234,3 +234,15 @@ describe('sección Dashboard', () => {
     sinContenido()
   })
 })
+
+describe('Dashboard como el prototipo', () => {
+  it('Given un proyecto con Sprints, When ingreso al Dashboard, Then el pretítulo «Proyecto #7» va encima del título y dice «Proyecto actual: 7»', async () => {
+    simularApi(() => respuesta(200, conSprints()))
+
+    abrir()
+
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Dashboard' })
+    expect(screen.getByText('Proyecto #7').compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getByText('Proyecto actual:').textContent).toBe('Proyecto actual: 7')
+  })
+})

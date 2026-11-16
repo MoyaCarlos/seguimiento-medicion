@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   datosDelGrafico,
-  formatoNumero,
+  ejeDelGrafico,
   proporcion,
   textoDesviacion,
   type Metricas,
@@ -57,21 +57,6 @@ describe('datosDelGrafico', () => {
   })
 })
 
-describe('formatoNumero', () => {
-  it.each([
-    [-6.25, '-6,25'],
-    [4, '4'],
-    [0, '0'],
-    [1.5, '1,5'],
-  ])('%d se muestra como %s', (valor, esperado) => {
-    expect(formatoNumero(valor)).toBe(esperado)
-  })
-
-  it('null se muestra como sin datos', () => {
-    expect(formatoNumero(null)).toBe('sin datos')
-  })
-})
-
 describe('textoDesviacion', () => {
   it.each([
     [2, 'Se trabajó más de lo estimado'],
@@ -105,5 +90,17 @@ describe('proporcion', () => {
 
   it('nunca pasa de 100', () => {
     expect(proporcion(15, 10)).toBe(100)
+  })
+})
+
+describe('ejeDelGrafico', () => {
+  it.each([
+    [16, [0, 8, 16]],
+    [3, [0, 2, 4]],
+    [40, [0, 20, 40]],
+    [13, [0, 7, 14]],
+    [0, [0, 1, 2]],
+  ])('con un máximo de %d las marcas son %j', (maximo, esperado) => {
+    expect(ejeDelGrafico(maximo)).toEqual(esperado)
   })
 })

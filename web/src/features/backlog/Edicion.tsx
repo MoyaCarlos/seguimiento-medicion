@@ -131,13 +131,14 @@ export function Edicion({
         id={id('criterios')}
         name="criterios"
         label="Criterios de aceptación"
+        opcional
         value={formulario.criterios}
         onChange={(valor) => actualizar('criterios', valor)}
         disabled={enviando}
         error={errores.criterios}
       />
 
-      <div className="field">
+      <div className="field backlog-campo--corto">
         <label htmlFor={id('estimacion')}>Story Points</label>
         <select
           id={id('estimacion')}
@@ -162,8 +163,8 @@ export function Edicion({
 
       {enviando && <LoadingIndicator />}
 
-      <div className="backlog-acciones">
-        <Button type="button" variant="secondary" onClick={onCancelar} disabled={enviando}>
+      <div className="backlog-panel__acciones">
+        <Button type="button" variant="quiet" onClick={onCancelar} disabled={enviando}>
           Cancelar
         </Button>
         <Button

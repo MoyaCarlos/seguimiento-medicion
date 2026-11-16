@@ -29,6 +29,7 @@ export function PantallaDefectos({ proyectoId }: Props) {
   const [historias, setHistorias] = useState<HistoriaDeProyecto[] | null>(null)
   const [cargandoDatos, setCargandoDatos] = useState(true)
   const [errorDatos, setErrorDatos] = useState('')
+  const [exito, setExito] = useState('')
 
   function recargarDefectos() {
     setCargandoDefectos(true)
@@ -95,6 +96,11 @@ export function PantallaDefectos({ proyectoId }: Props) {
       </div>
 
       <AvisoProyectoCerrado fechaCierre={fechaCierre} />
+      {exito && (
+        <p className="defectos-exito" role="status">
+          {exito}
+        </p>
+      )}
       {cargandoDatos && <LoadingIndicator />}
       {errorDatos && <ErrorMessage message={errorDatos} />}
       {sinSprintActivo && (
@@ -108,30 +114,40 @@ export function PantallaDefectos({ proyectoId }: Props) {
         </p>
       )}
 
-      {sprints && activo && historias && historias.length > 0 && (
-        <section className="defectos-registro" aria-labelledby="registrar-defecto-title">
-          <h2 id="registrar-defecto-title">Registrar defecto</h2>
-          <FormularioDefecto
-            proyectoId={proyectoId}
-            historias={historias}
-            alRegistrar={recargarDefectos}
+      <div className="defectos-columnas">
+        {sprints && activo && historias && historias.length > 0 && (
+          <section className="defectos-registro" aria-labelledby="registrar-defecto-title">
+            <h2 id="registrar-defecto-title">Registrar defecto</h2>
+            <FormularioDefecto
+              proyectoId={proyectoId}
+              historias={historias}
+              alIniciar={() => setExito('')}
+              alRegistrar={() => {
+                recargarDefectos()
+                setExito('Defecto registrado')
+              }}
+              puedeEscribir={puedeEscribir}
+            />
+          </section>
+        )}
+
+        <section className="defectos-listado" aria-labelledby="defectos-listado-title">
+          <h2 id="defectos-listado-title">Defectos registrados</h2>
+          <ListadoDefectos
+            defectos={defectos}
+            cargando={cargandoDefectos}
+            error={errorDefectos}
+            haySprintActivo={Boolean(activo)}
+            sprints={sprints ?? []}
+            alIniciar={() => setExito('')}
+            alResolver={(mensaje) => {
+              recargarDefectos()
+              setExito(mensaje)
+            }}
             puedeEscribir={puedeEscribir}
           />
         </section>
-      )}
-
-      <section className="defectos-listado" aria-labelledby="defectos-listado-title">
-        <h2 id="defectos-listado-title">Defectos registrados</h2>
-        <ListadoDefectos
-          defectos={defectos}
-          cargando={cargandoDefectos}
-          error={errorDefectos}
-          haySprintActivo={Boolean(activo)}
-          sprints={sprints ?? []}
-          alResolver={recargarDefectos}
-          puedeEscribir={puedeEscribir}
-        />
-      </section>
+      </div>
     </section>
   )
 }

@@ -14,6 +14,7 @@ export type Proyecto = {
   fecha_fin: string | null
   creado_en: string
   horas_por_story_point: number | null
+  rol?: Rol
   fecha_cierre: string | null
 }
 

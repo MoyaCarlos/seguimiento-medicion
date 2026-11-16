@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, MemoryRouter, Route, Routes } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -18,11 +18,11 @@ const proyecto = {
 
 const proyectoBeta = { ...proyecto, id: 4, nombre: 'Proyecto Beta' }
 
-function abrir() {
+function abrir(hoy?: () => Date) {
   render(
     <MemoryRouter initialEntries={['/projects/3/proyecto']}>
       <Routes>
-        <Route path="/projects/:id/proyecto" element={<Panel />} />
+        <Route path="/projects/:id/proyecto" element={<Panel hoy={hoy} />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -40,6 +40,7 @@ type EstadoDelNuevo = 'En curso' | 'pendiente' | 'error'
 
 function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -72,6 +73,7 @@ function responderCambio(estadoDelNuevo: EstadoDelNuevo) {
 
 function responderEstado(estado: string | null) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -118,6 +120,7 @@ function simularDescarga() {
 
 function responderPanelYReporte(reporte: Response) {
   const fetchMock = vi.fn((url: string) => {
+    if (url.endsWith('/members')) return Promise.resolve(new Response('[]', { status: 200 }))
     if (url === '/projects/3') {
       return Promise.resolve(new Response(JSON.stringify(proyecto), { status: 200 }))
     }
@@ -147,8 +150,8 @@ describe('panel del proyecto', () => {
       const fetchMock = responderEstado(estado)
       abrir()
 
-      expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
-      expect(await screen.findByText(estado)).toBeTruthy()
+      expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+      expect(await screen.findAllByText(estado)).toHaveLength(2)
       expect(fetchMock.mock.calls.some(([url]) => url === '/projects/3/status')).toBe(true)
     },
   )
@@ -157,7 +160,7 @@ describe('panel del proyecto', () => {
     responderEstado(null)
     abrir()
 
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(await screen.findByText('no se pudo calcular el estado')).toBeTruthy()
     expect(await screen.findByText('Sin datos')).toBeTruthy()
   })
@@ -166,11 +169,11 @@ describe('panel del proyecto', () => {
     const fetchMock = responderCambio('En curso')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
-    expect(await screen.findByText('En curso')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('En curso')).toHaveLength(2))
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/projects/4/status')
   })
 
@@ -178,10 +181,10 @@ describe('panel del proyecto', () => {
     responderCambio('pendiente')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
     expect(screen.getByText('Consultando…')).toBeTruthy()
     expect(screen.queryByText('Planificado')).toBeNull()
   })
@@ -190,10 +193,10 @@ describe('panel del proyecto', () => {
     responderCambio('error')
     const router = abrirNavegable()
 
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     await router.navigate('/projects/4/proyecto')
 
-    expect(await screen.findByText('Proyecto Beta')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Beta/ })).toBeTruthy()
     expect(await screen.findByText('Sin datos')).toBeTruthy()
     expect(screen.getByText('no se pudo calcular el estado')).toBeTruthy()
     expect(screen.queryByText('Planificado')).toBeNull()
@@ -236,8 +239,9 @@ describe('panel del proyecto', () => {
     responderEstado('Suspendido')
     abrir()
 
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
     expect(await screen.findByText('Suspendido')).toBeTruthy()
+    expect(document.querySelector('.badge')).toBeNull()
   })
 
   it('US5.2: Given el resumen de un proyecto, When presiono "Exportar reporte del proyecto", Then se descarga el PDF del proyecto', async () => {
@@ -245,7 +249,7 @@ describe('panel del proyecto', () => {
     const descarga = simularDescarga()
     const api = responderPanelYReporte(respuestaPdf())
     abrir()
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
 
     await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
 
@@ -256,6 +260,17 @@ describe('panel del proyecto', () => {
     expect(await descarga.crear.mock.calls[0][0].text()).toBe('%PDF-1.4 contenido')
   })
 
+  it('Given el resumen de un proyecto, When se muestra, Then "Exportar reporte del proyecto" es el botón compartido de exportar, con su flecha', async () => {
+    responderPanelYReporte(respuestaPdf())
+    abrir()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+
+    const boton = screen.getByRole('button', { name: 'Exportar reporte del proyecto' })
+
+    expect(boton.className).toContain('reporte-exportar__boton')
+    expect(boton.querySelector('svg')).toBeTruthy()
+  })
+
   it('US5.3: Given que el backend informa un error de generación, When presiono "Exportar reporte del proyecto", Then veo el mensaje y no se descarga un archivo', async () => {
     const usuario = userEvent.setup()
     const descarga = simularDescarga()
@@ -263,7 +278,7 @@ describe('panel del proyecto', () => {
       new Response(JSON.stringify({ mensaje: 'no se pudo generar el reporte' }), { status: 500 }),
     )
     abrir()
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
 
     await usuario.click(screen.getByRole('button', { name: 'Exportar reporte del proyecto' }))
 
@@ -279,9 +294,11 @@ describe('panel del proyecto', () => {
       vi.fn((url: string) =>
         Promise.resolve(
           new Response(
-            JSON.stringify(
-              url === '/projects/3' ? { ...proyecto, descripcion } : { estado: 'Planificado' },
-            ),
+            url.endsWith('/members')
+              ? '[]'
+              : JSON.stringify(
+                  url === '/projects/3' ? { ...proyecto, descripcion } : { estado: 'Planificado' },
+                ),
             { status: 200 },
           ),
         ),
@@ -296,6 +313,342 @@ describe('panel del proyecto', () => {
     const parrafo = await screen.findByText(descripcion)
 
     expect(getComputedStyle(parrafo).getPropertyValue('overflow-wrap')).toBe('anywhere')
+  })
+})
+
+describe('pretítulo del panel', () => {
+  function responderTodo() {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado: 'Planificado' } : proyecto,
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+
+  it('Dado el panel principal, cuando se abre, entonces «Panel principal · #3» va encima del título con el nombre del proyecto', async () => {
+    responderTodo()
+    abrirNavegable()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })
+    const pretitulo = screen.getByText('Panel principal · #3')
+
+    expect(pretitulo.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.getAllByText(/Panel principal/)).toHaveLength(1)
+    expect(screen.queryByRole('heading', { name: 'Panel del proyecto' })).toBeNull()
+  })
+
+  it('Dado «Editar proyecto», cuando se abre, entonces no muestra «Panel principal»', async () => {
+    responderTodo()
+    const router = abrirNavegable()
+    await router.navigate('/projects/3/proyecto/edit')
+
+    await screen.findByRole('heading', { name: 'Editar proyecto' })
+
+    expect(screen.queryByText(/Panel principal/)).toBeNull()
+  })
+})
+
+describe('cabecera y botones del panel como el prototipo', () => {
+  function responder(estado: string, rol?: string, extra: object = {}) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado } : { ...proyecto, rol, ...extra },
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+
+  it.each([
+    ['Planificado', 'badge badge--planificado'],
+    ['En curso', 'badge'],
+    ['Finalizado', 'badge badge--finalizado'],
+  ])('Given el estado %s, When abre el panel, Then el título lleva la insignia «%s» con su variante', async (estado, clases) => {
+    responder(estado, 'scrum_master')
+    abrir()
+
+    const titulo = await screen.findByRole('heading', { level: 1, name: new RegExp(`Proyecto Alfa`) })
+    const insignia = titulo.parentElement?.querySelector('.badge')
+
+    expect(insignia?.textContent).toBe(estado)
+    expect(insignia?.className).toBe(clases)
+    expect(titulo.parentElement?.className).toBe('title-row')
+  })
+
+  it('Given que el estado todavía se consulta o falló, When abre el panel, Then el título no muestra insignia', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        url.endsWith('/status')
+          ? Promise.resolve(new Response(JSON.stringify({ mensaje: 'falló' }), { status: 500 }))
+          : url.endsWith('/members')
+            ? Promise.resolve(new Response('[]', { status: 200 }))
+            : Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol: 'scrum_master' }), { status: 200 })),
+      ),
+    )
+    abrir()
+
+    await screen.findByText('Sin datos')
+
+    expect(document.querySelector('.title-row .badge')).toBeNull()
+  })
+
+  it('Given el Scrum Master, When abre el panel, Then los botones van bajo el título en orden Exportar, Configurar equipo (con ícono) y Editar proyecto (principal, con ícono)', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const equipo = await screen.findByRole('link', { name: 'Configurar equipo' })
+    const editar = screen.getByRole('link', { name: 'Editar proyecto' })
+    const exportar = screen.getByRole('button', { name: 'Exportar reporte del proyecto' })
+
+    expect(equipo.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(editar.getAttribute('href')).toBe('/projects/3/proyecto/edit')
+    expect(equipo.className).toBe('button button--secondary')
+    expect(editar.className).toBe('button button--primary')
+    expect(equipo.querySelector('svg')).toBeTruthy()
+    expect(editar.querySelector('svg')).toBeTruthy()
+    expect(exportar.compareDocumentPosition(equipo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(equipo.compareDocumentPosition(editar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/Solo el Scrum Master puede editar/)).toBeNull()
+  })
+
+  it('Given un Product Builder, When abre el panel, Then «Configurar equipo» y «Editar proyecto» están deshabilitados y la nota explica por qué', async () => {
+    responder('En curso', 'product_builder')
+    abrir()
+
+    const equipo = await screen.findByRole('button', { name: 'Configurar equipo' })
+    const editar = screen.getByRole('button', { name: 'Editar proyecto' })
+    const nota = screen.getByText('Solo el Scrum Master puede editar el proyecto y configurar el equipo.')
+
+    expect((equipo as HTMLButtonElement).disabled).toBe(true)
+    expect((editar as HTMLButtonElement).disabled).toBe(true)
+    expect(equipo.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
+    expect(editar.getAttribute('aria-describedby')).toBe(nota.closest('[id]')?.id)
+    expect(screen.queryByRole('link', { name: 'Editar proyecto' })).toBeNull()
+    expect(nota.closest('[id]')?.querySelector('svg[aria-hidden="true"]')).toBeTruthy()
+  })
+
+  it('Given la descripción del proyecto, When abre el panel, Then va en una tarjeta «Descripción» con el enlace «Ver estado del proyecto» y su flecha', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const tarjeta = (await screen.findByRole('heading', { level: 2, name: 'Descripción' })).closest('article')
+    const enlace = within(tarjeta as HTMLElement).getByRole('link', { name: 'Ver estado del proyecto' })
+
+    expect(within(tarjeta as HTMLElement).getByText('Descripción', { selector: 'p' })).toBeTruthy()
+    expect(enlace.getAttribute('href')).toBe('/projects/3/status')
+    expect(enlace.className).toBe('enlace')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un proyecto sin descripción, When abre el panel, Then la tarjeta dice «Sin descripción»', async () => {
+    responder('En curso', 'scrum_master', { descripcion: '' })
+    abrir()
+
+    expect(await screen.findByText('Sin descripción')).toBeTruthy()
+  })
+
+  it('Given las fechas del proyecto, When abre el panel, Then el cronograma las muestra como dd/mm/aaaa junto al estado', async () => {
+    responder('En curso', 'scrum_master')
+    abrir()
+
+    const cronograma = (await screen.findByRole('heading', { level: 2, name: 'Cronograma' })).closest('section') as HTMLElement
+
+    expect(within(cronograma).getByText('01/10/2026')).toBeTruthy()
+    expect(within(cronograma).getByText('01/11/2026')).toBeTruthy()
+    expect(within(cronograma).getByText('En curso')).toBeTruthy()
+  })
+})
+
+describe('tarjeta «Equipo» del panel como el prototipo', () => {
+  const integrantes = [
+    { id: 1, proyecto_id: 3, nombre: 'carlos.moya', rol: 'scrum_master', vinculado_en: '2026-10-01T00:00:00Z' },
+    { id: 2, proyecto_id: 3, nombre: 'ana.iriarte', rol: 'product_builder', vinculado_en: '2026-10-01T00:00:00Z' },
+  ]
+
+  function responder(rol: string, respuestaEquipo: () => Promise<Response>) {
+    const fetchMock = vi.fn((url: string) => {
+      if (url === '/projects/3/members') return respuestaEquipo()
+      if (url === '/projects/3/status') {
+        return Promise.resolve(new Response(JSON.stringify({ estado: 'En curso' }), { status: 200 }))
+      }
+      return Promise.resolve(new Response(JSON.stringify({ ...proyecto, rol }), { status: 200 }))
+    })
+    vi.stubGlobal('fetch', fetchMock)
+    return fetchMock
+  }
+  const conEquipo = () => Promise.resolve(new Response(JSON.stringify(integrantes), { status: 200 }))
+
+  async function tarjetaEquipo() {
+    return (await screen.findByRole('heading', { level: 2, name: 'Equipo' })).closest('aside') as HTMLElement
+  }
+
+  it('Given un proyecto con integrantes, When abre el panel, Then la tarjeta «Equipo» lista nombre y rol de cada uno', async () => {
+    const api = responder('scrum_master', conEquipo)
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+    const filas = await within(tarjeta).findAllByRole('listitem')
+
+    expect(filas).toHaveLength(2)
+    expect(within(filas[0]).getByText('carlos.moya')).toBeTruthy()
+    expect(within(filas[0]).getByText('Scrum Master')).toBeTruthy()
+    expect(within(filas[1]).getByText('ana.iriarte')).toBeTruthy()
+    expect(within(filas[1]).getByText('Product Builder')).toBeTruthy()
+    expect(api.mock.calls.filter(([url]) => url === '/projects/3/members')).toHaveLength(1)
+  })
+
+  it('Given los integrantes, When se listan, Then cada uno lleva un avatar con su inicial y colores que rotan desde el segundo', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const filas = await within(await tarjetaEquipo()).findAllByRole('listitem')
+    const avatares = filas.map((fila) => fila.querySelector('.avatar-proyecto'))
+
+    expect(avatares.map((a) => a?.getAttribute('data-inicial'))).toEqual(['C', 'A'])
+    expect(avatares.map((a) => a?.className)).toEqual([
+      'avatar-proyecto avatar-proyecto--1',
+      'avatar-proyecto avatar-proyecto--2',
+    ])
+  })
+
+  it('Given el Scrum Master, When mira la tarjeta, Then el pie dice «Configurar equipo» y lleva a la configuración', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const enlace = within(await tarjetaEquipo()).getByRole('link', { name: 'Configurar equipo' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(enlace.className).toBe('enlace')
+    expect(enlace.querySelector('svg')).toBeTruthy()
+  })
+
+  it('Given un Product Builder, When mira la tarjeta, Then el pie dice «Ver equipo» y sigue llevando a la configuración', async () => {
+    responder('product_builder', conEquipo)
+    abrir()
+
+    const enlace = within(await tarjetaEquipo()).getByRole('link', { name: 'Ver equipo' })
+
+    expect(enlace.getAttribute('href')).toBe('/projects/3/proyecto/settings')
+    expect(within(await tarjetaEquipo()).queryByRole('link', { name: 'Configurar equipo' })).toBeNull()
+  })
+
+  it('Given un proyecto sin integrantes, When abre el panel, Then la tarjeta lo dice', async () => {
+    responder('scrum_master', () => Promise.resolve(new Response('[]', { status: 200 })))
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(await within(tarjeta).findByText('Todavía no hay integrantes asignados.')).toBeTruthy()
+    expect(within(tarjeta).queryByRole('list')).toBeNull()
+  })
+
+  it('Given que el equipo falla, When abre el panel, Then la tarjeta muestra el error y el resto del panel sigue', async () => {
+    responder('scrum_master', () =>
+      Promise.resolve(new Response(JSON.stringify({ mensaje: 'no se pudo leer el equipo' }), { status: 500 })),
+    )
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect((await within(tarjeta).findByRole('alert')).textContent).toBe('no se pudo leer el equipo')
+    expect(within(tarjeta).queryByText('Todavía no hay integrantes asignados.')).toBeNull()
+    expect(screen.getByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+  })
+
+  it('Given que el equipo está cargando, When abre el panel, Then la tarjeta muestra el indicador de carga y no «Todavía no hay integrantes»', async () => {
+    responder('scrum_master', () => new Promise<Response>(() => {}))
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(within(tarjeta).getByRole('status')).toBeTruthy()
+    expect(within(tarjeta).queryByText('Todavía no hay integrantes asignados.')).toBeNull()
+  })
+
+  it('Given las dos tarjetas, When abre el panel, Then comparten la rejilla con la descripción', async () => {
+    responder('scrum_master', conEquipo)
+    abrir()
+
+    const tarjeta = await tarjetaEquipo()
+
+    expect(tarjeta.parentElement?.className).toBe('panel-rejilla')
+    expect(tarjeta.className).toBe('panel-tarjeta')
+    expect(tarjeta.previousElementSibling?.tagName).toBe('ARTICLE')
+  })
+})
+
+describe('barra de avance del cronograma', () => {
+  function responder(extra: object = {}) {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              url.endsWith('/members') ? [] : url.endsWith('/status') ? { estado: 'En curso' } : { ...proyecto, rol: 'scrum_master', ...extra },
+            ),
+            { status: 200 },
+          ),
+        ),
+      ),
+    )
+  }
+  const pista = () => screen.findByRole('img', { name: /^Avance / })
+
+  it('Given que hoy es anterior al inicio, When abre el panel, Then la barra marca 0%', async () => {
+    responder()
+    abrir(() => new Date(2026, 8, 15))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 0%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('0%')
+    expect((barra.querySelector('b') as HTMLElement).style.left).toBe('0%')
+  })
+
+  it('Given que hoy está a mitad del período, When abre el panel, Then la barra marca el porcentaje transcurrido', async () => {
+    responder({ fecha_inicio: '2026-10-01', fecha_fin: '2026-10-31' })
+    abrir(() => new Date(2026, 9, 16))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 50%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('50%')
+    expect((barra.querySelector('b') as HTMLElement).style.left).toBe('50%')
+  })
+
+  it('Given que hoy es posterior al fin, When abre el panel, Then la barra marca 100%', async () => {
+    responder()
+    abrir(() => new Date(2026, 11, 1))
+
+    const barra = await pista()
+
+    expect(barra.getAttribute('aria-label')).toBe('Avance 100%')
+    expect((barra.querySelector('i') as HTMLElement).style.width).toBe('100%')
+  })
+
+  it('Given un proyecto sin fechas, When abre el panel, Then no se dibuja la barra', async () => {
+    responder({ fecha_inicio: null, fecha_fin: null })
+    abrir(() => new Date(2026, 9, 16))
+
+    await screen.findByRole('heading', { level: 2, name: 'Cronograma' })
+
+    expect(screen.queryByRole('img', { name: /^Avance / })).toBeNull()
   })
 })
 
@@ -327,18 +680,18 @@ describe('aviso de proyecto cerrado en el panel', () => {
     responderProyecto(conCierre('2026-10-20'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
-    expect(screen.getByText('Proyecto Alfa')).toBeTruthy()
-    expect(screen.getByText('Descripción')).toBeTruthy()
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 2, name: 'Descripción' })).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
   })
 
   it('un proyecto abierto no muestra el aviso', async () => {
     responderProyecto(conCierre(null))
     abrir()
 
-    expect(await screen.findByText('Proyecto Alfa')).toBeTruthy()
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect(await screen.findByRole('heading', { level: 1, name: /Proyecto Alfa/ })).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     expect(screen.queryByText(/Proyecto cerrado el/)).toBeNull()
   })
 
@@ -366,17 +719,19 @@ describe('aviso de proyecto cerrado en el panel', () => {
     responderProyecto(conCierre('2026-10-20'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
     for (const nombre of ['Configurar equipo', 'Editar proyecto']) {
-      const enlace = screen.getByRole('link', { name: nombre })
-      expect(enlace.getAttribute('href')).toBeTruthy()
-      expect(enlace.getAttribute('aria-disabled')).toBeNull()
+      for (const enlace of screen.getAllByRole('link', { name: nombre })) {
+        expect(enlace.getAttribute('href')).toBeTruthy()
+        expect(enlace.getAttribute('aria-disabled')).toBeNull()
+      }
     }
   })
 
   it('FR-007a: el panel pide el proyecto una sola vez', async () => {
     const fetchMock = vi.fn((url: string, _init?: RequestInit) => {
       if (url === '/projects/3') return conCierre('2026-10-20')()
+      if (url === '/projects/3/members') return Promise.resolve(new Response('[]', { status: 200 }))
       if (url === '/projects/3/status') {
         return Promise.resolve(
           new Response(JSON.stringify({ estado: 'Planificado' }), { status: 200 }),
@@ -387,8 +742,8 @@ describe('aviso de proyecto cerrado en el panel', () => {
     vi.stubGlobal('fetch', fetchMock)
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-10-20')).toBeTruthy()
-    expect(await screen.findByText('Planificado')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 20/10/2026')).toBeTruthy()
+    await waitFor(() => expect(screen.getAllByText('Planificado')).toHaveLength(2))
     const pedidosDelProyecto = fetchMock.mock.calls.filter(
       ([url, init]) => url === '/projects/3' && (init?.method ?? 'GET') === 'GET',
     )

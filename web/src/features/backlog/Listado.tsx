@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, Outlet, useMatch, useNavigate, useParams } from 'react-router'
 import { Button } from '../../compartido/componentes/Button'
+import { Icono } from '../../compartido/componentes/Icono'
+import { VentanaModal } from '../../compartido/componentes/VentanaModal'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { LoadingIndicator } from '../../compartido/componentes/LoadingIndicator'
 import { AvisoProyectoCerrado } from '../../compartido/permisos/AvisoProyectoCerrado'
@@ -14,9 +16,12 @@ import { mensajeDeError } from './edicionHistoria'
 import type { Historia } from './historia'
 import { Markdown } from './Markdown'
 import { etiquetaPrioridad } from './opciones'
+import type { Prioridad } from './opciones'
 import './backlog.css'
 
 const notaCerradoDe = (historiaId: number) => `backlog-${historiaId}-nota-cerrado`
+
+const MARCADOR: Record<Prioridad, string> = { M: 'must', S: 'should', C: 'could', W: 'wont' }
 
 export function Listado() {
   const { id = '' } = useParams()
@@ -33,6 +38,9 @@ function PantallaBacklog({ id }: { id: string }) {
   const [sprints, setSprints] = useState<SprintParaAsignar[] | null>(null)
   const [errorSprints, setErrorSprints] = useState('')
   const [aviso, setAviso] = useState('')
+  const [recarga, setRecarga] = useState(0)
+  const navegar = useNavigate()
+  const cajonAbierto = useMatch('/projects/:id/backlog/nueva') !== null
 
   useEffect(() => {
     let vigente = true
@@ -51,7 +59,7 @@ function PantallaBacklog({ id }: { id: string }) {
     return () => {
       vigente = false
     }
-  }, [id])
+  }, [id, recarga])
 
   useEffect(() => {
     let vigente = true
@@ -96,131 +104,147 @@ function PantallaBacklog({ id }: { id: string }) {
   }
 
   return (
-    <section className="backlog" aria-labelledby="backlog-title">
-      <div className="page-header backlog-encabezado">
-        <div>
-          <p className="eyebrow">Product Backlog</p>
-          <h1 id="backlog-title">Product Backlog</h1>
-          <p className="project-context">
-            Proyecto actual: <strong>{id}</strong>
-          </p>
-        </div>
-        <Link className="button button--secondary" to={`/projects/${id}/backlog/nueva`}>
-          Nueva historia
-        </Link>
-      </div>
-
-      <AvisoProyectoCerrado fechaCierre={fechaCierre} />
-      {aviso && (
-        <p className="message backlog-aviso" role="status">
-          {aviso}
-        </p>
-      )}
-      {cargando && <LoadingIndicator />}
-      {error && <ErrorMessage message={error} />}
-
-      {!cargando && !error && historias.length === 0 && (
-        <p className="backlog-vacio">No hay historias en el backlog</p>
-      )}
-
-      <ul className="backlog-lista">
-        {historias.map((historia) => (
-          <li key={historia.id}>
-            <article className="backlog-item" aria-labelledby={`historia-${historia.id}`}>
-              <div className="backlog-item__cabecera">
-                <div>
-                  <p className="backlog-item__meta">Historia #{historia.id}</p>
-                  <h2 id={`historia-${historia.id}`}>{historia.titulo}</h2>
-                </div>
-                <div className="backlog-acciones">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={!puedeEscribir}
-                    aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
-                    onClick={() => {
-                      setAviso('')
-                      setAsignandoId(null)
-                      setEditandoId(historia.id)
-                    }}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={!puedeEscribir}
-                    aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
-                    onClick={() => {
-                      setAviso('')
-                      setEditandoId(null)
-                      setAsignandoId(historia.id)
-                    }}
-                  >
-                    Asignar a Sprint
-                  </Button>
-                  <Link className="button button--secondary" to={`/projects/${id}/votacion/${historia.id}`}>
-                    Votar
-                  </Link>
-                </div>
-              </div>
-              {!puedeEscribir && <NotaCerrado id={notaCerradoDe(historia.id)} />}
-
-              <p className="backlog-item__datos">
-                <span>{etiquetaPrioridad(historia.prioridad)}</span>
-                <span>{historia.estado}</span>
-                <span>
-                  {historia.estimacion_sp === null
-                    ? 'Sin estimar'
-                    : `${historia.estimacion_sp} Story Points`}
-                </span>
-                <span>
-                  Valor de negocio:{' '}
-                  {historia.valor_negocio === null ? 'Sin valor de negocio' : historia.valor_negocio}
-                </span>
+    <>
+      <section className="backlog" aria-labelledby="backlog-title">
+        <div className="page-header backlog-encabezado">
+          <div>
+            <p className="eyebrow">Proyecto #{id}</p>
+            <h1 id="backlog-title">Product Backlog</h1>
+            {!cargando && !error && (
+              <p className="project-context">
+                {historias.length} {historias.length === 1 ? 'historia' : 'historias'} sin Sprint
               </p>
+            )}
+          </div>
+          <Link className="button button--primary" to={`/projects/${id}/backlog/nueva`}>
+            <Icono nombre="mas" />
+            Nueva historia
+          </Link>
+        </div>
 
-              <div className="backlog-item__descripcion">
-                <Markdown texto={historia.descripcion} />
-              </div>
+        <AvisoProyectoCerrado fechaCierre={fechaCierre} />
+        {aviso && (
+          <p className="message backlog-aviso" role="status">
+            {aviso}
+          </p>
+        )}
+        {cargando && <LoadingIndicator />}
+        {error && <ErrorMessage message={error} />}
 
-              <div className="backlog-item__criterios">
-                <h3>Criterios de aceptación</h3>
-                {historia.criterios_aceptacion === null ? (
-                  <p>Sin criterios de aceptación</p>
-                ) : (
-                  <Markdown texto={historia.criterios_aceptacion} />
+        {!cargando && !error && historias.length === 0 && (
+          <p className="backlog-vacio">No hay historias en el backlog</p>
+        )}
+
+        <ul className="backlog-lista">
+          {historias.map((historia) => (
+            <li key={historia.id}>
+              <article
+                className={`backlog-item backlog-item--${MARCADOR[historia.prioridad]}`}
+                aria-labelledby={`historia-${historia.id}`}>
+                <div className="backlog-item__cabecera">
+                  <div className="backlog-item__titulo">
+                    <span className="backlog-item__id">#{historia.id}</span>
+                    <h2 id={`historia-${historia.id}`}>{historia.titulo}</h2>
+                  </div>
+                  <div className="backlog-acciones">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={!puedeEscribir}
+                      aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
+                      onClick={() => {
+                        setAviso('')
+                        setAsignandoId(null)
+                        setEditandoId(historia.id)
+                      }}
+                    >
+                      <Icono nombre="editar" />
+                      Editar
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled={!puedeEscribir}
+                      aria-describedby={puedeEscribir ? undefined : notaCerradoDe(historia.id)}
+                      onClick={() => {
+                        setAviso('')
+                        setEditandoId(null)
+                        setAsignandoId(historia.id)
+                      }}
+                    >
+                      Asignar a Sprint
+                    </Button>
+                    <Link className="button button--secondary backlog-votar" to={`/projects/${id}/votacion/${historia.id}`}>
+                      Votar
+                    </Link>
+                  </div>
+                </div>
+                {!puedeEscribir && <NotaCerrado id={notaCerradoDe(historia.id)} />}
+
+                <ul className="backlog-chips">
+                  <li className={`backlog-chip backlog-chip--${MARCADOR[historia.prioridad]}`}>
+                    {etiquetaPrioridad(historia.prioridad)}
+                  </li>
+                  <li className="backlog-chip backlog-chip--nueva">{historia.estado}</li>
+                  {historia.estimacion_sp === null ? (
+                    <li className="backlog-chip backlog-chip--ninguno">Sin estimar</li>
+                  ) : (
+                    <li className="backlog-chip backlog-chip--sp">{historia.estimacion_sp} Story Points</li>
+                  )}
+                  {historia.valor_negocio === null ? (
+                    <li className="backlog-chip backlog-chip--ninguno">Sin valor de negocio</li>
+                  ) : (
+                    <li className="backlog-chip backlog-chip--sp">Valor de negocio: {historia.valor_negocio}</li>
+                  )}
+                </ul>
+
+                <div className="backlog-item__descripcion">
+                  <Markdown texto={historia.descripcion} />
+                </div>
+
+                <div className="backlog-item__criterios">
+                  <h3>Criterios de aceptación</h3>
+                  {historia.criterios_aceptacion === null ? (
+                    <p className="backlog-item__vacio">Sin criterios de aceptación</p>
+                  ) : (
+                    <Markdown texto={historia.criterios_aceptacion} />
+                  )}
+                </div>
+
+                {editandoId === historia.id && (
+                  <Edicion
+                    key={historia.id}
+                    historia={historia}
+                    onGuardada={guardar}
+                    onEstimacionActualizada={(estimacion) =>
+                      actualizarEstimacion(historia.id, estimacion)
+                    }
+                    onCancelar={() => setEditandoId(null)}
+                    puedeEscribir={puedeEscribir}
+                  />
                 )}
-              </div>
 
-              {editandoId === historia.id && (
-                <Edicion
-                  key={historia.id}
-                  historia={historia}
-                  onGuardada={guardar}
-                  onEstimacionActualizada={(estimacion) =>
-                    actualizarEstimacion(historia.id, estimacion)
-                  }
-                  onCancelar={() => setEditandoId(null)}
-                  puedeEscribir={puedeEscribir}
-                />
-              )}
-
-              {asignandoId === historia.id && (
-                <AsignarASprint
-                  key={historia.id}
-                  historia={historia}
-                  sprints={sprints}
-                  errorSprints={errorSprints}
-                  onAsignada={asignada}
-                  onCancelar={() => setAsignandoId(null)}
-                  puedeEscribir={puedeEscribir}
-                />
-              )}
-            </article>
-          </li>
-        ))}
-      </ul>
-    </section>
+                {asignandoId === historia.id && (
+                  <AsignarASprint
+                    key={historia.id}
+                    historia={historia}
+                    sprints={sprints}
+                    errorSprints={errorSprints}
+                    onAsignada={asignada}
+                    onCancelar={() => setAsignandoId(null)}
+                    puedeEscribir={puedeEscribir}
+                  />
+                )}
+              </article>
+            </li>
+          ))}
+        </ul>
+      </section>
+      {cajonAbierto && (
+        <VentanaModal lado="derecha" alCerrar={() => navegar(`/projects/${id}/backlog`)}>
+          <Outlet context={{ alCrear: () => setRecarga((actual) => actual + 1) }} />
+        </VentanaModal>
+      )}
+    </>
   )
 }

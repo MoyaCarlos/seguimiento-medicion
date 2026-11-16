@@ -105,7 +105,8 @@ function botonGuardar() {
 }
 
 function mensajeDe(campo: HTMLElement) {
-  const id = campo.getAttribute('aria-describedby')
+  // Con el marcador «Opcional» (criterios) aria-describedby lleva dos ids: el marcador y luego el error o la ayuda.
+  const id = campo.getAttribute('aria-describedby')?.split(' ').at(-1)
   return id ? document.getElementById(id)?.textContent ?? null : null
 }
 
@@ -140,19 +141,22 @@ describe('creación de historias de US1', () => {
     expect(within(confirmacion).getByText(/sin estimación/i)).toBeTruthy()
   })
 
-  it('US1.2: restablece el formulario y conserva el proyecto para otra historia', async () => {
+  it('US1.2: tras crear, «Crear otra historia» vuelve al formulario en blanco y conserva el proyecto', async () => {
     const fetchMock = responderCreada()
     abrir()
     const user = await completarFormulario({ prioridad: 'S' })
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
+    expect(screen.queryByLabelText('Título')).toBeNull()
 
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
+
+    expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
     expect((screen.getByLabelText('Título') as HTMLInputElement).value).toBe('')
     expect((screen.getByLabelText('Descripción') as HTMLTextAreaElement).value).toBe('')
     expect((screen.getByLabelText('Prioridad') as HTMLSelectElement).value).toBe('M')
     expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
-    expect(screen.getByRole('region', { name: 'Historia creada' })).toBeTruthy()
 
     await user.type(screen.getByLabelText('Título'), 'Otra historia')
     await user.type(screen.getByLabelText('Descripción'), 'Otra descripción')
@@ -228,6 +232,7 @@ describe('casos límite de creación', () => {
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
 
     await user.type(screen.getByLabelText('Título'), 'Historia repetida')
     await user.type(screen.getByLabelText('Descripción'), 'Otra descripción')
@@ -344,14 +349,14 @@ describe('validación de US2', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('US2.6: un intento inválido reemplaza la confirmación anterior', async () => {
+  it('US2.6: al volver con «Crear otra historia» la confirmación anterior desaparece y un intento inválido no llama a la API', async () => {
     const fetchMock = responderCreada()
     abrir()
     const user = await completarFormulario()
 
     await user.click(botonGuardar())
     await screen.findByRole('region', { name: 'Historia creada' })
-
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     await user.click(botonGuardar())
 
     expect(screen.queryByRole('region', { name: 'Historia creada' })).toBeNull()
@@ -449,6 +454,8 @@ describe('errores del servidor de US3', () => {
     await user.click(botonGuardar())
 
     expect(await screen.findByRole('region', { name: 'Historia creada' })).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     expect(mensajeDe(screen.getByLabelText('Título'))).toBeNull()
     expect(screen.getByLabelText('Título').getAttribute('aria-invalid')).toBe('false')
   })
@@ -510,6 +517,7 @@ describe('valor de negocio de US4', () => {
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).valor_negocio).toBe(13)
     expect(within(confirmacion).getByText('13')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Crear otra historia' }))
     expect((screen.getByLabelText('Valor de negocio') as HTMLSelectElement).value).toBe('')
   })
 })
@@ -539,7 +547,7 @@ describe('criterios de aceptación de #174', () => {
 
     const confirmacion = await screen.findByRole('region', { name: 'Historia creada' })
     expect(cuerpoEnviado(fetchMock).criterios_aceptacion).toBe(criterios)
-    expect(within(confirmacion).getByRole('heading', { name: 'Criterios de aceptación' })).toBeTruthy()
+    expect(within(confirmacion).getByText('Criterios de aceptación')).toBeTruthy()
     expect(within(confirmacion).getByText('Dado')).toBeTruthy()
   })
 
@@ -620,6 +628,57 @@ describe('prioridad MoSCoW', () => {
   })
 })
 
+describe('presentación del cajón según el prototipo (#230)', () => {
+  it('Given el cajón, When se abre, Then dice «Nueva historia» y a qué proyecto se agrega', () => {
+    abrir()
+
+    expect(screen.getByRole('heading', { name: 'Nueva historia', level: 2 })).toBeTruthy()
+    expect(screen.getByText('Se agrega al Product Backlog del proyecto #42.')).toBeTruthy()
+  })
+
+  it('Given el campo de criterios, When se muestra, Then explica con la ayuda del editor de Markdown (#326) qué sintaxis admite', () => {
+    abrir()
+
+    expect(document.getElementById('criterios-ayuda')?.textContent).toMatch(/^Admite Markdown: negrita, listas, enlaces/)
+  })
+
+  it('Given el formulario, When se muestra, Then «Cancelar» lo cierra volviendo a /backlog', async () => {
+    const router = abrir()
+    const user = userEvent.setup()
+
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+
+  it('Given una historia creada, When se muestra el resumen, Then el título del cajón pasa a «Historia creada» con su bajada y el formulario ya no está', async () => {
+    responderCreada({ valor_negocio: 5, estimacion_sp: 3 })
+    abrir()
+    const user = await completarFormulario()
+
+    await user.click(botonGuardar())
+
+    const resumen = await screen.findByRole('region', { name: 'Historia creada' })
+    expect(within(resumen).getByRole('heading', { name: 'Historia creada', level: 2 })).toBeTruthy()
+    expect(within(resumen).getByText('Se agregó al Product Backlog del proyecto #42.')).toBeTruthy()
+    expect(within(resumen).getByText('3 Story Points')).toBeTruthy()
+    expect(within(resumen).getByText('Valor de negocio')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Nueva historia' })).toBeNull()
+    expect(screen.queryByLabelText('Título')).toBeNull()
+  })
+
+  it('Given el resumen, When presiono «Ver Product Backlog», Then vuelve a /backlog', async () => {
+    responderCreada()
+    const router = abrir()
+    const user = await completarFormulario()
+    await user.click(botonGuardar())
+
+    await user.click(await screen.findByRole('button', { name: 'Ver Product Backlog' }))
+
+    expect(router.state.location.pathname).toBe('/projects/42/backlog')
+  })
+})
+
 describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
   const proyecto = (fecha_cierre: string | null) => () =>
     new Response(JSON.stringify({ id: 42, rol: 'scrum_master', fecha_cierre }), { status: 200 })
@@ -635,12 +694,12 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     screen.getByLabelText('Valor de negocio') as HTMLSelectElement,
   ]
 
-  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 2026-11-10», formulario y «Guardar» deshabilitados con «El proyecto está cerrado» y sin enviar', async () => {
+  it('Escenario: proyecto cerrado: aviso «Proyecto cerrado el 10/11/2026», formulario y «Guardar» deshabilitados con «El proyecto está cerrado» y sin enviar', async () => {
     const backlog = vi.fn()
     simularFetch(backlog, proyecto('2026-11-10'))
     abrir()
 
-    expect(await screen.findByText('Proyecto cerrado el 2026-11-10')).toBeTruthy()
+    expect(await screen.findByText('Proyecto cerrado el 10/11/2026')).toBeTruthy()
     for (const campo of campos()) expect(campo.disabled).toBe(true)
     const guardar = botonGuardar() as HTMLButtonElement
     expect(guardar.disabled).toBe(true)
@@ -667,7 +726,7 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     const pantalla = simularFetch(vi.fn(), proyecto('2026-11-10'))
     abrir()
 
-    await screen.findByText('Proyecto cerrado el 2026-11-10')
+    await screen.findByText('Proyecto cerrado el 10/11/2026')
     await userEvent.type(screen.getByLabelText('Título'), 'x')
 
     expect(pantalla.mock.calls.filter(([ruta]) => ruta === '/projects/42')).toHaveLength(1)
@@ -702,3 +761,26 @@ describe('nueva historia - proyecto cerrado (cerrar y reabrir, US2)', () => {
     expect(screen.queryByText('El proyecto está cerrado')).toBeNull()
   })
 })
+
+describe('editor de Markdown en «Nueva historia» según el prototipo', () => {
+  it('Given el cajón, When se muestra, Then solo «Criterios de aceptación» lleva el marcador «Opcional» y su nombre accesible no cambia', () => {
+    abrir()
+
+    const criterios = screen.getByLabelText('Criterios de aceptación')
+    const marcador = screen.getByText('Opcional')
+
+    expect(screen.getAllByText('Opcional')).toHaveLength(1)
+    expect(criterios.closest('.campo-markdown')?.contains(marcador)).toBe(true)
+    expect(screen.getByLabelText('Descripción').closest('.campo-markdown')?.contains(marcador)).toBe(false)
+  })
+
+  it('Given el cajón, When se muestra, Then Descripción y Criterios tienen sus propias pestañas Escribir y Vista previa enlazadas a su panel', () => {
+    abrir()
+
+    const pestanas = screen.getAllByRole('tab', { name: 'Vista previa' })
+
+    expect(pestanas).toHaveLength(2)
+    expect(new Set(pestanas.map((p) => p.getAttribute('aria-controls'))).size).toBe(2)
+  })
+})
+

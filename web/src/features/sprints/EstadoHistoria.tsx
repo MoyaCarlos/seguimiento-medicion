@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../../compartido/componentes/Button'
+import { Icono } from '../../compartido/componentes/Icono'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
 import { NotaCerrado } from '../../compartido/permisos/NotaCerrado'
 import { cambiarEstadoHistoria } from './api'
@@ -12,8 +13,8 @@ type Props = {
 }
 
 const ACCIONES = {
-  Nueva: { etiqueta: 'Iniciar', destino: 'En progreso' },
-  'En progreso': { etiqueta: 'Completar', destino: 'Completada' },
+  Nueva: { etiqueta: 'Iniciar', destino: 'En progreso', icono: 'play' },
+  'En progreso': { etiqueta: 'Completar', destino: 'Completada', icono: 'check' },
 } as const
 
 export function EstadoHistoria({ historia, alCambiar, puedeEscribir = true }: Props) {
@@ -21,7 +22,7 @@ export function EstadoHistoria({ historia, alCambiar, puedeEscribir = true }: Pr
   const [error, setError] = useState('')
 
   if (historia.estado === 'Completada') return null
-  const { etiqueta, destino } = ACCIONES[historia.estado]
+  const { etiqueta, destino, icono } = ACCIONES[historia.estado]
   const idNota = `historia-${historia.id}-nota-estado`
 
   async function cambiar() {
@@ -43,10 +44,12 @@ export function EstadoHistoria({ historia, alCambiar, puedeEscribir = true }: Pr
       <Button
         type="button"
         variant="secondary"
+        className="sprint-boton sprint-boton--contorno"
         onClick={cambiar}
         disabled={enviando || !puedeEscribir}
         aria-describedby={puedeEscribir ? undefined : idNota}
       >
+        <Icono nombre={icono} />
         {etiqueta}
       </Button>
       {!puedeEscribir && <NotaCerrado id={idNota} />}

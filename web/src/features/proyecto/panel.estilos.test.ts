@@ -1,0 +1,209 @@
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
+import { expect, it } from 'vitest'
+
+const css = readFileSync('src/features/proyecto/estilos.css', 'utf8')
+const token = (nombre: string) =>
+  readFileSync('src/App.css', 'utf8').match(new RegExp(`${nombre}:\\s*(#[0-9a-f]{6})`))?.[1] ?? ''
+const regla = (selector: string) =>
+  [...css.matchAll(/([^{}]+)\{([^}]*)\}/g)]
+    .filter(([, lista]) => lista.split(',').some((parte) => parte.trim() === selector))
+    .map(([, , cuerpo]) => cuerpo)
+    .join('\n')
+
+function luminancia(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+  const lineal = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  return 0.2126 * lineal(r) + 0.7152 * lineal(g) + 0.0722 * lineal(b)
+}
+const contraste = (a: string, b: string) => {
+  const [claro, oscuro] = [luminancia(a), luminancia(b)].sort((x, y) => y - x)
+  return (claro + 0.05) / (oscuro + 0.05)
+}
+const color = (bloque: string, propiedad: string) =>
+  [...bloque.matchAll(new RegExp(`(?:^|[\\s;])${propiedad}:\\s*(#[0-9a-f]{6})`, 'g'))].at(-1)?.[1] ?? ''
+
+it('Given el título del panel, When se estiliza, Then el nombre y la insignia van en fila con 12px de separación', () => {
+  const bloque = regla('.title-row')
+
+  expect(bloque).toMatch(/display:\s*flex/)
+  expect(bloque).toMatch(/flex-wrap:\s*wrap/)
+  expect(bloque).toMatch(/gap:\s*12px/)
+})
+
+it('Given la insignia de estado, When se estiliza, Then es una píldora de 12,5px en negrita con un punto delante', () => {
+  const bloque = regla('.badge')
+
+  expect(bloque).toMatch(/border-radius:\s*999px/)
+  expect(bloque).toMatch(/font-size:\s*12\.5px/)
+  expect(bloque).toMatch(/font-weight:\s*700/)
+  expect(regla('.badge::before')).toMatch(/border-radius:\s*50%/)
+})
+
+it('Given cada variante de la insignia, When se estiliza, Then su texto cumple 4,5:1 contra su fondo', () => {
+  const pares: [string, string][] = [
+    ['.badge', token('--brand-soft')],
+    ['.badge--planificado', '#f1f5f9'],
+    ['.badge--finalizado', '#dcfce7'],
+  ]
+  for (const [selector, fondo] of pares) {
+    const bloque = regla(selector)
+    const texto = color(bloque, 'color')
+    const fondoReal = color(bloque, 'background') || fondo
+
+    expect(texto, selector).not.toBe('')
+    expect(contraste(texto, fondoReal), selector).toBeGreaterThanOrEqual(4.5)
+  }
+})
+
+it('Given las tarjetas del panel, When se estilizan, Then la descripción ocupa 1,6 fr y el equipo 1 fr', () => {
+  expect(regla('.panel-rejilla')).toMatch(/grid-template-columns:\s*minmax\(0, 1\.6fr\) minmax\(0, 1fr\)/)
+  expect(regla('.panel-rejilla')).toMatch(/gap:\s*20px/)
+})
+
+it('Given una tarjeta del panel, When se estiliza, Then tiene radio 14 y relleno de 22px', () => {
+  const bloque = regla('.panel-tarjeta')
+
+  expect(bloque).toMatch(/border-radius:\s*var\(--radius\)/)
+  expect(bloque).toMatch(/padding:\s*22px/)
+})
+
+it('Given el título de una tarjeta, When se estiliza, Then es una etiqueta de 12px en mayúsculas', () => {
+  const bloque = regla('.panel-tarjeta__titulo')
+
+  expect(bloque).toMatch(/font-size:\s*12px/)
+  expect(bloque).toMatch(/text-transform:\s*uppercase/)
+  expect(bloque).toMatch(/letter-spacing:\s*0\.08em/)
+})
+
+it('Given una descripción larga sin espacios, When se estiliza, Then se corta en varias líneas', () => {
+  expect(regla('.panel-prosa')).toMatch(/overflow-wrap:\s*anywhere/)
+})
+
+it('Given las fechas del cronograma, When se estilizan, Then usan 17px con cifras tabulares', () => {
+  const bloque = regla('.cronograma__fechas strong')
+
+  expect(bloque).toMatch(/font-size:\s*17px/)
+  expect(bloque).toMatch(/font-variant-numeric:\s*tabular-nums/)
+})
+
+it('Given el enlace «Ver estado del proyecto», When se estiliza, Then usa el color de marca oscuro, en negrita y con la flecha de 15px', () => {
+  expect(regla('.enlace')).toMatch(/color:\s*var\(--brand-dark\)/)
+  expect(regla('.enlace')).toMatch(/font-weight:\s*700/)
+  expect(regla('.enlace svg')).toMatch(/width:\s*15px/)
+})
+
+it('Given la nota de rol, When se estiliza, Then es una franja ámbar con texto de 13,5px que cumple 4,5:1', () => {
+  const bloque = regla('.nota-gestion')
+
+  expect(bloque).toMatch(/background:\s*#fdf0d5/)
+  expect(bloque).toMatch(/font-size:\s*13\.5px/)
+  expect(contraste(color(bloque, 'color'), color(bloque, 'background'))).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given la barra de avance, When se estiliza, Then es una pista de 8px con relleno degradado y un marcador circular de 16px', () => {
+  expect(regla('.cronograma__pista')).toMatch(/height:\s*8px/)
+  expect(regla('.cronograma__pista')).toMatch(/border-radius:\s*999px/)
+  expect(regla('.cronograma__pista i')).toMatch(/linear-gradient\(90deg,\s*#2dd4bf,\s*#0d9488\)/)
+  const marcador = regla('.cronograma__pista b')
+  expect(marcador).toMatch(/width:\s*16px/)
+  expect(marcador).toMatch(/height:\s*16px/)
+  expect(marcador).toMatch(/border-radius:\s*50%/)
+})
+
+it('Given la cabecera del panel, When se estiliza, Then los botones bajan debajo del título cuando no entran (flex-wrap, huecos 16/24)', () => {
+  const bloque = regla('.hu04-panel .page-header')
+
+  expect(bloque).toMatch(/flex-wrap:\s*wrap/)
+  expect(bloque).toMatch(/gap:\s*16px 24px/)
+})
+
+it('Given los botones de la cabecera, When llevan ícono, Then ícono y texto van separados 8px y el ícono mide 16px', () => {
+  expect(regla('.hu04-acciones .button')).toMatch(/gap:\s*8px/)
+  expect(regla('.hu04-acciones .button svg')).toMatch(/width:\s*16px/)
+})
+
+it('Given el enlace «Ver estado del proyecto», When se estiliza, Then no va subrayado salvo al pasar el mouse', () => {
+  expect(regla('.enlace')).toMatch(/text-decoration:\s*none/)
+})
+
+it('Given el cronograma en pantallas angostas, When las fechas no entran, Then cada columna puede encogerse en vez de salirse de la tarjeta', () => {
+  expect(regla('.cronograma__fechas div')).toMatch(/min-width:\s*0/)
+})
+
+it('Given las tres fechas del cronograma, When no entran en una fila, Then bajan de renglón en vez de pisarse', () => {
+  expect(regla('.cronograma__fechas')).toMatch(/flex-wrap:\s*wrap/)
+})
+
+it('Given el formulario de edición, When se estiliza, Then es una tarjeta de hasta 720px con radio 14 y relleno 22px', () => {
+  const bloque = regla('.panel-formulario')
+
+  expect(bloque).toMatch(/max-width:\s*720px/)
+  expect(bloque).toMatch(/border-radius:\s*var\(--radius\)/)
+  expect(bloque).toMatch(/padding:\s*22px/)
+})
+
+it('Given la zona de cierre, When se estiliza, Then es otra tarjeta, separada del formulario', () => {
+  const bloque = regla('.panel-editar .zona-cierre')
+
+  expect(bloque).toMatch(/border:\s*1px solid/)
+  expect(bloque).toMatch(/border-radius:\s*var\(--radius\)/)
+  expect(bloque).toMatch(/padding:\s*22px/)
+  expect(bloque).toMatch(/max-width:\s*720px/)
+})
+
+it('Given la ayuda de un campo de la edición, When se estiliza, Then es de 12,5px y gris con contraste 4,5:1', () => {
+  const bloque = regla('.panel-formulario .field__ayuda')
+
+  expect(bloque).toMatch(/font-size:\s*12\.5px/)
+  expect(contraste(color(bloque, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given las etiquetas del formulario de edición, When se estilizan, Then miden 13px', () => {
+  expect(regla('.panel-formulario .field label')).toMatch(/font-size:\s*13px/)
+})
+
+it('Given la descripción del formulario de edición, When se estiliza, Then es un cuadro de 92px mínimo con la tipografía de la app, no monoespaciada', () => {
+  const bloque = regla('.panel-formulario textarea')
+
+  expect(bloque).toMatch(/font:\s*inherit/)
+  expect(bloque).toMatch(/font-size:\s*14\.5px/)
+  expect(bloque).toMatch(/min-height:\s*92px/)
+  expect(bloque).toMatch(/border-radius:\s*10px/)
+  expect(bloque).toMatch(/padding:\s*10px 12px/)
+})
+
+it('Given la rejilla de Configurar equipo, When se estiliza, Then son columnas de al menos 300px con 20px de hueco', () => {
+  const bloque = regla('.equipo-rejilla')
+
+  expect(bloque).toMatch(/grid-template-columns:\s*repeat\(auto-fit, minmax\(300px, 1fr\)\)/)
+  expect(bloque).toMatch(/gap:\s*20px/)
+  expect(bloque).toMatch(/align-items:\s*start/)
+})
+
+it('Given el título de una tarjeta de Equipo, When se estiliza, Then es de 17px', () => {
+  expect(regla('.equipo-titulo')).toMatch(/font-size:\s*17px/)
+})
+
+it('Given una persona del equipo, When se estiliza, Then el nombre es de 14px, el rol gris de 12,5px con contraste 4,5:1 y la fila las separa 12px', () => {
+  expect(regla('.equipo-persona')).toMatch(/font-size:\s*14px/)
+  const rol = regla('.equipo-persona small')
+  expect(rol).toMatch(/font-size:\s*12\.5px/)
+  expect(contraste(color(rol, 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+  expect(regla('.equipo-lista li')).toMatch(/gap:\s*12px/)
+})
+
+it('Given el botón «Quitar», When se estiliza, Then es chico (32px, 13px de letra) y con contorno de la marca con contraste 4,5:1', () => {
+  const bloque = regla('.equipo-quitar')
+
+  expect(bloque).toMatch(/min-height:\s*32px/)
+  expect(bloque).toMatch(/font-size:\s*13px/)
+  expect(contraste(color(regla('.button--secondary.equipo-quitar'), 'color'), '#ffffff')).toBeGreaterThanOrEqual(4.5)
+})
+
+it('Given la confirmación de «Quitar», When se estiliza, Then baja a su propia línea y alineada a la izquierda para no aplastar el nombre (el cálculo del ancho real se mira en el navegador)', () => {
+  expect(regla('.equipo-lista li')).toMatch(/flex-wrap:\s*wrap/)
+  expect(regla('.equipo-acciones--confirmando')).toMatch(/flex-basis:\s*100%/)
+  expect(regla('.equipo-acciones .hu04-confirmacion')).toMatch(/justify-content:\s*flex-start/)
+  expect(regla('.equipo-persona')).toMatch(/flex:\s*1 1 120px/)
+})

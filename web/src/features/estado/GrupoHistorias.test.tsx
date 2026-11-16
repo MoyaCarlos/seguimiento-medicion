@@ -13,10 +13,8 @@ const grupo: GrupoAvance = {
   ],
 }
 
-function valorDe(region: HTMLElement, etiqueta: string): string | null {
-  const termino = within(region).getByText(etiqueta, { selector: 'dt' })
-  return termino.nextElementSibling?.textContent ?? null
-}
+const chipsDe = (region: HTMLElement) =>
+  Array.from(region.querySelectorAll('.estado-columna__chips span')).map((chip) => chip.textContent)
 
 describe('GrupoHistorias', () => {
   it('US1.1: Given un grupo, When se muestra, Then tiene un encabezado con su estado y cuenta como región', () => {
@@ -30,8 +28,7 @@ describe('GrupoHistorias', () => {
     render(<GrupoHistorias grupo={{ ...grupo, cantidad: 7, story_points: 99 }} />)
 
     const region = screen.getByRole('region', { name: 'En progreso' })
-    expect(valorDe(region, 'Historias')).toBe('7')
-    expect(valorDe(region, 'Story Points')).toBe('99')
+    expect(chipsDe(region)).toEqual(['7 historias', '99 SP'])
   })
 
   it('US1: Given un grupo con historias, When se muestra, Then las lista en una lista semántica en el orden recibido', () => {
@@ -76,8 +73,7 @@ describe('GrupoHistorias', () => {
     render(<GrupoHistorias grupo={{ estado: 'Completada', cantidad: 0, story_points: 0, historias: [] }} />)
 
     const region = screen.getByRole('region', { name: 'Completada' })
-    expect(valorDe(region, 'Historias')).toBe('0')
-    expect(valorDe(region, 'Story Points')).toBe('0')
+    expect(chipsDe(region)).toEqual(['0 historias', '0 SP'])
     expect(within(region).getByText('No hay historias en este grupo.')).toBeTruthy()
     expect(within(region).queryByRole('list')).toBeNull()
   })

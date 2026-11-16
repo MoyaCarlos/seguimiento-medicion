@@ -38,7 +38,7 @@ export function BotonCerrar({ sprint, alActualizar, puedeGestionar = true, puede
   }
 
   return (
-    <div>
+    <div className="sprint-pie">
       {aviso && <ErrorMessage message={aviso} />}
       {enviando && <LoadingIndicator />}
       <Button

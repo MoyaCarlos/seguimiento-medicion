@@ -18,7 +18,10 @@ export const rutas: RouteObject[] = [
         children: [
           {
             element: <ComposicionInicio />,
-            children: [{ index: true, lazy: () => import('./features/proyecto/crear') }],
+            children: [
+              { index: true, element: <></> },
+              { path: 'projects/new', lazy: () => import('./features/proyecto/crear') },
+            ],
           },
           {
             path: 'projects/:id',
