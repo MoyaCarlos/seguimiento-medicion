@@ -9,3 +9,19 @@ export const navegacion: { ruta: string; texto: string; icono: NombreIcono }[] =
   { ruta: 'dashboard', texto: 'Dashboard', icono: 'barras' },
   { ruta: 'historial', texto: 'Historial de Sprints', icono: 'historial' },
 ]
+
+export const ajustes: { ruta: string; texto: string; icono: NombreIcono }[] = [
+  { ruta: 'proyecto/settings', texto: 'Equipo', icono: 'equipo' },
+  { ruta: 'proyecto/edit', texto: 'Editar proyecto', icono: 'editar' },
+]
+
+const SECCION_DE_VOTACION = 'Planning Poker'
+
+export function seccionDeRuta(pathname: string): string | undefined {
+  const [, , , tramo, subtramo] = pathname.split('/')
+  if (tramo === 'votacion') return SECCION_DE_VOTACION
+  if (tramo === 'backlog' && subtramo === 'nueva') return 'Nueva historia'
+  const ajuste = ajustes.find(({ ruta }) => ruta === `${tramo}/${subtramo}`)
+  if (ajuste) return ajuste.texto
+  return navegacion.find(({ ruta }) => ruta === tramo)?.texto
+}

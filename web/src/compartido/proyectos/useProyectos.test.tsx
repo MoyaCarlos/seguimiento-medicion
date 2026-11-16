@@ -1,5 +1,7 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { render, renderHook, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { ProveedorProyectos } from './ProveedorProyectos'
 import { useProyectos } from './useProyectos'
 
 function simularRespuesta(cuerpo: string, status = 200) {
@@ -89,5 +91,34 @@ describe('useProyectos', () => {
     await Promise.resolve()
 
     expect(consola).not.toHaveBeenCalled()
+  })
+})
+
+describe('ProveedorProyectos', () => {
+  const envoltura = (recarga: number) =>
+    function Envoltura({ children }: { children: ReactNode }) {
+      return <ProveedorProyectos recarga={recarga}>{children}</ProveedorProyectos>
+    }
+
+  it('dos consumidores dentro del proveedor comparten una sola consulta a GET /projects', async () => {
+    const fetchSimulado = simularRespuesta(JSON.stringify([{ id: 1, nombre: 'Alfa' }]))
+
+    const { result } = renderHook(() => [useProyectos(), useProyectos()], { wrapper: envoltura(0) })
+
+    await waitFor(() => expect(result.current[0].estado).toBe('listo'))
+    expect(result.current[1]).toEqual(result.current[0])
+    expect(fetchSimulado).toHaveBeenCalledTimes(1)
+  })
+
+  it('solo vuelve a pedir la lista cuando cambia la recarga, no en cada render', async () => {
+    const fetchSimulado = simularRespuesta('[]')
+    const { rerender } = render(<ProveedorProyectos recarga={0}><span /></ProveedorProyectos>)
+    await waitFor(() => expect(fetchSimulado).toHaveBeenCalledTimes(1))
+
+    rerender(<ProveedorProyectos recarga={0}><span /></ProveedorProyectos>)
+    expect(fetchSimulado).toHaveBeenCalledTimes(1)
+
+    rerender(<ProveedorProyectos recarga={1}><span /></ProveedorProyectos>)
+    await waitFor(() => expect(fetchSimulado).toHaveBeenCalledTimes(2))
   })
 })

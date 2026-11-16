@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "#312: frontend de cerrar y reabrir un proyecto (#300). Solo frontend: el backend (spec 044, PR #311) ya está en main. Zona «Cerrar proyecto» dentro de Editar proyecto, solo para el Scrum Master, con confirmación; botón «Reabrir proyecto» si está cerrado; aviso de solo lectura «Proyecto cerrado el AAAA-MM-DD»; acciones de escritura deshabilitadas con una nota en un proyecto cerrado."
+**Input**: User description: "#312: frontend de cerrar y reabrir un proyecto (#300). Solo frontend: el backend (spec 044, PR #311) ya está en main. Zona «Cerrar proyecto» dentro de Editar proyecto, solo para el Scrum Master, con confirmación; botón «Reabrir proyecto» si está cerrado; aviso de solo lectura «Proyecto cerrado el dd/mm/aaaa»; acciones de escritura deshabilitadas con una nota en un proyecto cerrado."
 
 ## Clarifications
 
@@ -28,7 +28,7 @@ El Scrum Master abre «Editar proyecto» y, en una zona «Cerrar proyecto», cie
 
 **Acceptance Scenarios**:
 
-1. **Given** un proyecto abierto sin Sprint Activo y el usuario es Scrum Master, **When** pide cerrar y confirma, **Then** el proyecto queda cerrado y la pantalla muestra «Proyecto cerrado el AAAA-MM-DD» con estado «Finalizado».
+1. **Given** un proyecto abierto sin Sprint Activo y el usuario es Scrum Master, **When** pide cerrar y confirma, **Then** el proyecto queda cerrado y la pantalla muestra «Proyecto cerrado el dd/mm/aaaa» con estado «Finalizado».
 2. **Given** la confirmación de cierre abierta, **When** el usuario cancela, **Then** no se envía nada y el proyecto sigue abierto.
 3. **Given** un proyecto con un Sprint Activo, **When** el Scrum Master confirma el cierre, **Then** ve «Cerrá el Sprint activo antes de cerrar el proyecto» y el proyecto sigue abierto.
 4. **Given** un proyecto que otra persona ya cerró (la pantalla estaba desactualizada), **When** el Scrum Master confirma el cierre, **Then** ve «El proyecto ya está cerrado».
@@ -37,7 +37,7 @@ El Scrum Master abre «Editar proyecto» y, en una zona «Cerrar proyecto», cie
 
 ### User Story 2 - Un proyecto cerrado se ve como solo lectura (Priority: P1)
 
-En las pantallas del proyecto aparece un aviso «Proyecto cerrado el AAAA-MM-DD», y las acciones de escritura de las pantallas que lo respetan quedan deshabilitadas con una nota que explica por qué. Las lecturas siguen funcionando.
+En las pantallas del proyecto aparece un aviso «Proyecto cerrado el dd/mm/aaaa», y las acciones de escritura de las pantallas que lo respetan quedan deshabilitadas con una nota que explica por qué. Las lecturas siguen funcionando.
 
 **Why this priority**: sin esto, un proyecto cerrado invitaría a acciones que el servidor rechaza con 409.
 
@@ -45,7 +45,7 @@ En las pantallas del proyecto aparece un aviso «Proyecto cerrado el AAAA-MM-DD�
 
 **Acceptance Scenarios**:
 
-1. **Given** un proyecto cerrado, **When** cualquier integrante abre una pantalla del proyecto que escribe o el Panel, **Then** ve el aviso «Proyecto cerrado el AAAA-MM-DD» y puede seguir leyendo los datos.
+1. **Given** un proyecto cerrado, **When** cualquier integrante abre una pantalla del proyecto que escribe o el Panel, **Then** ve el aviso «Proyecto cerrado el dd/mm/aaaa» y puede seguir leyendo los datos.
 2. **Given** un proyecto cerrado, **When** se muestra una acción de escritura, **Then** está deshabilitada y una nota visible explica que el proyecto está cerrado.
 3. **Given** un proyecto abierto, **When** se muestran las pantallas, **Then** no hay aviso y las acciones se comportan como antes (los usos actuales de permisos de HU-21 no cambian).
 4. **Given** una acción que igual llega al servidor sobre un proyecto cerrado, **When** el servidor responde 409 «El proyecto está cerrado», **Then** se muestra ese mensaje tal cual.
@@ -101,7 +101,7 @@ El Product Builder no ve la zona «Cerrar proyecto», o la ve con sus botones de
 - **FR-003**: Los errores 409 de cerrar y reabrir MUST mostrarse con el mensaje del servidor, sin reescribirlo.
 - **FR-004**: Con el proyecto cerrado, la misma zona MUST ofrecer «Reabrir proyecto» al Scrum Master, sin confirmación previa (acción reversible y poco riesgosa).
 - **FR-005**: Tras cerrar o reabrir con éxito, la interfaz MUST reflejar de inmediato la fecha de cierre y el estado devueltos por el servidor, sin recargar. El estado se muestra solo a partir de la respuesta de la acción; al volver a cargar la pantalla se muestra únicamente la fecha de cierre, porque `GET /projects/{id}` no trae el estado.
-- **FR-006**: Las pantallas del proyecto que escriben (las de las Fases 1 a 3) y el Panel MUST mostrar el aviso «Proyecto cerrado el AAAA-MM-DD» cuando el proyecto tiene fecha de cierre, y no mostrarlo si no la tiene (ni mientras se carga, ni ante un error). Las pantallas de solo lectura (Estado, Dashboard, Historial) pueden mostrar el aviso cuando se rediseñen, reutilizando el mismo componente; no forman parte de esta entrega.
+- **FR-006**: Las pantallas del proyecto que escriben (las de las Fases 1 a 3) y el Panel MUST mostrar el aviso «Proyecto cerrado el dd/mm/aaaa» cuando el proyecto tiene fecha de cierre, y no mostrarlo si no la tiene (ni mientras se carga, ni ante un error). Las pantallas de solo lectura (Estado, Dashboard, Historial) pueden mostrar el aviso cuando se rediseñen, reutilizando el mismo componente; no forman parte de esta entrega.
 - **FR-007**: En un proyecto cerrado, las acciones de escritura de todas las pantallas del proyecto que escriben (excepto autenticación) MUST estar deshabilitadas con una nota visible asociada. La nota «El proyecto está cerrado» MUST mostrarse solo cuando el cierre es conocido (la respuesta trae `fecha_cierre`): nunca mientras se carga, ante un error ni en un proyecto abierto. Se entrega en tres fases independientes, cada una completa y probable por separado: **Fase 1** zona «Cerrar proyecto», aviso (incluido el Panel) y Editar proyecto; **Fase 2** Sprints (incluidas horas y estado de las historias); **Fase 3** Historias, Votación, Defectos y Equipo.
 - **FR-007a**: Cada pantalla MUST obtener el estado «cerrado» del mismo dato del proyecto que ya consulta, sin pedidos nuevos al servidor.
 - **FR-008**: Las lecturas MUST seguir funcionando en un proyecto cerrado.
@@ -133,7 +133,7 @@ El Product Builder no ve la zona «Cerrar proyecto», o la ve con sus botones de
 - El backend de la spec 044 está en main y su contrato no cambia.
 - La rama sale de la de HU-21 (PR #321) porque amplía los permisos compartidos.
 - «Reabrir» no pide confirmación, porque se puede volver a cerrar y no destruye datos.
-- La fecha de cierre se muestra tal como la entrega el servidor (AAAA-MM-DD).
+- La API entrega la fecha de cierre como AAAA-MM-DD; la pantalla la muestra como dd/mm/aaaa (misma función que el resto de la aplicación). Cambiado por el rediseño #230 (decisión B1 del grupo, 15/11); la versión original mostraba la fecha tal como llegaba.
 - Si falta tiempo, se corta por fase: lo no entregado pasa a otro PR, y esas pantallas siguen mostrando el 409 del servidor mientras tanto.
 - El armazón del rediseño (spec 046) queda intacto; el aviso y la zona se montan desde archivos nuevos.
 - Nota: las pantallas de solo lectura (Estado, Dashboard, Historial) pueden mostrar el aviso cuando se rediseñen, reutilizando `AvisoProyectoCerrado`; hoy quedan fuera.

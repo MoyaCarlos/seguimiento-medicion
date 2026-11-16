@@ -16,10 +16,16 @@ describe('agruparPorEstado', () => {
     expect(grupos.Finalizado.map((s) => s.id)).toEqual([1])
   })
 
-  it('ordena cada lista por id ascendente', () => {
+  it('ordena Pendiente y Activo por número ascendente', () => {
+    const grupos = agruparPorEstado([sprint(3, 'Pendiente'), sprint(1, 'Pendiente'), sprint(2, 'Pendiente')])
+
+    expect(grupos.Pendiente.map((s) => s.numero)).toEqual([1, 2, 3])
+  })
+
+  it('ordena Finalizado por número descendente: el más reciente arriba, como el prototipo', () => {
     const grupos = agruparPorEstado([sprint(3, 'Finalizado'), sprint(1, 'Finalizado'), sprint(2, 'Finalizado')])
 
-    expect(grupos.Finalizado.map((s) => s.id)).toEqual([1, 2, 3])
+    expect(grupos.Finalizado.map((s) => s.numero)).toEqual([3, 2, 1])
   })
 })
 

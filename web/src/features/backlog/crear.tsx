@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
-import { Link, useParams } from 'react-router'
+import { useNavigate, useOutletContext, useParams } from 'react-router'
 import { ApiError, ConnectionError } from '../../compartido/api/client'
 import { Button } from '../../compartido/componentes/Button'
 import { ErrorMessage } from '../../compartido/componentes/ErrorMessage'
@@ -49,6 +49,8 @@ type Props = {
 }
 
 function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = true }: Props) {
+  const navegar = useNavigate()
+  const contexto = useOutletContext<{ alCrear?: () => void } | null>()
   const deshabilitado = proyectoId === null || !puedeEscribir
 
   const [formulario, setFormulario] = useState<FormularioHistoria>(ESTADO_INICIAL)
@@ -95,6 +97,7 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
       const historia = await crearHistoria(armarCuerpo(proyectoId, formulario))
       setConfirmacion(historia)
       setFormulario(ESTADO_INICIAL)
+      contexto?.alCrear?.()
     } catch (error) {
       if (error instanceof ApiError || error instanceof ConnectionError) {
         const mapeado = mapearError(error)
@@ -112,20 +115,71 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
     }
   }
 
-  return (
-    <section className="backlog" aria-labelledby="backlog-title">
-      <div className="page-header">
-        <div>
-          <p className="eyebrow">Product Backlog</p>
-          <h1 id="backlog-title">Nueva historia</h1>
-          <p className="project-context">
-            Proyecto actual: <strong>{id}</strong>
-          </p>
+  const cerrar = () => navegar(`/projects/${id}/backlog`)
+
+  if (confirmacion) {
+    return (
+      <section className="backlog-crear backlog-confirmacion" aria-label="Historia creada">
+        <header className="backlog-crear__cabecera">
+          <h2>Historia creada</h2>
+          <p className="project-context">Se agregó al Product Backlog del proyecto #{id}.</p>
+        </header>
+        <dl className="backlog-resumen" role="status">
+          <div>
+            <dt>Título</dt>
+            <dd>{confirmacion.titulo}</dd>
+          </div>
+          <div>
+            <dt>Prioridad</dt>
+            <dd>{etiquetaPrioridad(confirmacion.prioridad)}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{confirmacion.estado}</dd>
+          </div>
+          <div>
+            <dt>Estimación</dt>
+            <dd>
+              {confirmacion.estimacion_sp === null
+                ? 'sin estimación'
+                : `${confirmacion.estimacion_sp} Story Points`}
+            </dd>
+          </div>
+          {confirmacion.valor_negocio !== null && (
+            <div>
+              <dt>Valor de negocio</dt>
+              <dd>{confirmacion.valor_negocio}</dd>
+            </div>
+          )}
+          <div>
+            <dt>Criterios de aceptación</dt>
+            <dd>
+              {confirmacion.criterios_aceptacion ? (
+                <Markdown texto={confirmacion.criterios_aceptacion} />
+              ) : (
+                <em>Sin criterios de aceptación</em>
+              )}
+            </dd>
+          </div>
+        </dl>
+        <div className="backlog-crear__acciones">
+          <Button type="button" onClick={() => setConfirmacion(null)}>
+            Crear otra historia
+          </Button>
+          <Button type="button" variant="quiet" onClick={cerrar}>
+            Ver Product Backlog
+          </Button>
         </div>
-        <Link className="button button--quiet" to={`/projects/${id}/backlog`}>
-          Volver al backlog
-        </Link>
-      </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="backlog-crear">
+      <header className="backlog-crear__cabecera">
+        <h2>Nueva historia</h2>
+        <p className="project-context">Se agrega al Product Backlog del proyecto #{id}.</p>
+      </header>
 
       <AvisoProyectoCerrado fechaCierre={fechaCierre} />
       {proyectoId === null && (
@@ -160,102 +214,77 @@ function PantallaCrear({ id, proyectoId, fechaCierre = null, puedeEscribir = tru
             id="criterios"
             name="criterios"
             label="Criterios de aceptación"
+            opcional
             value={formulario.criterios}
             onChange={(valor) => setFormulario((actual) => ({ ...actual, criterios: valor }))}
             disabled={deshabilitado}
             error={errores.criterios}
           />
 
-          <div className="field">
-            <label htmlFor="prioridad">Prioridad</label>
-            <select
-              id="prioridad"
-              name="prioridad"
-              value={formulario.prioridad}
-              onChange={cambiarPrioridad}
-              disabled={deshabilitado}
-              aria-invalid={Boolean(errores.prioridad)}
-              aria-describedby={errores.prioridad ? 'prioridad-error' : undefined}
-            >
-              {PRIORIDADES.map((prioridad) => (
-                <option key={prioridad.codigo} value={prioridad.codigo}>
-                  {prioridad.etiqueta}
-                </option>
-              ))}
-            </select>
-            {errores.prioridad && (
-              <ErrorMessage id="prioridad-error" message={errores.prioridad} />
-            )}
-          </div>
+          <div className="backlog-form__fila">
+            <div className="field">
+              <label htmlFor="prioridad">Prioridad</label>
+              <select
+                id="prioridad"
+                name="prioridad"
+                value={formulario.prioridad}
+                onChange={cambiarPrioridad}
+                disabled={deshabilitado}
+                aria-invalid={Boolean(errores.prioridad)}
+                aria-describedby={errores.prioridad ? 'prioridad-error' : undefined}
+              >
+                {PRIORIDADES.map((prioridad) => (
+                  <option key={prioridad.codigo} value={prioridad.codigo}>
+                    {prioridad.etiqueta}
+                  </option>
+                ))}
+              </select>
+              {errores.prioridad && (
+                <ErrorMessage id="prioridad-error" message={errores.prioridad} />
+              )}
+            </div>
 
-          <div className="field">
-            <label htmlFor="valor-negocio">Valor de negocio</label>
-            <select
-              id="valor-negocio"
-              name="valorNegocio"
-              value={formulario.valorNegocio}
-              onChange={cambiarValorNegocio}
-              disabled={deshabilitado}
-              aria-invalid={Boolean(errores.valor_negocio)}
-              aria-describedby={errores.valor_negocio ? 'valor-negocio-error' : undefined}
-            >
-              <option value="">Sin valor</option>
-              {VALORES_NEGOCIO.map((valor) => (
-                <option key={valor} value={String(valor)}>
-                  {valor}
-                </option>
-              ))}
-            </select>
-            {errores.valor_negocio && (
-              <ErrorMessage id="valor-negocio-error" message={errores.valor_negocio} />
-            )}
+            <div className="field">
+              <label htmlFor="valor-negocio">Valor de negocio</label>
+              <select
+                id="valor-negocio"
+                name="valorNegocio"
+                value={formulario.valorNegocio}
+                onChange={cambiarValorNegocio}
+                disabled={deshabilitado}
+                aria-invalid={Boolean(errores.valor_negocio)}
+                aria-describedby={errores.valor_negocio ? 'valor-negocio-error' : undefined}
+              >
+                <option value="">Sin valor</option>
+                {VALORES_NEGOCIO.map((valor) => (
+                  <option key={valor} value={String(valor)}>
+                    {valor}
+                  </option>
+                ))}
+              </select>
+              {errores.valor_negocio && (
+                <ErrorMessage id="valor-negocio-error" message={errores.valor_negocio} />
+              )}
+            </div>
           </div>
 
           {enviando && <LoadingIndicator />}
 
-          <Button
-            type="submit"
-            disabled={enviando || deshabilitado}
-            aria-describedby={puedeEscribir ? undefined : NOTA_CERRADO}
-          >
-            Guardar
-          </Button>
+          <div className="backlog-crear__acciones">
+            <Button
+              type="submit"
+              disabled={enviando || deshabilitado}
+              aria-describedby={puedeEscribir ? undefined : NOTA_CERRADO}
+            >
+              Guardar
+            </Button>
+            <Button type="button" variant="quiet" onClick={cerrar}>
+              Cancelar
+            </Button>
+          </div>
           {!puedeEscribir && <NotaCerrado id={NOTA_CERRADO} />}
         </fieldset>
       </form>
-
-      {confirmacion && (
-        <section className="backlog-confirmacion" aria-label="Historia creada">
-          <h2>Historia creada</h2>
-          <p>{confirmacion.titulo}</p>
-          <dl>
-            <dt>Prioridad</dt>
-            <dd>{etiquetaPrioridad(confirmacion.prioridad)}</dd>
-            <dt>Estado</dt>
-            <dd>{confirmacion.estado}</dd>
-            <dt>Estimación</dt>
-            <dd>
-              {confirmacion.estimacion_sp === null
-                ? 'sin estimación'
-                : `${confirmacion.estimacion_sp} Story Points`}
-            </dd>
-            {confirmacion.valor_negocio !== null && (
-              <>
-                <dt>Valor de negocio</dt>
-                <dd>{confirmacion.valor_negocio}</dd>
-              </>
-            )}
-          </dl>
-          <div className="backlog-confirmacion__criterios">
-            <h3>Criterios de aceptación</h3>
-            {confirmacion.criterios_aceptacion ? (
-              <Markdown texto={confirmacion.criterios_aceptacion} />
-            ) : (
-              <p>Sin criterios de aceptación</p>
-            )}
-          </div>
-        </section>
-      )}
     </section>
   )
 }

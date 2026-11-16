@@ -21,4 +21,31 @@ describe('Resultado', () => {
 
     expect(container.textContent).toBe('')
   })
+
+  it('Given diferencias entre los votos, When se muestra el resultado, Then el texto va debajo de la tarjeta y no dentro de ella', () => {
+    render(
+      <Resultado
+        promedio={{ exacto: 5.25, carta_sugerida: 5 }}
+        diferencias={{ hay_diferencias: true, minimo: 3, maximo: 8 }}
+      />,
+    )
+
+    const tarjeta = screen.getByRole('region', { name: 'Resultado de la votación' })
+    const texto = screen.getByText('Hay diferencias: mínimo 3, máximo 8')
+
+    expect(tarjeta.contains(texto)).toBe(false)
+    expect(tarjeta.compareDocumentPosition(texto) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(texto.className).toBe('votacion-diferencias')
+  })
+
+  it('Given votos iguales, When se muestra el resultado, Then dice que no hay diferencias con el mismo estilo', () => {
+    render(
+      <Resultado
+        promedio={{ exacto: 5, carta_sugerida: 5 }}
+        diferencias={{ hay_diferencias: false, minimo: null, maximo: null }}
+      />,
+    )
+
+    expect(screen.getByText('No hay diferencias: todos votaron lo mismo').className).toBe('votacion-diferencias')
+  })
 })
