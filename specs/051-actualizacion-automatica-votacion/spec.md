@@ -6,7 +6,7 @@
 
 **Created**: 2026-11-15
 
-**Status**: Implementada (pendiente de PR)
+**Status**: Implementada (PR #328, pendiente de review)
 
 **Relacionado**: spec 030 (pantalla de Planning Poker), spec 012 (API de votación), #222,
 #218. Solo frontend; no cambia el contrato de la API.
