@@ -1,16 +1,20 @@
 # Feature Specification: Rediseño visual del frontend (#230)
 
-**Feature Branch**: `feature/230-rediseno-ola-1` (PR 1 de la ola 1; los PR siguientes salen de `main` con ramas `feature/230-ola-1-*`)
+**Feature Branch**: `feature/230-rediseno-completo` (rama de integración y PR único del rediseño; la ola 1 salió primero en ramas `feature/230-ola-1-*`)
 
 **Created**: 2026-11-11
 
-**Status**: Draft
+**Status**: Implementado en la rama de integración (en revisión). Actualizada el 2026-11-15 para reflejar el alcance final: ola 1 y ola 2 en un solo PR
 
 **Input**: User description: "Rediseño visual del frontend (issue #230): nueva identidad visual (azul marino y teal) y mejor aprovechamiento del ancho de pantalla, con el prototipo «Métrica Remake Sprint 4» (versión final) como referencia visual, sin cambiar la API ni el modelo de datos y sin agregar pantallas ni endpoints. Se entrega por olas."
 
 ## Objetivo
 
 Darle a la aplicación una identidad visual nueva y un armazón de navegación que aproveche el ancho de la pantalla, sin cambiar lo que la aplicación hace. El prototipo «Métrica Remake Sprint 4» (versión final) es la guía visual y de estructura: no se copia su código ni sus datos, y lo que el prototipo marca como «Propuesta» o con «*» (datos que la API no entrega) no forma parte de este rediseño.
+
+## Actualización del 15/11 (alcance final)
+
+El rediseño se entrega en **un solo PR de integración** (`feature/230-rediseno-completo`) que incluye las dos olas. Cuando se escribió esta spec la ola 2 quedaba fuera porque esperaba #247, HU-21 y cerrar/reabrir; esas historias ya están en `main` y la rama las integró (#321, #322, #324, #315, #319, #320, #323, #325 y #326, con la regla «queda el markup del rediseño y se reinyecta lo de `main`»). Las decisiones de la sección «Fuera de alcance» marcadas como tomadas el 11 y el 12/11 fueron **revisadas por el equipo** al adoptar el prototipo final (V10); abajo figura el estado vigente. Lo que quedó escrito como alcance de la ola 2 se lee como histórico.
 
 ## Alcance por olas
 
@@ -22,15 +26,17 @@ Darle a la aplicación una identidad visual nueva y un armazón de navegación q
 | 2 | Acceso | Pantallas Ingresar y Registro |
 | 3 | Seguimiento | Pantallas Estado, Dashboard y Defectos |
 
-### Ola 2 (fuera de esta entrega)
+### Ola 2 (incluida en el PR de integración)
 
-Proyectos (inicio), Panel del proyecto, Historias, Sprints, Votación, Editar proyecto, Equipo, Historial de Sprints y su detalle. Esperan el frontend de HU-21 (#247) y cerrar/reabrir proyecto (#300). Mientras tanto siguen funcionando dentro del armazón nuevo con sus estilos actuales.
+Proyectos (inicio, con la sección «Proyectos cerrados»), Panel del proyecto, Historias (lista, cajón «Nueva historia», paneles de Editar y Asignar a Sprint, editor de Markdown), Sprints, Votación, Editar proyecto (con la zona «Cerrar proyecto»), Equipo, Historial de Sprints y su detalle. Originalmente esperaban el frontend de HU-21 (#247) y cerrar/reabrir proyecto (#300); al estar en `main`, se rediseñan en este PR conservando su comportamiento.
 
 ### Fuera de alcance
 
-- Lo que la API no entrega: estado, avance, Scrum Master y rol en las tarjetas de proyecto; barra de avance por fechas; prioridad de cada historia en Estado.
-- Lo que el prototipo marca como «Propuesta»: «Repetir contraseña», aviso de sesión no válida (401), permisos por rol, cerrar/reabrir y eliminar proyecto.
-- Decisiones del equipo (2026-11-11 y 2026-11-12): las pantallas de acceso van a pantalla completa, sin cabecera; sin ventana modal para crear proyecto, sin barra de pestañas inferior en celular, sin avisos flotantes, sin tarjeta «Equipo» en el Panel, sin menú de usuario desplegable.
+- Lo que la API no entrega: estado, avance y Scrum Master en las tarjetas de proyecto; prioridad de cada historia en Estado. (El rol sí se muestra en las tarjetas porque HU-21 ya lo entrega, y la «Cerrado el dd/mm/aaaa» sale de `fecha_cierre`.)
+- **Excepción a FR-015, decidida por el equipo:** la barra de avance del cronograma del Panel es solo presentación; muestra el porcentaje de tiempo transcurrido entre la fecha de inicio y la de fin que la API ya entrega (fechas locales, «hoy» inyectable en las pruebas). No es una métrica y no cambia ningún cálculo.
+- Lo que el prototipo marca como «Propuesta»: eliminar proyecto / «Zona de peligro» (#232, necesita endpoint nuevo; queda para después de la entrega) y todas las etiquetas «Propuesta» y «Solo del prototipo». Dejaron de ser «Propuesta» y se implementan porque ya están en `main`: «Repetir contraseña», permisos por rol (HU-21), cerrar y reabrir proyecto (#322), quitar integrante (#323) y cambiar nombre (#325).
+- Decisiones del equipo: las pantallas de acceso van a pantalla completa, sin cabecera; sin avisos flotantes (el aviso de datos de prueba cargados es en línea).
+- Decisiones del 11 y el 12/11 que el equipo **revirtió** al adoptar el prototipo final (V10), y que hoy sí se implementan: ventana modal para «Nuevo proyecto» (ruta `/projects/new`), barra de pestañas inferior en pantallas de 900 px o menos, tarjeta «Equipo» en el Panel y menú de usuario desplegable (con el rol en el proyecto y «Cambiar nombre»).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -100,18 +106,18 @@ Reglas en formato EARS.
 
 - **FR-001** (Ubicuo): El rediseño no debe cambiar la API, el modelo de datos, las rutas ni los textos y nombres accesibles existentes, salvo los que esta spec enumera.
 - **FR-002** (Basado en estado): Mientras haya una sesión iniciada, la aplicación debe mostrar la barra lateral «Navegación principal» y la barra superior.
-- **FR-003** (Basado en estado): Mientras la ruta sea de un proyecto, la barra lateral debe mostrar el selector «Proyecto» (lista desplegable nativa con «nombre (#id)»), el enlace «Nuevo proyecto» y la navegación «Secciones del proyecto» con la sección actual marcada como página actual.
-- **FR-004** (Ubicuo): La barra superior debe mostrar una navegación «Ruta de navegación» y el menú de usuario con el nombre de la persona una sola vez y un único botón «Cerrar sesión» visible.
+- **FR-003** (Basado en estado): Mientras la ruta sea de un proyecto, la barra lateral debe mostrar el selector «Proyecto» (botón con lista de opciones (listbox personalizado, `aria-haspopup="listbox"`) con «nombre (#id)» y la opción actual marcada), el botón «Nuevo proyecto» fuera de la lista y la navegación «Secciones del proyecto» con la sección actual marcada como página actual.
+- **FR-004** (Ubicuo): La barra superior debe mostrar una navegación «Ruta de navegación» y el botón «Menú de usuario» con el nombre de la persona; al abrirlo muestra el panel «Cuenta» con el nombre, el rol en el proyecto (solo dentro de un proyecto), «Cambiar nombre» y «Cerrar sesión». El pie de la barra lateral repite el nombre, el rol y un botón de salida.
 - **FR-005** (Basado en evento): Cuando la persona presiona «Abrir menú» en una pantalla angosta, la aplicación debe abrir la barra lateral como cajón; cuando navega, presiona Escape o presiona «Cerrar menú», debe cerrarlo.
 - **FR-006** (Basado en estado): Mientras no haya sesión iniciada, la aplicación no debe mostrar la barra lateral ni la cabecera, y las pantallas de acceso deben ofrecer en el formulario el enlace a la otra pantalla («Registrate» o «Ingresá»).
 - **FR-007** (Ubicuo): El listado de proyectos se debe pedir una sola vez al montar una pantalla de proyecto y no al cambiar de sección.
 - **FR-008** (Basado en evento): Cuando la persona presiona «Mostrar contraseña», el campo debe mostrar el texto y el botón debe quedar con `aria-pressed` verdadero, sin cambiar su nombre accesible; al presionarlo de nuevo debe volver al estado inicial.
-- **FR-009** (Ubicuo): Las fechas visibles en las pantallas de la ola 1 se deben mostrar como dd/mm/aaaa.
+- **FR-009** (Ubicuo): Las fechas visibles en las pantallas rediseñadas (ola 1 y ola 2) se deben mostrar como dd/mm/aaaa, incluida la fecha de cierre del proyecto.
 - **FR-010** (Ubicuo): Los íconos deben ser decorativos (ocultos para lectores de pantalla) y no deben agregar dependencias.
 - **FR-011** (Ubicuo): Todo control interactivo debe tener foco visible, ser operable con teclado y cumplir contraste AA.
 - **FR-012** (No deseado): Si el ancho de la pantalla es de 320 px, entonces ninguna pantalla debe generar scroll horizontal.
 - **FR-013** (Basado en estado): Mientras la pantalla mida 900 px o menos, la barra lateral no debe ocupar ancho del contenido.
-- **FR-014** (Ubicuo): Las pantallas de la ola 2 deben seguir funcionando y viéndose coherentes dentro del armazón nuevo sin modificar sus archivos.
+- **FR-014** (Ubicuo): Las pantallas de la ola 2 se rediseñan en el PR de integración conservando su comportamiento y los textos y nombres accesibles existentes, salvo los que cada commit RED declara con su antes y después.
 - **FR-015** (No deseado): Si un dato del prototipo no lo entrega la API, entonces no se debe mostrar ni calcular en el cliente.
 
 ## Success Criteria *(mandatory)*
@@ -120,23 +126,23 @@ Reglas en formato EARS.
 
 **Visuales**
 
-- **SC-001**: A 320 px de ancho ninguna pantalla de la ola 1 tiene scroll horizontal.
+- **SC-001**: A 320 px de ancho ninguna pantalla rediseñada tiene scroll horizontal.
 - **SC-002**: En pantallas de 1280 px o más, el contenido usa hasta 1180 px de ancho además de la barra lateral.
-- **SC-003**: Todas las fechas de las pantallas de la ola 1 se leen como dd/mm/aaaa.
+- **SC-003**: Todas las fechas de las pantallas rediseñadas se leen como dd/mm/aaaa.
 - **SC-004**: Todo el recorrido (navegar, cambiar de proyecto, abrir y cerrar el cajón, cerrar sesión, mostrar la contraseña) se completa solo con teclado y con foco visible en cada paso.
 - **SC-005**: Texto y controles cumplen contraste AA (4,5:1 texto normal, 3:1 texto grande y bordes de controles).
 
 **No regresión**
 
-- **SC-006**: Todas las pruebas de componente existentes siguen en verde sin debilitarse. Solo se reemplazan dos, atadas al diseño anterior: la que exigía que las pestañas pasaran de línea a 600 px (ahora verifica que la barra lateral no ocupa ancho en pantallas angostas) y la espera por el texto «Ruta actual» (ahora espera otra señal del cambio de proyecto, con la misma aserción).
+- **SC-006**: Las pruebas de componente existentes no se debilitan. Se modifican las que están atadas al diseño anterior (textos, estructura, formato de fechas, orden, nombre accesible del selector, etc.); **cada una está declarada con su antes → después en el mensaje del commit RED (o del merge) que la toca y resumida en la descripción del PR**. Las pruebas de las historias integradas desde `main` (#321 a #326) solo se adaptan al DOM nuevo, con la misma declaración. Lo único que pierde cobertura de texto es la ayuda de «Criterios de aceptación», que ahora es la del editor de Markdown de #326.
 - **SC-007**: Se conservan los roles y nombres accesibles: lista «Proyecto», navegación «Secciones del proyecto», botón «Cerrar sesión», enlace «Nuevo proyecto», y el título de cada pantalla.
-- **SC-008**: Ningún PR de la ola 1 modifica archivos de las pantallas de la ola 2.
+- **SC-008**: Los cambios de otras historias que tocan pantallas de la ola 2 (#321 a #326) se integran en la rama conservando su comportamiento; cada conflicto se resolvió con la regla «queda el markup del rediseño y se reinyecta lo de `main`» y está anotado en el mensaje del merge.
 
 ## Assumptions
 
 - No hay cambios de backend ni de modelo de datos: no se toca `MODELO-DE-DATOS.md`.
 - Los tokens de color anteriores quedan como alias de los nuevos hasta que la ola 2 migre sus pantallas; quitarlos es parte de la ola 2.
-- La tipografía usa fuentes del sistema; no se cargan fuentes externas.
-- El Dashboard mantiene su gráfico actual; solo cambia su estilo.
+- La tipografía es **Inter autoalojada** (woff2 propio con licencia OFL-1.1, incluido en el repositorio); no se piden fuentes a servidores externos ni se agregan dependencias.
+- El Dashboard cambia su presentación: eje con marcas 0 / mitad / techo, valores sobre las barras, indicadores de Horas y Defectos sin barras y un decimal. Los cálculos de las métricas no cambian.
 - BDD: al ser frontend, los escenarios se automatizan como pruebas de componente (Principio III de la constitución). Los cambios solo de estilos no llevan ciclo RED/GREEN; los de estructura, etiquetas o comportamiento sí.
 - Cada PR usa «Refs #230»; el issue queda abierto hasta la ola 2.
