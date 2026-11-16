@@ -35,8 +35,9 @@ Con Node 24 listo:
 
    La terminal muestra `listening on :8080`. Para cargar un proyecto y un Sprint
    de ejemplo, usá los comandos de
-   [`docs/curl-frontend-sprint-2.md`](../docs/curl-frontend-sprint-2.md) y
-   anotá los `id` que devuelve.
+   [`docs/curl-frontend-sprint-2.md`](../docs/curl-frontend-sprint-2.md). No
+   hace falta anotar los `id` para abrir las pantallas: el proyecto aparece en
+   «Mis proyectos».
 
 2. Levantar el frontend, desde esta carpeta (`web/`):
 
@@ -47,9 +48,14 @@ Con Node 24 listo:
 
    La terminal muestra la dirección, normalmente `http://localhost:5173`.
 
-3. Abrir `http://localhost:5173`. La página `/` lista «Mis proyectos» y el
-   selector de la barra lateral permite cambiar de proyecto. También podés
-   entrar directo a `http://localhost:5173/projects/<id>` si conocés el `id`.
+3. Abrir `http://localhost:5173`. Todas las páginas, salvo el ingreso y el
+   registro, piden sesión: sin ella, `/` lleva primero a `/ingresar`. Ahí
+   ingresás con tu usuario o, si no tenés cuenta, seguís el enlace
+   «Registrate» a `/registro`. Si cargaste los datos de ejemplo, podés
+   ingresar con el usuario que creaste en esos comandos (por ejemplo `ana`).
+   Después del ingreso, la página `/` lista «Mis proyectos» y el selector de
+   la barra lateral permite cambiar de proyecto. También podés entrar directo
+   a `http://localhost:5173/projects/<id>` si conocés el `id`.
 
 ### Otros comandos
 
@@ -66,8 +72,8 @@ Antes de abrir un Pull Request tienen que pasar los tres.
 El navegador no puede llamar directamente al backend (el backend no tiene CORS,
 el permiso que necesita un navegador para llamar a otra dirección). Por eso, en
 desarrollo, el servidor de Vite hace de intermediario. Está configurado en
-`vite.config.ts` para las direcciones que empiezan con `/backlog`, `/projects` y
-`/sprints`, y decide según lo que pide quien llama:
+`vite.config.ts` para las direcciones que empiezan con `/auth`, `/backlog`,
+`/defectos`, `/demo`, `/projects`, `/sprints` y `/users`, y decide según lo que pide quien llama:
 
 - Si la llamada pide **JSON** (`Accept: application/json`), la reenvía al backend
   en `http://localhost:8080`.
@@ -152,18 +158,20 @@ export function Component() {
 **2. Agregar una línea en `src/rutas.tsx`**, dentro de la lista `children` de la
 ruta `projects/:id` (la que contiene las secciones del proyecto, como
 `proyecto/*`, `backlog/*`, `sprints/*` y `status/*`; el archivo tiene otra
-lista `children` más afuera, que no es esa), **después de la línea de
-`status/*`**:
+lista `children` más afuera, que no es esa), **al final de esa lista**:
 
 ```tsx
 { path: 'ejemplo/*', lazy: () => import('./features/ejemplo') },
 ```
 
 **3. Agregar una línea en `src/navegacion.ts`** para que aparezca en el menú,
-**después de la línea de `status`**:
+**al final de la lista**. Cada entrada lleva un `icono`, obligatorio: tiene que
+ser uno de los nombres definidos en `src/compartido/componentes/Icono.tsx`
+(tipo `NombreIcono`). Si tu pantalla necesita un icono nuevo, se pide y se
+agrega en la base:
 
 ```ts
-{ ruta: 'ejemplo', texto: 'Ejemplo' },
+{ ruta: 'ejemplo', texto: 'Ejemplo', icono: 'carpeta' },
 ```
 
 Eso es todo: fuera de tu carpeta cambian solo esas dos líneas. Si dos personas
