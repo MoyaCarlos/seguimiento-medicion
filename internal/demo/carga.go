@@ -46,6 +46,14 @@ type Resumen struct {
 	Rondas         int   `json:"rondas_votacion"`
 	Votos          int   `json:"votos"`
 	Defectos       int   `json:"defectos"`
+
+	ProyectosAdicionales      int `json:"proyectos_adicionales,omitempty"`
+	HistoriasAdicionales      int `json:"historias_adicionales,omitempty"`
+	SprintsAdicionales        int `json:"sprints_adicionales,omitempty"`
+	RegistrosHorasAdicionales int `json:"registros_horas_adicionales,omitempty"`
+	RondasAdicionales         int `json:"rondas_adicionales,omitempty"`
+	VotosAdicionales          int `json:"votos_adicionales,omitempty"`
+	DefectosAdicionales       int `json:"defectos_adicionales,omitempty"`
 }
 
 // carga es el estado compartido entre los bloques de una misma transacción.
@@ -111,6 +119,7 @@ var bloquesDemo = []bloque{
 	bloqueHoras,
 	bloqueVotacion,
 	bloqueDefectos,
+	bloqueProyectosAdicionales,
 }
 
 // Cargador carga el proyecto de demostración en una sola transacción.
