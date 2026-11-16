@@ -170,7 +170,9 @@ Redactados en formato EARS (Ubicuo / Evento / Estado / No deseado / Opcional).
 - El backend de la spec 012 está implementado y no se modifica; sus rechazos incluyen, además de 400 y 404, 403 (sin permiso) y 409 (votación ya iniciada), todos con un campo `mensaje`.
 - No hay inicio de sesión: se elige quién actúa entre los integrantes del proyecto (selector).
 - Se llega a la pantalla con un botón «Votar» en cada historia del Product Backlog, que navega a una ruta nueva del proyecto.
-- La vista se actualiza manualmente con el botón «Actualizar», sin consulta periódica automática.
+- La vista se actualiza manualmente con el botón «Actualizar». Desde #225 (spec 051) también
+  hay sondeo automático cada 5 segundos mientras la ronda está abierta y la pestaña visible;
+  se pausa con la pestaña oculta, la ronda revelada o una acción en curso.
 - Los textos de la interfaz están en español, como el resto de la aplicación.
 - Abrir nuevas rondas, comparar diferencias y registrar la estimación acordada son HU-14 y quedan fuera de alcance.
 

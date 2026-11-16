@@ -25,9 +25,13 @@
 
 **Decision**: un único estado `enviando` bloquea las tres acciones y las cartas mientras hay un pedido en curso (mismo patrón que `EstadoHistoria`).
 
-## R6 — Sin polling
+## R6 — Sin polling (decisión original)
 
 **Decision**: botón «Actualizar» (clarify). Descartado el sondeo periódico por YAGNI.
+
+**Actualización (#225, spec 051)**: se agregó polling cada 5 segundos en `useVotacion`,
+pausado con la pestaña oculta, la ronda revelada o una acción en curso. El botón «Actualizar»
+se conserva como refresco manual.
 
 ## R7 — Aislamiento
 
