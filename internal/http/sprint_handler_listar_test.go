@@ -14,7 +14,7 @@ import (
 func peticionListarSprints(id string) *nethttp.Request {
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/sprints", nil)
 	req.SetPathValue("id", id)
-	return req
+	return conSesionDe(req, anaDePrueba)
 }
 
 func TestSprintHandler_Listar_DevuelveLosSprintsDelProyecto(t *testing.T) {

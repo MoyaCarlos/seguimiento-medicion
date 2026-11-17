@@ -16,9 +16,13 @@ func NewListarIntegrantes(proyectos repository.ProjectRepository) *ListarIntegra
 	return &ListarIntegrantes{proyectos: proyectos}
 }
 
-// Ejecutar verifica que el proyecto exista y devuelve sus integrantes.
-func (s *ListarIntegrantes) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+// Ejecutar verifica que el proyecto exista, que consultanteID lo integre y
+// devuelve sus integrantes.
+func (s *ListarIntegrantes) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) ([]domain.Member, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return nil, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return nil, err
 	}
 	return s.proyectos.ListarIntegrantes(ctx, proyectoID)

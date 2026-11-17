@@ -18,9 +18,12 @@ func NewCalcularMetricas(proyectos repository.ProjectRepository, datos repositor
 	return &CalcularMetricas{proyectos: proyectos, datos: datos}
 }
 
-func (s *CalcularMetricas) Ejecutar(ctx context.Context, proyectoID int64) (domain.MetricasProyecto, error) {
+func (s *CalcularMetricas) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) (domain.MetricasProyecto, error) {
 	proyecto, err := s.proyectos.ObtenerPorID(ctx, proyectoID)
 	if err != nil {
+		return domain.MetricasProyecto{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return domain.MetricasProyecto{}, err
 	}
 	datos, err := s.datos.ListarDatosSprintsFinalizados(ctx, proyectoID)

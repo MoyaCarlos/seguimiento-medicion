@@ -114,11 +114,15 @@ func (h *VotacionHandler) AbrirRonda(w nethttp.ResponseWriter, r *nethttp.Reques
 
 // Historial atiende GET /backlog/{id}/votacion/rondas.
 func (h *VotacionHandler) Historial(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := h.historiaDeRuta(w, r)
 	if !ok {
 		return
 	}
-	historial, err := h.historial.Ejecutar(r.Context(), id)
+	historial, err := h.historial.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

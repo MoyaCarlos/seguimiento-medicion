@@ -21,10 +21,10 @@ func (f *fakeDatosMetricas) ListarDatosSprintsFinalizados(_ context.Context, pro
 
 func TestCalcularMetricas_UsaLasHorasPorStoryPointDelProyecto(t *testing.T) {
 	horas := 4.0
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, HorasPorStoryPoint: &horas}}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: {ID: 1, HorasPorStoryPoint: &horas}}}
 	datos := &fakeDatosMetricas{datos: []domain.DatosMetricasSprint{{SprintID: 7, Numero: 1, HistoriasCompletadas: 1, SPCompletados: 5}}}
 
-	metricas, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 1)
+	metricas, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -44,10 +44,10 @@ func TestCalcularMetricas_UsaLasHorasPorStoryPointDelProyecto(t *testing.T) {
 }
 
 func TestCalcularMetricas_ProyectoSinHorasPorStoryPoint(t *testing.T) {
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: {ID: 1}}}
 	datos := &fakeDatosMetricas{datos: []domain.DatosMetricasSprint{{SprintID: 7, SPCompletados: 5}}}
 
-	metricas, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 1)
+	metricas, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -61,10 +61,10 @@ func TestCalcularMetricas_ProyectoSinHorasPorStoryPoint(t *testing.T) {
 }
 
 func TestCalcularMetricas_ProyectoInexistente(t *testing.T) {
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{}}
 	datos := &fakeDatosMetricas{}
 
-	_, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 99)
+	_, err := NewCalcularMetricas(proyectos, datos).Ejecutar(context.Background(), 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -75,10 +75,10 @@ func TestCalcularMetricas_ProyectoInexistente(t *testing.T) {
 }
 
 func TestCalcularMetricas_PropagaElErrorDelRepositorio(t *testing.T) {
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1}}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: {ID: 1}}}
 	falla := errors.New("falla de lectura")
 
-	_, err := NewCalcularMetricas(proyectos, &fakeDatosMetricas{err: falla}).Ejecutar(context.Background(), 1)
+	_, err := NewCalcularMetricas(proyectos, &fakeDatosMetricas{err: falla}).Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if !errors.Is(err, falla) {
 		t.Fatalf("se esperaba la falla de lectura, se obtuvo %v", err)

@@ -89,12 +89,13 @@ func TestPertenencia_UnNoIntegranteRecibe403EnElPanelLaVotacionYLasEscrituras(t 
 	}
 }
 
-// Límite conocido de HU-21: con sesión, un no integrante puede leer los demás
-// datos del proyecto.
-func TestPertenencia_UnNoIntegrantePuedeLeerLosDemasDatos(t *testing.T) {
+// Un no integrante con sesión tampoco puede leer los demás datos del proyecto
+// (antes: 200, límite conocido de HU-21; el recorrido completo está en
+// TestLecturaDeProyecto_SoloLosIntegrantesLeen).
+func TestPertenencia_UnNoIntegranteNoPuedeLeerLosDemasDatos(t *testing.T) {
 	c := proyectoDeAna(t)
 	for _, ruta := range []string{"/projects/1/backlog", "/projects/1/sprints", "/projects/1/defectos", "/backlog/1", "/backlog/1/horas"} {
-		c.esperar("diego", http.MethodGet, ruta, "", http.StatusOK)
+		c.esperar("diego", http.MethodGet, ruta, "", http.StatusForbidden)
 	}
 }
 

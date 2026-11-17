@@ -27,12 +27,16 @@ func NewReporteHandler(generar *service.GenerarReporte, pdf generadorReportes) *
 
 // Sprint atiende GET /sprints/{id}/reporte.
 func (h *ReporteHandler) Sprint(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	reporte, err := h.generar.EjecutarSprint(r.Context(), id, time.Now())
+	reporte, err := h.generar.EjecutarSprint(r.Context(), id, actor, time.Now())
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -48,12 +52,16 @@ func (h *ReporteHandler) Sprint(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // Proyecto atiende GET /projects/{id}/reporte.
 func (h *ReporteHandler) Proyecto(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	reporte, err := h.generar.EjecutarProyecto(r.Context(), id, time.Now())
+	reporte, err := h.generar.EjecutarProyecto(r.Context(), id, actor, time.Now())
 	if err != nil {
 		escribirError(w, err)
 		return

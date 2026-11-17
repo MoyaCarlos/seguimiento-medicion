@@ -21,7 +21,7 @@ func TestConsultarAvanceHistorias_AgrupaLasHistoriasDelRepositorio(t *testing.T)
 	}}
 	servicio := NewConsultarAvanceHistorias(proyectosConUno(), historias, &fakeListadorSprints{})
 
-	avance, err := servicio.Ejecutar(context.Background(), 1)
+	avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -48,9 +48,9 @@ func TestConsultarAvanceHistorias_AgrupaLasHistoriasDelRepositorio(t *testing.T)
 func TestConsultarAvanceHistorias_ProyectoInexistente(t *testing.T) {
 	historias := &fakeAvanceHistoriasRepository{}
 	sprints := &fakeListadorSprints{}
-	servicio := NewConsultarAvanceHistorias(&fakeProjectRepository{}, historias, sprints)
+	servicio := NewConsultarAvanceHistorias(&fakeProjectRepository{lectorEnTodos: true}, historias, sprints)
 
-	avance, err := servicio.Ejecutar(context.Background(), 999)
+	avance, err := servicio.Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -70,7 +70,7 @@ func TestConsultarAvanceHistorias_PropagaLosErroresSinDatosParciales(t *testing.
 		historias *fakeAvanceHistoriasRepository
 	}{
 		"del repositorio de proyectos": {
-			proyectos: &fakeProjectRepository{err: falla},
+			proyectos: &fakeProjectRepository{err: falla, lectorEnTodos: true},
 			historias: &fakeAvanceHistoriasRepository{},
 		},
 		"del repositorio de historias": {
@@ -82,7 +82,7 @@ func TestConsultarAvanceHistorias_PropagaLosErroresSinDatosParciales(t *testing.
 		t.Run(nombre, func(t *testing.T) {
 			servicio := NewConsultarAvanceHistorias(c.proyectos, c.historias, &fakeListadorSprints{})
 
-			avance, err := servicio.Ejecutar(context.Background(), 1)
+			avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 			if !errors.Is(err, falla) {
 				t.Fatalf("se esperaba el error de la lectura, se obtuvo %v", err)
@@ -112,7 +112,7 @@ func TestConsultarAvanceHistorias_InformaElSprintDeCadaHistoria(t *testing.T) {
 	}}
 	servicio := NewConsultarAvanceHistorias(proyectosConUno(), historias, sprints)
 
-	avance, err := servicio.Ejecutar(context.Background(), 1)
+	avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -139,7 +139,7 @@ func TestConsultarAvanceHistorias_ErrorAlListarLosSprintsSePropagaSinDatosParcia
 	servicio := NewConsultarAvanceHistorias(proyectosConUno(), &fakeAvanceHistoriasRepository{},
 		&fakeListadorSprints{err: falla})
 
-	avance, err := servicio.Ejecutar(context.Background(), 1)
+	avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if !errors.Is(err, falla) {
 		t.Fatalf("se esperaba el error del listado, se obtuvo %v", err)
@@ -156,7 +156,7 @@ func TestConsultarAvanceHistorias_SprintAusenteDelListadoEsErrorInternoYNoNoEnco
 	sprints := &fakeListadorSprints{sprints: []domain.Sprint{{ID: 10, ProyectoID: 1, Numero: 1}}}
 	servicio := NewConsultarAvanceHistorias(proyectosConUno(), historias, sprints)
 
-	avance, err := servicio.Ejecutar(context.Background(), 1)
+	avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err == nil {
 		t.Fatal("se esperaba un error por el Sprint ausente del listado")
@@ -175,7 +175,7 @@ func TestConsultarAvanceHistorias_SprintAusenteDelListadoEsErrorInternoYNoNoEnco
 func TestConsultarAvanceHistorias_ProyectoSinHistoriasTieneLosTresGruposYLosTotalesEnCero(t *testing.T) {
 	servicio := NewConsultarAvanceHistorias(proyectosConUno(), &fakeAvanceHistoriasRepository{}, &fakeListadorSprints{})
 
-	avance, err := servicio.Ejecutar(context.Background(), 1)
+	avance, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)

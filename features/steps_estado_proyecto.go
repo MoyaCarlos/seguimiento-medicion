@@ -185,12 +185,12 @@ func (p *pasosEstado) sinSprintsIniciados() error {
 }
 
 func (p *pasosEstado) consultoEstado() error {
-	p.estado, p.err = p.consulta.Ejecutar(context.Background(), p.base.proyectoID, time.Now())
+	p.estado, p.err = p.consulta.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID), time.Now())
 	return nil
 }
 
 func (p *pasosEstado) consultoEstadoDeInexistente() error {
-	p.estado, p.err = p.consulta.Ejecutar(context.Background(), 999, time.Now())
+	p.estado, p.err = p.consulta.Ejecutar(context.Background(), 999, 0, time.Now())
 	return nil
 }
 

@@ -18,7 +18,7 @@ func TestConsultarEsfuerzoReal_DevuelveDetalleYTotal(t *testing.T) {
 		{ID: 4, HistoriaID: 3, Minutos: 120, Fecha: time.Date(2026, 10, 10, 0, 0, 0, 0, time.UTC)},
 	}}
 
-	esfuerzo, err := NewConsultarEsfuerzoReal(historias, horas).Ejecutar(context.Background(), 3)
+	esfuerzo, err := NewConsultarEsfuerzoReal(historias, horas, integrantesConActor{}).Ejecutar(context.Background(), 3, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -38,7 +38,7 @@ func TestConsultarEsfuerzoReal_DevuelveDetalleYTotal(t *testing.T) {
 func TestConsultarEsfuerzoReal_HistoriaSinCargas(t *testing.T) {
 	historias := &fakeHistoriaRepository{historias: map[int64]domain.BacklogItem{3: {ID: 3, ProyectoID: 1}}}
 
-	esfuerzo, err := NewConsultarEsfuerzoReal(historias, &fakeRegistroHorasRepository{}).Ejecutar(context.Background(), 3)
+	esfuerzo, err := NewConsultarEsfuerzoReal(historias, &fakeRegistroHorasRepository{}, integrantesConActor{}).Ejecutar(context.Background(), 3, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -52,7 +52,7 @@ func TestConsultarEsfuerzoReal_HistoriaInexistente(t *testing.T) {
 	historias := &fakeHistoriaRepository{historias: map[int64]domain.BacklogItem{}}
 	horas := &fakeRegistroHorasRepository{}
 
-	_, err := NewConsultarEsfuerzoReal(historias, horas).Ejecutar(context.Background(), 99)
+	_, err := NewConsultarEsfuerzoReal(historias, horas, integrantesConActor{}).Ejecutar(context.Background(), 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Errorf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)

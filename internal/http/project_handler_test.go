@@ -598,7 +598,7 @@ func TestProjectHandler_ListarIntegrantes(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/members", nil)
 	req.SetPathValue("id", idStr)
-	handler.ListarIntegrantes(rec, req)
+	handler.ListarIntegrantes(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d", rec.Code)
@@ -622,7 +622,7 @@ func TestProjectHandler_ObtenerEstado_EnCurso(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/"+idStr+"/status", nil)
 	req.SetPathValue("id", idStr)
-	handler.ObtenerEstado(rec, req)
+	handler.ObtenerEstado(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("se esperaba 200, se obtuvo %d (%s)", rec.Code, rec.Body.String())
@@ -642,7 +642,7 @@ func TestProjectHandler_ObtenerEstado_Inexistente(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/projects/999/status", nil)
 	req.SetPathValue("id", "999")
-	handler.ObtenerEstado(rec, req)
+	handler.ObtenerEstado(rec, conSesionDe(req, anaDePrueba))
 
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("se esperaba 404, se obtuvo %d", rec.Code)
@@ -657,7 +657,7 @@ func TestProjectHandler_ObtenerEstado_IDInvalido(t *testing.T) {
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, "/projects/"+id+"/status", nil)
 			req.SetPathValue("id", id)
-			handler.ObtenerEstado(rec, req)
+			handler.ObtenerEstado(rec, conSesionDe(req, anaDePrueba))
 
 			if rec.Code != http.StatusBadRequest {
 				t.Fatalf("se esperaba 400, se obtuvo %d", rec.Code)

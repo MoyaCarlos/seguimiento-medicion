@@ -5,7 +5,7 @@ Característica: Permisos por rol (segregación de funciones)
   Quiero que las acciones de gestión del proyecto solo las pueda hacer el Scrum Master
   Para que el resto del equipo participe sin alterar la planificación
 
-  # Categorías: normal (1, 5), alternativo (8, 9), límite (6, 7), error (2, 3, 4).
+  # Categorías: normal (1, 5, 11), alternativo (8, 9), límite (6, 7), error (2, 3, 4, 10).
 
   Antecedentes:
     Dado que inicié sesión como "ana"
@@ -76,3 +76,33 @@ Característica: Permisos por rol (segregación de funciones)
     Y que inicié sesión como "eva"
     Cuando consulto mis proyectos
     Entonces recibo una lista vacía
+
+  Esquema del escenario: 10. Un usuario que no integra el proyecto no puede consultar sus datos
+    Dado que "Tienda" tiene un Sprint
+    Y que "diego" tiene cuenta y no integra "Tienda"
+    Y que inicié sesión como "diego"
+    Cuando intento consultar <datos> de "<origen>"
+    Entonces el sistema responde 403 con el mensaje "No sos integrante de este proyecto"
+
+    Ejemplos:
+      | datos                    | origen  |
+      | el estado                | Tienda  |
+      | el equipo                | Tienda  |
+      | el backlog               | Tienda  |
+      | los Sprints              | Tienda  |
+      | los defectos             | Tienda  |
+      | las métricas             | Tienda  |
+      | el historial             | Tienda  |
+      | el avance                | Tienda  |
+      | el reporte               | Tienda  |
+      | el backlog del Sprint    | Tienda  |
+      | el reporte del Sprint    | Tienda  |
+      | la historia              | Carrito |
+      | las horas                | Carrito |
+      | las rondas de votación   | Carrito |
+
+  Escenario: 11. Un integrante sigue consultando los datos de su proyecto
+    Dado que "Tienda" tiene un Sprint
+    Y que inicié sesión como "bruno"
+    Cuando intento consultar el backlog de "Tienda"
+    Entonces el sistema entrega los datos

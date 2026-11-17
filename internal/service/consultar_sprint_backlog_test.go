@@ -40,9 +40,9 @@ func TestConsultarSprintBacklog_DevuelveLasHistoriasEnElOrdenDelRepositorio(t *t
 		{ID: 2, ProyectoID: 1, Titulo: "Iniciar sesión", Prioridad: domain.PrioridadMust},
 		{ID: 1, ProyectoID: 1, Titulo: "Cerrar sesión", Prioridad: domain.PrioridadShould},
 	}
-	servicio := NewConsultarSprintBacklog(sprints, &fakeHistoriasDeSprintRepository{historias: esperadas})
+	servicio := NewConsultarSprintBacklog(sprints, &fakeHistoriasDeSprintRepository{historias: esperadas}, integrantesConActor{})
 
-	historias, err := servicio.Ejecutar(context.Background(), sprint.ID)
+	historias, err := servicio.Ejecutar(context.Background(), sprint.ID, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -60,9 +60,9 @@ func TestConsultarSprintBacklog_DevuelveLasHistoriasEnElOrdenDelRepositorio(t *t
 func TestConsultarSprintBacklog_SinHistoriasDevuelveVacio(t *testing.T) {
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sembrarSprintPendiente(t, sprints, 1)
-	servicio := NewConsultarSprintBacklog(sprints, &fakeHistoriasDeSprintRepository{})
+	servicio := NewConsultarSprintBacklog(sprints, &fakeHistoriasDeSprintRepository{}, integrantesConActor{})
 
-	historias, err := servicio.Ejecutar(context.Background(), sprint.ID)
+	historias, err := servicio.Ejecutar(context.Background(), sprint.ID, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -73,9 +73,9 @@ func TestConsultarSprintBacklog_SinHistoriasDevuelveVacio(t *testing.T) {
 
 func TestConsultarSprintBacklog_SprintInexistenteNoConsultaElListado(t *testing.T) {
 	historias := &fakeHistoriasDeSprintRepository{}
-	servicio := NewConsultarSprintBacklog(repository.NewSprintRepositoryEnMemoria(), historias)
+	servicio := NewConsultarSprintBacklog(repository.NewSprintRepositoryEnMemoria(), historias, integrantesConActor{})
 
-	_, err := servicio.Ejecutar(context.Background(), 99)
+	_, err := servicio.Ejecutar(context.Background(), 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrSprintNoEncontrado, se obtuvo %v", err)

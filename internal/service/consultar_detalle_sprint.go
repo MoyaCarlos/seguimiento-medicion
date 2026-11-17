@@ -25,10 +25,13 @@ func NewConsultarDetalleSprint(proyectos buscadorProyectos, sprints obtenedorSpr
 	return &ConsultarDetalleSprint{proyectos: proyectos, sprints: sprints, metricas: metricas, historial: historial}
 }
 
-// Ejecutar valida en orden: proyecto existente, Sprint existente y del
-// proyecto, Sprint finalizado. Recién entonces lee el detalle.
-func (s *ConsultarDetalleSprint) Ejecutar(ctx context.Context, proyectoID, sprintID int64) (domain.DetalleSprint, error) {
+// Ejecutar valida en orden: proyecto existente, consultante integrante, Sprint
+// existente y del proyecto, Sprint finalizado. Recién entonces lee el detalle.
+func (s *ConsultarDetalleSprint) Ejecutar(ctx context.Context, proyectoID, sprintID, consultanteID int64) (domain.DetalleSprint, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return domain.DetalleSprint{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return domain.DetalleSprint{}, err
 	}
 	sprint, err := s.sprints.ObtenerPorID(ctx, sprintID)
@@ -42,7 +45,7 @@ func (s *ConsultarDetalleSprint) Ejecutar(ctx context.Context, proyectoID, sprin
 		return domain.DetalleSprint{}, err
 	}
 
-	metricasProyecto, err := s.metricas.Ejecutar(ctx, proyectoID)
+	metricasProyecto, err := s.metricas.Ejecutar(ctx, proyectoID, consultanteID)
 	if err != nil {
 		return domain.DetalleSprint{}, err
 	}

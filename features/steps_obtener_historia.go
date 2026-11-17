@@ -10,16 +10,15 @@ import (
 
 	"github.com/cucumber/godog"
 
-	apphttp "github.com/MoyaCarlos/seguimiento-medicion/internal/http"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
-	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
 
 // obtenerHistoriaContext ejercita GET /backlog/{id} sobre una base real en memoria.
 type obtenerHistoriaContext struct {
-	db  *sql.DB
-	mux *http.ServeMux
-	rec *httptest.ResponseRecorder
+	db     *sql.DB
+	mux    *http.ServeMux
+	rec    *httptest.ResponseRecorder
+	lector lectorDeEscenario
 }
 
 func (c *obtenerHistoriaContext) iniciar() error {
@@ -31,13 +30,11 @@ func (c *obtenerHistoriaContext) iniciar() error {
 	if err := repository.AplicarMigraciones(context.Background(), db); err != nil {
 		return err
 	}
-	backlog := repository.NewSQLiteBacklogRepository(db)
-	handler := apphttp.NewBacklogHandler(nil, nil, service.NewObtenerHistoria(backlog), nil, nil, nil)
 	c.db = db
-	c.mux = http.NewServeMux()
-	c.mux.HandleFunc("GET /backlog/{id}", handler.Obtener)
+	c.mux = apiDeEscenario(db)
 	c.rec = nil
-	return nil
+	c.lector, err = nuevoLector(db)
+	return err
 }
 
 func (c *obtenerHistoriaContext) cerrar() error {
@@ -53,7 +50,10 @@ func (c *obtenerHistoriaContext) crearProyecto() error {
 	_, err := c.db.Exec(
 		`INSERT OR IGNORE INTO proyectos (id, nombre, descripcion, fecha_inicio, fecha_fin, creado_en)
 		 VALUES (1, 'Proyecto', '', NULL, NULL, '2026-10-26T00:00:00Z')`)
-	return err
+	if err != nil {
+		return err
+	}
+	return c.lector.integra(1)
 }
 
 func (c *obtenerHistoriaContext) crearSprint(id int) error {
@@ -98,7 +98,7 @@ func (c *obtenerHistoriaContext) historiaCompletada(id int, fecha string, sprint
 
 func (c *obtenerHistoriaContext) consultoHistoria(id string) error {
 	c.rec = httptest.NewRecorder()
-	c.mux.ServeHTTP(c.rec, httptest.NewRequest(http.MethodGet, "/backlog/"+id, nil))
+	c.mux.ServeHTTP(c.rec, c.lector.pedir(httptest.NewRequest(http.MethodGet, "/backlog/"+id, nil)))
 	return nil
 }
 

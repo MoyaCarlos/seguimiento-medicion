@@ -30,7 +30,7 @@ func TestConsultarHistorialSprints_UneCadaSprintFinalizadoConSusMetricas(t *test
 	}}}
 	servicio := NewConsultarHistorialSprints(metricas, sprints)
 
-	historial, err := servicio.Ejecutar(context.Background(), 1)
+	historial, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -53,7 +53,7 @@ func TestConsultarHistorialSprints_SinSprintsFinalizadosDevuelveSliceVacio(t *te
 	sprints := &fakeListadorSprints{sprints: []domain.Sprint{sprintParaHistorial(10, 1, domain.SprintActivo)}}
 	servicio := NewConsultarHistorialSprints(&fakeCalculadorMetricas{}, sprints)
 
-	historial, err := servicio.Ejecutar(context.Background(), 1)
+	historial, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -67,7 +67,7 @@ func TestConsultarHistorialSprints_ProyectoInexistenteNoListaSprints(t *testing.
 	sprints := &fakeListadorSprints{}
 	servicio := NewConsultarHistorialSprints(&fakeCalculadorMetricas{err: domain.ErrProyectoNoEncontrado}, sprints)
 
-	_, err := servicio.Ejecutar(context.Background(), 99)
+	_, err := servicio.Ejecutar(context.Background(), 99, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -81,7 +81,7 @@ func TestConsultarHistorialSprints_SprintFinalizadoSinMetricasEsErrorInterno(t *
 	sprints := &fakeListadorSprints{sprints: []domain.Sprint{sprintParaHistorial(10, 1, domain.SprintFinalizado)}}
 	servicio := NewConsultarHistorialSprints(&fakeCalculadorMetricas{}, sprints)
 
-	historial, err := servicio.Ejecutar(context.Background(), 1)
+	historial, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err == nil {
 		t.Fatal("se esperaba un error por la inconsistencia entre fuentes")
@@ -107,7 +107,7 @@ func TestConsultarHistorialSprints_PropagaErroresDeLectura(t *testing.T) {
 	}
 	for _, c := range casos {
 		t.Run(c.nombre, func(t *testing.T) {
-			historial, err := NewConsultarHistorialSprints(c.metricas, c.sprints).Ejecutar(context.Background(), 1)
+			historial, err := NewConsultarHistorialSprints(c.metricas, c.sprints).Ejecutar(context.Background(), 1, actorDePrueba)
 
 			if !errors.Is(err, falla) {
 				t.Fatalf("se esperaba la falla de lectura, se obtuvo %v", err)

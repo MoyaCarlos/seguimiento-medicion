@@ -22,13 +22,13 @@ func (f historiasDeSprintFake) ListarPorSprint(context.Context, int64) ([]domain
 }
 
 func nuevoSprintHandlerConBacklog(sprints repository.SprintRepository, historias repository.HistoriasDeSprintRepository) *SprintHandler {
-	return NewSprintHandler(nil, nil, nil, nil, service.NewConsultarSprintBacklog(sprints, historias), sprints)
+	return NewSprintHandler(nil, nil, nil, nil, service.NewConsultarSprintBacklog(sprints, historias, &stubProjectRepository{miembros: anaIntegra(1)}), sprints)
 }
 
 func peticionConsultarBacklog(id string) *nethttp.Request {
 	req := httptest.NewRequest(nethttp.MethodGet, "/sprints/"+id+"/backlog", nil)
 	req.SetPathValue("id", id)
-	return req
+	return conSesionDe(req, anaDePrueba)
 }
 
 func TestSprintHandler_ConsultarBacklog_DevuelveLasHistoriasDelSprint(t *testing.T) {

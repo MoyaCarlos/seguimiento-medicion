@@ -39,6 +39,11 @@ type pasosAsignacion struct {
 	errConsulta      error
 }
 
+// consultante es quien lee los datos del proyecto: su Scrum Master.
+func (p *pasosAsignacion) consultante() int64 {
+	return scrumMasterDelProyecto(p.base.db, p.base.proyectoID)
+}
+
 func (p *pasosAsignacion) preparar() {
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.sprints = repository.NewSQLiteSprintRepository(p.base.db)
@@ -48,7 +53,7 @@ func (p *pasosAsignacion) preparar() {
 	p.cerrar = service.NewCerrarSprint(p.sprints, p.backlog, proyectos)
 	p.asignar = service.NewAsignarHistoriaASprint(p.backlog, p.sprints, repository.NewSQLiteProjectRepository(p.base.db))
 	p.consultar = service.NewConsultarProductBacklog(proyectos, p.backlog)
-	p.consultarBacklog = service.NewConsultarSprintBacklog(p.sprints, p.backlog)
+	p.consultarBacklog = service.NewConsultarSprintBacklog(p.sprints, p.backlog, proyectos)
 	p.estadoPlan, p.planID, p.otroSprint = "", 0, 0
 	p.historias = map[string]int64{}
 	p.antes, p.err = domain.BacklogItem{}, nil
@@ -228,7 +233,7 @@ func (p *pasosAsignacion) yaNoEstaEnProductBacklog(titulo string) error {
 	if err := p.sinErrorDeAsignacion(); err != nil {
 		return err
 	}
-	historias, err := p.consultar.Ejecutar(context.Background(), p.base.proyectoID)
+	historias, err := p.consultar.Ejecutar(context.Background(), p.base.proyectoID, p.consultante())
 	if err != nil {
 		return err
 	}
@@ -344,12 +349,12 @@ func (p *pasosAsignacion) consultarBacklogDelSprint(estado string) error {
 	if !ok {
 		return fmt.Errorf("no existe un Sprint en estado %q", estado)
 	}
-	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), sprintID)
+	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), sprintID, p.consultante())
 	return nil
 }
 
 func (p *pasosAsignacion) consultarBacklogDeSprintInexistente(id int) error {
-	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), int64(id))
+	p.sprintBacklog, p.errConsulta = p.consultarBacklog.Ejecutar(context.Background(), int64(id), p.consultante())
 	return nil
 }
 

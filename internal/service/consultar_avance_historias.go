@@ -19,11 +19,15 @@ func NewConsultarAvanceHistorias(proyectos buscadorProyectos, historias reposito
 	return &ConsultarAvanceHistorias{proyectos: proyectos, historias: historias, sprints: sprints}
 }
 
-// Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe, sin
-// leer historias ni Sprints. Una historia que apunta a un Sprint ausente del
+// Ejecutar responde domain.ErrProyectoNoEncontrado si el proyecto no existe y
+// domain.ErrNoEsIntegrante si consultanteID no lo integra, sin leer historias
+// ni Sprints. Una historia que apunta a un Sprint ausente del
 // listado es un error interno, no un 404.
-func (s *ConsultarAvanceHistorias) Ejecutar(ctx context.Context, proyectoID int64) (domain.AvanceHistorias, error) {
+func (s *ConsultarAvanceHistorias) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) (domain.AvanceHistorias, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return domain.AvanceHistorias{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return domain.AvanceHistorias{}, err
 	}
 	historias, err := s.historias.ListarPorProyecto(ctx, proyectoID)

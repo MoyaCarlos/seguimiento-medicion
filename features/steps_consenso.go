@@ -220,7 +220,7 @@ func (c *pasosConsenso) votacionNoIniciada() error {
 }
 
 func (c *pasosConsenso) consultaElHistorial() (err error) {
-	c.consulta, err = c.historial.Ejecutar(context.Background(), c.votacion.historiaID)
+	c.consulta, err = c.historial.Ejecutar(context.Background(), c.votacion.historiaID, scrumMasterDelProyecto(c.votacion.base.db, c.votacion.proyectoID))
 	return err
 }
 

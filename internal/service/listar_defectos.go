@@ -17,8 +17,11 @@ func NewListarDefectos(proyectos repository.ProjectRepository, defectos reposito
 	return &ListarDefectos{proyectos: proyectos, defectos: defectos}
 }
 
-func (s *ListarDefectos) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.DefectoDetalle, error) {
+func (s *ListarDefectos) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) ([]domain.DefectoDetalle, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return nil, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return nil, err
 	}
 	return s.defectos.ListarPorProyecto(ctx, proyectoID)

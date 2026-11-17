@@ -21,6 +21,14 @@ func rolEnProyecto(ctx context.Context, integrantes repository.IntegrantesReposi
 	return "", false, nil
 }
 
+// exigirLector es el único guardia de las lecturas con alcance de proyecto:
+// exige integrarlo (ErrNoEsIntegrante, 403), esté abierto o cerrado. Los
+// servicios de lectura lo llaman después de comprobar que el recurso existe
+// (404 antes que 403, como el panel del proyecto).
+func exigirLector(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {
+	return verificarIntegrante(ctx, integrantes, proyectoID, usuarioID)
+}
+
 // exigirIntegrante es el guardia de las escrituras de un integrante (HU-21):
 // exige integrar el proyecto (403) y que el proyecto esté abierto (409, #300).
 func exigirIntegrante(ctx context.Context, integrantes repository.IntegrantesRepository, proyectoID, usuarioID int64) error {

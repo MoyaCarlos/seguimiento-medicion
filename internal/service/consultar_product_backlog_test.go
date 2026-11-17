@@ -9,14 +9,14 @@ import (
 )
 
 func proyectosConUno() *fakeProjectRepository {
-	return &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}}
+	return &fakeProjectRepository{proyectos: map[int64]domain.Project{1: {ID: 1, Nombre: "Proyecto"}}, lectorEnTodos: true}
 }
 
 func TestConsultarProductBacklog_ProyectoInexistente(t *testing.T) {
 	backlog := &fakeProductBacklogRepository{}
-	servicio := NewConsultarProductBacklog(&fakeProjectRepository{}, backlog)
+	servicio := NewConsultarProductBacklog(&fakeProjectRepository{lectorEnTodos: true}, backlog)
 
-	_, err := servicio.Ejecutar(context.Background(), 999)
+	_, err := servicio.Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -33,7 +33,7 @@ func TestConsultarProductBacklog_DevuelveLasHistoriasDelRepositorio(t *testing.T
 	}
 	servicio := NewConsultarProductBacklog(proyectosConUno(), &fakeProductBacklogRepository{historias: esperadas})
 
-	historias, err := servicio.Ejecutar(context.Background(), 1)
+	historias, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestConsultarProductBacklog_DevuelveLasHistoriasDelRepositorio(t *testing.T
 func TestConsultarProductBacklog_SinHistoriasDevuelveVacio(t *testing.T) {
 	servicio := NewConsultarProductBacklog(proyectosConUno(), &fakeProductBacklogRepository{})
 
-	historias, err := servicio.Ejecutar(context.Background(), 1)
+	historias, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -64,7 +64,7 @@ func TestConsultarProductBacklog_PropagaErrorDelRepositorio(t *testing.T) {
 	errPersistencia := errors.New("falla de persistencia")
 	servicio := NewConsultarProductBacklog(proyectosConUno(), &fakeProductBacklogRepository{err: errPersistencia})
 
-	_, err := servicio.Ejecutar(context.Background(), 1)
+	_, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if !errors.Is(err, errPersistencia) {
 		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)

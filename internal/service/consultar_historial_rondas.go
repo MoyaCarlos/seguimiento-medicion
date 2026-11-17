@@ -29,8 +29,8 @@ type VotoRevelado struct {
 	Valor     int
 }
 
-// ConsultarHistorialRondas arma el historial de rondas de una historia. No pide
-// quién consulta: esos votos ya son visibles para todo el equipo.
+// ConsultarHistorialRondas arma el historial de rondas de una historia. Esos
+// votos son visibles para todo el equipo, pero solo para el equipo.
 type ConsultarHistorialRondas struct {
 	historias  repository.HistoriaRepository
 	proyectos  repository.ProjectRepository
@@ -41,9 +41,12 @@ func NewConsultarHistorialRondas(historias repository.HistoriaRepository, proyec
 	return &ConsultarHistorialRondas{historias: historias, proyectos: proyectos, votaciones: votaciones}
 }
 
-func (s *ConsultarHistorialRondas) Ejecutar(ctx context.Context, historiaID int64) (HistorialRondas, error) {
+func (s *ConsultarHistorialRondas) Ejecutar(ctx context.Context, historiaID, consultanteID int64) (HistorialRondas, error) {
 	historia, err := s.historias.ObtenerPorID(ctx, historiaID)
 	if err != nil {
+		return HistorialRondas{}, err
+	}
+	if err := exigirLector(ctx, s.proyectos, historia.ProyectoID, consultanteID); err != nil {
 		return HistorialRondas{}, err
 	}
 	rondas, err := s.votaciones.ListarRondasReveladas(ctx, historia.ID)

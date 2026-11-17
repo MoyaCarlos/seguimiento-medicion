@@ -32,7 +32,7 @@ func consultarAvance(t *testing.T, historias *stubAvanceHistorias, id string) *h
 func consultarAvanceConSprints(t *testing.T, historias *stubAvanceHistorias, sprints stubSprintsDelHistorial, id string) *httptest.ResponseRecorder {
 	t.Helper()
 	proyectos := repository.NewProjectRepositoryEnMemoria()
-	proyecto, err := proyectos.Guardar(context.Background(), domain.Project{Nombre: "Proyecto"})
+	proyecto, err := proyectos.GuardarConScrumMaster(context.Background(), domain.Project{Nombre: "Proyecto"}, anaDePrueba.ID)
 	if err != nil {
 		t.Fatalf("no se pudo sembrar el proyecto: %v", err)
 	}
@@ -43,7 +43,7 @@ func consultarAvanceConSprints(t *testing.T, historias *stubAvanceHistorias, spr
 	req := httptest.NewRequest(nethttp.MethodGet, "/projects/"+id+"/avance", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, historias, sprints)).Consultar(rec, req)
+	NewAvanceHandler(service.NewConsultarAvanceHistorias(proyectos, historias, sprints)).Consultar(rec, conSesionDe(req, anaDePrueba))
 	return rec
 }
 

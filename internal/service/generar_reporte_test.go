@@ -107,7 +107,7 @@ func nuevoGenerarReporteDePrueba(
 func TestGenerarReporte_EjecutarSprint_DevuelveTodasLasSecciones(t *testing.T) {
 	ctx := context.Background()
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto", HorasPorStoryPoint: punteroADecimal(4)}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	finalizado := sprintDeReporte(t, sprints, 1, "Cerrar el carrito", domain.SprintFinalizado)
 
@@ -130,7 +130,7 @@ func TestGenerarReporte_EjecutarSprint_DevuelveTodasLasSecciones(t *testing.T) {
 	}
 
 	sut := nuevoGenerarReporteDePrueba(proyectos, sprints, &fakeProductBacklogRepository{}, historias, arrastradas, datos, defectos)
-	reporte, err := sut.EjecutarSprint(ctx, finalizado.ID, fechaDeReporte(20))
+	reporte, err := sut.EjecutarSprint(ctx, finalizado.ID, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -167,7 +167,7 @@ func TestGenerarReporte_EjecutarSprint_DevuelveTodasLasSecciones(t *testing.T) {
 
 func TestGenerarReporte_EjecutarSprint_MarcaCompletadaSoloSiElEstadoEsCompletada(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	finalizado := sprintDeReporte(t, sprints, 1, "Cerrar el carrito", domain.SprintFinalizado)
 
@@ -182,7 +182,7 @@ func TestGenerarReporte_EjecutarSprint_MarcaCompletadaSoloSiElEstadoEsCompletada
 		proyectos, sprints, &fakeProductBacklogRepository{}, historias,
 		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
 	)
-	reporte, err := sut.EjecutarSprint(context.Background(), finalizado.ID, fechaDeReporte(20))
+	reporte, err := sut.EjecutarSprint(context.Background(), finalizado.ID, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -209,7 +209,7 @@ func TestGenerarReporte_EjecutarSprint_Inexistente(t *testing.T) {
 		&fakeDefectoRepository{},
 	)
 
-	_, err := sut.EjecutarSprint(context.Background(), 999, fechaDeReporte(20))
+	_, err := sut.EjecutarSprint(context.Background(), 999, actorDePrueba, fechaDeReporte(20))
 
 	if !errors.Is(err, domain.ErrSprintNoEncontrado) {
 		t.Fatalf("se esperaba ErrSprintNoEncontrado, se obtuvo %v", err)
@@ -220,7 +220,7 @@ func TestGenerarReporte_EjecutarSprint_NoFinalizado(t *testing.T) {
 	for _, estado := range []domain.EstadoSprint{domain.SprintPendiente, domain.SprintActivo} {
 		t.Run(string(estado), func(t *testing.T) {
 			proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-			proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+			proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 			sprints := repository.NewSprintRepositoryEnMemoria()
 			sprint := sprintDeReporte(t, sprints, 1, "Objetivo", estado)
 			historias := &fakeHistoriasDeSprintRepository{}
@@ -228,7 +228,7 @@ func TestGenerarReporte_EjecutarSprint_NoFinalizado(t *testing.T) {
 			datos := &fakeDatosMetricasRepository{}
 
 			sut := nuevoGenerarReporteDePrueba(proyectos, sprints, &fakeProductBacklogRepository{}, historias, arrastradas, datos, &fakeDefectoRepository{})
-			_, err := sut.EjecutarSprint(context.Background(), sprint.ID, fechaDeReporte(20))
+			_, err := sut.EjecutarSprint(context.Background(), sprint.ID, actorDePrueba, fechaDeReporte(20))
 
 			if !errors.Is(err, domain.ErrSprintNoFinalizadoParaReporte) {
 				t.Fatalf("se esperaba ErrSprintNoFinalizadoParaReporte, se obtuvo %v", err)
@@ -243,7 +243,7 @@ func TestGenerarReporte_EjecutarSprint_NoFinalizado(t *testing.T) {
 
 func TestGenerarReporte_EjecutarSprint_SinHorasNiDefectos(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto", HorasPorStoryPoint: punteroADecimal(4)}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sprintDeReporte(t, sprints, 1, "Vacío", domain.SprintFinalizado)
 
@@ -254,7 +254,7 @@ func TestGenerarReporte_EjecutarSprint_SinHorasNiDefectos(t *testing.T) {
 		&fakeDefectoRepository{},
 	)
 
-	reporte, err := sut.EjecutarSprint(context.Background(), sprint.ID, fechaDeReporte(20))
+	reporte, err := sut.EjecutarSprint(context.Background(), sprint.ID, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -271,7 +271,7 @@ func TestGenerarReporte_EjecutarSprint_SinHorasNiDefectos(t *testing.T) {
 
 func TestGenerarReporte_EjecutarSprint_DefectoDeOtroSprintSoloResuelto(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	anterior := sprintDeReporte(t, sprints, 1, "Anterior", domain.SprintFinalizado)
 	actual := sprintDeReporte(t, sprints, 1, "Actual", domain.SprintFinalizado)
@@ -287,7 +287,7 @@ func TestGenerarReporte_EjecutarSprint_DefectoDeOtroSprintSoloResuelto(t *testin
 		&fakeDatosMetricasRepository{}, defectos,
 	)
 
-	reporte, err := sut.EjecutarSprint(context.Background(), actual.ID, fechaDeReporte(20))
+	reporte, err := sut.EjecutarSprint(context.Background(), actual.ID, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -305,7 +305,7 @@ func TestGenerarReporte_EjecutarSprint_DefectoDeOtroSprintSoloResuelto(t *testin
 
 func TestGenerarReporte_EjecutarSprint_PropagaErrores(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sprintDeReporte(t, sprints, 1, "Objetivo", domain.SprintFinalizado)
 	falla := errors.New("falla de lectura")
@@ -316,7 +316,7 @@ func TestGenerarReporte_EjecutarSprint_PropagaErrores(t *testing.T) {
 		&fakeDatosMetricasRepository{err: falla}, &fakeDefectoRepository{},
 	)
 
-	_, err := sut.EjecutarSprint(context.Background(), sprint.ID, fechaDeReporte(20))
+	_, err := sut.EjecutarSprint(context.Background(), sprint.ID, actorDePrueba, fechaDeReporte(20))
 	if !errors.Is(err, falla) {
 		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)
 	}
@@ -357,7 +357,8 @@ func TestGenerarReporte_EjecutarProyecto_DevuelveTodasLasSecciones(t *testing.T)
 	}}
 
 	sut := nuevoGenerarReporteDePrueba(proyectos, sprints, backlog, historias, arrastradas, datos, defectos)
-	reporte, err := sut.EjecutarProyecto(ctx, 1, fechaDeReporte(20))
+	// Ana (id 2) es la única integrante del equipo del reporte.
+	reporte, err := sut.EjecutarProyecto(ctx, 1, 2, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -404,7 +405,7 @@ func TestGenerarReporte_EjecutarProyecto_DevuelveTodasLasSecciones(t *testing.T)
 
 func TestGenerarReporte_EjecutarProyecto_NoMarcaCompletadasEnBacklogNiSprintActivo(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	activo := sprintDeReporte(t, sprints, 1, "Pulir la entrega", domain.SprintActivo)
 
@@ -419,7 +420,7 @@ func TestGenerarReporte_EjecutarProyecto_NoMarcaCompletadasEnBacklogNiSprintActi
 		proyectos, sprints, backlog, historias, &fakeArrastradasRepository{},
 		&fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
 	)
-	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -437,7 +438,7 @@ func TestGenerarReporte_EjecutarProyecto_NoMarcaCompletadasEnBacklogNiSprintActi
 
 func TestGenerarReporte_EjecutarProyecto_SinSprintActivo(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sprintDeReporte(t, sprints, 1, "Objetivo", domain.SprintFinalizado)
 
@@ -448,7 +449,7 @@ func TestGenerarReporte_EjecutarProyecto_SinSprintActivo(t *testing.T) {
 		&fakeDefectoRepository{},
 	)
 
-	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -459,7 +460,7 @@ func TestGenerarReporte_EjecutarProyecto_SinSprintActivo(t *testing.T) {
 
 func TestGenerarReporte_EjecutarProyecto_SinHistoriasEnElBacklog(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	sprint := sprintDeReporte(t, sprints, 1, "Objetivo", domain.SprintFinalizado)
 
@@ -470,7 +471,7 @@ func TestGenerarReporte_EjecutarProyecto_SinHistoriasEnElBacklog(t *testing.T) {
 		&fakeDefectoRepository{},
 	)
 
-	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -481,7 +482,7 @@ func TestGenerarReporte_EjecutarProyecto_SinHistoriasEnElBacklog(t *testing.T) {
 
 func TestGenerarReporte_EjecutarProyecto_SinSprintsFinalizados(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	sprints := repository.NewSprintRepositoryEnMemoria()
 	activo := sprintDeReporte(t, sprints, 1, "Primer Sprint", domain.SprintActivo)
 
@@ -495,7 +496,7 @@ func TestGenerarReporte_EjecutarProyecto_SinSprintsFinalizados(t *testing.T) {
 		&fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
 	)
 
-	reporte, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	reporte, err := sut.EjecutarProyecto(context.Background(), 1, actorDePrueba, fechaDeReporte(20))
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -520,7 +521,7 @@ func TestGenerarReporte_EjecutarProyecto_Inexistente(t *testing.T) {
 		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
 	)
 
-	_, err := sut.EjecutarProyecto(context.Background(), 999, fechaDeReporte(20))
+	_, err := sut.EjecutarProyecto(context.Background(), 999, actorDePrueba, fechaDeReporte(20))
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -529,7 +530,7 @@ func TestGenerarReporte_EjecutarProyecto_Inexistente(t *testing.T) {
 
 func TestGenerarReporte_EjecutarProyecto_PropagaErrores(t *testing.T) {
 	proyecto := domain.Project{ID: 1, Nombre: "Proyecto"}
-	proyectos := &fakeProjectRepository{proyectos: map[int64]domain.Project{1: proyecto}}
+	proyectos := &fakeProjectRepository{lectorEnTodos: true, proyectos: map[int64]domain.Project{1: proyecto}}
 	falla := errors.New("falla del backlog")
 
 	sut := nuevoGenerarReporteDePrueba(
@@ -538,7 +539,7 @@ func TestGenerarReporte_EjecutarProyecto_PropagaErrores(t *testing.T) {
 		&fakeArrastradasRepository{}, &fakeDatosMetricasRepository{}, &fakeDefectoRepository{},
 	)
 
-	_, err := sut.EjecutarProyecto(context.Background(), 1, fechaDeReporte(20))
+	_, err := sut.EjecutarProyecto(context.Background(), 1, actorDePrueba, fechaDeReporte(20))
 	if !errors.Is(err, falla) {
 		t.Fatalf("se esperaba el error del repositorio, se obtuvo %v", err)
 	}

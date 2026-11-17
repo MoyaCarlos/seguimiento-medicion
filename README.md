@@ -99,13 +99,14 @@ documentados en [`AGENTS.md`](./AGENTS.md).
 Todas las rutas de la API, salvo el registro, el ingreso, la salud y la demo, piden
 sesión (`Authorization: Bearer <token>`); la identidad sale siempre de la sesión. Las
 acciones de gestión (Sprints, votación, editar el proyecto y configurar el equipo) son
-del Scrum Master, y las escrituras del resto exigen integrar el proyecto. El detalle
+del Scrum Master, y tanto las escrituras como las lecturas de datos de un proyecto
+exigen integrarlo (403 «No sos integrante de este proyecto» si no). El detalle
 está en [`specs/042-hu-21-permisos-por-rol/`](./specs/042-hu-21-permisos-por-rol/).
 
-- **Límite conocido de lectura:** con sesión, una persona que no integra un proyecto
-  todavía puede leer sus historias, Sprints, horas, defectos, métricas, historial y
-  reportes si conoce sus identificadores. La pertenencia solo se exige al leer el panel
-  del proyecto (`GET /projects/{id}`) y la votación (`GET /backlog/{id}/votacion`).
+- **Lectura solo para integrantes:** con sesión, una persona que no integra un proyecto
+  recibe 403 al leer cualquiera de sus datos (estado, equipo, historias, Sprints, horas,
+  defectos, métricas, historial, avance, votación y reportes), también por la API con los
+  identificadores a la vista. Quien integra el proyecto lee igual, esté abierto o cerrado.
 - **Fuera de alcance:** el traspaso del rol de Scrum Master a otra persona.
 
 ## Documentación del proyecto

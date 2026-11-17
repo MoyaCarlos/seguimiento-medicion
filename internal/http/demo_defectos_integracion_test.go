@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/demo"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/service"
 )
@@ -30,8 +31,12 @@ func TestDemo_LosDefectosCargadosSeListanEnElProyecto25(t *testing.T) {
 	mux := nethttp.NewServeMux()
 	mux.HandleFunc("GET /projects/{id}/defectos", NewDefectoHandler(nil, nil, nil, listar).Listar)
 
+	var carlos int64
+	if err := db.QueryRow(`SELECT id FROM usuarios WHERE nombre_normalizado = 'carlos.moya'`).Scan(&carlos); err != nil {
+		t.Fatal(err)
+	}
 	respuesta := httptest.NewRecorder()
-	mux.ServeHTTP(respuesta, httptest.NewRequest("GET", "/projects/25/defectos", nil))
+	mux.ServeHTTP(respuesta, conSesionDe(httptest.NewRequest("GET", "/projects/25/defectos", nil), domain.User{ID: carlos}))
 
 	if respuesta.Code != nethttp.StatusOK {
 		t.Fatalf("estado %d, se esperaba 200", respuesta.Code)

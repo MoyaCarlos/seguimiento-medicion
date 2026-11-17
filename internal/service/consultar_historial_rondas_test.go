@@ -23,7 +23,7 @@ func TestConsultarHistorialRondas_SoloRondasReveladas(t *testing.T) {
 	votaciones := votacionConRondaUnoReveladaYDosAbierta()
 	servicio := NewConsultarHistorialRondas(historias(historiaDelBacklog()), equipoDelProyecto(), votaciones)
 
-	historial, err := servicio.Ejecutar(context.Background(), 3)
+	historial, err := servicio.Ejecutar(context.Background(), 3, carlos)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -47,7 +47,7 @@ func TestConsultarHistorialRondas_SoloRondasReveladas(t *testing.T) {
 func TestConsultarHistorialRondas_SinRondasReveladas(t *testing.T) {
 	servicio := NewConsultarHistorialRondas(historias(historiaDelBacklog()), equipoDelProyecto(), votacionAbierta(votosDe(3)...))
 
-	historial, err := servicio.Ejecutar(context.Background(), 3)
+	historial, err := servicio.Ejecutar(context.Background(), 3, carlos)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -60,7 +60,7 @@ func TestConsultarHistorialRondas_SinRondasReveladas(t *testing.T) {
 func TestConsultarHistorialRondas_HistoriaInexistente(t *testing.T) {
 	servicio := NewConsultarHistorialRondas(historias(), equipoDelProyecto(), votacionRevelada(votosDe(3)...))
 
-	if _, err := servicio.Ejecutar(context.Background(), 999); !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
+	if _, err := servicio.Ejecutar(context.Background(), 999, carlos); !errors.Is(err, domain.ErrHistoriaNoEncontrada) {
 		t.Errorf("se esperaba ErrHistoriaNoEncontrada, se obtuvo %v", err)
 	}
 }
@@ -71,7 +71,7 @@ func TestConsultarHistorialRondas_NoEscribe(t *testing.T) {
 	repoHistorias := historias(historiaDelBacklog())
 	servicio := NewConsultarHistorialRondas(repoHistorias, equipoDelProyecto(), votaciones)
 
-	if _, err := servicio.Ejecutar(context.Background(), 3); err != nil {
+	if _, err := servicio.Ejecutar(context.Background(), 3, carlos); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
 

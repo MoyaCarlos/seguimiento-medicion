@@ -28,11 +28,15 @@ func NewSprintHandler(crear *service.CrearSprint, iniciar *service.IniciarSprint
 
 // Listar atiende GET /projects/{id}/sprints.
 func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := idDeRuta(w, r)
 	if !ok {
 		return
 	}
-	sprints, err := h.consultar.Ejecutar(r.Context(), id)
+	sprints, err := h.consultar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -46,11 +50,15 @@ func (h *SprintHandler) Listar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarBacklog atiende GET /sprints/{id}/backlog.
 func (h *SprintHandler) ConsultarBacklog(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, ok := idDeRuta(w, r)
 	if !ok {
 		return
 	}
-	historias, err := h.consultarBacklog.Ejecutar(r.Context(), id)
+	historias, err := h.consultarBacklog.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

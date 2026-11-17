@@ -67,8 +67,8 @@ func nuevoEscenarioHorasHTTP(t *testing.T) escenarioHorasHTTP {
 	horas := &stubRegistroHorasRepository{}
 	handler := NewHorasHandler(
 		service.NewImputarHoras(historias, sprints, integrantes, horas),
-		service.NewObtenerHistoria(historias),
-		service.NewConsultarEsfuerzoReal(historias, horas),
+		service.NewObtenerHistoria(historias, integrantes),
+		service.NewConsultarEsfuerzoReal(historias, horas, integrantes),
 	)
 	return escenarioHorasHTTP{handler: handler, horas: horas, sprint: sprint}
 }
@@ -268,7 +268,7 @@ func (e escenarioHorasHTTP) consultar(id string) *httptest.ResponseRecorder {
 	req := httptest.NewRequest(nethttp.MethodGet, "/backlog/"+id+"/horas", nil)
 	req.SetPathValue("id", id)
 	rec := httptest.NewRecorder()
-	e.handler.ConsultarEsfuerzo(rec, req)
+	e.handler.ConsultarEsfuerzo(rec, comoActor(req, 2))
 	return rec
 }
 

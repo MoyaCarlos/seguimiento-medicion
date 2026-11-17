@@ -57,7 +57,7 @@ func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 				proyecto.FechaInicio = &inicio
 				proyecto.FechaFin = &fin
 			}
-			guardado, err := proyectos.Guardar(ctx, proyecto)
+			guardado, err := proyectos.GuardarConScrumMaster(ctx, proyecto, actorDePrueba)
 			if err != nil {
 				t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 			}
@@ -68,7 +68,7 @@ func TestObtenerEstadoProyecto_Ejecutar(t *testing.T) {
 			}
 
 			servicio := NewObtenerEstadoProyecto(proyectos, sprints)
-			got, err := servicio.Ejecutar(ctx, guardado.ID, c.ahora)
+			got, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, c.ahora)
 			if err != nil {
 				t.Fatalf("no se esperaba error: %v", err)
 			}
@@ -101,7 +101,7 @@ func TestObtenerEstadoProyecto_FinalizadoYPendiente(t *testing.T) {
 			if c.conInicio {
 				proyecto.FechaInicio = &inicioFuturo
 			}
-			guardado, err := proyectos.Guardar(ctx, proyecto)
+			guardado, err := proyectos.GuardarConScrumMaster(ctx, proyecto, actorDePrueba)
 			if err != nil {
 				t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 			}
@@ -112,7 +112,7 @@ func TestObtenerEstadoProyecto_FinalizadoYPendiente(t *testing.T) {
 			}
 
 			servicio := NewObtenerEstadoProyecto(proyectos, sprints)
-			got, err := servicio.Ejecutar(ctx, guardado.ID, ahora)
+			got, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, ahora)
 			if err != nil {
 				t.Fatalf("no se esperaba error: %v", err)
 			}
@@ -129,7 +129,7 @@ func TestObtenerEstadoProyecto_Ejecutar_ProyectoInexistente(t *testing.T) {
 		repository.NewSprintRepositoryEnMemoria(),
 	)
 
-	_, err := servicio.Ejecutar(context.Background(), 999, time.Now())
+	_, err := servicio.Ejecutar(context.Background(), 999, actorDePrueba, time.Now())
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
@@ -141,14 +141,14 @@ func TestObtenerEstadoProyecto_RecalculaOnDemand(t *testing.T) {
 	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	guardado, err := proyectos.Guardar(ctx, domain.Project{Nombre: "Proyecto", FechaInicio: &inicio, FechaFin: &fin})
+	guardado, err := proyectos.GuardarConScrumMaster(ctx, domain.Project{Nombre: "Proyecto", FechaInicio: &inicio, FechaFin: &fin}, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 	}
 	servicio := NewObtenerEstadoProyecto(proyectos, sprints)
 
 	antes := inicio.AddDate(0, 0, -1)
-	estadoAntes, err := servicio.Ejecutar(ctx, guardado.ID, antes)
+	estadoAntes, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, antes)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -157,7 +157,7 @@ func TestObtenerEstadoProyecto_RecalculaOnDemand(t *testing.T) {
 	}
 
 	dentro := time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC)
-	estadoDentro, err := servicio.Ejecutar(ctx, guardado.ID, dentro)
+	estadoDentro, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, dentro)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -175,7 +175,7 @@ func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 	fin := time.Date(2026, 11, 30, 0, 0, 0, 0, time.UTC)
 	proyectos := repository.NewProjectRepositoryEnMemoria()
 	sprints := repository.NewSprintRepositoryEnMemoria()
-	guardado, err := proyectos.Guardar(ctx, domain.Project{Nombre: "Proyecto", FechaInicio: &inicio, FechaFin: &fin})
+	guardado, err := proyectos.GuardarConScrumMaster(ctx, domain.Project{Nombre: "Proyecto", FechaInicio: &inicio, FechaFin: &fin}, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 	}
@@ -186,7 +186,7 @@ func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 	servicio := NewObtenerEstadoProyecto(proyectos, sprints)
 	ahora := civilLocal(2026, 12, 1)
 
-	estado, err := servicio.Ejecutar(ctx, guardado.ID, ahora)
+	estado, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, ahora)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestObtenerEstadoProyecto_ReflejaCambioDeSprint(t *testing.T) {
 	if err := sprints.Actualizar(ctx, sprint); err != nil {
 		t.Fatalf("no se esperaba error al finalizar el Sprint: %v", err)
 	}
-	estado, err = servicio.Ejecutar(ctx, guardado.ID, ahora)
+	estado, err = servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, ahora)
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
@@ -243,7 +243,7 @@ func TestObtenerEstadoProyecto_EsSoloLectura(t *testing.T) {
 	ctx := context.Background()
 	proyectosBase := repository.NewProjectRepositoryEnMemoria()
 	sprintsBase := repository.NewSprintRepositoryEnMemoria()
-	guardado, err := proyectosBase.Guardar(ctx, domain.Project{Nombre: "Proyecto"})
+	guardado, err := proyectosBase.GuardarConScrumMaster(ctx, domain.Project{Nombre: "Proyecto"}, actorDePrueba)
 	if err != nil {
 		t.Fatalf("no se esperaba error al guardar el proyecto: %v", err)
 	}
@@ -255,10 +255,10 @@ func TestObtenerEstadoProyecto_EsSoloLectura(t *testing.T) {
 	sprints := &spySprintRepository{SprintRepository: sprintsBase}
 	servicio := NewObtenerEstadoProyecto(proyectos, sprints)
 
-	if _, err := servicio.Ejecutar(ctx, guardado.ID, time.Now()); err != nil {
+	if _, err := servicio.Ejecutar(ctx, guardado.ID, actorDePrueba, time.Now()); err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
 	}
-	if _, err := servicio.Ejecutar(ctx, 999, time.Now()); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
+	if _, err := servicio.Ejecutar(ctx, 999, actorDePrueba, time.Now()); !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba domain.ErrProyectoNoEncontrado, se obtuvo %v", err)
 	}
 

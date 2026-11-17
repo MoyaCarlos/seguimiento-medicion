@@ -92,7 +92,7 @@ func (h *ProjectHandler) Reabrir(w nethttp.ResponseWriter, r *nethttp.Request) {
 		escribirError(w, err)
 		return
 	}
-	estado, err := h.estado.Ejecutar(r.Context(), id, time.Now())
+	estado, err := h.estado.Ejecutar(r.Context(), id, actor, time.Now())
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -199,12 +199,16 @@ func (h *ProjectHandler) Obtener(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ObtenerEstado atiende GET /projects/{id}/status.
 func (h *ProjectHandler) ObtenerEstado(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
-	estado, err := h.estado.Ejecutar(r.Context(), id, time.Now())
+	estado, err := h.estado.Ejecutar(r.Context(), id, actor, time.Now())
 	if err != nil {
 		escribirError(w, err)
 		return
@@ -321,13 +325,17 @@ func (h *ProjectHandler) AsignarIntegrante(w nethttp.ResponseWriter, r *nethttp.
 
 // ListarIntegrantes atiende GET /projects/{id}/members.
 func (h *ProjectHandler) ListarIntegrantes(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	miembros, err := h.listarIntegrantes.Ejecutar(r.Context(), id)
+	miembros, err := h.listarIntegrantes.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

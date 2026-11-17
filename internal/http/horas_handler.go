@@ -62,13 +62,17 @@ func (h *HorasHandler) Imputar(w nethttp.ResponseWriter, r *nethttp.Request) {
 
 // ConsultarEsfuerzo atiende GET /backlog/{id}/horas.
 func (h *HorasHandler) ConsultarEsfuerzo(w nethttp.ResponseWriter, r *nethttp.Request) {
+	actor, ok := actorDeSesion(w, r)
+	if !ok {
+		return
+	}
 	id, err := parsearID(r.PathValue("id"))
 	if err != nil {
 		escribirError(w, err)
 		return
 	}
 
-	esfuerzo, err := h.consultar.Ejecutar(r.Context(), id)
+	esfuerzo, err := h.consultar.Ejecutar(r.Context(), id, actor)
 	if err != nil {
 		escribirError(w, err)
 		return

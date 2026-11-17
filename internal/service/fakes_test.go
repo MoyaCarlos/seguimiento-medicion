@@ -24,6 +24,9 @@ type fakeProjectRepository struct {
 	// bajas guarda la fecha de baja de cada vínculo {proyectoID, usuarioID}
 	// dado de baja (HU-16); sin entrada, el integrante está activo.
 	bajas map[[2]int64]time.Time
+	// lectorEnTodos hace que actorDePrueba integre cualquier proyecto: lo usan
+	// los tests de lectura que no prueban la pertenencia.
+	lectorEnTodos bool
 }
 
 // dadoDeBaja informa si el vínculo del usuario con el proyecto tiene baja.
@@ -186,14 +189,17 @@ func (f *fakeProjectRepository) reactivar(m domain.Membership) domain.Membership
 // nombre: el fake no conoce a los usuarios). Los dados de baja no figuran (HU-16).
 func (f *fakeProjectRepository) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
 	todos, err := f.ListarIntegrantesHistoricos(ctx, proyectoID)
-	if err != nil || todos == nil {
+	if err != nil || (todos == nil && !f.lectorEnTodos) {
 		return todos, err
 	}
-	activos := make([]domain.Member, 0, len(todos))
+	activos := make([]domain.Member, 0, len(todos)+1)
 	for _, m := range todos {
 		if !f.dadoDeBaja(proyectoID, m.UserID) {
 			activos = append(activos, m)
 		}
+	}
+	if f.lectorEnTodos {
+		activos = append(activos, domain.Member{UserID: actorDePrueba, ProjectID: proyectoID, Role: domain.RolProductBuilder})
 	}
 	return activos, nil
 }
@@ -765,7 +771,7 @@ type fakeCalculadorMetricas struct {
 	err       error
 }
 
-func (f *fakeCalculadorMetricas) Ejecutar(_ context.Context, _ int64) (domain.MetricasProyecto, error) {
+func (f *fakeCalculadorMetricas) Ejecutar(_ context.Context, _, _ int64) (domain.MetricasProyecto, error) {
 	return f.resultado, f.err
 }
 

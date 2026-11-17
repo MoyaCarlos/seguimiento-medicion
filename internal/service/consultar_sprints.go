@@ -5,10 +5,14 @@ import (
 	"sort"
 
 	"github.com/MoyaCarlos/seguimiento-medicion/internal/domain"
+	"github.com/MoyaCarlos/seguimiento-medicion/internal/repository"
 )
 
+// buscadorProyectos busca un proyecto y sabe quiénes lo integran, para que la
+// lectura de sus datos exija pertenencia.
 type buscadorProyectos interface {
 	ObtenerPorID(ctx context.Context, id int64) (domain.Project, error)
+	repository.IntegrantesRepository
 }
 
 type listadorSprints interface {
@@ -25,8 +29,11 @@ func NewConsultarSprints(proyectos buscadorProyectos, sprints listadorSprints) *
 	return &ConsultarSprints{proyectos: proyectos, sprints: sprints}
 }
 
-func (s *ConsultarSprints) Ejecutar(ctx context.Context, proyectoID int64) ([]domain.Sprint, error) {
+func (s *ConsultarSprints) Ejecutar(ctx context.Context, proyectoID, consultanteID int64) ([]domain.Sprint, error) {
 	if _, err := s.proyectos.ObtenerPorID(ctx, proyectoID); err != nil {
+		return nil, err
+	}
+	if err := exigirLector(ctx, s.proyectos, proyectoID, consultanteID); err != nil {
 		return nil, err
 	}
 	sprints, err := s.sprints.ListarPorProyecto(ctx, proyectoID)

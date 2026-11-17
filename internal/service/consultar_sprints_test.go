@@ -14,6 +14,12 @@ func (s stubBuscadorProyectos) ObtenerPorID(_ context.Context, id int64) (domain
 	return domain.Project{ID: id}, s.err
 }
 
+func (stubBuscadorProyectos) ListarIntegrantes(ctx context.Context, proyectoID int64) ([]domain.Member, error) {
+	return integrantesConActor{}.ListarIntegrantes(ctx, proyectoID)
+}
+
+func (stubBuscadorProyectos) ProyectoCerrado(context.Context, int64) (bool, error) { return false, nil }
+
 type stubListadorSprints struct {
 	sprints []domain.Sprint
 	err     error
@@ -28,7 +34,7 @@ func TestConsultarSprints_OrdenaPorID(t *testing.T) {
 		sprints: []domain.Sprint{{ID: 3}, {ID: 1}, {ID: 2}},
 	})
 
-	sprints, err := servicio.Ejecutar(context.Background(), 1)
+	sprints, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -46,7 +52,7 @@ func TestConsultarSprints_OrdenaPorID(t *testing.T) {
 func TestConsultarSprints_SinSprintsDevuelveArregloNoNulo(t *testing.T) {
 	servicio := NewConsultarSprints(stubBuscadorProyectos{}, stubListadorSprints{})
 
-	sprints, err := servicio.Ejecutar(context.Background(), 1)
+	sprints, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if err != nil {
 		t.Fatalf("no se esperaba error: %v", err)
@@ -62,7 +68,7 @@ func TestConsultarSprints_ProyectoInexistente(t *testing.T) {
 		stubListadorSprints{sprints: []domain.Sprint{{ID: 1}}},
 	)
 
-	_, err := servicio.Ejecutar(context.Background(), 999)
+	_, err := servicio.Ejecutar(context.Background(), 999, actorDePrueba)
 
 	if !errors.Is(err, domain.ErrProyectoNoEncontrado) {
 		t.Fatalf("se esperaba ErrProyectoNoEncontrado, se obtuvo %v", err)
@@ -73,7 +79,7 @@ func TestConsultarSprints_PropagaErrorDePersistencia(t *testing.T) {
 	errPersistencia := errors.New("fallo de persistencia")
 	servicio := NewConsultarSprints(stubBuscadorProyectos{}, stubListadorSprints{err: errPersistencia})
 
-	_, err := servicio.Ejecutar(context.Background(), 1)
+	_, err := servicio.Ejecutar(context.Background(), 1, actorDePrueba)
 
 	if !errors.Is(err, errPersistencia) {
 		t.Fatalf("se esperaba el error de persistencia, se obtuvo %v", err)

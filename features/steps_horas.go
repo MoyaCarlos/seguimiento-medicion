@@ -45,7 +45,7 @@ func (p *pasosHoras) preparar() {
 	sprints := repository.NewSQLiteSprintRepository(p.base.db)
 	proyectos := repository.NewSQLiteProjectRepository(p.base.db)
 	p.imputar = service.NewImputarHoras(p.historias, sprints, proyectos, p.horas)
-	p.consultar = service.NewConsultarEsfuerzoReal(p.historias, p.horas)
+	p.consultar = service.NewConsultarEsfuerzoReal(p.historias, p.horas, proyectos)
 	p.cerrar = service.NewCerrarSprint(sprints, p.historias, proyectos)
 	p.integrantes = map[string]int64{}
 	p.sprintActivo, p.sprintCerrado, p.historiaID, p.otraID = 0, 0, 0, 0
@@ -156,7 +156,7 @@ func (p *pasosHoras) imputo(integrante, horas string) error {
 }
 
 func (p *pasosHoras) totalActual(historiaID int64) (int, error) {
-	esfuerzo, err := p.consultar.Ejecutar(context.Background(), historiaID)
+	esfuerzo, err := p.consultar.Ejecutar(context.Background(), historiaID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	return esfuerzo.TotalMinutos, err
 }
 
@@ -363,7 +363,7 @@ func (p *pasosHoras) historiaTieneCargas(tabla *godog.Table) error {
 }
 
 func (p *pasosHoras) consultoEsfuerzoDe(historiaID int64) {
-	p.esfuerzo, p.err = p.consultar.Ejecutar(context.Background(), historiaID)
+	p.esfuerzo, p.err = p.consultar.Ejecutar(context.Background(), historiaID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 }
 
 func (p *pasosHoras) consultoEsfuerzo() error {

@@ -34,7 +34,7 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 	backlogHandler := apihttp.NewBacklogHandler(
 		service.NewCrearHistoriaBacklog(backlogRepo, proyectos),
 		service.NewConsultarProductBacklog(proyectos, backlogRepo),
-		service.NewObtenerHistoria(backlogRepo),
+		service.NewObtenerHistoria(backlogRepo, proyectos),
 		service.NewEditarHistoria(backlogRepo, sprintRepo, proyectos),
 		service.NewAsignarHistoriaASprint(backlogRepo, sprintRepo, proyectos),
 		service.NewCambiarEstadoHistoria(backlogRepo, sprintRepo, op.Ahora, proyectos),
@@ -58,20 +58,20 @@ func NuevoMux(db *sql.DB, op Opciones) *http.ServeMux {
 		service.NewIniciarSprint(sprintRepo, proyectos),
 		service.NewCerrarSprint(sprintRepo, backlogRepo, proyectos),
 		service.NewConsultarSprints(proyectos, sprintRepo),
-		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo),
+		service.NewConsultarSprintBacklog(sprintRepo, backlogRepo, proyectos),
 		sprintRepo,
 	)
 
 	horasRepo := repository.NewSQLiteRegistroHorasRepository(db)
 	horasHandler := apihttp.NewHorasHandler(
 		service.NewImputarHoras(backlogRepo, sprintRepo, proyectos, horasRepo),
-		service.NewObtenerHistoria(backlogRepo),
-		service.NewConsultarEsfuerzoReal(backlogRepo, horasRepo),
+		service.NewObtenerHistoria(backlogRepo, proyectos),
+		service.NewConsultarEsfuerzoReal(backlogRepo, horasRepo, proyectos),
 	)
 
 	votaciones := repository.NewSQLiteVotacionRepository(db)
 	votacionHandler := apihttp.NewVotacionHandler(
-		service.NewObtenerHistoria(backlogRepo),
+		service.NewObtenerHistoria(backlogRepo, proyectos),
 		service.NewVotar(backlogRepo, proyectos, votaciones),
 		service.NewConsultarVotacion(backlogRepo, proyectos, votaciones, domain.CoincidenciaExacta{}),
 		service.NewRevelarVotacion(backlogRepo, proyectos, votaciones),

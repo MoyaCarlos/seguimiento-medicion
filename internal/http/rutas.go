@@ -14,8 +14,12 @@ const (
 	Publica NivelRuta = iota
 	// SoloSesion exige sesión, sin pertenencia ni rol.
 	SoloSesion
-	// Lectura es un GET con sesión; la pertenencia solo la exigen el panel y la votación.
+	// Lectura es un GET con sesión, sin pertenencia: solo devuelve datos de la
+	// propia persona (GET /auth/yo, GET /projects, que lista solo sus proyectos).
 	Lectura
+	// LecturaDeProyecto es un GET con sesión que devuelve datos de un proyecto:
+	// exige ser integrante, también si el proyecto está cerrado (403 si no).
+	LecturaDeProyecto
 	// SesionIntegrante exige sesión y ser integrante del proyecto.
 	SesionIntegrante
 	// SesionScrumMaster exige sesión y ser el Scrum Master del proyecto.
@@ -63,48 +67,48 @@ func Rutas(h Handlers) []Ruta {
 
 		{"GET /projects", Lectura, h.Proyectos.Listar},
 		{"POST /projects", SoloSesion, h.Proyectos.Crear},
-		{"GET /projects/{id}", Lectura, h.Proyectos.Obtener},
-		{"GET /projects/{id}/status", Lectura, h.Proyectos.ObtenerEstado},
+		{"GET /projects/{id}", LecturaDeProyecto, h.Proyectos.Obtener},
+		{"GET /projects/{id}/status", LecturaDeProyecto, h.Proyectos.ObtenerEstado},
 		{"PUT /projects/{id}", SesionScrumMaster, h.Proyectos.Editar},
 		{"POST /projects/{id}/members", SesionScrumMaster, h.Proyectos.AsignarIntegrante},
 		{"DELETE /projects/{id}/members/{usuario_id}", SesionScrumMaster, h.Proyectos.QuitarIntegrante},
 		{"POST /projects/{id}/cerrar", SesionScrumMaster, h.Proyectos.Cerrar},
 		{"POST /projects/{id}/reabrir", SesionScrumMaster, h.Proyectos.Reabrir},
-		{"GET /projects/{id}/members", Lectura, h.Proyectos.ListarIntegrantes},
+		{"GET /projects/{id}/members", LecturaDeProyecto, h.Proyectos.ListarIntegrantes},
 
 		{"POST /backlog", SesionIntegrante, h.Backlog.Crear},
-		{"GET /projects/{id}/backlog", Lectura, h.Backlog.ConsultarBacklog},
+		{"GET /projects/{id}/backlog", LecturaDeProyecto, h.Backlog.ConsultarBacklog},
 		{"PUT /backlog/{id}", SesionIntegrante, h.Backlog.Editar},
-		{"GET /backlog/{id}", Lectura, h.Backlog.Obtener},
+		{"GET /backlog/{id}", LecturaDeProyecto, h.Backlog.Obtener},
 		{"PUT /backlog/{id}/sprint", SesionIntegrante, h.Backlog.AsignarSprint},
 		{"PUT /backlog/{id}/estado", SesionIntegrante, h.Backlog.CambiarEstado},
 		{"POST /backlog/{id}/horas", SesionIntegrante, h.Horas.Imputar},
-		{"GET /backlog/{id}/horas", Lectura, h.Horas.ConsultarEsfuerzo},
+		{"GET /backlog/{id}/horas", LecturaDeProyecto, h.Horas.ConsultarEsfuerzo},
 
-		{"GET /backlog/{id}/votacion", Lectura, h.Votacion.Consultar},
+		{"GET /backlog/{id}/votacion", LecturaDeProyecto, h.Votacion.Consultar},
 		{"POST /backlog/{id}/votacion", SesionScrumMaster, h.Votacion.Iniciar},
 		{"POST /backlog/{id}/votacion/votos", SesionIntegrante, h.Votacion.Votar},
 		{"POST /backlog/{id}/votacion/revelar", SesionScrumMaster, h.Votacion.Revelar},
 		{"POST /backlog/{id}/votacion/estimacion", SesionScrumMaster, h.Votacion.RegistrarEstimacion},
 		{"POST /backlog/{id}/votacion/rondas", SesionScrumMaster, h.Votacion.AbrirRonda},
-		{"GET /backlog/{id}/votacion/rondas", Lectura, h.Votacion.Historial},
+		{"GET /backlog/{id}/votacion/rondas", LecturaDeProyecto, h.Votacion.Historial},
 
 		{"POST /sprints", SesionScrumMaster, h.Sprints.Crear},
 		{"POST /sprints/{id}/iniciar", SesionScrumMaster, h.Sprints.Iniciar},
 		{"POST /sprints/{id}/cerrar", SesionScrumMaster, h.Sprints.Cerrar},
-		{"GET /sprints/{id}/backlog", Lectura, h.Sprints.ConsultarBacklog},
-		{"GET /projects/{id}/sprints", Lectura, h.Sprints.Listar},
+		{"GET /sprints/{id}/backlog", LecturaDeProyecto, h.Sprints.ConsultarBacklog},
+		{"GET /projects/{id}/sprints", LecturaDeProyecto, h.Sprints.Listar},
 
 		{"POST /projects/{id}/defectos", SesionIntegrante, h.Defectos.Registrar},
-		{"GET /projects/{id}/defectos", Lectura, h.Defectos.Listar},
+		{"GET /projects/{id}/defectos", LecturaDeProyecto, h.Defectos.Listar},
 		{"POST /defectos/{id}/resolver", SesionIntegrante, h.Defectos.Resolver},
 
-		{"GET /projects/{id}/metricas", Lectura, h.Metricas.Consultar},
-		{"GET /projects/{id}/historial", Lectura, h.Historial.Listar},
-		{"GET /projects/{id}/historial/{sprintId}", Lectura, h.Historial.Detalle},
-		{"GET /projects/{id}/avance", Lectura, h.Avance.Consultar},
-		{"GET /sprints/{id}/reporte", Lectura, h.Reporte.Sprint},
-		{"GET /projects/{id}/reporte", Lectura, h.Reporte.Proyecto},
+		{"GET /projects/{id}/metricas", LecturaDeProyecto, h.Metricas.Consultar},
+		{"GET /projects/{id}/historial", LecturaDeProyecto, h.Historial.Listar},
+		{"GET /projects/{id}/historial/{sprintId}", LecturaDeProyecto, h.Historial.Detalle},
+		{"GET /projects/{id}/avance", LecturaDeProyecto, h.Avance.Consultar},
+		{"GET /sprints/{id}/reporte", LecturaDeProyecto, h.Reporte.Sprint},
+		{"GET /projects/{id}/reporte", LecturaDeProyecto, h.Reporte.Proyecto},
 	}
 }
 

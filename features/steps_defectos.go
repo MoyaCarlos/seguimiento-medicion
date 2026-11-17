@@ -355,7 +355,7 @@ func (p *pasosDefectos) rechazoConError(esperado error) func() error {
 }
 
 func (p *pasosDefectos) sigueSinDefectos() error {
-	defectos, err := p.listar.Ejecutar(context.Background(), p.base.proyectoID)
+	defectos, err := p.listar.Ejecutar(context.Background(), p.base.proyectoID, scrumMasterDelProyecto(p.base.db, p.base.proyectoID))
 	if err != nil {
 		return err
 	}
@@ -366,7 +366,7 @@ func (p *pasosDefectos) sigueSinDefectos() error {
 }
 
 func (p *pasosDefectos) consultaDe(proyectoID int64) {
-	p.listado, p.err = p.listar.Ejecutar(context.Background(), proyectoID)
+	p.listado, p.err = p.listar.Ejecutar(context.Background(), proyectoID, scrumMasterDelProyecto(p.base.db, proyectoID))
 }
 
 func (p *pasosDefectos) consulta() error {
